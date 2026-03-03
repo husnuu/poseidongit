@@ -1,0 +1,26 @@
+.row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--muted, #81848b);
+  font-family: var(--font-family), sans-serif;
+  font-size: 14px;
+  line-height: 24px;
+}
+
+.row:hover {
+  color: var(--secondary, #131719);
+}
+
+.icon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  color: var(--text-color, #58595b);
+}
+
+.text {
+  flex: 1;
+}

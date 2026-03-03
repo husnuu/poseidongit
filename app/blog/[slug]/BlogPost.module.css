@@ -1,0 +1,159 @@
+.article {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+.backLinkWrap {
+  margin-bottom: 24px;
+}
+
+.backLink {
+  font-family: var(--font-family), sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary, #2168b8);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.category {
+  display: inline-block;
+  font-family: var(--font-family), sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #d97d27;
+  background: rgba(217, 125, 39, 0.1);
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-family: var(--font-family), 'Inter', sans-serif;
+  font-weight: 900;
+  font-size: 2rem;
+  line-height: 1.2;
+  color: #181818;
+  margin: 0 0 12px 0;
+  -webkit-text-stroke: 0.03em currentColor;
+}
+
+@media (min-width: 640px) {
+  .title {
+    font-size: 2.5rem;
+  }
+}
+
+.meta {
+  font-family: var(--font-family), sans-serif;
+  font-size: 14px;
+  color: var(--muted, #6b7280);
+}
+
+.metaSep::before {
+  content: ' · ';
+}
+
+.coverWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 28px;
+  background: #e5e7eb;
+}
+
+.coverImage {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+.excerpt {
+  font-family: var(--font-family), sans-serif;
+  font-size: 18px;
+  line-height: 1.6;
+  color: #4b5563;
+  margin: 0 0 28px 0;
+}
+
+.body {
+  font-family: var(--font-family), sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+  color: #374151;
+}
+
+.body p {
+  margin: 0 0 1em 0;
+}
+
+.body p:last-child {
+  margin-bottom: 0;
+}
+
+.body h2 {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #181818;
+  margin: 1.75em 0 0.5em 0;
+}
+
+.body h3 {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #181818;
+  margin: 1.5em 0 0.5em 0;
+}
+
+.body ul,
+.body ol {
+  margin: 1em 0;
+  padding-left: 1.5em;
+}
+
+.body li {
+  margin-bottom: 0.35em;
+}
+
+.body strong {
+  font-weight: 900;
+}
+
+.body a {
+  color: var(--primary, #2168b8);
+  text-decoration: underline;
+}
+
+.body a:hover {
+  opacity: 0.9;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.tag {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 4px 10px;
+  border-radius: 6px;
+}

@@ -1,0 +1,50 @@
+{
+  "name": "poseidonbooking",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "dev:safe": "rm -rf .next && next dev",
+    "dev:clean": "rm -rf .next node_modules/.cache && next dev",
+    "dev:studio": "sanity dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "studio": "sanity dev",
+    "studio:build": "sanity build"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@marsidev/react-turnstile": "^1.4.2",
+    "@opentelemetry/api": "^1.9.0",
+    "@pdf-lib/fontkit": "^1.1.1",
+    "@portabletext/react": "^4.0.0",
+    "@sanity/client": "^6.22.0",
+    "@sanity/image-url": "^1.0.2",
+    "firebase-admin": "^13.7.0",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
+    "lucide-react": "^0.575.0",
+    "next": "^15.0.0",
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.71.2",
+    "react-phone-number-input": "^3.4.16",
+    "resend": "^6.9.3",
+    "sanity": "^3.56.0",
+    "styled-components": "^6.3.11",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.0.0"
+  }
+}

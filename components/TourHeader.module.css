@@ -1,0 +1,106 @@
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-family: var(--font-family-title), var(--font-family), sans-serif;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+  font-size: 40px;
+  margin: 0 0 20px 0;
+  letter-spacing: 0.02em;
+  -webkit-text-stroke: 0.04em currentColor;
+}
+
+.titlePrimary {
+  color: var(--title-color);
+  display: block;
+}
+
+@media (min-width: 1300px) {
+  .title {
+    font-size: 50px;
+  }
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metaIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Review row: like icon + EXCELLENT + dots + reviews (Inter-Bold, 18px, #181818) */
+.reviewText {
+  font-family: "Inter-Bold", var(--font-family), sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 18px;
+  vertical-align: middle;
+  line-height: normal;
+  color: #181818;
+}
+
+.metaText {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+
+.metaLabel {
+  color: #181818;
+  font-family: "Inter-Bold", var(--font-family), sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  text-transform: uppercase;
+}
+
+.metaMuted {
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.ratingDots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+}
+
+.ratingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--success-color, #4bb543);
+}
+
+.reviewsLink {
+  color: #181818;
+  font-family: "Inter-Bold", var(--font-family), sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  text-transform: uppercase;
+  text-decoration: none;
+  margin-left: 8px;
+}
+
+.reviewsLink:hover {
+  text-decoration: underline;
+}

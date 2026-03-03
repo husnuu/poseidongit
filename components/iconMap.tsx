@@ -1,0 +1,67 @@
+import {
+  Ship,
+  MapPin,
+  Clock,
+  Users,
+  Camera,
+  Utensils,
+  Wifi,
+  Shield,
+  Heart,
+  Star,
+  Award,
+  Compass,
+  Anchor,
+  Waves,
+  Sun,
+  Moon,
+  Cloud,
+  Wind,
+  Droplet,
+  Mountain,
+  TreePine,
+  Fish,
+  Binoculars,
+  Sailboat,
+  LifeBuoy,
+  Flag,
+  Calendar,
+} from 'lucide-react'
+
+export const ICON_MAP: Record<
+  string,
+  React.ComponentType<{ className?: string; size?: number | string }>
+> = {
+  ship: Ship,
+  map: MapPin,
+  clock: Clock,
+  users: Users,
+  camera: Camera,
+  utensils: Utensils,
+  wifi: Wifi,
+  shield: Shield,
+  heart: Heart,
+  star: Star,
+  award: Award,
+  compass: Compass,
+  anchor: Anchor,
+  waves: Waves,
+  sun: Sun,
+  moon: Moon,
+  cloud: Cloud,
+  wind: Wind,
+  droplet: Droplet,
+  mountain: Mountain,
+  tree: TreePine,
+  fish: Fish,
+  binoculars: Binoculars,
+  sailboat: Sailboat,
+  lifebuoy: LifeBuoy,
+  flag: Flag,
+  calendar: Calendar,
+}
+
+export function getIcon(iconKey?: string) {
+  if (!iconKey) return null
+  return ICON_MAP[iconKey.toLowerCase()] ?? null
+}

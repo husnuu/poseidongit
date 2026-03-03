@@ -1,0 +1,72 @@
+.wrapper {
+  position: relative;
+  --PhoneInputCountryFlag-height: 18px;
+  --PhoneInputCountryFlag-aspectRatio: 1.5;
+}
+
+.wrapper :global(.PhoneInput) {
+  display: flex;
+  align-items: center;
+  min-height: 54px;
+  padding-left: 12px;
+  padding-right: 16px;
+}
+
+.wrapper :global(.PhoneInputInput) {
+  flex: 1;
+  min-width: 0;
+  border: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  font-size: 15px;
+  color: #111;
+  padding-left: 8px;
+  height: 54px !important;
+}
+
+.wrapper :global(.PhoneInputCountry) {
+  margin-right: 8px;
+  align-self: center;
+}
+
+.wrapper :global(.PhoneInputCountryIcon) {
+  width: 27px;
+  height: 18px;
+}
+
+.wrapper :global(.PhoneInputCountrySelect) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 2;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.wrapper :global(.PhoneInputCountrySelectArrow) {
+  margin-left: 4px;
+  color: #6b7280;
+}
+
+.label {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.labelActive {
+  top: 8px !important;
+  left: 108px !important;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.labelInactive {
+  top: 50% !important;
+  transform: translateY(-50%);
+  left: 108px !important;
+  font-size: 13px;
+}

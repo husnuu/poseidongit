@@ -1,0 +1,28 @@
+/* Başlık: blog sayfası ile aynı font ve kalınlık */
+.heading {
+  font-family: var(--font-family), sans-serif;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+  margin: 0;
+  font-size: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1em;
+  -webkit-text-stroke: 0.05em currentColor;
+  letter-spacing: 0.03em;
+}
+
+@media (min-width: 1200px) {
+  .heading {
+    font-size: 3rem;
+  }
+}
+
+.headingLine1 {
+  color: var(--primary);
+}
+
+.headingLine2 {
+  color: var(--secondary);
+}

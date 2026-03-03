@@ -1,0 +1,162 @@
+.highlightsDetailsRow {
+  display: flex;
+  gap: 60px;
+  margin: 32px 0 48px 0;
+  max-width: 977px;
+}
+
+.sectionColumn {
+  flex: 1;
+  min-width: 0;
+}
+
+.sectionTitleSmall {
+  font-family: var(--font-family), sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  color: var(--secondary, rgb(24, 24, 24));
+  margin: 0 0 16px 0;
+}
+
+.bulletList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.bulletItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.bulletItem:last-child {
+  margin-bottom: 0;
+}
+
+.bulletIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-color, #58595b);
+}
+
+.bulletText {
+  flex: 1;
+  font-family: var(--font-family), sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 24px;
+  color: rgba(24, 24, 24, 0.85);
+}
+
+.bulletTitle {
+  font-weight: 600;
+  color: var(--secondary, rgb(24, 24, 24));
+  margin-bottom: 4px;
+}
+
+.bulletDescription {
+  font-size: 14px;
+  line-height: 20px;
+  color: rgba(24, 24, 24, 0.7);
+  margin-top: 4px;
+}
+
+.detailLine {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.detailLine:last-child {
+  margin-bottom: 0;
+}
+
+.detailContent {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detailLabel {
+  font-family: var(--font-family), sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: rgba(24, 24, 24, 0.9);
+  flex-shrink: 0;
+}
+
+.detailValue {
+  font-family: var(--font-family), sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 24px;
+  color: rgba(24, 24, 24, 0.75);
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .highlightsDetailsRow {
+    flex-direction: column;
+    gap: 28px;
+    margin: 28px 0 36px 0;
+    padding: 0;
+    max-width: 100%;
+  }
+
+  .sectionTitleSmall {
+    font-size: 23px;
+    line-height: 32px;
+    margin-bottom: 16px;
+  }
+
+  .bulletItem {
+    margin-bottom: 14px;
+  }
+
+  .bulletText {
+    font-size: 17px;
+    line-height: 1.6;
+  }
+
+  .bulletTitle {
+    font-size: 17px;
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+
+  .bulletDescription {
+    font-size: 16px;
+    line-height: 1.55;
+    margin-top: 6px;
+  }
+
+  .detailLine {
+    margin-bottom: 14px;
+  }
+
+  .detailLabel {
+    font-size: 17px;
+  }
+
+  .detailValue {
+    font-size: 17px;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+
+  .bulletIcon {
+    width: 20px;
+    height: 20px;
+    margin-top: 3px;
+  }
+}

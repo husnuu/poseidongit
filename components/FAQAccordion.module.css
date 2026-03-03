@@ -1,0 +1,231 @@
+.faq {
+  max-width: 980px;
+  margin: 64px auto 0;
+  padding: 0 24px;
+  padding-bottom: 28px;
+}
+
+.faqTitle {
+  font-family: var(--font-family), sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 36px;
+  text-transform: uppercase;
+  color: #0f172a;
+  margin: 0 0 20px 0;
+  padding: 0;
+  display: block;
+}
+
+.faqWrapper {
+  width: 100%;
+}
+
+.faqList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.accordionItem {
+  border-bottom: 1px solid rgb(229, 231, 235);
+}
+
+.accordionItemLine {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgb(255, 255, 255);
+  cursor: pointer;
+  border: 0;
+  padding: 24px 0;
+  text-align: left;
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+  font-family: var(--font-family), sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--secondary, #131719);
+}
+
+.accordionItemIcon {
+  display: inline-flex;
+  width: 24px;
+  height: 25px;
+  flex: 0 0 auto;
+  transition: transform 200ms ease;
+  transform-origin: center;
+  color: #1e3a5f;
+}
+
+.accordionItemTitle {
+  font-family: var(--font-family), sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  flex: 1;
+  color: #0f172a;
+}
+
+.accordionItemInner {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 250ms ease;
+}
+
+.accordionItemContent {
+  padding: 0 0 24px 36px;
+}
+
+.accordionItemParagraph {
+  margin: 0;
+  font-family: var(--font-family), sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--secondary, #131719);
+}
+
+.accordionItem[data-open='true'] .accordionItemInner {
+  max-height: 500px;
+}
+
+.accordionItem[data-open='true'] .accordionItemIcon {
+  transform: rotate(180deg);
+}
+
+.missingQuestion {
+  margin-top: 24px;
+  border: 1px solid rgb(229, 231, 235);
+  border-radius: 12px;
+  background: rgb(255, 255, 255);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.missingQuestionLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.missingQuestionLeft p {
+  margin: 0;
+  font-family: var(--font-family), sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--secondary, #131719);
+}
+
+.missingQuestionIcon {
+  display: inline-flex;
+  color: #1e3a5f;
+}
+
+.missingQuestionCta {
+  appearance: none;
+  background-color: #25D366;
+  border: 0;
+  border-radius: 4px;
+  box-shadow: rgba(37, 211, 102, 0.3) 0 12px 34px 0;
+  box-sizing: border-box;
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family), sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  height: 54px;
+  line-height: 30px;
+  margin: 0;
+  padding: 14px 24px 10px;
+  text-align: center;
+  text-transform: uppercase;
+  transition: transform 0.2s ease;
+  outline: none;
+  min-width: 177px;
+  text-decoration: none;
+}
+
+.missingQuestionCta:hover {
+  transform: translateY(-1px);
+  color: rgb(255, 255, 255);
+}
+
+.missingQuestionCta:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .faq {
+    margin: 32px auto 0;
+    padding: 0 16px;
+    max-width: 100%;
+  }
+
+  .faqTitle {
+    font-size: 20px;
+    line-height: 28px;
+    margin-bottom: 20px;
+  }
+
+  .accordionItemLine {
+    padding: 18px 0;
+  }
+
+  .accordionItemTitle {
+    font-size: 15px;
+    line-height: 22px;
+  }
+
+  .accordionItemContent {
+    padding: 0 0 18px 28px;
+  }
+
+  .accordionItemParagraph {
+    font-size: 14px;
+    line-height: 22px;
+    word-break: break-word;
+  }
+
+  .accordionItemIcon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .accordionItemIcon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .missingQuestion {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    margin-top: 20px;
+  }
+
+  .missingQuestionLeft p {
+    font-size: 14px;
+    line-height: 20px;
+    word-break: break-word;
+  }
+
+  .missingQuestionCta {
+    width: 100%;
+    margin-top: 12px;
+    font-size: 14px;
+    padding: 12px 16px;
+    height: auto;
+    min-width: 0;
+  }
+}
