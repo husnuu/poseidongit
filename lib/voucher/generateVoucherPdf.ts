@@ -101,7 +101,15 @@ function arrivalTimeAfterDeparture(departureTime: string | undefined): string | 
 }
 
 function drawDashedLine(
-  page: { drawLine: (opts: { start: { x: number; y: number }; end: { x: number; y: number }; color?: ReturnType<typeof rgb>; dashArray?: number[] }) => void },
+  page: {
+    drawLine: (opts: {
+      start: { x: number; y: number }
+      end: { x: number; y: number }
+      thickness?: number
+      color?: ReturnType<typeof rgb>
+      dashArray?: number[]
+    }) => void
+  },
   x1: number,
   y: number,
   x2: number,
@@ -310,7 +318,7 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
   const barValueSize = 12
   const barLineH = 18
   const barTop = y - card2BarH
-  page.drawText('YOLCU', { x: MARGIN + 24, y: barTop + card2BarH - 12, size: barLabelSize, font: boldFont, color: rgb(1, 1, 1, 0.9) })
+  page.drawText('YOLCU', { x: MARGIN + 24, y: barTop + card2BarH - 12, size: barLabelSize, font: boldFont, color: WHITE, opacity: 0.9 })
   page.drawText(data.customerName, {
     x: MARGIN + 24,
     y: barTop + card2BarH - 12 - barLineH,
@@ -327,7 +335,8 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
     y: barTop + card2BarH - 12,
     size: barLabelSize,
     font: boldFont,
-    color: rgb(1, 1, 1, 0.9),
+    color: WHITE,
+    opacity: 0.9,
   })
   page.drawText(refNum, {
     x: rightBarX,
@@ -438,14 +447,16 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
     y: footerHeight - 12,
     font,
     size: 9,
-    color: rgb(1, 1, 1, 0.9),
+    color: WHITE,
+    opacity: 0.9,
   })
   page.drawText(`© ${data.copyrightYear} Çeşme Poseidon`, {
     x: MARGIN,
     y: footerHeight - 22,
     font,
     size: 9,
-    color: rgb(1, 1, 1, 0.9),
+    color: WHITE,
+    opacity: 0.9,
   })
 
   return doc.save()
