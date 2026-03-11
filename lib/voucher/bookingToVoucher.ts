@@ -11,6 +11,8 @@ type BookingDoc = {
   className?: string
   totalPrice?: number
   currency?: string
+  status?: string
+  meetingPoint?: string
   customer?: {
     firstName?: string
     lastName?: string
@@ -40,8 +42,10 @@ export function bookingToVoucherData(
     tourTitle: booking.tourTitle ?? '—',
     date: booking.date ?? '—',
     time: booking.time,
-    meetingPickup: '—',
-    language: 'Turkish',
+    meetingPickup: (booking as { meetingPoint?: string }).meetingPoint?.trim() || '—',
+    language: 'Türkçe',
+    className: booking.className?.trim() || undefined,
+    status: booking.status,
 
     customerName: [customer.firstName, customer.lastName].filter(Boolean).join(' ') || '—',
     customerEmail: customer.email ?? '—',
@@ -53,7 +57,7 @@ export function bookingToVoucherData(
 
     totalPrice: booking.totalPrice ?? 0,
     currency: booking.currency ?? 'TRY',
-    paidNow: undefined,
+    paidNow: booking.status === 'paid' ? (booking.totalPrice ?? 0) : undefined,
     remainingAmount: undefined,
 
     cancellationPolicy: DEFAULT_POLICIES.cancellationPolicy,

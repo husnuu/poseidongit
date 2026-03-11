@@ -157,3 +157,36 @@
   padding: 4px 10px;
   border-radius: 6px;
 }
+
+.relatedLinks {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.relatedHeading {
+  font-family: var(--font-family), sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #181818;
+  margin: 0 0 12px 0;
+}
+
+.relatedList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.relatedList a {
+  color: var(--primary, #2168b8);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.relatedList a:hover {
+  text-decoration: underline;
+}

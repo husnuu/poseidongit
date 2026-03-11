@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getFirestore } from '@/lib/firebaseAdmin'
 import type { BookingStatus } from '@/lib/firestore/bookingTypes'
+import { client, urlFor } from '@/lib/sanity'
+import { tourImageAndPickupQuery, siteSettingsQuery } from '@/lib/queries'
 import { sendBookingPaidEmails } from '@/lib/email'
+import { getBaseUrl } from '@/lib/seo'
 
 const COLLECTION = 'bookings'
 const DEFAULT_LIMIT = 50
@@ -115,15 +118,70 @@ export async function PATCH(request: NextRequest) {
         child: number
         infant: number
       }
+      const tourId = String(data.tourId ?? '')
+      let tourImageUrl: string | undefined
+      let pickup: string | undefined
+      let logoUrl: string | undefined
+      let startTime: string | undefined
+      let paidNow: number = Number(data.totalPrice ?? 0)
+      if (tourId) {
+        try {
+          const tourMeta = await client.fetch<{
+            mainImage?: { asset?: { _ref?: string } }
+            quickFacts?: { meetingLocation?: string; startTime?: string }
+            whereSection?: { meetingPointAddress?: string }
+            deposit?: { enabled?: boolean; type?: string; value?: number }
+          } | null>(tourImageAndPickupQuery, { tourId })
+          if (tourMeta?.mainImage?.asset) {
+            tourImageUrl = urlFor(tourMeta.mainImage.asset).width(600).height(240).url()
+          }
+          pickup =
+            tourMeta?.whereSection?.meetingPointAddress?.trim() ||
+            tourMeta?.quickFacts?.meetingLocation?.trim() ||
+            undefined
+          startTime = tourMeta?.quickFacts?.startTime?.trim() || (data.time != null ? String(data.time) : undefined)
+          const total = Number(data.totalPrice ?? 0)
+          const dep = tourMeta?.deposit
+          if (dep?.enabled && dep.value != null && total > 0) {
+            paidNow = dep.type === 'percentage' ? Math.round((total * dep.value) / 100) : Math.round(dep.value)
+          } else {
+            paidNow = total
+          }
+        } catch {
+          startTime = data.time != null ? String(data.time) : undefined
+        }
+      } else {
+        startTime = data.time != null ? String(data.time) : undefined
+      }
+      try {
+        const siteSettings = await client.fetch<{ logo?: { asset?: { _ref?: string } } } | null>(
+          siteSettingsQuery
+        )
+        if (siteSettings?.logo?.asset) {
+          logoUrl = urlFor(siteSettings.logo.asset).width(220).height(70).url()
+        }
+      } catch {
+        // Logo opsiyonel
+      }
+      const envBase = (
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+        getBaseUrl()
+      ).replace(/\/$/, '')
+      const host = request.headers.get('host')
+      const proto = request.headers.get('x-forwarded-proto') === 'https' || request.headers.get('x-forwarded-ssl') === 'on' ? 'https' : 'http'
+      const requestBase = host ? `${proto}://${host}`.replace(/\/$/, '') : ''
+      const siteBaseUrl = (envBase || requestBase || '').replace(/\/$/, '') || undefined
       await sendBookingPaidEmails({
         bookingId,
         tourTitle: String(data.tourTitle ?? ''),
         date: String(data.date ?? ''),
-        time: data.time != null ? String(data.time) : undefined,
+        time: startTime,
         className: String(data.className ?? ''),
         counts,
         totalPrice: Number(data.totalPrice ?? 0),
         currency: String(data.currency ?? 'TRY'),
+        paidNow,
         customer: {
           firstName: String(customer.firstName ?? ''),
           lastName: String(customer.lastName ?? ''),
@@ -131,6 +189,10 @@ export async function PATCH(request: NextRequest) {
           phone: String(customer.phone ?? ''),
           note: customer.note != null ? String(customer.note) : undefined,
         },
+        tourImageUrl,
+        pickup,
+        logoUrl,
+        siteBaseUrl,
       })
     }
 

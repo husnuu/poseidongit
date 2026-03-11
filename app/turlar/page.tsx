@@ -4,11 +4,21 @@ import TourCard from '@/components/tours/TourCard'
 import type { TourListItem } from '@/components/tours/TourCard'
 import styles from './page.module.css'
 
+import type { Metadata } from 'next'
+import { getBaseUrl } from '@/lib/seo'
+
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
-  title: 'Turlar | Çeşme Tekne Turları',
-  description: 'Çeşme tekne turları ve deneyimler. En popüler turları inceleyin ve rezervasyon yapın.',
+export const metadata: Metadata = {
+  title: 'Çeşme Tekne Turları | Turlar ve Fiyatlar',
+  description:
+    'Çeşme tekne turu seçenekleri: adalar ve koylar turu, BBQ turları, günlük turlar. Fiyatlar ve rezervasyon.',
+  alternates: { canonical: `${getBaseUrl()}/turlar` },
+  openGraph: {
+    title: 'Çeşme Tekne Turları | Çeşme Poseidon',
+    description: 'Çeşme tekne turları ve deneyimler. Rezervasyon yapın.',
+    url: `${getBaseUrl()}/turlar`,
+  },
 }
 
 type TourListRaw = Omit<TourListItem, 'coverImageUrl' | 'coverImageAlt'> & {

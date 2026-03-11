@@ -4,10 +4,27 @@ import './globals.css'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import ChunkLoadErrorHandler from '@/components/ChunkLoadErrorHandler'
+import { getBaseUrl } from '@/lib/seo'
+
+const baseUrl = getBaseUrl()
+const metadataBase =
+  baseUrl && baseUrl.startsWith('http')
+    ? new URL(baseUrl)
+    : undefined
 
 export const metadata: Metadata = {
-  title: 'Poseidon Booking',
-  description: 'Çeşme tekne turları ve rezervasyon',
+  ...(metadataBase && { metadataBase }),
+  title: {
+    default: 'Çeşme Tekne Turu | Çeşme Poseidon – Adalar ve Koylar',
+    template: '%s | Çeşme Poseidon',
+  },
+  description:
+    'Çeşme tekne turu ve koy turları. Adalar ve koylar tekne turu rezervasyonu, özel turlar. Çeşme Poseidon ile güvenli ve keyifli deneyim.',
+  openGraph: {
+    type: 'website',
+    locale: 'tr_TR',
+    siteName: 'Çeşme Poseidon',
+  },
 }
 
 function HeaderFallback() {

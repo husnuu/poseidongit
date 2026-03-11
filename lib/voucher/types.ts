@@ -10,8 +10,15 @@ export interface VoucherData {
   tourTitle: string
   date: string
   time?: string
+  /** Toplanma / biniş noktası */
   meetingPickup: string
+  /** Süre (örn. "7 Saat") */
+  durationLabel?: string
   language: string
+  /** Sınıf (Eco / Premium / First Class vb.) */
+  className?: string
+  /** Rezervasyon durumu: pending, paid, cancelled */
+  status?: string
 
   /** Customer bölümü */
   customerName: string
@@ -28,6 +35,12 @@ export interface VoucherData {
   currency: string
   paidNow?: number
   remainingAmount?: number
+  /** Kapora tutarı (tur kaporalıysa ödenen tutar olarak gösterilir) */
+  depositAmount?: number
+  /** Dahil olanlar (tur içeriği) */
+  included?: string[]
+  /** Dahil olmayanlar (tur içeriği) */
+  notIncluded?: string[]
 
   /** Policies (kısa metin) */
   cancellationPolicy: string
@@ -37,13 +50,20 @@ export interface VoucherData {
   supportEmail: string
   website: string
   copyrightYear: number
+
+  /** Opsiyonel: site logosu (PDF üstünde gösterilir). Absolute URL. */
+  logoUrl?: string
+  /** Opsiyonel: tur kapak görseli (PDF mobil bilet üstünde gösterilir). Absolute URL. */
+  tourImageUrl?: string
+  /** Opsiyonel: tur galerisi (en fazla 3, PDF altında yan yana). Absolute URL[]. */
+  tourGalleryUrls?: string[]
 }
 
-/** Varsayılan policy metinleri */
+/** Varsayılan policy metinleri (Türkçe) */
 export const DEFAULT_POLICIES = {
   cancellationPolicy:
-    'Free cancellation up to 24 hours before the tour. After that, the amount paid is non-refundable.',
-  voucherNotice: 'Show this voucher to the staff.',
+    'Tura 24 saat kala ücretsiz iptal. Sonrasında ödenen tutar iade edilmez.',
+  voucherNotice: 'Biniş sırasında bu bileti gösteriniz.',
 }
 
 /** Varsayılan iletişim (env ile override edilebilir) */

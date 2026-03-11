@@ -3,7 +3,6 @@ import * as admin from 'firebase-admin'
 import { getFirestore } from '@/lib/firebaseAdmin'
 import type { BookingCreatePayload } from '@/lib/firestore/bookingTypes'
 import { client } from '@/lib/sanity'
-import { sendBookingEmails } from '@/lib/email'
 import { tourForAvailabilityQuery } from '@/lib/queries'
 
 const COLLECTION = 'bookings'
@@ -116,6 +115,15 @@ export async function POST(request: Request) {
       payload.classId,
       payload.counts
     )
+    // Kalkış saati: istekte varsa onu kullan, yoksa turun quickFacts.startTime (voucher/bilet sayfasında gösterilir)
+    let timeToSave: string | undefined = payload.time?.trim() || undefined
+    if (!timeToSave) {
+      const tourMeta = await client.fetch<{ startTime?: string } | null>(
+        `*[_type == "tour" && (_id == $id || slug.current == $id)][0]{ "startTime": quickFacts.startTime }`,
+        { id: firestoreTourId }
+      )
+      timeToSave = tourMeta?.startTime?.trim() || undefined
+    }
     const db = getFirestore()
     // Firestore undefined kabul etmez; note yoksa alanı ekleme
     const customer: Record<string, string> = {
@@ -134,7 +142,7 @@ export async function POST(request: Request) {
       tourId: firestoreTourId,
       tourTitle: payload.tourTitle,
       date: /^\d{4}-\d{2}-\d{2}$/.test(dateNorm) ? dateNorm : payload.date,
-      ...(payload.time && { time: payload.time }),
+      ...(timeToSave && { time: timeToSave }),
       counts: payload.counts,
       classId: payload.classId,
       className: payload.className,
@@ -145,23 +153,7 @@ export async function POST(request: Request) {
       source: 'web',
     })
 
-    await sendBookingEmails({
-      bookingId: ref.id,
-      tourTitle: payload.tourTitle,
-      date: payload.date,
-      time: payload.time,
-      className: payload.className,
-      counts: payload.counts,
-      totalPrice,
-      currency: CURRENCY,
-      customer: {
-        firstName: payload.customer.firstName,
-        lastName: payload.customer.lastName,
-        email: payload.customer.email,
-        phone: payload.customer.phone ?? '',
-        note: payload.customer.note,
-      },
-    })
+    // E-posta yalnızca ödeme onaylandığında (admin "paid" yaptığında) gönderilir.
 
     return NextResponse.json({
       bookingId: ref.id,

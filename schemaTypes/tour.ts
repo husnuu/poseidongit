@@ -399,6 +399,12 @@ export default defineType({
           description: 'Tur başlangıç noktası',
         }),
         defineField({
+          name: 'startTime',
+          title: 'Başlangıç saati',
+          type: 'string',
+          description: 'Tur kalkış saati (örn: 10:00) – e-posta ve detayda gösterilir',
+        }),
+        defineField({
           name: 'language',
           title: 'Dil',
           type: 'string',

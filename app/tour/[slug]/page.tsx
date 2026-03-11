@@ -1,8 +1,10 @@
+import { cache } from 'react'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import type { PortableTextBlock } from '@portabletext/react'
+import type { Metadata } from 'next'
 import { client, urlFor } from '@/lib/sanity'
-import { tourBySlugQuery } from '@/lib/queries'
+import { tourBySlugQuery, tourSlugsQuery } from '@/lib/queries'
 import { type TourGalleryImage } from '@/components/TourGalleryHero'
 import PhotoGrid from '@/components/PhotoGrid'
 import { TourHeader } from '@/components/TourHeader'
@@ -18,6 +20,13 @@ import TourBookingSidebar from '@/components/booking/TourBookingSidebar'
 import type { TourForBooking } from '@/lib/sanity/bookingTypes'
 import ReviewsSection from '@/components/ReviewsSection'
 import WhereSection, { type WhereSectionData } from '@/components/tour/WhereSection'
+import JsonLd from '@/components/seo/JsonLd'
+import {
+  buildBreadcrumbSchema,
+  buildFAQSchema,
+  buildTourSchema,
+  absoluteUrl,
+} from '@/lib/seo'
 
 interface TourVideo {
   enabled: boolean
@@ -186,9 +195,48 @@ interface Tour {
   whereSection?: WhereSectionData | null
 }
 
-async function getTour(slug: string): Promise<Tour | null> {
+const getTour = cache(async function getTour(slug: string): Promise<Tour | null> {
   const tour = await client.fetch<Tour | null>(tourBySlugQuery, { slug })
   return tour
+})
+
+export const revalidate = 3600 // ISR: tur sayfaları en fazla 1 saat sonra güncellenir
+
+/** Yayımlanmış turların slug'ları — 404 önlemek için sayfaların build/ISR'da bilinmesi gerekir */
+export async function generateStaticParams() {
+  const list = await client.fetch<{ slug: string | null }[]>(tourSlugsQuery)
+  return (list ?? []).map((t) => ({ slug: t.slug })).filter((p): p is { slug: string } => Boolean(p.slug))
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const { slug } = await params
+  const tour = await getTour(slug)
+  if (!tour) return { title: 'Tur bulunamadı' }
+  const title = `${tour.title} | Çeşme Tekne Turu`
+  const description =
+    (tour.shortDescription ?? tour.title).replace(/\s+/g, ' ').slice(0, 160) ||
+    `Çeşme tekne turu: ${tour.title}. Rezervasyon yapın.`
+  const url = absoluteUrl(`/tour/${slug}`)
+  const image =
+    tour.mainImage?.asset != null
+      ? urlFor(tour.mainImage.asset).width(1200).height(630).url()
+      : undefined
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: 'website',
+      images: image ? [{ url: image, width: 1200, height: 630, alt: tour.title }] : undefined,
+    },
+  }
 }
 
 function buildGalleryHeroImages(tour: Tour): TourGalleryImage[] {
@@ -251,8 +299,41 @@ export default async function TourPage({
   const galleryHeroImages = buildGalleryHeroImages(tour)
   const itineraryTimelineItems = buildItineraryTimelineItems(tour)
 
+  const tourUrl = absoluteUrl(`/tour/${slug}`)
+  const tourImage =
+    tour.mainImage?.asset != null
+      ? urlFor(tour.mainImage.asset).width(1200).height(630).url()
+      : undefined
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'Ana Sayfa', url: '/' },
+    { name: 'Turlar', url: '/turlar' },
+    { name: tour.title, url: `/tour/${slug}` },
+  ])
+  const faqSchema =
+    tour.faqs && tour.faqs.length > 0
+      ? buildFAQSchema(tour.faqs.map((f) => ({ question: f.question, answer: f.answer })))
+      : null
+  const lowestPrice =
+    tour.ticketClasses?.flatMap((c) => c.pricesByAge ?? [])
+      .map((p) => p.price)
+      .filter((n): n is number => typeof n === 'number')
+      .sort((a, b) => a - b)[0] ?? undefined
+  const productSchema = buildTourSchema({
+    name: tour.title,
+    description: tour.shortDescription ?? undefined,
+    url: tourUrl,
+    image: tourImage,
+    price: lowestPrice,
+    priceCurrency: 'TRY',
+    ratingValue: tour.rating,
+    reviewCount: tour.reviewCount,
+  })
+
   return (
     <div className="min-h-screen bg-white dark:bg-white">
+      <JsonLd data={breadcrumbSchema} />
+      {faqSchema && <JsonLd data={faqSchema} />}
+      <JsonLd data={productSchema} />
       {/* Full-width tour gallery hero (edge-to-edge) */}
       {galleryHeroImages.length > 0 && (
         <div className="w-full mb-0">

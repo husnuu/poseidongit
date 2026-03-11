@@ -1,10 +1,17 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import { client, urlFor } from '@/lib/sanity'
 import { blogBySlugQuery } from '@/lib/queries'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
+import JsonLd from '@/components/seo/JsonLd'
+import {
+  buildBreadcrumbSchema,
+  buildBlogPostingSchema,
+  absoluteUrl,
+} from '@/lib/seo'
 import styles from './BlogPost.module.css'
 
 interface BlogPost {
@@ -43,13 +50,30 @@ export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>
-}) {
+}): Promise<Metadata> {
   const { slug } = await params
   const post = await client.fetch<BlogPost | null>(blogBySlugQuery, { slug })
   if (!post) return { title: 'Yazı bulunamadı' }
+  const title = `${post.title} | Blog | Çeşme Poseidon`
+  const description =
+    (post.excerpt ?? post.title).replace(/\s+/g, ' ').slice(0, 160) || title
+  const url = absoluteUrl(`/blog/${slug}`)
+  const image = post.coverImage?.asset
+    ? urlFor(post.coverImage.asset).width(1200).height(630).url()
+    : post.coverImage?.url ?? undefined
   return {
-    title: `${post.title} | Blog | Poseidon Booking`,
-    description: post.excerpt ?? undefined,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: 'article',
+      publishedTime: post.publishDate ?? undefined,
+      authors: post.author ? [post.author] : undefined,
+      images: image ? [{ url: image, width: 1200, height: 630, alt: post.title }] : undefined,
+    },
   }
 }
 
@@ -67,8 +91,25 @@ export default async function BlogPostPage({
     ? urlFor(post.coverImage.asset).width(1200).height(630).url()
     : post.coverImage?.url ?? null
 
+  const postUrl = absoluteUrl(`/blog/${slug}`)
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'Ana Sayfa', url: '/' },
+    { name: 'Blog', url: '/blog' },
+    { name: post.title, url: `/blog/${slug}` },
+  ])
+  const blogPostingSchema = buildBlogPostingSchema({
+    title: post.title,
+    description: post.excerpt ?? undefined,
+    url: postUrl,
+    image: coverUrl ?? undefined,
+    datePublished: post.publishDate ?? undefined,
+    author: post.author ?? undefined,
+  })
+
   return (
     <main className="min-h-screen bg-zinc-50">
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={blogPostingSchema} />
       <article className={styles.article}>
         <div className={styles.backLinkWrap}>
           <Link href="/blog" className={styles.backLink}>
@@ -126,6 +167,18 @@ export default async function BlogPostPage({
             ))}
           </div>
         )}
+
+        <nav className={styles.relatedLinks} aria-label="İlgili sayfalar">
+          <h2 className={styles.relatedHeading}>İlgili sayfalar</h2>
+          <ul className={styles.relatedList}>
+            <li>
+              <Link href="/turlar">Çeşme tekne turları</Link>
+            </li>
+            <li>
+              <Link href="/koylar">Çeşme koyları</Link>
+            </li>
+          </ul>
+        </nav>
 
         <div className={styles.backLinkWrap}>
           <Link href="/blog" className={styles.backLink}>

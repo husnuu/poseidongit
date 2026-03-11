@@ -1,7 +1,6 @@
 'use client'
 
 import Image from 'next/image'
-import Link from 'next/link'
 
 function ClockIcon({ className }: { className?: string }) {
   return (
@@ -108,12 +107,11 @@ type TourCardProps = {
 }
 
 export default function TourCard({ tour }: TourCardProps) {
-  const href = tour.slug ? `/tour/${tour.slug}` : '#'
+  const href = tour.slug ? `/tour/${tour.slug}` : null
   const rating = tour.rating ?? 0
 
-  return (
-    <article className="h-full flex flex-col rounded-2xl overflow-hidden bg-white shadow-[0_12px_30px_rgba(0,0,0,0.12)] border border-black/5 transition-all duration-300 hover:shadow-[0_16px_40px_rgba(0,0,0,0.14)]">
-      <Link href={href} className="flex flex-col h-full">
+  const content = (
+    <>
         {/* Kapak görsel */}
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100">
           {tour.coverImageUrl ? (
@@ -241,7 +239,21 @@ export default function TourCard({ tour }: TourCardProps) {
             </span>
           </span>
         </div>
-      </Link>
+    </>
+  )
+
+  const wrapperClassName = 'flex flex-col h-full block'
+  return (
+    <article className="h-full flex flex-col rounded-2xl overflow-hidden bg-white shadow-[0_12px_30px_rgba(0,0,0,0.12)] border border-black/5 transition-all duration-300 hover:shadow-[0_16px_40px_rgba(0,0,0,0.14)]">
+      {href ? (
+        <a href={href} className={wrapperClassName}>
+          {content}
+        </a>
+      ) : (
+        <div className={`${wrapperClassName} opacity-90`}>
+          {content}
+        </div>
+      )}
     </article>
   )
 }

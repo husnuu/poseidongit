@@ -1,6 +1,8 @@
 import { client } from '@/lib/sanity'
 import { blogsListQuery, blogPageQuery } from '@/lib/queries'
 import BlogCard from '@/components/BlogCard'
+import { getBaseUrl } from '@/lib/seo'
+import type { Metadata } from 'next'
 import styles from './blog.module.css'
 
 interface BlogItem {
@@ -27,9 +29,16 @@ interface BlogPageContent {
   heroDescription?: string
 }
 
-export const metadata = {
-  title: 'Blog | Poseidon Booking',
-  description: 'Çeşme ve tekne turları hakkında blog yazıları',
+export const metadata: Metadata = {
+  title: 'Blog | Çeşme Tekne Turu ve Tatil Rehberi',
+  description:
+    'Çeşme tekne turu ipuçları, koy rehberleri ve tatil yazıları. Çeşme Poseidon blog.',
+  alternates: { canonical: `${getBaseUrl()}/blog` },
+  openGraph: {
+    title: 'Blog | Çeşme Poseidon',
+    description: 'Çeşme ve tekne turları hakkında blog yazıları.',
+    url: `${getBaseUrl()}/blog`,
+  },
 }
 
 export default async function BlogPage() {

@@ -1,0 +1,15 @@
+rules_version = '2';
+// bookings: okuma açık (Console'da "Error loading documents" olmasın diye), yazma kapalı (sadece sunucu firebase-admin ile yazar).
+// Diğer tüm koleksiyonlar: tamamen kapalı.
+// Admin SDK kuralları bypass eder; Next.js API'leri etkilenmez.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /bookings/{document} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

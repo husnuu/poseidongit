@@ -1,3 +1,6 @@
+/** Tüm yayımlanmış tur slug'ları (generateStaticParams / sitemap için) */
+export const tourSlugsQuery = `*[_type == "tour" && defined(slug.current)]{ "slug": slug.current }`
+
 export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
   _id,
   title,
@@ -199,6 +202,19 @@ export const tourForAvailabilityQuery = `*[_type == "tour" && (_id == $tourId ||
   "slug": slug.current,
   baseCapacity{ ecoCapacity, premiumCapacity, firstCapacity },
   availabilityOverrides[]{ date, eco, premium, first, note }
+}`
+
+/** Tour kapak görseli, toplanma, süre, galeri, kapora, dahil/dahil değil – voucher için. */
+export const tourImageAndPickupQuery = `*[_type == "tour" && (_id == $tourId || slug.current == $tourId)][0] {
+  mainImage{ asset },
+  "gallery": gallery[0...3][].asset,
+  "durationLabel": quickFacts.durationText,
+  "meetingPoint": coalesce(whereSection.meetingPointAddress, quickFacts.meetingLocation),
+  quickFacts{ meetingLocation, startTime, durationText },
+  whereSection{ meetingPointAddress },
+  deposit{ enabled, type, value },
+  included,
+  notIncluded
 }`
 
 export const siteSettingsQuery = `*[_type == "siteSettings"][0] {

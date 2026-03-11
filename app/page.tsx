@@ -15,8 +15,23 @@ import type { BlogSectionData } from '@/components/home/BlogSection'
 import type { InstagramSectionData } from '@/components/home/InstagramSection'
 import type { RouteSectionLocation } from '@/components/home/RouteSection'
 import type { TourListItem } from '@/components/tours/TourCard'
+import JsonLd from '@/components/seo/JsonLd'
+import { buildOrganizationSchema, buildWebSiteSchema, getBaseUrl } from '@/lib/seo'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'Çeşme Tekne Turu | Adalar ve Koylar – Çeşme Poseidon',
+  description:
+    'Çeşme tekne turu rezervasyonu. Adalar ve koylar tekne turu, BBQ turları, günlük turlar. Çeşme\'nin en güzel koylarını keşfedin – online rezervasyon.',
+  alternates: { canonical: getBaseUrl() },
+  openGraph: {
+    title: 'Çeşme Tekne Turu | Çeşme Poseidon',
+    description: 'Çeşme tekne turu ve koy turları. Adalar ve koylar turu rezervasyonu.',
+    url: getBaseUrl(),
+  },
+}
 
 type PopularToursSectionRaw = {
   enabled?: boolean | null
@@ -157,8 +172,15 @@ export default async function HomePage() {
     instagramSection = null
   }
 
+  const organizationSchema = buildOrganizationSchema()
+  const websiteSchema = buildWebSiteSchema({
+    description: 'Çeşme tekne turu ve koy turları. Adalar ve koylar tekne turu rezervasyonu.',
+  })
+
   return (
     <div className="min-h-screen bg-white">
+      <JsonLd data={organizationSchema} />
+      <JsonLd data={websiteSchema} />
       <HeroBanner hero={hero} />
       {featureBar && featureBar.length > 0 && <FeatureBar items={featureBar} />}
       <PopularToursSection data={popularToursSection} />
