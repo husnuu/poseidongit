@@ -475,7 +475,7 @@ export default function AdminBookingsPage() {
       if (submittedEmail) headers[ADMIN_EMAIL_HEADER] = submittedEmail
       const res = await fetchWithTimeout(`/api/admin/occupancy?${params}`, { headers })
       const text = await res.text()
-      let data: { days?: unknown[]; message?: string; error?: string; detail?: string } = {}
+      let data: { days?: DayOccupancyData[]; message?: string; error?: string; detail?: string } = {}
       try {
         data = text ? JSON.parse(text) : {}
       } catch {
