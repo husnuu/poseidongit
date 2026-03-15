@@ -1,8 +1,6 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import './globals.css'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
 import ChunkLoadErrorHandler from '@/components/ChunkLoadErrorHandler'
 import { getBaseUrl } from '@/lib/seo'
 
@@ -27,14 +25,6 @@ export const metadata: Metadata = {
   },
 }
 
-function HeaderFallback() {
-  return <header className="h-14 border-b border-zinc-200 bg-white" />
-}
-
-function FooterFallback() {
-  return <footer className="h-24 border-t border-zinc-200 bg-zinc-50" />
-}
-
 export default function RootLayout({
   children,
 }: {
@@ -43,13 +33,7 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className="min-h-screen bg-zinc-50 text-zinc-900 antialiased">
-        <Suspense fallback={<HeaderFallback />}>
-          <Header />
-        </Suspense>
-        {children}
-        <Suspense fallback={<FooterFallback />}>
-          <Footer />
-        </Suspense>
+        <Suspense fallback={null}>{children}</Suspense>
         <ChunkLoadErrorHandler />
       </body>
     </html>

@@ -69,6 +69,12 @@ const tourForBookingQuery = `*[_type == "tour" && slug.current == $slug][0] {
     enabled,
     type,
     value
+  },
+  pickupPoints[]{
+    name,
+    address,
+    description,
+    isDefault
   }
 }`
 

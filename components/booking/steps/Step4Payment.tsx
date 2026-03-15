@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { BookingWizardState } from '@/lib/sanity/bookingTypes'
+import FloatingInput from '@/components/ui/FloatingInput'
 import styles from '../booking.module.css'
 
 interface Step4PaymentProps {
@@ -31,6 +32,7 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled }: S
   return (
     <form
       className={styles.stepContent}
+      style={{ fontFamily: 'var(--font-family)' }}
       onSubmit={(e) => {
         e.preventDefault()
         handleSubmit(e)
@@ -38,71 +40,78 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled }: S
       noValidate
     >
       <div className={styles.card}>
-        <h3 className={styles.cardTitle}>Ödeme Özeti</h3>
-        <div className={styles.summaryRow}>
-          <span className={styles.summaryRowLabel}>
-            Şimdi öde (%{p.depositPercent})
+        <div className={styles.cardCaption}>
+          <span className={styles.cardCaptionIcon} aria-hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="20" height="14" x="2" y="5" rx="2" />
+              <line x1="2" x2="22" y1="10" y2="10" />
+              <path d="M12 15a2 2 0 0 1 2 2v4H10v-4a2 2 0 0 1 2-2z" />
+            </svg>
           </span>
-          <span className={styles.summaryRowValue} style={{ color: 'var(--primary)' }}>
-            {p.depositAmount.toLocaleString('tr-TR')} ₺
-          </span>
+          <h3 className={styles.cardCaptionTitle}>Ödeme Özeti</h3>
         </div>
-        <div className={styles.summaryRow}>
-          <span className={styles.summaryRowLabel}>Kalan (tur günü öde)</span>
-          <span className={styles.summaryRowValue}>
-            {p.remainingAmount.toLocaleString('tr-TR')} ₺
-          </span>
+        <hr className={styles.cardDivider} />
+        <div className={styles.cardContent}>
+          <div className={styles.summaryRow}>
+            <span className={styles.summaryRowLabel}>
+              Şimdi öde (%{p.depositPercent})
+            </span>
+            <span className={styles.summaryRowValue} style={{ color: 'var(--primary)' }}>
+              {p.depositAmount.toLocaleString('tr-TR')} ₺
+            </span>
+          </div>
+          <div className={styles.summaryRow}>
+            <span className={styles.summaryRowLabel}>Kalan (tur günü öde)</span>
+            <span className={styles.summaryRowValue}>
+              {p.remainingAmount.toLocaleString('tr-TR')} ₺
+            </span>
+          </div>
         </div>
       </div>
 
       <div className={styles.card}>
-        <h3 className={styles.cardTitle}>Kart Bilgileri</h3>
-        <label htmlFor="booking-cardName" className="block mb-1 text-sm font-medium text-zinc-900">
-          Kart Sahibi Adı
-        </label>
-        <input
-          id="booking-cardName"
-          type="text"
-          autoComplete="cc-name"
-          className={styles.input}
-          placeholder="Ad Soyad"
-          style={{ marginBottom: 12 }}
-        />
-        <label htmlFor="booking-cardNumber" className="block mb-1 text-sm font-medium text-zinc-900">
-          Kart Numarası
-        </label>
-        <input
-          id="booking-cardNumber"
-          type="text"
-          autoComplete="cc-number"
-          className={styles.input}
-          placeholder="0000 0000 0000 0000"
-          style={{ marginBottom: 12 }}
-        />
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="booking-cardExpiry" className="block mb-1 text-sm font-medium text-zinc-900">
-              Son Kullanma
-            </label>
-            <input
-              id="booking-cardExpiry"
+        <div className={styles.cardCaption}>
+          <span className={styles.cardCaptionIcon} aria-hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="20" height="14" x="2" y="5" rx="2" />
+              <line x1="2" x2="22" y1="10" y2="10" />
+            </svg>
+          </span>
+          <h3 className={styles.cardCaptionTitle}>Kart Bilgileri</h3>
+        </div>
+        <hr className={styles.cardDivider} />
+        <div className={styles.cardContent}>
+          <div className="space-y-4">
+            <FloatingInput
+              id="booking-cardName"
+              label="Kart Sahibi Adı *"
               type="text"
-              autoComplete="cc-exp"
-              className={styles.input}
-              placeholder="AA/YY"
+              autoComplete="cc-name"
+              compact
             />
-          </div>
-          <div>
-            <label htmlFor="booking-cardCvc" className="block mb-1 text-sm font-medium text-zinc-900">
-              CVC
-            </label>
-            <input
-              id="booking-cardCvc"
+            <FloatingInput
+              id="booking-cardNumber"
+              label="Kart Numarası *"
               type="text"
-              autoComplete="cc-csc"
-              className={styles.input}
-              placeholder="000"
+              autoComplete="cc-number"
+              compact
             />
+            <div className="grid grid-cols-2 gap-4">
+              <FloatingInput
+                id="booking-cardExpiry"
+                label="Son Kullanma (AA/YY) *"
+                type="text"
+                autoComplete="cc-exp"
+                compact
+              />
+              <FloatingInput
+                id="booking-cardCvc"
+                label="CVC *"
+                type="text"
+                autoComplete="cc-csc"
+                compact
+              />
+            </div>
           </div>
         </div>
       </div>

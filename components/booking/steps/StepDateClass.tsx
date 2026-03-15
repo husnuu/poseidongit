@@ -63,16 +63,20 @@ export default function StepDateClass({
   const LOW_STOCK_THRESHOLD = 5
 
   useEffect(() => {
+    const total = state.counts.adult + state.counts.child + state.counts.baby
     if (state.selectedClassKey === 'first' && (state.counts.child > 0 || state.counts.baby > 0)) {
+      onUpdate({ selectedClassKey: null })
+      return
+    }
+    if (state.selectedClassKey === 'first' && total % 2 !== 0) {
       onUpdate({ selectedClassKey: null })
       return
     }
     if (state.selectedDate && state.selectedClassKey) {
       const status = getClassStatusForDate(tour, state.selectedDate, state.selectedClassKey)
       if (status === 'full' || status === 'closed') onUpdate({ selectedClassKey: null })
-      // Kapasite yetersizse seçimi temizlemiyoruz; uyarı gösterilir ve İleri devre dışı kalır
     }
-  }, [tour, state.selectedDate, state.selectedClassKey, state.counts.child, state.counts.baby, onUpdate])
+  }, [tour, state.selectedDate, state.selectedClassKey, state.counts.adult, state.counts.child, state.counts.baby, onUpdate])
 
   useEffect(() => {
     if (!state.selectedDate || !state.selectedClassKey) {
@@ -216,12 +220,14 @@ export default function StepDateClass({
             const selected = state.selectedClassKey === cls.key
             const cap = capForClass(cls.key)
             const firstClassNoChildOrBaby = cls.key === 'first' ? state.counts.child === 0 && state.counts.baby === 0 : true
+            const firstClassEvenPax = cls.key !== 'first' || totalPax % 2 === 0
             const classStatus = state.selectedDate ? getClassStatusForDate(tour, state.selectedDate, cls.key) : null
             const classBlocked = classStatus === 'full' || classStatus === 'closed'
             const isFull = classBlocked || cap === 0
             const insufficientCap = cap > 0 && cap < totalPax && !classBlocked
-            const available = cap >= totalPax && firstClassNoChildOrBaby && !classBlocked
-            const isFirstClassRestricted = cls.key === 'first' && !firstClassNoChildOrBaby
+            const available = cap >= totalPax && firstClassNoChildOrBaby && firstClassEvenPax && !classBlocked
+            const isFirstClassRestricted = cls.key === 'first' && (!firstClassNoChildOrBaby || totalPax % 2 !== 0)
+            const isFirstClassOddPaxWarning = cls.key === 'first' && totalPax % 2 !== 0
             const adultPrice = cls.pricesByAge?.find((p) => p.ageKey === 'adult')
             const multiplier = state.selectedDate ? getSeasonMultiplier(tour, state.selectedDate) : 1
             const price =
@@ -244,6 +250,28 @@ export default function StepDateClass({
                 onClick={() => available && onUpdate({ selectedClassKey: cls.key })}
                 disabled={!available}
               >
+                {isFirstClassOddPaxWarning && (
+                  <div
+                    role="alert"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      zIndex: 2,
+                      padding: '10px 12px',
+                      background: '#fef3c7',
+                      border: '1px solid #f59e0b',
+                      borderRadius: '8px 8px 0 0',
+                      color: '#92400e',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      textAlign: 'center',
+                    }}
+                  >
+                    Bu alandaki bungalov yataklarımız 2 kişiliktir. Tek sayılı kişi ile rezervasyon verilmemektedir.
+                  </div>
+                )}
                 <div
                   style={{
                     filter: isFirstClassRestricted ? 'blur(5px)' : undefined,
@@ -368,7 +396,9 @@ export default function StepDateClass({
                     aria-hidden
                   >
                     <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#374151', textAlign: 'center', lineHeight: 1.4 }}>
-                      First class için sadece 16 yaş üstü misafirler kabul edilmektedir.
+                      {totalPax % 2 !== 0
+                        ? 'Bu alandaki bungalov yataklarımız 2 kişiliktir. Tek sayılı kişi ile rezervasyon verilmemektedir.'
+                        : 'First class için sadece 16 yaş üstü misafirler kabul edilmektedir.'}
                     </p>
                   </div>
                 )}

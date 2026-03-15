@@ -9,6 +9,7 @@ type Booking = {
   tourTitle: string
   date: string
   time?: string
+  meetingPoint?: string
   className: string
   totalPrice: number
   currency: string
@@ -265,6 +266,12 @@ export default function ManageBookingClient({
                   <td style={{ color: '#6b7280', padding: '8px 0' }}>Kalkış</td>
                   <td style={{ textAlign: 'right' }}>{booking.time || '—'}</td>
                 </tr>
+                {booking.meetingPoint != null && booking.meetingPoint !== '' && (
+                  <tr>
+                    <td style={{ color: '#6b7280', padding: '8px 0' }}>Toplanma noktası</td>
+                    <td style={{ textAlign: 'right', fontWeight: 500 }}>{booking.meetingPoint}</td>
+                  </tr>
+                )}
                 <tr>
                   <td style={{ color: '#6b7280', padding: '8px 0' }}>Sınıf</td>
                   <td style={{ textAlign: 'right' }}>{booking.className}</td>

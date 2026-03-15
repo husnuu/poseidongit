@@ -22,31 +22,48 @@ export default function StepPayment({ state }: StepPaymentProps) {
 
   return (
     <>
-      {/* Özet kartı – contact ile aynı card görünümü */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
-        <h3 className={styles.cardTitle}>Ödeme Bilgileri</h3>
-        <div className={styles.summaryRow}>
-          <span className={styles.summaryRowLabel}>
-            Şimdi öde: {p.depositAmount.toLocaleString('tr-TR')} ₺ (%{p.depositPercent})
+      <div className={styles.card}>
+        <div className={styles.cardCaption}>
+          <span className={styles.cardCaptionIcon} aria-hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="20" height="14" x="2" y="5" rx="2" />
+              <line x1="2" x2="22" y1="10" y2="10" />
+              <path d="M12 15a2 2 0 0 1 2 2v4H10v-4a2 2 0 0 1 2-2z" />
+            </svg>
           </span>
-          <span className={styles.summaryRowValue} />
+          <h3 className={styles.cardCaptionTitle}>Ödeme Bilgileri</h3>
         </div>
-        <div className={styles.summaryRow}>
-          <span className={styles.summaryRowLabel}>
-            Kalan: {p.remainingAmount.toLocaleString('tr-TR')} ₺ (tur günü öde)
-          </span>
-          <span className={styles.summaryRowValue} />
+        <hr className={styles.cardDivider} />
+        <div className={styles.cardContent}>
+          <div className={styles.summaryRow}>
+            <span className={styles.summaryRowLabel}>
+              Şimdi öde: {p.depositAmount.toLocaleString('tr-TR')} ₺ (%{p.depositPercent})
+            </span>
+            <span className={styles.summaryRowValue} />
+          </div>
+          <div className={styles.summaryRow}>
+            <span className={styles.summaryRowLabel}>
+              Kalan: {p.remainingAmount.toLocaleString('tr-TR')} ₺ (tur günü öde)
+            </span>
+            <span className={styles.summaryRowValue} />
+          </div>
         </div>
       </div>
 
-      {/* Kart bilgileri – contact form ile aynı card + kutucuklar + telefon componenti */}
-      <div
-        className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8"
-        style={{ fontFamily: 'var(--font-family)' }}
-      >
-        <h3 className={styles.cardTitle}>Kart Bilgileri</h3>
+      <div className={styles.card} style={{ fontFamily: 'var(--font-family)' }}>
+        <div className={styles.cardCaption}>
+          <span className={styles.cardCaptionIcon} aria-hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="20" height="14" x="2" y="5" rx="2" />
+              <line x1="2" x2="22" y1="10" y2="10" />
+            </svg>
+          </span>
+          <h3 className={styles.cardCaptionTitle}>Kart Bilgileri</h3>
+        </div>
+        <hr className={styles.cardDivider} />
+        <div className={styles.cardContent}>
 
-        <div className="space-y-5">
+        <div className="space-y-4">
           <FloatingInput
             id="booking-cardName"
             label="Kart Sahibi Adı *"
@@ -54,6 +71,7 @@ export default function StepPayment({ state }: StepPaymentProps) {
             autoComplete="cc-name"
             value={cardName}
             onChange={(e) => setCardName(e.target.value)}
+            compact
           />
 
           <FloatingInput
@@ -63,9 +81,10 @@ export default function StepPayment({ state }: StepPaymentProps) {
             autoComplete="cc-number"
             value={cardNumber}
             onChange={(e) => setCardNumber(e.target.value)}
+            compact
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FloatingInput
               id="booking-cardExpiry"
               label="Son Kullanma (AA/YY) *"
@@ -73,6 +92,7 @@ export default function StepPayment({ state }: StepPaymentProps) {
               autoComplete="cc-exp"
               value={cardExpiry}
               onChange={(e) => setCardExpiry(e.target.value)}
+              compact
             />
             <FloatingInput
               id="booking-cardCvc"
@@ -81,17 +101,19 @@ export default function StepPayment({ state }: StepPaymentProps) {
               autoComplete="cc-csc"
               value={cardCvc}
               onChange={(e) => setCardCvc(e.target.value)}
+              compact
             />
           </div>
 
-          {/* Contact formdaki ile birebir aynı telefon componenti */}
           <PhoneField
-            label="Phone Number"
+            label="Telefon *"
             value={contactPhone}
             onChange={(v) => setContactPhone(v ?? '')}
             onBlur={() => {}}
             defaultCountry="TR"
+            compact
           />
+        </div>
         </div>
       </div>
     </>

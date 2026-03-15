@@ -4,17 +4,18 @@ import type { VoucherData } from './types'
 
 const A4_WIDTH = 595.28
 const A4_HEIGHT = 841.89
-const MARGIN = 28
-const SPACING = 16
+const MARGIN = 32
+const SPACING = 20
 
-/* Biniş kartı renkleri (web ile aynı) */
+/* Biniş kartı renkleri – tutarlı ve okunaklı */
 const BLUE = rgb(30 / 255, 58 / 255, 138 / 255)       // #1e3a8a
 const BLUE_LIGHT = rgb(37 / 255, 99 / 255, 235 / 255) // #2563eb
 const WHITE = rgb(1, 1, 1)
-const GRAY_LABEL = rgb(107 / 255, 114 / 255, 128 / 255)
-const GRAY_VALUE = rgb(17 / 255, 24 / 255, 39 / 255)
-const CARD_BG = rgb(249 / 255, 250 / 255, 251 / 255)
-const DASHED_STROKE = rgb(209 / 255, 213 / 255, 219 / 255)
+const GRAY_LABEL = rgb(100 / 255, 116 / 255, 139 / 255)
+const GRAY_VALUE = rgb(15 / 255, 23 / 255, 42 / 255)
+const CARD_BG = rgb(248 / 255, 250 / 255, 252 / 255)
+const BORDER = rgb(226 / 255, 232 / 255, 240 / 255)
+const DASHED_STROKE = rgb(203 / 255, 213 / 255, 225 / 255)
 
 const DEJAVU_FONT_URL =
   'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf'

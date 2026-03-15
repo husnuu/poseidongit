@@ -25,8 +25,7 @@ async function getSiteSettings(): Promise<SiteSettings | null> {
   try {
     const settings = await client.fetch<SiteSettings | null>(siteSettingsQuery)
     return settings
-  } catch (error) {
-    console.error('Error fetching site settings:', error)
+  } catch {
     return null
   }
 }

@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
       tourTitle: data.tourTitle,
       date: dateStr,
       time: data.time ?? undefined,
+      meetingPoint: data.meetingPoint ?? undefined,
       className: data.className,
       totalPrice: data.totalPrice,
       currency: data.currency ?? 'TRY',

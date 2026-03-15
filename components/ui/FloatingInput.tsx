@@ -6,15 +6,16 @@ const WRAPPER_STYLE = {
   backgroundColor: '#fff',
   borderWidth: 1,
   borderStyle: 'solid',
-  borderColor: '#e5e7eb',
-  borderRadius: 12,
-  boxShadow: '0 10px 30px rgba(0,0,0,0.06)',
+  borderColor: '#e2e8f0',
+  borderRadius: 6,
+  boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
 }
 const FOCUS_STYLE = {
-  borderColor: '#2168b8',
-  boxShadow: '0 0 0 2px rgba(33,104,184,0.15)',
+  borderColor: 'var(--primary, #2563eb)',
+  boxShadow: '0 0 0 2px rgba(37,99,235,0.15)',
 }
 const INPUT_HEIGHT = 56
+const INPUT_HEIGHT_COMPACT = 44
 const LABEL_COLOR = '#6b7280'
 
 export interface FloatingInputProps
@@ -23,6 +24,8 @@ export interface FloatingInputProps
   error?: string
   /** Optional, for react-hook-form */
   wrapperClassName?: string
+  /** Küçük kutu (bilet.com tarzı) */
+  compact?: boolean
 }
 
 const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function FloatingInput({
@@ -33,6 +36,7 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
   error,
   className = '',
   wrapperClassName = '',
+  compact = false,
   onFocus,
   onBlur,
   onChange,
@@ -52,11 +56,22 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
       : (defaultValue != null && String(defaultValue).trim() !== '') || uncontrolledVal.trim() !== ''
 
   const active = focused || effectiveHasValue
+  const height = compact ? INPUT_HEIGHT_COMPACT : INPUT_HEIGHT
+  const paddingX = compact ? 12 : 16
+  const paddingTop = compact ? 14 : 20
+  const paddingBottom = compact ? 6 : 8
+  /* En az 16px: mobilde (iOS) focus’ta zoom’u engeller */
+  const inputFontSize = 16
+  /* Sol üstte, kutunun kenarının içinde (border içi) */
+  const labelInsetTop = compact ? 7 : 9
+  const labelInsetLeft = paddingX
+  const labelFontSizeActive = 11
+  const labelFontSizeInactive = compact ? 13 : 13
 
   return (
     <div className={`relative ${wrapperClassName}`}>
       <div
-        className="relative w-full transition-[border-color,box-shadow] duration-150"
+        className="relative w-full transition-[border-color,box-shadow] duration-150 overflow-hidden"
         style={{
           ...WRAPPER_STYLE,
           ...(focused ? FOCUS_STYLE : {}),
@@ -68,14 +83,14 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
           id={id}
           value={value}
           defaultValue={defaultValue}
-          className={`w-full bg-transparent pt-5 pb-2 px-4 text-[#111] outline-none rounded-xl ${className}`}
+          className={`w-full bg-transparent text-[#334155] outline-none rounded-[5px] ${className}`}
           style={{
-            height: INPUT_HEIGHT,
-            paddingLeft: 16,
-            paddingRight: 16,
-            paddingTop: 20,
-            paddingBottom: 8,
-            fontSize: 15,
+            height,
+            paddingLeft: paddingX,
+            paddingRight: paddingX,
+            paddingTop,
+            paddingBottom,
+            fontSize: inputFontSize,
           }}
           onFocus={(e) => {
             setFocused(true)
@@ -96,19 +111,20 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
         />
         <label
           htmlFor={id}
-          className="absolute left-4 pointer-events-none transition-all duration-200 origin-left"
+          className="absolute pointer-events-none transition-all duration-200 origin-left"
           style={{
+            left: labelInsetLeft,
             color: LABEL_COLOR,
             ...(active
               ? {
-                  top: 8,
-                  fontSize: 11,
+                  top: labelInsetTop,
+                  fontSize: labelFontSizeActive,
                   fontWeight: 500,
                 }
               : {
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  fontSize: 13,
+                  fontSize: labelFontSizeInactive,
                 }),
           }}
         >

@@ -193,6 +193,7 @@ interface Tour {
   bookingCard?: BookingCard
   reviewsSection?: ReviewsSection
   whereSection?: WhereSectionData | null
+  pickupPoints?: { name?: string; address?: string; description?: string; isDefault?: boolean }[]
 }
 
 const getTour = cache(async function getTour(slug: string): Promise<Tour | null> {

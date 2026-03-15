@@ -2,24 +2,41 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getFirestore } from '@/lib/firebaseAdmin'
 import type { BookingStatus } from '@/lib/firestore/bookingTypes'
 import { client, urlFor } from '@/lib/sanity'
-import { tourImageAndPickupQuery, siteSettingsQuery } from '@/lib/queries'
+import { tourImageAndPickupQuery, siteSettingsQuery, tourCoversByIdsQuery } from '@/lib/queries'
 import { sendBookingPaidEmails } from '@/lib/email'
 import { getBaseUrl } from '@/lib/seo'
 
 const COLLECTION = 'bookings'
 const DEFAULT_LIMIT = 50
-const MAX_LIMIT = 100
+const MAX_LIMIT = 500
 
-function getAuthToken(request: Request): string | null {
-  const auth = request.headers.get('Authorization')
-  if (!auth || !auth.startsWith('Bearer ')) return null
-  return auth.slice(7).trim()
+import { getAuthToken, getAdminEmail, requireAdmin } from '@/lib/adminAuth'
+
+/** Resolve tour cover image URL from Sanity for given tour ids. */
+async function getTourCoverMap(tourIds: string[]): Promise<Record<string, string>> {
+  const unique = [...new Set(tourIds)].filter(Boolean).slice(0, 80)
+  if (unique.length === 0) return {}
+  const tours = await client.fetch<{ _id: string; mainImage?: { asset?: { _ref?: string } } }[]>(
+    tourCoversByIdsQuery,
+    { ids: unique }
+  )
+  const map: Record<string, string> = {}
+  for (const t of tours ?? []) {
+    if (t._id && t.mainImage?.asset) {
+      try {
+        map[t._id] = urlFor(t.mainImage.asset).width(112).height(112).url()
+      } catch {
+        // skip
+      }
+    }
+  }
+  return map
 }
 
 export async function GET(request: NextRequest) {
   const token = getAuthToken(request)
-  const adminToken = process.env.ADMIN_TOKEN
-  if (!adminToken || token !== adminToken) {
+  const email = getAdminEmail(request)
+  if (!requireAdmin(token, email)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {
@@ -28,14 +45,16 @@ export async function GET(request: NextRequest) {
     const dateTo = searchParams.get('dateTo')?.trim() ?? null
     const classIdFilter = searchParams.get('classId')?.trim() ?? null
     const classNameFilter = searchParams.get('className')?.trim() ?? null
-    const hasFilters = !!(dateFrom || dateTo || classIdFilter || classNameFilter)
-    const baseLimit = hasFilters ? Math.min(MAX_LIMIT, 200) : DEFAULT_LIMIT
+    const tourIdFilter = searchParams.get('tourId')?.trim() ?? null
+    const hasFilters = !!(dateFrom || dateTo || classIdFilter || classNameFilter || tourIdFilter)
+    const baseLimit = hasFilters ? Math.min(MAX_LIMIT, 500) : DEFAULT_LIMIT
     const limit = Math.min(
       Math.max(1, parseInt(searchParams.get('limit') ?? String(baseLimit), 10)),
       MAX_LIMIT
     )
     const startAfterId = searchParams.get('startAfter') ?? null
     const statusFilter = searchParams.get('status') as BookingStatus | null
+    const sourceFilter = searchParams.get('source')?.trim()?.toLowerCase() ?? null
 
     const db = getFirestore()
     let query = db.collection(COLLECTION).orderBy('createdAt', 'desc').limit(limit)
@@ -46,7 +65,7 @@ export async function GET(request: NextRequest) {
       }
     }
     const snapshot = await query.get()
-    type DocRow = { id: string; status?: string; date?: string; classId?: string; className?: string; createdAt: string | null; [k: string]: unknown }
+    type DocRow = { id: string; status?: string; date?: string; classId?: string; className?: string; createdAt: string | null; tourId?: string; [k: string]: unknown }
     let list: DocRow[] = snapshot.docs.map((doc) => {
       const d = doc.data()
       const createdAt = d.createdAt?.toDate?.()
@@ -63,12 +82,28 @@ export async function GET(request: NextRequest) {
     if (dateTo) list = list.filter((b) => (b.date ?? '') <= dateTo)
     if (classIdFilter) list = list.filter((b) => b.classId === classIdFilter)
     if (classNameFilter) list = list.filter((b) => b.className === classNameFilter)
+    if (tourIdFilter) list = list.filter((b) => (b.tourId ?? '') === tourIdFilter)
+    if (sourceFilter) {
+      if (sourceFilter === 'web') {
+        list = list.filter((b) => (b.source ?? 'web') === 'web')
+      } else if (sourceFilter === 'manual') {
+        list = list.filter((b) => (b.source ?? '') === 'manual')
+      } else if (['physical', 'office', 'phone', 'whatsapp', 'agency'].includes(sourceFilter)) {
+        list = list.filter((b) => (b.manualSource ?? '') === sourceFilter)
+      }
+    }
+    const tourIds = list.map((b) => (b.tourId as string) ?? '').filter(Boolean)
+    const tourCoverMap = await getTourCoverMap(tourIds)
+    const bookingsWithCovers = list.map((b) => ({
+      ...b,
+      tourCoverImageUrl: (b.tourId && tourCoverMap[b.tourId as string]) || null,
+    }))
     const nextStartAfter =
       snapshot.docs.length === limit && snapshot.docs.length > 0
         ? snapshot.docs[snapshot.docs.length - 1].id
         : null
     return NextResponse.json({
-      bookings: list,
+      bookings: bookingsWithCovers,
       nextStartAfter,
       count: list.length,
     })
@@ -82,8 +117,8 @@ const VALID_STATUSES: BookingStatus[] = ['pending', 'paid', 'cancelled']
 
 export async function PATCH(request: NextRequest) {
   const token = getAuthToken(request)
-  const adminToken = process.env.ADMIN_TOKEN
-  if (!adminToken || token !== adminToken) {
+  const email = getAdminEmail(request)
+  if (!requireAdmin(token, email)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {
@@ -93,12 +128,13 @@ export async function PATCH(request: NextRequest) {
     }
     const bookingId = typeof body.bookingId === 'string' ? body.bookingId.trim() : ''
     const status = body.status as BookingStatus | undefined
+    const adminNote = typeof body.adminNote === 'string' ? body.adminNote.trim() : undefined
     if (!bookingId) {
       return NextResponse.json({ error: 'bookingId gerekli' }, { status: 400 })
     }
-    if (!status || !VALID_STATUSES.includes(status)) {
+    if (!status && adminNote === undefined) {
       return NextResponse.json(
-        { error: 'status gerekli ve pending, paid veya cancelled olmalı' },
+        { error: 'status veya adminNote güncellemesi gerekli' },
         { status: 400 }
       )
     }
@@ -109,7 +145,13 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Rezervasyon bulunamadı' }, { status: 404 })
     }
     const data = snap.data()!
-    await ref.update({ status })
+    const updates: Record<string, unknown> = {}
+    if (status && VALID_STATUSES.includes(status)) updates.status = status
+    if (adminNote !== undefined) updates.adminNote = adminNote === '' ? null : adminNote
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ ok: true, bookingId })
+    }
+    await ref.update(updates)
 
     if (status === 'paid') {
       const customer = (data.customer ?? {}) as Record<string, unknown>
@@ -136,6 +178,7 @@ export async function PATCH(request: NextRequest) {
             tourImageUrl = urlFor(tourMeta.mainImage.asset).width(600).height(240).url()
           }
           pickup =
+            (data.meetingPoint != null && String(data.meetingPoint).trim()) ||
             tourMeta?.whereSection?.meetingPointAddress?.trim() ||
             tourMeta?.quickFacts?.meetingLocation?.trim() ||
             undefined

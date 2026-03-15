@@ -48,7 +48,12 @@ export default function StepClass({
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
 
   useEffect(() => {
+    const total = state.counts.adult + state.counts.child + state.counts.baby
     if (state.selectedClassKey === 'first' && (state.counts.child > 0 || state.counts.baby > 0)) {
+      onUpdate({ selectedClassKey: null })
+      return
+    }
+    if (state.selectedClassKey === 'first' && total % 2 !== 0) {
       onUpdate({ selectedClassKey: null })
       return
     }
@@ -56,7 +61,7 @@ export default function StepClass({
       const status = getClassStatusForDate(tour, state.selectedDate, state.selectedClassKey)
       if (status === 'full' || status === 'closed') onUpdate({ selectedClassKey: null })
     }
-  }, [tour, state.selectedDate, state.selectedClassKey, state.counts.child, state.counts.baby, onUpdate])
+  }, [tour, state.selectedDate, state.selectedClassKey, state.counts.adult, state.counts.child, state.counts.baby, onUpdate])
 
   useEffect(() => {
     if (!state.selectedDate || !state.selectedClassKey) {
@@ -108,7 +113,19 @@ export default function StepClass({
 
   return (
     <div className={styles.card}>
-      <h3 className={styles.cardTitle}>Sınıf Seçimi</h3>
+      <div className={styles.cardCaption}>
+        <span className={styles.cardCaptionIcon} aria-hidden>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+            <path d="M13 5v2" />
+            <path d="M13 17v2" />
+            <path d="M13 11v2" />
+          </svg>
+        </span>
+        <h3 className={styles.cardCaptionTitle}>Sınıf Seçimi</h3>
+      </div>
+      <hr className={styles.cardDivider} />
+      <div className={styles.cardContent}>
       {fullClassNames.length > 0 && (
         <div
           role="alert"
@@ -166,12 +183,14 @@ export default function StepClass({
         const selected = state.selectedClassKey === cls.key
         const cap = getCapForTicketClass(capacityForDate, cls.key)
         const firstClassNoChildOrBaby = cls.key === 'first' ? state.counts.child === 0 && state.counts.baby === 0 : true
+        const firstClassEvenPax = cls.key !== 'first' || totalPax % 2 === 0
         const classStatus = state.selectedDate ? getClassStatusForDate(tour, state.selectedDate, cls.key) : null
         const classBlocked = classStatus === 'full' || classStatus === 'closed'
         const isFull = classBlocked || cap === 0
         const insufficientCap = cap > 0 && cap < totalPax && !classBlocked
-        const available = cap >= totalPax && firstClassNoChildOrBaby && !classBlocked
-        const isFirstClassRestricted = cls.key === 'first' && !firstClassNoChildOrBaby
+        const available = cap >= totalPax && firstClassNoChildOrBaby && firstClassEvenPax && !classBlocked
+        const isFirstClassRestricted = cls.key === 'first' && (!firstClassNoChildOrBaby || totalPax % 2 !== 0)
+        const isFirstClassOddPaxWarning = cls.key === 'first' && totalPax % 2 !== 0
         const adultPrice = cls.pricesByAge?.find((p) => p.ageKey === 'adult')
         const multiplier = state.selectedDate ? getSeasonMultiplier(tour, state.selectedDate) : 1
         const price =
@@ -183,17 +202,45 @@ export default function StepClass({
           month: 'short',
         })
         return (
-          <button
+          <div
             key={cls.key}
-            type="button"
+            role="article"
             className={`${styles.classCard} ${selected ? styles.classCardSelected : ''} ${isFull || insufficientCap ? styles.classCardDisabled : ''}`}
             style={{
               position: 'relative',
               ...(isFull || insufficientCap ? { opacity: 0.82, filter: 'grayscale(0.4)', cursor: 'not-allowed' } : {}),
             }}
             onClick={() => available && onUpdate({ selectedClassKey: cls.key })}
-            disabled={!available}
+            onKeyDown={(e) => {
+              if (available && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault()
+                onUpdate({ selectedClassKey: cls.key })
+              }
+            }}
+            tabIndex={available ? 0 : undefined}
           >
+            {isFirstClassOddPaxWarning && (
+              <div
+                role="alert"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 2,
+                  padding: '10px 12px',
+                  background: '#fef3c7',
+                  border: '1px solid #f59e0b',
+                  borderRadius: '8px 8px 0 0',
+                  color: '#92400e',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  textAlign: 'center',
+                }}
+              >
+                Bu alandaki bungalov yataklarımız 2 kişiliktir. Tek sayılı kişi ile rezervasyon verilmemektedir.
+              </div>
+            )}
             <div
               style={{
                 filter: isFirstClassRestricted ? 'blur(5px)' : undefined,
@@ -261,11 +308,6 @@ export default function StepClass({
                     {cls.badge}
                   </span>
                 )}
-                {selected && (
-                  <span className={styles.classBadge} style={{ background: 'var(--primary)', color: '#fff' }}>
-                    SEÇİLDİ
-                  </span>
-                )}
               </div>
               <h4 style={{ margin: '0 0 6px 0', fontSize: 16, fontWeight: 600 }}>{cls.label}</h4>
               {cls.description && (
@@ -288,6 +330,20 @@ export default function StepClass({
                   Mevcut rezervasyonlardan sonra kalan kontenjan: {cap} kişi. {totalPax} kişilik rezervasyon için yeterli yer yok.
                 </p>
               )}
+              <div className={styles.classCardFooter}>
+                <button
+                  type="button"
+                  className={styles.classCardSelectBtn}
+                  disabled={!available}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (available) onUpdate({ selectedClassKey: cls.key })
+                  }}
+                  aria-label={`${cls.label} seç`}
+                >
+                  Seçiniz
+                </button>
+              </div>
             </div>
             </div>
             {isFirstClassRestricted && (
@@ -306,11 +362,13 @@ export default function StepClass({
                 aria-hidden
               >
                 <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#374151', textAlign: 'center', lineHeight: 1.4 }}>
-                  First class için sadece 16 yaş üstü misafirler kabul edilmektedir.
+                  {totalPax % 2 !== 0
+                    ? 'Bu alandaki bungalov yataklarımız 2 kişiliktir. Tek sayılı kişi ile rezervasyon verilmemektedir.'
+                    : 'First class için sadece 16 yaş üstü misafirler kabul edilmektedir.'}
                 </p>
               </div>
             )}
-          </button>
+          </div>
         )
       })}
       {state.selectedClassKey && capacityForDate && getCapForTicketClass(capacityForDate, state.selectedClassKey) < totalPax && (
@@ -318,6 +376,7 @@ export default function StepClass({
           Bu tarih ve sınıf için yeterli kapasite yok ({totalPax} kişi).
         </p>
       )}
+      </div>
     </div>
   )
 }

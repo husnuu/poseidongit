@@ -8,10 +8,11 @@ import { tourForAvailabilityQuery } from '@/lib/queries'
 const COLLECTION = 'bookings'
 const CURRENCY = 'TRY'
 
-/** Resolve tourId (Sanity _id or slug) to canonical Sanity _id so Firestore always stores the same key. */
+/** Resolve tourId (Sanity _id or slug) to canonical Sanity _id. Firestore’da hep aynı anahtar kullanılsın diye drafts. kaldırılıyor. */
 async function resolveTourIdToSanityId(tourId: string): Promise<string> {
   const tour = await client.fetch<{ _id?: string } | null>(tourForAvailabilityQuery, { tourId })
-  return (tour?._id && String(tour._id).trim()) ? String(tour._id).trim() : tourId
+  const raw = (tour?._id && String(tour._id).trim()) ? String(tour._id).trim() : tourId
+  return raw.replace(/^drafts\./, '')
 }
 
 function normalizeBody(body: unknown): BookingCreatePayload | null {
@@ -37,11 +38,13 @@ function normalizeBody(body: unknown): BookingCreatePayload | null {
   const note = typeof customer.note === 'string' ? customer.note.trim() : undefined
   if (!firstName || !lastName || !email) return null
   const time = typeof b.time === 'string' ? b.time.trim() || undefined : undefined
+  const meetingPoint = typeof b.meetingPoint === 'string' ? b.meetingPoint.trim() || undefined : undefined
   return {
     tourId,
     tourTitle,
     date,
     time,
+    meetingPoint,
     counts: { adult, child, infant },
     classId,
     className,
@@ -143,6 +146,7 @@ export async function POST(request: Request) {
       tourTitle: payload.tourTitle,
       date: /^\d{4}-\d{2}-\d{2}$/.test(dateNorm) ? dateNorm : payload.date,
       ...(timeToSave && { time: timeToSave }),
+      ...(payload.meetingPoint && { meetingPoint: payload.meetingPoint }),
       counts: payload.counts,
       classId: payload.classId,
       className: payload.className,

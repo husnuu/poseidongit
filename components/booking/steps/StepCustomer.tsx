@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import Image from 'next/image'
+import { Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
+import { urlFor } from '@/lib/sanity'
 import FloatingInput from '@/components/ui/FloatingInput'
 import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
@@ -62,34 +65,107 @@ export default function StepCustomer({
   const totalPrice = state.pricingSummary?.total ?? 0
   const unitPrice =
     state.pricingSummary?.unitPrices?.find((u) => u.ageKey === 'adult')?.unitPrice ?? 0
+  const tourImageUrl = tour.mainImage?.asset
+    ? urlFor(tour.mainImage.asset).width(600).height(340).quality(90).fit('crop').url()
+    : tour.mainImage?.url
+      ? `${tour.mainImage.url}?w=600&h=340&fit=crop&q=90`
+      : null
+  const defaultPickup = tour.pickupPoints?.find((p) => p.isDefault) ?? tour.pickupPoints?.[0]
+  const tourAddress =
+    defaultPickup?.address?.trim() ||
+    (defaultPickup?.name?.trim() ? defaultPickup.name.trim() : null) ||
+    '—'
+  const selectedClassLabel =
+    tour.ticketClasses?.find((c) => c.key === state.selectedClassKey)?.label ?? '—'
 
   return (
     <>
-      <div className={styles.card}>
-        <h3 className={styles.cardTitle}>Özet</h3>
-        <div className={styles.summaryRow}>
-          <span className={styles.summaryRowLabel}>Tur</span>
-          <span className={styles.summaryRowValue}>{tour.title}</span>
-        </div>
-        <div className={styles.summaryRow}>
-          <span className={styles.summaryRowLabel}>Tarih</span>
-          <span className={styles.summaryRowValue}>{dateStr}</span>
-        </div>
-        <div className={styles.summaryRow}>
-          <span className={styles.summaryRowLabel}>Kişi</span>
-          <span className={styles.summaryRowValue}>{totalPax}</span>
-        </div>
-        <div className={styles.summaryRow}>
-          <span className={styles.summaryRowLabel}>Birim fiyat (Yetişkin)</span>
-          <span className={styles.summaryRowValue}>
-            {unitPrice.toLocaleString('tr-TR')} ₺
+      <div className={`${styles.card} ${styles.summaryCardPremium}`}>
+        <div className={styles.cardCaption}>
+          <span className={styles.cardCaptionIcon} aria-hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <path d="M14 2v6h6" />
+              <path d="M16 13H8" />
+              <path d="M16 17H8" />
+              <path d="M10 9H8" />
+            </svg>
           </span>
+          <h3 className={styles.cardCaptionTitle}>Özet</h3>
         </div>
-        <div className={styles.summaryRow}>
-          <span className={styles.summaryRowLabel}>Toplam</span>
-          <span className={styles.summaryRowValue}>
-            {totalPrice.toLocaleString('tr-TR')} ₺
-          </span>
+        <hr className={styles.cardDivider} />
+        <div className={styles.cardContent}>
+          {tourImageUrl && (
+            <div className={styles.summaryHero}>
+              <Image
+                src={tourImageUrl}
+                alt={tour.title}
+                fill
+                sizes="(max-width: 520px) 100vw, 472px"
+                className={styles.summaryHeroImage}
+                style={{ objectFit: 'cover' }}
+              />
+              <span className={styles.summaryHeroOverlay}>Tekne Turu</span>
+            </div>
+          )}
+          <h4 className={styles.summaryTourTitle}>{tour.title}</h4>
+          {tourAddress !== '—' && (
+            <p className={styles.summaryTourSubtitle}>{tourAddress}</p>
+          )}
+
+          <div className={styles.summarySection}>
+            <div className={styles.summaryInfoRow}>
+              <span className={styles.summaryInfoIcon} aria-hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                  <line x1="16" x2="16" y1="2" y2="6" />
+                  <line x1="8" x2="8" y1="2" y2="6" />
+                  <line x1="3" x2="21" y1="10" y2="10" />
+                </svg>
+              </span>
+              <span className={styles.summaryInfoLabel}>Tarih</span>
+              <span className={styles.summaryInfoValue}>{dateStr}</span>
+            </div>
+            <div className={styles.summaryInfoRow}>
+              <span className={styles.summaryInfoIcon} aria-hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+                  <path d="M13 5v2" />
+                  <path d="M13 17v2" />
+                  <path d="M13 11v2" />
+                </svg>
+              </span>
+              <span className={styles.summaryInfoLabel}>Sınıf</span>
+              <span className={styles.summaryInfoValue}>{selectedClassLabel}</span>
+            </div>
+            <div className={styles.summaryInfoRow}>
+              <span className={styles.summaryInfoIcon} aria-hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </span>
+              <span className={styles.summaryInfoLabel}>Katılımcı</span>
+              <span className={styles.summaryInfoValue}>{totalPax} kişi</span>
+            </div>
+            <div className={styles.summaryInfoRow}>
+              <span className={styles.summaryInfoIcon} aria-hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="20" height="14" x="2" y="5" rx="2" />
+                  <line x1="2" x2="22" y1="10" y2="10" />
+                </svg>
+              </span>
+              <span className={styles.summaryInfoLabel}>Birim fiyat</span>
+              <span className={styles.summaryInfoValue}>{unitPrice.toLocaleString('tr-TR')} ₺</span>
+            </div>
+          </div>
+
+          <div className={styles.summaryTotalBox}>
+            <p className={styles.summaryTotalLabel}>Toplam</p>
+            <p className={styles.summaryTotalValue}>{totalPrice.toLocaleString('tr-TR')} ₺</p>
+          </div>
         </div>
       </div>
 
@@ -97,15 +173,26 @@ export default function StepCustomer({
         <h2 id="booking-form-heading" className="sr-only">
           Bilgileriniz
         </h2>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
-          <form
+        <div className={styles.card}>
+          <div className={styles.cardCaption}>
+            <span className={styles.cardCaptionIcon} aria-hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </span>
+            <h3 className={styles.cardCaptionTitle}>Bilgileriniz</h3>
+          </div>
+          <hr className={styles.cardDivider} />
+          <div className={styles.cardContent}>
+            <form
             className="space-y-5"
             style={{ fontFamily: 'var(--font-family)' }}
             noValidate
             onSubmit={(e) => e.preventDefault()}
           >
             {/* Row1: Ad | Soyad – contact’taki Full Name | Group Size ile aynı yapı */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FloatingInput
                 id="booking-firstName"
                 label="Ad *"
@@ -113,6 +200,7 @@ export default function StepCustomer({
                 value={state.customer.firstName}
                 onChange={(e) => handleField('firstName', e.target.value)}
                 error={errors.firstName}
+                compact
               />
               <FloatingInput
                 id="booking-lastName"
@@ -121,11 +209,12 @@ export default function StepCustomer({
                 value={state.customer.lastName}
                 onChange={(e) => handleField('lastName', e.target.value)}
                 error={errors.lastName}
+                compact
               />
             </div>
 
             {/* Row2: E-posta | Telefon – contact’taki Email | Phone Number ile aynı */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FloatingInput
                 id="booking-email"
                 label="E-posta *"
@@ -134,15 +223,17 @@ export default function StepCustomer({
                 value={state.customer.email}
                 onChange={(e) => handleField('email', e.target.value)}
                 error={errors.email}
+                compact
               />
               <PhoneField
-                label="Telefon"
+                label="Telefon *"
                 name="phone"
                 value={state.customer.phone ?? ''}
                 onChange={(v) => handleField('phone', v ?? '')}
                 onBlur={() => {}}
                 error={errors.phone}
                 defaultCountry="TR"
+                compact
               />
             </div>
 
@@ -150,11 +241,17 @@ export default function StepCustomer({
             <FloatingTextarea
               id="booking-note"
               label="Özel istek (opsiyonel)"
-              rows={5}
+              rows={3}
               value={state.customer.note ?? ''}
               onChange={(e) => handleField('note', e.target.value)}
             />
-          </form>
+
+              <div className={styles.cardNoticeSuccess}>
+                <Check className={styles.cardNoticeSuccessIcon} aria-hidden />
+                <span>Bilet bilgileriniz SMS ve e-postayla ücretsiz gönderilecektir.</span>
+              </div>
+            </form>
+          </div>
         </div>
       </section>
     </>

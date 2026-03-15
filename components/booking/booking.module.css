@@ -104,13 +104,13 @@
 }
 
 .stepCircleActive {
-  background: var(--primary, #2168b8);
+  background: #1e3a8a;
   color: #fff;
-  border-color: var(--primary, #2168b8);
+  border-color: #1e3a8a;
 }
 
 .stepCircleDone {
-  background: var(--primary, #2168b8);
+  background: #1e3a8a;
   color: #fff;
 }
 
@@ -126,7 +126,7 @@
 }
 
 .connectorDone {
-  background: var(--primary, #2168b8);
+  background: #1e3a8a;
 }
 
 .closeBtn {
@@ -153,19 +153,82 @@
   padding: 20px 16px 100px;
 }
 
+/* Kart: referans tasarım – beyaz, 12px radius, yumuşak gölge, e2e8f0 border */
 .card {
   background: #fff;
-  border: 1px solid #e4e4e7;
-  border-radius: 14px;
-  padding: 20px;
-  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  font-family: var(--font-family);
 }
 
 .cardTitle {
-  font-size: 15px;
-  font-weight: 600;
-  color: #18181b;
+  font-family: var(--font-family);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e3a8a;
   margin: 0 0 12px 0;
+}
+
+/* Bölüm başlığı: ikon + başlık (referans: İletişim Bilgisi / Yolcular) */
+.cardCaption {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.cardCaptionIcon {
+  width: 24px;
+  height: 24px;
+  color: #1e3a8a;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardCaptionIcon svg {
+  display: block;
+}
+
+.cardCaptionTitle {
+  font-family: var(--font-family);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 0;
+}
+
+.cardDivider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0 0 1rem 0;
+  border: none;
+}
+
+.cardContent {
+  padding-top: 0.25rem;
+  font-family: var(--font-family);
+}
+
+/* Yeşil bilgi mesajı (referans: Bilet bilgileriniz SMS ve e-postayla...) */
+.cardNoticeSuccess {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #15803d;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+  font-family: var(--font-family);
+}
+
+.cardNoticeSuccessIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .ctaWrap {
@@ -232,20 +295,40 @@
   cursor: wait;
 }
 
+/* Input: referans – border e2e8f0, radius 6px, hafif gölge. 16px: mobilde focus zoom’u engeller */
 .input {
   width: 100%;
-  padding: 12px 14px;
+  min-height: 56px;
+  padding: 20px 16px 8px;
   font-size: 16px;
-  border: 1px solid #e4e4e7;
-  border-radius: 12px;
+  font-family: var(--font-family);
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   background: #fff;
-  color: #18181b;
+  color: #334155;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--primary, #2168b8);
-  box-shadow: 0 0 0 2px rgba(33, 104, 184, 0.2);
+  border-color: var(--primary, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* select aynı kutu stili (Bilgileriniz – toplanma noktası) */
+.select {
+  font-family: var(--font-family);
+}
+
+/* İletişim sayfası ile aynı etiket stili */
+.formLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  font-family: var(--font-family);
 }
 
 /* Telefon alan kodu özel dropdown */
@@ -270,58 +353,70 @@
 }
 
 .errorText {
+  font-family: var(--font-family);
   font-size: 13px;
   color: #dc2626;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .counterRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #f4f4f5;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  background: #fafafa;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.counterRow:last-child {
-  border-bottom: none;
+.counterRow:last-of-type {
+  margin-bottom: 0;
 }
 
 .counterLabel {
   font-size: 15px;
+  font-weight: 600;
   color: #18181b;
+  font-family: var(--font-family);
 }
 
 .counterSub {
-  font-size: 13px;
+  font-size: 12px;
   color: #71717a;
   margin-top: 2px;
+  font-family: var(--font-family);
 }
 
 .counterControls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .counterBtn {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
-  border: 1px solid #e4e4e7;
+  border: 1px solid #e2e8f0;
   background: #fff;
-  color: #52525b;
+  color: #334155;
   font-size: 18px;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .counterBtn:hover:not(:disabled) {
-  background: #f4f4f5;
-  border-color: #d4d4d8;
+  background: #fff;
+  border-color: var(--primary, #2168b8);
+  color: var(--primary, #2168b8);
 }
 
 .counterBtn:disabled {
@@ -331,9 +426,11 @@
 
 .counterValue {
   font-size: 16px;
-  font-weight: 600;
-  min-width: 24px;
+  font-weight: 700;
+  min-width: 28px;
   text-align: center;
+  color: #18181b;
+  font-family: var(--font-family);
 }
 
 /* Takvim: kompakt ve mobil uyumlu */
@@ -477,20 +574,24 @@
 
 .classCard {
   background: #fff;
-  border: 2px solid #e4e4e7;
-  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   overflow: hidden;
   margin-bottom: 12px;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  text-align: left;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
 }
 
 .classCard:hover {
   border-color: #d4d4d8;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .classCardSelected {
   border-color: var(--primary, #2168b8);
+  box-shadow: 0 0 0 2px rgba(33, 104, 184, 0.2);
 }
 
 .classCardDisabled {
@@ -511,6 +612,17 @@
 
 .classCardBody {
   padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.classCardFooter {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 12px;
 }
 
 .classBadge {
@@ -521,29 +633,190 @@
   padding: 4px 8px;
   border-radius: 6px;
   margin-bottom: 8px;
-  background: #e4e4e7;
-  color: #52525b;
+  background: #ea580c;
+  color: #fff;
 }
 
 .classBadgePopular {
-  background: rgba(33, 104, 184, 0.15);
-  color: var(--primary, #2168b8);
+  background: #c2410c;
+  color: #fff;
+}
+
+/* Özet kartı: premium tasarım */
+.summaryCardPremium {
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06) !important;
+  padding: 24px !important;
+  margin-bottom: 20px;
+}
+
+.summaryCardPremium .cardContent {
+  padding-top: 0;
+}
+
+.summaryHero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f1f5f9;
+  margin-bottom: 20px;
+}
+
+.summaryHeroImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.summaryHeroOverlay {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #fff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e3a8a;
+  font-family: var(--font-family);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.summaryTourTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #18181b;
+  margin: 0 0 6px 0;
+  font-family: var(--font-family);
+  line-height: 1.3;
+}
+
+.summaryTourSubtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 20px 0;
+  font-family: var(--font-family);
+}
+
+.summarySection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.summaryInfoRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-family);
+  font-size: 14px;
+}
+
+.summaryInfoIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.summaryInfoLabel {
+  flex: 1;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.summaryInfoValue {
+  font-weight: 600;
+  color: #18181b;
+  text-align: right;
+}
+
+.summaryTotalBox {
+  background: #f6f9ff;
+  border: 1px solid #e4ebff;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+.summaryTotalLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e3a8a;
+  margin: 0 0 2px 0;
+  font-family: var(--font-family);
+}
+
+.summaryTotalValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 0;
+  font-family: var(--font-family);
+}
+
+/* Özet kartı: modern liste (diğer kullanımlar için) */
+.summaryList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--font-family);
 }
 
 .summaryRow {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 14px;
-  padding: 6px 0;
+  padding: 12px 16px;
+  font-family: var(--font-family);
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.summaryRow:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .summaryRowLabel {
-  color: #71717a;
+  color: #64748b;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .summaryRowValue {
   font-weight: 600;
   color: #18181b;
+  font-family: var(--font-family);
+  font-size: 14px;
+  text-align: right;
+  max-width: 60%;
+  word-break: break-word;
+}
+
+.summaryRowTotal {
+  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+  border: 1px solid #93c5fd;
+  padding: 14px 18px;
+}
+
+.summaryRowTotal .summaryRowLabel {
+  color: #1e3a8a;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.summaryRowTotal .summaryRowValue {
+  color: #1e3a8a;
+  font-weight: 700;
+  font-size: 16px;
 }
 
 /* Rezervasyon özeti + tur fotoğrafı */
@@ -557,9 +830,10 @@
   flex-shrink: 0;
   width: 140px;
   height: 100px;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   background: #f4f4f5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .summaryImageWrap img {
@@ -571,6 +845,7 @@
 .summaryBody {
   flex: 1;
   min-width: 0;
+  font-family: var(--font-family);
 }
 
 @media (max-width: 480px) {
@@ -656,15 +931,15 @@
 .stepActions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #e4e4e7;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .stepActionsRow {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   justify-content: flex-end;
   flex-wrap: wrap;
 }
@@ -674,43 +949,49 @@
 }
 
 .stepBtnBack {
-  padding: 14px 24px;
+  font-family: var(--font-family);
+  padding: 14px 26px;
   font-size: 15px;
   font-weight: 600;
   border-radius: 12px;
-  border: 1px solid #e4e4e7;
+  border: 2px solid #1e3a8a;
   background: #fff;
-  color: #52525b;
+  color: #1e3a8a;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.1s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .stepBtnBack:hover {
-  background: #f4f4f5;
-  border-color: #d4d4d8;
+  background: #eff6ff;
+  border-color: #1e40af;
+  color: #1e40af;
 }
 
 .stepBtnPrimary {
-  padding: 14px 24px;
+  font-family: var(--font-family);
+  padding: 14px 28px;
   font-size: 15px;
   font-weight: 700;
   border-radius: 12px;
   border: none;
-  background: var(--primary, #2168b8);
+  background: linear-gradient(135deg, #1e3a8a 0%, #0f766e 100%);
   color: #fff;
   cursor: pointer;
-  transition: background 0.2s, opacity 0.2s;
+  transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 8px rgba(30, 58, 138, 0.35);
 }
 
 .stepBtnPrimary:hover:not(:disabled) {
-  background: #1a5a9e;
+  box-shadow: 0 4px 14px rgba(30, 58, 138, 0.45);
 }
 
 .stepBtnPrimary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 @media (min-width: 640px) {
@@ -731,6 +1012,78 @@
   }
 }
 
+/* Adım üstü: Geri butonu */
+.stepHeaderWithBack {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.stepBackBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 600;
+  color: #52525b;
+  background: #fff;
+  border: 1px solid #e4e4e7;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.stepBackBtn:hover {
+  background: #f4f4f5;
+  border-color: #d4d4d8;
+  color: #18181b;
+}
+
+.stepBackBtn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.stepBackBtnSmall {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.stepBackBtnSmall svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Sınıf kartı sağ alt: Seçiniz butonu */
+.classCardSelectBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: #1e3a8a;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  margin-top: 12px;
+}
+
+.classCardSelectBtn:hover:not(:disabled) {
+  background: #1e40af;
+}
+
+.classCardSelectBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Class card grid (premium step 2) */
 .classCardGrid {
   display: grid;
@@ -746,21 +1099,38 @@
 
 .classCardPremium {
   background: #fff;
-  border: 2px solid #e4e4e7;
-  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
   text-align: left;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
 }
 
 .classCardPremium:hover {
   border-color: #d4d4d8;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .classCardPremiumSelected {
   border-color: var(--primary, #2168b8);
   box-shadow: 0 0 0 2px rgba(33, 104, 184, 0.2);
+}
+
+.classCardPremiumBody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+}
+
+.classCardPremiumFooter {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 12px;
 }
 
 .classCardPremiumImageWrap {
@@ -786,10 +1156,6 @@
   align-items: flex-start;
   gap: 8px;
   pointer-events: none;
-}
-
-.classCardPremiumBody {
-  padding: 16px;
 }
 
 .classCardPremiumTitle {
@@ -833,15 +1199,15 @@
   margin: 0;
 }
 
-/* Wizard modal header (no logo) */
+/* Wizard modal header (lacivert–turkuaz gradient, beyaz yazı) */
 .wizardModalHeader {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px 20px;
-  background: #fff;
-  border-bottom: 1px solid #e4e4e7;
+  background: linear-gradient(135deg, #1e3a8a 0%, #0f766e 50%, #0d9488 100%);
+  border-bottom: none;
   flex-shrink: 0;
 }
 
@@ -850,7 +1216,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #18181b;
+  color: #fff;
   margin: 0;
 }
 
@@ -859,6 +1225,15 @@
   right: 16px;
   top: 50%;
   transform: translateY(-50%);
+}
+
+.wizardModalHeader .closeBtn {
+  color: #fff;
+}
+
+.wizardModalHeader .closeBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 .wizardModalStepStrip {

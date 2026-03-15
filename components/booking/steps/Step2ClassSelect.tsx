@@ -73,16 +73,20 @@ export default function Step2ClassSelect({
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
 
   useEffect(() => {
+    const total = state.counts.adult + state.counts.child + state.counts.baby
     if (state.selectedClassKey === 'first' && (state.counts.child > 0 || state.counts.baby > 0)) {
+      onUpdate({ selectedClassKey: null })
+      return
+    }
+    if (state.selectedClassKey === 'first' && total % 2 !== 0) {
       onUpdate({ selectedClassKey: null })
       return
     }
     if (state.selectedDate && state.selectedClassKey) {
       const status = getClassStatusForDate(tour, state.selectedDate, state.selectedClassKey)
       if (status === 'full' || status === 'closed') onUpdate({ selectedClassKey: null })
-      // Kapasite yetersizse seçimi temizlemiyoruz; uyarı gösterilir ve İleri devre dışı kalır
     }
-  }, [tour, state.selectedDate, state.selectedClassKey, state.counts.child, state.counts.baby, onUpdate])
+  }, [tour, state.selectedDate, state.selectedClassKey, state.counts.adult, state.counts.child, state.counts.baby, onUpdate])
 
   useEffect(() => {
     if (!state.selectedDate || !state.selectedClassKey) {
@@ -113,20 +117,49 @@ export default function Step2ClassSelect({
   if (!state.selectedDate) return null
 
   return (
-      <div className={styles.stepContent}>
-      <div className={styles.card} style={{ marginBottom: 16 }}>
-        <h3 className={styles.cardTitle}>Sınıf Seçimi</h3>
+    <div className={styles.stepContent}>
+      <div className={styles.stepHeaderWithBack}>
+        <button
+          type="button"
+          className={`${styles.stepBackBtn} ${styles.stepBackBtnSmall}`}
+          onClick={onBack}
+          aria-label="Önceki adıma dön"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M19 12H5" />
+            <path d="m12 19-7-7 7-7" />
+          </svg>
+          Geri
+        </button>
+      </div>
+
+      <div className={styles.card}>
+        <div className={styles.cardCaption}>
+          <span className={styles.cardCaptionIcon} aria-hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+              <path d="M13 5v2" />
+              <path d="M13 17v2" />
+              <path d="M13 11v2" />
+            </svg>
+          </span>
+          <h3 className={styles.cardCaptionTitle}>Sınıf Seçimi</h3>
+        </div>
+        <hr className={styles.cardDivider} />
+        <div className={styles.cardContent}>
         <div className={styles.classCardGrid}>
           {(tour.ticketClasses ?? []).map((cls) => {
             const selected = state.selectedClassKey === cls.key
             const cap = capForClass(cls.key)
             const firstClassNoChildOrBaby = cls.key === 'first' ? state.counts.child === 0 && state.counts.baby === 0 : true
+            const firstClassEvenPax = cls.key !== 'first' || totalPax % 2 === 0
             const classStatus = state.selectedDate ? getClassStatusForDate(tour, state.selectedDate, cls.key) : null
             const classBlocked = classStatus === 'full' || classStatus === 'closed'
             const isFull = classBlocked || cap === 0
             const insufficientCap = cap > 0 && cap < totalPax && !classBlocked
-            const available = cap >= totalPax && firstClassNoChildOrBaby && !classBlocked
-            const isFirstClassRestricted = cls.key === 'first' && !firstClassNoChildOrBaby
+            const available = cap >= totalPax && firstClassNoChildOrBaby && firstClassEvenPax && !classBlocked
+            const isFirstClassRestricted = cls.key === 'first' && (!firstClassNoChildOrBaby || totalPax % 2 !== 0)
+            const isFirstClassOddPaxWarning = cls.key === 'first' && totalPax % 2 !== 0
             const adultPrice = cls.pricesByAge?.find((p) => p.ageKey === 'adult')
             const multiplier = state.selectedDate ? getSeasonMultiplier(tour, state.selectedDate) : 1
             const price =
@@ -136,19 +169,46 @@ export default function Step2ClassSelect({
             const badgePopular = cls.badge?.toLowerCase().includes('popüler')
 
             return (
-              <button
+              <div
                 key={cls.key}
-                type="button"
+                role="article"
                 className={`${styles.classCardPremium} ${selected ? styles.classCardPremiumSelected : ''} ${isFull || insufficientCap ? styles.classCardDisabled : ''}`}
                 style={{
                   position: 'relative',
                   ...(isFull || insufficientCap ? { opacity: 0.82, filter: 'grayscale(0.4)', cursor: 'not-allowed' } : {}),
                 }}
                 onClick={() => available && onUpdate({ selectedClassKey: cls.key })}
-                disabled={!available}
-                aria-pressed={selected}
+                onKeyDown={(e) => {
+                  if (available && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault()
+                    onUpdate({ selectedClassKey: cls.key })
+                  }
+                }}
+                tabIndex={available ? 0 : undefined}
                 aria-label={`${cls.label}, ${price != null ? `${price} TL` : ''}, ${available ? 'Müsait' : insufficientCap ? 'Kapasite yetersiz' : isFull ? 'Dolu' : 'Kapalı'}`}
               >
+                {isFirstClassOddPaxWarning && (
+                  <div
+                    role="alert"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      zIndex: 2,
+                      padding: '10px 12px',
+                      background: '#fef3c7',
+                      border: '1px solid #f59e0b',
+                      borderRadius: '8px 8px 0 0',
+                      color: '#92400e',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      textAlign: 'center',
+                    }}
+                  >
+                    Bu alandaki bungalov yataklarımız 2 kişiliktir. Tek sayılı kişi ile rezervasyon verilmemektedir.
+                  </div>
+                )}
                 <div
                   style={{
                     filter: isFirstClassRestricted ? 'blur(5px)' : undefined,
@@ -220,14 +280,6 @@ export default function Step2ClassSelect({
                       </span>
                     )}
                     <span style={{ flex: 1 }} />
-                    {selected && (
-                      <span
-                        className={styles.classBadge}
-                        style={{ background: 'var(--primary)', color: '#fff' }}
-                      >
-                        Seçildi
-                      </span>
-                    )}
                   </div>
                 </div>
                 <div className={styles.classCardPremiumBody}>
@@ -262,6 +314,23 @@ export default function Step2ClassSelect({
                         : `Kalan: ${cap} kişi`}
                     </p>
                   )}
+                  <div className={styles.classCardPremiumFooter}>
+                    <button
+                      type="button"
+                      className={styles.classCardSelectBtn}
+                      disabled={!available}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (available) {
+                          onUpdate({ selectedClassKey: cls.key })
+                          onNext()
+                        }
+                      }}
+                      aria-label={`${cls.label} seç ve devam et`}
+                    >
+                      Seçiniz
+                    </button>
+                  </div>
                 </div>
                 </div>
                 {isFirstClassRestricted && (
@@ -280,11 +349,13 @@ export default function Step2ClassSelect({
                     aria-hidden
                   >
                     <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#374151', textAlign: 'center', lineHeight: 1.4 }}>
-                      First class için sadece 16 yaş üstü misafirler kabul edilmektedir.
+                      {totalPax % 2 !== 0
+                        ? 'Bu alandaki bungalov yataklarımız 2 kişiliktir. Tek sayılı kişi ile rezervasyon verilmemektedir.'
+                        : 'First class için sadece 16 yaş üstü misafirler kabul edilmektedir.'}
                     </p>
                   </div>
                 )}
-              </button>
+              </div>
             )
           })}
         </div>
@@ -293,22 +364,6 @@ export default function Step2ClassSelect({
             Bu sınıf için yeterli kapasite yok ({totalPax} kişi). Başka sınıf seçin veya kişi sayısını azaltın.
           </p>
         )}
-      </div>
-
-      <div className={styles.stepActions}>
-        <div className={styles.stepActionsRow}>
-          <button type="button" className={styles.stepBtnBack} onClick={onBack} aria-label="Önceki adıma dön">
-            Geri
-          </button>
-          <button
-            type="button"
-            className={styles.stepBtnPrimary}
-            onClick={onNext}
-            disabled={ctaDisabled}
-            aria-label={ctaLabel}
-          >
-            {ctaLabel}
-          </button>
         </div>
       </div>
     </div>

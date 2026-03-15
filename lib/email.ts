@@ -382,7 +382,10 @@ export async function sendBookingEmails(
   options?: { embedQr?: QrEmbedMethod }
 ): Promise<void> {
   const resend = getResend()
-  if (!resend) return
+  if (!resend) {
+    console.warn('[email] E-posta gönderilmedi: RESEND_API_KEY .env içinde tanımlı değil.')
+    return
+  }
 
   const from = getFrom()
   const baseUrl = getEmailBaseUrl().replace(/\/$/, '')
@@ -639,10 +642,14 @@ function buildAdminPaidEmailHtml(p: BookingEmailPayload): string {
 
 /**
  * Rezervasyon "ödendi" olarak işaretlendiğinde müşteri ve admin'e e-posta gönderir.
+ * RESEND_API_KEY yoksa e-posta gönderilmez (konsola uyarı yazılır).
  */
 export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promise<void> {
   const resend = getResend()
-  if (!resend) return
+  if (!resend) {
+    console.warn('[email] E-posta gönderilmedi: RESEND_API_KEY .env içinde tanımlı değil.')
+    return
+  }
 
   const from = getFrom()
   const baseUrl = getEmailBaseUrl().replace(/\/$/, '')

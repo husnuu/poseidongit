@@ -106,6 +106,12 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
     mapEmbedUrl,
     openInMapsLabel
   },
+  pickupPoints[]{
+    name,
+    address,
+    description,
+    isDefault
+  },
   ticketClasses[]{
     key,
     label,
@@ -202,6 +208,27 @@ export const tourForAvailabilityQuery = `*[_type == "tour" && (_id == $tourId ||
   "slug": slug.current,
   baseCapacity{ ecoCapacity, premiumCapacity, firstCapacity },
   availabilityOverrides[]{ date, eco, premium, first, note }
+}`
+
+/** Admin: tüm turlar liste (dropdown + kapak eşlemesi). */
+export const toursListForAdminQuery = `*[_type == "tour" && defined(slug.current)] | order(title asc) {
+  _id,
+  title,
+  "slug": slug.current,
+  mainImage{ asset }
+}`
+
+/** Admin: tur kapak görselleri – _id listesi ile. */
+export const tourCoversByIdsQuery = `*[_type == "tour" && _id in $ids] {
+  _id,
+  mainImage{ asset }
+}`
+
+/** Admin: tek tur – başlık + bilet sınıfları (manuel rezervasyon formu). */
+export const tourClassesForAdminQuery = `*[_type == "tour" && (_id == $tourId || slug.current == $tourId)][0] {
+  _id,
+  title,
+  ticketClasses[]{ key, label }
 }`
 
 /** Tour kapak görseli, toplanma, süre, galeri, kapora, dahil/dahil değil – voucher için. */

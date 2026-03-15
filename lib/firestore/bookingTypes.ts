@@ -23,6 +23,7 @@ export interface Booking {
   tourTitle: string
   date: string
   time?: string
+  meetingPoint?: string
   counts: BookingCounts
   classId: string
   className: string
@@ -49,6 +50,7 @@ export interface BookingCreatePayload {
   tourTitle: string
   date: string
   time?: string
+  meetingPoint?: string
   counts: { adult: number; child: number; infant: number }
   classId: string
   className: string

@@ -9,15 +9,16 @@ const WRAPPER_STYLE = {
   backgroundColor: '#fff',
   borderWidth: 1,
   borderStyle: 'solid',
-  borderColor: '#e5e7eb',
-  borderRadius: 12,
-  boxShadow: '0 10px 30px rgba(0,0,0,0.06)',
+  borderColor: '#e2e8f0',
+  borderRadius: 6,
+  boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
 }
 const FOCUS_STYLE = {
-  borderColor: '#2168b8',
-  boxShadow: '0 0 0 2px rgba(33,104,184,0.15)',
+  borderColor: 'var(--primary, #2563eb)',
+  boxShadow: '0 0 0 2px rgba(37,99,235,0.15)',
 }
 const INPUT_HEIGHT = 56
+const INPUT_HEIGHT_COMPACT = 44
 const LABEL_COLOR = '#6b7280'
 
 export interface PhoneFieldProps {
@@ -31,6 +32,8 @@ export interface PhoneFieldProps {
   disabled?: boolean
   wrapperClassName?: string
   defaultCountry?: 'TR' | 'US' | 'GB' | string
+  /** Küçük kutu (Bilgileriniz formu ile uyumlu) */
+  compact?: boolean
 }
 
 export default function PhoneField({
@@ -44,22 +47,24 @@ export default function PhoneField({
   disabled,
   wrapperClassName = '',
   defaultCountry = 'TR',
+  compact = false,
 }: PhoneFieldProps) {
   const genId = useId()
   const id = idProp ?? genId
   const [focused, setFocused] = useState(false)
   const hasValue = (value ?? '').trim() !== ''
   const active = focused || hasValue
+  const minHeight = compact ? INPUT_HEIGHT_COMPACT : INPUT_HEIGHT
 
   return (
     <div className={`relative ${wrapperClassName}`}>
       <div
-        className={styles.wrapper}
+        className={`${styles.wrapper} ${compact ? styles.wrapperCompact : ''}`}
         style={{
           ...WRAPPER_STYLE,
           ...(focused ? FOCUS_STYLE : {}),
           ...(error ? { borderColor: '#dc2626' } : {}),
-          minHeight: INPUT_HEIGHT,
+          minHeight,
         }}
       >
         <PhoneInput
@@ -82,7 +87,7 @@ export default function PhoneField({
         />
         <label
           htmlFor={id}
-          className={`${styles.label} ${active ? styles.labelActive : styles.labelInactive}`}
+          className={`${styles.label} ${active ? styles.labelActive : styles.labelInactive} ${compact ? styles.labelCompact : ''}`}
           style={{ color: LABEL_COLOR }}
         >
           {label}

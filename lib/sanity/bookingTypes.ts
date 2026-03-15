@@ -94,6 +94,13 @@ export interface TourImageForBooking {
   url?: string
 }
 
+export interface PickupPoint {
+  name?: string
+  address?: string
+  description?: string
+  isDefault?: boolean
+}
+
 export interface TourForBooking {
   _id?: string
   title: string
@@ -107,6 +114,7 @@ export interface TourForBooking {
   baseCapacity?: BaseCapacity
   availabilityOverrides?: AvailabilityOverride[]
   availability?: AvailabilityConfig
+  pickupPoints?: PickupPoint[]
 }
 
 /** Firestore bookings: tourId = Sanity _id (UUID), date "YYYY-MM-DD", classId "eco"|"premium"|"first", counts { adult, child, infant }, status "pending"|"paid". */
@@ -145,6 +153,8 @@ export interface BookingWizardState {
   counts: { adult: number; child: number; baby: number }
   selectedDate: string | null
   selectedClassKey: string | null
+  /** Seçilen toplanma / alım noktası (Sanity pickupPoints varsa müşteri seçer). */
+  meetingPoint?: string
   customer: {
     firstName: string
     lastName: string

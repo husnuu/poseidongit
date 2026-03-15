@@ -6,13 +6,13 @@ const WRAPPER_STYLE = {
   backgroundColor: '#fff',
   borderWidth: 1,
   borderStyle: 'solid',
-  borderColor: '#e5e7eb',
-  borderRadius: 12,
-  boxShadow: '0 10px 30px rgba(0,0,0,0.06)',
+  borderColor: '#e2e8f0',
+  borderRadius: 6,
+  boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
 }
 const FOCUS_STYLE = {
-  borderColor: '#2168b8',
-  boxShadow: '0 0 0 2px rgba(33,104,184,0.15)',
+  borderColor: 'var(--primary, #2563eb)',
+  boxShadow: '0 0 0 2px rgba(37,99,235,0.15)',
 }
 const LABEL_COLOR = '#6b7280'
 
@@ -55,7 +55,7 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
   return (
     <div className={`relative ${wrapperClassName}`}>
       <div
-        className="relative w-full transition-[border-color,box-shadow] duration-150 rounded-xl overflow-hidden"
+        className="relative w-full transition-[border-color,box-shadow] duration-150 rounded-lg overflow-hidden"
         style={{
           ...WRAPPER_STYLE,
           ...(focused ? FOCUS_STYLE : {}),
@@ -74,7 +74,7 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
             paddingRight: 16,
             paddingTop: active ? 24 : 16,
             paddingBottom: 16,
-            fontSize: 15,
+            fontSize: 16,
             minHeight: 120,
             color: '#111',
           }}
@@ -103,11 +103,13 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
             ...(active
               ? {
                   top: 10,
+                  left: 16,
                   fontSize: 11,
                   fontWeight: 500,
                 }
               : {
                   top: 18,
+                  left: 16,
                   fontSize: 13,
                 }),
           }}

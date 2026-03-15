@@ -1,11 +1,11 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Check, FileDown } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
-import { getRemainingCapacityForDate } from '@/lib/sanity/bookingPricing'
+import { getRemainingCapacityForDate, computePricingForSelection } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import StepPeople from './steps/StepPeople'
 import StepDateClass from './steps/StepDateClass'
@@ -46,6 +46,24 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
       return { ...prev, pricingSummary }
     })
   }, [])
+
+  // Sınıf/tarih/kişi değişince fiyatı her zaman güncelle (geri gelip başka sınıf seçince doğru fiyat görünsün)
+  useEffect(() => {
+    if (!state.selectedDate || !state.selectedClassKey) {
+      setState((prev) => (prev.pricingSummary == null ? prev : { ...prev, pricingSummary: null }))
+      return
+    }
+    const summary = computePricingForSelection(
+      tour,
+      state.selectedDate,
+      state.selectedClassKey,
+      state.counts
+    )
+    setState((prev) => {
+      if (summary && prev.pricingSummary?.total === summary.total && prev.pricingSummary?.currency === summary.currency) return prev
+      return { ...prev, pricingSummary: summary ?? null }
+    })
+  }, [tour, state.selectedDate, state.selectedClassKey, state.counts.adult, state.counts.child, state.counts.baby])
 
   const goNext = useCallback(() => {
     if (state.step < 4) {
@@ -106,6 +124,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
             tourId,
             tourTitle: tour.title ?? '',
             date: state.selectedDate ?? '',
+            ...(state.meetingPoint?.trim() && { meetingPoint: state.meetingPoint.trim() }),
             counts: {
               adult: state.counts.adult,
               child: state.counts.child,
