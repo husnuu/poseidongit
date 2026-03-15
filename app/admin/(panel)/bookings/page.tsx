@@ -73,7 +73,7 @@ async function exportToPdf(
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   await loadTurkishFont(doc, authToken, adminEmail)
 
-  const pageW = doc.getPageWidth(doc.getCurrentPageInfo().pageNumber)
+  const pageW = doc.internal.pageSize.getWidth()
   const margin = 14
   const headerH = 22
 
@@ -145,7 +145,7 @@ async function exportToPdf(
     didDrawPage: (data) => {
       doc.setFontSize(8)
       doc.setTextColor(148, 163, 184)
-      const pageH = doc.getPageHeight(doc.getCurrentPageInfo().pageNumber)
+      const pageH = doc.internal.pageSize.getHeight()
       doc.text(
         `Dışa aktarma: ${new Date().toLocaleDateString('tr-TR')}  ·  Sayfa ${data.pageNumber}`,
         margin,
