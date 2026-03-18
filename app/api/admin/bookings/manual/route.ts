@@ -4,7 +4,7 @@ import { getFirestore } from '@/lib/firebaseAdmin'
 import { client } from '@/lib/sanity'
 import { tourImageAndPickupQuery, siteSettingsQuery } from '@/lib/queries'
 import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
-import { sendBookingPaidEmails } from '@/lib/email'
+import { sendBookingPaidEmails, sendManualBookingAdminNotification } from '@/lib/email'
 import { getBaseUrl } from '@/lib/seo'
 import { urlFor } from '@/lib/sanity'
 import { getAuthToken, getAdminEmail, requireAdminOrAgent } from '@/lib/adminAuth'
@@ -47,6 +47,7 @@ function parseBody(body: unknown): {
   forceCreate?: boolean
   sendVoucher?: boolean
   sendEmail?: boolean
+  sendEmailToAdmin?: boolean
 } | { error: string } {
   if (!body || typeof body !== 'object') return { error: 'Geçersiz istek' }
   const b = body as Record<string, unknown>
@@ -86,6 +87,7 @@ function parseBody(body: unknown): {
   const forceCreate = b.forceCreate === true
   const sendVoucher = b.sendVoucher === true
   const sendEmail = b.sendEmail === true
+  const sendEmailToAdmin = b.sendEmailToAdmin === true
   const title = tourTitle || ''
   if (!title) return { error: 'Tur adı (tourTitle) gerekli' }
   return {
@@ -105,6 +107,7 @@ function parseBody(body: unknown): {
     forceCreate,
     sendVoucher,
     sendEmail,
+    sendEmailToAdmin,
   }
 }
 
@@ -143,6 +146,7 @@ export async function POST(request: NextRequest) {
     adminNote,
     forceCreate,
     sendEmail,
+    sendEmailToAdmin,
   } = parsed
 
   const totalPax = counts.adult + counts.child + counts.infant
@@ -254,11 +258,7 @@ export async function POST(request: NextRequest) {
     } catch {
       // ignore
     }
-    const siteBaseUrl = (
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
-      getBaseUrl()
-    ).replace(/\/$/, '')
+    const siteBaseUrl = getBaseUrl().replace(/\/$/, '')
     await sendBookingPaidEmails({
       bookingId: ref.id,
       tourTitle,
@@ -280,6 +280,27 @@ export async function POST(request: NextRequest) {
       logoUrl,
       siteBaseUrl,
     })
+  }
+
+  if (sendEmailToAdmin) {
+    const adminTo = (email && email.trim()) || process.env.ADMIN_EMAIL?.trim()
+    if (adminTo) {
+      await sendManualBookingAdminNotification(adminTo, {
+        bookingId: ref.id,
+        tourTitle,
+        date,
+        className,
+        counts,
+        totalPrice,
+        currency,
+        customer: {
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          email: customer.email || '',
+          phone: customer.phone,
+        },
+      })
+    }
   }
 
   return NextResponse.json({

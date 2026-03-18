@@ -122,7 +122,7 @@ export function TourHeader({
                       target={reviewsUrl?.startsWith('http') ? '_blank' : undefined}
                       rel={reviewsUrl?.startsWith('http') ? 'noopener noreferrer' : undefined}
                     >
-                      {reviewCount.toLocaleString('en-US')} reviews
+                      {reviewCount.toLocaleString('tr-TR')} yorum
                     </a>
                   </>
                 )}
@@ -147,7 +147,7 @@ export function TourHeader({
                 <PinIcon />
               </span>
               <span className={styles.metaText}>
-                <span className={styles.metaLabel}>DEPARTURE:</span>{' '}
+                <span className={styles.metaLabel}>Kalkış:</span>{' '}
                 {meetingLocationUrl ? (
                   <a
                     href={meetingLocationUrl}

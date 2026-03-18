@@ -544,9 +544,20 @@ export default defineType({
           fields: [
             defineField({
               name: 'icon',
-              title: 'İkon Anahtarı',
+              title: 'İkon',
               type: 'string',
-              description: 'İkon anahtarı (örn: ship, map, camera)',
+              description: 'Seçilmezse varsayılan tik (✓) gösterilir',
+              options: {
+                list: [
+                  { value: '', title: 'Tik (varsayılan)' },
+                  { value: 'food', title: 'Yemek' },
+                  { value: 'new', title: 'Yeni' },
+                  { value: 'captain', title: 'Kaptan' },
+                  { value: 'comfort', title: 'Konfor' },
+                  { value: 'luxury-bus', title: 'Lüks otobüs' },
+                ],
+                layout: 'dropdown',
+              },
             }),
             defineField({
               name: 'title',

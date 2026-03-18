@@ -11,6 +11,7 @@ import {
   buildBreadcrumbSchema,
   buildBlogPostingSchema,
   absoluteUrl,
+  getSiteName,
 } from '@/lib/seo'
 import styles from './BlogPost.module.css'
 
@@ -31,6 +32,7 @@ interface BlogPost {
   readTime?: string
   category?: string
   tags?: string[]
+  _updatedAt?: string
 }
 
 function formatDate(dateString?: string): string {
@@ -54,7 +56,8 @@ export async function generateMetadata({
   const { slug } = await params
   const post = await client.fetch<BlogPost | null>(blogBySlugQuery, { slug })
   if (!post) return { title: 'Yazı bulunamadı' }
-  const title = `${post.title} | Blog | Çeşme Poseidon`
+  const siteName = getSiteName()
+  const title = siteName ? `${post.title} | Blog | ${siteName}` : `${post.title} | Blog`
   const description =
     (post.excerpt ?? post.title).replace(/\s+/g, ' ').slice(0, 160) || title
   const url = absoluteUrl(`/blog/${slug}`)
@@ -71,6 +74,7 @@ export async function generateMetadata({
       url,
       type: 'article',
       publishedTime: post.publishDate ?? undefined,
+      modifiedTime: post._updatedAt ?? undefined,
       authors: post.author ? [post.author] : undefined,
       images: image ? [{ url: image, width: 1200, height: 630, alt: post.title }] : undefined,
     },

@@ -194,6 +194,7 @@ interface Tour {
   reviewsSection?: ReviewsSection
   whereSection?: WhereSectionData | null
   pickupPoints?: { name?: string; address?: string; description?: string; isDefault?: boolean }[]
+  _updatedAt?: string
 }
 
 const getTour = cache(async function getTour(slug: string): Promise<Tour | null> {
@@ -235,6 +236,7 @@ export async function generateMetadata({
       description,
       url,
       type: 'website',
+      modifiedTime: tour._updatedAt ?? undefined,
       images: image ? [{ url: image, width: 1200, height: 630, alt: tour.title }] : undefined,
     },
   }

@@ -1,5 +1,6 @@
 import { client } from '@/lib/sanity'
 import { siteSettingsQuery } from '@/lib/queries'
+import { getSiteName } from '@/lib/seo'
 import HeaderClient from './HeaderClient'
 
 interface SiteSettings {
@@ -33,11 +34,13 @@ async function getSiteSettings(): Promise<SiteSettings | null> {
 export default async function Header() {
   try {
     const settings = await getSiteSettings()
+    const fallbackName = getSiteName() || 'Site'
     if (!settings) {
-      return <HeaderClient settings={{ siteName: 'Poseidon', headerNav: [{ label: 'Anasayfa', href: '/' }] }} />
+      return <HeaderClient settings={{ siteName: fallbackName, headerNav: [{ label: 'Anasayfa', href: '/' }] }} />
     }
     return <HeaderClient settings={settings} />
   } catch {
-    return <HeaderClient settings={{ siteName: 'Poseidon', headerNav: [{ label: 'Anasayfa', href: '/' }] }} />
+    const fallbackName = getSiteName() || 'Site'
+    return <HeaderClient settings={{ siteName: fallbackName, headerNav: [{ label: 'Anasayfa', href: '/' }] }} />
   }
 }

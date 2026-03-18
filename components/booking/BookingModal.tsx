@@ -24,6 +24,7 @@ export default function BookingModal({ tour, onClose }: BookingModalProps) {
   })
   const [submitted, setSubmitted] = useState(false)
   const [step3Valid, setStep3Valid] = useState(false)
+  const [step4TermsAccepted, setStep4TermsAccepted] = useState(false)
 
   const maxPax = tour.quickFacts?.maxCapacity ?? MAX_PAX_FALLBACK
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
@@ -88,8 +89,9 @@ export default function BookingModal({ tour, onClose }: BookingModalProps) {
     if (state.step === 1) return !canProceedStep1
     if (state.step === 2) return !canProceedStep2
     if (state.step === 3) return !canProceedStep3
+    if (state.step === 4) return !step4TermsAccepted
     return false
-  }, [state.step, canProceedStep1, canProceedStep2, canProceedStep3])
+  }, [state.step, canProceedStep1, canProceedStep2, canProceedStep3, step4TermsAccepted])
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose()
@@ -159,7 +161,12 @@ export default function BookingModal({ tour, onClose }: BookingModalProps) {
               {state.step === 3 && (
                 <StepCustomer tour={tour} state={state} onUpdate={updateState} onValidationChange={setStep3Valid} />
               )}
-              {state.step === 4 && <StepPayment state={state} />}
+              {state.step === 4 && (
+                <StepPayment
+                  state={state}
+                  onTermsAcceptanceChange={setStep4TermsAccepted}
+                />
+              )}
             </>
           )}
         </main>

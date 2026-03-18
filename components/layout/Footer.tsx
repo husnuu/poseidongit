@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { unstable_noStore as noStore } from 'next/cache'
 import { client, urlFor } from '@/lib/sanity'
 import { siteFooterQuery } from '@/lib/queries'
+import { getSiteName } from '@/lib/seo'
 import FooterLegal from '@/components/layout/FooterLegal'
 import type { FooterLegalData } from '@/components/layout/FooterLegal'
 import {
@@ -58,6 +59,10 @@ type SiteFooterData = {
     items?: Array<{ label?: string | null; href?: string | null; enabled?: boolean }> | null
   } | null
   footerLegal?: FooterLegalData
+  craftedBy?: {
+    name?: string | null
+    linkedInUrl?: string | null
+  } | null
 }
 
 const AWARD_IMAGES_FALLBACK = [
@@ -101,7 +106,7 @@ async function getFooterData(): Promise<SiteFooterData | null> {
 export default async function Footer() {
   const data = await getFooterData()
 
-  const brandName = data?.brandName ?? 'Poseidon'
+  const brandName = (data?.brandName ?? getSiteName()) || 'Site'
   const logoAsset = data?.logo?.asset
   const logoUrl = logoAsset
     ? urlFor(logoAsset).width(140).height(44).url()
@@ -189,7 +194,7 @@ export default async function Footer() {
                 </span>
                 {reviewCount > 0 && (
                   <span className="text-base text-white/80">
-                    {reviewCount.toLocaleString('tr-TR')} reviews
+                    {reviewCount.toLocaleString('tr-TR')} yorum
                   </span>
                 )}
               </div>
@@ -328,6 +333,25 @@ export default async function Footer() {
               ))}
             </div>
           </div>
+
+          {/* Crafted by */}
+          {data?.craftedBy?.name && (
+            <div className="mt-6 border-t border-white/20 pt-6 text-center text-sm text-white/70">
+              Crafted by{' '}
+              {data.craftedBy.linkedInUrl ? (
+                <a
+                  href={data.craftedBy.linkedInUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/90 underline transition-colors hover:text-white"
+                >
+                  {data.craftedBy.name}
+                </a>
+              ) : (
+                <span className="text-white/90">{data.craftedBy.name}</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </footer>

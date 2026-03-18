@@ -5,18 +5,19 @@ import type { TourListItem } from '@/components/tours/TourCard'
 import styles from './page.module.css'
 
 import type { Metadata } from 'next'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, getSiteName } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 
+const siteName = getSiteName()
 export const metadata: Metadata = {
-  title: 'Çeşme Tekne Turları | Turlar ve Fiyatlar',
+  title: siteName ? `Tekne Turları | ${siteName}` : 'Tekne Turları | Turlar ve Fiyatlar',
   description:
-    'Çeşme tekne turu seçenekleri: adalar ve koylar turu, BBQ turları, günlük turlar. Fiyatlar ve rezervasyon.',
+    'Tekne turu seçenekleri: adalar ve koylar turu, BBQ turları, günlük turlar. Fiyatlar ve rezervasyon.',
   alternates: { canonical: `${getBaseUrl()}/turlar` },
   openGraph: {
-    title: 'Çeşme Tekne Turları | Çeşme Poseidon',
-    description: 'Çeşme tekne turları ve deneyimler. Rezervasyon yapın.',
+    title: siteName ? `Tekne Turları | ${siteName}` : 'Tekne Turları',
+    description: 'Tekne turları ve deneyimler. Rezervasyon.',
     url: `${getBaseUrl()}/turlar`,
   },
 }

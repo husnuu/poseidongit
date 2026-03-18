@@ -98,6 +98,7 @@ export default function Step1PeopleDate({
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
+        <div className={styles.counterList}>
         <div className={styles.counterRow}>
           <div>
             <div className={styles.counterLabel}>Yetişkin</div>
@@ -116,7 +117,7 @@ export default function Step1PeopleDate({
             <span className={styles.counterValue}>{counts.adult}</span>
             <button
               type="button"
-              className={styles.counterBtn}
+              className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
               disabled={!canIncrement}
               onClick={() => onUpdate({ counts: { ...counts, adult: counts.adult + 1 } })}
               aria-label="Yetişkin artır"
@@ -143,7 +144,7 @@ export default function Step1PeopleDate({
             <span className={styles.counterValue}>{counts.child}</span>
             <button
               type="button"
-              className={styles.counterBtn}
+              className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
               disabled={!canIncrement}
               onClick={() => onUpdate({ counts: { ...counts, child: counts.child + 1 } })}
               aria-label="Çocuk artır"
@@ -170,7 +171,7 @@ export default function Step1PeopleDate({
             <span className={styles.counterValue}>{counts.baby}</span>
             <button
               type="button"
-              className={styles.counterBtn}
+              className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
               disabled={!canIncrement}
               onClick={() => onUpdate({ counts: { ...counts, baby: counts.baby + 1 } })}
               aria-label="Bebek artır"
@@ -178,6 +179,7 @@ export default function Step1PeopleDate({
               +
             </button>
           </div>
+        </div>
         </div>
         {total > maxPax && (
           <p className={styles.errorText} style={{ marginTop: 8 }}>

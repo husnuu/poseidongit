@@ -1,9 +1,11 @@
 import { Suspense } from 'react'
 import ManageBookingClient from './ManageBookingClient'
 import { ticketPageUrl, voucherPdfUrl } from '@/lib/siteUrls'
+import { getSiteName } from '@/lib/seo'
 
+const siteName = getSiteName()
 export const metadata = {
-  title: 'Rezervasyonumu Yönet | Cesme Poseidon',
+  title: siteName ? `Rezervasyonumu Yönet | ${siteName}` : 'Rezervasyonumu Yönet',
   description: 'Rezervasyonunuzu görüntüleyin, biletinizi indirin veya iptal edin.',
 }
 

@@ -7,54 +7,68 @@ export const revalidate = 3600
 
 const BASE = getBaseUrl()
 
-async function getTourSlugs(): Promise<string[]> {
+type SitemapEntry = { slug: string; lastModified: Date }
+
+async function getTourEntries(): Promise<SitemapEntry[]> {
   try {
-    const list = await client.fetch<{ slug: string | null }[]>(
-      `*[_type == "tour" && defined(slug.current)]{ "slug": slug.current }`
+    const list = await client.fetch<{ slug: string | null; _updatedAt: string }[]>(
+      `*[_type == "tour" && defined(slug.current)]{ "slug": slug.current, _updatedAt }`
     )
-    return (list ?? []).map((t) => t.slug).filter((s): s is string => Boolean(s))
+    return (list ?? [])
+      .filter((t): t is { slug: string; _updatedAt: string } => Boolean(t.slug))
+      .map((t) => ({
+        slug: t.slug,
+        lastModified: t._updatedAt ? new Date(t._updatedAt) : new Date(),
+      }))
   } catch {
     return []
   }
 }
 
-async function getBlogSlugs(): Promise<string[]> {
+async function getBlogEntries(): Promise<SitemapEntry[]> {
   try {
-    const list = await client.fetch<{ slug: string | null }[]>(
-      `*[_type == "blog" && defined(slug.current)]{ "slug": slug.current }`
+    const list = await client.fetch<{ slug: string | null; _updatedAt: string }[]>(
+      `*[_type == "blog" && defined(slug.current)]{ "slug": slug.current, _updatedAt }`
     )
-    return (list ?? []).map((b) => b.slug).filter((s): s is string => Boolean(s))
+    return (list ?? [])
+      .filter((b): b is { slug: string; _updatedAt: string } => Boolean(b.slug))
+      .map((b) => ({
+        slug: b.slug,
+        lastModified: b._updatedAt ? new Date(b._updatedAt) : new Date(),
+      }))
   } catch {
     return []
   }
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [tourSlugs, blogSlugs] = await Promise.all([
-    getTourSlugs(),
-    getBlogSlugs(),
+  const [tourEntriesRaw, blogEntriesRaw] = await Promise.all([
+    getTourEntries(),
+    getBlogEntries(),
   ])
 
+  const now = new Date()
   const staticPages: MetadataRoute.Sitemap = [
-    { url: BASE, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
-    { url: `${BASE}/turlar`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${BASE}/koylar`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE}/hakkimizda`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${BASE}/rezervasyon`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: BASE, lastModified: now, changeFrequency: 'weekly', priority: 1 },
+    { url: `${BASE}/turlar`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${BASE}/koylar`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE}/hakkimizda`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/sik-sorulanlar`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE}/rezervasyon`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
   ]
 
-  const tourEntries: MetadataRoute.Sitemap = tourSlugs.map((slug) => ({
+  const tourEntries: MetadataRoute.Sitemap = tourEntriesRaw.map(({ slug, lastModified }) => ({
     url: `${BASE}/tour/${slug}`,
-    lastModified: new Date(),
+    lastModified,
     changeFrequency: 'weekly' as const,
     priority: 0.85,
   }))
 
-  const blogEntries: MetadataRoute.Sitemap = blogSlugs.map((slug) => ({
+  const blogEntries: MetadataRoute.Sitemap = blogEntriesRaw.map(({ slug, lastModified }) => ({
     url: `${BASE}/blog/${slug}`,
-    lastModified: new Date(),
+    lastModified,
     changeFrequency: 'monthly' as const,
     priority: 0.7,
   }))

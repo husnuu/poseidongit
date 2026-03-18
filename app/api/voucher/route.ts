@@ -108,7 +108,8 @@ export async function GET(request: NextRequest) {
     }
     const pdfBytes = await generateVoucherPdf(voucherData)
 
-    const filename = `Poseidon-Bilet-${voucherData.referenceNumber}.pdf`
+    const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'Bilet'
+  const filename = `${siteName}-Bilet-${voucherData.referenceNumber}.pdf`
     const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
 
     return new NextResponse(Buffer.from(pdfBytes), {

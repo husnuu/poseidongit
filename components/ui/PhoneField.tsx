@@ -34,6 +34,8 @@ export interface PhoneFieldProps {
   defaultCountry?: 'TR' | 'US' | 'GB' | string
   /** Küçük kutu (Bilgileriniz formu ile uyumlu) */
   compact?: boolean
+  /** Label border'ın üstünde (Material outlined) */
+  variant?: 'default' | 'outlined'
 }
 
 export default function PhoneField({
@@ -48,18 +50,20 @@ export default function PhoneField({
   wrapperClassName = '',
   defaultCountry = 'TR',
   compact = false,
+  variant = 'default',
 }: PhoneFieldProps) {
   const genId = useId()
   const id = idProp ?? genId
   const [focused, setFocused] = useState(false)
   const hasValue = (value ?? '').trim() !== ''
   const active = focused || hasValue
+  const isOutlined = variant === 'outlined'
   const minHeight = compact ? INPUT_HEIGHT_COMPACT : INPUT_HEIGHT
 
   return (
     <div className={`relative ${wrapperClassName}`}>
       <div
-        className={`${styles.wrapper} ${compact ? styles.wrapperCompact : ''}`}
+        className={`${styles.wrapper} ${compact ? styles.wrapperCompact : ''} ${isOutlined ? styles.wrapperOutlined : ''}`}
         style={{
           ...WRAPPER_STYLE,
           ...(focused ? FOCUS_STYLE : {}),
@@ -87,8 +91,10 @@ export default function PhoneField({
         />
         <label
           htmlFor={id}
-          className={`${styles.label} ${active ? styles.labelActive : styles.labelInactive} ${compact ? styles.labelCompact : ''}`}
-          style={{ color: LABEL_COLOR }}
+          className={`${styles.label} ${active ? styles.labelActive : styles.labelInactive} ${compact ? styles.labelCompact : ''} ${isOutlined ? styles.labelOutlined : ''}`}
+          style={{
+            color: active && isOutlined ? '#2563eb' : LABEL_COLOR,
+          }}
         >
           {label}
         </label>

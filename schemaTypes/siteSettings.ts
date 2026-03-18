@@ -30,10 +30,44 @@ export default defineType({
       ],
     }),
     defineField({
+      name: 'favicon',
+      title: 'Favicon',
+      type: 'image',
+      description: 'Tarayıcı sekmesi ikonu (favicon). Önerilen: 32×32 veya 48×48 px, PNG/ICO.',
+      options: {
+        hotspot: true,
+      },
+    }),
+    defineField({
       name: 'tagline',
       title: 'Kısa Slogan',
       type: 'string',
       description: 'Site sloganı (footer\'da gösterilir)',
+    }),
+
+    // SEO (varsayılan – tüm sayfalarda kullanılır, sayfa kendi SEO’sunu tanımlamazsa)
+    defineField({
+      name: 'seo',
+      title: 'SEO (Varsayılan)',
+      type: 'object',
+      description: 'Site genelinde varsayılan sayfa başlığı ve meta açıklaması. Ana sayfa ve diğer sayfalarda kendi SEO alanı yoksa bunlar kullanılır.',
+      fields: [
+        defineField({
+          name: 'metaTitle',
+          title: 'Varsayılan Sayfa Başlığı',
+          type: 'string',
+          description: 'Örn: Tekne Turu | Çeşme Adalar ve Koylar. Anahtar kelimeleri doğal kullanın; tıklanabilir ve açıklayıcı olsun (≈50–60 karakter).',
+          validation: (Rule) => Rule.max(70).warning('Google genelde ilk ~60 karakteri gösterir'),
+        }),
+        defineField({
+          name: 'metaDescription',
+          title: 'Varsayılan Meta Açıklaması',
+          type: 'text',
+          rows: 3,
+          description: 'Arama sonuçlarında görünecek kısa açıklama. Anahtar kelimeleri doğal kullanın (≈150–160 karakter).',
+          validation: (Rule) => Rule.max(165).warning('Google genelde ~160 karaktere kadar gösterir'),
+        }),
+      ],
     }),
 
     // B) Header

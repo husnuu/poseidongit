@@ -112,6 +112,7 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
     description,
     isDefault
   },
+  _updatedAt,
   ticketClasses[]{
     key,
     label,
@@ -247,6 +248,10 @@ export const tourImageAndPickupQuery = `*[_type == "tour" && (_id == $tourId || 
 export const siteSettingsQuery = `*[_type == "siteSettings"][0] {
   siteName,
   tagline,
+  seo{
+    metaTitle,
+    metaDescription
+  },
   logo{
     asset,
     "url": asset->url,
@@ -254,6 +259,9 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0] {
       lqip,
       dimensions
     }
+  },
+  favicon{
+    asset
   },
   headerNav[]{
     label,
@@ -338,10 +346,15 @@ export const blogBySlugQuery = `*[_type == "blog" && slug.current == $slug][0] {
   "publishDate": coalesce(publishedAt, publishDate),
   "readTime": select(readingTime != null => string(readingTime) + " dk", readTime),
   category,
-  tags
+  tags,
+  _updatedAt
 }`
 
 export const homePageHeroQuery = `*[_type == "homePage"][0] {
+  seo{
+    metaTitle,
+    metaDescription
+  },
   hero{
     eyebrow,
     heading,
@@ -607,6 +620,10 @@ export const siteFooterQuery = `*[_type == "siteFooter"][0] {
       asset,
       alt
     }
+  },
+  craftedBy {
+    name,
+    linkedInUrl
   }
 }`
 
@@ -627,5 +644,25 @@ export const aboutPageQuery = `*[_type == "aboutPage"][0] {
     order,
     isActive,
     image { asset, alt }
+  }
+}`
+
+/** Sık Sorulanlar sayfası (singleton) */
+export const faqPageQuery = `*[_type == "faqPage"][0] {
+  seo {
+    metaTitle,
+    metaDescription
+  },
+  cover {
+    heading,
+    description,
+    image { asset, alt }
+  },
+  sections[] {
+    sectionTitle,
+    items[] {
+      question,
+      answer
+    }
   }
 }`

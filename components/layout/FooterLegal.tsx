@@ -52,19 +52,19 @@ export default function FooterLegal({ data, inline }: FooterLegalProps) {
           {logos.map((item, index) => {
             const asset = item?.asset
             if (!asset) return null
-            const src = urlFor(asset).width(24).height(16).url()
+            const src = urlFor(asset).width(40).height(27).url()
             const alt = item?.alt || 'Payment method'
             return (
               <span
                 key={index}
-                className="flex items-center justify-center rounded bg-white px-1.5 py-1 shadow-sm"
+                className="flex items-center justify-center rounded bg-white px-2 py-1.5 shadow-sm"
               >
                 <Image
                   src={src}
                   alt={alt}
-                  width={24}
-                  height={16}
-                  className="h-4 w-auto object-contain"
+                  width={40}
+                  height={27}
+                  className="h-7 w-auto object-contain"
                 />
               </span>
             )

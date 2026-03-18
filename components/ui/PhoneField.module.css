@@ -5,6 +5,14 @@
   --PhoneInputCountryFlag-aspectRatio: 1.5;
 }
 
+.wrapperOutlined {
+  overflow: visible;
+}
+
+.wrapperOutlined :global(.PhoneInput) {
+  padding-top: 6px;
+}
+
 .wrapper :global(.PhoneInput) {
   display: flex;
   align-items: center;
@@ -94,4 +102,20 @@
 .labelCompact.labelActive {
   top: 6px !important;
   font-size: 11px;
+}
+
+/* Label border üstünde (Material outlined) */
+.labelOutlined {
+  top: -10px !important;
+  left: 12px !important;
+  background: #fff;
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 500;
+  transform: none !important;
+}
+
+.labelOutlined.labelActive {
+  top: -10px !important;
+  font-size: 12px;
 }

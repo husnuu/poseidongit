@@ -1,3 +1,4 @@
+import { getEmailBaseUrl } from '@/lib/siteUrls'
 import type { VoucherData } from './types'
 import { DEFAULT_POLICIES, DEFAULT_CONTACT } from './types'
 
@@ -30,9 +31,7 @@ export function bookingToVoucherData(
 ): VoucherData {
   const customer = booking.customer ?? {}
   const counts = booking.counts ?? { adult: 0, child: 0, infant: 0 }
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+  const siteUrl = getEmailBaseUrl()
   const baseUrl = siteUrl || bookingUrl.replace(/\/[^/]*$/, '')
 
   return {
@@ -64,18 +63,14 @@ export function bookingToVoucherData(
     voucherNotice: DEFAULT_POLICIES.voucherNotice,
 
     supportEmail: process.env.SUPPORT_EMAIL ?? DEFAULT_CONTACT.supportEmail,
-    website: process.env.NEXT_PUBLIC_SITE_URL ?? process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : DEFAULT_CONTACT.website,
+    website: getEmailBaseUrl() || DEFAULT_CONTACT.website,
     copyrightYear: new Date().getFullYear(),
   }
 }
 
 /** Mock voucher data (test / 404 fallback için kullanılmaz; sadece örnek). */
 export function getMockVoucherData(referenceNumber: string): VoucherData {
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://example.com')
+  const siteUrl = getEmailBaseUrl()
   return {
     referenceNumber,
     bookingUrl: `${siteUrl}/rezervasyon`,

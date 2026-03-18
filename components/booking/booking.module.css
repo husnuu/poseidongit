@@ -121,8 +121,9 @@
 
 .connector {
   width: 24px;
-  height: 2px;
+  height: 3px;
   background: #e4e4e7;
+  border-radius: 2px;
 }
 
 .connectorDone {
@@ -153,14 +154,14 @@
   padding: 20px 16px 100px;
 }
 
-/* Kart: referans tasarım – beyaz, 12px radius, yumuşak gölge, e2e8f0 border */
+/* Kart: premium – beyaz arka plan, ince border, yumuşak gölge */
 .card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border: 1px solid #e8edf3;
   border-radius: 12px;
   padding: 1.25rem;
   margin-bottom: 1.25rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
   font-family: var(--font-family);
 }
 
@@ -181,9 +182,9 @@
 }
 
 .cardCaptionIcon {
-  width: 24px;
-  height: 24px;
-  color: #1e3a8a;
+  width: 20px;
+  height: 20px;
+  color: #64748b;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -192,6 +193,8 @@
 
 .cardCaptionIcon svg {
   display: block;
+  width: 20px;
+  height: 20px;
 }
 
 .cardCaptionTitle {
@@ -204,7 +207,7 @@
 
 .cardDivider {
   height: 1px;
-  background: #e2e8f0;
+  background: #e8edf3;
   margin: 0 0 1rem 0;
   border: none;
 }
@@ -359,32 +362,43 @@
   margin-top: 6px;
 }
 
+/* Kişi sayısı listesi – referans: ince ayırıcılı, minimal satırlar */
+.counterList {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
 .counterRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  margin-bottom: 10px;
-  background: #fafafa;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 16px 18px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  transition: background 0.15s ease;
 }
 
-.counterRow:last-of-type {
-  margin-bottom: 0;
+.counterRow:last-child {
+  border-bottom: none;
+}
+
+.counterRow:hover {
+  background: #fafafa;
 }
 
 .counterLabel {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   color: #18181b;
   font-family: var(--font-family);
+  margin: 0;
 }
 
 .counterSub {
-  font-size: 12px;
-  color: #71717a;
+  font-size: 13px;
+  color: #9ca3af;
   margin-top: 2px;
   font-family: var(--font-family);
 }
@@ -392,31 +406,44 @@
 .counterControls {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .counterBtn {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #d1d5db;
   background: #fff;
-  color: #334155;
-  font-size: 18px;
+  color: #374151;
+  font-size: 16px;
   font-weight: 600;
+  line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .counterBtn:hover:not(:disabled) {
-  background: #fff;
-  border-color: var(--primary, #2168b8);
-  color: var(--primary, #2168b8);
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #111827;
+}
+
+/* Artı butonu – açık cyan/mavi vurgu (referans görsel) */
+.counterBtnPlus {
+  background: #e0f2fe;
+  border-color: transparent;
+  color: #0284c7;
+}
+
+.counterBtnPlus:hover:not(:disabled) {
+  background: #bae6fd;
+  border-color: transparent;
+  color: #0369a1;
 }
 
 .counterBtn:disabled {
@@ -425,17 +452,17 @@
 }
 
 .counterValue {
-  font-size: 16px;
-  font-weight: 700;
-  min-width: 28px;
+  font-size: 15px;
+  font-weight: 600;
+  min-width: 24px;
   text-align: center;
   color: #18181b;
   font-family: var(--font-family);
 }
 
-/* Takvim: kompakt ve mobil uyumlu */
+/* Takvim: daha ferah hücreler */
 .calendarWrap {
-  max-width: 320px;
+  max-width: 360px;
   margin: 12px auto 0;
 }
 
@@ -443,21 +470,21 @@
 .calendarGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 10px;
 }
 
 /* Sadece satışa açık günler listesi (boş/müsait değil günler yok) */
 .calendarAvailableOnly {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .calendarAvailableOnly .dayCell {
-  width: 56px;
-  min-width: 56px;
+  width: 60px;
+  min-width: 60px;
   aspect-ratio: 1;
 }
 
@@ -478,17 +505,18 @@
 .dayCell {
   position: relative;
   aspect-ratio: 1;
-  min-height: 0;
+  min-height: 40px;
+  min-width: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 13px;
   cursor: pointer;
   border: 1px solid transparent;
   background: #fafafa;
-  padding: 2px;
+  padding: 4px;
 }
 
 .dayCell:hover:not(.dayCellDisabled) {
@@ -573,15 +601,15 @@
 }
 
 .classCard {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border: 1px solid #e8edf3;
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 12px;
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
   text-align: left;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
 }
 
 .classCard:hover {
@@ -685,8 +713,8 @@
 }
 
 .summaryTourTitle {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 700;
   color: #18181b;
   margin: 0 0 6px 0;
   font-family: var(--font-family);
@@ -735,8 +763,8 @@
 }
 
 .summaryTotalBox {
-  background: #f6f9ff;
-  border: 1px solid #e4ebff;
+  background: #f8faff;
+  border: 1px solid #e6edff;
   padding: 10px 14px;
   border-radius: 10px;
   margin-top: 4px;
@@ -755,6 +783,169 @@
   font-weight: 700;
   color: #1e3a8a;
   margin: 0;
+  font-family: var(--font-family);
+}
+
+/* Ödenecek tutar kutusu (Özet kartında Toplam altında) */
+.summaryDueBox {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #93c5fd;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.summaryDueLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e40af;
+  margin: 0 0 4px 0;
+  font-family: var(--font-family);
+}
+
+.summaryDueValue {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 0;
+  font-family: var(--font-family);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.summaryDueBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1e40af;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-family: var(--font-family);
+}
+
+/* Ödeme özeti kartı – modern, net hiyerarşi */
+.paymentSummaryCard {
+  border-radius: 16px !important;
+  overflow: hidden;
+  padding: 0 !important;
+  box-shadow: 0 4px 20px rgba(30, 58, 138, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid #e0e7ff !important;
+}
+
+.paymentSummaryHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 20px 16px;
+  background: linear-gradient(160deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.paymentSummaryIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #1e3a8a 0%, #1e40af 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+}
+
+.paymentSummaryIcon svg {
+  display: block;
+}
+
+.paymentSummaryTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+  font-family: var(--font-family);
+  letter-spacing: -0.02em;
+}
+
+.paymentSummarySubtitle {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0;
+  font-family: var(--font-family);
+}
+
+.paymentSummaryBody {
+  padding: 16px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.paymentSummaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-family: var(--font-family);
+}
+
+.paymentSummaryLabel {
+  color: #64748b;
+  font-weight: 500;
+  font-family: var(--font-family);
+}
+
+.paymentSummaryAmount {
+  font-weight: 600;
+  color: #18181b;
+  font-family: var(--font-family);
+}
+
+.paymentSummaryDue {
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #93c5fd;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 2px;
+}
+
+.paymentSummaryDueLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e40af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: var(--font-family);
+}
+
+.paymentSummaryDueAmount {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  font-family: var(--font-family);
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.paymentSummaryDueBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1e40af;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 10px;
+  border-radius: 20px;
   font-family: var(--font-family);
 }
 

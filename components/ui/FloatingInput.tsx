@@ -7,16 +7,17 @@ const WRAPPER_STYLE = {
   borderWidth: 1,
   borderStyle: 'solid',
   borderColor: '#e2e8f0',
-  borderRadius: 6,
+  borderRadius: 12,
   boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
 }
 const FOCUS_STYLE = {
-  borderColor: 'var(--primary, #2563eb)',
-  boxShadow: '0 0 0 2px rgba(37,99,235,0.15)',
+  borderColor: '#2563eb',
+  boxShadow: '0 0 0 3px rgba(37,99,235,0.12)',
 }
 const INPUT_HEIGHT = 56
 const INPUT_HEIGHT_COMPACT = 44
 const LABEL_COLOR = '#6b7280'
+const LABEL_COLOR_FOCUS = '#2563eb'
 
 export interface FloatingInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'placeholder'> {
@@ -26,6 +27,8 @@ export interface FloatingInputProps
   wrapperClassName?: string
   /** Küçük kutu (bilet.com tarzı) */
   compact?: boolean
+  /** Label border'ın üstünde (Material outlined) */
+  variant?: 'default' | 'outlined'
 }
 
 const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function FloatingInput({
@@ -37,6 +40,7 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
   className = '',
   wrapperClassName = '',
   compact = false,
+  variant = 'default',
   onFocus,
   onBlur,
   onChange,
@@ -56,9 +60,10 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
       : (defaultValue != null && String(defaultValue).trim() !== '') || uncontrolledVal.trim() !== ''
 
   const active = focused || effectiveHasValue
+  const isOutlined = variant === 'outlined'
   const height = compact ? INPUT_HEIGHT_COMPACT : INPUT_HEIGHT
   const paddingX = compact ? 12 : 16
-  const paddingTop = compact ? 14 : 20
+  const paddingTop = isOutlined ? (compact ? 16 : 20) : (compact ? 14 : 20)
   const paddingBottom = compact ? 6 : 8
   /* En az 16px: mobilde (iOS) focus’ta zoom’u engeller */
   const inputFontSize = 16
@@ -71,7 +76,7 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
   return (
     <div className={`relative ${wrapperClassName}`}>
       <div
-        className="relative w-full transition-[border-color,box-shadow] duration-150 overflow-hidden"
+        className="relative w-full transition-[border-color,box-shadow] duration-150 overflow-visible"
         style={{
           ...WRAPPER_STYLE,
           ...(focused ? FOCUS_STYLE : {}),
@@ -112,21 +117,33 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
         <label
           htmlFor={id}
           className="absolute pointer-events-none transition-all duration-200 origin-left"
-          style={{
-            left: labelInsetLeft,
-            color: LABEL_COLOR,
-            ...(active
+          style={
+            isOutlined
               ? {
-                  top: labelInsetTop,
-                  fontSize: labelFontSizeActive,
+                  top: -10,
+                  left: labelInsetLeft,
+                  background: '#fff',
+                  padding: '0 6px',
+                  fontSize: 12,
                   fontWeight: 500,
+                  color: focused || effectiveHasValue ? LABEL_COLOR_FOCUS : LABEL_COLOR,
                 }
               : {
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  fontSize: labelFontSizeInactive,
-                }),
-          }}
+                  left: labelInsetLeft,
+                  color: LABEL_COLOR,
+                  ...(active
+                    ? {
+                        top: labelInsetTop,
+                        fontSize: labelFontSizeActive,
+                        fontWeight: 500,
+                      }
+                    : {
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        fontSize: labelFontSizeInactive,
+                      }),
+                }
+          }
         >
           {label}
         </label>

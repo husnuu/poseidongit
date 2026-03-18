@@ -21,6 +21,8 @@ interface Step2ClassSelectProps {
   onPricingComputed: (pricing: PricingSummary | null) => void
   onBack: () => void
   onNext: () => void
+  /** Sınıf seçildiğinde doğrudan bir sonraki adıma geçmek için (state güncellenmeden önce çağrılır, tek tıkla ilerleme). */
+  onStepNext?: () => void
   canProceed: boolean
   ctaLabel: string
   ctaDisabled: boolean
@@ -37,11 +39,13 @@ export default function Step2ClassSelect({
   onPricingComputed,
   onBack,
   onNext,
+  onStepNext,
   ctaLabel,
   ctaDisabled,
   optimisticUsed,
   availabilityFromParent,
 }: Step2ClassSelectProps) {
+  const advance = onStepNext ?? onNext
   const year = state.selectedDate ? parseInt(state.selectedDate.slice(0, 4), 10) : new Date().getFullYear()
   const month = state.selectedDate ? parseInt(state.selectedDate.slice(5, 7), 10) : new Date().getMonth() + 1
   const calendar = useMemo(
@@ -177,11 +181,17 @@ export default function Step2ClassSelect({
                   position: 'relative',
                   ...(isFull || insufficientCap ? { opacity: 0.82, filter: 'grayscale(0.4)', cursor: 'not-allowed' } : {}),
                 }}
-                onClick={() => available && onUpdate({ selectedClassKey: cls.key })}
+                onClick={() => {
+                  if (available) {
+                    onUpdate({ selectedClassKey: cls.key })
+                    advance()
+                  }
+                }}
                 onKeyDown={(e) => {
                   if (available && (e.key === 'Enter' || e.key === ' ')) {
                     e.preventDefault()
                     onUpdate({ selectedClassKey: cls.key })
+                    advance()
                   }
                 }}
                 tabIndex={available ? 0 : undefined}
@@ -323,7 +333,7 @@ export default function Step2ClassSelect({
                         e.stopPropagation()
                         if (available) {
                           onUpdate({ selectedClassKey: cls.key })
-                          onNext()
+                          advance()
                         }
                       }}
                       aria-label={`${cls.label} seç ve devam et`}

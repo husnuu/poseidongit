@@ -11,7 +11,7 @@ export default defineType({
             title: 'Marka Adı',
             type: 'string',
             description: 'Footer\'da gösterilecek marka adı',
-            initialValue: 'Çeşme Poseidon',
+            initialValue: '',
             validation: (Rule) => Rule.required().error('Marka adı zorunludur'),
         }),
         defineField({
@@ -447,6 +447,28 @@ export default defineType({
                             ],
                         },
                     ],
+                }),
+            ],
+        }),
+
+        // Crafted by (footer en altı)
+        defineField({
+            name: 'craftedBy',
+            title: 'Crafted by',
+            type: 'object',
+            description: 'Footer\'ın en altında "Crafted by [İsim]" satırı; isim LinkedIn\'e linklenir.',
+            fields: [
+                defineField({
+                    name: 'name',
+                    title: 'İsim',
+                    type: 'string',
+                    description: 'Örn: "Ahmet Yılmaz"',
+                }),
+                defineField({
+                    name: 'linkedInUrl',
+                    title: 'LinkedIn Profil URL',
+                    type: 'url',
+                    description: 'İsme tıklandığında açılacak LinkedIn profil linki',
                 }),
             ],
         }),

@@ -11,16 +11,19 @@ const WRAPPER_STYLE = {
   boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
 }
 const FOCUS_STYLE = {
-  borderColor: 'var(--primary, #2563eb)',
-  boxShadow: '0 0 0 2px rgba(37,99,235,0.15)',
+  borderColor: '#2563eb',
+  boxShadow: '0 0 0 2px rgba(37,99,235,0.2)',
 }
 const LABEL_COLOR = '#6b7280'
+const LABEL_COLOR_FOCUS = '#2563eb'
 
 export interface FloatingTextareaProps
   extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'placeholder'> {
   label: string
   error?: string
   wrapperClassName?: string
+  /** Label border'ın üstünde (Material outlined) */
+  variant?: 'default' | 'outlined'
 }
 
 const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(function FloatingTextarea({
@@ -31,6 +34,7 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
   error,
   className = '',
   wrapperClassName = '',
+  variant = 'default',
   onFocus,
   onBlur,
   onChange,
@@ -51,11 +55,12 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
       : (defaultValue != null && String(defaultValue).trim() !== '') || uncontrolledVal.trim() !== ''
 
   const active = focused || effectiveHasValue
+  const isOutlined = variant === 'outlined'
 
   return (
     <div className={`relative ${wrapperClassName}`}>
       <div
-        className="relative w-full transition-[border-color,box-shadow] duration-150 rounded-lg overflow-hidden"
+        className={`relative w-full transition-[border-color,box-shadow] duration-150 rounded-lg ${isOutlined ? 'overflow-visible' : 'overflow-hidden'}`}
         style={{
           ...WRAPPER_STYLE,
           ...(focused ? FOCUS_STYLE : {}),
@@ -72,7 +77,7 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
           style={{
             paddingLeft: 16,
             paddingRight: 16,
-            paddingTop: active ? 24 : 16,
+            paddingTop: isOutlined ? 20 : (active ? 24 : 16),
             paddingBottom: 16,
             fontSize: 16,
             minHeight: 120,
@@ -98,21 +103,33 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
         <label
           htmlFor={id}
           className="absolute left-4 pointer-events-none transition-all duration-200 origin-left"
-          style={{
-            color: LABEL_COLOR,
-            ...(active
+          style={
+            isOutlined
               ? {
-                  top: 10,
-                  left: 16,
-                  fontSize: 11,
+                  top: -10,
+                  left: 12,
+                  background: '#fff',
+                  padding: '0 6px',
+                  fontSize: 12,
                   fontWeight: 500,
+                  color: focused || effectiveHasValue ? LABEL_COLOR_FOCUS : LABEL_COLOR,
                 }
               : {
-                  top: 18,
-                  left: 16,
-                  fontSize: 13,
-                }),
-          }}
+                  color: LABEL_COLOR,
+                  ...(active
+                    ? {
+                        top: 10,
+                        left: 16,
+                        fontSize: 11,
+                        fontWeight: 500,
+                      }
+                    : {
+                        top: 18,
+                        left: 16,
+                        fontSize: 13,
+                      }),
+                }
+          }
         >
           {label}
         </label>

@@ -206,6 +206,15 @@ export default function Step3CustomerInfo({
             <p className={styles.summaryTotalLabel}>Toplam</p>
             <p className={styles.summaryTotalValue}>{totalPrice.toLocaleString('tr-TR')} ₺</p>
           </div>
+          {state.pricingSummary && (
+            <div className={styles.summaryDueBox}>
+              <p className={styles.summaryDueLabel}>Şimdi ödenecek tutar</p>
+              <p className={styles.summaryDueValue}>
+                {state.pricingSummary.depositAmount.toLocaleString('tr-TR')} ₺
+                <span className={styles.summaryDueBadge}>%{state.pricingSummary.depositPercent}</span>
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -230,6 +239,7 @@ export default function Step3CustomerInfo({
               onChange={(e) => handleField('firstName', e.target.value)}
               error={errors.firstName}
               compact
+              variant="outlined"
             />
             <FloatingInput
               id="booking-lastName"
@@ -239,6 +249,7 @@ export default function Step3CustomerInfo({
               onChange={(e) => handleField('lastName', e.target.value)}
               error={errors.lastName}
               compact
+              variant="outlined"
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginBottom: 20 }}>
@@ -251,6 +262,7 @@ export default function Step3CustomerInfo({
               onChange={(e) => handleField('email', e.target.value)}
               error={errors.email}
               compact
+              variant="outlined"
             />
             <PhoneField
               label="Telefon *"
@@ -261,6 +273,7 @@ export default function Step3CustomerInfo({
               error={errors.phone}
               defaultCountry="TR"
               compact
+              variant="outlined"
             />
           </div>
 
@@ -297,6 +310,7 @@ export default function Step3CustomerInfo({
             rows={3}
             value={state.customer.note ?? ''}
             onChange={(e) => handleField('note', e.target.value)}
+            variant="outlined"
           />
         </div>
       </div>

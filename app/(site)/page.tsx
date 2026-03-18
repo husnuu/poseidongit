@@ -16,21 +16,48 @@ import type { InstagramSectionData } from '@/components/home/InstagramSection'
 import type { RouteSectionLocation } from '@/components/home/RouteSection'
 import type { TourListItem } from '@/components/tours/TourCard'
 import JsonLd from '@/components/seo/JsonLd'
-import { buildOrganizationSchema, buildWebSiteSchema, getBaseUrl } from '@/lib/seo'
+import { buildOrganizationSchema, buildWebSiteSchema, getBaseUrl, getSiteName } from '@/lib/seo'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = {
-  title: 'Çeşme Tekne Turu | Adalar ve Koylar – Çeşme Poseidon',
-  description:
-    'Çeşme tekne turu rezervasyonu. Adalar ve koylar tekne turu, BBQ turları, günlük turlar. Çeşme\'nin en güzel koylarını keşfedin – online rezervasyon.',
-  alternates: { canonical: getBaseUrl() },
-  openGraph: {
-    title: 'Çeşme Tekne Turu | Çeşme Poseidon',
-    description: 'Çeşme tekne turu ve koy turları. Adalar ve koylar turu rezervasyonu.',
-    url: getBaseUrl(),
-  },
+const siteName = getSiteName()
+const defaultHomeTitle = siteName
+  ? `Tekne Turu | Adalar ve Koylar – ${siteName}`
+  : 'Tekne Turu | Adalar ve Koylar'
+const defaultHomeDescription =
+  'Tekne turu rezervasyonu. Adalar ve koylar turu, BBQ turları, günlük turlar. Online rezervasyon.'
+
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const data = await client.fetch<{
+      seo?: { metaTitle?: string | null; metaDescription?: string | null } | null
+    } | null>(homePageHeroQuery)
+    const title = data?.seo?.metaTitle?.trim() ?? defaultHomeTitle
+    const description =
+      data?.seo?.metaDescription?.trim()?.slice(0, 160) ?? defaultHomeDescription
+    return {
+      title: title.includes('|') ? title : siteName ? `${title} | ${siteName}` : title,
+      description,
+      alternates: { canonical: getBaseUrl() },
+      openGraph: {
+        title: title.includes('|') ? title : siteName ? `${title} | ${siteName}` : title,
+        description,
+        url: getBaseUrl(),
+      },
+    }
+  } catch {
+    return {
+      title: defaultHomeTitle,
+      description: defaultHomeDescription,
+      alternates: { canonical: getBaseUrl() },
+      openGraph: {
+        title: siteName ? `Tekne Turu | ${siteName}` : 'Tekne Turu',
+        description: 'Tekne turu ve koy turları. Rezervasyon.',
+        url: getBaseUrl(),
+      },
+    }
+  }
 }
 
 type PopularToursSectionRaw = {
@@ -81,6 +108,7 @@ type RouteSectionRaw = {
 }
 
 type HomePageHeroResult = {
+  seo?: { metaTitle?: string | null; metaDescription?: string | null } | null
   hero: HeroData | null
   featureBar?: FeatureBarItem[] | null
   popularToursSection?: PopularToursSectionRaw | null
@@ -146,6 +174,7 @@ function mapRouteSection(raw: RouteSectionRaw | null): {
 }
 
 export default async function HomePage() {
+  let data: HomePageHeroResult | null = null
   let hero: HeroData | null = null
   let featureBar: FeatureBarItem[] | null = null
   let popularToursSection: PopularToursSectionData | null = null
@@ -154,7 +183,7 @@ export default async function HomePage() {
   let routeSection: ReturnType<typeof mapRouteSection> = null
   let instagramSection: InstagramSectionData | null = null
   try {
-    const data = await client.fetch<HomePageHeroResult>(homePageHeroQuery, {}, { useCdn: false })
+    data = await client.fetch<HomePageHeroResult>(homePageHeroQuery, {}, { useCdn: false })
     hero = data?.hero ?? null
     featureBar = data?.featureBar ?? null
     popularToursSection = mapPopularToursToCardItems(data?.popularToursSection ?? null)
@@ -174,7 +203,9 @@ export default async function HomePage() {
 
   const organizationSchema = buildOrganizationSchema()
   const websiteSchema = buildWebSiteSchema({
-    description: 'Çeşme tekne turu ve koy turları. Adalar ve koylar tekne turu rezervasyonu.',
+    description:
+      data?.seo?.metaDescription?.trim() ||
+      'Çeşme tekne turu ve koy turları. Adalar ve koylar tekne turu rezervasyonu.',
   })
 
   return (

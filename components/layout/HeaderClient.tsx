@@ -224,7 +224,7 @@ export default function HeaderClient({ settings }: HeaderClientProps) {
                     priority
                   />
                 ) : (
-                  <span className={styles.logoFallback}>Poseidon</span>
+                  <span className={styles.logoFallback}>{settings.siteName || 'Site'}</span>
                 )}
               </div>
             </Link>
@@ -284,7 +284,7 @@ export default function HeaderClient({ settings }: HeaderClientProps) {
                     className={styles.mobileMenuLogoImage}
                   />
                 ) : (
-                  <span className={styles.logoFallback}>Poseidon</span>
+                  <span className={styles.logoFallback}>{settings.siteName || 'Site'}</span>
                 )}
               </Link>
               <button

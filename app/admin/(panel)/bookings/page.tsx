@@ -85,7 +85,8 @@ async function exportToPdf(
   doc.setFontSize(16)
   doc.text('Rezervasyon Listesi', margin, 14)
   doc.setFontSize(9)
-  doc.text('Çeşme Poseidon', pageW - margin - doc.getTextWidth('Çeşme Poseidon'), 14)
+  const siteNamePdf = process.env.NEXT_PUBLIC_SITE_NAME || 'Site'
+  doc.text(siteNamePdf, pageW - margin - doc.getTextWidth(siteNamePdf), 14)
 
   // Filtre satırı
   doc.setTextColor(100, 116, 139)

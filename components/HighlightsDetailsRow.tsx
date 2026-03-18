@@ -1,3 +1,4 @@
+import { Check, UtensilsCrossed, Sparkles, Anchor, Sofa, Bus } from 'lucide-react'
 import styles from './HighlightsDetailsRow.module.css'
 
 interface Highlight {
@@ -25,24 +26,29 @@ interface HighlightsDetailsRowProps {
   }
 }
 
-const CheckIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={styles.bulletIcon}
-    aria-hidden
-  >
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M9.70711 14.2929L19 5L20.4142 6.41421L9.70711 17.1213L4 11.4142L5.41421 10L9.70711 14.2929Z"
-      fill="currentColor"
-    />
-  </svg>
-)
+const iconSize = 20
+const iconStroke = 2
+
+const CheckIcon = () => <Check size={iconSize} strokeWidth={iconStroke} className={styles.bulletIcon} aria-hidden />
+const FoodIcon = () => <UtensilsCrossed size={iconSize} strokeWidth={iconStroke} className={styles.bulletIcon} aria-hidden />
+const NewIcon = () => <Sparkles size={iconSize} strokeWidth={iconStroke} className={styles.bulletIcon} aria-hidden />
+const CaptainIcon = () => <Anchor size={iconSize} strokeWidth={iconStroke} className={styles.bulletIcon} aria-hidden />
+const ComfortIcon = () => <Sofa size={iconSize} strokeWidth={iconStroke} className={styles.bulletIcon} aria-hidden />
+const LuxuryBusIcon = () => <Bus size={iconSize} strokeWidth={iconStroke} className={styles.bulletIcon} aria-hidden />
+
+const HIGHLIGHT_ICONS: Record<string, () => JSX.Element> = {
+  food: FoodIcon,
+  new: NewIcon,
+  captain: CaptainIcon,
+  comfort: ComfortIcon,
+  'luxury-bus': LuxuryBusIcon,
+}
+
+function getHighlightIcon(iconKey?: string | null) {
+  if (!iconKey?.trim()) return CheckIcon
+  const key = iconKey.trim().toLowerCase()
+  return HIGHLIGHT_ICONS[key] ?? CheckIcon
+}
 
 export default function HighlightsDetailsRow({
   highlights,
@@ -90,9 +96,11 @@ export default function HighlightsDetailsRow({
         <div className={styles.sectionColumn}>
           <h2 className={styles.sectionTitleSmall}>ÖNE ÇIKANLAR</h2>
           <ul className={styles.bulletList}>
-            {highlights.map((highlight, index) => (
+            {highlights.map((highlight, index) => {
+              const IconComponent = getHighlightIcon(highlight.icon)
+              return (
               <li key={index} className={styles.bulletItem}>
-                <CheckIcon />
+                <IconComponent />
                 <div className={styles.bulletText}>
                   {highlight.description ? (
                     <>
@@ -106,7 +114,8 @@ export default function HighlightsDetailsRow({
                   )}
                 </div>
               </li>
-            ))}
+              )
+            })}
           </ul>
         </div>
       )}

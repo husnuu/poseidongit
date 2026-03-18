@@ -2,8 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Inter - Google Fonts (lokal font dosyası yok, 404 önlenir) */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap");
+/* Inter: next/font ile layout'tan yüklenir (render-blocking değil). */
 
 /* Hero birincil buton: kenarda hareket eden beyaz parıltı (dönme yok, sadece parıltı konumu hareket eder) */
 @property --hero-angle {
@@ -70,8 +69,8 @@
     --text-color: #58595b;
     --success-color: #4bb543;
     --border-color: #e5e7eb;
-    --font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
-    --font-family-title: "Inter", var(--font-family), sans-serif;
+    --font-family: var(--font-inter, "Inter"), ui-sans-serif, system-ui, sans-serif;
+    --font-family-title: var(--font-inter, "Inter"), var(--font-family), sans-serif;
     --title-color: #1e3a5f;
     /* Hakkımızda split section sol panel (WakeUp tarzı); lacivert için gradient kullanılabilir */
     --about-bg: #d8832a;

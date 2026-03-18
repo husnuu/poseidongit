@@ -206,15 +206,7 @@ export async function PATCH(request: NextRequest) {
       } catch {
         // Logo opsiyonel
       }
-      const envBase = (
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
-        getBaseUrl()
-      ).replace(/\/$/, '')
-      const host = request.headers.get('host')
-      const proto = request.headers.get('x-forwarded-proto') === 'https' || request.headers.get('x-forwarded-ssl') === 'on' ? 'https' : 'http'
-      const requestBase = host ? `${proto}://${host}`.replace(/\/$/, '') : ''
-      const siteBaseUrl = (envBase || requestBase || '').replace(/\/$/, '') || undefined
+      const siteBaseUrl = getBaseUrl().replace(/\/$/, '')
       await sendBookingPaidEmails({
         bookingId,
         tourTitle: String(data.tourTitle ?? ''),

@@ -32,6 +32,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
   } | null>(null)
   /** Rezervasyon başarılı olunca anlık kalan kontenjan = Sanity kapasitesi - (API used + bu). */
   const [optimisticUsed, setOptimisticUsed] = useState<UsedByDateAndClass | null>(null)
+  const [step4TermsAccepted, setStep4TermsAccepted] = useState(false)
 
   const maxPax = tour.quickFacts?.maxCapacity ?? MAX_PAX_FALLBACK
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
@@ -193,9 +194,9 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
     if (state.step === 1) return !canProceedStep1
     if (state.step === 2) return !canProceedStep2
     if (state.step === 3) return !canProceedStep3
-    if (state.step === 4) return submitting
+    if (state.step === 4) return submitting || !step4TermsAccepted
     return false
-  }, [state.step, canProceedStep1, canProceedStep2, canProceedStep3, submitting])
+  }, [state.step, canProceedStep1, canProceedStep2, canProceedStep3, submitting, step4TermsAccepted])
 
   const goBackToTour = useCallback(() => {
     setSubmitted(false)
@@ -358,7 +359,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
                 {submitError}
               </div>
             )}
-            <StepPayment state={state} />
+            <StepPayment state={state} onTermsAcceptanceChange={setStep4TermsAccepted} />
           </>
         )}
       </main>

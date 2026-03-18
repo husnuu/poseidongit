@@ -3,13 +3,13 @@ import { buildGoogleCalendarUrl } from '@/lib/calendar'
 import { generateVoucherPdf } from '@/lib/voucher/generateVoucherPdf'
 import type { VoucherData } from '@/lib/voucher/types'
 import { DEFAULT_POLICIES, DEFAULT_CONTACT } from '@/lib/voucher/types'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, getSiteName } from '@/lib/seo'
 import { manageBookingUrl, voucherPdfUrl, getEmailBaseUrl } from '@/lib/siteUrls'
 import { getFirestore } from '@/lib/firebaseAdmin'
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery } from '@/lib/queries'
 
-const DEFAULT_FROM = 'Poseidon Booking <onboarding@resend.dev>'
+const DEFAULT_FROM = (() => { const n = process.env.NEXT_PUBLIC_SITE_NAME || 'Booking'; return `${n} <onboarding@resend.dev>` })()
 
 /** E-postadaki buton linkleri için production-safe domain (cesmetekneturu.net). */
 const OFFICIAL_EMAIL_DOMAIN = 'https://cesmetekneturu.net'
@@ -87,10 +87,7 @@ function formatParticipants(counts: { adult: number; child: number; infant: numb
 
 /** BookingEmailPayload + voucherUrl ile e-posta ekinde gönderilecek PDF için VoucherData üretir. */
 function payloadToVoucherData(payload: BookingEmailPayload, voucherUrl: string): VoucherData {
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
-  const website = siteUrl ? siteUrl.replace(/\/$/, '') : DEFAULT_CONTACT.website
+  const website = getEmailBaseUrl().replace(/\/$/, '') || DEFAULT_CONTACT.website
   return {
     referenceNumber: payload.bookingId,
     bookingUrl: voucherUrl,
@@ -179,12 +176,8 @@ function buildConfirmationEmailHtml(
   const customerName = `${p.customer.firstName} ${p.customer.lastName}`.trim() || '—'
   const tourImage = p.tourImageUrl?.trim() || ''
   const bookingUrl = p.bookingUrl?.trim() || '#'
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
-  const voucherUrl = baseUrl
-    ? `${baseUrl.replace(/\/$/, '')}/api/voucher?bookingId=${encodeURIComponent(p.bookingId)}`
-    : '#'
+  const baseUrl = getEmailBaseUrl()
+  const voucherUrl = `${baseUrl.replace(/\/$/, '')}/api/voucher?bookingId=${encodeURIComponent(p.bookingId)}`
   const calendarUrl = buildGoogleCalendarUrl({
     tourTitle: p.tourTitle,
     date: p.date,
@@ -313,7 +306,7 @@ function buildConfirmationEmailHtml(
           <tr>
             <td style="padding: 32px 24px 24px 24px; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #6b7280; line-height: 1.5;">If you have any questions, reply to this email.</p>
-              <p style="margin: 8px 0 0 0; font-size: 12px; color: #6b7280;">&copy; 2026 Poseidon Booking</p>
+              <p style="margin: 8px 0 0 0; font-size: 12px; color: #6b7280;">&copy; 2026 ${process.env.NEXT_PUBLIC_SITE_NAME || 'Booking'}</p>
             </td>
           </tr>
         </table>
@@ -364,6 +357,29 @@ function buildAdminEmailHtml(p: BookingEmailPayload): string {
 `.trim()
 }
 
+/**
+ * Manuel rezervasyon oluşturulduğunda admin'e (veya belirtilen adrese) bildirim e-postası gönderir.
+ * RESEND_API_KEY yoksa sessizce atlar.
+ */
+export async function sendManualBookingAdminNotification(
+  to: string,
+  payload: BookingEmailPayload
+): Promise<void> {
+  const resend = getResend()
+  if (!resend || !to?.trim()) return
+  const from = getFrom()
+  const html = buildAdminEmailHtml(payload)
+  const { error } = await resend.emails.send({
+    from,
+    to: [to.trim()],
+    subject: `Manuel rezervasyon: ${payload.tourTitle} – ${payload.date}`,
+    html,
+  })
+  if (error) {
+    console.error('[email] Manuel rezervasyon admin bildirimi gönderilemedi:', payload.bookingId, error)
+  }
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -407,7 +423,7 @@ export async function sendBookingEmails(
     }
     const pdfBytes = await generateVoucherPdf(voucherData)
     attachments.push({
-      filename: `Poseidon-Bilet-${payload.bookingId}.pdf`,
+      filename: `${getSiteName() || 'Bilet'}-Bilet-${payload.bookingId}.pdf`,
       content: Buffer.from(pdfBytes),
     })
   } catch (e) {
@@ -483,7 +499,7 @@ function buildPremiumConfirmationEmailHtml(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rezervasyon Onayı – Cesme Poseidon</title>
+  <title>Rezervasyon Onayı – ${getSiteName() || 'Rezervasyon'}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -496,7 +512,7 @@ function buildPremiumConfirmationEmailHtml(
           <!-- Header (navy lacivert, yazılar beyaz) -->
           <tr>
             <td style="background-color:${headerFooterBg};padding:28px 24px;text-align:center;border-radius:12px 12px 0 0;">
-              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:0.5px;font-family:${emailFont};">Cesme Poseidon</h1>
+              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:0.5px;font-family:${emailFont};">${getSiteName() || 'Rezervasyon'}</h1>
               <p style="margin:8px 0 0 0;color:rgba(255,255,255,0.9);font-size:14px;font-family:${emailFont};">Tekne Turu Rezervasyonu</p>
             </td>
           </tr>
@@ -593,7 +609,7 @@ function buildPremiumConfirmationEmailHtml(
           <!-- Footer (navy lacivert, yazılar beyaz) -->
           <tr>
             <td style="padding:24px 24px 32px 24px;background-color:${headerFooterBg};border-radius:0 0 12px 12px;">
-              <p style="margin:0;font-size:12px;color:#ffffff;text-align:center;font-family:${emailFont};">Cesme Poseidon Tekne Turları</p>
+              <p style="margin:0;font-size:12px;color:#ffffff;text-align:center;font-family:${emailFont};">${getSiteName() || 'Tekne Turları'}</p>
               <p style="margin:8px 0 0 0;font-size:12px;text-align:center;"><a href="#" style="color:#ffffff;text-decoration:underline;">KVKK</a> · <a href="#" style="color:#ffffff;text-decoration:underline;">İptal-İade</a> · <a href="#" style="color:#ffffff;text-decoration:underline;">Gizlilik</a></p>
               <p style="margin:16px 0 0 0;font-size:11px;color:#ffffff;text-align:center;opacity:0.9;">Bu e-posta otomatik olarak gönderilmiştir.</p>
             </td>
@@ -671,7 +687,7 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
     }
     const pdfBytes = await generateVoucherPdf(voucherData)
     attachments.push({
-      filename: `Poseidon-Bilet-${payload.bookingId}.pdf`,
+      filename: `${getSiteName() || 'Bilet'}-Bilet-${payload.bookingId}.pdf`,
       content: Buffer.from(pdfBytes),
     })
   } catch (e) {

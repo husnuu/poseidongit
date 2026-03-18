@@ -7,6 +7,7 @@ import ContactSidebar from '@/components/contact/ContactSidebar'
 import type { ContactSidebarData } from '@/components/contact/ContactSidebar'
 import PopularToursSection from '@/components/home/PopularToursSection'
 import type { TourListItem } from '@/components/tours/TourCard'
+import { getSiteName } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,17 +53,18 @@ type ContactPageData = {
 }
 
 export async function generateMetadata() {
+  const siteName = getSiteName()
   try {
     const data = await client.fetch<ContactPageData | null>(contactPageQuery, {}, { useCdn: false })
     const title = data?.metaTitle ?? data?.title ?? 'İletişim'
     const description = data?.metaDescription ?? 'Bizimle iletişime geçin.'
     return {
-      title: title.includes('|') ? title : `${title} | Poseidon Booking`,
+      title: title.includes('|') ? title : siteName ? `${title} | ${siteName}` : title,
       description,
     }
   } catch {
     return {
-      title: 'İletişim | Poseidon Booking',
+      title: siteName ? `İletişim | ${siteName}` : 'İletişim',
       description: 'Bizimle iletişime geçin.',
     }
   }

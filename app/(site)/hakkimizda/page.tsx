@@ -3,12 +3,14 @@ import { aboutPageQuery } from '@/lib/queries'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
 import Image from 'next/image'
+import { getSiteName } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 
+const siteName = getSiteName()
 export const metadata = {
-  title: 'Hakkımızda | Çeşme Poseidon',
-  description: 'Çeşme Poseidon hakkında, hikayemiz ve teknelerimiz.',
+  title: siteName ? `Hakkımızda | ${siteName}` : 'Hakkımızda',
+  description: 'Hikayemiz ve teknelerimiz.',
 }
 
 type BoatItem = {

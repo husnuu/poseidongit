@@ -2,6 +2,7 @@ import { client, urlFor } from '@/lib/sanity'
 import { covesPageQuery, covesListQuery } from '@/lib/queries'
 import CovesHero from '@/components/coves/CovesHero'
 import CoveRow from '@/components/coves/CoveRow'
+import { getSiteName } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,17 +27,18 @@ type CovesPageData = {
 const opts = { useCdn: false as const }
 
 export async function generateMetadata() {
+  const siteName = getSiteName()
   try {
     const data = await client.fetch<CovesPageData | null>(covesPageQuery, {}, opts)
     const title = data?.metaTitle ?? data?.title ?? 'Koylar'
     const description = data?.metaDescription ?? data?.description ?? 'Keşfedeceğiniz koylar.'
     return {
-      title: title.includes('|') ? title : `${title} | Poseidon Booking`,
+      title: title.includes('|') ? title : siteName ? `${title} | ${siteName}` : title,
       description: description?.slice(0, 160) ?? 'Keşfedeceğiniz koylar.',
     }
   } catch {
     return {
-      title: 'Koylar | Poseidon Booking',
+      title: siteName ? `Koylar | ${siteName}` : 'Koylar',
       description: 'Keşfedeceğiniz koylar.',
     }
   }

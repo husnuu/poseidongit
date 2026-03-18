@@ -10,8 +10,12 @@ export interface FAQItem {
 
 interface FAQAccordionProps {
   faqs?: FAQItem[] | null
+  /** Başlık (verilmezse "Sık Sorulan Sorular"). Ara başlık stili için title verildiğinde diğer sayfalardaki gibi kullanılır. */
+  title?: string | null
   /** Optional WhatsApp link for "WhatsApp'tan ulaşın" button */
   whatsappUrl?: string | null
+  /** Alt kısım "Sorunuz yukarıda yok mu?" bloğunu göster (varsayılan true). FAQ sayfasında her bölümde false, en sonda tek blok için true. */
+  showMissingQuestion?: boolean
 }
 
 const ChevronIcon = () => (
@@ -50,52 +54,80 @@ const QuestionIcon = () => (
   </svg>
 )
 
-export default function FAQAccordion({ faqs, whatsappUrl }: FAQAccordionProps) {
+export default function FAQAccordion({
+  faqs,
+  title,
+  whatsappUrl,
+  showMissingQuestion = true,
+}: FAQAccordionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
-  if (!faqs || faqs.length === 0) return null
+  const hasTitle = !!title?.trim()
+  const hasFaqs = !!(faqs && faqs.length > 0)
+
+  if (!hasFaqs && !showMissingQuestion) return null
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index)
   }
 
+  const titleContent = hasTitle ? title : 'Sık Sorulan Sorular'
+  const isSectionTitle = hasTitle
+
   return (
     <section className={styles.faq}>
-      <h2 className={styles.faqTitle}>Sık Sorulan Sorular</h2>
+      {(hasFaqs || hasTitle) && (
+      <h2
+        className={isSectionTitle ? styles.faqTitleSection : styles.faqTitle}
+        style={
+          isSectionTitle
+            ? {
+                color: 'var(--secondary)',
+                fontFamily: 'var(--font-family-title), var(--font-family), sans-serif',
+              }
+            : undefined
+        }
+      >
+        {titleContent}
+      </h2>
+      )}
 
-      <div className={styles.faqWrapper}>
-        <ul className={styles.faqList}>
-          {faqs.map((faq, index) => {
-            const isOpen = openIndex === index
-            return (
-              <li
-                key={index}
-                className={styles.accordionItem}
-                data-open={isOpen ? 'true' : 'false'}
-              >
-                <button
-                  type="button"
-                  className={styles.accordionItemLine}
-                  aria-expanded={isOpen}
-                  onClick={() => toggleFAQ(index)}
+      {hasFaqs && (
+        <div className={styles.faqWrapper}>
+          <ul className={styles.faqList}>
+            {faqs!.map((faq, index) => {
+              const isOpen = openIndex === index
+              return (
+                <li
+                  key={index}
+                  className={styles.accordionItem}
+                  data-open={isOpen ? 'true' : 'false'}
                 >
-                  <span className={styles.accordionItemIcon} aria-hidden>
-                    <ChevronIcon />
-                  </span>
-                  <span className={styles.accordionItemTitle}>{faq.question}</span>
-                </button>
+                  <button
+                    type="button"
+                    className={styles.accordionItemLine}
+                    aria-expanded={isOpen}
+                    onClick={() => toggleFAQ(index)}
+                  >
+                    <span className={styles.accordionItemIcon} aria-hidden>
+                      <ChevronIcon />
+                    </span>
+                    <span className={styles.accordionItemTitle}>{faq.question}</span>
+                  </button>
 
-                <div className={styles.accordionItemInner}>
-                  <div className={styles.accordionItemContent}>
-                    <p className={styles.accordionItemParagraph}>{faq.answer}</p>
+                  <div className={styles.accordionItemInner}>
+                    <div className={styles.accordionItemContent}>
+                      <p className={styles.accordionItemParagraph}>{faq.answer}</p>
+                    </div>
                   </div>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      </div>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
 
+      {showMissingQuestion && (
       <div className={styles.missingQuestion}>
         <div className={styles.missingQuestionLeft}>
           <span className={styles.missingQuestionIcon}>
@@ -118,6 +150,7 @@ export default function FAQAccordion({ faqs, whatsappUrl }: FAQAccordionProps) {
           </button>
         )}
       </div>
+      )}
     </section>
   )
 }

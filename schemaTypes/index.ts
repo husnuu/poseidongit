@@ -4,6 +4,7 @@ import blogPage from './blogPage'
 import boatTimelineItem from './boatTimelineItem'
 import contactPage from './contactPage'
 import cove from './cove'
+import faqPage from './faqPage'
 import covesPage from './covesPage'
 import homePage from './homePage'
 import legalPage from './legalPage'
@@ -20,6 +21,7 @@ export const schemaTypes = [
   contactPage,
   cove,
   covesPage,
+  faqPage,
   homePage,
   legalPage,
   siteFooter,

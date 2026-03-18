@@ -1,26 +1,17 @@
 /**
- * Site ve e-posta linkleri için tek kaynak. Hepsi aynı base URL'i kullanır (NEXT_PUBLIC_SITE_URL / VERCEL_URL, yoksa cesmetekneturu.net).
+ * Site ve e-posta linkleri için tek kaynak. Hepsi getBaseUrl (NEXT_PUBLIC_SITE_URL veya resmi domain) kullanır; VERCEL_URL asla kullanılmaz.
  */
 
-const OFFICIAL_DOMAIN = 'https://cesmetekneturu.net'
-
-function getEnvBase(): string {
-  const url =
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
-  return url.replace(/\/$/, '')
-}
+import { getBaseUrl } from '@/lib/seo'
 
 /** E-postadaki buton/linkler için base URL (site ile aynı). */
 export function getEmailBaseUrl(): string {
-  const base = getEnvBase()
-  return base || OFFICIAL_DOMAIN
+  return getBaseUrl()
 }
 
 /** Sitede (SSR/client) kullanılan base URL. */
 export function getSiteBaseUrl(): string {
-  const base = getEnvBase()
-  return base || OFFICIAL_DOMAIN
+  return getBaseUrl()
 }
 
 /** Rezervasyonumu Yönet linki (e-posta). */

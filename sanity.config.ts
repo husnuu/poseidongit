@@ -4,7 +4,7 @@ import { schemaTypes } from './schemaTypes'
 
 export default defineConfig({
   name: 'poseidonbooking',
-  title: 'Poseidon Booking Studio',
+  title: 'Booking Studio',
   projectId: '7q8277he',
   dataset: 'production',
   // Studio'yu düzenlenebilir yap (bazı ortamlarda read-only açılabiliyor)

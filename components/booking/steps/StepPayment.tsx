@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import type { BookingWizardState } from '@/lib/sanity/bookingTypes'
 import FloatingInput from '@/components/ui/FloatingInput'
 import PhoneField from '@/components/ui/PhoneField'
@@ -8,15 +9,24 @@ import styles from '../booking.module.css'
 
 interface StepPaymentProps {
   state: BookingWizardState
+  /** Şartlar & Koşullar linki (varsayılan: /terms) */
+  termsHref?: string
+  /** Checkbox değişince parent'ın ödeme butonunu devre dışı bırakması için */
+  onTermsAcceptanceChange?: (accepted: boolean) => void
 }
 
-export default function StepPayment({ state }: StepPaymentProps) {
+export default function StepPayment({ state, termsHref = '/terms', onTermsAcceptanceChange }: StepPaymentProps) {
   const p = state.pricingSummary
   const [cardName, setCardName] = useState('')
   const [cardNumber, setCardNumber] = useState('')
   const [cardExpiry, setCardExpiry] = useState('')
   const [cardCvc, setCardCvc] = useState('')
   const [contactPhone, setContactPhone] = useState(state.customer.phone ?? '')
+  const [termsAccepted, setTermsAccepted] = useState(false)
+
+  useEffect(() => {
+    onTermsAcceptanceChange?.(termsAccepted)
+  }, [termsAccepted, onTermsAcceptanceChange])
 
   if (!p) return null
 
@@ -113,6 +123,22 @@ export default function StepPayment({ state }: StepPaymentProps) {
             defaultCountry="TR"
             compact
           />
+
+          <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm text-zinc-600">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-zinc-300 text-[var(--primary)] focus:ring-[var(--primary)]"
+              aria-describedby="terms-checkbox-desc-step"
+            />
+            <span id="terms-checkbox-desc-step">
+              <Link href={termsHref} target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
+                Şartlar &amp; Koşullar
+              </Link>
+              &apos;ı okudum ve kabul ediyorum.
+            </span>
+          </label>
         </div>
         </div>
       </div>

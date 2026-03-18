@@ -426,6 +426,7 @@ export default function BookingWizardModal({
                   onPricingComputed={onPricingComputed}
                   onBack={goBack}
                   onNext={handleCta}
+                  onStepNext={goNext}
                   canProceed={canProceedStep2}
                   ctaLabel={ctaLabel}
                   ctaDisabled={ctaDisabled}

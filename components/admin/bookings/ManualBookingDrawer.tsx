@@ -74,6 +74,7 @@ export default function ManualBookingDrawer({
   const [adminNote, setAdminNote] = useState('')
   const [sendVoucher, setSendVoucher] = useState(false)
   const [sendEmail, setSendEmail] = useState(false)
+  const [sendEmailToAdmin, setSendEmailToAdmin] = useState(false)
   const [capacityInfo, setCapacityInfo] = useState<CapacityInfo | null>(null)
   const [capacityLoading, setCapacityLoading] = useState(false)
   const [classesLoading, setClassesLoading] = useState(false)
@@ -196,6 +197,7 @@ export default function ManualBookingDrawer({
     setAdminNote('')
     setSendVoucher(false)
     setSendEmail(false)
+    setSendEmailToAdmin(false)
     setSubmitError(null)
     setCapacityExceeded(false)
     setForceCreate(false)
@@ -249,6 +251,7 @@ export default function ManualBookingDrawer({
           forceCreate: exceedsCapacity && forceCreate,
           sendVoucher,
           sendEmail,
+          sendEmailToAdmin,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -573,7 +576,7 @@ export default function ManualBookingDrawer({
                   onChange={(e) => setSendVoucher(e.target.checked)}
                   className="rounded border-zinc-300"
                 />
-                <span className="text-sm text-zinc-700">Voucher gönderme</span>
+                <span className="text-sm text-zinc-700">Voucher gönderme (isteğe bağlı)</span>
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -582,7 +585,16 @@ export default function ManualBookingDrawer({
                   onChange={(e) => setSendEmail(e.target.checked)}
                   className="rounded border-zinc-300"
                 />
-                <span className="text-sm text-zinc-700">Müşteriye e-posta gönder (ödendi ise)</span>
+                <span className="text-sm text-zinc-700">Müşteriye e-posta gönder (isteğe bağlı, ödendi ise)</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={sendEmailToAdmin}
+                  onChange={(e) => setSendEmailToAdmin(e.target.checked)}
+                  className="rounded border-zinc-300"
+                />
+                <span className="text-sm text-zinc-700">Admin'e de e-posta gönder (isteğe bağlı)</span>
               </label>
             </div>
           </div>

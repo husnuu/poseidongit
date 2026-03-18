@@ -82,7 +82,7 @@ export default function AdminHeader() {
             </svg>
           </div>
           <div className="min-w-0">
-            <span className="block truncate text-base font-bold tracking-tight text-slate-800 sm:text-lg">Poseidon</span>
+            <span className="block truncate text-base font-bold tracking-tight text-slate-800 sm:text-lg">{process.env.NEXT_PUBLIC_SITE_NAME || 'Admin'}</span>
             <span className="hidden truncate text-xs font-medium text-slate-500 sm:block sm:text-sm">Rezervasyon Paneli</span>
           </div>
         </Link>

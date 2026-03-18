@@ -1,5 +1,6 @@
 import { PDFDocument, rgb, StandardFonts, type PDFFont } from 'pdf-lib'
 import QRCode from 'qrcode'
+import { getSiteName } from '@/lib/seo'
 import type { VoucherData } from './types'
 
 const A4_WIDTH = 595.28
@@ -149,7 +150,7 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
   const bodyRows = 5
   const card1BodyH = 200
 
-  // Lacivert başlık: sadece "Cesme Poseidon Mobil Bilet" büyük ve kalın, tüm alanı kaplar
+  // Lacivert başlık: site adı + "Mobil Bilet"
   page.drawRectangle({
     x: MARGIN,
     y: y - headerBlueH,
@@ -157,7 +158,8 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
     height: headerBlueH,
     color: BLUE,
   })
-  const headerTitle = 'Cesme Poseidon Mobil Bilet'
+  const siteName = getSiteName()
+  const headerTitle = siteName ? `${siteName} Mobil Bilet` : 'Mobil Bilet'
   const headerTitleSize = 26
   const headerTitleW = boldFont.widthOfTextAtSize(headerTitle, headerTitleSize)
   page.drawText(headerTitle, {
@@ -451,7 +453,7 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
     color: WHITE,
     opacity: 0.9,
   })
-  page.drawText(`© ${data.copyrightYear} Çeşme Poseidon`, {
+  page.drawText(`© ${data.copyrightYear} ${getSiteName() || 'Booking'}`, {
     x: MARGIN,
     y: footerHeight - 22,
     font,

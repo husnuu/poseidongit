@@ -166,6 +166,15 @@ export default function StepCustomer({
             <p className={styles.summaryTotalLabel}>Toplam</p>
             <p className={styles.summaryTotalValue}>{totalPrice.toLocaleString('tr-TR')} ₺</p>
           </div>
+          {state.pricingSummary && (
+            <div className={styles.summaryDueBox}>
+              <p className={styles.summaryDueLabel}>Şimdi ödenecek tutar</p>
+              <p className={styles.summaryDueValue}>
+                {state.pricingSummary.depositAmount.toLocaleString('tr-TR')} ₺
+                <span className={styles.summaryDueBadge}>%{state.pricingSummary.depositPercent}</span>
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import QRCode from 'qrcode'
+import { getBaseUrl } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 function getVoucherUrl(bookingId: string): string {
-  const base =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
-  if (!base) return `https://example.com/api/voucher?bookingId=${encodeURIComponent(bookingId)}`
+  const base = getBaseUrl()
   return `${base.replace(/\/$/, '')}/api/voucher?bookingId=${encodeURIComponent(bookingId)}`
 }
 

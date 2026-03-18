@@ -59,7 +59,7 @@ export async function generateTicketPdf(data: TicketPdfData): Promise<void> {
   doc.setTextColor(255, 255, 255)
   doc.setFontSize(22)
   doc.setFont(FONT_DISPLAY_NAME, 'normal')
-  doc.text('Poseidon Booking', margin, 18)
+  doc.text(process.env.NEXT_PUBLIC_SITE_NAME || 'Booking', margin, 18)
   doc.setFontSize(11)
   doc.text('Rezervasyon Bileti', margin, 24)
 
@@ -135,7 +135,7 @@ export async function generateTicketPdf(data: TicketPdfData): Promise<void> {
     y
   )
   y += 6
-  doc.text('Poseidon Booking — Çeşme tekne turları', margin, y)
+  doc.text(`${process.env.NEXT_PUBLIC_SITE_NAME || 'Booking'} — Tekne turları`, margin, y)
 
   const fileName = `bilet_${data.bookingId}_${data.date.replace(/\D/g, '')}.pdf`
   doc.save(fileName)

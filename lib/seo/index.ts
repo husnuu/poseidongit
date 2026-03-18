@@ -1,16 +1,19 @@
 /**
  * SEO yardımcıları: base URL, JSON-LD şemaları, meta builder.
- * Resmi site: https://cesmetekneturu.net (NEXT_PUBLIC_SITE_URL ile ayarlanır).
+ * Site adı: NEXT_PUBLIC_SITE_NAME (örn. .env). Boş bırakılırsa JSON-LD/meta fallback boş veya generic olur.
  */
 
-const DEFAULT_SITE_NAME = 'Çeşme Poseidon'
+/** Site adı: ortam değişkeninden. Hardcoded marka yok. */
+export function getSiteName(): string {
+  return process.env.NEXT_PUBLIC_SITE_NAME?.trim() ?? ''
+}
 
-/** Site base URL: ortam değişkenlerinden. Canlıda NEXT_PUBLIC_SITE_URL=https://cesmetekneturu.net kullanın. */
+/** Resmi production domain — SEO ve tüm public URL'ler için; VERCEL_URL asla kullanılmaz. */
+const OFFICIAL_DOMAIN = 'https://cesmetekneturu.net'
+
+/** Site base URL: NEXT_PUBLIC_SITE_URL varsa o, yoksa OFFICIAL_DOMAIN. Trailing slash kaldırılır. */
 export function getBaseUrl(): string {
-  const raw =
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
-  return raw.replace(/\/$/, '')
+  return (process.env.NEXT_PUBLIC_SITE_URL?.trim() || OFFICIAL_DOMAIN).replace(/\/$/, '')
 }
 
 export function absoluteUrl(path: string): string {
@@ -30,7 +33,7 @@ export function buildOrganizationSchema(overrides?: {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: overrides?.name ?? DEFAULT_SITE_NAME,
+    name: overrides?.name ?? (getSiteName() || undefined),
     url: overrides?.url ?? base,
     logo: overrides?.logo ?? `${base}/logo.png`,
     sameAs: overrides?.sameAs ?? [],
@@ -43,9 +46,9 @@ export function buildWebSiteSchema(overrides?: { name?: string; url?: string; de
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: overrides?.name ?? DEFAULT_SITE_NAME,
+    name: overrides?.name ?? (getSiteName() || undefined),
     url: overrides?.url ?? base,
-    description: overrides?.description ?? 'Çeşme tekne turları ve rezervasyon. Adalar ve koylar turu.',
+    description: overrides?.description ?? 'Tekne turları ve rezervasyon.',
     potentialAction: {
       '@type': 'SearchAction',
       target: { '@type': 'EntryPoint', urlTemplate: `${base}/turlar?q={search_term_string}` },
@@ -117,10 +120,10 @@ export function buildBlogPostingSchema(params: {
     dateModified: params.dateModified ?? params.datePublished ?? undefined,
     author: params.author
       ? { '@type': 'Person', name: params.author }
-      : { '@type': 'Organization', name: DEFAULT_SITE_NAME },
+      : { '@type': 'Organization', name: getSiteName() || undefined },
     publisher: {
       '@type': 'Organization',
-      name: DEFAULT_SITE_NAME,
+      name: getSiteName() || undefined,
       url: base,
     },
   }
@@ -156,7 +159,7 @@ export function buildTourSchema(params: {
     image: params.image ?? undefined,
     brand: {
       '@type': 'Brand',
-      name: DEFAULT_SITE_NAME,
+      name: getSiteName() || undefined,
     },
     offers:
       params.price != null && params.price > 0
