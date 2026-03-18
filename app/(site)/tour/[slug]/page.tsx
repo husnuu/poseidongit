@@ -236,7 +236,6 @@ export async function generateMetadata({
       description,
       url,
       type: 'website',
-      modifiedTime: tour._updatedAt ?? undefined,
       images: image ? [{ url: image, width: 1200, height: 630, alt: tour.title }] : undefined,
     },
   }
