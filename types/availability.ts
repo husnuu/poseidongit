@@ -12,4 +12,6 @@ export type Availability = {
   tourId: string
   date: string // YYYY-MM-DD
   classes: Record<string, ClassAvailability> // classId -> { capacity, booked, remaining }
+  /** First Class için o tarihte dolu loca ID'leri (L1–L10). Her zaman dizi (boş olabilir). */
+  firstClassLocasReserved: string[]
 }

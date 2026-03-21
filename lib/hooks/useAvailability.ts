@@ -65,15 +65,15 @@ export function useAvailability(
     const datesToSend = dates.length > 0 ? dates : [new Date().toISOString().slice(0, 10)]
     const invalidateKey = options?.invalidateKey ?? ''
     const key = `${tourId}:${slug ?? ''}:${[...datesToSend].sort().join(',')}:${invalidateKey}`
-    if (lastFetch.current === key) return
+    const isSingleDate = datesToSend.length === 1
+    const singleDate = isSingleDate ? datesToSend[0] : null
+    // Tek tarih (loca seçimi) için her zaman yeniden çek ki dolu loca'lar güncel olsun; çoklu tarihte cache kullan
+    if (!isSingleDate && lastFetch.current === key) return
     lastFetch.current = key
 
     let cancelled = false
     setLoading(true)
     setError(null)
-
-    const isSingleDate = datesToSend.length === 1
-    const singleDate = isSingleDate ? datesToSend[0] : null
 
     if (isSingleDate && singleDate) {
       const params = new URLSearchParams({ tourId, date: singleDate })

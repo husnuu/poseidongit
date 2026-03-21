@@ -74,7 +74,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr" className={inter.variable}>
-      <body className={`${inter.className} min-h-screen bg-zinc-50 text-zinc-900 antialiased`}>
+      <body
+        className={`${inter.className} min-h-screen overflow-x-hidden bg-zinc-50 text-zinc-900 antialiased`}
+      >
         <Suspense fallback={null}>{children}</Suspense>
         <ChunkLoadErrorHandler />
         <GoogleAnalytics />

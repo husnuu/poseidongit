@@ -1,12 +1,27 @@
+/**
+ * POST /api/bookings — Web rezervasyonu oluşturur.
+ * Rate limiting: see docs/RATE_LIMITING_SUGGESTIONS.md (e.g. 10 req/min per IP).
+ */
 import { NextResponse } from 'next/server'
 import * as admin from 'firebase-admin'
 import { getFirestore } from '@/lib/firebaseAdmin'
 import type { BookingCreatePayload } from '@/lib/firestore/bookingTypes'
+import {
+  additionalTravelerSlotCount,
+  parseAdditionalTravelersFromBody,
+} from '@/lib/bookingAdditionalTravelers'
+import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
+import { tourForBookingBySanityIdQuery } from '@/lib/sanity/bookingQueries'
+import { computePricingForSelection } from '@/lib/sanity/bookingPricing'
+import type { TourForBooking } from '@/lib/sanity/bookingTypes'
 
 const COLLECTION = 'bookings'
 const CURRENCY = 'TRY'
+const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
+const TOTAL_FIRST_CLASS_LOCAS = 10
+const LOCA_REGEX = /^L(10|[1-9])$/
 
 /** Resolve tourId (Sanity _id or slug) to canonical Sanity _id. Firestore’da hep aynı anahtar kullanılsın diye drafts. kaldırılıyor. */
 async function resolveTourIdToSanityId(tourId: string): Promise<string> {
@@ -37,8 +52,31 @@ function normalizeBody(body: unknown): BookingCreatePayload | null {
   const phone = typeof customer.phone === 'string' ? customer.phone.trim() : ''
   const note = typeof customer.note === 'string' ? customer.note.trim() : undefined
   if (!firstName || !lastName || !email) return null
+  const parsedExtras = parseAdditionalTravelersFromBody(b.additionalTravelers)
+  if (parsedExtras === null) return null
+  const extraN = additionalTravelerSlotCount({ adult, child, infant })
+  if (extraN === 0) {
+    if (parsedExtras.length > 0) return null
+  } else {
+    if (parsedExtras.length !== extraN) return null
+    for (const t of parsedExtras) {
+      if (!t.firstName.trim() || !t.lastName.trim()) return null
+    }
+  }
   const time = typeof b.time === 'string' ? b.time.trim() || undefined : undefined
   const meetingPoint = typeof b.meetingPoint === 'string' ? b.meetingPoint.trim() || undefined : undefined
+  let firstClassLocas: string[] | undefined
+  if (classId === 'first') {
+    if (Array.isArray(b.firstClassLocas)) {
+      firstClassLocas = (b.firstClassLocas as unknown[])
+        .map((x) => (typeof x === 'string' ? x.trim().toUpperCase() : ''))
+        .filter((x) => LOCA_REGEX.test(x))
+      if (firstClassLocas.length === 0) firstClassLocas = undefined
+    }
+    if (!firstClassLocas && typeof b.firstClassLoca === 'string' && LOCA_REGEX.test(b.firstClassLoca.trim())) {
+      firstClassLocas = [b.firstClassLoca.trim().toUpperCase()]
+    }
+  }
   return {
     tourId,
     tourTitle,
@@ -48,32 +86,58 @@ function normalizeBody(body: unknown): BookingCreatePayload | null {
     counts: { adult, child, infant },
     classId,
     className,
+    ...(firstClassLocas && firstClassLocas.length > 0 && { firstClassLocas }),
     customer: { firstName, lastName, email, phone, note },
+    ...(extraN > 0 ? { additionalTravelers: parsedExtras } : {}),
   }
 }
 
-/** Şimdilik: Sanity'den tur fiyatını al, yetişkin birim fiyat * toplam kişi ile toplam hesapla. tourId = Sanity _id (resolve edilmiş). */
+function normalizeClassKey(classId: string): string {
+  const k = classId.toLowerCase().trim()
+  if (k === 'eco' || k.startsWith('eco')) return 'eco'
+  if (k === 'premium' || k.startsWith('prem')) return 'premium'
+  if (k === 'first' || k.startsWith('first')) return 'first'
+  return k || 'eco'
+}
+
+function collectFirstClassLocas(d: Record<string, unknown>): string[] {
+  const out: string[] = []
+  if (Array.isArray(d.firstClassLocas)) {
+    for (const x of d.firstClassLocas) {
+      const s = typeof x === 'string' ? x.trim().toUpperCase() : ''
+      if (s && LOCA_REGEX.test(s) && !out.includes(s)) out.push(s)
+    }
+  }
+  if (out.length === 0 && typeof d.firstClassLoca === 'string') {
+    const s = d.firstClassLoca.trim().toUpperCase()
+    if (s && LOCA_REGEX.test(s)) out.push(s)
+  }
+  return out
+}
+
+/** Sanity turu + tarih: sezon, özel gün sınıf/genel fiyatları (classPriceOverrides → priceOverrides) ile toplam. */
 async function computePrices(
   tourId: string,
+  date: string,
   classId: string,
   counts: { adult: number; child: number; infant: number }
 ): Promise<{ unitPrice: number; totalPrice: number }> {
   try {
-    const tour = await client.fetch<{
-      ticketClasses?: Array<{
-        key: string
-        pricesByAge?: Array< { ageKey: string; price: number } >
-      }>
-    } | null>(
-      `*[_type == "tour" && (_id == $id || slug.current == $id)][0]{ ticketClasses[]{ key, pricesByAge[]{ ageKey, price } } }`,
-      { id: tourId }
-    )
-    const cls = tour?.ticketClasses?.find((c) => c.key === classId)
-    const adultPrice = cls?.pricesByAge?.find((p) => p.ageKey === 'adult')?.price ?? 0
+    const tour = await client.fetch<TourForBooking | null>(tourForBookingBySanityIdQuery, {
+      id: tourId,
+    })
+    const dateStr = date.slice(0, 10)
+    const summary = computePricingForSelection(tour, dateStr, classId, {
+      adult: counts.adult,
+      child: counts.child,
+      baby: counts.infant,
+    })
     const totalPax = counts.adult + counts.child + counts.infant
-    const unitPrice = adultPrice
-    const totalPrice = totalPax * unitPrice
-    return { unitPrice, totalPrice }
+    if (!summary || totalPax <= 0) {
+      return { unitPrice: 0, totalPrice: 0 }
+    }
+    const unitPrice = Math.round(summary.total / totalPax)
+    return { unitPrice, totalPrice: summary.total }
   } catch {
     const totalPax = (counts.adult || 0) + (counts.child || 0) + (counts.infant || 0)
     return { unitPrice: 0, totalPrice: 0 }
@@ -107,6 +171,17 @@ export async function POST(request: Request) {
         if (!(typeof cust.lastName === 'string' && cust.lastName.trim())) missing.push('soyad')
         if (!(typeof cust.email === 'string' && cust.email.trim())) missing.push('e-posta')
       }
+      const counts = b?.counts as Record<string, unknown> | undefined
+      const ad = typeof counts?.adult === 'number' ? counts.adult : 0
+      const ch = typeof counts?.child === 'number' ? counts.child : 0
+      const inf = typeof counts?.infant === 'number' ? counts.infant : 0
+      const needExtra = Math.max(0, ad + ch + inf - 1)
+      const parsed = parseAdditionalTravelersFromBody(b?.additionalTravelers)
+      if (parsed === null) missing.push('diğer yolcu listesi geçersiz')
+      else if (needExtra > 0 && parsed.length !== needExtra) missing.push('tüm yolcuların ad-soyadı')
+      else if (needExtra > 0 && parsed.some((t) => !t.firstName.trim() || !t.lastName.trim())) {
+        missing.push('tüm yolcuların ad-soyadı')
+      }
       return NextResponse.json(
         { error: missing.length ? `Eksik veya geçersiz alan: ${missing.join(', ')}.` : 'Eksik veya geçersiz istek.' },
         { status: 400 }
@@ -115,6 +190,7 @@ export async function POST(request: Request) {
     const firestoreTourId = await resolveTourIdToSanityId(payload.tourId)
     const { unitPrice, totalPrice } = await computePrices(
       firestoreTourId,
+      payload.date,
       payload.classId,
       payload.counts
     )
@@ -128,6 +204,52 @@ export async function POST(request: Request) {
       timeToSave = tourMeta?.startTime?.trim() || undefined
     }
     const db = getFirestore()
+    const dateNorm = payload.date.slice(0, 10)
+    const totalPax = payload.counts.adult + payload.counts.child + payload.counts.infant
+    if (totalPax <= 0) {
+      return NextResponse.json({ error: 'Kişi sayısı en az 1 olmalıdır.' }, { status: 400 })
+    }
+    if (normalizeClassKey(payload.classId) === 'first') {
+      const requiredLocaCount = Math.ceil(totalPax / 2)
+      const selectedLocas = Array.from(
+        new Set(
+          (payload.firstClassLocas ?? [])
+            .map((x) => x.trim().toUpperCase())
+            .filter((x) => LOCA_REGEX.test(x))
+        )
+      )
+      if (selectedLocas.length !== requiredLocaCount) {
+        return NextResponse.json(
+          { error: `First Class için ${requiredLocaCount} adet loca seçmelisiniz.` },
+          { status: 400 }
+        )
+      }
+      if (selectedLocas.length > TOTAL_FIRST_CLASS_LOCAS) {
+        return NextResponse.json(
+          { error: `Maksimum ${TOTAL_FIRST_CLASS_LOCAS} loca seçilebilir.` },
+          { status: 400 }
+        )
+      }
+      const firstClassSnapshot = await db
+        .collection(COLLECTION)
+        .where('date', '==', dateNorm)
+        .where('classId', '==', 'first')
+        .where('status', 'in', ACTIVE_STATUSES)
+        .get()
+      const reservedLocas = new Set<string>()
+      for (const doc of firstClassSnapshot.docs) {
+        const locas = collectFirstClassLocas(doc.data() as Record<string, unknown>)
+        for (const loca of locas) reservedLocas.add(loca)
+      }
+      const conflicts = selectedLocas.filter((loca) => reservedLocas.has(loca))
+      if (conflicts.length > 0) {
+        return NextResponse.json(
+          { error: `Seçilen localar dolu: ${conflicts.join(', ')}` },
+          { status: 409 }
+        )
+      }
+      payload.firstClassLocas = selectedLocas
+    }
     // Firestore undefined kabul etmez; note yoksa alanı ekleme
     const customer: Record<string, string> = {
       firstName: payload.customer.firstName,
@@ -138,7 +260,7 @@ export async function POST(request: Request) {
     if (payload.customer.note !== undefined && payload.customer.note !== '') {
       customer.note = payload.customer.note
     }
-    const dateNorm = payload.date.slice(0, 10)
+    const accessToken = generateBookingAccessToken()
     const ref = await db.collection(COLLECTION).add({
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       status: 'pending',
@@ -150,17 +272,24 @@ export async function POST(request: Request) {
       counts: payload.counts,
       classId: payload.classId,
       className: payload.className,
+      ...(payload.firstClassLocas && payload.firstClassLocas.length > 0 && { firstClassLocas: payload.firstClassLocas }),
       unitPrice,
       totalPrice,
       currency: CURRENCY,
       customer,
+      ...(payload.additionalTravelers &&
+        payload.additionalTravelers.length > 0 && {
+          additionalTravelers: payload.additionalTravelers,
+        }),
       source: 'web',
+      accessToken,
     })
 
     // E-posta yalnızca ödeme onaylandığında (admin "paid" yaptığında) gönderilir.
 
     return NextResponse.json({
       bookingId: ref.id,
+      accessToken,
       summary: {
         tourTitle: payload.tourTitle,
         date: payload.date,

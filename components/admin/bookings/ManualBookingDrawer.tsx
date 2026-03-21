@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { TourOption } from '@/types/adminBookings'
+import FirstClassSeatSelector from '@/components/booking/FirstClassSeatSelector'
 
 const MANUAL_SOURCE_OPTIONS: { value: string; label: string }[] = [
   { value: 'physical', label: 'Fiziksel satış' },
@@ -83,8 +84,14 @@ export default function ManualBookingDrawer({
   const [forceCreate, setForceCreate] = useState(false)
   const [saving, setSaving] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  /** First Class seçildiğinde seçilen localar (L1–L10). */
+  const [firstClassLocas, setFirstClassLocas] = useState<string[]>([])
+  /** Seçilen tarih için başka rezervasyonlarda dolu loca id'leri (availability API'den). */
+  const [reservedLocaIds, setReservedLocaIds] = useState<string[]>([])
 
   const totalPax = adult + child + infant
+  const isFirstClass = !!classId && (classId.toLowerCase().startsWith('first') || tourClasses.find((c) => c.id === classId)?.label?.toLowerCase().includes('first'))
+  const requiredLocas = isFirstClass ? Math.ceil(totalPax / 2) : 0
   const computedTotal = unitPrice * totalPax
   const totalPrice = totalPriceOverride !== null ? totalPriceOverride : (unitPrice ? computedTotal : 0)
 
@@ -134,6 +141,7 @@ export default function ManualBookingDrawer({
   useEffect(() => {
     if (!tourId || !date || !authToken) {
       setCapacityInfo(null)
+      setReservedLocaIds([])
       return
     }
     let cancelled = false
@@ -154,9 +162,13 @@ export default function ManualBookingDrawer({
         } else {
           setCapacityInfo(null)
         }
+        setReservedLocaIds(Array.isArray(data.firstClassLocasReserved) ? data.firstClassLocasReserved : [])
       })
       .catch(() => {
-        if (!cancelled) setCapacityInfo(null)
+        if (!cancelled) {
+          setCapacityInfo(null)
+          setReservedLocaIds([])
+        }
       })
       .finally(() => {
         if (!cancelled) setCapacityLoading(false)
@@ -172,6 +184,11 @@ export default function ManualBookingDrawer({
       if (c) setClassName(c.label || c.id)
     }
   }, [classId, tourClasses])
+
+  // First Class değilse veya tarih değişince loca seçimini sıfırla
+  useEffect(() => {
+    if (!isFirstClass || !date) setFirstClassLocas([])
+  }, [isFirstClass, date, classId])
 
   const exceedsCapacity = capacityInfo ? totalPax > capacityInfo.remaining : false
 
@@ -202,6 +219,8 @@ export default function ManualBookingDrawer({
     setCapacityExceeded(false)
     setForceCreate(false)
     setSuccessMessage(null)
+    setFirstClassLocas([])
+    setReservedLocaIds([])
   }, [])
 
   const handleSubmit = async (andNew: boolean) => {
@@ -222,6 +241,10 @@ export default function ManualBookingDrawer({
     if (exceedsCapacity && !forceCreate) {
       setCapacityExceeded(true)
       setSubmitError(`Kalan kapasite ${capacityInfo?.remaining ?? 0} kişi. Yine de kaydetmek için onaylayın.`)
+      return
+    }
+    if (isFirstClass && requiredLocas > 0 && (firstClassLocas?.length ?? 0) < requiredLocas) {
+      setSubmitError(`First Class için ${requiredLocas} loca seçin (${totalPax} kişi → ${requiredLocas} loca).`)
       return
     }
     setSaving(true)
@@ -252,6 +275,7 @@ export default function ManualBookingDrawer({
           sendVoucher,
           sendEmail,
           sendEmailToAdmin,
+          ...(isFirstClass && (firstClassLocas?.length ?? 0) > 0 && { firstClassLocas: firstClassLocas!.map((id) => id.trim().toUpperCase()) }),
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -399,6 +423,29 @@ export default function ManualBookingDrawer({
                 ))}
               </select>
             </div>
+
+            {isFirstClass && date && (
+              <div className="rounded-xl border border-stone-200/80 bg-gradient-to-b from-white to-stone-50/30 p-4 shadow-sm">
+                <h4 className="mb-3 text-sm font-semibold text-zinc-800">Loca Seçimi (First Class)</h4>
+                <FirstClassSeatSelector
+                  selectedLocaIds={firstClassLocas}
+                  reservedLocaIds={reservedLocaIds}
+                  requiredCount={requiredLocas}
+                  onToggle={(locaId) => {
+                    const id = locaId.trim().toUpperCase()
+                    if (firstClassLocas.includes(id)) {
+                      setFirstClassLocas(firstClassLocas.filter((x) => x !== id))
+                    } else if (firstClassLocas.length < requiredLocas) {
+                      setFirstClassLocas([...firstClassLocas, id])
+                    }
+                  }}
+                  onReplace={(removeId, addId) => {
+                    setFirstClassLocas([...firstClassLocas.filter((x) => x !== removeId.trim().toUpperCase()), addId.trim().toUpperCase()])
+                  }}
+                  aria-label="First Class loca seçimi"
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-3 gap-2">
               <div>

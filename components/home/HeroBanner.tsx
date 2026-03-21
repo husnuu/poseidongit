@@ -1,8 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { Crown } from 'lucide-react'
 
 export type HeroData = {
   eyebrow?: string | null
+  topBadgeText?: string | null
   heading?: string | null
   subheading?: string | null
   heroBadgeEnabled?: boolean
@@ -75,47 +77,57 @@ export default function HeroBanner({ hero }: { hero: HeroData | null }) {
         aria-hidden
       />
 
-      {/* Badge (sol üst) */}
-      {hero.heroBadgeEnabled && (
-        <div
-          className="absolute left-6 top-6 z-10 md:left-16 md:top-12 rounded-[10px] bg-white/20 px-4 py-2.5 backdrop-blur-md border border-white/20"
-          aria-label="Değerlendirme"
-        >
-          <span className="text-sm font-medium text-white whitespace-nowrap">
-            MÜKEMMEL • 2,017 yorum
+      {(hero.topBadgeText?.trim() || hero.heroBadgeEnabled) && (
+        <div className="pointer-events-none absolute left-5 top-[12px] z-10 md:left-10 md:top-[24px]">
+          <span
+            className="relative inline-flex items-center gap-2 overflow-hidden rounded-l-none rounded-r-full border px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-white md:px-5 md:py-2 md:text-sm"
+            style={{
+              fontFamily: 'var(--font-family)',
+              background: 'linear-gradient(90deg, #d8832a 0%, #c97622 100%)',
+              borderColor: 'rgba(255, 235, 205, 0.7)',
+              boxShadow:
+                '0 4px 14px rgba(0, 0, 0, 0.22), 0 0 12px rgba(251, 146, 60, 0.5), 0 0 22px rgba(249, 115, 22, 0.35), inset 0 0 0 1px rgba(255, 244, 220, 0.32)',
+            }}
+          >
+            <Crown className="h-4 w-4 text-white md:h-5 md:w-5" aria-hidden />
+            <span className="relative z-[1]">
+              {hero.topBadgeText?.trim() || 'Çeşme’nin En Çok Tercih Edilen Tekne Turu'}
+            </span>
           </span>
         </div>
       )}
 
-      {/* Metin + CTA (sol alt) - başlık ortaya kadar genişleyebilir */}
+      {/* Metin + CTA: CTA alta sabit; başlık mobilde translate ile yukarı */}
       <div className="absolute bottom-0 left-0 right-0 z-10 flex items-end">
         <div className="w-full max-w-[min(1000px,65vw)] pl-5 pr-6 py-8 md:pl-10 md:pr-16 md:py-16">
-          {hero.eyebrow && (
-            <p className="mb-2 text-xs font-medium uppercase tracking-widest text-white/80">
-              {hero.eyebrow}
-            </p>
-          )}
-          <h1
-            className="max-w-[98%] text-[48px] font-black uppercase leading-[1.25] text-white lg:max-w-[96%] lg:text-[74px]"
-            style={{ fontFamily: 'var(--font-family)', fontWeight: 900, textShadow: '0 6px 12px rgba(0, 0, 0, .16)', marginBottom: '0.5em' }}
-          >
-            {line1}
-            <br />
-            {line2 || '\u00A0'}
-          </h1>
-          {hero.subheading && (
-            <p className="mt-4 max-w-[540px] text-base text-white/85 md:text-lg">
-              {hero.subheading}
-            </p>
-          )}
-          {/* CTA: birincil 220×54 lacivert + hareketli kenar; ikincil 220×54 tamamen beyaz, Inter-Bold */}
-          <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+          <div className="relative -translate-y-12 sm:-translate-y-8 md:translate-y-0">
+            {hero.eyebrow && (
+              <p className="mb-2 text-xs font-medium uppercase tracking-widest text-white/80">
+                {hero.eyebrow}
+              </p>
+            )}
+            <h1
+              className="max-w-[98%] text-[42px] font-black uppercase leading-[1.25] text-white sm:text-[48px] md:text-[60px] lg:max-w-[96%] lg:text-[78px]"
+              style={{ fontFamily: 'var(--font-family)', fontWeight: 900, textShadow: '0 6px 12px rgba(0, 0, 0, .16)', marginBottom: '0.5em' }}
+            >
+              {line1}
+              <br />
+              {line2 || '\u00A0'}
+            </h1>
+            {hero.subheading && (
+              <p className="mt-4 max-w-[540px] text-base text-white/85 md:text-lg">
+                {hero.subheading}
+              </p>
+            )}
+          </div>
+          {/* CTA: birincil lacivert + hareketli kenar; ikincil beyaz, Inter-Bold */}
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
             {/* Birincil: lacivert, etrafında dönen kenar (conic-gradient + rotate) */}
-            <span className="hero-primary-btn-wrap inline-flex h-[58px] w-[224px] flex-shrink-0 items-center justify-center rounded p-[2px]">
+            <span className="hero-primary-btn-wrap inline-flex h-[52px] w-[200px] flex-shrink-0 items-center justify-center rounded p-[2px]">
               <Link
                 href={hero.primaryCta?.href || '/turlar'}
-                className="hero-primary-inner hero-btn-shine flex h-[54px] w-[220px] items-center justify-center rounded bg-[#1e3a5f] text-white no-underline transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
-                style={{ fontFamily: '"Inter-Bold", var(--font-family), sans-serif', fontWeight: 700, fontSize: '20px', textTransform: 'uppercase' }}
+                className="hero-primary-inner hero-btn-shine flex h-[48px] w-[196px] items-center justify-center rounded bg-[#1e3a8a] text-white no-underline transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+                style={{ fontFamily: '"Inter-Bold", var(--font-family), sans-serif', fontWeight: 700, fontSize: '17px', textTransform: 'uppercase' }}
               >
                 {hero.primaryCta?.label || 'Turları Gör'}
               </Link>
@@ -123,8 +135,8 @@ export default function HeroBanner({ hero }: { hero: HeroData | null }) {
             {/* İkincil: tamamen beyaz, kenar yok */}
             <Link
               href={hero.secondaryCta?.href || '/contact'}
-              className="hero-btn-shine hero-cta-secondary inline-flex h-[54px] w-[220px] flex-shrink-0 items-center justify-center rounded bg-white text-[#1e3a5f] no-underline transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent"
-              style={{ fontFamily: '"Inter-Bold", var(--font-family), sans-serif', fontWeight: 700, fontSize: '20px', textTransform: 'uppercase' }}
+              className="hero-btn-shine hero-cta-secondary inline-flex h-[48px] w-[196px] flex-shrink-0 items-center justify-center rounded bg-white text-[#1e3a5f] no-underline transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent"
+              style={{ fontFamily: '"Inter-Bold", var(--font-family), sans-serif', fontWeight: 700, fontSize: '17px', textTransform: 'uppercase' }}
             >
               {hero.secondaryCta?.label || 'İletişim'}
             </Link>

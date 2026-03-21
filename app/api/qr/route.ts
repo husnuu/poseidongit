@@ -1,29 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import QRCode from 'qrcode'
 import { getBaseUrl } from '@/lib/seo'
+import { validateBookingAccessToken } from '@/lib/bookingAccessToken'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-function getVoucherUrl(bookingId: string): string {
-  const base = getBaseUrl()
-  return `${base.replace(/\/$/, '')}/api/voucher?bookingId=${encodeURIComponent(bookingId)}`
+function getVoucherUrl(bookingId: string, token: string): string {
+  const base = getBaseUrl().replace(/\/$/, '')
+  return `${base}/api/voucher/access?bookingId=${encodeURIComponent(bookingId)}&token=${encodeURIComponent(token)}`
 }
 
-/** GET /api/qr?bookingId=xxx — bilet doğrulama QR kodu PNG döndürür. E-postada img src ile kullanılır. */
+/** GET /api/qr?bookingId=xxx&token=xxx — bilet doğrulama QR kodu PNG döndürür. Token gerekli. */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const bookingId = searchParams.get('bookingId')?.trim()
+    const token = searchParams.get('token')?.trim()
 
-    if (!bookingId) {
+    if (!bookingId || !token) {
       return NextResponse.json(
-        { error: 'bookingId gerekli' },
+        { error: 'bookingId ve token gerekli' },
         { status: 400 }
       )
     }
 
-    const voucherUrl = getVoucherUrl(bookingId)
+    const valid = await validateBookingAccessToken(bookingId, token)
+    if (!valid) {
+      return NextResponse.json({ error: 'Forbidden. Valid token required.' }, { status: 403 })
+    }
+
+    const voucherUrl = getVoucherUrl(bookingId, token)
     const buffer = await QRCode.toBuffer(voucherUrl, {
       type: 'png',
       width: 240,

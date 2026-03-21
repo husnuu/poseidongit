@@ -41,7 +41,7 @@ interface BookingsTableProps {
   onCopyLink: (b: AdminBookingRow) => void
   updatingId: string | null
   getManageUrl: (bookingId: string) => string
-  getVoucherPdfUrl: (bookingId: string) => string
+  getVoucherPdfUrl: (bookingId: string, accessToken?: string | null) => string
 }
 
 function ParticipantsBreakdown({ counts }: { counts: { adult: number; child: number; infant: number } }) {
@@ -162,7 +162,7 @@ export default function BookingsTable({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-zinc-900 truncate">{b.tourTitle}</p>
-                <p className="text-xs text-zinc-600">{b.date}{b.className ? ` · Sınıf: ${b.className}` : ''}</p>
+                <p className="text-xs text-zinc-600">{b.date}{b.className ? ` · Sınıf: ${b.className}${(b.firstClassLocas?.length ? ` (${b.firstClassLocas.join(', ')})` : b.firstClassLoca ? ` (${b.firstClassLoca})` : '')}` : ''}</p>
                 <p className="mt-0.5 text-sm text-zinc-800">
                   {b.customer.firstName} {b.customer.lastName}
                   {b.customer.phone ? ` · ${b.customer.phone}` : ''}
@@ -184,7 +184,7 @@ export default function BookingsTable({
                     Detay
                   </button>
                   <a
-                    href={getVoucherPdfUrl(b.id)}
+                    href={getVoucherPdfUrl(b.id, b.accessToken)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="rounded bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200"
@@ -289,7 +289,7 @@ export default function BookingsTable({
               <td className="px-4 py-3">
                 <ParticipantsBreakdown counts={b.counts} />
               </td>
-              <td className="px-4 py-3 text-zinc-600">{b.className}</td>
+              <td className="px-4 py-3 text-zinc-600">{b.className}{(b.firstClassLocas?.length ? ` · ${b.firstClassLocas.join(', ')}` : b.firstClassLoca ? ` · ${b.firstClassLoca}` : '')}</td>
               <td className="px-4 py-3">
                 <SourceBadge source={b.source} manualSource={b.manualSource} />
               </td>
@@ -329,7 +329,7 @@ export default function BookingsTable({
                     Detay
                   </button>
                   <a
-                    href={getVoucherPdfUrl(b.id)}
+                    href={getVoucherPdfUrl(b.id, b.accessToken)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="rounded bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200"

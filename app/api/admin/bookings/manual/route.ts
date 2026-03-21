@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as admin from 'firebase-admin'
 import { getFirestore } from '@/lib/firebaseAdmin'
+import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { client } from '@/lib/sanity'
 import { tourImageAndPickupQuery, siteSettingsQuery } from '@/lib/queries'
 import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
@@ -30,6 +31,8 @@ function generateBookingReference(): string {
 const MANUAL_SOURCES = ['physical', 'office', 'phone', 'whatsapp', 'agency', 'other'] as const
 type ManualSource = (typeof MANUAL_SOURCES)[number]
 
+const LOCA_REGEX = /^L(10|[1-9])$/
+
 function parseBody(body: unknown): {
   tourId: string
   tourTitle: string
@@ -48,6 +51,7 @@ function parseBody(body: unknown): {
   sendVoucher?: boolean
   sendEmail?: boolean
   sendEmailToAdmin?: boolean
+  firstClassLocas?: string[]
 } | { error: string } {
   if (!body || typeof body !== 'object') return { error: 'Geçersiz istek' }
   const b = body as Record<string, unknown>
@@ -90,6 +94,14 @@ function parseBody(body: unknown): {
   const sendEmailToAdmin = b.sendEmailToAdmin === true
   const title = tourTitle || ''
   if (!title) return { error: 'Tur adı (tourTitle) gerekli' }
+  let firstClassLocas: string[] | undefined
+  if (Array.isArray(b.firstClassLocas) && b.firstClassLocas.length > 0) {
+    firstClassLocas = (b.firstClassLocas as unknown[])
+      .filter((x): x is string => typeof x === 'string')
+      .map((x) => x.trim().toUpperCase())
+      .filter((x) => LOCA_REGEX.test(x))
+    if (firstClassLocas.length === 0) firstClassLocas = undefined
+  }
   return {
     tourId,
     tourTitle: title,
@@ -108,6 +120,7 @@ function parseBody(body: unknown): {
     sendVoucher,
     sendEmail,
     sendEmailToAdmin,
+    firstClassLocas,
   }
 }
 
@@ -147,6 +160,7 @@ export async function POST(request: NextRequest) {
     forceCreate,
     sendEmail,
     sendEmailToAdmin,
+    firstClassLocas: firstClassLocasParsed,
   } = parsed
 
   const totalPax = counts.adult + counts.child + counts.infant
@@ -176,13 +190,13 @@ export async function POST(request: NextRequest) {
     .get()
 
   const bookedByClass: Record<string, number> = {}
-  snapshot.docs.forEach((doc) => {
+  for (const doc of snapshot.docs) {
     const d = doc.data()
     const ckey = normalizeClassKey((d.classId as string) ?? '')
-    const c = (d.counts ?? {}) as { adult?: number; child?: number; infant?: number }
-    const pax = (c.adult ?? 0) + (c.child ?? 0) + (c.infant ?? 0)
+    const c = (d.counts ?? {}) as Record<string, unknown>
+    const pax = Math.max(0, Number(c?.adult) || 0) + Math.max(0, Number(c?.child) || 0) + Math.max(0, Number(c?.infant) || 0)
     if (pax > 0) bookedByClass[ckey] = (bookedByClass[ckey] ?? 0) + pax
-  })
+  }
 
   const classKey = normalizeClassKey(classId)
   const capacity = capacityByClass[classKey] ?? 0
@@ -203,6 +217,7 @@ export async function POST(request: NextRequest) {
   }
 
   const reference = generateBookingReference()
+  const accessToken = generateBookingAccessToken()
   const ref = await db.collection(COLLECTION).add({
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     status,
@@ -226,6 +241,9 @@ export async function POST(request: NextRequest) {
     createdByAdmin: true,
     ...(adminNote != null && adminNote !== '' && { adminNote }),
     reference,
+    accessToken,
+    ...(status === 'paid' && totalPrice > 0 && { paidNow: totalPrice }),
+    ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { firstClassLocas: firstClassLocasParsed }),
   })
 
   if (status === 'paid' && sendEmail && customer.email && totalPrice > 0) {
@@ -261,9 +279,11 @@ export async function POST(request: NextRequest) {
     const siteBaseUrl = getBaseUrl().replace(/\/$/, '')
     await sendBookingPaidEmails({
       bookingId: ref.id,
+      accessToken,
       tourTitle,
       date,
       time: startTime,
+      status,
       className,
       counts,
       totalPrice,
@@ -279,6 +299,7 @@ export async function POST(request: NextRequest) {
       pickup,
       logoUrl,
       siteBaseUrl,
+      ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { firstClassLocas: firstClassLocasParsed }),
     })
   }
 
@@ -299,6 +320,7 @@ export async function POST(request: NextRequest) {
           email: customer.email || '',
           phone: customer.phone,
         },
+        ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { firstClassLocas: firstClassLocasParsed }),
       })
     }
   }

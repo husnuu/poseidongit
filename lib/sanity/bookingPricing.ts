@@ -4,10 +4,20 @@
  */
 import type {
   TourForBooking,
+  TicketClassForBooking,
+  SpecificDate,
   CalendarDay,
   PricingSummary,
   PricingUnit,
 } from './bookingTypes'
+
+/** Seçilen sınıf First Class mı (loca seçimi gerekir). key === 'first' veya label'da "first" geçiyorsa. */
+export function isFirstClassKey(tour: TourForBooking, classKey: string | null): boolean {
+  if (!classKey) return false
+  if (classKey === 'first') return true
+  const cls = tour.ticketClasses?.find((c) => c.key === classKey)
+  return (cls?.label?.toLowerCase().includes('first') ?? false)
+}
 
 /** Özel günde sınıf durumu: 'open' | 'full' | 'closed' | null (null = özel kural yok, kapasiteye bak) */
 export function getClassStatusForDate(
@@ -80,16 +90,82 @@ export function getSeasonMultiplier(tour: TourForBooking, dateStr: string): numb
   return 1
 }
 
+function normalizeTicketClassKey(classKey: string): string {
+  const k = classKey.toLowerCase().trim()
+  if (k === 'eco' || k.startsWith('eco')) return 'eco'
+  if (k === 'premium' || k.startsWith('prem')) return 'premium'
+  if (k === 'first' || k.startsWith('first')) return 'first'
+  return k
+}
+
+/** Takvim aktif ve özel gün satırı açıksa o günün kaydı. */
+function getActiveSpecificDate(tour: TourForBooking, dateStr: string): SpecificDate | null {
+  const avail = tour.availability
+  if (!avail?.enabled || !avail.specificDates?.length) return null
+  const dateNorm = dateStr.slice(0, 10)
+  const specific = avail.specificDates.find((s) => (s.date || '').slice(0, 10) === dateNorm)
+  if (!specific || specific.enabled === false) return null
+  return specific
+}
+
+function unitFromPriceOverrideObject(
+  po: { adultPrice?: number; childPrice?: number; infantPrice?: number } | undefined,
+  ageKey: 'adult' | 'child' | 'infant'
+): number | null {
+  if (!po) return null
+  const raw =
+    ageKey === 'adult' ? po.adultPrice : ageKey === 'child' ? po.childPrice : po.infantPrice
+  if (raw != null && Number.isFinite(Number(raw))) return Math.round(Number(raw))
+  return null
+}
+
+/**
+ * Öncelik: sınıfa özel özel gün fiyatı → günlük genel özel gün fiyatı → tur sınıfı × sezon.
+ */
+function effectiveUnitForAge(
+  tour: TourForBooking,
+  dateStr: string,
+  ticketClassKey: string,
+  ageKey: 'adult' | 'child' | 'infant',
+  cls: TicketClassForBooking,
+  mult: number
+): number {
+  const specific = getActiveSpecificDate(tour, dateStr)
+  if (specific) {
+    const norm = normalizeTicketClassKey(ticketClassKey)
+    const classRow = specific.classPriceOverrides?.find(
+      (x) => normalizeTicketClassKey(x.classKey) === norm
+    )
+    const fromClassRow = unitFromPriceOverrideObject(classRow, ageKey)
+    if (fromClassRow != null) return fromClassRow
+    const fromDay = unitFromPriceOverrideObject(specific.priceOverrides, ageKey)
+    if (fromDay != null) return fromDay
+  }
+  const agePrice = cls.pricesByAge?.find((p) => p.ageKey === ageKey)
+  return agePrice ? Math.round(agePrice.price * mult) : 0
+}
+
+/**
+ * Sınıf kartındaki “Yetişkin (tarih): … ₺” — `computePricingForSelection` ile aynı özel gün / sınıf / sezon mantığı.
+ */
+export function getDisplayedAdultUnitPriceForClass(
+  tour: TourForBooking,
+  dateStr: string,
+  cls: TicketClassForBooking
+): number | undefined {
+  const mult = getSeasonMultiplier(tour, dateStr)
+  const unit = effectiveUnitForAge(tour, dateStr, cls.key, 'adult', cls, mult)
+  if (!Number.isFinite(unit) || unit <= 0) return undefined
+  return unit
+}
+
 function getMinPriceForDate(tour: TourForBooking, dateStr: string): number | null {
   const classes = tour.ticketClasses ?? []
   const mult = getSeasonMultiplier(tour, dateStr)
   let min: number | null = null
   for (const c of classes) {
-    const adult = c.pricesByAge?.find((p) => p.ageKey === 'adult')
-    if (adult) {
-      const p = Math.round(adult.price * mult)
-      if (min === null || p < min) min = p
-    }
+    const p = effectiveUnitForAge(tour, dateStr, c.key, 'adult', c, mult)
+    if (p > 0 && (min === null || p < min)) min = p
   }
   return min
 }
@@ -142,7 +218,7 @@ export function computePricingForSelection(
   for (const { key, count } of mapping) {
     if (count <= 0) continue
     const agePrice = cls.pricesByAge.find((p) => p.ageKey === key)
-    const unitPrice = agePrice ? Math.round(agePrice.price * mult) : 0
+    const unitPrice = effectiveUnitForAge(tour, dateStr, classKey, key, cls, mult)
     unitPrices.push({
       ageKey: key,
       ageLabel: agePrice?.ageLabel ?? key,

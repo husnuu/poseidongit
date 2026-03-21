@@ -2,7 +2,8 @@ import { client } from '@/lib/sanity'
 import type { TourForBooking, CalendarDay, PricingSummary } from './bookingTypes'
 import { buildCalendarDaysForMonth, computePricingForSelection } from './bookingPricing'
 
-const tourForBookingQuery = `*[_type == "tour" && slug.current == $slug][0] {
+/** Rezervasyon sihirbazı + fiyat hesabı için tur projeksiyonu (slug veya _id sorgularında ortak). */
+export const tourForBookingProjection = `{
   _id,
   title,
   "slug": slug.current,
@@ -30,6 +31,12 @@ const tourForBookingQuery = `*[_type == "tour" && slug.current == $slug][0] {
       defaultAvailable,
       available,
       priceOverrides{
+        adultPrice,
+        childPrice,
+        infantPrice
+      },
+      classPriceOverrides[]{
+        classKey,
         adultPrice,
         childPrice,
         infantPrice
@@ -77,6 +84,11 @@ const tourForBookingQuery = `*[_type == "tour" && slug.current == $slug][0] {
     isDefault
   }
 }`
+
+const tourForBookingQuery = `*[_type == "tour" && slug.current == $slug][0] ${tourForBookingProjection}`
+
+/** Firestore’da saklanan Sanity _id veya slug ile tur çekilir (özel gün fiyatları dahil). */
+export const tourForBookingBySanityIdQuery = `*[_type == "tour" && (_id == $id || slug.current == $id)][0] ${tourForBookingProjection}`
 
 export async function fetchTourForBooking(
   slug: string

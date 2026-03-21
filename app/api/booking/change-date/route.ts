@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import * as admin from 'firebase-admin'
+import type { UpdateData } from 'firebase-admin/firestore'
 import { getFirestore } from '@/lib/firebaseAdmin'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
@@ -7,6 +9,9 @@ import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabil
 const COLLECTION = 'bookings'
 const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
+const LOCA_REGEX = /^L(10|[1-9])$/
+/** First Class: tüm turlar ortak havuz (availability / calendar ile uyumlu). */
+const FIRST_CLASS_CAPACITY_TOTAL = 20
 
 function normalizeClassKey(classId: string): string {
   const k = (classId ?? '').toLowerCase().trim()
@@ -20,6 +25,7 @@ function normalizeClassKey(classId: string): string {
  * POST /api/booking/change-date
  * Body: { bookingId, email, newDate } (newDate YYYY-MM-DD)
  * Verifies email, checks availability for new date, updates booking date.
+ * Rate limiting: see docs/RATE_LIMITING_SUGGESTIONS.md (e.g. 10 req/min per IP).
  */
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -33,6 +39,10 @@ export async function POST(request: NextRequest) {
     const bookingId = typeof body.bookingId === 'string' ? body.bookingId.trim() : ''
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const newDate = typeof body.newDate === 'string' ? body.newDate.trim().slice(0, 10) : ''
+    const rawLocas = body.firstClassLocas
+    const firstClassLocasBody = Array.isArray(rawLocas)
+      ? (rawLocas as unknown[]).map((x) => String(x).trim().toUpperCase()).filter((x) => LOCA_REGEX.test(x))
+      : undefined
 
     if (!bookingId || !email || !newDate || !DATE_REGEX.test(newDate)) {
       return NextResponse.json(
@@ -93,40 +103,112 @@ export async function POST(request: NextRequest) {
     const classKey = normalizeClassKey(classId)
     const capacity = capacityByClass[classKey] ?? 0
 
-    const snapshot = await db
-      .collection(COLLECTION)
-      .where('tourId', '==', sanityTour._id ?? tourId)
-      .where('date', '==', newDate)
-      .where('status', 'in', ACTIVE_STATUSES)
-      .get()
+    const requiredFirstClassLocas = classKey === 'first' ? Math.ceil(totalPax / 2) : 0
+    let finalFirstClassLocas: string[] | undefined
 
-    let bookedForClass = 0
-    snapshot.docs.forEach((doc) => {
-      if (doc.id === bookingId) return
-      const d = doc.data()
-      const cid = normalizeClassKey(String(d.classId ?? ''))
-      if (cid !== classKey) return
-      const c = (d.counts ?? {}) as { adult?: number; child?: number; infant?: number }
-      bookedForClass += (c.adult ?? 0) + (c.child ?? 0) + (c.infant ?? 0)
-    })
+    if (classKey === 'first') {
+      /**
+       * First Class: tüm turlar ortak L1–L10; rezervasyonlar turId’ye göre değil global sorgulanır.
+       */
+      const globalFirstSnap = await db
+        .collection(COLLECTION)
+        .where('date', '==', newDate)
+        .where('classId', '==', 'first')
+        .where('status', 'in', ACTIVE_STATUSES)
+        .get()
 
-    const remaining = Math.max(0, capacity - bookedForClass)
-    if (remaining < totalPax) {
-      return NextResponse.json(
-        {
-          error:
-            'Seçilen tarihte yeterli kontenjan yok. Lütfen başka bir tarih seçin veya bizimle iletişime geçin.',
-        },
-        { status: 400 }
-      )
+      let globalBookedPax = 0
+      const reservedOnNewDate: string[] = []
+      for (const doc of globalFirstSnap.docs) {
+        if (doc.id === bookingId) continue
+        const d = doc.data()
+        const c = (d.counts ?? {}) as Record<string, unknown>
+        globalBookedPax +=
+          Math.max(0, Number(c?.adult) || 0) +
+          Math.max(0, Number(c?.child) || 0) +
+          Math.max(0, Number(c?.infant) || 0)
+        const arr = Array.isArray(d.firstClassLocas)
+          ? (d.firstClassLocas as string[])
+              .map((x) => String(x).trim().toUpperCase())
+              .filter((x) => LOCA_REGEX.test(x))
+          : []
+        const single = typeof d.firstClassLoca === 'string' ? d.firstClassLoca.trim().toUpperCase() : ''
+        if (arr.length) arr.forEach((l) => reservedOnNewDate.includes(l) || reservedOnNewDate.push(l))
+        else if (single && LOCA_REGEX.test(single) && !reservedOnNewDate.includes(single)) reservedOnNewDate.push(single)
+      }
+
+      const remaining = Math.max(0, FIRST_CLASS_CAPACITY_TOTAL - globalBookedPax)
+      if (remaining < totalPax) {
+        return NextResponse.json(
+          {
+            error:
+              'Seçilen tarihte yeterli kontenjan yok. Lütfen başka bir tarih seçin veya bizimle iletişime geçin.',
+          },
+          { status: 400 }
+        )
+      }
+
+      if (requiredFirstClassLocas > 0) {
+        if (firstClassLocasBody && firstClassLocasBody.length === requiredFirstClassLocas) {
+          const alreadyTaken = firstClassLocasBody.filter((l) => reservedOnNewDate.includes(l))
+          if (alreadyTaken.length > 0) {
+            return NextResponse.json(
+              { error: `Seçilen localar (${alreadyTaken.join(', ')}) bu tarihte dolu. Lütfen müsait loca seçin.` },
+              { status: 400 }
+            )
+          }
+          finalFirstClassLocas = firstClassLocasBody
+        } else {
+          return NextResponse.json(
+            { error: `First Class için ${requiredFirstClassLocas} loca seçmeniz gerekiyor (${totalPax} kişi).` },
+            { status: 400 }
+          )
+        }
+      }
+    } else {
+      const snapshot = await db
+        .collection(COLLECTION)
+        .where('tourId', '==', sanityTour._id ?? tourId)
+        .where('date', '==', newDate)
+        .where('status', 'in', ACTIVE_STATUSES)
+        .get()
+
+      let bookedForClass = 0
+      for (const doc of snapshot.docs) {
+        if (doc.id === bookingId) continue
+        const d = doc.data()
+        const cid = normalizeClassKey(String(d.classId ?? ''))
+        if (cid !== classKey) continue
+        const c = (d.counts ?? {}) as Record<string, unknown>
+        bookedForClass += Math.max(0, Number(c?.adult) || 0) + Math.max(0, Number(c?.child) || 0) + Math.max(0, Number(c?.infant) || 0)
+      }
+
+      const remaining = Math.max(0, capacity - bookedForClass)
+      if (remaining < totalPax) {
+        return NextResponse.json(
+          {
+            error:
+              'Seçilen tarihte yeterli kontenjan yok. Lütfen başka bir tarih seçin veya bizimle iletişime geçin.',
+          },
+          { status: 400 }
+        )
+      }
+      finalFirstClassLocas = undefined
     }
 
-    await ref.update({ date: newDate })
+    const updatePayload: UpdateData = { date: newDate }
+    if (finalFirstClassLocas && finalFirstClassLocas.length > 0) {
+      updatePayload.firstClassLocas = finalFirstClassLocas
+      /** Eski tek-alan (firstClassLoca) kalsın; doluluk hesapları çift sayabilir. Tam sil. */
+      updatePayload.firstClassLoca = admin.firestore.FieldValue.delete()
+    }
+    await ref.update(updatePayload)
 
     return NextResponse.json({
       ok: true,
       message: 'Rezervasyon tarihiniz güncellendi.',
       date: newDate,
+      ...(finalFirstClassLocas && finalFirstClassLocas.length > 0 && { firstClassLocas: finalFirstClassLocas }),
     })
   } catch (e) {
     console.error('[booking change-date]', e)

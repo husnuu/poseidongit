@@ -79,14 +79,6 @@ export default function FAQAccordion({
       {(hasFaqs || hasTitle) && (
       <h2
         className={isSectionTitle ? styles.faqTitleSection : styles.faqTitle}
-        style={
-          isSectionTitle
-            ? {
-                color: 'var(--secondary)',
-                fontFamily: 'var(--font-family-title), var(--font-family), sans-serif',
-              }
-            : undefined
-        }
       >
         {titleContent}
       </h2>

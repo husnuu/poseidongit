@@ -151,6 +151,7 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
       defaultAvailable,
       available,
       priceOverrides{ adultPrice, childPrice, infantPrice },
+      classPriceOverrides[]{ classKey, adultPrice, childPrice, infantPrice },
       classAvailability[]{ classKey, status }
     }
   },
@@ -238,7 +239,7 @@ export const tourImageAndPickupQuery = `*[_type == "tour" && (_id == $tourId || 
   "gallery": gallery[0...3][].asset,
   "durationLabel": quickFacts.durationText,
   "meetingPoint": coalesce(whereSection.meetingPointAddress, quickFacts.meetingLocation),
-  quickFacts{ meetingLocation, startTime, durationText },
+  quickFacts{ meetingLocation, startTime, returnTime, durationText },
   whereSection{ meetingPointAddress },
   deposit{ enabled, type, value },
   included,
@@ -270,6 +271,12 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0] {
   cta{
     text,
     href
+  },
+  announcementBar{
+    enabled,
+    text,
+    icon,
+    linkUrl
   },
   headerLanguages[]{
     code,
@@ -357,6 +364,7 @@ export const homePageHeroQuery = `*[_type == "homePage"][0] {
   },
   hero{
     eyebrow,
+    topBadgeText,
     heading,
     subheading,
     heroBadgeEnabled,
@@ -645,6 +653,17 @@ export const aboutPageQuery = `*[_type == "aboutPage"][0] {
     isActive,
     image { asset, alt }
   }
+}`
+
+/** Yasal sayfa slug ile (Gizlilik Politikası, Kullanım Şartları vb.) */
+export const legalPageBySlugQuery = `*[_type == "legalPage" && slug.current == $slug][0] {
+  _id,
+  title,
+  "slug": slug.current,
+  seoTitle,
+  seoDescription,
+  content,
+  updatedAt
 }`
 
 /** Sık Sorulanlar sayfası (singleton) */

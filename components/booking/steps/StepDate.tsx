@@ -46,7 +46,7 @@ export default function StepDate({ tour, state, onUpdate }: StepDateProps) {
 
   return (
     <div className={styles.card}>
-      <h3 className={styles.cardTitle}>Tarih Seçin</h3>
+      <h3 className={`${styles.cardTitle} ${styles.wizardMainStepTitle}`}>Tarih Seçin</h3>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <button
           type="button"

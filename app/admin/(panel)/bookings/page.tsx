@@ -214,9 +214,20 @@ function getManageUrl(bookingId: string): string {
   return `${window.location.origin}/rezervasyon/yonet?bookingId=${encodeURIComponent(bookingId)}`
 }
 
-function getVoucherPdfUrl(bookingId: string): string {
+function getVoucherPdfUrl(bookingId: string, accessToken?: string | null): string {
   if (typeof window === 'undefined') return ''
-  return `${window.location.origin}/api/voucher?bookingId=${encodeURIComponent(bookingId)}&download=1`
+  const base = window.location.origin
+  if (accessToken?.trim()) {
+    const params = new URLSearchParams()
+    params.set('bookingId', bookingId)
+    params.set('token', accessToken.trim())
+    params.set('download', '1')
+    return `${base}/api/voucher/access?${params.toString()}`
+  }
+  const params = new URLSearchParams()
+  params.set('bookingId', bookingId)
+  params.set('download', '1')
+  return `${base}/api/voucher?${params.toString()}`
 }
 
 type SortKey = 'date' | 'totalPrice' | 'createdAt' | 'tourTitle'
@@ -394,6 +405,8 @@ export default function AdminBookingsPage() {
           counts: b.counts ?? { adult: 0, child: 0, infant: 0 },
           classId: b.classId,
           className: b.className,
+          firstClassLocas: Array.isArray(b.firstClassLocas) ? b.firstClassLocas : undefined,
+          firstClassLoca: typeof b.firstClassLoca === 'string' ? b.firstClassLoca : undefined,
           totalPrice: Number(b.totalPrice ?? 0),
           unitPrice: typeof b.unitPrice === 'number' ? b.unitPrice : undefined,
           currency: b.currency ?? 'TRY',

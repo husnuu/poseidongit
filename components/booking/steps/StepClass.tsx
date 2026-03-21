@@ -8,7 +8,7 @@ import type {
   PricingSummary,
 } from '@/lib/sanity/bookingTypes'
 import { getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
-import { buildCalendarDaysForMonth, computePricingForSelection, getSeasonMultiplier, getClassStatusForDate, getRemainingCapacityForDate, getCapForTicketClass } from '@/lib/sanity/bookingPricing'
+import { buildCalendarDaysForMonth, computePricingForSelection, getDisplayedAdultUnitPriceForClass, getClassStatusForDate, getRemainingCapacityForDate, getCapForTicketClass } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import styles from '../booking.module.css'
 
@@ -122,7 +122,7 @@ export default function StepClass({
             <path d="M13 11v2" />
           </svg>
         </span>
-        <h3 className={styles.cardCaptionTitle}>Sınıf Seçimi</h3>
+        <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>Sınıf Seçimi</h3>
       </div>
       <hr className={styles.cardDivider} />
       <div className={styles.cardContent}>
@@ -191,12 +191,9 @@ export default function StepClass({
         const available = cap >= totalPax && firstClassNoChildOrBaby && firstClassEvenPax && !classBlocked
         const isFirstClassRestricted = cls.key === 'first' && (!firstClassNoChildOrBaby || totalPax % 2 !== 0)
         const isFirstClassOddPaxWarning = cls.key === 'first' && totalPax % 2 !== 0
-        const adultPrice = cls.pricesByAge?.find((p) => p.ageKey === 'adult')
-        const multiplier = state.selectedDate ? getSeasonMultiplier(tour, state.selectedDate) : 1
-        const price =
-          adultPrice?.price != null
-            ? Math.round(adultPrice.price * multiplier)
-            : undefined
+        const price = state.selectedDate
+          ? getDisplayedAdultUnitPriceForClass(tour, state.selectedDate, cls)
+          : undefined
         const dateFormatted = new Date(state.selectedDate!).toLocaleDateString('tr-TR', {
           day: 'numeric',
           month: 'short',

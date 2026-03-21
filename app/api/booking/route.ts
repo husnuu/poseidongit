@@ -1,3 +1,7 @@
+/**
+ * GET /api/booking — Rezervasyon detayı (bookingId + email ile).
+ * Rate limiting: see docs/RATE_LIMITING_SUGGESTIONS.md (e.g. 20 req/min per IP).
+ */
 import { NextRequest, NextResponse } from 'next/server'
 import { getFirestore } from '@/lib/firebaseAdmin'
 
@@ -63,14 +67,26 @@ export async function GET(request: NextRequest) {
       : null
     const canCancel = typeof hoursUntilTour === 'number' && hoursUntilTour > 24
 
+    const classId = String(data.classId ?? '')
+    const firstClassLocasRaw = data.firstClassLocas
+    const firstClassLocaSingle = typeof data.firstClassLoca === 'string' ? data.firstClassLoca.trim() : ''
+    const firstClassLocas = Array.isArray(firstClassLocasRaw) && firstClassLocasRaw.length > 0
+      ? (firstClassLocasRaw as string[]).map((x) => String(x).trim().toUpperCase()).filter((x) => /^L(10|[1-9])$/.test(x))
+      : firstClassLocaSingle && /^L(10|[1-9])$/.test(firstClassLocaSingle.toUpperCase())
+        ? [firstClassLocaSingle.toUpperCase()]
+        : undefined
+
     const booking = {
       id: snap.id,
       status,
+      tourId: String(data.tourId ?? ''),
       tourTitle: data.tourTitle,
       date: dateStr,
       time: data.time ?? undefined,
       meetingPoint: data.meetingPoint ?? undefined,
+      classId,
       className: data.className,
+      firstClassLocas: firstClassLocas?.length ? firstClassLocas : undefined,
       totalPrice: data.totalPrice,
       currency: data.currency ?? 'TRY',
       counts: data.counts ?? { adult: 0, child: 0, infant: 0 },
@@ -81,6 +97,8 @@ export async function GET(request: NextRequest) {
       },
       canCancel,
       hoursUntilTour: hoursUntilTour != null ? Math.round(hoursUntilTour) : null,
+      /** Secure token for ticket/voucher links. Omitted for legacy bookings without token. */
+      accessToken: typeof data.accessToken === 'string' && data.accessToken.trim() ? data.accessToken.trim() : undefined,
     }
 
     return NextResponse.json({ booking })

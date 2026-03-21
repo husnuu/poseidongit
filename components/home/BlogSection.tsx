@@ -77,8 +77,8 @@ function BlogCard({ post }: { post: BlogPostItem }) {
             </time>
           )}
           <span
-            className="tour-card-cta hero-btn-shine relative mt-auto w-full rounded-xl py-3 md:py-3.5 font-black uppercase text-white text-center text-lg flex items-center justify-center overflow-hidden"
-            style={{ background: '#1e3a8a', boxShadow: '0 4px 14px rgba(30, 58, 138, 0.4)' }}
+            className="tour-card-cta hero-btn-shine relative mt-auto w-full rounded-xl py-2.5 md:py-3 font-black uppercase text-white text-center text-base md:text-[17px] flex items-center justify-center overflow-hidden"
+            style={{ background: '#1e3a8a', boxShadow: '0 3px 12px rgba(30, 58, 138, 0.35)' }}
           >
             Yazıyı oku
           </span>
@@ -127,7 +127,7 @@ export default function BlogSection({ data }: BlogSectionProps) {
         <header className="mb-12">
           <h2
             id="blog-section-heading"
-            className="text-[48px] font-black uppercase leading-[1.1] mb-4"
+            className="text-[34px] font-black uppercase leading-[1.15] mb-4 sm:text-[38px] md:text-[42px] lg:text-[46px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
           >
             {firstTwo && <span style={{ color: '#1e3a8a' }}>{firstTwo}</span>}
@@ -161,7 +161,7 @@ export default function BlogSection({ data }: BlogSectionProps) {
           <div className="mt-12 flex justify-center">
             <Link
               href={ctaButton.href}
-              className="rounded-xl py-2.5 px-6 font-bold uppercase text-sm inline-flex items-center justify-center transition hover:bg-zinc-50 border-2"
+              className="rounded-lg py-2 px-5 font-bold uppercase text-xs inline-flex items-center justify-center transition hover:bg-zinc-50 border-2"
               style={{ background: '#fff', color: '#1e3a8a', borderColor: '#1e3a8a' }}
             >
               {ctaButton.label}

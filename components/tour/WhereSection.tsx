@@ -42,7 +42,7 @@ export default function WhereSection({ data }: WhereSectionProps) {
       <h2
         id="where-section-heading"
         className="text-2xl font-bold mb-4"
-        style={{ color: '#0f172a' }}
+        style={{ color: '#1e3a5f' }}
       >
         {data.heading || 'Nerede'}
       </h2>

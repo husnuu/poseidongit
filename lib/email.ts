@@ -1,10 +1,12 @@
 import { Resend } from 'resend'
 import { buildGoogleCalendarUrl } from '@/lib/calendar'
 import { generateVoucherPdf } from '@/lib/voucher/generateVoucherPdf'
+import { buildVoucherDataFromBookingSnapshot } from '@/lib/voucher/buildVoucherDataFromBookingSnapshot'
+import { formatTicketDate } from '@/lib/voucher/formatTicketDate'
 import type { VoucherData } from '@/lib/voucher/types'
 import { DEFAULT_POLICIES, DEFAULT_CONTACT } from '@/lib/voucher/types'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
-import { manageBookingUrl, voucherPdfUrl, getEmailBaseUrl } from '@/lib/siteUrls'
+import { manageBookingUrl, voucherPdfUrl, getEmailBaseUrl, customerTicketViewUrl } from '@/lib/siteUrls'
 import { getFirestore } from '@/lib/firebaseAdmin'
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery } from '@/lib/queries'
@@ -23,6 +25,9 @@ export interface BookingEmailPayload {
   date: string
   time?: string
   className: string
+  /** First Class localar (L1–L10). Eski tek loca için firstClassLoca da kullanılabilir. */
+  firstClassLocas?: string[]
+  firstClassLoca?: string
   counts: { adult: number; child: number; infant: number }
   totalPrice: number
   currency: string
@@ -51,6 +56,10 @@ export interface BookingEmailPayload {
   paidNow?: number
   /** E-posta içindeki buton linkleri için site base URL (örn. https://siteniz.com). Boşsa env kullanılır. */
   siteBaseUrl?: string
+  /** Güvenli bilet/voucher linkleri için erişim tokenı. Yeni rezervasyonlarda mutlaka gönderin. */
+  accessToken?: string
+  /** Firestore durumu — PDF’te ödenen tutar gösterimi için (snapshot yolu başarısız olursa). */
+  status?: string
 }
 
 function getResend(): Resend | null {
@@ -85,6 +94,12 @@ function formatParticipants(counts: { adult: number; child: number; infant: numb
   return parts.length > 0 ? parts.join(', ') : '—'
 }
 
+/** Sınıf + First Class loca metni (tek veya çoklu). */
+function classDisplay(p: { className?: string; firstClassLocas?: string[]; firstClassLoca?: string }): string {
+  const locas = (p.firstClassLocas?.length ? p.firstClassLocas : p.firstClassLoca ? [p.firstClassLoca] : []).join(', ')
+  return locas ? `${p.className?.trim() || '—'} · Loca ${locas}` : (p.className?.trim() || '—')
+}
+
 /** BookingEmailPayload + voucherUrl ile e-posta ekinde gönderilecek PDF için VoucherData üretir. */
 function payloadToVoucherData(payload: BookingEmailPayload, voucherUrl: string): VoucherData {
   const website = getEmailBaseUrl().replace(/\/$/, '') || DEFAULT_CONTACT.website
@@ -92,11 +107,13 @@ function payloadToVoucherData(payload: BookingEmailPayload, voucherUrl: string):
     referenceNumber: payload.bookingId,
     bookingUrl: voucherUrl,
     tourTitle: payload.tourTitle,
-    date: payload.date,
+    date: formatTicketDate(payload.date),
     time: payload.time,
-    meetingPickup: payload.pickup?.trim() || 'Çeşme Sahil',
+    meetingPickup: payload.pickup?.trim() || '—',
+    status: payload.status?.trim() || undefined,
     language: 'Türkçe',
     className: payload.className?.trim() || undefined,
+    firstClassLoca: (payload.firstClassLocas?.length ? payload.firstClassLocas.join(', ') : payload.firstClassLoca?.trim()) || undefined,
     customerName: `${payload.customer.firstName} ${payload.customer.lastName}`.trim() || '—',
     customerEmail: payload.customer.email || '—',
     customerPhone: payload.customer.phone || '—',
@@ -124,6 +141,7 @@ async function enrichVoucherDataWithTour(data: VoucherData, tourId: string): Pro
       gallery?: { _ref?: string }[]
       durationLabel?: string | null
       meetingPoint?: string | null
+      quickFacts?: { startTime?: string | null; returnTime?: string | null }
       deposit?: { enabled?: boolean; type?: string; value?: number }
       included?: string[] | null
       notIncluded?: string[] | null
@@ -147,6 +165,8 @@ async function enrichVoucherDataWithTour(data: VoucherData, tourId: string): Pro
           ? tourMeta.deposit.value
           : Math.round((tourMeta.deposit.value / 100) * data.totalPrice)
     }
+    const fallbackTime = tourMeta.quickFacts?.startTime?.trim() || undefined
+    const arrivalTime = tourMeta.quickFacts?.returnTime?.trim() || undefined
     return {
       ...data,
       ...(tourImageUrl && { tourImageUrl }),
@@ -156,6 +176,8 @@ async function enrichVoucherDataWithTour(data: VoucherData, tourId: string): Pro
       ...(depositAmount != null && { depositAmount }),
       ...(tourMeta.included?.length && { included: tourMeta.included }),
       ...(tourMeta.notIncluded?.length && { notIncluded: tourMeta.notIncluded }),
+      ...(data.time ? {} : fallbackTime ? { time: fallbackTime } : {}),
+      ...(arrivalTime ? { arrivalTime } : {}),
     }
   } catch {
     return data
@@ -176,8 +198,7 @@ function buildConfirmationEmailHtml(
   const customerName = `${p.customer.firstName} ${p.customer.lastName}`.trim() || '—'
   const tourImage = p.tourImageUrl?.trim() || ''
   const bookingUrl = p.bookingUrl?.trim() || '#'
-  const baseUrl = getEmailBaseUrl()
-  const voucherUrl = `${baseUrl.replace(/\/$/, '')}/api/voucher?bookingId=${encodeURIComponent(p.bookingId)}`
+  const viewTicketUrl = customerTicketViewUrl(p.bookingId, p.accessToken)
   const calendarUrl = buildGoogleCalendarUrl({
     tourTitle: p.tourTitle,
     date: p.date,
@@ -198,7 +219,7 @@ function buildConfirmationEmailHtml(
     { label: 'Reference', value: p.bookingId, highlight: true },
     { label: 'Date', value: dateFormatted + (p.time ? ` · ${p.time}` : '') },
     { label: 'Participants', value: participants },
-    { label: 'Class', value: p.className },
+    { label: 'Class', value: classDisplay(p) },
     { label: 'Name', value: customerName },
     { label: 'Email', value: p.customer.email || '—' },
     { label: 'Phone', value: p.customer.phone || '—' },
@@ -300,7 +321,7 @@ function buildConfirmationEmailHtml(
           </tr>
           <tr>
             <td style="padding: 16px 24px 0 24px; text-align: center;">
-              <p style="margin: 0; font-size: 13px; color: #6b7280;">Voucher PDF'inizi indirmek için <a href="${escapeHtml(voucherUrl)}" style="color: #0c1929; text-decoration: underline;">buraya tıklayın</a>.</p>
+              <p style="margin: 0; font-size: 13px; color: #6b7280;">Biletinizi sitede görüntülemek için <a href="${escapeHtml(viewTicketUrl)}" style="color: #0c1929; text-decoration: underline;">buraya tıklayın</a>.</p>
             </td>
           </tr>
           <tr>
@@ -343,7 +364,7 @@ function buildAdminEmailHtml(p: BookingEmailPayload): string {
     <p style="margin: 0 0 8px;"><strong>Tur:</strong> ${escapeHtml(p.tourTitle)}</p>
     <p style="margin: 0 0 8px;"><strong>Tarih:</strong> ${escapeHtml(dateFormatted)}</p>
     ${timeLine}
-    <p style="margin: 0 0 8px;"><strong>Sınıf:</strong> ${escapeHtml(p.className)}</p>
+    <p style="margin: 0 0 8px;"><strong>Sınıf:</strong> ${escapeHtml(classDisplay(p))}</p>
     <p style="margin: 0 0 8px;"><strong>Yetişkin:</strong> ${p.counts.adult} · <strong>Çocuk:</strong> ${p.counts.child} · <strong>Bebek:</strong> ${p.counts.infant}</p>
     <p style="margin: 0 0 8px;"><strong>Toplam:</strong> ${p.totalPrice} ${escapeHtml(p.currency)}</p>
     <hr style="border: none; border-top: 1px solid #cbd5e1; margin: 12px 0;">
@@ -406,20 +427,27 @@ export async function sendBookingEmails(
   const from = getFrom()
   const baseUrl = getEmailBaseUrl().replace(/\/$/, '')
   const bookingUrl = payload.bookingUrl || `${baseUrl}/rezervasyon`
-  const voucherUrlForPdf = voucherPdfUrl(payload.bookingId, false)
+  const voucherUrlForPdf = payload.accessToken
+    ? voucherPdfUrl(payload.bookingId, false, payload.accessToken)
+    : voucherPdfUrl(payload.bookingId, false)
 
   const customerHtml = buildCustomerEmailHtml({ ...payload, bookingUrl })
 
   const attachments: Array<{ filename: string; content: Buffer; contentId?: string }> = []
   try {
-    let voucherData = payloadToVoucherData(payload, voucherUrlForPdf)
-    try {
-      const db = getFirestore()
-      const snap = await db.collection('bookings').doc(payload.bookingId).get()
-      const tourId = typeof snap.data()?.tourId === 'string' ? String(snap.data()?.tourId).trim() : ''
-      if (tourId) voucherData = await enrichVoucherDataWithTour(voucherData, tourId)
-    } catch {
-      // Tur verisi olmadan PDF üretilir
+    const db = getFirestore()
+    const snap = await db.collection('bookings').doc(payload.bookingId).get()
+    let voucherData: VoucherData | null = snap.exists
+      ? await buildVoucherDataFromBookingSnapshot(snap, payload.accessToken?.trim() ?? '')
+      : null
+    if (!voucherData) {
+      voucherData = payloadToVoucherData(payload, voucherUrlForPdf)
+      try {
+        const tourId = typeof snap.data()?.tourId === 'string' ? String(snap.data()?.tourId).trim() : ''
+        if (tourId) voucherData = await enrichVoucherDataWithTour(voucherData, tourId)
+      } catch {
+        // Tur verisi olmadan PDF üretilir
+      }
     }
     const pdfBytes = await generateVoucherPdf(voucherData)
     attachments.push({
@@ -486,7 +514,7 @@ function buildPremiumConfirmationEmailHtml(
   const emailFont = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
 
   const manageUrl = manageBookingUrl(p.bookingId)
-  const pdfDownloadUrl = voucherPdfUrl(p.bookingId, true)
+  const viewTicketUrl = customerTicketViewUrl(p.bookingId, p.accessToken)
   const heroImg = tourImage || ''
 
   const paidRowHtml =
@@ -552,7 +580,7 @@ function buildPremiumConfirmationEmailHtml(
                 <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Kalkış saati</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(p.time || '—')}</td></tr>
                 <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Toplanma noktası</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(pickup)}</td></tr>
                 <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Misafirler</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(participants)}</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Sınıf</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(p.className)}</td></tr>
+                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Sınıf</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(classDisplay(p))}</td></tr>
                 ${paidRowHtml}
                 <tr><td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:${textMuted};font-size:13px;">Toplam Tutar</td><td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:${primary};font-size:18px;font-weight:700;text-align:right;">${escapeHtml(String(p.totalPrice))} ${escapeHtml(p.currency)}</td></tr>
               </table>
@@ -569,7 +597,7 @@ function buildPremiumConfirmationEmailHtml(
                 </tr>
                 <tr>
                   <td>
-                    <a href="${escapeHtml(pdfDownloadUrl)}" target="_blank" style="display:block;width:100%;background-color:transparent;color:${textDark}!important;font-size:15px;font-weight:600;text-decoration:none;text-align:center;padding:14px 24px;border-radius:10px;border:2px solid #d1d5db;box-sizing:border-box;font-family:${emailFont};">PDF Bilet İndir</a>
+                    <a href="${escapeHtml(viewTicketUrl)}" target="_blank" style="display:block;width:100%;background-color:transparent;color:${textDark}!important;font-size:15px;font-weight:600;text-decoration:none;text-align:center;padding:14px 24px;border-radius:10px;border:2px solid #d1d5db;box-sizing:border-box;font-family:${emailFont};">Biletimi Görüntüle</a>
                   </td>
                 </tr>
               </table>
@@ -584,7 +612,7 @@ function buildPremiumConfirmationEmailHtml(
                     <div style="font-size:14px;font-weight:700;color:${textDark};margin-bottom:8px;">Önemli Bilgiler</div>
                     <ul style="margin:0;padding:0 0 0 18px;color:${textMuted};font-size:13px;line-height:1.6;">
                       <li style="margin-bottom:4px;">Lütfen kalkış saatinden 30 dakika önce teknede olun.</li>
-                      <li style="margin-bottom:4px;">Biniş sırasında biletinizi (sayfa veya PDF) göstermeniz yeterlidir.</li>
+                      <li style="margin-bottom:4px;">Biniş sırasında web sitedeki bilet sayfanızı veya e-posta ekindeki PDF biletinizi göstermeniz yeterlidir.</li>
                       <li>Sorularınız için bizimle iletişime geçebilirsiniz.</li>
                     </ul>
                   </td>
@@ -644,7 +672,7 @@ function buildAdminPaidEmailHtml(p: BookingEmailPayload): string {
     <p style="margin: 0 0 8px;"><strong>Tur:</strong> ${escapeHtml(p.tourTitle)}</p>
     <p style="margin: 0 0 8px;"><strong>Tarih:</strong> ${escapeHtml(dateFormatted)}</p>
     ${timeLine}
-    <p style="margin: 0 0 8px;"><strong>Sınıf:</strong> ${escapeHtml(p.className)}</p>
+    <p style="margin: 0 0 8px;"><strong>Sınıf:</strong> ${escapeHtml(classDisplay(p))}</p>
     <p style="margin: 0 0 8px;"><strong>Toplam:</strong> ${p.totalPrice} ${escapeHtml(p.currency)}</p>
     <hr style="border: none; border-top: 1px solid #a7f3d0; margin: 12px 0;">
     <p style="margin: 0 0 8px;"><strong>Müşteri:</strong> ${escapeHtml(p.customer.firstName)} ${escapeHtml(p.customer.lastName)}</p>
@@ -670,20 +698,27 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
   const from = getFrom()
   const baseUrl = getEmailBaseUrl().replace(/\/$/, '')
   const bookingUrl = payload.bookingUrl || `${baseUrl}/rezervasyon`
-  const voucherUrlForPdf = voucherPdfUrl(payload.bookingId, false)
+  const voucherUrlForPdf = payload.accessToken
+    ? voucherPdfUrl(payload.bookingId, false, payload.accessToken)
+    : voucherPdfUrl(payload.bookingId, false)
 
   const customerHtml = buildCustomerPaidEmailHtml({ ...payload, bookingUrl })
 
   const attachments: Array<{ filename: string; content: Buffer; contentId?: string }> = []
   try {
-    let voucherData = payloadToVoucherData(payload, voucherUrlForPdf)
-    try {
-      const db = getFirestore()
-      const snap = await db.collection('bookings').doc(payload.bookingId).get()
-      const tourId = typeof snap.data()?.tourId === 'string' ? String(snap.data()?.tourId).trim() : ''
-      if (tourId) voucherData = await enrichVoucherDataWithTour(voucherData, tourId)
-    } catch {
-      // Tur verisi olmadan PDF üretilir
+    const db = getFirestore()
+    const snap = await db.collection('bookings').doc(payload.bookingId).get()
+    let voucherData: VoucherData | null = snap.exists
+      ? await buildVoucherDataFromBookingSnapshot(snap, payload.accessToken?.trim() ?? '')
+      : null
+    if (!voucherData) {
+      voucherData = payloadToVoucherData(payload, voucherUrlForPdf)
+      try {
+        const tourId = typeof snap.data()?.tourId === 'string' ? String(snap.data()?.tourId).trim() : ''
+        if (tourId) voucherData = await enrichVoucherDataWithTour(voucherData, tourId)
+      } catch {
+        // Tur verisi olmadan PDF üretilir
+      }
     }
     const pdfBytes = await generateVoucherPdf(voucherData)
     attachments.push({

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK } from '@/lib/sanity/bookingTypes'
+import { resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
 import StepPeople from './steps/StepPeople'
 import StepDate from './steps/StepDate'
 import StepClass from './steps/StepClass'
@@ -30,7 +31,13 @@ export default function BookingModal({ tour, onClose }: BookingModalProps) {
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
 
   const updateState = useCallback((patch: Partial<BookingWizardState>) => {
-    setState((prev) => ({ ...prev, ...patch }))
+    setState((prev) => {
+      const next = { ...prev, ...patch }
+      if (patch.counts !== undefined) {
+        next.additionalTravelers = resizeAdditionalTravelers(prev.additionalTravelers, patch.counts)
+      }
+      return next
+    })
   }, [])
 
   const onPricingComputed = useCallback((pricingSummary: PricingSummary | null) => {

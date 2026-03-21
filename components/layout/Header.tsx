@@ -1,6 +1,7 @@
 import { client } from '@/lib/sanity'
 import { siteSettingsQuery } from '@/lib/queries'
 import { getSiteName } from '@/lib/seo'
+import type { AnnouncementBarData } from './announcementBarTypes'
 import HeaderClient from './HeaderClient'
 
 interface SiteSettings {
@@ -16,6 +17,7 @@ interface SiteSettings {
   }
   headerNav?: Array<{ label: string; href: string }>
   cta?: { text?: string; href?: string }
+  announcementBar?: AnnouncementBarData | null
   languages?: string[]
   footerNav?: Array<{ label: string; href: string }>
   legalNav?: Array<{ label: string; href: string }>
@@ -36,11 +38,22 @@ export default async function Header() {
     const settings = await getSiteSettings()
     const fallbackName = getSiteName() || 'Site'
     if (!settings) {
-      return <HeaderClient settings={{ siteName: fallbackName, headerNav: [{ label: 'Anasayfa', href: '/' }] }} />
+      return (
+        <HeaderClient
+          settings={{ siteName: fallbackName, headerNav: [{ label: 'Anasayfa', href: '/' }] }}
+          announcementBar={null}
+        />
+      )
     }
-    return <HeaderClient settings={settings} />
+    const bar = settings.announcementBar ?? null
+    return <HeaderClient settings={settings} announcementBar={bar} />
   } catch {
     const fallbackName = getSiteName() || 'Site'
-    return <HeaderClient settings={{ siteName: fallbackName, headerNav: [{ label: 'Anasayfa', href: '/' }] }} />
+    return (
+      <HeaderClient
+        settings={{ siteName: fallbackName, headerNav: [{ label: 'Anasayfa', href: '/' }] }}
+        announcementBar={null}
+      />
+    )
   }
 }

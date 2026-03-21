@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import type { AdminBookingRow, BookingStatus } from '@/types/adminBookings'
 import { MANUAL_SOURCE_LABELS } from '@/types/adminBookings'
+import { additionalTravelerLabels } from '@/lib/bookingAdditionalTravelers'
 
 const STATUS_LABELS: Record<BookingStatus, string> = {
   pending: 'Beklemede',
@@ -15,7 +16,7 @@ interface BookingDetailModalProps {
   onClose: () => void
   booking: AdminBookingRow | null
   getManageUrl: (bookingId: string) => string
-  getVoucherPdfUrl: (bookingId: string) => string
+  getVoucherPdfUrl: (bookingId: string, accessToken?: string | null) => string
   onStatusChange: (bookingId: string, status: BookingStatus) => void
   onAdminNoteSave: (bookingId: string, adminNote: string) => Promise<void>
   updating: boolean
@@ -42,6 +43,12 @@ export default function BookingDetailModal({
   if (!booking) return null
 
   const totalPax = booking.counts.adult + booking.counts.child + booking.counts.infant
+  const extraTravelers = booking.additionalTravelers ?? []
+  const extraLabels = additionalTravelerLabels({
+    adult: booking.counts.adult,
+    child: booking.counts.child,
+    infant: booking.counts.infant,
+  })
 
   const handleSaveNote = async () => {
     setSavingNote(true)
@@ -100,18 +107,35 @@ export default function BookingDetailModal({
               <div>
                 <h4 className="font-semibold text-zinc-900">{booking.tourTitle}</h4>
                 <p className="text-sm text-zinc-600">{booking.date}{booking.time ? ` · ${booking.time}` : ''}</p>
-                <p className="text-sm text-zinc-600">{booking.className}</p>
+                <p className="text-sm text-zinc-600">
+                  {booking.className}
+                  {booking.firstClassLocas?.length ? ` · Loca ${booking.firstClassLocas.join(', ')}` : booking.firstClassLoca ? ` · Loca ${booking.firstClassLoca}` : ''}
+                </p>
               </div>
             </div>
 
             <div className="rounded-lg bg-zinc-50 p-3">
-              <p className="text-xs font-medium uppercase text-zinc-500">Müşteri</p>
+              <p className="text-xs font-medium uppercase text-zinc-500">Rezervasyonu yapan</p>
               <p className="font-medium text-zinc-900">{booking.customer.firstName} {booking.customer.lastName}</p>
               <p className="text-sm text-zinc-600">{booking.customer.email}</p>
               {booking.customer.phone && (
                 <p className="text-sm text-zinc-600">{booking.customer.phone}</p>
               )}
             </div>
+
+            {extraTravelers.length > 0 && (
+              <div className="rounded-lg border border-zinc-100 bg-white p-3">
+                <p className="text-xs font-medium uppercase text-zinc-500">Diğer yolcular</p>
+                <ul className="mt-2 space-y-1.5 text-sm text-zinc-800">
+                  {extraTravelers.map((t, i) => (
+                    <li key={`${t.firstName}-${t.lastName}-${i}`}>
+                      <span className="text-zinc-500">{extraLabels[i] ?? `Yolcu ${i + 2}`}: </span>
+                      <span className="font-medium">{t.firstName} {t.lastName}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <div>
               <p className="text-xs font-medium uppercase text-zinc-500">Katılımcılar</p>
@@ -173,7 +197,7 @@ export default function BookingDetailModal({
 
             <div className="flex flex-wrap gap-2 border-t border-zinc-200 pt-4">
               <a
-                href={getVoucherPdfUrl(booking.id)}
+                href={getVoucherPdfUrl(booking.id, booking.accessToken)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"

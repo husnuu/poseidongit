@@ -27,11 +27,18 @@ export interface Booking {
   counts: BookingCounts
   classId: string
   className: string
+  /** First Class için seçilen localar (L1–L10). Eski kayıtlar için tekil alan da olabilir. */
+  firstClassLocas?: string[]
+  firstClassLoca?: string
   unitPrice: number
   totalPrice: number
   currency: string
   customer: BookingCustomer
+  /** Ana iletişim kişisi dışındaki yolcuların ad-soyadı (web rezervasyonu). */
+  additionalTravelers?: { firstName: string; lastName: string }[]
   source: string
+  /** Secure token for voucher/ticket access. Required for new bookings; legacy docs may lack it. */
+  accessToken?: string
 }
 
 export interface BookingInput {
@@ -54,6 +61,8 @@ export interface BookingCreatePayload {
   counts: { adult: number; child: number; infant: number }
   classId: string
   className: string
+  /** First Class için seçilen localar (L1–L10). */
+  firstClassLocas?: string[]
   customer: {
     firstName: string
     lastName: string
@@ -61,4 +70,5 @@ export interface BookingCreatePayload {
     phone: string
     note?: string
   }
+  additionalTravelers?: { firstName: string; lastName: string }[]
 }

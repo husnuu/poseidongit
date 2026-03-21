@@ -1,32 +1,61 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import FirstClassSeatSelector from '@/components/booking/FirstClassSeatSelector'
+import type { CalendarDayAvailability } from '@/app/api/availability/calendar/route'
+import styles from '@/components/booking/booking.module.css'
+import { ticketPagePath } from '@/lib/siteUrls'
 
 type Booking = {
   id: string
   status: string
+  tourId?: string
   tourTitle: string
   date: string
   time?: string
   meetingPoint?: string
+  classId?: string
   className: string
+  firstClassLocas?: string[]
   totalPrice: number
   currency: string
   counts: { adult: number; child: number; infant: number }
   customer: { firstName: string; lastName: string; email: string }
   canCancel: boolean
   hoursUntilTour: number | null
+  accessToken?: string
+}
+
+function buildTicketUrl(bookingId: string, accessToken?: string): string {
+  if (!bookingId) return '#'
+  const base = typeof window !== 'undefined' ? window.location.origin : ''
+  if (accessToken?.trim()) {
+    return `${base}/bilet/${encodeURIComponent(bookingId)}?token=${encodeURIComponent(accessToken.trim())}`
+  }
+  return `${base}/bilet/${encodeURIComponent(bookingId)}`
+}
+
+function buildVoucherPdfUrl(bookingId: string, accessToken?: string): string {
+  if (!bookingId) return '#'
+  const base = typeof window !== 'undefined' ? window.location.origin : ''
+  if (accessToken?.trim()) {
+    const params = new URLSearchParams()
+    params.set('bookingId', bookingId)
+    params.set('token', accessToken.trim())
+    params.set('download', '1')
+    return `${base}/api/voucher/access?${params.toString()}`
+  }
+  const params = new URLSearchParams()
+  params.set('bookingId', bookingId)
+  params.set('download', '1')
+  return `${base}/api/voucher?${params.toString()}`
 }
 
 export default function ManageBookingClient({
   initialBookingId,
-  ticketPageUrl,
-  voucherPdfUrl,
 }: {
   initialBookingId: string
-  ticketPageUrl: string
-  voucherPdfUrl: string
 }) {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -37,6 +66,34 @@ export default function ManageBookingClient({
   const [newDate, setNewDate] = useState('')
   const [changeDateLoading, setChangeDateLoading] = useState(false)
   const [changeDateError, setChangeDateError] = useState<string | null>(null)
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  })
+  const [calendarDays, setCalendarDays] = useState<CalendarDayAvailability[]>([])
+  const [calendarLoading, setCalendarLoading] = useState(false)
+  const [selectedNewDate, setSelectedNewDate] = useState<string | null>(null)
+  const [selectedFirstClassLocas, setSelectedFirstClassLocas] = useState<string[]>([])
+
+  const isFirstClass =
+    !!booking &&
+    booking !== 'cancelled' &&
+    (String((booking as Booking).classId ?? '').toLowerCase().includes('first') ||
+      String((booking as Booking).className ?? '').toLowerCase().includes('first'))
+  const bookingTourId = booking && booking !== 'cancelled' ? (booking as Booking).tourId : ''
+  const bookingIdForCalendar =
+    booking && booking !== 'cancelled' ? (booking as Booking).id : ''
+  const bookingDateStr =
+    booking && booking !== 'cancelled' ? (booking as Booking).date.slice(0, 10) : ''
+  const bookingLocasSig =
+    booking && booking !== 'cancelled'
+      ? ((booking as Booking).firstClassLocas ?? []).join(',')
+      : ''
+  const totalPax =
+    booking && booking !== 'cancelled'
+      ? (booking as Booking).counts.adult + (booking as Booking).counts.child + (booking as Booking).counts.infant
+      : 0
+  const requiredLocas = isFirstClass ? Math.ceil(totalPax / 2) : 0
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -101,11 +158,57 @@ export default function ManageBookingClient({
     }
   }, [booking])
 
+  useEffect(() => {
+    if (booking && booking !== 'cancelled' && isFirstClass && (booking as Booking).date) {
+      const d = (booking as Booking).date.slice(0, 7)
+      setCalendarMonth(d)
+    }
+  }, [booking, isFirstClass])
+
+  useEffect(() => {
+    if (!isFirstClass || !bookingTourId || !calendarMonth) {
+      setCalendarDays([])
+      return
+    }
+    const exclude =
+      bookingIdForCalendar !== ''
+        ? `&excludeBookingId=${encodeURIComponent(bookingIdForCalendar)}`
+        : ''
+    setCalendarLoading(true)
+    fetch(
+      `/api/availability/calendar?tourId=${encodeURIComponent(bookingTourId)}&month=${encodeURIComponent(calendarMonth)}${exclude}`
+    )
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.days) setCalendarDays(data.days)
+        else setCalendarDays([])
+      })
+      .catch(() => setCalendarDays([]))
+      .finally(() => setCalendarLoading(false))
+  }, [isFirstClass, bookingTourId, calendarMonth, bookingIdForCalendar, bookingLocasSig])
+
+  /** Tarih seçilince: kendi tur gününüzde mevcut localarınızı forma yükle; başka günde seçimi sıfırla. */
+  useEffect(() => {
+    if (!isFirstClass || !booking || booking === 'cancelled') return
+    const b = booking as Booking
+    const bd = (b.date ?? '').slice(0, 10)
+    if (!selectedNewDate) return
+    if (selectedNewDate === bd) {
+      setSelectedFirstClassLocas((b.firstClassLocas ?? []).map((x) => String(x).trim().toUpperCase()))
+    } else {
+      setSelectedFirstClassLocas([])
+    }
+  }, [selectedNewDate, booking, isFirstClass])
+
   const handleChangeDate = useCallback(async () => {
-    if (!booking || booking === 'cancelled' || !newDate.trim()) return
-    const dateNorm = newDate.trim().slice(0, 10)
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateNorm)) {
+    const dateToUse = isFirstClass && selectedNewDate ? selectedNewDate : newDate.trim().slice(0, 10)
+    if (!booking || booking === 'cancelled' || !dateToUse) return
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateToUse)) {
       setChangeDateError('Geçerli bir tarih seçin (YYYY-AA-GG).')
+      return
+    }
+    if (isFirstClass && requiredLocas > 0 && selectedFirstClassLocas.length !== requiredLocas) {
+      setChangeDateError(`First Class için ${requiredLocas} loca seçin (${totalPax} kişi).`)
       return
     }
     setChangeDateLoading(true)
@@ -113,31 +216,51 @@ export default function ManageBookingClient({
     setSuccess(null)
     setError(null)
     try {
+      const body: { bookingId: string; email: string; newDate: string; firstClassLocas?: string[] } = {
+        bookingId: (booking as Booking).id,
+        email: (booking as Booking).customer.email,
+        newDate: dateToUse,
+      }
+      if (isFirstClass && requiredLocas > 0) {
+        body.firstClassLocas = selectedFirstClassLocas.map((id) => id.trim().toUpperCase())
+      }
       const res = await fetch('/api/booking/change-date', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookingId: (booking as Booking).id,
-          email: (booking as Booking).customer.email,
-          newDate: dateNorm,
-        }),
+        body: JSON.stringify(body),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         setChangeDateError(data.error || 'Tarih güncellenemedi.')
         return
       }
-      setBooking((prev) =>
-        prev && prev !== 'cancelled' ? { ...prev, date: dateNorm } : prev
-      )
+      const locasFromServer = Array.isArray(data.firstClassLocas)
+        ? (data.firstClassLocas as string[]).map((x) => String(x).trim().toUpperCase())
+        : null
+      const newLocas =
+        isFirstClass && requiredLocas > 0
+          ? locasFromServer && locasFromServer.length === requiredLocas
+            ? locasFromServer
+            : selectedFirstClassLocas.map((id) => id.trim().toUpperCase())
+          : null
+      setBooking((prev) => {
+        if (!prev || prev === 'cancelled') return prev
+        return {
+          ...prev,
+          date: dateToUse,
+          ...(newLocas && newLocas.length > 0 ? { firstClassLocas: newLocas } : {}),
+        }
+      })
       setNewDate('')
+      setSelectedNewDate(null)
+      setSelectedFirstClassLocas([])
       setSuccess('Rezervasyon tarihiniz güncellendi.')
     } catch {
       setChangeDateError('Bağlantı hatası.')
     } finally {
       setChangeDateLoading(false)
     }
-  }, [booking, newDate])
+  }, [booking, newDate, isFirstClass, selectedNewDate, selectedFirstClassLocas, requiredLocas, totalPax])
 
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', padding: 24 }}>
@@ -274,8 +397,16 @@ export default function ManageBookingClient({
                 )}
                 <tr>
                   <td style={{ color: '#6b7280', padding: '8px 0' }}>Sınıf</td>
-                  <td style={{ textAlign: 'right' }}>{booking.className}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 500 }}>{booking.className}</td>
                 </tr>
+                {isFirstClass && (
+                  <tr>
+                    <td style={{ color: '#6b7280', padding: '8px 0' }}>Loca</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600, color: '#92400e', fontFamily: 'monospace' }}>
+                      {(booking.firstClassLocas?.length ? booking.firstClassLocas.join(', ') : '—')}
+                    </td>
+                  </tr>
+                )}
                 <tr>
                   <td style={{ color: '#6b7280', padding: '8px 0' }}>Misafirler</td>
                   <td style={{ textAlign: 'right' }}>
@@ -307,26 +438,175 @@ export default function ManageBookingClient({
 
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
             <h3 className="text-sm font-semibold text-amber-900 mb-2">Tarih değiştir</h3>
-            <div className="flex flex-wrap gap-2 items-end">
-              <div className="flex-1 min-w-[140px]">
-                <label className="block text-xs font-medium text-amber-800 mb-1">Yeni tarih</label>
-                <input
-                  type="date"
-                  value={newDate}
-                  onChange={(e) => setNewDate(e.target.value)}
-                  min={new Date().toISOString().slice(0, 10)}
-                  className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm"
-                />
+            {isFirstClass ? (
+              <>
+                <p className="text-xs text-amber-800 mb-3">
+                  Aynı gün sadece loca değiştirmek için tur tarihinizi tekrar seçin. Takvimde{' '}
+                  <strong>müsait loca sayısı</strong> (L1–L10) gösterilir; dolu localar seçicide kilitlidir.
+                </p>
+                <div className={styles.card}>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const [y, m] = calendarMonth.split('-').map(Number)
+                        const d = new Date(y, m - 2, 1)
+                        setCalendarMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+                      }}
+                      className="min-h-[36px] min-w-[36px] rounded-lg border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+                    >
+                      ‹
+                    </button>
+                    <span className="text-sm font-semibold text-zinc-900">
+                      {new Date(calendarMonth + '-01').toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const [y, m] = calendarMonth.split('-').map(Number)
+                        const d = new Date(y, m, 1)
+                        setCalendarMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+                      }}
+                      className="min-h-[36px] min-w-[36px] rounded-lg border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+                    >
+                      ›
+                    </button>
+                  </div>
+                  {calendarLoading ? (
+                    <div className="py-8 text-center text-zinc-500 text-sm">Yükleniyor…</div>
+                  ) : (
+                    <div className={styles.calendarWrap}>
+                      <div className={styles.calendarGrid}>
+                        {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((w) => (
+                          <div key={w} className={styles.weekday}>{w}</div>
+                        ))}
+                        {(() => {
+                          const [y, m] = calendarMonth.split('-').map(Number)
+                          const firstDay = new Date(y, m - 1, 1)
+                          const lastDay = new Date(y, m, 0)
+                          const gridStart = (firstDay.getDay() + 6) % 7
+                          const dayMap = Object.fromEntries(calendarDays.map((d) => [d.date, d]))
+                          const todayStr = new Date().toISOString().slice(0, 10)
+                          const pads = Array.from({ length: gridStart }, (_, i) => <div key={`pad-${i}`} />)
+                          const dayCells = []
+                          for (let day = 1; day <= lastDay.getDate(); day++) {
+                            const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                            const info = dayMap[dateStr]
+                            const isPast = dateStr < todayStr
+                            const locasFree =
+                              info && typeof info.firstRemainingLocas === 'number'
+                                ? info.firstRemainingLocas
+                                : info
+                                  ? Math.min(10, Math.max(0, Math.ceil((info.firstRemaining ?? 0) / 2)))
+                                  : 0
+                            const isOwnTourDate = dateStr === bookingDateStr
+                            const locaSlotsOk =
+                              isOwnTourDate || (requiredLocas > 0 ? locasFree >= requiredLocas : locasFree > 0)
+                            const hasCapacity = info && info.firstRemaining > 0 && locaSlotsOk
+                            const available = !isPast && hasCapacity
+                            const selected = selectedNewDate === dateStr
+                            dayCells.push(
+                              <button
+                                key={dateStr}
+                                type="button"
+                                className={`${styles.dayCell} ${selected ? styles.dayCellSelected : ''} ${!available ? styles.dayCellDisabled : ''}`}
+                                onClick={() => available && setSelectedNewDate(dateStr)}
+                                disabled={!available}
+                              >
+                                <span className={styles.dayNum}>{day}</span>
+                                {info && !isPast && (
+                                  <span className={styles.dayPrice}>
+                                    {locasFree} loca
+                                  </span>
+                                )}
+                              </button>
+                            )
+                          }
+                          return [...pads, ...dayCells]
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {selectedNewDate && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium text-amber-900 mb-2">
+                      {selectedNewDate} için loca seçin ({requiredLocas} loca gerekli)
+                    </p>
+                    <FirstClassSeatSelector
+                      selectedLocaIds={selectedFirstClassLocas}
+                      reservedLocaIds={
+                        calendarDays.find((d) => d.date === selectedNewDate)?.firstClassLocasReserved ?? []
+                      }
+                      currentBookingLocaIds={
+                        selectedNewDate === bookingDateStr
+                          ? ((booking as Booking).firstClassLocas ?? []).map((x) => x.trim().toUpperCase())
+                          : []
+                      }
+                      requiredCount={requiredLocas}
+                      onToggle={(id) => {
+                        setSelectedFirstClassLocas((prev) =>
+                          prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < requiredLocas ? [...prev, id] : prev
+                        )
+                      }}
+                      onReplace={(removeId, addId) =>
+                        setSelectedFirstClassLocas((prev) =>
+                          prev.filter((x) => x !== removeId).concat(addId)
+                        )
+                      }
+                      aria-label="First Class loca seçimi"
+                    />
+                  </div>
+                )}
+                <div className="mt-4 flex flex-wrap gap-2 items-center">
+                  <button
+                    type="button"
+                    onClick={handleChangeDate}
+                    disabled={
+                      changeDateLoading ||
+                      !selectedNewDate ||
+                      (requiredLocas > 0 && selectedFirstClassLocas.length !== requiredLocas)
+                    }
+                    className="px-4 py-2 rounded-lg bg-amber-600 text-white font-semibold text-sm hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {changeDateLoading ? 'Güncelleniyor...' : 'Tarihi Güncelle'}
+                  </button>
+                  {selectedNewDate && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedNewDate(null)
+                        setSelectedFirstClassLocas([])
+                      }}
+                      className="px-4 py-2 rounded-lg border border-amber-300 text-amber-800 text-sm hover:bg-amber-100"
+                    >
+                      Seçimi temizle
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-wrap gap-2 items-end">
+                <div className="flex-1 min-w-[140px]">
+                  <label className="block text-xs font-medium text-amber-800 mb-1">Yeni tarih</label>
+                  <input
+                    type="date"
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    min={new Date().toISOString().slice(0, 10)}
+                    className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleChangeDate}
+                  disabled={changeDateLoading || !newDate.trim()}
+                  className="px-4 py-2 rounded-lg bg-amber-600 text-white font-semibold text-sm hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {changeDateLoading ? 'Güncelleniyor...' : 'Tarihi Güncelle'}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleChangeDate}
-                disabled={changeDateLoading || !newDate.trim()}
-                className="px-4 py-2 rounded-lg bg-amber-600 text-white font-semibold text-sm hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {changeDateLoading ? 'Güncelleniyor...' : 'Tarihi Güncelle'}
-              </button>
-            </div>
+            )}
             {changeDateError && (
               <p className="mt-2 text-sm text-red-600">{changeDateError}</p>
             )}
@@ -334,20 +614,12 @@ export default function ManageBookingClient({
 
           <div className="flex flex-col gap-3">
             <a
-              href={ticketPageUrl || '#'}
+              href={ticketPagePath(booking.id, booking.accessToken)}
               target="_blank"
               rel="noopener noreferrer"
               className="block text-center py-3.5 px-5 rounded-xl border-2 border-[#1f3c88] text-[#1f3c88] font-semibold hover:bg-[#1f3c88] hover:text-white transition-colors"
             >
               Biletimi Görüntüle
-            </a>
-            <a
-              href={voucherPdfUrl || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block text-center py-3.5 px-5 rounded-xl border-2 border-zinc-300 text-zinc-700 font-semibold hover:bg-zinc-100 transition-colors"
-            >
-              PDF Bilet İndir
             </a>
             {booking.canCancel && (
               <button

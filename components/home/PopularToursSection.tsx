@@ -43,7 +43,7 @@ export default function PopularToursSection({ data }: PopularToursSectionProps) 
   return (
     <section
       ref={sectionRef}
-      className="w-full transition-all duration-700 ease-out py-14 md:py-20"
+      className="w-full transition-all duration-700 ease-out pt-14 pb-12 md:pt-20 md:pb-16"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(20px)',
@@ -51,7 +51,7 @@ export default function PopularToursSection({ data }: PopularToursSectionProps) 
       aria-labelledby="popular-tours-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">
-        <header className="mb-12">
+        <header className="mb-10 md:mb-12">
           {subtitle && (
             <p
               className="text-sm uppercase tracking-[0.1em] mb-1"
@@ -62,7 +62,7 @@ export default function PopularToursSection({ data }: PopularToursSectionProps) 
           )}
           <h2
             id="popular-tours-heading"
-            className="text-[48px] font-black uppercase leading-[1.1] mb-6"
+            className="text-[34px] font-black uppercase leading-[1.15] mb-6 sm:text-[38px] md:text-[42px] lg:text-[46px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
           >
             {firstTwo && <span style={{ color: '#1e3a8a' }}>{firstTwo}</span>}

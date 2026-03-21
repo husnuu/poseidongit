@@ -20,12 +20,22 @@ ADMIN_TOKEN=güçlü-rastgele-string
 
 ## Koleksiyonlar
 
-- **bookings**: Her belge bir rezervasyon (id, createdAt, status, tourId, tourTitle, date, counts, classId, className, unitPrice, totalPrice, currency, customer, source).
+- **bookings**: Her belge bir rezervasyon (id, createdAt, status, tourId, tourTitle, date, counts, classId, className, unitPrice, totalPrice, currency, customer, source, **accessToken**).
 - **availability**: Şimdilik placeholder; ileride tourId + date bazlı kapasite tutulabilir.
+
+## Bilet erişim token’ı (accessToken)
+
+**Sizin token üretmeniz gerekmez.** Token tamamen sunucuda otomatik üretilir:
+
+1. **Web rezervasyonu** (POST /api/bookings): Rezervasyon oluşturulurken `generateBookingAccessToken()` çağrılır, token Firestore’a yazılır ve yanıtta `accessToken` olarak döner.
+2. **Manuel rezervasyon** (POST /api/admin/bookings/manual): Aynı şekilde token üretilir ve kaydedilir.
+3. **Eski rezervasyonlar**: Admin panelden “Ödendi” yapıldığında dokümanda token yoksa o an üretilip Firestore’a yazılır; e-postadaki bilet linki token’lı gider.
+
+Bilet PDF ve bilet sayfası (`/api/voucher`, `/bilet/[bookingId]`) sadece geçerli token ile açılır. Linkler e-postada ve “Rezervasyonumu Yönet” sayfasında token ile üretilir.
 
 ## API
 
-- **POST /api/bookings**: Rezervasyon oluşturur. Body: tourId, tourTitle, date, counts, classId, className, customer. Server totalPrice hesaplar (şimdilik Sanity’den class fiyatı × kişi sayısı). Response: `bookingId`, `summary`.
+- **POST /api/bookings**: Rezervasyon oluşturur. Body: tourId, tourTitle, date, counts, classId, className, customer. Server totalPrice hesaplar (şimdilik Sanity’den class fiyatı × kişi sayısı). Response: `bookingId`, `accessToken`, `summary`.
 - **GET /api/admin/bookings**: Sadece admin. Header: `Authorization: Bearer <ADMIN_TOKEN>`. Query: `limit`, `startAfter`, `status` (pending|paid|cancelled). Response: `bookings`, `nextStartAfter`, `count`.
 
 ## Admin panel

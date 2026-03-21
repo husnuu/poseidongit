@@ -98,7 +98,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                   {isInternalHref(primaryCta.href) ? (
                     <Link
                       href={primaryCta.href || '#'}
-                      className="h-[54px] min-w-[220px] w-full sm:w-[220px] px-6 rounded-md bg-[#111] text-white font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#222] text-[20px]"
+                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md bg-[#111] text-white font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#222] text-[17px]"
                       style={{ fontFamily: 'var(--font-family)' }}
                     >
                       {primaryCta.label}
@@ -108,7 +108,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                       href={primaryCta.href || '#'}
                       target={primaryCta.href?.startsWith('http') ? '_blank' : undefined}
                       rel={primaryCta.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="h-[54px] min-w-[220px] w-full sm:w-[220px] px-6 rounded-md bg-[#111] text-white font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#222] text-[20px]"
+                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md bg-[#111] text-white font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#222] text-[17px]"
                       style={{ fontFamily: 'var(--font-family)' }}
                     >
                       {primaryCta.label}
@@ -121,7 +121,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                   {isInternalHref(secondaryCta.href) ? (
                     <Link
                       href={secondaryCta.href || '#'}
-                      className="h-[54px] min-w-[220px] w-full sm:w-[220px] px-6 rounded-md bg-white text-[#111] font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#f2f2f2] text-[20px]"
+                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md bg-white text-[#111] font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#f2f2f2] text-[17px]"
                       style={{ fontFamily: 'var(--font-family)' }}
                     >
                       {secondaryCta.label}
@@ -131,7 +131,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                       href={secondaryCta.href || '#'}
                       target={secondaryCta.href?.startsWith('http') ? '_blank' : undefined}
                       rel={secondaryCta.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="h-[54px] min-w-[220px] w-full sm:w-[220px] px-6 rounded-md bg-white text-[#111] font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#f2f2f2] text-[20px]"
+                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md bg-white text-[#111] font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#f2f2f2] text-[17px]"
                       style={{ fontFamily: 'var(--font-family)' }}
                     >
                       {secondaryCta.label}

@@ -156,7 +156,7 @@ export default async function Footer() {
 
   return (
     <footer
-      className="text-white/90"
+      className="text-white/90 print:hidden"
       style={{
         background: 'linear-gradient(to right, #1e3a5f 0%, #1e4976 35%, #2563eb 70%, #38bdf8 100%)',
       }}

@@ -22,6 +22,23 @@ function normalizeClassKey(classId: string): string {
 
 export const dynamic = 'force-dynamic'
 
+const LOCA_REGEX = /^L(10|[1-9])$/
+
+function collectFirstClassLocas(d: Record<string, unknown>): string[] {
+  const out: string[] = []
+  if (Array.isArray(d.firstClassLocas)) {
+    for (const x of d.firstClassLocas) {
+      const s = typeof x === 'string' ? x.trim().toUpperCase() : ''
+      if (s && LOCA_REGEX.test(s) && !out.includes(s)) out.push(s)
+    }
+  }
+  if (out.length === 0 && typeof d.firstClassLoca === 'string') {
+    const s = d.firstClassLoca.trim().toUpperCase()
+    if (s && LOCA_REGEX.test(s)) out.push(s)
+  }
+  return out
+}
+
 export type DayOccupancy = {
   date: string
   capacity: number
@@ -29,6 +46,8 @@ export type DayOccupancy = {
   remaining: number
   percent: number
   byClass?: Record<string, { capacity: number; booked: number; remaining: number }>
+  /** First Class: o gün dolu loca numaraları (L1–L10). */
+  firstClassLocasBooked?: string[]
 }
 
 export async function GET(request: NextRequest) {
@@ -84,23 +103,49 @@ export async function GET(request: NextRequest) {
       .get()
 
     const bookedByDateAndClass: Record<string, Record<string, number>> = {}
-    snapshot.docs.forEach((doc) => {
-      const d = doc.data()
-      const status = d.status as string
-      if (!ACTIVE_STATUSES.includes(status)) return
-      const date = (d.date as string)?.slice(0, 10)
-      if (!date) return
-      const classKey = normalizeClassKey((d.classId as string) ?? '')
-      const counts = (d.counts ?? { adult: 0, child: 0, infant: 0 }) as {
-        adult?: number
-        child?: number
-        infant?: number
+    const firstClassLocasByDate: Record<string, string[]> = {}
+    for (const doc of snapshot.docs) {
+      try {
+        const d = doc.data() as Record<string, unknown>
+        const status = d.status as string
+        if (!ACTIVE_STATUSES.includes(status)) continue
+        const date = (d.date as string)?.slice(0, 10)
+        if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue
+        const classKey = normalizeClassKey((d.classId as string) ?? '')
+        const rawCounts = d.counts ?? { adult: 0, child: 0, infant: 0 }
+        const counts = rawCounts as Record<string, unknown>
+        const pax = Math.max(0, Number(counts?.adult) || 0) + Math.max(0, Number(counts?.child) || 0) + Math.max(0, Number(counts?.infant) || 0)
+        if (pax <= 0) continue
+        if (!bookedByDateAndClass[date]) bookedByDateAndClass[date] = {}
+        bookedByDateAndClass[date][classKey] = (bookedByDateAndClass[date][classKey] ?? 0) + pax
+      } catch (err) {
+        console.warn('occupancy: skip doc', doc.id, err)
       }
-      const pax = (counts.adult ?? 0) + (counts.child ?? 0) + (counts.infant ?? 0)
-      if (pax <= 0) return
-      if (!bookedByDateAndClass[date]) bookedByDateAndClass[date] = {}
-      bookedByDateAndClass[date][classKey] = (bookedByDateAndClass[date][classKey] ?? 0) + pax
-    })
+    }
+
+    // First Class localar turdan bağımsız ortak havuzdur: tüm turlardan global topla.
+    const firstClassGlobalSnapshot = await db
+      .collection(COLLECTION)
+      .where('date', '>=', startDate)
+      .where('date', '<=', endDate)
+      .where('classId', '==', 'first')
+      .get()
+    for (const doc of firstClassGlobalSnapshot.docs) {
+      try {
+        const d = doc.data() as Record<string, unknown>
+        const status = d.status as string
+        if (!ACTIVE_STATUSES.includes(status)) continue
+        const date = (d.date as string)?.slice(0, 10)
+        if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue
+        const locas = collectFirstClassLocas(d)
+        if (!firstClassLocasByDate[date]) firstClassLocasByDate[date] = []
+        for (const loca of locas) {
+          if (loca && !firstClassLocasByDate[date].includes(loca)) firstClassLocasByDate[date].push(loca)
+        }
+      } catch (err) {
+        console.warn('occupancy first-class global: skip doc', doc.id, err)
+      }
+    }
 
     const days: DayOccupancy[] = []
     const classKeys = ['eco', 'premium', 'first']
@@ -135,6 +180,9 @@ export async function GET(request: NextRequest) {
 
       const remaining = Math.max(0, totalCapacity - totalBooked)
       const percent = totalCapacity > 0 ? Math.round((totalBooked / totalCapacity) * 100) : 0
+      const firstClassLocasBooked = firstClassLocasByDate[dateStr]
+        ? [...firstClassLocasByDate[dateStr]].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+        : undefined
 
       days.push({
         date: dateStr,
@@ -143,6 +191,7 @@ export async function GET(request: NextRequest) {
         remaining,
         percent,
         byClass,
+        ...(firstClassLocasBooked && firstClassLocasBooked.length > 0 && { firstClassLocasBooked }),
       })
     }
 

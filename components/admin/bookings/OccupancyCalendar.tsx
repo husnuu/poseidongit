@@ -199,11 +199,22 @@ export default function OccupancyCalendar({
                             %{data.percent}
                             {data.percent >= 100 ? ' DOLU' : ''}
                           </div>
+                          <div className="mt-0.5 text-[10px] text-zinc-600">
+                            Loca: {data.firstClassLocasBooked?.length ?? 0}/10
+                          </div>
+                          {classFilter === 'first' && (data.firstClassLocasBooked?.length ?? 0) > 0 && (
+                            <div className="mt-0.5 text-[10px] text-zinc-600" title="Dolu localar">
+                              Loca: {data.firstClassLocasBooked!.join(', ')}
+                            </div>
+                          )}
                           {hasByClass && classFilter === 'all' && (
                             <div className="mt-1 space-y-0.5 border-t border-zinc-200/80 pt-0.5 text-[10px] text-zinc-600">
                               {Object.entries(data.byClass!).map(([k, v]) => (
                                 <div key={k} className="truncate">
                                   {CLASS_LABELS_SHORT[k] ?? k}: {v.booked}/{v.capacity || '—'}
+                                  {k === 'first' && (data.firstClassLocasBooked?.length ?? 0) > 0 && (
+                                    <span className="ml-0.5">({data.firstClassLocasBooked!.join(', ')})</span>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -214,6 +225,9 @@ export default function OccupancyCalendar({
                           <div className="mt-0.5 text-xs text-zinc-600">
                             Dolu: {data.booked} kişi
                           </div>
+                          {classFilter === 'first' && (data.firstClassLocasBooked?.length ?? 0) > 0 && (
+                            <div className="mt-0.5 text-[10px] text-zinc-500">Loca: {data.firstClassLocasBooked!.join(', ')}</div>
+                          )}
                           {hasByClass && (
                             <div className="mt-0.5 space-y-0.5 text-[10px] text-zinc-500">
                               {Object.entries(data.byClass!).map(([k, v]) =>
@@ -234,6 +248,8 @@ export default function OccupancyCalendar({
                                 </div>
                               ))}
                             </div>
+                          ) : classFilter === 'first' ? (
+                            'Loca: —'
                           ) : (
                             '0 kişi'
                           )}

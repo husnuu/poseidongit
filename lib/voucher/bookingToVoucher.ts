@@ -1,15 +1,20 @@
 import { getEmailBaseUrl } from '@/lib/siteUrls'
 import type { VoucherData } from './types'
 import { DEFAULT_POLICIES, DEFAULT_CONTACT } from './types'
+import { formatTicketDate } from './formatTicketDate'
 
 type BookingDoc = {
   id: string
   tourTitle?: string
   date?: string
   time?: string
+  /** Firestore paidNow — bilet/PDF “Ödenen tutar” */
+  paidNow?: number
   counts?: { adult?: number; child?: number; infant?: number }
   classId?: string
   className?: string
+  firstClassLocas?: string[]
+  firstClassLoca?: string
   totalPrice?: number
   currency?: string
   status?: string
@@ -34,16 +39,18 @@ export function bookingToVoucherData(
   const siteUrl = getEmailBaseUrl()
   const baseUrl = siteUrl || bookingUrl.replace(/\/[^/]*$/, '')
 
+  const rawDate = typeof booking.date === 'string' ? booking.date : ''
   return {
     referenceNumber: booking.id,
     bookingUrl,
 
     tourTitle: booking.tourTitle ?? '—',
-    date: booking.date ?? '—',
+    date: rawDate ? formatTicketDate(rawDate) : '—',
     time: booking.time,
     meetingPickup: (booking as { meetingPoint?: string }).meetingPoint?.trim() || '—',
     language: 'Türkçe',
     className: booking.className?.trim() || undefined,
+    firstClassLoca: (booking.firstClassLocas?.length ? booking.firstClassLocas.join(', ') : booking.firstClassLoca?.trim()) || undefined,
     status: booking.status,
 
     customerName: [customer.firstName, customer.lastName].filter(Boolean).join(' ') || '—',
@@ -56,7 +63,12 @@ export function bookingToVoucherData(
 
     totalPrice: booking.totalPrice ?? 0,
     currency: booking.currency ?? 'TRY',
-    paidNow: booking.status === 'paid' ? (booking.totalPrice ?? 0) : undefined,
+    paidNow:
+      typeof booking.paidNow === 'number' && booking.paidNow > 0
+        ? booking.paidNow
+        : booking.status === 'paid'
+          ? (booking.totalPrice ?? 0)
+          : undefined,
     remainingAmount: undefined,
 
     cancellationPolicy: DEFAULT_POLICIES.cancellationPolicy,

@@ -34,6 +34,56 @@
   }
 }
 
+/* Tur kartı CTA: kenarda yavaş, hafif beyaz gezinti + dışta çok hafif beyaz nabız */
+.tour-card-cta-shimmer.hero-primary-btn-wrap::before {
+  inset: -1px;
+  background: conic-gradient(
+    from var(--hero-angle),
+    transparent 45deg,
+    rgba(255, 255, 255, 0.07) 56deg,
+    rgba(255, 255, 255, 0.48) 74deg 86deg,
+    rgba(255, 255, 255, 0.07) 98deg,
+    transparent 118deg
+  );
+  animation: hero-shimmer-move 4.2s linear infinite;
+  opacity: 0.92;
+}
+
+.tour-card-cta-shimmer.hero-primary-btn-wrap {
+  animation: tour-card-cta-edge-pulse 3.2s ease-in-out infinite;
+}
+
+@keyframes tour-card-cta-edge-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 4px 18px rgba(30, 58, 138, 0.28),
+      0 0 0 1px rgba(255, 255, 255, 0.12),
+      0 0 10px rgba(255, 255, 255, 0.06);
+  }
+  50% {
+    box-shadow:
+      0 4px 22px rgba(30, 58, 138, 0.32),
+      0 0 0 1px rgba(255, 255, 255, 0.22),
+      0 0 22px rgba(255, 255, 255, 0.14);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-card-cta-shimmer.hero-primary-btn-wrap::before {
+    animation: none;
+    opacity: 0.5;
+    --hero-angle: 55deg;
+  }
+  .tour-card-cta-shimmer.hero-primary-btn-wrap {
+    animation: none;
+    box-shadow:
+      0 4px 18px rgba(30, 58, 138, 0.28),
+      0 0 0 1px rgba(255, 255, 255, 0.14),
+      0 0 12px rgba(255, 255, 255, 0.07);
+  }
+}
+
 /* Butonlarda hover: üzerinden geçen parıltı */
 .hero-btn-shine {
   position: relative;
@@ -58,6 +108,22 @@
 }
 .hero-btn-shine:hover::after {
   transform: translateX(100%);
+}
+
+/* Yazdır / PDF: tam A4, kenar boşluğu yok (bilet kenardan kenara) */
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
 }
 
 @layer base {

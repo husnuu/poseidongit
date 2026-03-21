@@ -73,6 +73,10 @@ export default async function HakkimizdaPage() {
   const wordsTop = (data.titleTop || '').toUpperCase().trim().split(/\s+/)
   const firstTwoTop = wordsTop.slice(0, 2).join(' ')
   const restTop = wordsTop.slice(2).join(' ')
+  const timelineWords = (data.timelineTitle || '').toUpperCase().trim().split(/\s+/).filter(Boolean)
+  const timelineMid = Math.ceil(timelineWords.length / 2)
+  const timelineBlue = timelineWords.slice(0, timelineMid).join(' ')
+  const timelineBlack = timelineWords.slice(timelineMid).join(' ')
 
   return (
     <div className="min-h-screen bg-white">
@@ -132,16 +136,17 @@ export default async function HakkimizdaPage() {
         </section>
       )}
 
-      {/* Timeline başlık + Teknelerimiz */}
+      {/* Timeline başlık + Teknelerimiz (Koylar UI ile aynı düzen) */}
       {(data.timelineTitle || data.timelineDescription || boats.length > 0) && (
-        <section className="w-full py-12 md:py-20 bg-zinc-50/80">
-          <div className="mx-auto max-w-[1200px] px-4">
+        <section className="w-full py-12 md:py-20">
+          <div className="mx-auto max-w-[1400px] px-4">
             {data.timelineTitle && (
               <h2
-                className="text-[32px] md:text-[40px] font-black uppercase mb-3"
-                style={{ color: 'var(--secondary)', fontFamily: 'var(--font-family-title)' }}
+                className="text-[26px] md:text-[32px] font-black uppercase mb-3 leading-[1.15]"
+                style={{ fontFamily: 'var(--font-family-title)' }}
               >
-                {data.timelineTitle}
+                {timelineBlue && <span style={{ color: '#1e3a8a' }}>{timelineBlue}</span>}
+                {timelineBlack && <span style={{ color: '#000' }}>{' ' + timelineBlack}</span>}
               </h2>
             )}
             {data.timelineDescription && (
@@ -151,47 +156,68 @@ export default async function HakkimizdaPage() {
             )}
 
             {boats.length > 0 && (
-              <div className="flex flex-col gap-8">
-                {boats.map((boat) => (
-                  <article
-                    key={`${boat.year}-${boat.name}`}
-                    className="bg-white rounded-2xl overflow-hidden shadow-[0_12px_30px_rgba(0,0,0,0.08)] border border-black/5 flex flex-col sm:flex-row"
-                  >
-                    <div className="relative w-full sm:w-[280px] sm:min-w-[280px] aspect-[4/3] sm:aspect-auto sm:h-[220px] bg-zinc-100">
-                      {boat.imageUrl ? (
-                        <Image
-                          src={boat.imageUrl}
-                          alt={boat.imageAlt || ''}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 640px) 100vw, 280px"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-zinc-400 text-sm">
-                          Görsel yok
-                        </div>
-                      )}
-                      {boat.year && (
-                        <span
-                          className="absolute bottom-3 left-3 px-3 py-1.5 rounded-md text-white font-bold text-sm"
-                          style={{ background: '#1e3a8a' }}
+              <div className="mt-10 flex flex-col gap-0">
+                {boats.map((boat, index) => {
+                  const reverse = index % 2 === 1
+                  return (
+                    <article
+                      key={`${boat.year}-${boat.name}-${index}`}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-0 w-full overflow-hidden"
+                    >
+                      <div
+                        className={`w-full h-[260px] md:h-[340px] lg:h-[380px] bg-neutral-200 overflow-hidden ${
+                          reverse ? 'md:order-2' : 'md:order-1'
+                        }`}
+                      >
+                        {boat.imageUrl ? (
+                          <div className="relative w-full h-full">
+                            <Image
+                              src={boat.imageUrl}
+                              alt={boat.imageAlt || ''}
+                              fill
+                              className="w-full h-full object-cover"
+                              sizes="(max-width: 768px) 100vw, 50vw"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-full h-full bg-neutral-300 flex items-center justify-center text-neutral-500 text-sm">
+                            Görsel yok
+                          </div>
+                        )}
+                      </div>
+
+                      <div
+                        className={`bg-[#f3f4f6] flex flex-col items-center justify-center text-center px-8 py-10 min-h-[200px] md:min-h-[260px] ${
+                          reverse ? 'md:order-1' : 'md:order-2'
+                        }`}
+                      >
+                        <h3
+                          className="text-base md:text-lg tracking-[0.2em] uppercase font-black"
+                          style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900, color: '#1e3a8a' }}
                         >
-                          {boat.year}
-                        </span>
-                      )}
-                    </div>
-                    <div className="p-6 sm:p-8 flex-1 flex flex-col justify-center">
-                      {boat.name && (
-                        <h3 className="font-black text-lg uppercase mb-2" style={{ color: 'var(--secondary)' }}>
                           {boat.name}
                         </h3>
-                      )}
-                      {boat.description && (
-                        <p className="text-base text-black/80 leading-relaxed">{boat.description}</p>
-                      )}
-                    </div>
-                  </article>
-                ))}
+                        {boat.year && (
+                          <p
+                            className="mt-1 text-xs md:text-sm font-semibold uppercase tracking-[0.14em] text-zinc-500"
+                            style={{ fontFamily: 'var(--font-family)' }}
+                          >
+                            {boat.year}
+                          </p>
+                        )}
+                        <div className="mt-3 h-px w-16 bg-[#1e3a8a]/30" aria-hidden />
+                        {boat.description?.trim() && (
+                          <p
+                            className="mt-4 text-sm md:text-base text-zinc-700 leading-relaxed max-w-md"
+                            style={{ fontFamily: 'var(--font-family)' }}
+                          >
+                            {boat.description}
+                          </p>
+                        )}
+                      </div>
+                    </article>
+                  )
+                })}
               </div>
             )}
           </div>

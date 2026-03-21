@@ -15,9 +15,13 @@ export interface AdminBookingRow {
     phone: string
     note?: string
   }
+  additionalTravelers?: { firstName: string; lastName: string }[]
   counts: { adult: number; child: number; infant: number }
   classId: string
   className: string
+  /** First Class localar (L1–L10). Eski tek loca için firstClassLoca da olabilir. */
+  firstClassLocas?: string[]
+  firstClassLoca?: string
   totalPrice: number
   unitPrice?: number
   currency: string
@@ -29,6 +33,8 @@ export interface AdminBookingRow {
   manualSource?: string | null
   createdByAdmin?: boolean
   reference?: string | null
+  /** Secure token for voucher/ticket links. Required for new bookings. */
+  accessToken?: string | null
 }
 
 export const MANUAL_SOURCE_LABELS: Record<string, string> = {
@@ -65,4 +71,6 @@ export interface DayOccupancyData {
   remaining: number
   percent: number
   byClass?: Record<string, { capacity: number; booked: number; remaining: number }>
+  /** First Class: o gün dolu loca numaraları (L1–L10). */
+  firstClassLocasBooked?: string[]
 }

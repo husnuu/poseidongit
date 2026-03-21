@@ -53,13 +53,51 @@
 }
 
 .reviewsLink {
-  text-decoration: underline;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
   cursor: pointer;
   color: var(--secondary, rgb(24, 24, 24));
   line-height: 1.5;
-  transition: opacity 0.2s ease;
+  padding-bottom: 2px;
+  transition: color 0.2s ease;
+}
+
+.reviewsLinkIcon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Kalın lacivert çizgi, aşağı doğru açıklaşan gradient */
+.reviewsLink::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: linear-gradient(
+    to bottom,
+    #1e3a5f 0%,
+    rgba(30, 58, 95, 0.55) 50%,
+    rgba(30, 58, 95, 0.15) 100%
+  );
+  border-radius: 0 0 2px 2px;
+  pointer-events: none;
 }
 
 .reviewsLink:hover {
-  opacity: 0.8;
+  color: #1e3a5f;
+}
+
+.reviewsLink:hover::after {
+  background: linear-gradient(
+    to bottom,
+    #1e3a5f 0%,
+    rgba(30, 58, 95, 0.7) 50%,
+    rgba(30, 58, 95, 0.2) 100%
+  );
 }

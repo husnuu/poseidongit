@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Plane } from 'lucide-react'
+import { Ship, Printer } from 'lucide-react'
 
 export type BoardingPassTicketProps = {
   bookingId: string
@@ -10,6 +10,8 @@ export type BoardingPassTicketProps = {
   tourImageUrl: string | null
   dateFormatted: string
   time: string | undefined
+  /** Sanity quickFacts.returnTime (limana dönüş). */
+  arrivalTime?: string
   durationLabel: string | null
   meetingPoint: string
   customerName: string
@@ -17,8 +19,9 @@ export type BoardingPassTicketProps = {
   className: string
   totalPrice: number
   currency: string
+  /** Ödeme onaylı / kayıtlı ödenen tutar; yoksa gösterilmez. */
+  paidAmount?: number | null
   status: string
-  pdfDownloadUrl: string
   manageUrl: string
   homeUrl: string
   qrImageUrl?: string
@@ -42,28 +45,21 @@ function boardingTimeBefore(time: string | undefined): string | null {
   return `${h.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`
 }
 
-function arrivalTimeAfter(time: string | undefined): string | null {
-  if (!time?.trim()) return null
-  const m = time.trim().match(/^(\d{1,2})\s*:\s*(\d{2})/)
-  if (!m) return null
-  let h = parseInt(m[1], 10)
-  let min = parseInt(m[2], 10)
-  min += 10
-  if (min >= 60) {
-    min -= 60
-    h += 1
-  }
-  h += 7
-  if (h >= 24) h -= 24
-  return `${h.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 print:text-[10px] print:tracking-[0.12em]">
+      {children}
+    </p>
+  )
 }
 
 export default function BoardingPassTicket({
   bookingId,
   tourTitle,
-  tourImageUrl,
+  tourImageUrl: _tourImageUrl,
   dateFormatted,
   time,
+  arrivalTime,
   durationLabel,
   meetingPoint,
   customerName,
@@ -71,297 +67,202 @@ export default function BoardingPassTicket({
   className,
   totalPrice,
   currency,
-  status,
-  pdfDownloadUrl,
+  paidAmount,
+  status: _status,
   manageUrl,
   homeUrl,
   qrImageUrl,
 }: BoardingPassTicketProps) {
+  void _tourImageUrl
+  void _status
   const totalPriceLabel = `${totalPrice.toLocaleString('tr-TR')} ${currency}`
-  const boardingTime = boardingTimeBefore(time) ?? time ?? '—'
-  const arrivalTime = arrivalTimeAfter(time) ?? '—'
+  const paidAmountLabel =
+    paidAmount != null && paidAmount > 0 ? `${paidAmount.toLocaleString('tr-TR')} ${currency}` : null
+  const depTime = time?.trim() || '—'
+  const boardingTime = boardingTimeBefore(time) ?? depTime
+  const arr = arrivalTime?.trim()
+
+  const scheduleLine =
+    depTime !== '—'
+      ? `Tahmini kalkış ${depTime} · Gemiye biniş en geç ${boardingTime}`
+      : `Biniş saati: ${boardingTime}`
 
   return (
     <div
-      className="min-h-screen bg-[#e5e7eb] px-3 py-6"
-      style={{ fontFamily: "'Montserrat', sans-serif" }}
+      className="min-h-screen bg-slate-200/90 px-4 py-6 sm:px-6 sm:py-8 print:min-h-0 print:h-auto print:bg-white print:px-0 print:py-0 [-webkit-print-color-adjust:exact] [print-color-adjust:exact]"
+      style={{ fontFamily: "'Montserrat', system-ui, sans-serif" }}
     >
       <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
       />
 
-      <div className="mx-auto w-full max-w-[420px] space-y-4">
-        {/* ——— SOL KART (Ana biniş kartı) ——— */}
-        <div className="overflow-hidden rounded-2xl bg-white shadow-xl">
-          {/* Mavi başlık: BİNİŞ KARTI + Güzergâh */}
-          <div
-            className="relative px-5 pt-5 pb-6"
+      <div className="mx-auto w-full max-w-[min(100%,36rem)] print:max-w-none print:w-full">
+        {/* Yazdırmada tam A4 (210×297mm), dikeyde esneyen orta bölüm */}
+        <article
+          className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_4px_24px_rgba(15,23,42,0.08)] print:break-inside-avoid print:flex print:h-[297mm] print:max-h-[297mm] print:w-[210mm] print:flex-col print:overflow-hidden print:rounded-none print:border-0 print:shadow-none"
+          aria-label="Elektronik bilet"
+        >
+          {/* —— HEADER —— */}
+          <header
+            className="px-5 pb-6 pt-6 sm:px-8 sm:pb-7 sm:pt-7 print:shrink-0 print:px-7 print:pb-5 print:pt-6"
             style={{ backgroundColor: BLUE }}
           >
-            <div className="flex justify-center">
-              <span
-                className="rounded-md border-2 border-white/40 bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-white"
-                style={{ borderColor: 'rgba(255,255,255,0.5)' }}
-              >
-                Biniş Kartı
-              </span>
-            </div>
-
-            {/* Güzergâh: Nereden — uçak çizgisi — Nereye */}
-            <div className="mt-6 flex items-start justify-between gap-4">
-              <div className="flex flex-1 flex-col items-center text-center">
-                <p className="text-lg font-extrabold uppercase leading-tight text-white">
-                  Çeşme
-                </p>
-                <p className="mt-1 text-xs font-medium text-white/95">
-                  {boardingTime}
-                </p>
-                <p className="mt-0.5 text-[10px] text-white/80">
-                  (biniş, kalkıştan 30 dk önce)
-                </p>
+            <div className="flex flex-col gap-5 print:gap-3.5">
+              <div className="flex flex-wrap items-center justify-between gap-3 print:gap-3">
+                <span className="inline-flex max-w-full items-center rounded-lg border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white sm:text-[11px] print:px-3 print:py-1.5 print:text-[10px]">
+                  E-Bilet Çeşme Poseidon
+                </span>
+                {durationLabel ? (
+                  <span className="text-xs font-semibold text-white/85 print:text-sm">Süre: {durationLabel}</span>
+                ) : null}
               </div>
 
-              <div className="relative flex shrink-0 items-center px-2 pt-6">
-                <svg
-                  width="48"
-                  height="24"
-                  viewBox="0 0 48 24"
-                  fill="none"
-                  className="text-white"
+              {/* Rota */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6 print:flex-row print:items-center print:gap-6">
+                <div className="flex min-w-0 flex-1 items-center gap-3 text-white print:gap-4">
+                  <span className="shrink-0 text-lg font-extrabold uppercase tracking-tight sm:text-xl print:text-xl">
+                    Çeşme
+                  </span>
+                  <div className="relative flex min-w-[3rem] flex-1 items-center justify-center px-1">
+                    <div className="h-px w-full border-t border-dashed border-white/50" aria-hidden />
+                    <Ship
+                      className="absolute h-5 w-5 rounded-full bg-[#1e3a8a] p-0.5 text-white print:h-6 print:w-6"
+                      strokeWidth={2.2}
+                      aria-hidden
+                    />
+                  </div>
+                  <span className="min-w-0 flex-1 text-right text-base font-extrabold uppercase leading-snug text-white sm:text-left sm:text-lg print:text-left print:text-lg print:leading-snug print:line-clamp-4">
+                    {tourTitle}
+                  </span>
+                </div>
+              </div>
+
+              {/* Tarih + tek satır zaman özeti */}
+              <div className="rounded-xl border border-white/20 bg-black/10 px-4 py-3 sm:px-5 print:px-5 print:py-3.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/75 print:text-[11px]">
+                  Tur tarihi
+                </p>
+                <p className="mt-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl print:text-2xl print:leading-tight">
+                  {dateFormatted}
+                </p>
+                <p className="mt-2 text-sm font-semibold text-white/95 print:mt-2 print:text-sm print:leading-snug">
+                  {scheduleLine}
+                </p>
+                {arr ? (
+                  <p className="mt-1.5 text-sm font-semibold text-white/90 print:mt-1.5 print:text-sm">
+                    Tahmini varış: {arr}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </header>
+
+          {/* —— DETAY IZGARASI —— kalan yüksekliği doldurur */}
+          <section className="space-y-6 px-5 py-6 sm:px-8 sm:py-8 print:flex print:min-h-0 print:flex-1 print:flex-col print:gap-5 print:space-y-0 print:overflow-hidden print:px-7 print:py-5">
+            <div className="grid shrink-0 gap-6 sm:grid-cols-2 print:grid-cols-2 print:gap-6">
+              <div className="space-y-1.5 print:space-y-1">
+                <Label>Yolcu</Label>
+                <p
+                  className="text-lg font-bold leading-snug text-slate-900 print:text-lg print:leading-snug"
+                  style={{ color: BLUE_LIGHT }}
                 >
-                  <path
-                    d="M2 12 Q 24 2 46 12"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 3"
-                    fill="none"
-                  />
-                  <path
-                    d="M24 8 L28 12 L24 16 L26 12 Z"
-                    fill="currentColor"
-                    transform="translate(0,0)"
-                  />
-                </svg>
-                <Plane
-                  className="absolute left-1/2 top-6 h-4 w-4 -translate-x-1/2 text-white"
-                  strokeWidth={2.5}
-                />
-              </div>
-
-              <div className="flex flex-1 flex-col items-center text-center">
-                <p className="line-clamp-2 text-base font-extrabold uppercase leading-tight text-white md:text-lg">
-                  {tourTitle.length > 12 ? tourTitle.slice(0, 10) + '…' : tourTitle}
-                </p>
-                <p className="mt-0.5 line-clamp-1 text-[10px] font-semibold uppercase tracking-wider text-white/90">
-                  {tourTitle}
-                </p>
-                <p className="mt-1 text-xs font-medium text-white/95">—</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Beyaz alan: satırlar (kesik çizgi ayırıcılı) */}
-          <div className="border-t border-dashed border-gray-300 px-5 py-4">
-            <CardRow
-              leftLabel="Tur"
-              leftValue={tourTitle.length > 14 ? tourTitle.slice(0, 12) + '…' : tourTitle}
-              leftHighlight
-              rightLabel="Tarih"
-              rightValue={dateFormatted}
-            />
-            <div className="my-3 border-t border-dashed border-gray-300" />
-            <CardRow
-              leftLabel="Toplanma"
-              leftValue={meetingPoint}
-              rightLabel="Biniş"
-              rightValue={boardingTime}
-            />
-            <div className="my-3 border-t border-dashed border-gray-300" />
-            <CardRow
-              leftLabel="Sınıf"
-              leftValue={className}
-              rightLabel="Kalkış"
-              rightValue={time ?? '—'}
-            />
-            <div className="my-3 border-t border-dashed border-gray-300" />
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-                  Yolcu
-                </p>
-                <p className="mt-0.5 font-bold text-gray-900" style={{ color: BLUE_LIGHT }}>
                   {customerName}
                 </p>
-                <p className="mt-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-                  Rezervasyon No
-                </p>
-                <p className="mt-0.5 font-mono text-sm font-bold" style={{ color: BLUE_LIGHT }}>
-                  {bookingId}
-                </p>
+                {participants ? (
+                  <p className="text-sm font-medium text-slate-600 print:text-sm">{participants}</p>
+                ) : null}
               </div>
-              {qrImageUrl && (
-                <div className="shrink-0 rounded-lg border border-gray-200 bg-white p-1.5">
-                  <img
-                    src={qrImageUrl}
-                    alt="QR"
-                    width={64}
-                    height={64}
-                    className="h-16 w-16 object-contain"
-                  />
+              <div className="space-y-1.5 print:space-y-1">
+                <Label>Sınıf</Label>
+                <p className="text-lg font-bold text-slate-900 print:text-lg print:leading-snug">{className}</p>
+              </div>
+            </div>
+
+            <div className="shrink-0 space-y-1.5 rounded-xl bg-slate-50 px-4 py-3 sm:px-5 print:space-y-1 print:px-5 print:py-2.5">
+              <Label>Rezervasyon numarası</Label>
+              <p className="font-mono text-base font-bold tracking-wide text-slate-900 sm:text-lg print:text-base print:leading-snug">
+                {bookingId}
+              </p>
+            </div>
+
+            {/* —— QR: kalan yükseklik burada esner; taşmayı önlemek için min-h-0 —— */}
+            <div className="rounded-2xl border-2 border-slate-200 bg-slate-50/80 px-4 py-6 sm:px-8 sm:py-8 print:flex print:min-h-0 print:flex-1 print:flex-col print:justify-center print:overflow-hidden print:px-6 print:py-4">
+              <div className="mx-auto flex min-h-0 w-full max-w-sm flex-col items-center justify-center text-center print:max-w-none">
+                <Label>Biniş doğrulama</Label>
+                <h2 className="mt-2 text-lg font-extrabold text-slate-900 sm:text-xl print:mt-1 print:text-xl">
+                  QR kodu
+                </h2>
+                <p className="mt-1 max-w-xs text-sm font-medium leading-relaxed text-slate-600 print:mt-1 print:max-w-md print:text-sm">
+                  Binişte bu QR kodu gösteriniz.
+                </p>
+                {qrImageUrl ? (
+                  <div className="mt-5 rounded-2xl border-2 border-white bg-white p-4 shadow-sm print:mt-3 print:rounded-xl print:p-3 print:border-slate-200">
+                    <img
+                      src={qrImageUrl}
+                      alt="Biniş QR kodu"
+                      width={224}
+                      height={224}
+                      className="h-52 w-52 object-contain sm:h-56 sm:w-56 print:h-[46mm] print:w-[46mm] print:max-h-[46mm] print:max-w-[46mm]"
+                      style={{ imageRendering: 'crisp-edges' }}
+                    />
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm text-slate-500 print:mt-2 print:text-sm">QR kodu yüklenemedi.</p>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* —— FOOTER —— */}
+          <footer className="border-t border-slate-200 bg-slate-50 px-5 py-5 sm:px-8 print:shrink-0 print:px-7 print:py-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between print:flex-row print:items-start print:gap-x-8 print:gap-y-1">
+              <div className="flex flex-col gap-4 sm:flex-row sm:gap-10 print:flex-row print:gap-8">
+                <div>
+                  <Label>Toplam tutar</Label>
+                  <p className="mt-1 text-xl font-extrabold text-slate-900 print:text-xl">{totalPriceLabel}</p>
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ——— SAĞ KART (QR / Biniş doğrulama) ——— */}
-        <div className="overflow-hidden rounded-2xl bg-white shadow-xl">
-          <div className="border-b border-dashed border-gray-300 px-5 py-4">
-            <div className="flex justify-between text-center">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-                  Kalkış
+                {paidAmountLabel ? (
+                  <div>
+                    <Label>Ödenen tutar</Label>
+                    <p className="mt-1 text-lg font-bold text-emerald-800 print:text-lg">{paidAmountLabel}</p>
+                  </div>
+                ) : null}
+              </div>
+              <div className="max-w-md sm:text-right print:max-w-[50%] print:text-right">
+                <Label>Toplanma noktası</Label>
+                <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-800 print:text-sm print:leading-snug">
+                  {meetingPoint}
                 </p>
-                <p className="mt-1 font-bold text-gray-900">{time ?? '—'}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-                  Biniş
-                </p>
-                <p className="mt-1 font-bold text-gray-900">{boardingTime}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-                  Varış
-                </p>
-                <p className="mt-1 font-bold text-gray-900">{arrivalTime}</p>
               </div>
             </div>
-            <p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-              Tur
-            </p>
-            <p className="mt-0.5 font-bold text-gray-900">{tourTitle}</p>
-          </div>
+          </footer>
+        </article>
 
-          <div className="relative flex justify-center border-b border-dashed border-gray-300 py-3">
-            <span className="absolute left-1/2 top-1/2 h-px w-full -translate-x-1/2 -translate-y-1/2 border-t border-dashed border-gray-300 bg-white" />
-            <Plane
-              className="relative z-10 h-5 w-5 rounded-full bg-white px-1 text-gray-400"
-              style={{ color: BLUE }}
-              strokeWidth={2}
-            />
-          </div>
-
-          <p className="px-4 py-2 text-center text-[11px] font-semibold uppercase leading-snug text-gray-600">
-            Binişte bu QR kodu gösterin
-          </p>
-
-          {qrImageUrl && (
-            <div className="flex justify-center px-6 pb-4">
-              <div className="rounded-xl border-2 border-gray-200 bg-white p-3">
-                <img
-                  src={qrImageUrl}
-                  alt="QR Biniş Kodu"
-                  width={160}
-                  height={160}
-                  className="h-40 w-40 object-contain"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Mavi alt şerit */}
-          <div
-            className="flex justify-between px-5 py-4 text-white"
-            style={{ backgroundColor: BLUE }}
-          >
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/85">
-                Yolcu
-              </p>
-              <p className="mt-0.5 font-bold">{customerName}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/85">
-                Rezervasyon No
-              </p>
-              <p className="mt-0.5 font-mono text-sm font-bold">{bookingId}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Toplam & Toplanma (küçük bilgi) */}
-        <div className="rounded-2xl bg-white px-5 py-4 shadow-md">
-          <div className="flex justify-between">
-            <span className="text-sm font-semibold text-gray-500">Toplam</span>
-            <span className="font-bold text-gray-900">{totalPriceLabel}</span>
-          </div>
-          <p className="mt-2 text-xs text-gray-500">
-            Toplanma: {meetingPoint}
-          </p>
-        </div>
-
-        {/* Aksiyonlar */}
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <a
-            href={pdfDownloadUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 rounded-xl border-2 py-3.5 text-center text-sm font-bold text-gray-700 transition-colors hover:bg-gray-100"
+        {/* Aksiyonlar — yazdırmada gizli */}
+        <div className="mt-6 flex flex-col gap-3 print:hidden sm:flex-row sm:justify-center">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 py-3.5 text-center text-sm font-bold transition-colors hover:bg-slate-50 sm:max-w-xs"
             style={{ borderColor: BLUE, color: BLUE }}
           >
-            PDF İndir
-          </a>
+            <Printer className="h-5 w-5 shrink-0" aria-hidden />
+            Yazdır veya PDF kaydet
+          </button>
           <Link
             href={manageUrl}
-            className="flex-1 rounded-xl py-3.5 text-center text-sm font-bold text-white transition-opacity hover:opacity-95"
+            className="flex-1 rounded-xl py-3.5 text-center text-sm font-bold text-white transition-opacity hover:opacity-95 sm:max-w-xs"
             style={{ backgroundColor: BLUE }}
           >
             Rezervasyonu Yönet
           </Link>
         </div>
-        <p className="text-center text-sm text-gray-500">
-          <Link href={homeUrl} className="font-medium underline hover:text-gray-700">
+        <p className="mt-4 text-center text-sm text-slate-600 print:hidden">
+          <Link href={homeUrl} className="font-semibold underline decoration-slate-400 underline-offset-2 hover:text-slate-900">
             Ana sayfaya dön
           </Link>
         </p>
-      </div>
-    </div>
-  )
-}
-
-function CardRow({
-  leftLabel,
-  leftValue,
-  rightLabel,
-  rightValue,
-  leftHighlight,
-}: {
-  leftLabel: string
-  leftValue: string
-  rightLabel: string
-  rightValue: string
-  leftHighlight?: boolean
-}) {
-  return (
-    <div className="flex justify-between gap-4">
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-          {leftLabel}
-        </p>
-        <p
-          className={`mt-0.5 font-bold ${leftHighlight ? '' : 'text-gray-900'}`}
-          style={leftHighlight ? { color: BLUE_LIGHT } : undefined}
-        >
-          {leftValue}
-        </p>
-      </div>
-      <div className="text-right">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-          {rightLabel}
-        </p>
-        <p className="mt-0.5 font-bold text-gray-900">{rightValue}</p>
       </div>
     </div>
   )

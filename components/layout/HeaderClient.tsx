@@ -3,8 +3,40 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
+import {
+  Anchor,
+  Bell,
+  Calendar,
+  Info,
+  Megaphone,
+  Percent,
+  Ship,
+  Sparkles,
+  Star,
+  Tag,
+  type LucideIcon,
+} from 'lucide-react'
 import { urlFor } from '@/lib/sanity'
+import type { AnnouncementBarData } from './announcementBarTypes'
 import styles from './Header.module.css'
+
+const ANNOUNCEMENT_ICONS: Record<string, LucideIcon> = {
+  megaphone: Megaphone,
+  info: Info,
+  bell: Bell,
+  sparkles: Sparkles,
+  tag: Tag,
+  percent: Percent,
+  anchor: Anchor,
+  calendar: Calendar,
+  ship: Ship,
+  star: Star,
+}
+
+function announcementIconComponent(iconKey: string | null | undefined): LucideIcon | null {
+  if (!iconKey || iconKey === 'none') return null
+  return ANNOUNCEMENT_ICONS[iconKey] ?? null
+}
 
 const EMOJI_FALLBACK: Record<string, string> = {
   tr: '🇹🇷',
@@ -43,13 +75,24 @@ interface SiteSettings {
 
 interface HeaderClientProps {
   settings: SiteSettings
+  announcementBar?: AnnouncementBarData | null
+  /** SSR ile spacer doğru kalsın diye tahmini yükseklik (px) */
+  announcementFallbackHeightPx?: number
 }
 
 /** Geçerli bir path veya URL ise döndür, değilse "#" (RSC/serialization hatalarını önler). */
 function safeHref(href: unknown): string {
   if (typeof href !== 'string' || !href) return '#'
   const t = href.trim()
-  if (t.startsWith('/') || t.startsWith('http://') || t.startsWith('https://')) return t
+  if (
+    t.startsWith('/') ||
+    t.startsWith('http://') ||
+    t.startsWith('https://') ||
+    t.startsWith('mailto:') ||
+    t.startsWith('tel:')
+  ) {
+    return t
+  }
   return '#'
 }
 
@@ -181,10 +224,27 @@ function CloseIcon() {
 
 const SCROLL_THRESHOLD = 60
 
-export default function HeaderClient({ settings }: HeaderClientProps) {
+function isExternalHttpUrl(href: string): boolean {
+  return /^https?:\/\//i.test(href)
+}
+
+function isMailtoOrTel(href: string): boolean {
+  return /^mailto:|^tel:/i.test(href)
+}
+
+export default function HeaderClient({
+  settings,
+  announcementBar = null,
+}: HeaderClientProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [headerVisible, setHeaderVisible] = useState(true)
   const lastScrollY = useRef(0)
+
+  const announcementText = announcementBar?.text?.trim() ?? ''
+  const showAnnouncement = Boolean(announcementBar?.enabled && announcementText)
+  const linkTrimmed = announcementBar?.linkUrl?.trim() ?? ''
+  const linkResolved = linkTrimmed ? safeHref(linkTrimmed) : '#'
+  const hasWorkingLink = Boolean(linkTrimmed && linkResolved !== '#')
 
   useEffect(() => {
     function onScroll() {
@@ -204,12 +264,56 @@ export default function HeaderClient({ settings }: HeaderClientProps) {
     ? urlFor(settings.logo.asset).width(220).height(60).url()
     : settings.logo?.url ?? null
 
-  return (
+  const AnnouncementIcon = announcementIconComponent(announcementBar?.icon)
+  const announcementInnerClass =
+    'mx-auto flex max-w-7xl items-center justify-center gap-2.5 px-4 py-2.5 text-center sm:px-6'
+  const announcementTextClass =
+    'text-sm font-medium leading-snug text-white sm:text-[15px] [&_a]:underline'
+
+  const announcementInner = (
     <>
-      <div className={styles.headerSpacer} aria-hidden />
-      <header
-        className={`${styles.header} ${!headerVisible ? styles.headerHidden : ''}`}
-      >
+      {AnnouncementIcon ? (
+        <AnnouncementIcon className="h-4 w-4 shrink-0 text-white/95" strokeWidth={2} aria-hidden />
+      ) : null}
+      <span className={announcementTextClass}>{announcementText}</span>
+    </>
+  )
+
+  return (
+    <div className={`${styles.siteHeaderStack} print:hidden`}>
+      {showAnnouncement && (
+        <div className={styles.announcementStrip} role="region" aria-label="Site duyurusu">
+          {hasWorkingLink ? (
+            isExternalHttpUrl(linkResolved) ? (
+              <a
+                href={linkResolved}
+                className={`${announcementInnerClass} block text-white no-underline transition hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {announcementInner}
+              </a>
+            ) : isMailtoOrTel(linkResolved) ? (
+              <a
+                href={linkResolved}
+                className={`${announcementInnerClass} block text-white no-underline transition hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white`}
+              >
+                {announcementInner}
+              </a>
+            ) : (
+              <Link
+                href={linkResolved}
+                className={`${announcementInnerClass} block text-white no-underline transition hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white`}
+              >
+                {announcementInner}
+              </Link>
+            )
+          ) : (
+            <div className={announcementInnerClass}>{announcementInner}</div>
+          )}
+        </div>
+      )}
+      <header className={`${styles.header} ${!headerVisible ? styles.headerHidden : ''}`}>
         <div className={styles.headerInner}>
           <div className={styles.headerLeft}>
             <Link href="/" className={styles.logoLink} aria-label="Ana sayfa">
@@ -314,6 +418,6 @@ export default function HeaderClient({ settings }: HeaderClientProps) {
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }

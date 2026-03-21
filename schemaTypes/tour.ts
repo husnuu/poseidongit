@@ -405,6 +405,12 @@ export default defineType({
           description: 'Tur kalkış saati (örn: 10:00) – e-posta ve detayda gösterilir',
         }),
         defineField({
+          name: 'returnTime',
+          title: 'Dönüş / varış saati',
+          type: 'string',
+          description: 'Teknenin limana dönüş saati (örn: 13:00) – bilet sayfasında gösterilir',
+        }),
+        defineField({
           name: 'language',
           title: 'Dil',
           type: 'string',
@@ -1415,15 +1421,16 @@ export default defineType({
                 }),
                 defineField({
                   name: 'priceOverrides',
-                  title: 'Fiyat Değişiklikleri',
+                  title: 'Genel fiyat (tüm sınıflar)',
                   type: 'object',
-                  description: 'Bu gün için özel fiyatlar (opsiyonel)',
+                  description:
+                    'Bu güne ortak özel fiyat. Sınıfa özel satırda o yaş için değer yoksa burası kullanılır; o da boşsa turun normal sınıf fiyatı uygulanır.',
                   fields: [
                     defineField({
                       name: 'adultPrice',
                       title: 'Yetişkin Fiyatı',
                       type: 'number',
-                      description: 'Bu gün için yetişkin fiyatı (boş bırakılırsa normal fiyat kullanılır)',
+                      description: 'Boş bırakılırsa (veya sınıf satırında tanımlıysa orası) normal fiyat kullanılır',
                     }),
                     defineField({
                       name: 'childPrice',
@@ -1437,6 +1444,86 @@ export default defineType({
                       type: 'number',
                       description: 'Bu gün için bebek fiyatı',
                     }),
+                  ],
+                }),
+                defineField({
+                  name: 'classPriceOverrides',
+                  title: 'Sınıfa özel fiyatlar',
+                  type: 'array',
+                  description:
+                    'Eco, Premium veya First için ayrı fiyat. Girilen yaş fiyatı, genel fiyat ve tur varsayılanının önüne geçer.',
+                  validation: (Rule) =>
+                    Rule.custom((items) => {
+                      if (!items) return true
+                      const classKeys = (items as any[])
+                        .map((item: any) => item?.classKey)
+                        .filter(Boolean)
+                      const uniqueKeys = new Set(classKeys)
+                      if (classKeys.length !== uniqueKeys.size) {
+                        return 'Her sınıf için yalnızca bir fiyat satırı ekleyin'
+                      }
+                      return true
+                    }),
+                  of: [
+                    {
+                      type: 'object',
+                      fields: [
+                        defineField({
+                          name: 'classKey',
+                          title: 'Sınıf',
+                          type: 'string',
+                          options: {
+                            list: [
+                              { title: 'Eco', value: 'eco' },
+                              { title: 'Premium', value: 'premium' },
+                              { title: 'First', value: 'first' },
+                            ],
+                          },
+                          validation: (Rule) => Rule.required().error('Sınıf seçimi zorunludur'),
+                        }),
+                        defineField({
+                          name: 'adultPrice',
+                          title: 'Yetişkin',
+                          type: 'number',
+                        }),
+                        defineField({
+                          name: 'childPrice',
+                          title: 'Çocuk',
+                          type: 'number',
+                        }),
+                        defineField({
+                          name: 'infantPrice',
+                          title: 'Bebek',
+                          type: 'number',
+                        }),
+                      ],
+                      preview: {
+                        select: {
+                          classKey: 'classKey',
+                          adultPrice: 'adultPrice',
+                          childPrice: 'childPrice',
+                          infantPrice: 'infantPrice',
+                        },
+                        prepare({
+                          classKey,
+                          adultPrice,
+                          childPrice,
+                          infantPrice,
+                        }: Record<string, unknown>) {
+                          const title = classKey
+                            ? classKey.charAt(0).toUpperCase() + classKey.slice(1)
+                            : 'Sınıf'
+                          const parts: string[] = []
+                          if (adultPrice != null) parts.push(`Yetişkin ${adultPrice}`)
+                          if (childPrice != null) parts.push(`Çocuk ${childPrice}`)
+                          if (infantPrice != null) parts.push(`Bebek ${infantPrice}`)
+                          return {
+                            title,
+                            subtitle: parts.length ? `${parts.join(' · ')} TRY` : 'Fiyat girilmedi',
+                          }
+                        },
+                      },
+                    },
                   ],
                 }),
                 defineField({

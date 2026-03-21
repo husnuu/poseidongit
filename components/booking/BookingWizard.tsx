@@ -1,16 +1,18 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Check, FileDown } from 'lucide-react'
+import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
-import { getRemainingCapacityForDate, computePricingForSelection } from '@/lib/sanity/bookingPricing'
+import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
+import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import StepPeople from './steps/StepPeople'
 import StepDateClass from './steps/StepDateClass'
 import StepCustomer from './steps/StepCustomer'
 import StepPayment from './steps/StepPayment'
+import PaymentSuccessPanel from './PaymentSuccessPanel'
 import styles from './booking.module.css'
 
 interface BookingWizardProps {
@@ -28,17 +30,27 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
   const [submitting, setSubmitting] = useState(false)
   const [bookingResult, setBookingResult] = useState<{
     bookingId: string
+    accessToken?: string
     summary: { tourTitle: string; date: string; className: string; totalPrice: number; currency: string; status: string }
   } | null>(null)
   /** Rezervasyon başarılı olunca anlık kalan kontenjan = Sanity kapasitesi - (API used + bu). */
   const [optimisticUsed, setOptimisticUsed] = useState<UsedByDateAndClass | null>(null)
   const [step4TermsAccepted, setStep4TermsAccepted] = useState(false)
+  /** Step 2'ye her girildiğinde artırılır; böylece dolu loca listesi Firestore'dan yeniden çekilir. */
+  const [step2InvalidateKey, setStep2InvalidateKey] = useState(0)
+  const prevStepRef = useRef(state.step)
 
   const maxPax = tour.quickFacts?.maxCapacity ?? MAX_PAX_FALLBACK
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
 
   const updateState = useCallback((patch: Partial<BookingWizardState>) => {
-    setState((prev) => ({ ...prev, ...patch }))
+    setState((prev) => {
+      const next = { ...prev, ...patch }
+      if (patch.counts !== undefined) {
+        next.additionalTravelers = resizeAdditionalTravelers(prev.additionalTravelers, patch.counts)
+      }
+      return next
+    })
   }, [])
 
   const onPricingComputed = useCallback((pricingSummary: PricingSummary | null) => {
@@ -78,6 +90,13 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
     }
   }, [state.step])
 
+  // Step 2'ye (tarih/sınıf) her girildiğinde availability'yi yeniden çek (dolu loca'lar güncel olsun)
+  useEffect(() => {
+    const prev = prevStepRef.current
+    prevStepRef.current = state.step
+    if (prev !== 2 && state.step === 2) setStep2InvalidateKey((k) => k + 1)
+  }, [state.step])
+
   const datesForAvailability = useMemo(
     () => (state.selectedDate ? [state.selectedDate] : []),
     [state.selectedDate]
@@ -94,11 +113,15 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
       ? capacityForSelectedDate[state.selectedClassKey] ?? 0
       : 0
   const hasEnoughCapacityForClass = capacityForSelectedClass >= totalPax
+  const requiresFirstClassLoca = isFirstClassKey(tour, state.selectedClassKey)
+  const requiredFirstClassLocas = requiresFirstClassLoca ? Math.ceil(totalPax / 2) : 0
+  const hasRequiredLocas = (state.firstClassLocas?.length ?? 0) === requiredFirstClassLocas
   const canProceedStep2 = Boolean(
     state.selectedDate &&
       state.selectedClassKey &&
       state.pricingSummary &&
-      hasEnoughCapacityForClass
+      hasEnoughCapacityForClass &&
+      (!requiresFirstClassLoca || hasRequiredLocas)
   )
   const [step3Valid, setStep3Valid] = useState(false)
   const canProceedStep3 = step3Valid
@@ -133,6 +156,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
             },
             classId: state.selectedClassKey ?? '',
             className: tour.ticketClasses?.find((c) => c.key === state.selectedClassKey)?.label ?? state.selectedClassKey ?? '',
+            ...(requiresFirstClassLoca && (state.firstClassLocas?.length ?? 0) > 0 && { firstClassLocas: state.firstClassLocas!.map((id) => id.trim().toUpperCase()) }),
             customer: {
               firstName: state.customer.firstName?.trim() ?? '',
               lastName: state.customer.lastName?.trim() ?? '',
@@ -140,10 +164,16 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
               phone: phoneDisplay ?? '',
               note: state.customer.note?.trim() || undefined,
             },
+            ...(additionalTravelerSlotCount(state.counts) > 0 && {
+              additionalTravelers: (state.additionalTravelers ?? []).map((t) => ({
+                firstName: t.firstName?.trim() ?? '',
+                lastName: t.lastName?.trim() ?? '',
+              })),
+            }),
           }),
         })
         const text = await res.text()
-        let data: { error?: string; bookingId?: string; summary?: unknown } = {}
+        let data: { error?: string; bookingId?: string; accessToken?: string; summary?: unknown } = {}
         try {
           data = text ? JSON.parse(text) : {}
         } catch {
@@ -172,7 +202,12 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
           }))
         }
         const summary = data.summary as { tourTitle: string; date: string; className: string; totalPrice: number; currency: string; status: string }
-        setBookingResult({ bookingId: data.bookingId, summary })
+        const accessToken = typeof data.accessToken === 'string' && data.accessToken.trim() ? data.accessToken.trim() : undefined
+        setBookingResult({
+          bookingId: data.bookingId,
+          accessToken,
+          summary,
+        })
         setSubmitted(true)
       } catch {
         setSubmitError('Bağlantı hatası. Lütfen tekrar deneyin.')
@@ -207,7 +242,6 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
   }, [tour.slug, router])
 
   if (submitted && bookingResult) {
-    const s = bookingResult.summary
     return (
       <div className={styles.wizard}>
         <div className={styles.header}>
@@ -222,68 +256,13 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
         </div>
         <div className={styles.content}>
           <div className={styles.card} style={{ maxWidth: 420, margin: '0 auto', padding: 28 }}>
-            <div style={{ textAlign: 'center', marginBottom: 20 }}>
-              <h2 className={styles.successTitle} style={{ marginBottom: 8 }}>
-                Rezervasyonunuz onaylandı
-              </h2>
-              <p className={styles.successText} style={{ margin: 0 }}>
-                Rezervasyon numaranızı not alın; iletişim için kullanılacaktır.
-              </p>
-            </div>
-            <div
-              className={styles.summaryBody}
-              style={{
-                background: 'var(--primary)',
-                color: '#fff',
-                padding: '16px 20px',
-                borderRadius: 12,
-                marginBottom: 20,
-              }}
-            >
-              <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 4 }}>Rezervasyon no</div>
-              <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '0.02em' }}>
-                {bookingResult.bookingId}
-              </div>
-            </div>
-            <div className={styles.summaryBody} style={{ marginBottom: 20 }}>
-              <div className={styles.summaryRow}>
-                <span className={styles.summaryRowLabel}>Tur</span>
-                <span className={styles.summaryRowValue}>{s.tourTitle}</span>
-              </div>
-              <div className={styles.summaryRow}>
-                <span className={styles.summaryRowLabel}>Tarih</span>
-                <span className={styles.summaryRowValue}>{s.date}</span>
-              </div>
-              <div className={styles.summaryRow}>
-                <span className={styles.summaryRowLabel}>Sınıf</span>
-                <span className={styles.summaryRowValue}>{s.className}</span>
-              </div>
-              <div className={styles.summaryRow}>
-                <span className={styles.summaryRowLabel}>Toplam</span>
-                <span className={styles.summaryRowValue}>{s.totalPrice.toLocaleString('tr-TR')} {s.currency}</span>
-              </div>
-            </div>
-            <p className={styles.successText} style={{ marginBottom: 16, textAlign: 'center', fontSize: 14 }}>
-              Ödeme bilgileriniz işlendik. Voucher&apos;ınızı aşağıdan indirebilirsiniz.
-            </p>
-            <a
-              href={`/api/voucher?bookingId=${bookingResult.bookingId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.ticketPdfBtn}
-              style={{ marginBottom: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
-            >
-              <FileDown className="w-5 h-5" aria-hidden />
-              Voucher&apos;ı İndir (PDF)
-            </a>
-            <button
-              type="button"
-              className={styles.ctaButton}
-              onClick={goBackToTour}
-              style={{ display: 'block', width: '100%', textAlign: 'center' }}
-            >
-              Tura Dön
-            </button>
+            <PaymentSuccessPanel
+              bookingId={bookingResult.bookingId}
+              accessToken={bookingResult.accessToken}
+              summary={bookingResult.summary}
+              doneButtonLabel="Tura Dön"
+              onDone={goBackToTour}
+            />
           </div>
         </div>
       </div>
@@ -342,6 +321,8 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
             onUpdate={updateState}
             onPricingComputed={onPricingComputed}
             optimisticUsed={optimisticUsed}
+            onProceedToNextStep={goNext}
+            availabilityInvalidateKey={String(step2InvalidateKey)}
           />
         )}
         {state.step === 3 && (

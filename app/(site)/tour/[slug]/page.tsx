@@ -430,7 +430,7 @@ export default async function TourPage({
         {/* Extras */}
         {tour.extras && tour.extras.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4 text-black dark:text-zinc-50">
+            <h2 className="text-2xl font-semibold mb-4" style={{ color: '#1e3a5f' }}>
               Ekstra Hizmetler
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

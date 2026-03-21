@@ -54,16 +54,16 @@ export default function RouteSection({
       aria-labelledby="route-section-heading"
     >
       <div
-        className={`mx-auto max-w-7xl px-6 py-24 transition-all duration-700 ease-out ${
+        className={`mx-auto max-w-7xl px-6 pt-16 pb-16 transition-all duration-700 ease-out md:pt-20 md:pb-20 ${
           visible ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
         }`}
       >
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-14">
           {/* Sol: Başlık, Açıklama, CTA */}
           <div className="flex flex-col">
             <h2
               id="route-section-heading"
-              className="text-[40px] font-black uppercase leading-[1.1] md:text-[48px]"
+              className="text-[34px] font-black uppercase leading-[1.15] sm:text-[38px] md:text-[42px] lg:text-[46px]"
               style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
             >
               {firstTwo && <span style={{ color: '#1e3a8a' }}>{firstTwo}</span>}
@@ -82,7 +82,7 @@ export default function RouteSection({
               <span className="hero-primary-btn-wrap mt-[22px] inline-flex">
                 <Link
                   href={ctaButton.href || '#'}
-                  className="hero-primary-inner hero-btn-shine inline-flex h-[54px] min-w-[220px] items-center justify-center rounded bg-[#1e3a5f] px-6 text-center text-lg font-black uppercase text-white transition hover:brightness-110"
+                  className="hero-primary-inner hero-btn-shine inline-flex h-[48px] min-w-[200px] items-center justify-center rounded bg-[#1e3a5f] px-5 text-center text-base font-black uppercase text-white transition hover:brightness-110"
                   style={{ fontFamily: 'var(--font-family)' }}
                 >
                   {ctaButton.label}

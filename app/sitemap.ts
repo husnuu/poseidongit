@@ -41,10 +41,27 @@ async function getBlogEntries(): Promise<SitemapEntry[]> {
   }
 }
 
+async function getLegalEntries(): Promise<SitemapEntry[]> {
+  try {
+    const list = await client.fetch<{ slug: string | null; _updatedAt: string }[]>(
+      `*[_type == "legalPage" && defined(slug.current)]{ "slug": slug.current, _updatedAt }`
+    )
+    return (list ?? [])
+      .filter((l): l is { slug: string; _updatedAt: string } => Boolean(l.slug))
+      .map((l) => ({
+        slug: l.slug,
+        lastModified: l._updatedAt ? new Date(l._updatedAt) : new Date(),
+      }))
+  } catch {
+    return []
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [tourEntriesRaw, blogEntriesRaw] = await Promise.all([
+  const [tourEntriesRaw, blogEntriesRaw, legalEntriesRaw] = await Promise.all([
     getTourEntries(),
     getBlogEntries(),
+    getLegalEntries(),
   ])
 
   const now = new Date()
@@ -73,5 +90,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
-  return [...staticPages, ...tourEntries, ...blogEntries]
+  const legalEntries: MetadataRoute.Sitemap = legalEntriesRaw.map(({ slug, lastModified }) => ({
+    url: `${BASE}/yasal/${slug}`,
+    lastModified,
+    changeFrequency: 'monthly' as const,
+    priority: 0.5,
+  }))
+
+  return [...staticPages, ...tourEntries, ...blogEntries, ...legalEntries]
 }

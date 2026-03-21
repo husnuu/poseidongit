@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import Image from 'next/image'
 import { Star } from 'lucide-react'
 import type {
@@ -10,8 +10,9 @@ import type {
   PricingSummary,
 } from '@/lib/sanity/bookingTypes'
 import { getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
-import { computePricingForSelection, buildCalendarDaysForMonth, getFirstAvailableYearMonth, getSeasonMultiplier, getClassStatusForDate, getRemainingCapacityForDate, getCapForTicketClass } from '@/lib/sanity/bookingPricing'
+import { computePricingForSelection, buildCalendarDaysForMonth, getFirstAvailableYearMonth, getDisplayedAdultUnitPriceForClass, getClassStatusForDate, getRemainingCapacityForDate, getCapForTicketClass, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
+import FirstClassSeatSelector from '../FirstClassSeatSelector'
 import styles from '../booking.module.css'
 
 function datesForMonth(year: number, month: number): string[] {
@@ -30,6 +31,10 @@ interface StepDateClassProps {
   onPricingComputed: (pricing: PricingSummary | null) => void
   /** Rezervasyon sonrası anlık kalan kontenjan için (Sanity kapasitesi - API used - bu). */
   optimisticUsed?: UsedByDateAndClass | null
+  /** First Class loca seçildikten sonra bir sonraki adıma geçmek için (opsiyonel). */
+  onProceedToNextStep?: () => void
+  /** Step 2'ye her girildiğinde değişirse availability yeniden çekilir (dolu loca'lar güncel olsun). */
+  availabilityInvalidateKey?: string
 }
 
 export default function StepDateClass({
@@ -38,7 +43,10 @@ export default function StepDateClass({
   onUpdate,
   onPricingComputed,
   optimisticUsed,
+  onProceedToNextStep,
+  availabilityInvalidateKey,
 }: StepDateClassProps) {
+  const locaSectionRef = useRef<HTMLDivElement>(null)
   const firstAvailable = useMemo(() => getFirstAvailableYearMonth(tour), [tour])
   const [viewYear, setViewYear] = useState(() => firstAvailable.year)
   const [viewMonth, setViewMonth] = useState(() => firstAvailable.month)
@@ -59,24 +67,34 @@ export default function StepDateClass({
   const { usedByDate, availability } = useAvailability(getTourIdForFirebase(tour), datesToFetch, {
     tourSlug: tour?.slug,
     optimisticUsed,
+    invalidateKey: availabilityInvalidateKey ?? '',
   })
   const LOW_STOCK_THRESHOLD = 5
 
   useEffect(() => {
     const total = state.counts.adult + state.counts.child + state.counts.baby
     if (state.selectedClassKey === 'first' && (state.counts.child > 0 || state.counts.baby > 0)) {
-      onUpdate({ selectedClassKey: null })
+      onUpdate({ selectedClassKey: null, firstClassLocas: [] })
       return
     }
     if (state.selectedClassKey === 'first' && total % 2 !== 0) {
-      onUpdate({ selectedClassKey: null })
+      onUpdate({ selectedClassKey: null, firstClassLocas: [] })
       return
     }
     if (state.selectedDate && state.selectedClassKey) {
       const status = getClassStatusForDate(tour, state.selectedDate, state.selectedClassKey)
-      if (status === 'full' || status === 'closed') onUpdate({ selectedClassKey: null })
+      if (status === 'full' || status === 'closed') onUpdate({ selectedClassKey: null, firstClassLocas: [] })
     }
   }, [tour, state.selectedDate, state.selectedClassKey, state.counts.adult, state.counts.child, state.counts.baby, onUpdate])
+
+  // Tarih değişince First Class loca seçimini sıfırla (müsaitlik tarihe göre).
+  const prevDateRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (prevDateRef.current !== null && prevDateRef.current !== state.selectedDate && (state.firstClassLocas?.length ?? 0) > 0) {
+      onUpdate({ firstClassLocas: [] })
+    }
+    prevDateRef.current = state.selectedDate
+  }, [state.selectedDate, state.firstClassLocas, onUpdate])
 
   useEffect(() => {
     if (!state.selectedDate || !state.selectedClassKey) {
@@ -140,7 +158,7 @@ export default function StepDateClass({
   return (
     <>
       <div className={styles.card}>
-        <h3 className={styles.cardTitle}>Tarih Seçin</h3>
+        <h3 className={`${styles.cardTitle} ${styles.wizardMainStepTitle}`}>Tarih Seçin</h3>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <button
             type="button"
@@ -215,7 +233,7 @@ export default function StepDateClass({
 
       {state.selectedDate && (
         <div className={styles.card}>
-          <h3 className={styles.cardTitle}>Sınıf Seçimi</h3>
+          <h3 className={`${styles.cardTitle} ${styles.wizardMainStepTitle}`}>Sınıf Seçimi</h3>
           {(tour.ticketClasses ?? []).map((cls) => {
             const selected = state.selectedClassKey === cls.key
             const cap = capForClass(cls.key)
@@ -228,12 +246,9 @@ export default function StepDateClass({
             const available = cap >= totalPax && firstClassNoChildOrBaby && firstClassEvenPax && !classBlocked
             const isFirstClassRestricted = cls.key === 'first' && (!firstClassNoChildOrBaby || totalPax % 2 !== 0)
             const isFirstClassOddPaxWarning = cls.key === 'first' && totalPax % 2 !== 0
-            const adultPrice = cls.pricesByAge?.find((p) => p.ageKey === 'adult')
-            const multiplier = state.selectedDate ? getSeasonMultiplier(tour, state.selectedDate) : 1
-            const price =
-              adultPrice?.price != null
-                ? Math.round(adultPrice.price * multiplier)
-                : undefined
+            const price = state.selectedDate
+              ? getDisplayedAdultUnitPriceForClass(tour, state.selectedDate, cls)
+              : undefined
             const dateFormatted = new Date(state.selectedDate!).toLocaleDateString('tr-TR', {
               day: 'numeric',
               month: 'short',
@@ -247,7 +262,14 @@ export default function StepDateClass({
                   position: 'relative',
                   ...(isFull || insufficientCap ? { opacity: 0.82, filter: 'grayscale(0.4)', cursor: 'not-allowed' } : {}),
                 }}
-                onClick={() => available && onUpdate({ selectedClassKey: cls.key })}
+                onClick={() => {
+                  if (available) {
+                    onUpdate({
+                      selectedClassKey: cls.key,
+                      ...(cls.key !== 'first' ? { firstClassLocas: [] } : {}),
+                    })
+                  }
+                }}
                 disabled={!available}
               >
                 {isFirstClassOddPaxWarning && (
@@ -412,6 +434,35 @@ export default function StepDateClass({
           )}
         </div>
       )}
+
+      {/* First Class seçildiyse loca seçimi ayrı kartta (N kişi → N/2 loca) */}
+      {state.selectedDate && state.selectedClassKey && isFirstClassKey(tour, state.selectedClassKey) && (() => {
+        const totalPax = state.counts.adult + state.counts.child + state.counts.baby
+        const requiredLocas = Math.ceil(totalPax / 2)
+        const selected = state.firstClassLocas ?? []
+        const handleToggle = (locaId: string) => {
+          const id = locaId.trim().toUpperCase()
+          if (selected.includes(id)) {
+            onUpdate({ firstClassLocas: selected.filter((x) => x !== id) })
+          } else if (selected.length < requiredLocas) {
+            onUpdate({ firstClassLocas: [...selected, id] })
+          }
+        }
+        return (
+          <div ref={locaSectionRef} className={styles.card} style={{ marginTop: 16 }}>
+            <h3 className={styles.cardTitle}>Loca Seçimi</h3>
+            <FirstClassSeatSelector
+              selectedLocaIds={selected}
+              reservedLocaIds={availability?.date === state.selectedDate ? (availability?.firstClassLocasReserved || []) : []}
+              requiredCount={requiredLocas}
+              onToggle={handleToggle}
+              onReplace={(removeId, addId) => onUpdate({ firstClassLocas: [...(state.firstClassLocas ?? []).filter((x) => x !== removeId), addId.trim().toUpperCase()] })}
+              onAfterSelect={onProceedToNextStep}
+              aria-label="First Class loca seçimi"
+            />
+          </div>
+        )
+      })()}
     </>
   )
 }

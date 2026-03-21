@@ -1,3 +1,7 @@
+/**
+ * POST /api/booking/cancel — Rezervasyon iptali (bookingId + email ile).
+ * Rate limiting: see docs/RATE_LIMITING_SUGGESTIONS.md (e.g. 10 req/min per IP).
+ */
 import { NextRequest, NextResponse } from 'next/server'
 import { getFirestore } from '@/lib/firebaseAdmin'
 

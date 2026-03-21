@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Check, FileDown } from 'lucide-react'
+import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
-import { getRemainingCapacityForDate, computePricingForSelection } from '@/lib/sanity/bookingPricing'
+import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
+import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import {
   Step1PeopleDate,
@@ -13,6 +14,7 @@ import {
   Step3CustomerInfo,
   Step4Payment,
 } from './steps'
+import PaymentSuccessPanel from './PaymentSuccessPanel'
 import styles from './booking.module.css'
 
 export interface BookingWizardModalProps {
@@ -37,6 +39,7 @@ export default function BookingWizardModal({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [bookingResult, setBookingResult] = useState<{
     bookingId: string
+    accessToken?: string
     summary: { tourTitle: string; date: string; className: string; totalPrice: number; currency: string; status: string }
   } | null>(null)
   const [step3Valid, setStep3Valid] = useState(false)
@@ -45,16 +48,30 @@ export default function BookingWizardModal({
   /** Modal her açıldığında güncellenir; useAvailability bu sayede önceki rezervasyonları yeniden çeker. */
   const [availabilityInvalidateKey, setAvailabilityInvalidateKey] = useState('')
   const paneRef = useRef<HTMLDivElement>(null)
+  const prevStepRef = useRef(state.step)
 
   useEffect(() => {
     if (open) setAvailabilityInvalidateKey(String(Date.now()))
   }, [open])
 
+  // Step 2'ye (sınıf/loca) her girildiğinde availability'yi yeniden çek (dolu loca'lar güncel olsun)
+  useEffect(() => {
+    const prev = prevStepRef.current
+    prevStepRef.current = state.step
+    if (prev !== 2 && state.step === 2) setAvailabilityInvalidateKey(String(Date.now()))
+  }, [state.step])
+
   const maxPax = tour.quickFacts?.maxCapacity ?? MAX_PAX_FALLBACK
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
 
   const updateState = useCallback((patch: Partial<BookingWizardState>) => {
-    setState((prev) => ({ ...prev, ...patch }))
+    setState((prev) => {
+      const next = { ...prev, ...patch }
+      if (patch.counts !== undefined) {
+        next.additionalTravelers = resizeAdditionalTravelers(prev.additionalTravelers, patch.counts)
+      }
+      return next
+    })
   }, [])
 
   const onPricingComputed = useCallback((pricingSummary: PricingSummary | null) => {
@@ -100,14 +117,13 @@ export default function BookingWizardModal({
   }, [submitted])
 
   const handleClose = useCallback(() => {
-    if (submitted) {
-      setSubmitted(false)
-      setBookingResult(null)
-      setOptimisticUsed(null)
-      setState((prev) => ({ ...DEFAULT_BOOKING_STATE, tourSlug: prev.tourSlug }))
-    }
+    setSubmitted(false)
+    setBookingResult(null)
+    setSubmitError(null)
+    setOptimisticUsed(null)
+    setState((prev) => ({ ...DEFAULT_BOOKING_STATE, tourSlug: prev.tourSlug }))
     onClose()
-  }, [submitted, onClose, tourSlug])
+  }, [onClose, tourSlug])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -170,8 +186,14 @@ export default function BookingWizardModal({
       : 0
   const canProceedStep1 = totalPax >= 1 && state.counts.adult >= 1 && totalPax <= maxPax && !!state.selectedDate
   const hasEnoughCapacityStep2 = capacityForSelectedClass >= totalPax
+  const requiresFirstClassLoca = isFirstClassKey(tour, state.selectedClassKey)
+  const requiredFirstClassLocas = requiresFirstClassLoca ? Math.ceil(totalPax / 2) : 0
+  const hasRequiredLocas = (state.firstClassLocas?.length ?? 0) === requiredFirstClassLocas
   const canProceedStep2 = Boolean(
-    state.selectedClassKey && state.pricingSummary && hasEnoughCapacityStep2
+    state.selectedClassKey &&
+      state.pricingSummary &&
+      hasEnoughCapacityStep2 &&
+      (!requiresFirstClassLoca || hasRequiredLocas)
   )
   const canProceedStep3 = step3Valid
 
@@ -202,6 +224,7 @@ export default function BookingWizardModal({
             },
             classId: state.selectedClassKey ?? '',
             className: tour.ticketClasses?.find((c) => c.key === state.selectedClassKey)?.label ?? state.selectedClassKey ?? '',
+            ...(requiresFirstClassLoca && (state.firstClassLocas?.length ?? 0) > 0 && { firstClassLocas: state.firstClassLocas!.map((id) => id.trim().toUpperCase()) }),
             customer: {
               firstName: state.customer.firstName?.trim() ?? '',
               lastName: state.customer.lastName?.trim() ?? '',
@@ -209,10 +232,16 @@ export default function BookingWizardModal({
               phone: phoneDisplay ?? '',
               note: state.customer.note?.trim() || undefined,
             },
+            ...(additionalTravelerSlotCount(state.counts) > 0 && {
+              additionalTravelers: (state.additionalTravelers ?? []).map((t) => ({
+                firstName: t.firstName?.trim() ?? '',
+                lastName: t.lastName?.trim() ?? '',
+              })),
+            }),
           }),
         })
         const text = await res.text()
-        let data: { error?: string; bookingId?: string; summary?: unknown } = {}
+        let data: { error?: string; bookingId?: string; accessToken?: string; summary?: unknown } = {}
         try {
           data = text ? JSON.parse(text) : {}
         } catch {
@@ -242,7 +271,12 @@ export default function BookingWizardModal({
           }))
         }
         const summary = data.summary as { tourTitle: string; date: string; className: string; totalPrice: number; currency: string; status: string }
-        setBookingResult({ bookingId: data.bookingId, summary })
+        const accessToken = typeof data.accessToken === 'string' && data.accessToken.trim() ? data.accessToken.trim() : undefined
+        setBookingResult({
+          bookingId: data.bookingId,
+          accessToken,
+          summary,
+        })
         setSubmitted(true)
       } catch {
         setSubmitError('Bağlantı hatası. Lütfen tekrar deneyin.')
@@ -337,71 +371,24 @@ export default function BookingWizardModal({
         <main className={styles.wizardModalContent} key={submitted ? 'done' : state.step}>
           {submitted ? (
             <div className={styles.card} style={{ padding: 28, maxWidth: 420, margin: '0 auto' }}>
-              <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                <h2 className={styles.successTitle} style={{ marginBottom: 8 }}>
-                  Rezervasyonunuz onaylandı
-                </h2>
-                <p className={styles.successText} style={{ margin: 0 }}>
-                  Rezervasyon numaranızı not alın; iletişim için kullanılacaktır.
-                </p>
-              </div>
               {bookingResult ? (
+                <PaymentSuccessPanel
+                  bookingId={bookingResult.bookingId}
+                  accessToken={bookingResult.accessToken}
+                  summary={bookingResult.summary}
+                  doneButtonLabel="Kapat"
+                  onDone={handleClose}
+                />
+              ) : (
                 <>
-                  <div
-                    className={styles.summaryBody}
-                    style={{
-                      background: 'var(--primary)',
-                      color: '#fff',
-                      padding: '16px 20px',
-                      borderRadius: 12,
-                      marginBottom: 20,
-                    }}
-                  >
-                    <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 4 }}>Rezervasyon no</div>
-                    <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '0.02em' }}>
-                      {bookingResult.bookingId}
-                    </div>
-                  </div>
-                  <div className={styles.summaryBody} style={{ marginBottom: 20 }}>
-                    <div className={styles.summaryRow}>
-                      <span className={styles.summaryRowLabel}>Tur</span>
-                      <span className={styles.summaryRowValue}>{bookingResult.summary.tourTitle}</span>
-                    </div>
-                    <div className={styles.summaryRow}>
-                      <span className={styles.summaryRowLabel}>Tarih</span>
-                      <span className={styles.summaryRowValue}>{bookingResult.summary.date}</span>
-                    </div>
-                    <div className={styles.summaryRow}>
-                      <span className={styles.summaryRowLabel}>Sınıf</span>
-                      <span className={styles.summaryRowValue}>{bookingResult.summary.className}</span>
-                    </div>
-                    <div className={styles.summaryRow}>
-                      <span className={styles.summaryRowLabel}>Toplam</span>
-                      <span className={styles.summaryRowValue}>
-                        {bookingResult.summary.totalPrice.toLocaleString('tr-TR')} {bookingResult.summary.currency}
-                      </span>
-                    </div>
-                  </div>
+                  <p className={styles.successText} style={{ textAlign: 'center', margin: '0 0 16px' }}>
+                    Rezervasyonunuz kaydediliyor…
+                  </p>
+                  <button type="button" className={styles.ctaButton} onClick={handleClose} style={{ width: '100%' }}>
+                    Kapat
+                  </button>
                 </>
-              ) : null}
-              <p className={styles.successText} style={{ marginBottom: 16, textAlign: 'center', fontSize: 14 }}>
-                Ödeme bilgileriniz işlendik. Voucher&apos;ınızı aşağıdan indirebilirsiniz.
-              </p>
-              {bookingResult && (
-                <a
-                  href={`/api/voucher?bookingId=${bookingResult.bookingId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.ticketPdfBtn}
-                  style={{ marginBottom: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
-                >
-                  <FileDown className="w-5 h-5" aria-hidden />
-                  Voucher&apos;ı İndir (PDF)
-                </a>
               )}
-              <button type="button" className={styles.ctaButton} onClick={handleClose} style={{ width: '100%', marginTop: 0 }}>
-                Kapat
-              </button>
             </div>
           ) : (
             <>

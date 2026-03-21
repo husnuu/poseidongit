@@ -48,23 +48,23 @@ export default function FooterLegal({ data, inline }: FooterLegalProps) {
       )}
 
       {logos.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className="mt-3 flex flex-wrap gap-2">
           {logos.map((item, index) => {
             const asset = item?.asset
             if (!asset) return null
-            const src = urlFor(asset).width(40).height(27).url()
+            const src = urlFor(asset).width(32).height(22).url()
             const alt = item?.alt || 'Payment method'
             return (
               <span
                 key={index}
-                className="flex items-center justify-center rounded bg-white px-2 py-1.5 shadow-sm"
+                className="flex items-center justify-center rounded bg-white px-1.5 py-1 shadow-sm"
               >
                 <Image
                   src={src}
                   alt={alt}
-                  width={40}
-                  height={27}
-                  className="h-7 w-auto object-contain"
+                  width={32}
+                  height={22}
+                  className="h-5 w-auto max-h-5 object-contain"
                 />
               </span>
             )

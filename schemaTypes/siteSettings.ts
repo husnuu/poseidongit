@@ -146,6 +146,66 @@ export default defineType({
       hidden: true,
     }),
     defineField({
+      name: 'announcementBar',
+      title: 'Üst duyuru çubuğu',
+      type: 'object',
+      description:
+        'Header’ın üzerinde tam genişlikte lacivert şerit (isteğe bağlı). Kampanya, önemli haber veya uyarı için.',
+      fields: [
+        defineField({
+          name: 'enabled',
+          title: 'Göster',
+          type: 'boolean',
+          description: 'Açıkken şerit tüm sayfalarda header üstünde görünür.',
+          initialValue: false,
+        }),
+        defineField({
+          name: 'text',
+          title: 'Metin',
+          type: 'string',
+          description: 'Beyaz renkte gösterilir. Kısa ve net yazın.',
+          validation: (Rule) =>
+            Rule.custom((text, context) => {
+              const parent = context.parent as { enabled?: boolean }
+              if (parent?.enabled && (!text || !String(text).trim())) {
+                return 'Duyuru açıkken metin girilmelidir'
+              }
+              return true
+            }),
+        }),
+        defineField({
+          name: 'icon',
+          title: 'İkon',
+          type: 'string',
+          description: 'Şeridin solunda gösterilecek ikon',
+          options: {
+            list: [
+              { title: 'Yok', value: 'none' },
+              { title: 'Megafon', value: 'megaphone' },
+              { title: 'Bilgi', value: 'info' },
+              { title: 'Zil', value: 'bell' },
+              { title: 'Yıldız / parıltı', value: 'sparkles' },
+              { title: 'Etiket', value: 'tag' },
+              { title: 'İndirim / yüzde', value: 'percent' },
+              { title: 'Çapa', value: 'anchor' },
+              { title: 'Takvim', value: 'calendar' },
+              { title: 'Gemi', value: 'ship' },
+              { title: 'Yıldız', value: 'star' },
+            ],
+            layout: 'dropdown',
+          },
+          initialValue: 'megaphone',
+        }),
+        defineField({
+          name: 'linkUrl',
+          title: 'İsteğe bağlı link',
+          type: 'string',
+          description:
+            'Doldurursanız şerit tıklanabilir olur (örn. /turlar veya https://...). Boş bırakırsanız sadece metin gösterilir.',
+        }),
+      ],
+    }),
+    defineField({
       name: 'headerLanguages',
       title: 'Header Dilleri / Bayraklar',
       type: 'array',

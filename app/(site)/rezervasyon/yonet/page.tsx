@@ -1,12 +1,11 @@
 import { Suspense } from 'react'
 import ManageBookingClient from './ManageBookingClient'
-import { ticketPageUrl, voucherPdfUrl } from '@/lib/siteUrls'
 import { getSiteName } from '@/lib/seo'
 
 const siteName = getSiteName()
 export const metadata = {
   title: siteName ? `Rezervasyonumu Yönet | ${siteName}` : 'Rezervasyonumu Yönet',
-  description: 'Rezervasyonunuzu görüntüleyin, biletinizi indirin veya iptal edin.',
+  description: 'Rezervasyonunuzu görüntüleyin, biletinizi sitede açın veya iptal edin.',
 }
 
 export default async function RezervasyonYonetPage({
@@ -16,17 +15,11 @@ export default async function RezervasyonYonetPage({
 }) {
   const params = await searchParams
   const bookingId = typeof params.bookingId === 'string' ? params.bookingId.trim() : ''
-  const ticketUrl = bookingId ? ticketPageUrl(bookingId) : ''
-  const pdfDownloadUrl = bookingId ? voucherPdfUrl(bookingId, true) : ''
 
   return (
     <div className="min-h-screen bg-zinc-50 py-12">
       <Suspense fallback={<div className="max-w-xl mx-auto px-6 py-8">Yükleniyor...</div>}>
-        <ManageBookingClient
-          initialBookingId={bookingId}
-          ticketPageUrl={ticketUrl}
-          voucherPdfUrl={pdfDownloadUrl}
-        />
+        <ManageBookingClient initialBookingId={bookingId} />
       </Suspense>
     </div>
   )

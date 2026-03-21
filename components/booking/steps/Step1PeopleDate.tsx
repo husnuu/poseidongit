@@ -94,7 +94,7 @@ export default function Step1PeopleDate({
               <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
           </span>
-          <h3 className={styles.cardCaptionTitle}>Kişi Sayısı</h3>
+          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>Kişi Sayısı</h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
@@ -199,7 +199,7 @@ export default function Step1PeopleDate({
               <line x1="3" x2="21" y1="10" y2="10" />
             </svg>
           </span>
-          <h3 className={styles.cardCaptionTitle}>Tarih Seçin</h3>
+          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>Tarih Seçin</h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>

@@ -64,7 +64,7 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
                 href={post.postUrl || instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block relative aspect-square rounded-xl overflow-hidden bg-zinc-200 transition transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
+                className="block relative aspect-[3/4] rounded-xl overflow-hidden bg-zinc-200 transition transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
                 aria-label={post.imageAlt || 'Instagram gönderisi'}
               >
                 {post.imageUrl ? (

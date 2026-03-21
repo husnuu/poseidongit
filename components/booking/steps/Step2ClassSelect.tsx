@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import Image from 'next/image'
 import { Check } from 'lucide-react'
 import type {
@@ -9,9 +9,10 @@ import type {
   PricingSummary,
 } from '@/lib/sanity/bookingTypes'
 import { getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
-import { buildCalendarDaysForMonth, computePricingForSelection, getSeasonMultiplier, getClassStatusForDate, getRemainingCapacityForDate, getCapForTicketClass } from '@/lib/sanity/bookingPricing'
+import { computePricingForSelection, getDisplayedAdultUnitPriceForClass, getClassStatusForDate, getRemainingCapacityForDate, getCapForTicketClass, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import type { Availability } from '@/types/availability'
+import FirstClassSeatSelector from '../FirstClassSeatSelector'
 import styles from '../booking.module.css'
 
 interface Step2ClassSelectProps {
@@ -45,13 +46,8 @@ export default function Step2ClassSelect({
   optimisticUsed,
   availabilityFromParent,
 }: Step2ClassSelectProps) {
+  const locaSectionRef = useRef<HTMLDivElement>(null)
   const advance = onStepNext ?? onNext
-  const year = state.selectedDate ? parseInt(state.selectedDate.slice(0, 4), 10) : new Date().getFullYear()
-  const month = state.selectedDate ? parseInt(state.selectedDate.slice(5, 7), 10) : new Date().getMonth() + 1
-  const calendar = useMemo(
-    () => buildCalendarDaysForMonth(tour, year, month),
-    [tour, year, month]
-  )
   const datesToFetch = useMemo(
     () => (state.selectedDate ? [state.selectedDate] : []),
     [state.selectedDate]
@@ -79,18 +75,27 @@ export default function Step2ClassSelect({
   useEffect(() => {
     const total = state.counts.adult + state.counts.child + state.counts.baby
     if (state.selectedClassKey === 'first' && (state.counts.child > 0 || state.counts.baby > 0)) {
-      onUpdate({ selectedClassKey: null })
+      onUpdate({ selectedClassKey: null, firstClassLocas: [] })
       return
     }
     if (state.selectedClassKey === 'first' && total % 2 !== 0) {
-      onUpdate({ selectedClassKey: null })
+      onUpdate({ selectedClassKey: null, firstClassLocas: [] })
       return
     }
     if (state.selectedDate && state.selectedClassKey) {
       const status = getClassStatusForDate(tour, state.selectedDate, state.selectedClassKey)
-      if (status === 'full' || status === 'closed') onUpdate({ selectedClassKey: null })
+      if (status === 'full' || status === 'closed') onUpdate({ selectedClassKey: null, firstClassLocas: [] })
     }
   }, [tour, state.selectedDate, state.selectedClassKey, state.counts.adult, state.counts.child, state.counts.baby, onUpdate])
+
+  // First Class seçilince loca alanına kaydır
+  useEffect(() => {
+    if (!state.selectedClassKey || !isFirstClassKey(tour, state.selectedClassKey)) return
+    const t = setTimeout(() => {
+      locaSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+    return () => clearTimeout(t)
+  }, [tour, state.selectedClassKey])
 
   useEffect(() => {
     if (!state.selectedDate || !state.selectedClassKey) {
@@ -147,7 +152,7 @@ export default function Step2ClassSelect({
               <path d="M13 11v2" />
             </svg>
           </span>
-          <h3 className={styles.cardCaptionTitle}>Sınıf Seçimi</h3>
+          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>Sınıf Seçimi</h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
@@ -164,12 +169,9 @@ export default function Step2ClassSelect({
             const available = cap >= totalPax && firstClassNoChildOrBaby && firstClassEvenPax && !classBlocked
             const isFirstClassRestricted = cls.key === 'first' && (!firstClassNoChildOrBaby || totalPax % 2 !== 0)
             const isFirstClassOddPaxWarning = cls.key === 'first' && totalPax % 2 !== 0
-            const adultPrice = cls.pricesByAge?.find((p) => p.ageKey === 'adult')
-            const multiplier = state.selectedDate ? getSeasonMultiplier(tour, state.selectedDate) : 1
-            const price =
-              adultPrice?.price != null
-                ? Math.round(adultPrice.price * multiplier)
-                : undefined
+            const price = state.selectedDate
+              ? getDisplayedAdultUnitPriceForClass(tour, state.selectedDate, cls)
+              : undefined
             const badgePopular = cls.badge?.toLowerCase().includes('popüler')
 
             return (
@@ -183,15 +185,23 @@ export default function Step2ClassSelect({
                 }}
                 onClick={() => {
                   if (available) {
-                    onUpdate({ selectedClassKey: cls.key })
-                    advance()
+                    const isFirst = isFirstClassKey(tour, cls.key)
+                    onUpdate({
+                      selectedClassKey: cls.key,
+                      ...(isFirst ? {} : { firstClassLocas: [] }),
+                    })
+                    if (!isFirst) advance()
                   }
                 }}
                 onKeyDown={(e) => {
                   if (available && (e.key === 'Enter' || e.key === ' ')) {
                     e.preventDefault()
-                    onUpdate({ selectedClassKey: cls.key })
-                    advance()
+                    const isFirst = isFirstClassKey(tour, cls.key)
+                    onUpdate({
+                      selectedClassKey: cls.key,
+                      ...(isFirst ? {} : { firstClassLocas: [] }),
+                    })
+                    if (!isFirst) advance()
                   }
                 }}
                 tabIndex={available ? 0 : undefined}
@@ -332,11 +342,15 @@ export default function Step2ClassSelect({
                       onClick={(e) => {
                         e.stopPropagation()
                         if (available) {
-                          onUpdate({ selectedClassKey: cls.key })
-                          advance()
+                          const isFirst = isFirstClassKey(tour, cls.key)
+                          onUpdate({
+                            selectedClassKey: cls.key,
+                            ...(isFirst ? {} : { firstClassLocas: [] }),
+                          })
+                          if (!isFirst) advance()
                         }
                       }}
-                      aria-label={`${cls.label} seç ve devam et`}
+                      aria-label={isFirstClassKey(tour, cls.key) ? `${cls.label} seç, loca seçin` : `${cls.label} seç ve devam et`}
                     >
                       Seçiniz
                     </button>
@@ -374,6 +388,32 @@ export default function Step2ClassSelect({
             Bu sınıf için yeterli kapasite yok ({totalPax} kişi). Başka sınıf seçin veya kişi sayısını azaltın.
           </p>
         )}
+        {state.selectedClassKey && isFirstClassKey(tour, state.selectedClassKey) && (() => {
+          const requiredLocas = Math.ceil(totalPax / 2)
+          const selected = state.firstClassLocas ?? []
+          const handleToggle = (locaId: string) => {
+            const id = locaId.trim().toUpperCase()
+            if (selected.includes(id)) {
+              onUpdate({ firstClassLocas: selected.filter((x) => x !== id) })
+            } else if (selected.length < requiredLocas) {
+              onUpdate({ firstClassLocas: [...selected, id] })
+            }
+          }
+          return (
+            <div ref={locaSectionRef} style={{ marginTop: 20 }}>
+              <h4 className={styles.cardTitle} style={{ marginBottom: 0 }}>Loca Seçimi</h4>
+              <FirstClassSeatSelector
+                selectedLocaIds={selected}
+                reservedLocaIds={effectiveAvailability?.date === state.selectedDate ? (effectiveAvailability?.firstClassLocasReserved || []) : []}
+                requiredCount={requiredLocas}
+                onToggle={handleToggle}
+                onReplace={(removeId, addId) => onUpdate({ firstClassLocas: [...(state.firstClassLocas ?? []).filter((x) => x !== removeId), addId.trim().toUpperCase()] })}
+                onAfterSelect={advance}
+                aria-label="First Class loca seçimi"
+              />
+            </div>
+          )
+        })()}
         </div>
       </div>
     </div>

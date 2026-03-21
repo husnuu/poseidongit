@@ -14,9 +14,13 @@ export interface VoucherData {
   meetingPickup: string
   /** Süre (örn. "7 Saat") */
   durationLabel?: string
+  /** Sanity quickFacts.returnTime — “Tahmini varış” satırı */
+  arrivalTime?: string
   language: string
   /** Sınıf (Eco / Premium / First Class vb.) */
   className?: string
+  /** First Class loca (L1–L10). */
+  firstClassLoca?: string
   /** Rezervasyon durumu: pending, paid, cancelled */
   status?: string
 

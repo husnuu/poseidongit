@@ -12,6 +12,8 @@
     "dev:clean": "rm -rf .next node_modules/.cache && next dev -p 3002",
     "dev:studio": "sanity dev",
     "build": "next build",
+    "build:clean": "rm -rf .next node_modules/.cache && next build",
+    "build:safe": "rm -rf .next node_modules/.cache && NODE_OPTIONS='--max-old-space-size=4096' next build",
     "start": "next start",
     "lint": "next lint",
     "studio": "sanity dev",

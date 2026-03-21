@@ -51,6 +51,14 @@ export default defineType({
           description: 'Küçük üst yazı',
         }),
         defineField({
+          name: 'topBadgeText',
+          title: 'Başlık Üstü Badge Metni',
+          type: 'string',
+          description:
+            'Ana başlığın hemen üstünde küçük pill olarak görünür. Örn: "Çeşme’nin En Çok Tercih Edilen Tekne Turu"',
+          validation: (Rule) => Rule.max(90),
+        }),
+        defineField({
           name: 'heading',
           title: 'Ana Başlık',
           type: 'string',

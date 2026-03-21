@@ -63,12 +63,14 @@ export default function IncludedNotIncluded({
     <section className={styles.section}>
       <div className={styles.twoCol}>
         {hasIncluded && (
-          <div>
+          <div className={styles.includedCol}>
             <h3 className={styles.colTitle}>Dahil olanlar</h3>
             <ul className={styles.list}>
               {included!.map((item, idx) => (
                 <li key={`in-${idx}-${item}`} className={styles.item}>
-                  <CheckIcon />
+                  <span className={styles.iconWrap}>
+                    <CheckIcon />
+                  </span>
                   <span className={styles.text}>{item}</span>
                 </li>
               ))}
@@ -77,12 +79,14 @@ export default function IncludedNotIncluded({
         )}
 
         {hasNotIncluded && (
-          <div>
+          <div className={styles.notIncludedCol}>
             <h3 className={styles.colTitle}>Dahil olmayanlar</h3>
             <ul className={styles.list}>
               {notIncluded!.map((item, idx) => (
                 <li key={`out-${idx}-${item}`} className={styles.item}>
-                  <XIcon />
+                  <span className={styles.iconWrap}>
+                    <XIcon />
+                  </span>
                   <span className={styles.text}>{item}</span>
                 </li>
               ))}

@@ -1,31 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getFirestore } from '@/lib/firebaseAdmin'
-import { client, urlFor } from '@/lib/sanity'
-import { tourImageAndPickupQuery } from '@/lib/queries'
+import { validateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { generateVoucherPdf } from '@/lib/voucher/generateVoucherPdf'
-import { bookingToVoucherData } from '@/lib/voucher/bookingToVoucher'
-import { getEmailBaseUrl } from '@/lib/siteUrls'
+import { buildVoucherDataFromBookingSnapshot } from '@/lib/voucher/buildVoucherDataFromBookingSnapshot'
 
 const COLLECTION = 'bookings'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-function getVoucherUrl(bookingId: string): string {
-  const base = getEmailBaseUrl().replace(/\/$/, '')
-  return `${base}/api/voucher?bookingId=${encodeURIComponent(bookingId)}`
-}
-
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const searchParams = request.nextUrl.searchParams
     const bookingId = searchParams.get('bookingId')?.trim()
+    let token = searchParams.get('token')?.trim() ?? ''
+    // URL'de + bazen boşluğa dönüşebilir
+    if (token && token.includes(' ')) {
+      token = token.replace(/ /g, '+')
+    }
+    // Query'de token yoksa (örn. /api/voucher/access yönlendirmesinden sonra) cookie'den al
+    if (!token) {
+      const cookieBookingId = request.cookies.get('voucher_booking_id')?.value?.trim()
+      const cookieToken = request.cookies.get('voucher_token')?.value?.trim()
+      if (cookieBookingId === bookingId && cookieToken) {
+        token = cookieToken.includes(' ') ? cookieToken.replace(/ /g, '+') : cookieToken
+      }
+    }
     const download = searchParams.get('download') === '1'
 
     if (!bookingId) {
       return NextResponse.json(
-        { error: 'Missing bookingId. Use /api/voucher?bookingId=...' },
+        { error: 'Eksik rezervasyon numarası. Lütfen e-postanızdaki veya rezervasyon sayfasındaki linki kullanın.' },
         { status: 400 }
+      )
+    }
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Bilet linki geçersiz veya süresi dolmuş. Lütfen e-postanızdaki "Biletimi Görüntüle" linkini veya Rezervasyonumu Yönet sayfasını kullanın.' },
+        { status: 403 }
+      )
+    }
+
+    const valid = await validateBookingAccessToken(bookingId, token)
+    if (!valid) {
+      return NextResponse.json(
+        { error: 'Bilet linki geçersiz veya süresi dolmuş. Lütfen e-postanızdaki linki veya Rezervasyonumu Yönet sayfasını kullanın.' },
+        { status: 403 }
       )
     }
 
@@ -39,80 +60,20 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const data = snap.data()!
-    const booking = {
-      id: snap.id,
-      tourId: data.tourId,
-      tourTitle: data.tourTitle,
-      date: data.date,
-      time: data.time,
-      counts: data.counts,
-      classId: data.classId,
-      className: data.className,
-      totalPrice: data.totalPrice,
-      currency: data.currency,
-      status: data.status,
-      customer: data.customer,
-    }
-
-    const voucherUrl = getVoucherUrl(bookingId)
-    let voucherData = bookingToVoucherData(booking, voucherUrl)
-    try {
-      const tourId = typeof data.tourId === 'string' ? data.tourId.trim() : ''
-      if (tourId) {
-        const tourMeta = await client.fetch<{
-          mainImage?: { asset?: { _ref?: string } }
-          gallery?: { _ref?: string }[]
-          durationLabel?: string | null
-          meetingPoint?: string | null
-          quickFacts?: { startTime?: string | null }
-          deposit?: { enabled?: boolean; type?: string; value?: number }
-          included?: string[] | null
-          notIncluded?: string[] | null
-        } | null>(tourImageAndPickupQuery, { tourId })
-        if (tourMeta) {
-          const tourImageUrl = tourMeta.mainImage?.asset
-            ? urlFor(tourMeta.mainImage.asset).width(600).height(320).url()
-            : undefined
-          const galleryRefs = (tourMeta.gallery ?? []).filter((a: { _ref?: string }) => a?._ref).slice(0, 3)
-          const tourGalleryUrls = galleryRefs.length > 0
-            ? galleryRefs.map((assetRef: { _ref?: string }) =>
-                urlFor(assetRef).width(500).height(340).format('jpg').url()
-              )
-            : tourMeta.mainImage?.asset
-              ? [urlFor(tourMeta.mainImage.asset).width(500).height(340).format('jpg').url()]
-              : undefined
-          let depositAmount: number | undefined
-          if (tourMeta.deposit?.enabled && tourMeta.deposit?.value != null && voucherData.totalPrice > 0) {
-            depositAmount =
-              tourMeta.deposit.type === 'fixed'
-                ? tourMeta.deposit.value
-                : Math.round((tourMeta.deposit.value / 100) * voucherData.totalPrice)
-          }
-          const fallbackTime = tourMeta.quickFacts?.startTime?.trim() || undefined
-          voucherData = {
-            ...voucherData,
-            ...(voucherData.time ? {} : fallbackTime ? { time: fallbackTime } : {}),
-            ...(tourImageUrl && { tourImageUrl }),
-            ...(tourGalleryUrls?.length && { tourGalleryUrls }),
-            ...(tourMeta.meetingPoint && { meetingPickup: tourMeta.meetingPoint }),
-            ...(tourMeta.durationLabel && { durationLabel: tourMeta.durationLabel }),
-            ...(depositAmount != null && { depositAmount }),
-            ...(tourMeta.included?.length && { included: tourMeta.included }),
-            ...(tourMeta.notIncluded?.length && { notIncluded: tourMeta.notIncluded }),
-          }
-        }
-      }
-    } catch {
-      // PDF tur görseli olmadan da üretilir
+    const voucherData = await buildVoucherDataFromBookingSnapshot(snap, token)
+    if (!voucherData) {
+      return NextResponse.json(
+        { error: 'Bilet verisi oluşturulamadı. accessToken eksik olabilir.' },
+        { status: 500 }
+      )
     }
     const pdfBytes = await generateVoucherPdf(voucherData)
 
     const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'Bilet'
-  const filename = `${siteName}-Bilet-${voucherData.referenceNumber}.pdf`
+    const filename = `${siteName}-Bilet-${voucherData.referenceNumber}.pdf`
     const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
 
-    return new NextResponse(Buffer.from(pdfBytes), {
+    const res = new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
@@ -122,6 +83,10 @@ export async function GET(request: NextRequest) {
         'Cache-Control': 'private, no-cache',
       },
     })
+    // Cookie ile geldiyse tek kullanımlık olsun diye sil
+    res.cookies.set('voucher_token', '', { path: '/api/voucher', maxAge: 0 })
+    res.cookies.set('voucher_booking_id', '', { path: '/api/voucher', maxAge: 0 })
+    return res
   } catch (e) {
     console.error('[voucher] Error:', e)
     const message = e instanceof Error ? e.message : 'Failed to generate voucher'

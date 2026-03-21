@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getFirestore } from '@/lib/firebaseAdmin'
 import type { BookingStatus } from '@/lib/firestore/bookingTypes'
+import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery, siteSettingsQuery, tourCoversByIdsQuery } from '@/lib/queries'
 import { sendBookingPaidEmails } from '@/lib/email'
@@ -207,12 +208,28 @@ export async function PATCH(request: NextRequest) {
         // Logo opsiyonel
       }
       const siteBaseUrl = getBaseUrl().replace(/\/$/, '')
+      let accessToken = typeof data.accessToken === 'string' && data.accessToken.trim() ? data.accessToken.trim() : undefined
+      // Eski rezervasyonlarda token yoksa şimdi üret ve kaydet; e-postada token'lı link gitsin
+      if (!accessToken) {
+        accessToken = generateBookingAccessToken()
+        await ref.update({ accessToken, paidNow })
+      } else {
+        await ref.update({ paidNow })
+      }
       await sendBookingPaidEmails({
         bookingId,
+        accessToken,
         tourTitle: String(data.tourTitle ?? ''),
         date: String(data.date ?? ''),
         time: startTime,
+        status: String(data.status ?? ''),
         className: String(data.className ?? ''),
+        firstClassLocas: Array.isArray(data.firstClassLocas) && data.firstClassLocas.length > 0
+          ? data.firstClassLocas.filter((x: unknown) => typeof x === 'string' && /^L(10|[1-9])$/.test(String(x).trim()))
+          : undefined,
+        firstClassLoca: Array.isArray(data.firstClassLocas) && data.firstClassLocas.length > 0
+          ? undefined
+          : (typeof data.firstClassLoca === 'string' && /^L(10|[1-9])$/.test(data.firstClassLoca.trim()) ? data.firstClassLoca.trim() : undefined),
         counts,
         totalPrice: Number(data.totalPrice ?? 0),
         currency: String(data.currency ?? 'TRY'),

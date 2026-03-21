@@ -1,10 +1,28 @@
-.headerSpacer {
-  height: 83px;
-  flex-shrink: 0;
+/* Eski sabit header + spacer yerine: duyuru (akış) + sticky header */
+.siteHeaderStack {
+  width: 100%;
+}
+
+/* Duyuru: mobilde kenardan kenara (içerik max-width ile ortalanır) */
+.announcementStrip {
+  width: 100%;
+  background: #1e3a8a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: env(safe-area-inset-top, 0px);
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .announcementStrip {
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
 }
 
 .header {
-  position: fixed;
+  position: sticky;
   top: 0;
   left: 0;
   right: 0;
@@ -502,10 +520,6 @@
 }
 
 @media (max-width: 768px) {
-  .headerSpacer {
-    height: 68px;
-  }
-
   .header {
     padding: 0 16px;
     height: 68px;

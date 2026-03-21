@@ -5,7 +5,9 @@ import Image from 'next/image'
 import { Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
 import { urlFor } from '@/lib/sanity'
+import { validateAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
 import FloatingInput from '@/components/ui/FloatingInput'
+import AdditionalTravelersFields from './AdditionalTravelersFields'
 import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
 import styles from '../booking.module.css'
@@ -39,10 +41,11 @@ export default function StepCustomer({
     if (!phoneDigits.length) next.phone = 'Telefon zorunludur.'
     else if (phoneDigits.length < PHONE_MIN_DIGITS)
       next.phone = 'Geçerli bir telefon numarası giriniz.'
+    Object.assign(next, validateAdditionalTravelers(state.additionalTravelers, state.counts))
     setErrors(next)
     const valid = Object.keys(next).length === 0
     onValidationChange(valid)
-  }, [state.customer, onValidationChange])
+  }, [state.customer, state.additionalTravelers, state.counts, onValidationChange])
 
   useEffect(() => {
     validate()
@@ -91,7 +94,7 @@ export default function StepCustomer({
               <path d="M10 9H8" />
             </svg>
           </span>
-          <h3 className={styles.cardCaptionTitle}>Özet</h3>
+          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>Özet</h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
@@ -190,7 +193,7 @@ export default function StepCustomer({
                 <circle cx="12" cy="7" r="4" />
               </svg>
             </span>
-            <h3 className={styles.cardCaptionTitle}>Bilgileriniz</h3>
+            <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>Bilgileriniz</h3>
           </div>
           <hr className={styles.cardDivider} />
           <div className={styles.cardContent}>
@@ -253,6 +256,13 @@ export default function StepCustomer({
               rows={3}
               value={state.customer.note ?? ''}
               onChange={(e) => handleField('note', e.target.value)}
+            />
+
+            <AdditionalTravelersFields
+              state={state}
+              onUpdate={onUpdate}
+              errors={errors}
+              compact
             />
 
               <div className={styles.cardNoticeSuccess}>
