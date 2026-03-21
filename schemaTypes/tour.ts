@@ -1510,8 +1510,9 @@ export default defineType({
                           childPrice,
                           infantPrice,
                         }: Record<string, unknown>) {
-                          const title = classKey
-                            ? classKey.charAt(0).toUpperCase() + classKey.slice(1)
+                          const ck = typeof classKey === 'string' ? classKey : ''
+                          const title = ck
+                            ? ck.charAt(0).toUpperCase() + ck.slice(1)
                             : 'Sınıf'
                           const parts: string[] = []
                           if (adultPrice != null) parts.push(`Yetişkin ${adultPrice}`)

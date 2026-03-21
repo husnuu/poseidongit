@@ -189,7 +189,8 @@ export default function ManageBookingClient({
 
   /** Tarih seçilince: kendi tur gününüzde mevcut localarınızı forma yükle; başka günde seçimi sıfırla. */
   useEffect(() => {
-    if (!isFirstClass || !booking || booking === 'cancelled') return
+    // isFirstClass true iken booking zaten 'cancelled' değildir (bkz. isFirstClass tanımı).
+    if (!isFirstClass || !booking) return
     const b = booking as Booking
     const bd = (b.date ?? '').slice(0, 10)
     if (!selectedNewDate) return

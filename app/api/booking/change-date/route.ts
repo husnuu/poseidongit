@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as admin from 'firebase-admin'
-import type { UpdateData } from 'firebase-admin/firestore'
+import type { DocumentData, UpdateData } from 'firebase-admin/firestore'
 import { getFirestore } from '@/lib/firebaseAdmin'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
       finalFirstClassLocas = undefined
     }
 
-    const updatePayload: UpdateData = { date: newDate }
+    const updatePayload: UpdateData<DocumentData> = { date: newDate }
     if (finalFirstClassLocas && finalFirstClassLocas.length > 0) {
       updatePayload.firstClassLocas = finalFirstClassLocas
       /** Eski tek-alan (firstClassLoca) kalsın; doluluk hesapları çift sayabilir. Tam sil. */

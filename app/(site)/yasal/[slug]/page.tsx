@@ -134,7 +134,8 @@ export default async function YasalSayfaPage({
 
   if (!page) notFound()
 
-  const hasContent = Array.isArray(page.content) && page.content.length > 0
+  const contentBlocks =
+    Array.isArray(page.content) && page.content.length > 0 ? page.content : null
 
   return (
     <main className="min-h-screen bg-zinc-50">
@@ -159,9 +160,9 @@ export default async function YasalSayfaPage({
           )}
         </header>
 
-        {hasContent ? (
+        {contentBlocks ? (
           <div className="[&_.pt-list]:mb-4">
-            <PortableText value={page.content} components={legalPageComponents} />
+            <PortableText value={contentBlocks} components={legalPageComponents} />
           </div>
         ) : (
           <p className="text-lg text-zinc-500 italic">İçerik henüz eklenmedi.</p>
