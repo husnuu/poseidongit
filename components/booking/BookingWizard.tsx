@@ -6,6 +6,7 @@ import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
 import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
+import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
 import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import StepPeople from './steps/StepPeople'
@@ -131,6 +132,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
     else if (state.step === 2 && canProceedStep2) goNext()
     else if (state.step === 3 && canProceedStep3) goNext()
     else if (state.step === 4) {
+      if (!isBookingOnlinePaymentEnabled) return
       setSubmitError(null)
       setSubmitting(true)
       const tourId = getTourIdForFirebase(tour)
@@ -221,6 +223,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
     if (state.step === 1) return 'Devam'
     if (state.step === 2) return 'Devam'
     if (state.step === 3) return 'Ödemeye Geç'
+    if (state.step === 4 && !isBookingOnlinePaymentEnabled) return 'Ödeme kapalı'
     if (state.step === 4 && submitting) return 'İşleniyor…'
     return 'ÖDEMEYİ TAMAMLA'
   }, [state.step, submitting])
@@ -229,7 +232,10 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
     if (state.step === 1) return !canProceedStep1
     if (state.step === 2) return !canProceedStep2
     if (state.step === 3) return !canProceedStep3
-    if (state.step === 4) return submitting || !step4TermsAccepted
+    if (state.step === 4) {
+      if (!isBookingOnlinePaymentEnabled) return true
+      return submitting || !step4TermsAccepted
+    }
     return false
   }, [state.step, canProceedStep1, canProceedStep2, canProceedStep3, submitting, step4TermsAccepted])
 

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import type { BookingWizardState } from '@/lib/sanity/bookingTypes'
+import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
 import FloatingInput from '@/components/ui/FloatingInput'
 import styles from '../booking.module.css'
 
@@ -22,7 +23,7 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, ter
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
-    if (ctaDisabled || loading || !termsAccepted) return
+    if (!isBookingOnlinePaymentEnabled || ctaDisabled || loading || !termsAccepted) return
     setLoading(true)
     try {
       await Promise.resolve(onSubmit())
@@ -91,6 +92,15 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, ter
         </div>
       </div>
 
+      {!isBookingOnlinePaymentEnabled && (
+        <div className={styles.virtualPosDisabledNotice} role="status">
+          <strong>Sanal POS şu anda aktif değil</strong>
+          Online kart ödemesi geçici olarak kapalıdır. Rezervasyonu tamamlamak için lütfen bizimle iletişime geçin. Üstteki
+          &quot;Geri&quot; ile önceki adıma dönebilirsiniz.
+        </div>
+      )}
+
+      {isBookingOnlinePaymentEnabled && (
       <div className={styles.card}>
         <div className={styles.cardCaption}>
           <span className={styles.cardCaptionIcon} aria-hidden>
@@ -153,7 +163,9 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, ter
           </div>
         </div>
       </div>
+      )}
 
+      {isBookingOnlinePaymentEnabled && (
       <div className={styles.stepActions}>
         <div className={styles.stepActionsRow}>
           <button
@@ -167,6 +179,7 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, ter
           </button>
         </div>
       </div>
+      )}
     </form>
   )
 }

@@ -368,6 +368,25 @@
   margin-top: 6px;
 }
 
+.virtualPosDisabledNotice {
+  font-family: var(--font-family);
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #fcd34d;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 14px;
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+
+.virtualPosDisabledNotice strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 15px;
+  color: #78350f;
+}
+
 /* Kişi sayısı listesi – referans: ince ayırıcılı, minimal satırlar */
 .counterList {
   border: 1px solid #e5e7eb;

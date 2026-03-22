@@ -6,6 +6,7 @@ import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
 import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
+import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
 import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import {
@@ -202,6 +203,7 @@ export default function BookingWizardModal({
     else if (state.step === 2 && canProceedStep2) goNext()
     else if (state.step === 3 && canProceedStep3) goNext()
     else if (state.step === 4) {
+      if (!isBookingOnlinePaymentEnabled) return
       setSubmitError(null)
       setSubmitting(true)
       const tourId = getTourIdForFirebase(tour)
@@ -291,6 +293,7 @@ export default function BookingWizardModal({
     if (state.step === 1) label = 'Devam'
     else if (state.step === 2) label = 'Devam'
     else if (state.step === 3) label = 'Ödemeye Geç'
+    else if (state.step === 4 && !isBookingOnlinePaymentEnabled) label = 'Ödeme kapalı'
     else if (state.step === 4 && submitting) label = 'İşleniyor…'
     else label = 'Ödemeyi Tamamla'
 
@@ -298,7 +301,7 @@ export default function BookingWizardModal({
     if (state.step === 1) disabled = !canProceedStep1
     else if (state.step === 2) disabled = !canProceedStep2
     else if (state.step === 3) disabled = !canProceedStep3
-    else if (state.step === 4) disabled = submitting
+    else if (state.step === 4) disabled = submitting || !isBookingOnlinePaymentEnabled
     else disabled = false
 
     return { ctaLabel: label, ctaDisabled: disabled }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import type { BookingWizardState } from '@/lib/sanity/bookingTypes'
+import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
 import FloatingInput from '@/components/ui/FloatingInput'
 import PhoneField from '@/components/ui/PhoneField'
 import styles from '../booking.module.css'
@@ -25,6 +26,10 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
   const [termsAccepted, setTermsAccepted] = useState(false)
 
   useEffect(() => {
+    if (!isBookingOnlinePaymentEnabled) {
+      onTermsAcceptanceChange?.(false)
+      return
+    }
     onTermsAcceptanceChange?.(termsAccepted)
   }, [termsAccepted, onTermsAcceptanceChange])
 
@@ -60,6 +65,15 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
         </div>
       </div>
 
+      {!isBookingOnlinePaymentEnabled && (
+        <div className={styles.virtualPosDisabledNotice} role="status">
+          <strong>Sanal POS şu anda aktif değil</strong>
+          Online kart ödemesi geçici olarak kapalıdır. Rezervasyonu tamamlamak için lütfen bizimle iletişime geçin veya
+          önceki adıma dönüp seçiminizi gözden geçirin.
+        </div>
+      )}
+
+      {isBookingOnlinePaymentEnabled && (
       <div className={styles.card} style={{ fontFamily: 'var(--font-family)' }}>
         <div className={styles.cardCaption}>
           <span className={styles.cardCaptionIcon} aria-hidden>
@@ -142,6 +156,7 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
         </div>
         </div>
       </div>
+      )}
     </>
   )
 }
