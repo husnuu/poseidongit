@@ -14,6 +14,41 @@ export function getSiteBaseUrl(): string {
   return getBaseUrl()
 }
 
+function normalizeHostname(host: string): string {
+  return host.replace(/^www\./i, '').toLowerCase()
+}
+
+/**
+ * Aynı site (getBaseUrl / NEXT_PUBLIC_SITE_URL) içi linklerde Next.js `Link` için path.
+ * CMS’te tam URL (https://siteniz/hakkimizda) girilmiş olsa bile aynı sekmede sayfa içi gezinme için kullanılır.
+ */
+export function sameSitePathFromHref(href: string | null | undefined): string | null {
+  const raw = href?.trim()
+  if (!raw) return null
+  if (raw.startsWith('/') && !raw.startsWith('//')) return raw || '/'
+
+  let absolute: URL
+  try {
+    absolute = new URL(raw)
+  } catch {
+    return null
+  }
+
+  let baseParsed: URL
+  try {
+    baseParsed = new URL(getBaseUrl())
+  } catch {
+    return null
+  }
+
+  if (normalizeHostname(absolute.hostname) !== normalizeHostname(baseParsed.hostname)) {
+    return null
+  }
+
+  const path = `${absolute.pathname}${absolute.search}${absolute.hash}`
+  return path || '/'
+}
+
 /** Rezervasyonumu Yönet linki (e-posta). */
 export function manageBookingUrl(bookingId: string): string {
   return `${getEmailBaseUrl()}/rezervasyon/yonet?bookingId=${encodeURIComponent(bookingId)}`

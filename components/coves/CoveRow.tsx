@@ -1,11 +1,10 @@
-import Link from 'next/link'
-
 export interface CoveRowProps {
   reverse: boolean
   title: string
   description?: string | null
   imageUrl: string | null
   alt?: string | null
+  /** İleride tekrar detay sayfası açılırsa kullanılır; satır artık tıklanabilir değil. */
   slug?: string | null
 }
 
@@ -15,7 +14,7 @@ export default function CoveRow({
   description,
   imageUrl,
   alt,
-  slug,
+  slug: _slug,
 }: CoveRowProps) {
   const content = (
     <>
@@ -57,7 +56,11 @@ export default function CoveRow({
             {description}
           </p>
         )}
-        <span className="mt-6 inline-flex items-center gap-2 text-sm transition-colors group-hover:opacity-80" style={{ color: '#1e3a8a', fontFamily: 'var(--font-family)' }}>
+        <span
+          className="mt-6 inline-flex items-center gap-2 text-sm select-none"
+          style={{ color: '#1e3a8a', fontFamily: 'var(--font-family)' }}
+          aria-hidden
+        >
           <span className="font-bold uppercase">Detay</span>
           <span aria-hidden>→</span>
         </span>
@@ -67,17 +70,6 @@ export default function CoveRow({
 
   const wrapperClass =
     'grid grid-cols-1 md:grid-cols-2 gap-0 w-full overflow-hidden'
-
-  if (slug?.trim()) {
-    return (
-      <Link
-        href={`/koylar/${encodeURIComponent(slug)}`}
-        className={`${wrapperClass} group block`}
-      >
-        {content}
-      </Link>
-    )
-  }
 
   return <div className={wrapperClass}>{content}</div>
 }

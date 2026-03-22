@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { PortableText } from '@portabletext/react'
+import { sameSitePathFromHref } from '@/lib/siteUrls'
 import type { PortableTextBlock } from '@portabletext/react'
 
 export type AboutTeaserData = {
@@ -58,6 +59,8 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
   if (!data?.enabled) return null
 
   const { heading, body, imageUrl, imageAlt, primaryCta, secondaryCta } = data
+  const primaryPath = primaryCta?.href ? sameSitePathFromHref(primaryCta.href) : null
+  const secondaryPath = secondaryCta?.href ? sameSitePathFromHref(secondaryCta.href) : null
 
   return (
     <section
@@ -95,9 +98,9 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-8">
               {primaryCta?.label && (
                 <>
-                  {isInternalHref(primaryCta.href) ? (
+                  {primaryPath ? (
                     <Link
-                      href={primaryCta.href || '#'}
+                      href={primaryPath}
                       className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md bg-[#111] text-white font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#222] text-[17px]"
                       style={{ fontFamily: 'var(--font-family)' }}
                     >
@@ -118,9 +121,9 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
               )}
               {secondaryCta?.label && (
                 <>
-                  {isInternalHref(secondaryCta.href) ? (
+                  {secondaryPath ? (
                     <Link
-                      href={secondaryCta.href || '#'}
+                      href={secondaryPath}
                       className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md bg-white text-[#111] font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#f2f2f2] text-[17px]"
                       style={{ fontFamily: 'var(--font-family)' }}
                     >
