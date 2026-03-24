@@ -123,6 +123,13 @@ export default function BookingDetailModal({
               )}
             </div>
 
+            {booking.mealPreference?.label?.trim() && (
+              <div className="rounded-lg border border-amber-100 bg-amber-50/80 p-3">
+                <p className="text-xs font-medium uppercase text-amber-800/90">Yemek tercihi</p>
+                <p className="mt-1 text-sm font-medium text-zinc-900">{booking.mealPreference.label.trim()}</p>
+              </div>
+            )}
+
             {extraTravelers.length > 0 && (
               <div className="rounded-lg border border-zinc-100 bg-white p-3">
                 <p className="text-xs font-medium uppercase text-zinc-500">Diğer yolcular</p>
@@ -131,6 +138,9 @@ export default function BookingDetailModal({
                     <li key={`${t.firstName}-${t.lastName}-${i}`}>
                       <span className="text-zinc-500">{extraLabels[i] ?? `Yolcu ${i + 2}`}: </span>
                       <span className="font-medium">{t.firstName} {t.lastName}</span>
+                      {t.mealPreference?.label?.trim() ? (
+                        <span className="text-zinc-500"> · Yemek: {t.mealPreference.label.trim()}</span>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

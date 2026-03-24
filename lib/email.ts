@@ -11,7 +11,10 @@ import { getFirestore } from '@/lib/firebaseAdmin'
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery } from '@/lib/queries'
 
-const DEFAULT_FROM = (() => { const n = process.env.NEXT_PUBLIC_SITE_NAME || 'Booking'; return `${n} <onboarding@resend.dev>` })()
+const DEFAULT_FROM = (() => {
+  const n = process.env.NEXT_PUBLIC_SITE_NAME || 'Çeşme Poseidon Booking'
+  return `${n} <noreply@cesmetekneturu.net>`
+})()
 
 /** E-postadaki buton linkleri için production-safe domain (cesmetekneturu.net). */
 const OFFICIAL_EMAIL_DOMAIN = 'https://cesmetekneturu.net'
@@ -46,6 +49,8 @@ export interface BookingEmailPayload {
   language?: string
   /** Opsiyonel: toplanma / pickup bilgisi. */
   pickup?: string
+  /** Tur mealMenu ile seçilen yemek (Firestore mealPreference). */
+  mealPreference?: { key: string; label: string }
   /** Opsiyonel: etkinlik süresi (saat). Google Calendar linki için; yoksa 2. */
   durationHours?: number
   /** Opsiyonel: IANA timezone (örn. Europe/Istanbul). Yoksa Europe/Istanbul. */
@@ -351,6 +356,10 @@ function buildAdminEmailHtml(p: BookingEmailPayload): string {
     p.customer.note && p.customer.note.trim()
       ? `<p><strong>Müşteri notu:</strong> ${escapeHtml(p.customer.note.trim())}</p>`
       : ''
+  const mealLine =
+    p.mealPreference?.label?.trim()
+      ? `<p style="margin: 0 0 8px;"><strong>Yemek tercihi:</strong> ${escapeHtml(p.mealPreference.label.trim())}</p>`
+      : ''
 
   return `
 <!DOCTYPE html>
@@ -371,6 +380,7 @@ function buildAdminEmailHtml(p: BookingEmailPayload): string {
     <p style="margin: 0 0 8px;"><strong>Müşteri:</strong> ${escapeHtml(p.customer.firstName)} ${escapeHtml(p.customer.lastName)}</p>
     <p style="margin: 0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(p.customer.email)}</p>
     <p style="margin: 0;"><strong>Telefon:</strong> ${escapeHtml(p.customer.phone || '—')}</p>
+    ${mealLine}
   </div>
   ${noteLine}
 </body>
@@ -509,8 +519,8 @@ function buildPremiumConfirmationEmailHtml(
   const cardBg = '#ffffff'
   const textDark = '#1a1a1a'
   const textMuted = '#6b7280'
-  const supportPhone = process.env.SUPPORT_PHONE?.trim() || '+90 XXX XXX XX XX'
-  const supportEmail = process.env.SUPPORT_EMAIL?.trim() || 'destek@cesmeposeidon.com'
+  const supportPhone = process.env.SUPPORT_PHONE?.trim() || '+90 533 417 36 56'
+  const supportEmail = process.env.SUPPORT_EMAIL?.trim() || 'turkeycesme@hotmail.com'
   const emailFont = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
 
   const manageUrl = manageBookingUrl(p.bookingId)
@@ -520,6 +530,10 @@ function buildPremiumConfirmationEmailHtml(
   const paidRowHtml =
     p.paidNow != null && p.paidNow > 0
       ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Ödenen Tutar</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${primary};font-size:14px;font-weight:600;text-align:right;">${escapeHtml(String(p.paidNow))} ${escapeHtml(p.currency)}</td></tr>`
+      : ''
+  const mealRowHtml =
+    p.mealPreference?.label?.trim()
+      ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Yemek tercihi</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(p.mealPreference.label.trim())}</td></tr>`
       : ''
 
   return `<!DOCTYPE html>
@@ -540,8 +554,8 @@ function buildPremiumConfirmationEmailHtml(
           <!-- Header (navy lacivert, yazılar beyaz) -->
           <tr>
             <td style="background-color:${headerFooterBg};padding:28px 24px;text-align:center;border-radius:12px 12px 0 0;">
-              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:0.5px;font-family:${emailFont};">${getSiteName() || 'Rezervasyon'}</h1>
-              <p style="margin:8px 0 0 0;color:rgba(255,255,255,0.9);font-size:14px;font-family:${emailFont};">Tekne Turu Rezervasyonu</p>
+              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:0.5px;font-family:${emailFont};">${getSiteName() || 'Rezervasyon için teşekkürler'}</h1>
+              <p style="margin:8px 0 0 0;color:rgba(255,255,255,0.9);font-size:14px;font-family:${emailFont};">Çeşme Tekne Turu Rezervasyonu</p>
             </td>
           </tr>
           <!-- Hero image: mutlaka tur fotoğrafı (kapak ile aynı) -->
@@ -581,6 +595,7 @@ function buildPremiumConfirmationEmailHtml(
                 <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Toplanma noktası</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(pickup)}</td></tr>
                 <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Misafirler</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(participants)}</td></tr>
                 <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Sınıf</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(classDisplay(p))}</td></tr>
+                ${mealRowHtml}
                 ${paidRowHtml}
                 <tr><td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:${textMuted};font-size:13px;">Toplam Tutar</td><td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:${primary};font-size:18px;font-weight:700;text-align:right;">${escapeHtml(String(p.totalPrice))} ${escapeHtml(p.currency)}</td></tr>
               </table>
@@ -659,6 +674,10 @@ function buildCustomerPaidEmailHtml(p: BookingEmailPayload): string {
 function buildAdminPaidEmailHtml(p: BookingEmailPayload): string {
   const dateFormatted = formatDate(p.date)
   const timeLine = p.time ? `<p><strong>Saat:</strong> ${escapeHtml(p.time)}</p>` : ''
+  const mealLine =
+    p.mealPreference?.label?.trim()
+      ? `<p style="margin: 0 0 8px;"><strong>Yemek tercihi:</strong> ${escapeHtml(p.mealPreference.label.trim())}</p>`
+      : ''
 
   return `
 <!DOCTYPE html>
@@ -678,6 +697,7 @@ function buildAdminPaidEmailHtml(p: BookingEmailPayload): string {
     <p style="margin: 0 0 8px;"><strong>Müşteri:</strong> ${escapeHtml(p.customer.firstName)} ${escapeHtml(p.customer.lastName)}</p>
     <p style="margin: 0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(p.customer.email)}</p>
     <p style="margin: 0;"><strong>Telefon:</strong> ${escapeHtml(p.customer.phone || '—')}</p>
+    ${mealLine}
   </div>
 </body>
 </html>
@@ -783,6 +803,77 @@ function buildContactFormEmailHtml(p: ContactFormPayload): string {
 </body>
 </html>
 `.trim()
+}
+
+export type YachtInquiryEmailPayload = {
+  yachtName: string
+  yachtSlug: string
+  location?: string
+  date: string
+  guestCount: number
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  message: string
+  priceFrom?: number
+  currency?: string
+}
+
+function buildYachtInquiryEmailHtml(p: YachtInquiryEmailPayload): string {
+  const loc = p.location ? `<p style="margin: 0 0 8px;"><strong>Konum:</strong> ${escapeHtml(p.location)}</p>` : ''
+  const price =
+    p.priceFrom != null
+      ? `<p style="margin: 0 0 8px;"><strong>Başlangıç fiyatı:</strong> ${escapeHtml(String(p.priceFrom))} ${escapeHtml(p.currency ?? 'TRY')}</p>`
+      : ''
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Yat müsaitlik talebi</title></head>
+<body style="font-family: system-ui, sans-serif; line-height: 1.5; color: #333; max-width: 560px; margin: 0 auto; padding: 24px;">
+  <h1 style="color: #0c4a6e;">Yeni yat müsaitlik talebi</h1>
+  <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 20px 0;">
+    <p style="margin: 0 0 8px;"><strong>Yat:</strong> ${escapeHtml(p.yachtName)}</p>
+    <p style="margin: 0 0 8px;"><strong>Slug:</strong> ${escapeHtml(p.yachtSlug)}</p>
+    ${loc}
+    <p style="margin: 0 0 8px;"><strong>Tarih:</strong> ${escapeHtml(p.date)}</p>
+    <p style="margin: 0 0 8px;"><strong>Misafir:</strong> ${p.guestCount}</p>
+    ${price}
+    <hr style="border: none; border-top: 1px solid #cbd5e1; margin: 12px 0;">
+    <p style="margin: 0 0 8px;"><strong>Ad:</strong> ${escapeHtml(p.firstName)} ${escapeHtml(p.lastName)}</p>
+    <p style="margin: 0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(p.email)}</p>
+    <p style="margin: 0 0 8px;"><strong>Telefon:</strong> ${escapeHtml(p.phone)}</p>
+    <p style="margin: 0 0 8px;"><strong>Mesaj:</strong></p>
+    <p style="margin: 0; white-space: pre-wrap;">${escapeHtml(p.message)}</p>
+  </div>
+</body>
+</html>
+`.trim()
+}
+
+/**
+ * Yat müsaitlik formu — admin bildirimi (RESEND_API_KEY + ADMIN_EMAIL).
+ */
+export async function sendYachtInquiryEmail(
+  payload: YachtInquiryEmailPayload
+): Promise<{ ok: boolean; error?: string }> {
+  const resend = getResend()
+  if (!resend) return { ok: false, error: 'E-posta yapılandırılmamış' }
+  const to = process.env.ADMIN_EMAIL?.trim()
+  if (!to) return { ok: false, error: 'Alıcı e-posta yok' }
+  const from = getFrom()
+  const { error } = await resend.emails.send({
+    from,
+    to: [to],
+    replyTo: payload.email,
+    subject: `Yat talebi: ${payload.yachtName} — ${payload.date}`,
+    html: buildYachtInquiryEmailHtml(payload),
+  })
+  if (error) {
+    console.error('[email] Yat talebi e-postası gönderilemedi:', error)
+    return { ok: false, error: error.message }
+  }
+  return { ok: true }
 }
 
 /**

@@ -112,6 +112,12 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
     description,
     isDefault
   },
+  mealMenu{
+    enabled,
+    sectionTitle,
+    description,
+    options[]{ key, label, description }
+  },
   _updatedAt,
   ticketClasses[]{
     key,
@@ -230,7 +236,13 @@ export const tourCoversByIdsQuery = `*[_type == "tour" && _id in $ids] {
 export const tourClassesForAdminQuery = `*[_type == "tour" && (_id == $tourId || slug.current == $tourId)][0] {
   _id,
   title,
-  ticketClasses[]{ key, label }
+  ticketClasses[]{ key, label },
+  mealMenu{
+    enabled,
+    sectionTitle,
+    description,
+    options[]{ key, label }
+  }
 }`
 
 /** Tour kapak görseli, toplanma, süre, galeri, kapora, dahil/dahil değil – voucher için. */

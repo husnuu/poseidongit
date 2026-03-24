@@ -112,6 +112,19 @@ export interface PickupPoint {
   isDefault?: boolean
 }
 
+export interface MealMenuOption {
+  key?: string
+  label?: string
+  description?: string
+}
+
+export interface MealMenuForBooking {
+  enabled?: boolean
+  sectionTitle?: string
+  description?: string
+  options?: MealMenuOption[]
+}
+
 export interface TourForBooking {
   _id?: string
   title: string
@@ -126,6 +139,7 @@ export interface TourForBooking {
   availabilityOverrides?: AvailabilityOverride[]
   availability?: AvailabilityConfig
   pickupPoints?: PickupPoint[]
+  mealMenu?: MealMenuForBooking
 }
 
 /** Firestore bookings: tourId = Sanity _id (UUID), date "YYYY-MM-DD", classId "eco"|"premium"|"first", counts { adult, child, infant }, status "pending"|"paid". */
@@ -168,6 +182,8 @@ export interface BookingWizardState {
   firstClassLocas?: string[] | null
   /** Seçilen toplanma / alım noktası (Sanity pickupPoints varsa müşteri seçer). */
   meetingPoint?: string
+  /** Tur mealMenu aktifken seçilen seçenek anahtarı (Sunucu etiketi Sanity’den doğrular). */
+  mealPreferenceKey?: string
   customer: {
     firstName: string
     lastName: string
@@ -176,8 +192,8 @@ export interface BookingWizardState {
     phone: string
     note?: string
   }
-  /** Ana rezervasyon sahibi dışındaki yolcular (sıra: kalan yetişkinler, çocuklar, bebekler). */
-  additionalTravelers: { firstName: string; lastName: string }[]
+  /** Ana rezervasyon sahibi dışındaki yolcular (sıra: kalan yetişkinler, çocuklar; bebekler counts.baby ile). */
+  additionalTravelers: { firstName: string; lastName: string; mealPreferenceKey?: string }[]
   pricingSummary: PricingSummary | null
   step: 1 | 2 | 3 | 4
 }

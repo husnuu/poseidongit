@@ -15,7 +15,7 @@ export interface AdminBookingRow {
     phone: string
     note?: string
   }
-  additionalTravelers?: { firstName: string; lastName: string }[]
+  additionalTravelers?: { firstName: string; lastName: string; mealPreference?: { key: string; label: string } }[]
   counts: { adult: number; child: number; infant: number }
   classId: string
   className: string
@@ -29,6 +29,7 @@ export interface AdminBookingRow {
   createdAt: string | null
   adminNote?: string | null
   meetingPoint?: string
+  mealPreference?: { key: string; label: string }
   source?: string
   manualSource?: string | null
   createdByAdmin?: boolean

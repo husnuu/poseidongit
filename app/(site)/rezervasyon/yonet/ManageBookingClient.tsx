@@ -15,6 +15,7 @@ type Booking = {
   date: string
   time?: string
   meetingPoint?: string
+  mealPreference?: { key: string; label: string }
   classId?: string
   className: string
   firstClassLocas?: string[]
@@ -394,6 +395,12 @@ export default function ManageBookingClient({
                   <tr>
                     <td style={{ color: '#6b7280', padding: '8px 0' }}>Toplanma noktası</td>
                     <td style={{ textAlign: 'right', fontWeight: 500 }}>{booking.meetingPoint}</td>
+                  </tr>
+                )}
+                {booking.mealPreference?.label?.trim() && (
+                  <tr>
+                    <td style={{ color: '#6b7280', padding: '8px 0' }}>Yemek tercihi</td>
+                    <td style={{ textAlign: 'right', fontWeight: 500 }}>{booking.mealPreference.label.trim()}</td>
                   </tr>
                 )}
                 <tr>

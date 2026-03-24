@@ -216,6 +216,17 @@ export async function PATCH(request: NextRequest) {
       } else {
         await ref.update({ paidNow })
       }
+      const rawMeal = data.mealPreference as { key?: unknown; label?: unknown } | undefined
+      const mealPreference =
+        rawMeal &&
+        typeof rawMeal === 'object' &&
+        typeof rawMeal.key === 'string' &&
+        typeof rawMeal.label === 'string' &&
+        rawMeal.key.trim() &&
+        rawMeal.label.trim()
+          ? { key: rawMeal.key.trim(), label: rawMeal.label.trim() }
+          : undefined
+
       await sendBookingPaidEmails({
         bookingId,
         accessToken,
@@ -245,6 +256,7 @@ export async function PATCH(request: NextRequest) {
         pickup,
         logoUrl,
         siteBaseUrl,
+        ...(mealPreference && { mealPreference }),
       })
     }
 

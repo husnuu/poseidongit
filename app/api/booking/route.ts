@@ -84,6 +84,16 @@ export async function GET(request: NextRequest) {
       date: dateStr,
       time: data.time ?? undefined,
       meetingPoint: data.meetingPoint ?? undefined,
+      mealPreference:
+        data.mealPreference &&
+        typeof data.mealPreference === 'object' &&
+        typeof (data.mealPreference as { key?: unknown }).key === 'string' &&
+        typeof (data.mealPreference as { label?: unknown }).label === 'string'
+          ? {
+              key: String((data.mealPreference as { key: string }).key),
+              label: String((data.mealPreference as { label: string }).label),
+            }
+          : undefined,
       classId,
       className: data.className,
       firstClassLocas: firstClassLocas?.length ? firstClassLocas : undefined,

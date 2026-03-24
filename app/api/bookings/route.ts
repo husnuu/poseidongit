@@ -16,6 +16,10 @@ import { tourForAvailabilityQuery } from '@/lib/queries'
 import { tourForBookingBySanityIdQuery } from '@/lib/sanity/bookingQueries'
 import { computePricingForSelection } from '@/lib/sanity/bookingPricing'
 import type { TourForBooking } from '@/lib/sanity/bookingTypes'
+import {
+  resolveMealPreferenceForBooking,
+  resolveAdditionalTravelerMealPreferencesForBooking,
+} from '@/lib/bookingMealPreference'
 
 const COLLECTION = 'bookings'
 const CURRENCY = 'TRY'
@@ -90,6 +94,14 @@ function normalizeBody(body: unknown): BookingCreatePayload | null {
     customer: { firstName, lastName, email, phone, note },
     ...(extraN > 0 ? { additionalTravelers: parsedExtras } : {}),
   }
+}
+
+function parseMealPreferenceKey(body: unknown): string | undefined {
+  if (!body || typeof body !== 'object') return undefined
+  const mp = (body as Record<string, unknown>).mealPreference
+  if (!mp || typeof mp !== 'object') return undefined
+  const k = (mp as Record<string, unknown>).key
+  return typeof k === 'string' ? k.trim() || undefined : undefined
 }
 
 function normalizeClassKey(classId: string): string {
@@ -175,7 +187,7 @@ export async function POST(request: Request) {
       const ad = typeof counts?.adult === 'number' ? counts.adult : 0
       const ch = typeof counts?.child === 'number' ? counts.child : 0
       const inf = typeof counts?.infant === 'number' ? counts.infant : 0
-      const needExtra = Math.max(0, ad + ch + inf - 1)
+      const needExtra = additionalTravelerSlotCount({ adult: ad, child: ch, infant: inf })
       const parsed = parseAdditionalTravelersFromBody(b?.additionalTravelers)
       if (parsed === null) missing.push('diğer yolcu listesi geçersiz')
       else if (needExtra > 0 && parsed.length !== needExtra) missing.push('tüm yolcuların ad-soyadı')
@@ -188,6 +200,26 @@ export async function POST(request: Request) {
       )
     }
     const firestoreTourId = await resolveTourIdToSanityId(payload.tourId)
+    const mealResolve = await resolveMealPreferenceForBooking(
+      firestoreTourId,
+      parseMealPreferenceKey(body)
+    )
+    if (!mealResolve.ok) {
+      return NextResponse.json({ error: mealResolve.message }, { status: 400 })
+    }
+    const mealPreference = mealResolve.stored
+    const extrasMealResolve = await resolveAdditionalTravelerMealPreferencesForBooking(
+      firestoreTourId,
+      payload.additionalTravelers ?? []
+    )
+    if (!extrasMealResolve.ok) {
+      return NextResponse.json({ error: extrasMealResolve.message }, { status: 400 })
+    }
+    const additionalTravelersWithMeal = (payload.additionalTravelers ?? []).map((t, i) => ({
+      firstName: t.firstName,
+      lastName: t.lastName,
+      ...(extrasMealResolve.stored[i] && { mealPreference: extrasMealResolve.stored[i] }),
+    }))
     const { unitPrice, totalPrice } = await computePrices(
       firestoreTourId,
       payload.date,
@@ -279,8 +311,9 @@ export async function POST(request: Request) {
       customer,
       ...(payload.additionalTravelers &&
         payload.additionalTravelers.length > 0 && {
-          additionalTravelers: payload.additionalTravelers,
+          additionalTravelers: additionalTravelersWithMeal,
         }),
+      ...(mealPreference && { mealPreference }),
       source: 'web',
       accessToken,
     })

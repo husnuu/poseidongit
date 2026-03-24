@@ -82,6 +82,16 @@ export const tourForBookingProjection = `{
     address,
     description,
     isDefault
+  },
+  mealMenu{
+    enabled,
+    sectionTitle,
+    description,
+    options[]{
+      key,
+      label,
+      description
+    }
   }
 }`
 

@@ -1,0 +1,19 @@
+/**
+ * Yat “Açıklama” bloğu (.TourDescriptionExpandable .content) ile aynı gövde metni.
+ * Kısa özet (kart + detay üstü) burada hizalanır.
+ */
+.text {
+  font-family: var(--font-family), sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--secondary, #0f172a);
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .text {
+    font-size: 17px;
+    line-height: 1.65;
+  }
+}

@@ -177,6 +177,7 @@ function exportToCsv(bookings: AdminBookingRow[]): void {
     'Toplam',
     'Para Birimi',
     'Durum',
+    'Yemek tercihi',
     'Oluşturulma',
   ]
   const rows = bookings.map((b) => [
@@ -193,6 +194,7 @@ function exportToCsv(bookings: AdminBookingRow[]): void {
     String(b.totalPrice),
     b.currency,
     STATUS_LABELS[b.status] ?? b.status,
+    b.mealPreference?.label?.trim() ?? '',
     b.createdAt ?? '',
   ])
   const escape = (s: string) => {
@@ -402,6 +404,28 @@ export default function AdminBookingsPage() {
           date: b.date,
           time: b.time,
           customer: b.customer ?? {},
+          additionalTravelers: Array.isArray(b.additionalTravelers)
+            ? b.additionalTravelers
+                .filter((t: unknown) => t && typeof t === 'object')
+                .map((t) => {
+                  const row = t as Record<string, unknown>
+                  const rowMealPreference =
+                    row.mealPreference &&
+                    typeof row.mealPreference === 'object' &&
+                    typeof (row.mealPreference as { key?: unknown }).key === 'string' &&
+                    typeof (row.mealPreference as { label?: unknown }).label === 'string'
+                      ? {
+                          key: String((row.mealPreference as { key: string }).key),
+                          label: String((row.mealPreference as { label: string }).label),
+                        }
+                      : undefined
+                  return {
+                    firstName: String(row.firstName ?? ''),
+                    lastName: String(row.lastName ?? ''),
+                    ...(rowMealPreference ? { mealPreference: rowMealPreference } : {}),
+                  }
+                })
+            : undefined,
           counts: b.counts ?? { adult: 0, child: 0, infant: 0 },
           classId: b.classId,
           className: b.className,
@@ -414,6 +438,16 @@ export default function AdminBookingsPage() {
           createdAt: b.createdAt ?? null,
           adminNote: b.adminNote ?? null,
           meetingPoint: b.meetingPoint,
+          mealPreference:
+            b.mealPreference &&
+            typeof b.mealPreference === 'object' &&
+            typeof (b.mealPreference as { key?: string }).key === 'string' &&
+            typeof (b.mealPreference as { label?: string }).label === 'string'
+              ? {
+                  key: String((b.mealPreference as { key: string }).key),
+                  label: String((b.mealPreference as { label: string }).label),
+                }
+              : undefined,
           source: b.source,
           manualSource: b.manualSource ?? null,
           createdByAdmin: b.createdByAdmin ?? false,

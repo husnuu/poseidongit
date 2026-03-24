@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
+import YachtHeroBadgeOverlay from '@/components/yacht/YachtHeroBadgeOverlay'
 import styles from './PhotoGrid.module.css'
 
 export interface PhotoGridImage {
@@ -13,9 +14,11 @@ export interface PhotoGridImage {
 interface PhotoGridProps {
   images: PhotoGridImage[]
   tourTitle: string
+  /** Yat detay: ana görsel üzerinde şerit rozetler (tur «En Popüler» stili) */
+  heroBadges?: string[]
 }
 
-export default function PhotoGrid({ images, tourTitle }: PhotoGridProps) {
+export default function PhotoGrid({ images, tourTitle, heroBadges }: PhotoGridProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
 
@@ -77,6 +80,11 @@ export default function PhotoGrid({ images, tourTitle }: PhotoGridProps) {
               blurDataURL={mainImage.blurDataURL ?? undefined}
               sizes="(max-width: 768px) 100vw, 50vw"
             />
+            {heroBadges && heroBadges.length > 0 ? (
+              <div className={styles.mainBadgeLayer}>
+                <YachtHeroBadgeOverlay badges={heroBadges} />
+              </div>
+            ) : null}
           </div>
 
           {/* Second image - mobile: stacked below with button; desktop: part of grid (first thumb) */}

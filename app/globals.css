@@ -84,6 +84,70 @@
   }
 }
 
+/* Yat kartı İncele: parıltı sadece p-[2px] çerçevede (dışa taşmaz); nabız inset ile iç kenarda */
+.yacht-card-cta-edge.tour-card-cta-shimmer.hero-primary-btn-wrap::before {
+  inset: 0;
+  background: conic-gradient(
+    from var(--hero-angle),
+    transparent 46deg,
+    rgba(255, 255, 255, 0.06) 58deg,
+    rgba(255, 255, 255, 0.32) 74deg 82deg,
+    rgba(255, 255, 255, 0.06) 94deg,
+    transparent 108deg
+  );
+  animation: hero-shimmer-move 4.5s linear infinite;
+  opacity: 0.88;
+}
+
+.yacht-card-cta-edge.tour-card-cta-shimmer.hero-primary-btn-wrap {
+  /* Dış gölge yok — kart düzenini bozmaz */
+  animation: yacht-card-cta-inset-ring 3s ease-in-out infinite;
+}
+
+@keyframes yacht-card-cta-inset-ring {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 1px rgba(30, 58, 95, 0.22);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+      inset 0 0 10px rgba(30, 58, 95, 0.12);
+  }
+}
+
+.yacht-card-cta-inner.hero-primary-inner {
+  animation: yacht-card-cta-inner-edge 3s ease-in-out infinite;
+}
+
+@keyframes yacht-card-cta-inner-edge {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yacht-card-cta-edge.tour-card-cta-shimmer.hero-primary-btn-wrap::before {
+    animation: none;
+    opacity: 0.45;
+    --hero-angle: 52deg;
+  }
+  .yacht-card-cta-edge.tour-card-cta-shimmer.hero-primary-btn-wrap {
+    animation: none;
+    box-shadow: inset 0 0 0 1px rgba(30, 58, 95, 0.2);
+  }
+  .yacht-card-cta-inner.hero-primary-inner {
+    animation: none;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  }
+}
+
 /* Butonlarda hover: üzerinden geçen parıltı */
 .hero-btn-shine {
   position: relative;

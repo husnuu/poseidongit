@@ -34,8 +34,10 @@ export interface Booking {
   totalPrice: number
   currency: string
   customer: BookingCustomer
-  /** Ana iletişim kişisi dışındaki yolcuların ad-soyadı (web rezervasyonu). */
-  additionalTravelers?: { firstName: string; lastName: string }[]
+  /** Ana iletişim kişisi dışındaki yetişkin/çocuk ad-soyadı; bebekler counts.infant ile (web rezervasyonu). */
+  additionalTravelers?: { firstName: string; lastName: string; mealPreference?: { key: string; label: string } }[]
+  /** Tur mealMenu aktifken seçilen menü (Sunucu Sanity ile doğrular). */
+  mealPreference?: { key: string; label: string }
   source: string
   /** Secure token for voucher/ticket access. Required for new bookings; legacy docs may lack it. */
   accessToken?: string
@@ -70,5 +72,11 @@ export interface BookingCreatePayload {
     phone: string
     note?: string
   }
-  additionalTravelers?: { firstName: string; lastName: string }[]
+  additionalTravelers?: Array<{
+    firstName: string
+    lastName: string
+    mealPreferenceKey?: string
+    mealPreference?: { key: string; label: string }
+  }>
+  mealPreference?: { key: string; label: string }
 }

@@ -3,11 +3,14 @@
 import type { BookingWizardState } from '@/lib/sanity/bookingTypes'
 import { additionalTravelerLabels } from '@/lib/bookingAdditionalTravelers'
 import FloatingInput from '@/components/ui/FloatingInput'
+import styles from '../booking.module.css'
+import MealOptionSelect from './MealOptionSelect'
 
 interface AdditionalTravelersFieldsProps {
   state: BookingWizardState
   onUpdate: (patch: Partial<BookingWizardState>) => void
   errors: Record<string, string>
+  mealOptions?: Array<{ key: string; label: string }>
   /** StepCustomer: compact + default variant; Step3: outlined */
   compact?: boolean
   variant?: 'default' | 'outlined'
@@ -17,6 +20,7 @@ export default function AdditionalTravelersFields({
   state,
   onUpdate,
   errors,
+  mealOptions,
   compact = true,
   variant = 'default',
 }: AdditionalTravelersFieldsProps) {
@@ -25,9 +29,9 @@ export default function AdditionalTravelersFields({
 
   const list = state.additionalTravelers ?? []
 
-  const setTraveler = (index: number, field: 'firstName' | 'lastName', value: string) => {
+  const setTraveler = (index: number, field: 'firstName' | 'lastName' | 'mealPreferenceKey', value: string) => {
     const next = [...list]
-    while (next.length <= index) next.push({ firstName: '', lastName: '' })
+    while (next.length <= index) next.push({ firstName: '', lastName: '', mealPreferenceKey: '' })
     next[index] = { ...next[index], [field]: value }
     onUpdate({ additionalTravelers: next })
   }
@@ -36,9 +40,7 @@ export default function AdditionalTravelersFields({
     <div className="space-y-5 border-t border-zinc-200/80 pt-5 mt-2">
       <div>
         <p className="text-sm font-medium text-zinc-800">Diğer yolcular</p>
-        <p className="text-xs text-zinc-500 mt-0.5">
-          Rezervasyonu yapan kişi dışındaki katılımcıların ad ve soyadını girin.
-        </p>
+        <p className="text-xs text-zinc-500 mt-0.5">Diğer misafirlerin bilgilerini doldurun.</p>
       </div>
       {labels.map((label, i) => (
         <div key={`${label}-${i}`} className="space-y-3">
@@ -65,6 +67,22 @@ export default function AdditionalTravelersFields({
               variant={variant}
             />
           </div>
+          {mealOptions && mealOptions.length > 0 && (
+            <div>
+              <MealOptionSelect
+                options={mealOptions}
+                value={list[i]?.mealPreferenceKey ?? ''}
+                onChange={(key) => setTraveler(i, 'mealPreferenceKey', key)}
+                ariaLabel={`${label} yemek tercihi`}
+                label="Yemek tercihi *"
+                namePrefix={`booking-traveler-${i}-meal`}
+                showError={Boolean(errors[`traveler${i}Meal`])}
+              />
+              {errors[`traveler${i}Meal`] ? (
+                <p className={styles.errorText}>{errors[`traveler${i}Meal`]}</p>
+              ) : null}
+            </div>
+          )}
         </div>
       ))}
     </div>

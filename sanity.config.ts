@@ -23,8 +23,19 @@ export default defineConfig({
               .title('Koylar Sayfası')
               .id('covesPage')
               .child(S.document().schemaType('covesPage').documentId('covesPage')),
+            S.listItem()
+              .title('Yat kiralama — lokasyonlar')
+              .id('yachtLocation-list')
+              .child(S.documentTypeList('yachtLocation').title('Lokasyonlar')),
+            S.listItem()
+              .title('Yat kiralama — yatlar')
+              .id('yachtRental-list')
+              .child(S.documentTypeList('yachtRental').title('Yatlar')),
             ...S.documentTypeListItems().filter(
-              (item) => !['contactPage', 'covesPage'].includes(item.getId() ?? '')
+              (item) =>
+                !['contactPage', 'covesPage', 'yachtLocation', 'yachtRental'].includes(
+                  item.getId() ?? ''
+                )
             ),
           ]),
     }),

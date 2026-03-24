@@ -7,6 +7,7 @@ import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTyp
 import { validateAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
 import FloatingInput from '@/components/ui/FloatingInput'
 import AdditionalTravelersFields from './AdditionalTravelersFields'
+import MealPreferenceFields, { isTourMealMenuActive, tourMealOptions } from './MealPreferenceFields'
 import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
 import styles from '../booking.module.css'
@@ -49,7 +50,12 @@ export default function Step3CustomerInfo({
     if (!phoneDigits.length) next.phone = 'Telefon zorunludur.'
     else if (phoneDigits.length < PHONE_MIN_LENGTH)
       next.phone = 'Geçerli bir telefon numarası giriniz.'
-    Object.assign(next, validateAdditionalTravelers(state.additionalTravelers, state.counts))
+    Object.assign(
+      next,
+      validateAdditionalTravelers(state.additionalTravelers, state.counts, {
+        requireMealPreference: isTourMealMenuActive(tour),
+      })
+    )
     setErrors(next)
     const valid = Object.keys(next).length === 0
     onValidationChange(valid)
@@ -307,6 +313,13 @@ export default function Step3CustomerInfo({
             </div>
           )}
 
+          <MealPreferenceFields
+            tour={tour}
+            state={state}
+            onUpdate={onUpdate}
+            error={errors.mealPreference}
+          />
+
           <FloatingTextarea
             id="booking-note"
             label="Özel istek (opsiyonel)"
@@ -320,6 +333,7 @@ export default function Step3CustomerInfo({
             state={state}
             onUpdate={onUpdate}
             errors={errors}
+            mealOptions={isTourMealMenuActive(tour) ? tourMealOptions(tour) : undefined}
             compact
             variant="outlined"
           />

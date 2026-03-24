@@ -9,6 +9,7 @@ import { sendBookingPaidEmails, sendManualBookingAdminNotification } from '@/lib
 import { getBaseUrl } from '@/lib/seo'
 import { urlFor } from '@/lib/sanity'
 import { getAuthToken, getAdminEmail, requireAdminOrAgent } from '@/lib/adminAuth'
+import { resolveMealPreferenceForBooking } from '@/lib/bookingMealPreference'
 
 const COLLECTION = 'bookings'
 const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
@@ -52,6 +53,7 @@ function parseBody(body: unknown): {
   sendEmail?: boolean
   sendEmailToAdmin?: boolean
   firstClassLocas?: string[]
+  mealPreferenceKey?: string
 } | { error: string } {
   if (!body || typeof body !== 'object') return { error: 'Geçersiz istek' }
   const b = body as Record<string, unknown>
@@ -102,6 +104,12 @@ function parseBody(body: unknown): {
       .filter((x) => LOCA_REGEX.test(x))
     if (firstClassLocas.length === 0) firstClassLocas = undefined
   }
+  let mealPreferenceKey: string | undefined
+  const mp = b.mealPreference
+  if (mp && typeof mp === 'object') {
+    const mk = (mp as Record<string, unknown>).key
+    if (typeof mk === 'string') mealPreferenceKey = mk.trim() || undefined
+  }
   return {
     tourId,
     tourTitle: title,
@@ -121,6 +129,7 @@ function parseBody(body: unknown): {
     sendEmail,
     sendEmailToAdmin,
     firstClassLocas,
+    mealPreferenceKey,
   }
 }
 
@@ -161,6 +170,7 @@ export async function POST(request: NextRequest) {
     sendEmail,
     sendEmailToAdmin,
     firstClassLocas: firstClassLocasParsed,
+    mealPreferenceKey,
   } = parsed
 
   const totalPax = counts.adult + counts.child + counts.infant
@@ -179,6 +189,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Tur bulunamadı' }, { status: 404 })
   }
   const firestoreTourId = sanityTour._id ?? tourId
+
+  const mealResolve = await resolveMealPreferenceForBooking(firestoreTourId, mealPreferenceKey)
+  if (!mealResolve.ok) {
+    return NextResponse.json({ error: mealResolve.message }, { status: 400 })
+  }
+  const mealPreference = mealResolve.stored
 
   const capacityByClass = computeCapacityForDate(sanityTour, date)
   const db = getFirestore()
@@ -244,6 +260,7 @@ export async function POST(request: NextRequest) {
     accessToken,
     ...(status === 'paid' && totalPrice > 0 && { paidNow: totalPrice }),
     ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { firstClassLocas: firstClassLocasParsed }),
+    ...(mealPreference && { mealPreference }),
   })
 
   if (status === 'paid' && sendEmail && customer.email && totalPrice > 0) {
@@ -300,6 +317,7 @@ export async function POST(request: NextRequest) {
       logoUrl,
       siteBaseUrl,
       ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { firstClassLocas: firstClassLocasParsed }),
+      ...(mealPreference && { mealPreference }),
     })
   }
 
@@ -321,6 +339,7 @@ export async function POST(request: NextRequest) {
           phone: customer.phone,
         },
         ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { firstClassLocas: firstClassLocasParsed }),
+        ...(mealPreference && { mealPreference }),
       })
     }
   }

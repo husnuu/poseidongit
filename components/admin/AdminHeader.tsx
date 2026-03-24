@@ -15,6 +15,7 @@ export default function AdminHeader() {
 
   const bookingsActive = pathname === '/admin/bookings'
   const biletciActive = pathname === '/admin/biletci'
+  const yachtInquiriesActive = pathname === '/admin/yacht-inquiries'
 
   useEffect(() => {
     setMenuOpen(false)
@@ -54,6 +55,17 @@ export default function AdminHeader() {
         onClick={() => setMenuOpen(false)}
       >
         Rezervasyonlar
+      </Link>
+      <Link
+        href="/admin/yacht-inquiries"
+        className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+          yachtInquiriesActive
+            ? 'bg-cyan-100 text-cyan-800'
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+        }`}
+        onClick={() => setMenuOpen(false)}
+      >
+        Motoryat Mesajları
       </Link>
       <Link
         href="/admin/biletci"

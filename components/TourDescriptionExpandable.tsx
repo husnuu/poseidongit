@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
@@ -7,10 +8,22 @@ import styles from './TourDescriptionExpandable.module.css'
 
 interface TourDescriptionExpandableProps {
   description: PortableTextBlock[]
+  /** Varsayılan: "Tur Açıklaması" */
+  heading?: string
+  /** Başlığın solunda gösterilir (örn. ikon) */
+  headingIcon?: ReactNode
+  /** `yacht`: yat detay — başlık dahil/galeri kolon başlıklarıyla aynı; ikon kutusu yok */
+  headingVariant?: 'tour' | 'yacht'
+  /** Varsa h2 bu sınıfla (örn. yat detay ortak başlık modülü) */
+  headingClassName?: string
 }
 
 export default function TourDescriptionExpandable({
   description,
+  heading = 'Tur Açıklaması',
+  headingIcon,
+  headingVariant = 'tour',
+  headingClassName,
 }: TourDescriptionExpandableProps) {
   const [expanded, setExpanded] = useState(false)
 
@@ -29,9 +42,18 @@ export default function TourDescriptionExpandable({
 
   if (!hasContent) return null
 
+  const iconWrapClass =
+    headingVariant === 'yacht' ? styles.headingIconWrapYacht : styles.headingIconWrap
+  const headingClass =
+    headingClassName ??
+    (headingVariant === 'yacht' ? styles.headingYacht : styles.heading)
+
   return (
     <div className={styles.section}>
-      <h2 className={styles.heading}>Tur Açıklaması</h2>
+      <div className={headingVariant === 'yacht' ? styles.headingRowYacht : styles.headingRow}>
+        {headingIcon ? <span className={iconWrapClass}>{headingIcon}</span> : null}
+        <h2 className={headingClass}>{heading}</h2>
+      </div>
 
       <div
         className={

@@ -3,6 +3,10 @@ import styles from './IncludedNotIncluded.module.css'
 interface IncludedNotIncludedProps {
   included?: string[]
   notIncluded?: string[]
+  /** Dış section sarmalayıcı olmadan (yan galeri düzeninde) */
+  embedded?: boolean
+  /** Varsa kolon başlıkları bu sınıfla (örn. yat detay ortak başlık) */
+  columnHeadingClassName?: string
 }
 
 const CheckIcon = () => (
@@ -53,18 +57,21 @@ const XIcon = () => (
 export default function IncludedNotIncluded({
   included,
   notIncluded,
+  embedded = false,
+  columnHeadingClassName,
 }: IncludedNotIncludedProps) {
   const hasIncluded = Array.isArray(included) && included.length > 0
   const hasNotIncluded = Array.isArray(notIncluded) && notIncluded.length > 0
 
   if (!hasIncluded && !hasNotIncluded) return null
 
-  return (
-    <section className={styles.section}>
-      <div className={styles.twoCol}>
+  const colHeading = columnHeadingClassName ?? styles.colTitle
+
+  const inner = (
+    <div className={embedded ? styles.twoColEmbedded : styles.twoCol}>
         {hasIncluded && (
           <div className={styles.includedCol}>
-            <h3 className={styles.colTitle}>Dahil olanlar</h3>
+            <h3 className={colHeading}>Dahil olanlar</h3>
             <ul className={styles.list}>
               {included!.map((item, idx) => (
                 <li key={`in-${idx}-${item}`} className={styles.item}>
@@ -80,7 +87,7 @@ export default function IncludedNotIncluded({
 
         {hasNotIncluded && (
           <div className={styles.notIncludedCol}>
-            <h3 className={styles.colTitle}>Dahil olmayanlar</h3>
+            <h3 className={colHeading}>Dahil olmayanlar</h3>
             <ul className={styles.list}>
               {notIncluded!.map((item, idx) => (
                 <li key={`out-${idx}-${item}`} className={styles.item}>
@@ -94,6 +101,11 @@ export default function IncludedNotIncluded({
           </div>
         )}
       </div>
-    </section>
   )
+
+  if (embedded) {
+    return <div className={styles.embeddedRoot}>{inner}</div>
+  }
+
+  return <section className={styles.section}>{inner}</section>
 }

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
+import { isTourMealMenuActive } from '@/components/booking/steps/MealPreferenceFields'
 import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
 import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
 import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey } from '@/lib/sanity/bookingPricing'
@@ -238,8 +239,13 @@ export default function BookingWizardModal({
               additionalTravelers: (state.additionalTravelers ?? []).map((t) => ({
                 firstName: t.firstName?.trim() ?? '',
                 lastName: t.lastName?.trim() ?? '',
+                ...(t.mealPreferenceKey?.trim() && { mealPreferenceKey: t.mealPreferenceKey.trim() }),
               })),
             }),
+            ...(isTourMealMenuActive(tour) &&
+              state.mealPreferenceKey?.trim() && {
+                mealPreference: { key: state.mealPreferenceKey.trim() },
+              }),
           }),
         })
         const text = await res.text()

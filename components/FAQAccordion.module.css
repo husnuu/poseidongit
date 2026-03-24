@@ -7,11 +7,12 @@
 
 .faqTitle {
   font-family: var(--font-family), sans-serif;
-  font-weight: 700;
-  font-size: 24px;
-  line-height: 36px;
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1.3;
   text-transform: uppercase;
   color: #1e3a5f;
+  letter-spacing: 0.5px;
   margin: 0 0 20px 0;
   padding: 0;
   display: block;
@@ -19,20 +20,25 @@
 
 /* Ara başlık stili: Hakkımızda / diğer sayfalardaki section title ile aynı (biraz daha küçük) */
 .faqTitleSection {
-  font-family: var(--font-family-title), var(--font-family), sans-serif;
+  font-family: var(--font-family), sans-serif;
   font-weight: 900;
-  font-size: 22px;
-  line-height: 1.2;
+  font-size: 18px;
+  line-height: 1.3;
   text-transform: uppercase;
   color: #1e3a5f;
+  letter-spacing: 0.5px;
   margin: 0 0 20px 0;
   padding: 0;
   display: block;
 }
 
 @media (min-width: 768px) {
+  .faqTitle {
+    font-size: 18px;
+  }
+
   .faqTitleSection {
-    font-size: 26px;
+    font-size: 18px;
   }
 }
 
@@ -193,9 +199,14 @@
   }
 
   .faqTitle {
-    font-size: 20px;
-    line-height: 28px;
+    font-size: 23px;
+    line-height: 32px;
     margin-bottom: 20px;
+  }
+
+  .faqTitleSection {
+    font-size: 23px;
+    line-height: 32px;
   }
 
   .accordionItemLine {

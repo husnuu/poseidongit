@@ -489,6 +489,73 @@ export default defineType({
       ],
     }),
 
+    // 4.55) Rezervasyon — yemek menüsü (Bilgileriniz adımında seçilir)
+    defineField({
+      name: 'mealMenu',
+      title: 'Yemek menüsü (rezervasyon)',
+      type: 'object',
+      description:
+        'Açıkken rezervasyon sihirbazında “Bilgileriniz” adımında zorunlu seçim gösterilir; Firestore ve e-postalara yazılır.',
+      fields: [
+        defineField({
+          name: 'enabled',
+          title: 'Aktif',
+          type: 'boolean',
+          initialValue: false,
+        }),
+        defineField({
+          name: 'sectionTitle',
+          title: 'Bölüm başlığı',
+          type: 'string',
+          initialValue: 'Yemek tercihi',
+          description: 'Formda görünen başlık (örn. Yemek menüsü)',
+        }),
+        defineField({
+          name: 'description',
+          title: 'Açıklama',
+          type: 'text',
+          rows: 2,
+          description: 'İsteğe bağlı kısa açıklama (formun altında gösterilir)',
+        }),
+        defineField({
+          name: 'options',
+          title: 'Menü seçenekleri',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              fields: [
+                defineField({
+                  name: 'key',
+                  title: 'Anahtar (tekil)',
+                  type: 'string',
+                  description: 'Küçük harf, tire; örn. et-menu, vejetaryen (sistemde saklanır)',
+                  validation: (Rule) => Rule.required().error('Anahtar zorunludur'),
+                }),
+                defineField({
+                  name: 'label',
+                  title: 'Görünen ad',
+                  type: 'string',
+                  description: 'Müşterinin gördüğü seçenek metni',
+                  validation: (Rule) => Rule.required().error('Etiket zorunludur'),
+                }),
+                defineField({
+                  name: 'description',
+                  title: 'Alt açıklama',
+                  type: 'text',
+                  rows: 2,
+                  description: 'İsteğe bağlı (sadece CMS / iç not)',
+                }),
+              ],
+              preview: {
+                select: { title: 'label', subtitle: 'key' },
+              },
+            },
+          ],
+        }),
+      ],
+    }),
+
     // 4.6) Nerede / Toplanma noktası ve harita
     defineField({
       name: 'whereSection',

@@ -12,6 +12,8 @@ import siteFooter from './siteFooter'
 import siteSettings from './siteSettings'
 import tour from './tour'
 import toursPage from './toursPage'
+import yachtLocation from './yachtLocation'
+import yachtRental from './yachtRental'
 
 export const schemaTypes = [
   aboutPage,
@@ -28,4 +30,6 @@ export const schemaTypes = [
   siteSettings,
   tour,
   toursPage,
+  yachtLocation,
+  yachtRental,
 ]

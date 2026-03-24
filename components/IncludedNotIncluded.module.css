@@ -13,19 +13,31 @@
   margin: 0 0 16px 0;
 }
 
+.embeddedRoot {
+  width: 100%;
+  min-width: 0;
+}
+
 .twoCol {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 56px;
 }
 
+.twoColEmbedded {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
 .colTitle {
   font-family: var(--font-family), sans-serif;
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 24px;
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1.3;
   text-transform: uppercase;
   color: #1e3a5f;
+  letter-spacing: 0.5px;
   margin: 0 0 12px 0;
 }
 
@@ -120,7 +132,8 @@
     padding: 0;
   }
 
-  .twoCol {
+  .twoCol,
+  .twoColEmbedded {
     grid-template-columns: 1fr;
     gap: 28px;
   }
@@ -132,8 +145,8 @@
   }
 
   .colTitle {
-    font-size: 18px;
-    line-height: 26px;
+    font-size: 23px;
+    line-height: 32px;
     margin-bottom: 12px;
   }
 

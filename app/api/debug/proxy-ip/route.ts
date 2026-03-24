@@ -7,15 +7,22 @@ export const runtime = 'nodejs'
 
 /**
  * Fixie / çıkış IP testi.
- * - Geliştirme: tarayıcıdan GET yeterli (http://localhost:3002/api/debug/proxy-ip)
- * - Production: Authorization: Bearer <ADMIN_TOKEN> ve gerekirse X-Admin-Email
+ * - Geliştirme: tarayıcıdan GET yeterli
+ * - Production: Bearer ADMIN_TOKEN (+ gerekirse X-Admin-Email) VEYA
+ *   FIXIE_IP_DEBUG_SECRET tanımlıysa: ?secret=aynı_değer (tarayıcı; URL loglanabilir, test sonrası secret’ı silin)
  */
 export async function GET(request: Request) {
   const dev = process.env.NODE_ENV === 'development'
   if (!dev) {
     const token = getAuthToken(request)
     const email = getAdminEmail(request)
-    if (!requireAdmin(token, email)) {
+    const adminOk = requireAdmin(token, email)
+    const debugSecret = process.env.FIXIE_IP_DEBUG_SECRET?.trim()
+    const provided = new URL(request.url).searchParams.get('secret')?.trim()
+    const secretOk = Boolean(
+      debugSecret && provided && debugSecret.length > 0 && debugSecret === provided
+    )
+    if (!adminOk && !secretOk) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
   }

@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { TourOption } from '@/types/adminBookings'
 import FirstClassSeatSelector from '@/components/booking/FirstClassSeatSelector'
+import MealOptionSelect from '@/components/booking/steps/MealOptionSelect'
+import bookingFieldStyles from '@/components/booking/booking.module.css'
 
 const MANUAL_SOURCE_OPTIONS: { value: string; label: string }[] = [
   { value: 'physical', label: 'Fiziksel satış' },
@@ -22,6 +24,13 @@ const STATUS_OPTIONS: { value: 'pending' | 'paid' | 'cancelled'; label: string }
 interface TourClass {
   id: string
   label: string
+}
+
+interface AdminTourMealMenu {
+  enabled: boolean
+  sectionTitle?: string
+  description?: string
+  options: { key: string; label: string }[]
 }
 
 interface CapacityInfo {
@@ -88,6 +97,8 @@ export default function ManualBookingDrawer({
   const [firstClassLocas, setFirstClassLocas] = useState<string[]>([])
   /** Seçilen tarih için başka rezervasyonlarda dolu loca id'leri (availability API'den). */
   const [reservedLocaIds, setReservedLocaIds] = useState<string[]>([])
+  const [mealMenu, setMealMenu] = useState<AdminTourMealMenu | null>(null)
+  const [mealPreferenceKey, setMealPreferenceKey] = useState('')
 
   const totalPax = adult + child + infant
   const isFirstClass = !!classId && (classId.toLowerCase().startsWith('first') || tourClasses.find((c) => c.id === classId)?.label?.toLowerCase().includes('first'))
@@ -117,6 +128,13 @@ export default function ManualBookingDrawer({
         ]
         setTourClasses(classes)
         setTourTitle(data.tourTitle || '')
+        setMealPreferenceKey('')
+        const mm = data.mealMenu as AdminTourMealMenu | undefined
+        if (mm?.enabled && Array.isArray(mm.options) && mm.options.length > 0) {
+          setMealMenu(mm)
+        } else {
+          setMealMenu(null)
+        }
         if (classes[0]) {
           setClassId(classes[0].id)
           setClassName(classes[0].label || classes[0].id)
@@ -125,9 +143,13 @@ export default function ManualBookingDrawer({
         setTourClasses([])
         setClassId('')
         setClassName('')
+        setMealMenu(null)
+        setMealPreferenceKey('')
       }
     } catch {
       setTourClasses([])
+      setMealMenu(null)
+      setMealPreferenceKey('')
     } finally {
       setClassesLoading(false)
     }
@@ -190,6 +212,12 @@ export default function ManualBookingDrawer({
     if (!isFirstClass || !date) setFirstClassLocas([])
   }, [isFirstClass, date, classId])
 
+  useEffect(() => {
+    if (mealMenu?.enabled && mealMenu.options.length === 1) {
+      setMealPreferenceKey(mealMenu.options[0].key)
+    }
+  }, [mealMenu])
+
   const exceedsCapacity = capacityInfo ? totalPax > capacityInfo.remaining : false
 
   const resetForm = useCallback(() => {
@@ -221,6 +249,8 @@ export default function ManualBookingDrawer({
     setSuccessMessage(null)
     setFirstClassLocas([])
     setReservedLocaIds([])
+    setMealMenu(null)
+    setMealPreferenceKey('')
   }, [])
 
   const handleSubmit = async (andNew: boolean) => {
@@ -245,6 +275,10 @@ export default function ManualBookingDrawer({
     }
     if (isFirstClass && requiredLocas > 0 && (firstClassLocas?.length ?? 0) < requiredLocas) {
       setSubmitError(`First Class için ${requiredLocas} loca seçin (${totalPax} kişi → ${requiredLocas} loca).`)
+      return
+    }
+    if (mealMenu?.enabled && mealMenu.options.length > 0 && !mealPreferenceKey.trim()) {
+      setSubmitError('Yemek tercihi seçin.')
       return
     }
     setSaving(true)
@@ -276,6 +310,8 @@ export default function ManualBookingDrawer({
           sendEmail,
           sendEmailToAdmin,
           ...(isFirstClass && (firstClassLocas?.length ?? 0) > 0 && { firstClassLocas: firstClassLocas!.map((id) => id.trim().toUpperCase()) }),
+          ...(mealMenu?.enabled &&
+            mealPreferenceKey.trim() && { mealPreference: { key: mealPreferenceKey.trim() } }),
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -423,6 +459,25 @@ export default function ManualBookingDrawer({
                 ))}
               </select>
             </div>
+
+            {mealMenu?.enabled && mealMenu.options.length > 0 && (
+              <div>
+                <p className={bookingFieldStyles.formLabel}>
+                  {mealMenu.sectionTitle?.trim() || 'Yemek tercihi'} *
+                </p>
+                {mealMenu.description?.trim() ? (
+                  <p className={bookingFieldStyles.mealOptionDescription}>{mealMenu.description.trim()}</p>
+                ) : null}
+                <MealOptionSelect
+                  options={mealMenu.options}
+                  value={mealPreferenceKey}
+                  onChange={setMealPreferenceKey}
+                  ariaLabel={mealMenu.sectionTitle?.trim() || 'Yemek tercihi'}
+                  namePrefix="manual-booking-meal"
+                  showError={false}
+                />
+              </div>
+            )}
 
             {isFirstClass && date && (
               <div className="rounded-xl border border-stone-200/80 bg-gradient-to-b from-white to-stone-50/30 p-4 shadow-sm">
