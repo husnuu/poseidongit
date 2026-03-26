@@ -14,6 +14,7 @@ import tour from './tour'
 import toursPage from './toursPage'
 import yachtLocation from './yachtLocation'
 import yachtRental from './yachtRental'
+import yachtRentalsPage from './yachtRentalsPage'
 
 export const schemaTypes = [
   aboutPage,
@@ -32,4 +33,5 @@ export const schemaTypes = [
   toursPage,
   yachtLocation,
   yachtRental,
+  yachtRentalsPage,
 ]

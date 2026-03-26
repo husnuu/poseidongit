@@ -70,8 +70,22 @@ export interface YachtRentalDocument {
   trustReviewsLabel?: string
   trustYearsExperience?: number
   trustFleetLine?: string
-  /** YYYY-MM-DD */
+  /** YYYY-MM-DD — her iki modda da, moda özel liste yoksa kullanılır */
   blockedDates?: string[]
+  /** Günlük takvim; doluysa günlük modda sadece bu günler engelli sayılır */
+  blockedDatesDaily?: string[]
+  /** Konaklamalı takvim; doluysa bu modda sadece bu günler engelli */
+  blockedDatesOvernight?: string[]
+  /** Sanity: false değilse günlük kiralama sunulur (varsayılan: açık) */
+  dailyRentalEnabled?: boolean
+  /** Sanity: true ise konaklamalı / tarih aralığı sunulur */
+  overnightRentalEnabled?: boolean
+  /** Konaklamalı toplam referans (takvim yoksa); GROQ: coalesce(overnightTotalPrice, overnightPriceFrom) */
+  overnightTotalPrice?: number
+  /** Günlük mod — güne özel fiyat satırları */
+  dailyDatePricing?: { date?: string | null; price?: number | null }[]
+  /** Konaklamalı — gece başına satırlar */
+  overnightNightPricing?: { date?: string | null; price?: number | null }[]
   inquiryCard?: YachtInquiryCard
   routeSuggestions?: string[]
   relatedTours?: { title?: string; slug?: string | null }[]

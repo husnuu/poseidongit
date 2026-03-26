@@ -556,6 +556,105 @@ export default defineType({
       ],
     }),
 
+    // 4.56) Tur sayfası — yemek menüsü vitrini (bilgi; rezervasyon mealMenu’dan ayrı)
+    defineField({
+      name: 'foodMenu',
+      title: 'Tur sayfası — yemek menüsü',
+      type: 'object',
+      description:
+        'Tur detayında kart ızgarası olarak gösterilir. Rezervasyondaki “Yemek menüsü (rezervasyon)” alanından bağımsızdır.',
+      fields: [
+        defineField({
+          name: 'enabled',
+          title: 'Göster',
+          type: 'boolean',
+          initialValue: false,
+        }),
+        defineField({
+          name: 'sectionTitle',
+          title: 'Bölüm başlığı',
+          type: 'string',
+          initialValue: 'Yemek menüsü',
+        }),
+        defineField({
+          name: 'intro',
+          title: 'Giriş metni',
+          type: 'text',
+          rows: 2,
+          description: 'İsteğe bağlı; başlığın altında gösterilir.',
+        }),
+        defineField({
+          name: 'items',
+          title: 'Menü öğeleri',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              fields: [
+                defineField({
+                  name: 'title',
+                  title: 'Başlık',
+                  type: 'string',
+                  validation: (Rule) => Rule.required().error('Başlık gerekli'),
+                }),
+                defineField({
+                  name: 'excerpt',
+                  title: 'Kısa açıklama (detayda)',
+                  type: 'text',
+                  rows: 4,
+                  description:
+                    'Detay açılınca gösterilir; her satıra bir yemek/kalem yazabilirsiniz (şık liste olarak görünür). Kartta gösterilmez.',
+                }),
+                defineField({
+                  name: 'image',
+                  title: 'Görsel',
+                  type: 'image',
+                  options: { hotspot: true },
+                  fields: [
+                    {
+                      name: 'alt',
+                      type: 'string',
+                      title: 'Alternatif metin',
+                    },
+                  ],
+                }),
+                defineField({
+                  name: 'priceLabel',
+                  title: 'Fiyat / etiket',
+                  type: 'string',
+                  description: 'Örn. Dahil, Ücretsiz veya tutar.',
+                }),
+                defineField({
+                  name: 'metaLine1',
+                  title: 'Alt satır 1',
+                  type: 'string',
+                  description: 'İsteğe bağlı (ör. porsiyon, stok bilgisi).',
+                }),
+                defineField({
+                  name: 'metaLine2',
+                  title: 'Alt satır 2',
+                  type: 'string',
+                }),
+                defineField({
+                  name: 'detail',
+                  title: 'Detay içerik (açılır)',
+                  type: 'array',
+                  description: 'Karta tıklanınca açılan tam metin (zengin metin).',
+                  of: [{ type: 'block' }],
+                }),
+              ],
+              preview: {
+                select: { title: 'title', media: 'image' },
+                prepare({ title, media }) {
+                  return { title: title || 'Öğe', media }
+                },
+              },
+            },
+          ],
+        }),
+      ],
+    }),
+
     // 4.6) Nerede / Toplanma noktası ve harita
     defineField({
       name: 'whereSection',

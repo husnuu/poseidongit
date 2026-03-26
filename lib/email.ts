@@ -809,7 +809,13 @@ export type YachtInquiryEmailPayload = {
   yachtName: string
   yachtSlug: string
   location?: string
+  rentalType?: 'daily' | 'overnight'
   date: string
+  checkIn?: string
+  checkOut?: string
+  nights?: number
+  /** E-posta konusu ve özet satırı için kısa metin */
+  summaryLine?: string
   guestCount: number
   firstName: string
   lastName: string
@@ -824,8 +830,20 @@ function buildYachtInquiryEmailHtml(p: YachtInquiryEmailPayload): string {
   const loc = p.location ? `<p style="margin: 0 0 8px;"><strong>Konum:</strong> ${escapeHtml(p.location)}</p>` : ''
   const price =
     p.priceFrom != null
-      ? `<p style="margin: 0 0 8px;"><strong>Başlangıç fiyatı:</strong> ${escapeHtml(String(p.priceFrom))} ${escapeHtml(p.currency ?? 'TRY')}</p>`
+      ? `<p style="margin: 0 0 8px;"><strong>${p.rentalType === 'overnight' ? 'Toplam fiyat (özet)' : 'Günlük fiyat (özet)'}:</strong> ${escapeHtml(String(p.priceFrom))} ${escapeHtml(p.currency ?? 'TRY')}</p>`
       : ''
+  const rental =
+    p.rentalType === 'overnight'
+      ? '<p style="margin: 0 0 8px;"><strong>Kiralama:</strong> Konaklamalı</p>'
+      : '<p style="margin: 0 0 8px;"><strong>Kiralama:</strong> Günlük (7 saat)</p>'
+  const stay =
+    p.rentalType === 'overnight' && p.checkIn && p.checkOut && p.nights != null
+      ? `<p style="margin: 0 0 8px;"><strong>Konaklama:</strong> ${escapeHtml(p.checkIn)} → ${escapeHtml(p.checkOut)} (${p.nights} gece)</p>`
+      : ''
+  const duration =
+    p.rentalType === 'overnight'
+      ? `<p style="margin: 0 0 8px;"><strong>Süre:</strong> ${p.nights != null ? `${p.nights} gece` : '—'}</p>`
+      : '<p style="margin: 0 0 8px;"><strong>Süre:</strong> 7 saat</p>'
   return `
 <!DOCTYPE html>
 <html>
@@ -836,7 +854,10 @@ function buildYachtInquiryEmailHtml(p: YachtInquiryEmailPayload): string {
     <p style="margin: 0 0 8px;"><strong>Yat:</strong> ${escapeHtml(p.yachtName)}</p>
     <p style="margin: 0 0 8px;"><strong>Slug:</strong> ${escapeHtml(p.yachtSlug)}</p>
     ${loc}
-    <p style="margin: 0 0 8px;"><strong>Tarih:</strong> ${escapeHtml(p.date)}</p>
+    ${rental}
+    <p style="margin: 0 0 8px;"><strong>Tarih / aralık:</strong> ${escapeHtml(p.summaryLine ?? p.date)}</p>
+    ${stay}
+    ${duration}
     <p style="margin: 0 0 8px;"><strong>Misafir:</strong> ${p.guestCount}</p>
     ${price}
     <hr style="border: none; border-top: 1px solid #cbd5e1; margin: 12px 0;">
@@ -862,11 +883,12 @@ export async function sendYachtInquiryEmail(
   const to = process.env.ADMIN_EMAIL?.trim()
   if (!to) return { ok: false, error: 'Alıcı e-posta yok' }
   const from = getFrom()
+  const subjTail = payload.summaryLine ?? payload.date
   const { error } = await resend.emails.send({
     from,
     to: [to],
     replyTo: payload.email,
-    subject: `Yat talebi: ${payload.yachtName} — ${payload.date}`,
+    subject: `Yat talebi: ${payload.yachtName} — ${subjTail}`,
     html: buildYachtInquiryEmailHtml(payload),
   })
   if (error) {

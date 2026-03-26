@@ -20,6 +20,7 @@ import TourBookingSidebar from '@/components/booking/TourBookingSidebar'
 import type { TourForBooking } from '@/lib/sanity/bookingTypes'
 import ReviewsSection from '@/components/ReviewsSection'
 import WhereSection, { type WhereSectionData } from '@/components/tour/WhereSection'
+import TourFoodMenu from '@/components/tour/TourFoodMenu'
 import JsonLd from '@/components/seo/JsonLd'
 import {
   buildBreadcrumbSchema,
@@ -164,6 +165,23 @@ interface ReviewsSection {
   items?: ReviewItem[]
 }
 
+interface FoodMenuItemRaw {
+  title?: string
+  excerpt?: string
+  priceLabel?: string
+  metaLine1?: string
+  metaLine2?: string
+  image?: { asset?: { _ref?: string; _type?: string }; alt?: string | null }
+  detail?: PortableTextBlock[] | null
+}
+
+interface TourFoodMenuData {
+  enabled?: boolean
+  sectionTitle?: string | null
+  intro?: string | null
+  items?: FoodMenuItemRaw[] | null
+}
+
 interface Tour {
   _id?: string
   title: string
@@ -194,6 +212,7 @@ interface Tour {
   reviewsSection?: ReviewsSection
   whereSection?: WhereSectionData | null
   pickupPoints?: { name?: string; address?: string; description?: string; isDefault?: boolean }[]
+  foodMenu?: TourFoodMenuData | null
   _updatedAt?: string
 }
 
@@ -426,6 +445,29 @@ export default async function TourPage({
           included={tour.included}
           notIncluded={tour.notIncluded}
         />
+
+        {tour.foodMenu?.enabled &&
+        tour.foodMenu.items &&
+        tour.foodMenu.items.filter((i) => i?.title?.trim()).length > 0 ? (
+          <TourFoodMenu
+            sectionTitle={tour.foodMenu.sectionTitle?.trim() || 'Yemek menüsü'}
+            intro={tour.foodMenu.intro?.trim() || null}
+            items={tour.foodMenu.items
+              .filter((i) => i?.title?.trim())
+              .map((i) => ({
+                title: i.title!.trim(),
+                excerpt: i.excerpt?.trim() || null,
+                priceLabel: i.priceLabel?.trim() || null,
+                metaLine1: i.metaLine1?.trim() || null,
+                metaLine2: i.metaLine2?.trim() || null,
+                imageUrl: i.image?.asset
+                  ? urlFor(i.image.asset).width(960).height(720).url()
+                  : null,
+                imageAlt: i.image?.alt?.trim() || i.title!.trim(),
+                detail: i.detail?.length ? i.detail : null,
+              }))}
+          />
+        ) : null}
 
         {/* Extras */}
         {tour.extras && tour.extras.length > 0 && (

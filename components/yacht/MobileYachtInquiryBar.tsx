@@ -1,55 +1,34 @@
 'use client'
 
-import { formatYachtMobilePrice } from '@/lib/yachtFormat'
 import { DEFAULT_YACHT_INQUIRY_CTA } from '@/lib/yachtConversionCopy'
 import styles from './MobileYachtInquiryBar.module.css'
 
 interface MobileYachtInquiryBarProps {
-  priceFrom?: number
-  currency?: string
-  selectedDate: string | null
+  priceHeadline: string
+  dateSubtitle: string | null
   onOpenInquiry: () => void
   ctaText?: string
   isModalOpen: boolean
 }
 
-function formatSelectedDateLabel(iso: string | null): string | null {
-  if (!iso) return null
-  try {
-    const d = new Date(iso + 'T12:00:00')
-    return d.toLocaleDateString('tr-TR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
-  } catch {
-    return iso
-  }
-}
-
 export default function MobileYachtInquiryBar({
-  priceFrom,
-  currency,
-  selectedDate,
+  priceHeadline,
+  dateSubtitle,
   onOpenInquiry,
   ctaText = DEFAULT_YACHT_INQUIRY_CTA,
   isModalOpen,
 }: MobileYachtInquiryBarProps) {
   if (isModalOpen) return null
 
-  const dateLabel = formatSelectedDateLabel(selectedDate)
-
   return (
     <div className={styles.bookingBar}>
       <div className={styles.bookingBarInner}>
         <div className={styles.priceBlock}>
-          <div className={styles.priceValue}>
-            {formatYachtMobilePrice(priceFrom, currency)}
-          </div>
-          {dateLabel ? (
-            <div className={styles.dateLine}>{dateLabel}</div>
+          <div className={styles.priceValue}>{priceHeadline}</div>
+          {dateSubtitle ? (
+            <div className={styles.dateLine}>{dateSubtitle}</div>
           ) : (
-            <div className={styles.dateLineMuted}>Takvimden tarih seçin</div>
+            <div className={styles.dateLineMuted}>Takvimden seçim yapın</div>
           )}
         </div>
         <div className={styles.rightBlock}>

@@ -2,7 +2,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { unstable_noStore as noStore } from 'next/cache'
 import { client, urlFor } from '@/lib/sanity'
-import { siteFooterQuery } from '@/lib/queries'
+import { siteFooterQuery, siteSettingsLogoQuery } from '@/lib/queries'
+import headerStyles from '@/components/layout/Header.module.css'
 import { getSiteName } from '@/lib/seo'
 import FooterLegal from '@/components/layout/FooterLegal'
 import type { FooterLegalData } from '@/components/layout/FooterLegal'
@@ -15,6 +16,11 @@ import {
   MapPin,
   Star,
 } from 'lucide-react'
+
+type SiteSettingsLogo = {
+  siteName?: string | null
+  logo?: { asset?: { _ref?: string }; url?: string; alt?: string | null } | null
+} | null
 
 type SiteFooterData = {
   brandName?: string | null
@@ -45,6 +51,7 @@ type SiteFooterData = {
     items?: Array<{ platform?: string | null; href?: string | null; enabled?: boolean }> | null
   } | null
   brag?: {
+    enabled?: boolean | null
     title?: string | null
     badges?: Array<{
       type?: string | null
@@ -103,15 +110,29 @@ async function getFooterData(): Promise<SiteFooterData | null> {
   }
 }
 
+async function getSiteSettingsLogo(): Promise<SiteSettingsLogo> {
+  noStore()
+  try {
+    return await client.fetch<SiteSettingsLogo>(siteSettingsLogoQuery, {}, { useCdn: false })
+  } catch {
+    return null
+  }
+}
+
 export default async function Footer() {
-  const data = await getFooterData()
+  const [data, settingsForLogo] = await Promise.all([getFooterData(), getSiteSettingsLogo()])
 
   const brandName = (data?.brandName ?? getSiteName()) || 'Site'
-  const logoAsset = data?.logo?.asset
+  /** Header menü ile aynı: önce Site Ayarları logosu, yoksa footer belgesindeki logo */
+  const logoAsset = settingsForLogo?.logo?.asset ?? data?.logo?.asset
   const logoUrl = logoAsset
-    ? urlFor(logoAsset).width(140).height(44).url()
-    : data?.logo?.url ?? null
-  const logoAlt = data?.logo?.alt ?? brandName
+    ? urlFor(logoAsset).width(220).height(60).url()
+    : settingsForLogo?.logo?.url ?? data?.logo?.url ?? null
+  const logoAlt =
+    settingsForLogo?.logo?.alt?.trim() ||
+    data?.logo?.alt?.trim() ||
+    settingsForLogo?.siteName?.trim() ||
+    brandName
 
   const topRated = data?.topRated
   const showTopRated = topRated?.enabled !== false
@@ -139,7 +160,8 @@ export default async function Footer() {
     data?.social?.items?.filter((i) => i?.enabled !== false && i?.href) ?? []
   const socialTitle = data?.social?.title
 
-  const bragTitle = data?.brag?.title ?? 'Not to brag, but…'
+  const showBragSection = data?.brag?.enabled !== false
+  const bragTitle = data?.brag?.title?.trim() || 'Not to brag, but…'
   const bragBadges = data?.brag?.badges?.filter((b) => b?.enabled !== false) ?? []
   const hasBragImages = bragBadges.some((b) => b?.image?.asset || b?.imageUrl)
   const awardImages = hasBragImages
@@ -162,22 +184,30 @@ export default async function Footer() {
       }}
     >
       <div className="mx-auto w-full max-w-[1600px] px-4 py-14 sm:px-6 md:px-8 md:py-20 lg:px-10 xl:px-12">
-        <div className="grid gap-14 lg:grid-cols-3 lg:gap-x-24 xl:gap-x-32">
+        <div
+          className={`grid gap-14 lg:gap-x-24 xl:gap-x-32 ${showBragSection ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}
+        >
           {/* Sol kolon: Logo + Top Rated + Contact + Social */}
           <div className="space-y-7">
-            <Link href="/" className="inline-block" prefetch={false}>
-              {logoUrl ? (
-                <div className="relative h-12 w-[160px]">
+            <Link
+              href="/"
+              className={headerStyles.logoLink}
+              prefetch={false}
+              aria-label="Ana sayfa"
+            >
+              <div className={headerStyles.logoWrapper}>
+                {logoUrl ? (
                   <Image
                     src={logoUrl}
                     alt={logoAlt}
-                    fill
-                    className="object-contain object-left"
+                    width={220}
+                    height={55}
+                    className={`${headerStyles.logoImage} ${headerStyles.logoImageOnDark}`}
                   />
-                </div>
-              ) : (
-                <span className="text-2xl font-bold text-white">{brandName}</span>
-              )}
+                ) : (
+                  <span className="text-2xl font-bold text-white">{brandName}</span>
+                )}
+              </div>
             </Link>
             {showTopRated && (
               <div className="flex flex-wrap items-center gap-3">
@@ -257,8 +287,8 @@ export default async function Footer() {
           </div>
 
           {/* Orta kolon: EXPLORE */}
-          <div className="lg:pl-16 xl:pl-24">
-            <h3 className="mb-6 text-2xl font-bold uppercase tracking-wide text-white md:text-3xl">
+          <div className={showBragSection ? 'lg:pl-16 xl:pl-24' : ''}>
+            <h3 className="mb-6 text-xl font-bold uppercase tracking-wide text-white md:text-2xl">
               {exploreTitle}
             </h3>
             <ul className="space-y-4">
@@ -277,42 +307,45 @@ export default async function Footer() {
             </ul>
           </div>
 
-          {/* Sağ kolon: NOT TO BRAG + rozetler */}
-          <div>
-            <h3 className="mb-6 text-xl font-bold uppercase tracking-wide text-white md:text-2xl">
-              {bragTitle}
-            </h3>
-            <div className="grid grid-cols-2 gap-5">
-              {awardImages.map((item, index) => {
-                const content = (
-                  <div
-                    key={index}
-                    className="flex items-center justify-center rounded-xl bg-white/10 p-4"
-                  >
-                    {item.src ? (
-                      <Image
-                        src={item.src}
-                        alt={item.alt}
-                        width={80}
-                        height={80}
-                        className="h-20 w-20 object-contain"
-                      />
-                    ) : (
-                      <span className="h-20 w-20" />
-                    )}
-                  </div>
-                )
-                const linkHref = 'href' in item && item.href && typeof item.href === 'string' ? item.href : null
-                return linkHref ? (
-                  <a key={index} href={linkHref} target="_blank" rel="noopener noreferrer">
-                    {content}
-                  </a>
-                ) : (
-                  <div key={index}>{content}</div>
-                )
-              })}
+          {/* Sağ kolon: ödül / rozet (Sanity’den açılıp kapanır) */}
+          {showBragSection ? (
+            <div>
+              <h3 className="mb-6 text-xl font-bold uppercase tracking-wide text-white md:text-2xl">
+                {bragTitle}
+              </h3>
+              <div className="grid grid-cols-2 gap-5">
+                {awardImages.map((item, index) => {
+                  const content = (
+                    <div
+                      key={index}
+                      className="flex items-center justify-center rounded-xl bg-white/10 p-4"
+                    >
+                      {item.src ? (
+                        <Image
+                          src={item.src}
+                          alt={item.alt}
+                          width={80}
+                          height={80}
+                          className="h-20 w-20 object-contain"
+                        />
+                      ) : (
+                        <span className="h-20 w-20" />
+                      )}
+                    </div>
+                  )
+                  const linkHref =
+                    'href' in item && item.href && typeof item.href === 'string' ? item.href : null
+                  return linkHref ? (
+                    <a key={index} href={linkHref} target="_blank" rel="noopener noreferrer">
+                      {content}
+                    </a>
+                  ) : (
+                    <div key={index}>{content}</div>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
 
         {/* Bottom bar: Sol = Legal + Ödeme, Sağ = Terms & Privacy */}

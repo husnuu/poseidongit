@@ -657,6 +657,11 @@
   color: var(--primary, #2168b8);
 }
 
+.dayCellInRange {
+  background: rgba(33, 104, 184, 0.06);
+  color: var(--primary, #2168b8);
+}
+
 .dayCellDisabled {
   opacity: 0.4;
   cursor: not-allowed;

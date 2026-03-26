@@ -1,5 +1,5 @@
 .section {
-  margin: 32px 0 0 0;
+  margin: 32px 0 2.5rem 0;
   max-width: 977px;
 }
 
@@ -21,7 +21,7 @@
 .twoCol {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 56px;
+  gap: 64px;
 }
 
 .twoColEmbedded {
@@ -32,13 +32,13 @@
 
 .colTitle {
   font-family: var(--font-family), sans-serif;
-  font-weight: 900;
-  font-size: 18px;
-  line-height: 1.3;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 36px;
   text-transform: uppercase;
   color: #1e3a5f;
-  letter-spacing: 0.5px;
-  margin: 0 0 12px 0;
+  letter-spacing: 0.02em;
+  margin: 0 0 16px 0;
 }
 
 .list {
@@ -135,7 +135,14 @@
   .twoCol,
   .twoColEmbedded {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 0;
+  }
+
+  /* Yığılmış düzende: iki blok arasında net boşluk + ince ayırıcı */
+  .includedCol + .notIncludedCol {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
   }
 
   .sectionTitle {
@@ -145,9 +152,9 @@
   }
 
   .colTitle {
-    font-size: 23px;
-    line-height: 32px;
-    margin-bottom: 12px;
+    font-size: 20px;
+    line-height: 30px;
+    margin-bottom: 14px;
   }
 
   .text {
@@ -157,5 +164,14 @@
 
   .item {
     margin-bottom: 12px;
+  }
+
+  /* Dahil olmayanlar maddeleri arasında biraz daha nefes */
+  .notIncludedCol .item {
+    margin-bottom: 16px;
+  }
+
+  .notIncludedCol .item:last-child {
+    margin-bottom: 0;
   }
 }

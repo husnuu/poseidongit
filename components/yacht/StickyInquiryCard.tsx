@@ -1,9 +1,10 @@
 'use client'
 
 import { CheckCircle2 } from 'lucide-react'
-import YachtCalendar from '@/components/yacht/YachtCalendar'
+import YachtCalendar, { type YachtCalendarRange } from '@/components/yacht/YachtCalendar'
+import YachtRentalModeTabs from '@/components/yacht/YachtRentalModeTabs'
 import type { YachtInquiryCard as InquiryCardConfig } from '@/lib/yachtTypes'
-import { formatYachtStickyPriceLine } from '@/lib/yachtFormat'
+import type { YachtRentalMode } from '@/lib/yachtRentalModes'
 import {
   DEFAULT_NOTE_SUBTITLE,
   DEFAULT_NOTE_TITLE,
@@ -36,12 +37,18 @@ function CheckIcon() {
 }
 
 interface StickyInquiryCardProps {
-  priceFrom?: number
-  currency?: string
+  priceHeadline: string
+  resolveDayPrice?: (iso: string) => number | undefined
   inquiryCard?: InquiryCardConfig | null
   blockedDates?: string[]
+  rentalMode: YachtRentalMode
+  onRentalModeChange: (m: YachtRentalMode) => void
+  showRentalModeTabs: boolean
+  selectionMode: 'single' | 'range'
   selectedDate: string | null
   onSelectDate: (d: string) => void
+  overnightRange: YachtCalendarRange
+  onOvernightRangeChange: (v: YachtCalendarRange) => void
   guestCount: number
   onGuestCountChange: (n: number) => void
   maxGuests?: number
@@ -49,12 +56,18 @@ interface StickyInquiryCardProps {
 }
 
 export default function StickyInquiryCard({
-  priceFrom,
-  currency,
+  priceHeadline,
+  resolveDayPrice,
   inquiryCard,
   blockedDates,
+  rentalMode,
+  onRentalModeChange,
+  showRentalModeTabs,
+  selectionMode,
   selectedDate,
   onSelectDate,
+  overnightRange,
+  onOvernightRangeChange,
   guestCount,
   onGuestCountChange,
   maxGuests = 80,
@@ -69,13 +82,11 @@ export default function StickyInquiryCard({
   const noteTitle = inquiryCard?.noteTitle?.trim() || DEFAULT_NOTE_TITLE
   const noteSubtitle = inquiryCard?.noteSubtitle?.trim() || DEFAULT_NOTE_SUBTITLE
 
-  const priceText = formatYachtStickyPriceLine(priceFrom, currency)
-
   return (
     <div className={styles.sidebar}>
       <div className={styles.content}>
         <h2 className={styles.title}>{title}</h2>
-        <p className={styles.price}>{priceText}</p>
+        <p className={styles.price}>{priceHeadline}</p>
 
         <ul className={styles.list}>
           {trustBadges.map((badge, index) => (
@@ -86,11 +97,19 @@ export default function StickyInquiryCard({
           ))}
         </ul>
 
+        {showRentalModeTabs ? (
+          <YachtRentalModeTabs value={rentalMode} onChange={onRentalModeChange} />
+        ) : null}
+
         <div className="mb-4">
           <YachtCalendar
             blockedDates={blockedDates}
+            selectionMode={selectionMode}
             selectedDate={selectedDate}
             onSelectDate={onSelectDate}
+            rangeValue={overnightRange}
+            onRangeChange={onOvernightRangeChange}
+            resolveDayPrice={resolveDayPrice}
             compactTitle
           />
         </div>
@@ -125,10 +144,10 @@ export default function StickyInquiryCard({
           </div>
         </div>
 
-        <span className="hero-primary-btn-wrap mt-0 w-full rounded-xl p-[2px] block">
+        <span className="hero-primary-btn-wrap mt-0 w-full rounded-xl p-[2px] block yacht-inquiry-cta-wrap">
           <button
             type="button"
-            className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${styles.ctaButton}`}
+            className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${styles.yachtInquiryCta}`}
             style={{ borderRadius: 10 }}
             onClick={onOpenInquiry}
           >

@@ -10,22 +10,19 @@
 }
 
 .flatGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 40px;
-}
-
-@media (max-width: 640px) {
-  .flatGrid {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-}
-
-.col {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 28px;
+  row-gap: 0;
+}
+
+@media (min-width: 768px) {
+  .flatGrid {
+    column-gap: 40px;
+  }
 }
 
 .item {
@@ -38,19 +35,21 @@
   font-family: var(--font-family), sans-serif;
 }
 
+/* Son satırda alt çizgi yok */
 .item:last-child {
   border-bottom: none;
   padding-bottom: 6px;
 }
 
-.item:first-child {
-  padding-top: 4px;
+/* Çift sütunlu son satır: soldaki hücre (sondan ikinci, tek sıradaki indeks) */
+.item:nth-last-child(2):nth-child(odd) {
+  border-bottom: none;
+  padding-bottom: 6px;
 }
 
-@media (min-width: 641px) {
-  .col .item:last-child {
-    border-bottom: none;
-  }
+.item:first-child,
+.item:nth-child(2) {
+  padding-top: 4px;
 }
 
 .itemTop {
@@ -83,10 +82,13 @@
   padding-left: 30px;
 }
 
-@media (max-width: 640px) {
-  .itemMobileAfterWc {
-    border-top: 1px solid rgba(15, 23, 42, 0.14);
-    margin-top: 8px;
-    padding-top: 20px;
+@media (max-width: 380px) {
+  .value {
+    font-size: 15px;
+    padding-left: 26px;
+  }
+
+  .flatGrid {
+    column-gap: 14px;
   }
 }

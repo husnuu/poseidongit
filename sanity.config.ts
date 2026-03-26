@@ -31,11 +31,19 @@ export default defineConfig({
               .title('Yat kiralama — yatlar')
               .id('yachtRental-list')
               .child(S.documentTypeList('yachtRental').title('Yatlar')),
+            S.listItem()
+              .title('Yat kiralama — ana sayfa')
+              .id('yachtRentalsPage')
+              .child(S.document().schemaType('yachtRentalsPage').documentId('yachtRentalsPage')),
             ...S.documentTypeListItems().filter(
               (item) =>
-                !['contactPage', 'covesPage', 'yachtLocation', 'yachtRental'].includes(
-                  item.getId() ?? ''
-                )
+                ![
+                  'contactPage',
+                  'covesPage',
+                  'yachtLocation',
+                  'yachtRental',
+                  'yachtRentalsPage',
+                ].includes(item.getId() ?? '')
             ),
           ]),
     }),

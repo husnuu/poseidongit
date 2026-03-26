@@ -11,13 +11,13 @@
     "dev:5000": "next dev -p 5000",
     "dev:safe": "rm -rf .next && next dev -p 3002",
     "dev:clean": "rm -rf .next node_modules/.cache && next dev -p 3002",
-    "dev:studio": "sanity dev",
+    "dev:studio": "sanity dev --port 3333",
     "build": "next build",
     "build:clean": "rm -rf .next node_modules/.cache && next build",
     "build:safe": "rm -rf .next node_modules/.cache && NODE_OPTIONS='--max-old-space-size=4096' next build",
     "start": "next start",
     "lint": "next lint",
-    "studio": "sanity dev",
+    "studio": "sanity dev --port 3333",
     "studio:build": "sanity build"
   },
   "dependencies": {

@@ -36,9 +36,10 @@
   white-space: nowrap;
 }
 
+/* Konum (MapPin) ile aynı boyut */
 .metaGlyph {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
   color: #1e3a5f;
 }

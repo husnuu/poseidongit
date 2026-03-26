@@ -145,11 +145,11 @@ export default function StickyBookingCard({
           ))}
         </ul>
 
-        <span className="hero-primary-btn-wrap mt-0 w-full rounded-xl p-[2px] block">
+        <span className="hero-primary-btn-wrap tour-reserve-cta-wrap mt-0 w-full rounded-xl p-[2px] block">
           {onRezervasyonClick ? (
             <button
               type="button"
-              className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${styles.ctaButton}`}
+              className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${styles.yachtInquiryCta}`}
               style={{ borderRadius: 10 }}
               onClick={() => {
                 openBookingModal()
@@ -161,7 +161,7 @@ export default function StickyBookingCard({
           ) : (
             <Link
               href={`/rezervasyon/${tourSlug}`}
-              className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${styles.ctaButton}`}
+              className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${styles.yachtInquiryCta}`}
               style={{ borderRadius: 10 }}
             >
               {ctaText}

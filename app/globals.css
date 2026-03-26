@@ -34,7 +34,7 @@
   }
 }
 
-/* Tur kartı CTA: kenarda yavaş, hafif beyaz gezinti + dışta çok hafif beyaz nabız */
+/* Tur kartı CTA: kenarda yavaş, hafif beyaz gezinti; dış gölge nötr (renkli halo yok) */
 .tour-card-cta-shimmer.hero-primary-btn-wrap::before {
   inset: -1px;
   background: conic-gradient(
@@ -56,16 +56,15 @@
 @keyframes tour-card-cta-edge-pulse {
   0%,
   100% {
+    /* Dışta renkli gölge yok (mobilde turuncu/mavi kenar çizgisi oluşmasın) */
     box-shadow:
-      0 4px 18px rgba(30, 58, 138, 0.28),
-      0 0 0 1px rgba(255, 255, 255, 0.12),
-      0 0 10px rgba(255, 255, 255, 0.06);
+      inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+      0 1px 3px rgba(15, 23, 42, 0.06);
   }
   50% {
     box-shadow:
-      0 4px 22px rgba(30, 58, 138, 0.32),
-      0 0 0 1px rgba(255, 255, 255, 0.22),
-      0 0 22px rgba(255, 255, 255, 0.14);
+      inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+      0 2px 6px rgba(15, 23, 42, 0.08);
   }
 }
 
@@ -78,9 +77,8 @@
   .tour-card-cta-shimmer.hero-primary-btn-wrap {
     animation: none;
     box-shadow:
-      0 4px 18px rgba(30, 58, 138, 0.28),
-      0 0 0 1px rgba(255, 255, 255, 0.14),
-      0 0 12px rgba(255, 255, 255, 0.07);
+      inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+      0 1px 3px rgba(15, 23, 42, 0.06);
   }
 }
 

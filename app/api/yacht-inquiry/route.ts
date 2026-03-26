@@ -3,6 +3,7 @@ import * as admin from 'firebase-admin'
 import { verifyTurnstileToken } from '@/lib/turnstile'
 import { sendYachtInquiryEmail } from '@/lib/email'
 import { getFirestore } from '@/lib/firebaseAdmin'
+import { overnightNights } from '@/lib/yachtRentalModes'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +13,11 @@ function parseBody(body: unknown): {
   yachtSlug?: string
   yachtName?: string
   location?: string
+  rentalType?: 'daily' | 'overnight'
   date?: string
+  checkIn?: string
+  checkOut?: string
+  nights?: number
   guestCount?: number
   firstName?: string
   lastName?: string
@@ -28,7 +33,19 @@ function parseBody(body: unknown): {
   const yachtSlug = typeof b.yachtSlug === 'string' ? b.yachtSlug.trim() : undefined
   const yachtName = typeof b.yachtName === 'string' ? b.yachtName.trim() : undefined
   const location = typeof b.location === 'string' ? b.location.trim() || undefined : undefined
+  const rentalTypeRaw = typeof b.rentalType === 'string' ? b.rentalType.trim() : undefined
+  const rentalType =
+    rentalTypeRaw === 'overnight' ? 'overnight' : rentalTypeRaw === 'daily' ? 'daily' : undefined
   const date = typeof b.date === 'string' ? b.date.trim().slice(0, 10) : undefined
+  const checkIn = typeof b.checkIn === 'string' ? b.checkIn.trim().slice(0, 10) : undefined
+  const checkOut = typeof b.checkOut === 'string' ? b.checkOut.trim().slice(0, 10) : undefined
+  let nights: number | undefined =
+    typeof b.nights === 'number'
+      ? b.nights
+      : typeof b.nights === 'string'
+        ? parseInt(b.nights, 10)
+        : undefined
+  if (nights != null && Number.isNaN(nights)) nights = undefined
   const guestCount =
     typeof b.guestCount === 'number'
       ? b.guestCount
@@ -52,7 +69,11 @@ function parseBody(body: unknown): {
     yachtSlug,
     yachtName,
     location,
+    rentalType,
     date,
+    checkIn,
+    checkOut,
+    nights,
     guestCount,
     firstName,
     lastName,
@@ -95,7 +116,11 @@ export async function POST(request: Request) {
       yachtSlug,
       yachtName,
       location,
+      rentalType,
       date,
+      checkIn,
+      checkOut,
+      nights: nightsBody,
       guestCount,
       firstName,
       lastName,
@@ -110,9 +135,30 @@ export async function POST(request: Request) {
     if (!yachtSlug || !yachtName) {
       return NextResponse.json({ error: 'Yat bilgisi eksik.' }, { status: 400 })
     }
+
+    const mode = rentalType === 'overnight' ? 'overnight' : 'daily'
+
+    if (mode === 'daily') {
+      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return NextResponse.json({ error: 'Geçerli bir tarih seçin.' }, { status: 400 })
+      }
+    } else {
+      if (!checkIn || !checkOut || !/^\d{4}-\d{2}-\d{2}$/.test(checkIn) || !/^\d{4}-\d{2}-\d{2}$/.test(checkOut)) {
+        return NextResponse.json({ error: 'Giriş ve ayrılış tarihlerini seçin.' }, { status: 400 })
+      }
+      const n = overnightNights(checkIn, checkOut)
+      if (n < 1) {
+        return NextResponse.json({ error: 'Konaklama en az 1 gece olmalıdır.' }, { status: 400 })
+      }
+      if (nightsBody != null && nightsBody !== n) {
+        return NextResponse.json({ error: 'Gece sayısı tarihlerle uyuşmuyor.' }, { status: 400 })
+      }
+    }
+
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return NextResponse.json({ error: 'Geçerli bir tarih seçin.' }, { status: 400 })
     }
+
     if (typeof guestCount !== 'number' || Number.isNaN(guestCount) || guestCount < 1 || guestCount > 120) {
       return NextResponse.json({ error: 'Misafir sayısı geçersiz.' }, { status: 400 })
     }
@@ -146,10 +192,12 @@ export async function POST(request: Request) {
       }
     }
 
-    const payload = {
+    const nightsComputed = mode === 'overnight' && checkIn && checkOut ? overnightNights(checkIn, checkOut) : undefined
+
+    const payload: Record<string, unknown> = {
       yachtSlug,
       yachtName,
-      ...(location ? { location } : {}),
+      rentalType: mode,
       date,
       guestCount,
       firstName,
@@ -157,17 +205,33 @@ export async function POST(request: Request) {
       email,
       phone,
       message,
-      ...(priceFrom != null && Number.isFinite(priceFrom) ? { priceFrom } : {}),
-      ...(currency ? { currency } : {}),
     }
+    if (location) payload.location = location
+    if (mode === 'overnight' && checkIn && checkOut && nightsComputed != null) {
+      payload.checkIn = checkIn
+      payload.checkOut = checkOut
+      payload.nights = nightsComputed
+    }
+    if (priceFrom != null && Number.isFinite(priceFrom)) payload.priceFrom = priceFrom
+    if (currency) payload.currency = currency
 
     await saveToFirestore(payload)
+
+    const emailSummaryDate =
+      mode === 'overnight' && checkIn && checkOut && nightsComputed != null
+        ? `${checkIn} → ${checkOut} (${nightsComputed} gece)`
+        : date
 
     const { ok, error: mailError } = await sendYachtInquiryEmail({
       yachtName,
       yachtSlug,
       location,
+      rentalType: mode,
       date,
+      checkIn: mode === 'overnight' ? checkIn : undefined,
+      checkOut: mode === 'overnight' ? checkOut : undefined,
+      nights: mode === 'overnight' ? nightsComputed : undefined,
+      summaryLine: emailSummaryDate,
       guestCount,
       firstName,
       lastName,

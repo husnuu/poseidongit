@@ -1,13 +1,21 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import YachtCalendar from '@/components/yacht/YachtCalendar'
+import YachtCalendar, { type YachtCalendarRange } from '@/components/yacht/YachtCalendar'
+import YachtRentalModeTabs from '@/components/yacht/YachtRentalModeTabs'
 import YachtInquiryForm from '@/components/yacht/YachtInquiryForm'
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
 import bookingStyles from '@/components/booking/booking.module.css'
 import stickyCardStyles from '@/components/StickyBookingCard.module.css'
 import { DEFAULT_YACHT_INQUIRY_CTA } from '@/lib/yachtConversionCopy'
 import { Check, ChevronLeft } from 'lucide-react'
+import {
+  isValidOvernightRange,
+  overnightNights,
+  priceFromForMode,
+  type YachtRentalMode,
+} from '@/lib/yachtRentalModes'
+import { yachtDailyUnitPrice, yachtOvernightStayTotal } from '@/lib/yachtCalendarPricing'
 
 interface YachtInquiryModalProps {
   open: boolean
@@ -15,12 +23,20 @@ interface YachtInquiryModalProps {
   /** Açılışta hangi adım: 1 = takvim + misafir, 2 = form */
   initialStep: 1 | 2
   yacht: YachtRentalDocument
+  rentalMode: YachtRentalMode
+  onRentalModeChange: (m: YachtRentalMode) => void
+  showRentalModeTabs: boolean
+  blockedDates?: string[]
+  selectionMode: 'single' | 'range'
   selectedDate: string | null
   onSelectDate: (d: string) => void
+  overnightRange: YachtCalendarRange
+  onOvernightRangeChange: (v: YachtCalendarRange) => void
   guestCount: number
   onGuestCountChange: (n: number) => void
   maxGuests: number
   ctaText?: string
+  resolveDayPrice?: (iso: string) => number | undefined
 }
 
 export default function YachtInquiryModal({
@@ -28,12 +44,20 @@ export default function YachtInquiryModal({
   onClose,
   initialStep,
   yacht,
+  rentalMode,
+  onRentalModeChange,
+  showRentalModeTabs,
+  blockedDates,
+  selectionMode,
   selectedDate,
   onSelectDate,
+  overnightRange,
+  onOvernightRangeChange,
   guestCount,
   onGuestCountChange,
   maxGuests,
   ctaText,
+  resolveDayPrice,
 }: YachtInquiryModalProps) {
   const [step, setStep] = useState<1 | 2>(initialStep)
 
@@ -66,6 +90,29 @@ export default function YachtInquiryModal({
   const locLabel = [yacht.locationTitle, yacht.marina].filter(Boolean).join(' · ') || null
   const modalSubtitle =
     step === 1 ? 'Tarih ve misafir sayısını seçin' : 'İletişim bilgilerinizi bırakın'
+
+  const rangeOk =
+    overnightRange.checkIn && overnightRange.checkOut
+      ? isValidOvernightRange({
+          checkIn: overnightRange.checkIn,
+          checkOut: overnightRange.checkOut,
+        })
+      : false
+
+  const stayTotal =
+    rangeOk && overnightRange.checkIn && overnightRange.checkOut
+      ? yachtOvernightStayTotal(yacht, overnightRange.checkIn, overnightRange.checkOut)
+      : undefined
+
+  const step1Ready =
+    rentalMode === 'daily' ? Boolean(selectedDate) : rangeOk && stayTotal != null
+
+  const summaryPrice =
+    rentalMode === 'daily' && selectedDate
+      ? yachtDailyUnitPrice(yacht, selectedDate)
+      : rentalMode === 'overnight' && rangeOk && overnightRange.checkIn && overnightRange.checkOut
+        ? stayTotal
+        : priceFromForMode(yacht, rentalMode)
 
   return (
     <div
@@ -149,10 +196,17 @@ export default function YachtInquiryModal({
               >
                 {modalSubtitle}
               </p>
+              {showRentalModeTabs ? (
+                <YachtRentalModeTabs value={rentalMode} onChange={onRentalModeChange} />
+              ) : null}
               <YachtCalendar
-                blockedDates={yacht.blockedDates}
+                blockedDates={blockedDates}
+                selectionMode={selectionMode}
                 selectedDate={selectedDate}
                 onSelectDate={onSelectDate}
+                rangeValue={overnightRange}
+                onRangeChange={onOvernightRangeChange}
+                resolveDayPrice={resolveDayPrice}
               />
 
               <div className="mt-6 mb-2">
@@ -190,17 +244,21 @@ export default function YachtInquiryModal({
               className="shrink-0 border-t border-zinc-100 bg-white px-4 pt-3 pb-3 sm:px-6 sm:pb-6 sm:shadow-[0_-6px_16px_rgba(15,23,42,0.06)] max-sm:pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
               style={{ fontFamily: 'var(--font-family)' }}
             >
-              {!selectedDate ? (
+              {!step1Ready ? (
                 <p className="text-xs text-zinc-500 m-0 mb-2 text-center sm:text-left">
-                  Devam etmek için takvimden bir gün seçin.
+                  {rentalMode === 'daily'
+                    ? 'Devam etmek için takvimden bir gün seçin.'
+                    : !rangeOk
+                      ? 'Devam etmek için giriş ve ayrılış günlerini seçin (en az 1 gece).'
+                      : 'Konaklama fiyatı için gece takviminde tüm geceler tanımlı olmalı veya konaklamalı toplam fiyat girilmeli.'}
                 </p>
               ) : null}
-              <span className="hero-primary-btn-wrap mt-0 mb-0 w-full rounded-xl p-[2px] block">
+              <span className="hero-primary-btn-wrap mt-0 mb-0 w-full rounded-xl p-[2px] block yacht-inquiry-cta-wrap">
                 <button
                   type="button"
-                  className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${stickyCardStyles.ctaButton} disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:transform-none`}
+                  className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${stickyCardStyles.yachtInquiryCta} disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:transform-none`}
                   style={{ fontFamily: 'var(--font-family)', borderRadius: 10 }}
-                  disabled={!selectedDate}
+                  disabled={!step1Ready}
                   onClick={() => setStep(2)}
                 >
                   Devam et
@@ -211,31 +269,39 @@ export default function YachtInquiryModal({
         ) : (
           <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
             <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="mb-3 inline-flex items-center gap-1.5 text-sm font-bold text-[#2168b8] hover:opacity-90 -ml-1 px-1 py-1 rounded-lg hover:bg-zinc-50"
-                style={{ fontFamily: 'var(--font-family)' }}
-              >
-                <ChevronLeft className="w-4 h-4 shrink-0" strokeWidth={2.5} aria-hidden />
-                Tarih ve misafir
-              </button>
-              <p
-                className="text-xs font-semibold text-zinc-500 m-0 mb-4"
-                style={{ fontFamily: 'var(--font-family)' }}
-              >
-                {modalSubtitle}
-              </p>
+              type="button"
+              onClick={() => setStep(1)}
+              className="mb-3 inline-flex items-center gap-1.5 text-sm font-bold text-[#2168b8] hover:opacity-90 -ml-1 px-1 py-1 rounded-lg hover:bg-zinc-50"
+              style={{ fontFamily: 'var(--font-family)' }}
+            >
+              <ChevronLeft className="w-4 h-4 shrink-0" strokeWidth={2.5} aria-hidden />
+              Tarih ve misafir
+            </button>
+            <p
+              className="text-xs font-semibold text-zinc-500 m-0 mb-4"
+              style={{ fontFamily: 'var(--font-family)' }}
+            >
+              {modalSubtitle}
+            </p>
 
-              <YachtInquiryForm
-                yachtSlug={yacht.slug}
-                yachtName={yacht.name}
-                locationLabel={locLabel}
-                priceFrom={yacht.priceFrom}
-                currency={yacht.currency}
-                selectedDate={selectedDate}
-                guestCount={guestCount}
-                submitLabel={ctaText?.trim() || DEFAULT_YACHT_INQUIRY_CTA}
-              />
+            <YachtInquiryForm
+              yachtSlug={yacht.slug}
+              yachtName={yacht.name}
+              locationLabel={locLabel}
+              rentalMode={rentalMode}
+              priceFrom={summaryPrice}
+              currency={yacht.currency}
+              selectedDate={selectedDate}
+              overnightCheckIn={overnightRange.checkIn}
+              overnightCheckOut={overnightRange.checkOut}
+              overnightNights={
+                rangeOk && overnightRange.checkIn && overnightRange.checkOut
+                  ? overnightNights(overnightRange.checkIn, overnightRange.checkOut)
+                  : null
+              }
+              guestCount={guestCount}
+              submitLabel={ctaText?.trim() || DEFAULT_YACHT_INQUIRY_CTA}
+            />
           </div>
         )}
       </div>

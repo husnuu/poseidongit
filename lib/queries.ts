@@ -118,6 +118,20 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
     description,
     options[]{ key, label, description }
   },
+  foodMenu{
+    enabled,
+    sectionTitle,
+    intro,
+    items[]{
+      title,
+      excerpt,
+      priceLabel,
+      metaLine1,
+      metaLine2,
+      image{ asset, alt },
+      detail[]
+    }
+  },
   _updatedAt,
   ticketClasses[]{
     key,
@@ -316,6 +330,16 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0] {
   socialLinks[]{
     platform,
     href
+  }
+}`
+
+/** Footer logosunu header ile aynı kaynaktan (siteSettings) hizalamak için hafif sorgu */
+export const siteSettingsLogoQuery = `*[_type == "siteSettings"][0]{
+  siteName,
+  logo{
+    asset,
+    alt,
+    "url": asset->url
   }
 }`
 
@@ -536,6 +560,18 @@ export const toursPageQuery = `*[_type == "toursPage"][0] {
   titleBottom
 }`
 
+export const yachtRentalsPageQuery = `*[_type == "yachtRentalsPage"][0] {
+  "slug": slug.current,
+  titleTop,
+  titleBottom,
+  intro,
+  emptyStateMessage,
+  seo{
+    title,
+    description
+  }
+}`
+
 /** Koylar sayfası: başlık ve açıklama (items ayrı veya covesList ile doldurulur) */
 export const covesPageQuery = `*[_type == "covesPage"][0] {
   title,
@@ -614,6 +650,7 @@ export const siteFooterQuery = `*[_type == "siteFooter"][0] {
     }
   },
   brag {
+    enabled,
     title,
     badges[] {
       type,

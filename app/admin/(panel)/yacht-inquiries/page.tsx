@@ -11,6 +11,10 @@ interface AdminYachtInquiry {
   yachtName: string
   location: string | null
   date: string | null
+  rentalType?: 'daily' | 'overnight'
+  checkIn: string | null
+  checkOut: string | null
+  nights: number | null
   guestCount: number | null
   firstName: string
   lastName: string
@@ -444,7 +448,11 @@ export default function AdminYachtInquiriesPage() {
                         <div className="text-slate-500">{item.email}</div>
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-700">{item.yachtName || item.yachtSlug}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{formatDate(item.date)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">
+                        {item.rentalType === 'overnight' && item.checkIn && item.checkOut
+                          ? `${item.checkIn} → ${item.checkOut}${item.nights != null ? ` (${item.nights} gece)` : ''}`
+                          : formatDate(item.date)}
+                      </td>
                       <td className="px-4 py-3 text-sm text-slate-700">{item.guestCount ?? '—'}</td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${STATUS_BADGES[item.status]}`}>
@@ -522,7 +530,18 @@ export default function AdminYachtInquiriesPage() {
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs uppercase tracking-wide text-slate-500">Tur Bilgisi</p>
-                <p className="mt-1 text-sm text-slate-700">Tarih: {formatDate(selectedInquiry.date)}</p>
+                <p className="mt-1 text-sm text-slate-700">
+                  Tür:{' '}
+                  {selectedInquiry.rentalType === 'overnight' ? 'Konaklamalı' : 'Günlük (7 saat)'}
+                </p>
+                <p className="text-sm text-slate-700">
+                  Tarih:{' '}
+                  {selectedInquiry.rentalType === 'overnight' &&
+                  selectedInquiry.checkIn &&
+                  selectedInquiry.checkOut
+                    ? `${selectedInquiry.checkIn} → ${selectedInquiry.checkOut}${selectedInquiry.nights != null ? ` (${selectedInquiry.nights} gece)` : ''}`
+                    : formatDate(selectedInquiry.date)}
+                </p>
                 <p className="text-sm text-slate-700">Misafir: {selectedInquiry.guestCount ?? '—'}</p>
                 <p className="text-sm text-slate-700">Başlangıç: {formatPrice(selectedInquiry.priceFrom, selectedInquiry.currency)}</p>
               </div>

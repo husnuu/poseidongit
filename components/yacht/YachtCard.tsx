@@ -22,7 +22,11 @@ export type YachtListItem = {
   locationSlug?: string | null
   marina?: string | null
   priceFrom?: number | null
+  overnightTotalPrice?: number | null
+  overnightNightPricing?: { price?: number | null }[] | null
   currency?: string | null
+  dailyRentalEnabled?: boolean | null
+  overnightRentalEnabled?: boolean | null
   yachtType?: string | null
   isFeatured?: boolean | null
   specifications?: YachtSpecifications | null
@@ -68,6 +72,8 @@ export default function YachtCard({ yacht }: YachtCardProps) {
   const cabinsVal = spec?.cabins != null ? String(spec.cabins) : null
   const capacityVal = spec?.capacity != null ? String(spec.capacity) : null
   const yearVal = spec?.buildYear != null ? String(spec.buildYear) : null
+
+  const dailyOn = yacht.dailyRentalEnabled !== false
 
   const content = (
     <>
@@ -124,14 +130,11 @@ export default function YachtCard({ yacht }: YachtCardProps) {
           {lengthVal ? <MetaLabeled icon={Ruler} label="Uzunluk:" value={lengthVal} /> : null}
         </div>
 
-        {yacht.priceFrom != null && (
-          <p
-            className="text-lg font-extrabold uppercase mt-auto mb-4"
-            style={{ color: 'var(--secondary)' }}
-          >
+        {dailyOn && yacht.priceFrom != null ? (
+          <p className="text-lg font-extrabold uppercase mt-auto mb-4 m-0" style={{ color: 'var(--secondary)' }}>
             {formatYachtMobilePrice(yacht.priceFrom, yacht.currency ?? 'TRY')}
           </p>
-        )}
+        ) : null}
 
         <span className="hero-primary-btn-wrap tour-card-cta-shimmer yacht-card-cta-edge mt-auto w-full max-w-full rounded-xl p-[2px] flex">
           <span className="hero-primary-inner hero-btn-shine yacht-card-cta-inner w-full rounded-[10px] bg-[#1e3a8a] py-2.5 md:py-3 font-black uppercase text-white text-center text-base md:text-[17px] flex items-center justify-center overflow-hidden transition hover:brightness-110 ring-1 ring-inset ring-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)]">

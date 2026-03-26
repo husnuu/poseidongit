@@ -11,7 +11,8 @@ import {
 } from '@/lib/yachtQueries'
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
 import YachtDetailView from '@/components/yacht/YachtDetailView'
-import YachtCard, { type YachtListItem } from '@/components/yacht/YachtCard'
+import type { YachtListItem } from '@/components/yacht/YachtCard'
+import YachtRentalListSection from '@/components/yacht/YachtRentalListSection'
 import { buildYachtDetailMetadata } from '@/lib/yachtMetadata'
 import listStyles from '../../turlar/page.module.css'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
@@ -115,7 +116,11 @@ export default async function YatKiralamaSegmentPage({
         locationSlug: y.locationSlug,
         marina: y.marina,
         priceFrom: y.priceFrom,
+        overnightTotalPrice: y.overnightTotalPrice ?? undefined,
+        overnightNightPricing: y.overnightNightPricing ?? undefined,
         currency: y.currency,
+        dailyRentalEnabled: y.dailyRentalEnabled,
+        overnightRentalEnabled: y.overnightRentalEnabled,
         yachtType: y.yachtType,
         isFeatured: y.isFeatured,
         specifications: y.specifications ?? undefined,
@@ -146,16 +151,10 @@ export default async function YatKiralamaSegmentPage({
                 </p>
               )}
             </header>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {yachts.map((y) => (
-                <YachtCard key={y._id} yacht={y} />
-              ))}
-            </div>
-            {yachts.length === 0 && (
-              <p className="text-center text-black/60 py-12" style={{ fontFamily: 'var(--font-family)' }}>
-                Bu lokasyon için henüz yat eklenmemiş.
-              </p>
-            )}
+            <YachtRentalListSection
+              yachts={yachts}
+              emptyStateMessage="Bu lokasyon için henüz yat eklenmemiş."
+            />
           </div>
         </section>
       </div>

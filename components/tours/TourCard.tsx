@@ -229,10 +229,13 @@ export default function TourCard({ tour }: TourCardProps) {
             </p>
           )}
 
-          {/* CTA - lacivert, kenarda dönen parıltı + hafif kenar glow */}
+          {/* CTA - lacivert (hero ile aynı), kenar parıltısı + üstte hafif parlama */}
           <span className="hero-primary-btn-wrap tour-card-cta-shimmer mt-auto w-full rounded-xl p-[2px] flex">
             <span
-              className="hero-primary-inner hero-btn-shine w-full rounded-[10px] bg-[#1e3a8a] py-2.5 md:py-3 font-black uppercase text-white text-center text-base md:text-[17px] flex items-center justify-center overflow-hidden transition hover:brightness-110 ring-1 ring-inset ring-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_0_0_1px_rgba(255,255,255,0.06),0_3px_12px_rgba(30,58,138,0.38)]"
+              className="hero-primary-inner hero-btn-shine w-full rounded-[10px] py-2.5 md:py-3 font-black uppercase text-white text-center text-base md:text-[17px] flex items-center justify-center overflow-hidden transition hover:brightness-110 ring-1 ring-inset ring-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(15,23,42,0.18)]"
+              style={{
+                background: 'linear-gradient(180deg, #3558b0 0%, #1e3a8a 42%, #172e6e 100%)',
+              }}
             >
               Turu görüntüle
             </span>

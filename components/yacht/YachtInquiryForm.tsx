@@ -9,8 +9,13 @@ import { Turnstile } from '@marsidev/react-turnstile'
 import FloatingInput from '@/components/ui/FloatingInput'
 import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
-import { CalendarDays, Check, MapPin, Sailboat, Users } from 'lucide-react'
+import { CalendarDays, Check, Clock, MapPin, Moon, Sailboat, Users } from 'lucide-react'
 import { DEFAULT_YACHT_INQUIRY_CTA } from '@/lib/yachtConversionCopy'
+import {
+  formatDateTrShort,
+  formatOvernightSummaryTr,
+  type YachtRentalMode,
+} from '@/lib/yachtRentalModes'
 
 const DEFAULT_SCRIPT_ID = 'cf-turnstile-script'
 const SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
@@ -29,34 +34,29 @@ interface YachtInquiryFormProps {
   yachtSlug: string
   yachtName: string
   locationLabel?: string | null
+  rentalMode: YachtRentalMode
   priceFrom?: number
   currency?: string
   selectedDate: string | null
+  overnightCheckIn: string | null
+  overnightCheckOut: string | null
+  overnightNights: number | null
   guestCount: number
   onSubmitted?: () => void
   submitLabel?: string
-}
-
-function formatDateTr(iso: string | null): string {
-  if (!iso) return '—'
-  try {
-    return new Date(iso + 'T12:00:00').toLocaleDateString('tr-TR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
-  } catch {
-    return iso
-  }
 }
 
 export default function YachtInquiryForm({
   yachtSlug,
   yachtName,
   locationLabel,
+  rentalMode,
   priceFrom,
   currency,
   selectedDate,
+  overnightCheckIn,
+  overnightCheckOut,
+  overnightNights,
   guestCount,
   onSubmitted,
   submitLabel = DEFAULT_YACHT_INQUIRY_CTA,
@@ -94,13 +94,22 @@ export default function YachtInquiryForm({
       setSubmitError('Lütfen doğrulama kutusunu işaretleyin.')
       return
     }
-    if (!selectedDate) {
-      setSubmitError('Lütfen takvimden bir tarih seçin.')
-      return
+    if (rentalMode === 'daily') {
+      if (!selectedDate) {
+        setSubmitError('Lütfen takvimden bir tarih seçin.')
+        return
+      }
+    } else {
+      if (!overnightCheckIn || !overnightCheckOut || overnightNights == null || overnightNights < 1) {
+        setSubmitError('Lütfen geçerli bir konaklama aralığı seçin.')
+        return
+      }
     }
     setStatus('sending')
     setSubmitError(null)
     try {
+      const primaryDate =
+        rentalMode === 'daily' ? selectedDate! : overnightCheckIn!
       const res = await fetch('/api/yacht-inquiry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -108,7 +117,11 @@ export default function YachtInquiryForm({
           yachtSlug,
           yachtName,
           location: locationLabel ?? undefined,
-          date: selectedDate,
+          rentalType: rentalMode,
+          date: primaryDate,
+          checkIn: rentalMode === 'overnight' ? overnightCheckIn : undefined,
+          checkOut: rentalMode === 'overnight' ? overnightCheckOut : undefined,
+          nights: rentalMode === 'overnight' ? overnightNights : undefined,
           guestCount,
           firstName: data.firstName.trim(),
           lastName: data.lastName.trim(),
@@ -152,6 +165,13 @@ export default function YachtInquiryForm({
     )
   }
 
+  const priceLabel =
+    priceFrom != null
+      ? `${priceFrom.toLocaleString('tr-TR')} ${(currency ?? 'TRY').toUpperCase()}`
+      : '—'
+
+  const rentalTypeLabel = rentalMode === 'daily' ? 'Günlük kiralama' : 'Konaklamalı kiralama'
+
   return (
     <>
       <Script id={DEFAULT_SCRIPT_ID} src={SCRIPT_URL} strategy="afterInteractive" />
@@ -189,12 +209,49 @@ export default function YachtInquiryForm({
           ) : null}
           <li className="flex items-start gap-3 px-4 py-3.5">
             <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+              {rentalMode === 'daily' ? (
+                <Clock className="h-4 w-4" strokeWidth={2} aria-hidden />
+              ) : (
+                <Moon className="h-4 w-4" strokeWidth={2} aria-hidden />
+              )}
+            </span>
+            <div className="min-w-0 flex-1 pt-0.5">
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                Kiralama türü
+              </p>
+              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-slate-800">
+                {rentalTypeLabel}
+              </p>
+            </div>
+          </li>
+          <li className="flex items-start gap-3 px-4 py-3.5">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
               <CalendarDays className="h-4 w-4" strokeWidth={2} aria-hidden />
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
               <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">Tarih</p>
               <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-slate-800">
-                {formatDateTr(selectedDate)}
+                {rentalMode === 'daily'
+                  ? selectedDate
+                    ? formatDateTrShort(selectedDate)
+                    : '—'
+                  : overnightCheckIn && overnightCheckOut && overnightNights != null
+                    ? formatOvernightSummaryTr({
+                        checkIn: overnightCheckIn,
+                        checkOut: overnightCheckOut,
+                      })
+                    : '—'}
+              </p>
+            </div>
+          </li>
+          <li className="flex items-start gap-3 px-4 py-3.5">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+              <Clock className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1 pt-0.5">
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">Süre</p>
+              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-slate-800">
+                {rentalMode === 'daily' ? '7 saat' : `${overnightNights ?? '—'} gece`}
               </p>
             </div>
           </li>
@@ -208,6 +265,19 @@ export default function YachtInquiryForm({
               </p>
               <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-slate-800">
                 {guestCount} kişi
+              </p>
+            </div>
+          </li>
+          <li className="flex items-start gap-3 px-4 py-3.5">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+              <span className="text-xs font-black text-slate-600">₺</span>
+            </span>
+            <div className="min-w-0 flex-1 pt-0.5">
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                {rentalMode === 'daily' ? 'Günlük fiyat' : 'Toplam fiyat'}
+              </p>
+              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-slate-800">
+                {priceLabel}
               </p>
             </div>
           </li>
@@ -268,10 +338,10 @@ export default function YachtInquiryForm({
         <button
           type="submit"
           disabled={status === 'sending' || (!!siteKey && !turnstileToken)}
-          className="w-full rounded-xl font-bold uppercase text-white text-base transition disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-95"
+          className="w-full rounded-xl border-0 font-bold uppercase text-white text-base shadow-[0_2px_8px_rgba(15,23,42,0.1)] transition hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none hover:shadow-[0_3px_10px_rgba(15,23,42,0.12)]"
           style={{
             height: 56,
-            backgroundColor: '#2168b8',
+            background: 'linear-gradient(180deg, #fb923c 0%, #ea580c 100%)',
             fontFamily: 'var(--font-family)',
           }}
         >

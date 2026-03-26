@@ -385,7 +385,7 @@ export default function HeaderClient({
                     alt={settings.siteName || 'Logo'}
                     width={220}
                     height={60}
-                    className={styles.mobileMenuLogoImage}
+                    className={`${styles.mobileMenuLogoImage} ${styles.logoImageOnDark}`}
                   />
                 ) : (
                   <span className={styles.logoFallback}>{settings.siteName || 'Site'}</span>

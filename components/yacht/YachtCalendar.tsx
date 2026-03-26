@@ -7,10 +7,18 @@ import {
 } from '@/lib/yachtCalendar'
 import styles from '@/components/booking/booking.module.css'
 
+export type YachtCalendarRange = { checkIn: string | null; checkOut: string | null }
+
 interface YachtCalendarProps {
   blockedDates?: string[]
-  selectedDate: string | null
-  onSelectDate: (isoDate: string) => void
+  /** Varsayılan: tek gün seçimi */
+  selectionMode?: 'single' | 'range'
+  selectedDate?: string | null
+  onSelectDate?: (isoDate: string) => void
+  rangeValue?: YachtCalendarRange
+  onRangeChange?: (v: YachtCalendarRange) => void
+  /** Tur takvimi gibi gün altında fiyat (₺) */
+  resolveDayPrice?: (isoDate: string) => number | undefined
   /** Kart içinde daha kompakt başlık */
   compactTitle?: boolean
 }
@@ -24,8 +32,12 @@ function normalizeBlocked(set: Set<string>, raw?: string[]) {
 
 export default function YachtCalendar({
   blockedDates,
-  selectedDate,
+  selectionMode = 'single',
+  selectedDate = null,
   onSelectDate,
+  rangeValue = { checkIn: null, checkOut: null },
+  onRangeChange,
+  resolveDayPrice,
   compactTitle,
 }: YachtCalendarProps) {
   const todayStr = useMemo(() => todayStrLocal(), [])
@@ -55,12 +67,32 @@ export default function YachtCalendar({
 
   const isBeforeToday = (dateStr: string) => dateStr < todayStr
 
+  const handleDayClick = (dateStr: string, selectable: boolean) => {
+    if (!selectable) return
+    if (selectionMode === 'single') {
+      onSelectDate?.(dateStr)
+      return
+    }
+    const checkIn = rangeValue.checkIn
+    const checkOut = rangeValue.checkOut
+    if (!checkIn || (checkIn && checkOut)) {
+      onRangeChange?.({ checkIn: dateStr, checkOut: null })
+    } else {
+      if (dateStr > checkIn) {
+        onRangeChange?.({ checkIn, checkOut: dateStr })
+      } else {
+        onRangeChange?.({ checkIn: dateStr, checkOut: null })
+      }
+    }
+  }
+
+  const title =
+    selectionMode === 'range' ? 'Giriş ve ayrılış tarihi' : 'Tercih ettiğiniz tarih'
+
   return (
     <div className={compactTitle ? undefined : styles.card}>
       {!compactTitle && (
-        <h3 className={`${styles.cardTitle} ${styles.wizardMainStepTitle}`}>
-          Tercih ettiğiniz tarih
-        </h3>
+        <h3 className={`${styles.cardTitle} ${styles.wizardMainStepTitle}`}>{title}</h3>
       )}
       <div
         className="flex items-center justify-between mb-2"
@@ -112,16 +144,33 @@ export default function YachtCalendar({
           ))}
           {calendar.map((day) => {
             const dayNum = parseInt(day.date.slice(8), 10)
-            const selected = selectedDate === day.date
             const blockedDay = blocked.has(day.date)
             const past = isBeforeToday(day.date)
             const selectable = !past && !blockedDay
+            const cellPrice = resolveDayPrice?.(day.date)
+            const showPrice = selectable && cellPrice != null && cellPrice > 0
+
+            let selected = false
+            let inRange = false
+            if (selectionMode === 'single') {
+              selected = selectedDate === day.date
+            } else {
+              const ci = rangeValue.checkIn
+              const co = rangeValue.checkOut
+              if (ci && co) {
+                selected = day.date === ci || day.date === co
+                inRange = day.date > ci && day.date < co
+              } else if (ci) {
+                selected = day.date === ci
+              }
+            }
+
             return (
               <button
                 key={day.date}
                 type="button"
-                className={`${styles.dayCell} ${selected ? styles.dayCellSelected : ''} ${!selectable ? styles.dayCellDisabled : ''}`}
-                onClick={() => selectable && onSelectDate(day.date)}
+                className={`${styles.dayCell} ${selected ? styles.dayCellSelected : ''} ${inRange ? styles.dayCellInRange : ''} ${!selectable ? styles.dayCellDisabled : ''}`}
+                onClick={() => handleDayClick(day.date, selectable)}
                 disabled={!selectable}
                 aria-label={
                   blockedDay
@@ -132,11 +181,19 @@ export default function YachtCalendar({
                 }
               >
                 <span className={styles.dayNum}>{dayNum}</span>
+                {showPrice ? (
+                  <span className={styles.dayPrice}>{cellPrice!.toLocaleString('tr-TR')} ₺</span>
+                ) : null}
               </button>
             )
           })}
         </div>
       </div>
+      {selectionMode === 'range' && rangeValue.checkIn && !rangeValue.checkOut && (
+        <p className="text-xs text-zinc-600 mt-2 mb-0" style={{ fontFamily: 'var(--font-family)' }}>
+          Ayrılış gününü seçin (son konaklama gecesinden sonraki gün).
+        </p>
+      )}
       {blocked.size > 0 && (
         <p className="text-xs text-zinc-500 mt-2 mb-0" style={{ fontFamily: 'var(--font-family)' }}>
           Gri günler şu an için uygun değil. Diğer tarihler için talep bırakabilirsiniz.

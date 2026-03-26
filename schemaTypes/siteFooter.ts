@@ -16,9 +16,10 @@ export default defineType({
         }),
         defineField({
             name: 'logo',
-            title: 'Logo',
+            title: 'Logo (yedek)',
             type: 'image',
-            description: 'Footer logosu',
+            description:
+                'Site Ayarları’nda logo varsa footer’da da o kullanılır (header ile aynı boyut). Burası yalnızca Site Ayarları logosu yoksa gösterilir.',
             options: {
                 hotspot: true,
             },
@@ -264,14 +265,24 @@ export default defineType({
         // Brag Section (Awards/Badges)
         defineField({
             name: 'brag',
-            title: 'NOT TO BRAG, BUT... Bölümü',
+            title: 'Footer — ödül / rozet bölümü',
+            description:
+                '“Not to brag, but…” alanı: isteğe bağlı kapatılabilir; başlık ve rozetler aşağıdan düzenlenir.',
             type: 'object',
             fields: [
                 defineField({
+                    name: 'enabled',
+                    title: 'Bölümü göster',
+                    type: 'boolean',
+                    description: 'Kapalıyken footer’da bu sütun ve rozetler görünmez.',
+                    initialValue: true,
+                }),
+                defineField({
                     name: 'title',
-                    title: 'Başlık',
+                    title: 'Bölüm başlığı',
                     type: 'string',
-                    initialValue: 'NOT TO BRAG, BUT...',
+                    description: 'Örn. “NOT TO BRAG, BUT…” veya “Ödüllerimiz”.',
+                    initialValue: 'Not to brag, but…',
                 }),
                 defineField({
                     name: 'badges',

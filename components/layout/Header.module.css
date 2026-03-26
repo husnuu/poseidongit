@@ -92,6 +92,11 @@
   display: block;
 }
 
+/* Lacivert / koyu zemin: tek renk logo → beyaz (mobil menü + footer) */
+.logoImageOnDark {
+  filter: brightness(0) invert(1);
+}
+
 .logoFallback {
   font-family: var(--font-family), sans-serif;
   font-weight: 700;
@@ -377,7 +382,6 @@
 }
 
 .mobileMenuLogoImage {
-  filter: brightness(0) invert(1);
   object-fit: contain;
   object-position: left center;
   width: auto;

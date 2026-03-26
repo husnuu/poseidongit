@@ -74,17 +74,11 @@ export default function YachtHighlights({
   const all = [...primary, ...extra]
   if (all.length === 0) return null
 
-  const mid = Math.ceil(all.length / 2)
-  const left = all.slice(0, mid)
-  const right = all.slice(mid)
-
-  const renderItem = (row: Row, idx: number, globalIndex: number) => {
-    const prev = globalIndex > 0 ? all[globalIndex - 1] : null
-    const mobileAfterWc = row.label === 'Uzunluk' && prev?.label === 'WC / banyo'
+  const renderItem = (row: Row, idx: number) => {
     return (
       <li
         key={`${row.label}-${row.value}-${idx}`}
-        className={`${styles.item} ${mobileAfterWc ? styles.itemMobileAfterWc : ''}`}
+        className={styles.item}
       >
         <div className={styles.itemTop}>
           <RowIcon label={row.label} />
@@ -100,12 +94,9 @@ export default function YachtHighlights({
       <h2 id="yacht-highlights-heading" className={`${headingStyles.h2} ${styles.highlightsHeading}`}>
         Öne çıkan bilgiler
       </h2>
-      <div className={styles.flatGrid}>
-        <ul className={styles.col}>{left.map((row, i) => renderItem(row, i, i))}</ul>
-        <ul className={styles.col}>
-          {right.map((row, i) => renderItem(row, i, left.length + i))}
-        </ul>
-      </div>
+      <ul className={styles.flatGrid}>
+        {all.map((row, i) => renderItem(row, i))}
+      </ul>
     </section>
   )
 }

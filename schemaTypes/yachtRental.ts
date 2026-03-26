@@ -62,10 +62,39 @@ export default defineType({
       of: [{ type: 'block' }],
     }),
     defineField({
+      name: 'dailyRentalEnabled',
+      title: 'Günlük kiralama (takvim)',
+      type: 'boolean',
+      initialValue: true,
+      description: 'Kapalıysa sadece konaklamalı seçenek gösterilir (varsa).',
+    }),
+    defineField({
+      name: 'overnightRentalEnabled',
+      title: 'Konaklamalı kiralama (tarih aralığı)',
+      type: 'boolean',
+      initialValue: false,
+      description: 'Açıksa müşteri giriş–çıkış tarihi seçer; günlükten bağımsız takvim engeli ve fiyat kullanılabilir.',
+    }),
+    defineField({
       name: 'priceFrom',
-      title: 'Günlük başlangıç fiyatı',
+      title: 'Günlük kiralama — başlangıç fiyatı',
       type: 'number',
       validation: (Rule) => Rule.positive().integer(),
+    }),
+    defineField({
+      name: 'overnightTotalPrice',
+      title: 'Konaklamalı — toplam fiyat (referans)',
+      type: 'number',
+      description:
+        'Konaklamalı fiyatlandırma günlük kiralama fiyatından bağımsızdır. Gece başına takvimde satır yoksa veya yalnızca vitrin/liste için tek tutar vermek istiyorsanız bu alanı kullanın. Takvim doluysa seçilen her gece için satır olmalıdır; toplam o gecelerin fiyatlarının toplamıdır. Takvim tamamen boşsa konaklama toplamı olarak yalnızca bu tutar kullanılır.',
+      validation: (Rule) => Rule.positive().integer(),
+    }),
+    defineField({
+      name: 'overnightPriceFrom',
+      title: '[Eski alan] Konaklamalı fiyat',
+      type: 'number',
+      hidden: true,
+      description: 'Artık kullanılmıyor. Değer “Konaklamalı — toplam fiyat” alanına taşındı; site eski kayıtları otomatik okur.',
     }),
     defineField({
       name: 'currency',
@@ -196,10 +225,95 @@ export default defineType({
     }),
     defineField({
       name: 'blockedDates',
-      title: 'Müsait olmayan tarihler',
+      title: 'Müsait olmayan tarihler (ortak yedek)',
       type: 'array',
       of: [{ type: 'date' }],
-      description: 'Takvimde seçilemez. Boşsa tüm gelecek tarihler tercih olarak seçilebilir.',
+      description:
+        'Moda özel liste boşsa hem günlük hem konaklamalı takvimde kullanılır. Mod başına ayrı liste doldurduğunuzda bu alan o mod için yok sayılır.',
+    }),
+    defineField({
+      name: 'blockedDatesDaily',
+      title: 'Günlük takvim — müsait olmayan günler',
+      type: 'array',
+      of: [{ type: 'date' }],
+      description: 'Doluysa sadece günlük modda uygulanır; boşsa yukarıdaki ortak liste.',
+    }),
+    defineField({
+      name: 'blockedDatesOvernight',
+      title: 'Konaklamalı takvim — müsait olmayan günler',
+      type: 'array',
+      of: [{ type: 'date' }],
+      description: 'Doluysa sadece konaklamalı modda uygulanır; boşsa ortak liste.',
+    }),
+    defineField({
+      name: 'dailyDatePricing',
+      title: 'Günlük kiralama — güne özel fiyatlar',
+      type: 'array',
+      description:
+        'Tur takvimindeki gibi belirli günlere özel fiyat. Boşsa tüm günler için yukarıdaki “Günlük kiralama — başlangıç fiyatı” kullanılır.',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'date',
+              title: 'Tarih',
+              type: 'date',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'price',
+              title: 'Fiyat (₺)',
+              type: 'number',
+              validation: (Rule) => Rule.required().positive().integer(),
+            }),
+          ],
+          preview: {
+            select: { date: 'date', price: 'price' },
+            prepare({ date, price }: { date?: string; price?: number }) {
+              return {
+                title: date ? String(date) : 'Tarih',
+                subtitle: price != null ? `${price.toLocaleString('tr-TR')} ₺` : 'Fiyat yok',
+              }
+            },
+          },
+        },
+      ],
+    }),
+    defineField({
+      name: 'overnightNightPricing',
+      title: 'Konaklamalı — gece başına fiyatlar (takvim)',
+      type: 'array',
+      description:
+        'Konaklamalı modda takvim ve toplam buradan hesaplanır; günlük kiralama fiyatı kullanılmaz. Her satır o tarihte başlayan gecenin fiyatıdır. En az bir satır varsa seçilen aralıktaki her gece için satır gerekir; toplam bu fiyatların toplamıdır. Hiç satır yoksa “Konaklamalı — toplam fiyat (referans)” kullanılır.',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'date',
+              title: 'Gecenin başladığı tarih',
+              type: 'date',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'price',
+              title: 'Bu gece fiyatı (₺)',
+              type: 'number',
+              validation: (Rule) => Rule.required().positive().integer(),
+            }),
+          ],
+          preview: {
+            select: { date: 'date', price: 'price' },
+            prepare({ date, price }: { date?: string; price?: number }) {
+              return {
+                title: date ? String(date) : 'Tarih',
+                subtitle: price != null ? `${price.toLocaleString('tr-TR')} ₺ / gece` : 'Fiyat yok',
+              }
+            },
+          },
+        },
+      ],
     }),
     defineField({
       name: 'inquiryCard',
