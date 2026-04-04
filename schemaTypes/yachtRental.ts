@@ -86,7 +86,7 @@ export default defineType({
       title: 'Konaklamalı — toplam fiyat (referans)',
       type: 'number',
       description:
-        'Konaklamalı fiyatlandırma günlük kiralama fiyatından bağımsızdır. Gece başına takvimde satır yoksa veya yalnızca vitrin/liste için tek tutar vermek istiyorsanız bu alanı kullanın. Takvim doluysa seçilen her gece için satır olmalıdır; toplam o gecelerin fiyatlarının toplamıdır. Takvim tamamen boşsa konaklama toplamı olarak yalnızca bu tutar kullanılır.',
+        'Gecelik konaklamalı tutarlar “Konaklamalı — gece başına fiyatlar (takvim)” alanına girilir; sitede konaklama toplamı seçilen gecelerin bu tutarların toplamıdır (her gece aynıysa: gece sayısı × gecelik fiyat). Gece takvimi hiç doldurulmamışsa konaklama toplamı olarak yalnızca bu referans tutar kullanılır.',
       validation: (Rule) => Rule.positive().integer(),
     }),
     defineField({
@@ -285,7 +285,7 @@ export default defineType({
       title: 'Konaklamalı — gece başına fiyatlar (takvim)',
       type: 'array',
       description:
-        'Konaklamalı modda takvim ve toplam buradan hesaplanır; günlük kiralama fiyatı kullanılmaz. Her satır o tarihte başlayan gecenin fiyatıdır. En az bir satır varsa seçilen aralıktaki her gece için satır gerekir; toplam bu fiyatların toplamıdır. Hiç satır yoksa “Konaklamalı — toplam fiyat (referans)” kullanılır.',
+        'Konaklamalı gecelik fiyat burada: her satır, o tarihte başlayan gecenin konaklamalı tutarıdır (₺/gece). Takvimde bu değerler gösterilir. Toplam fiyat, seçilen aralıktaki gecelerin bu tutarlarının toplamıdır; tüm geceler aynı fiyatdaysa gece sayısı × gecelik fiyat ile aynıdır. Hiç satır yoksa “Konaklamalı — toplam fiyat (referans)” kullanılır.',
       of: [
         {
           type: 'object',

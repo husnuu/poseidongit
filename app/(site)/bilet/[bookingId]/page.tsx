@@ -1,13 +1,12 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getFirestore } from '@/lib/firebaseAdmin'
 import { validateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery } from '@/lib/queries'
 import { manageBookingUrl, getSiteBaseUrl } from '@/lib/siteUrls'
 import BoardingPassTicket from '@/components/boarding-pass/BoardingPassTicket'
-
-const COLLECTION = 'bookings'
+import { supabase } from '@/lib/supabase'
+import { firstClassLocasFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -47,46 +46,38 @@ type TicketData = {
   currency: string
   status: string
   customerName: string
-  /** Firestore’da varsa (admin ödeme sonrası yazılmış olabilir). */
+  /** Supabase'te varsa (admin ödeme sonrası yazılmış olabilir). */
   paidNowStored?: number
 }
 
 async function getTicketData(bookingId: string): Promise<TicketData | null> {
-  const db = getFirestore()
-  const snap = await db.collection(COLLECTION).doc(bookingId).get()
-  if (!snap.exists) return null
-  const d = snap.data()!
-  const customer = (d.customer ?? {}) as Record<string, string>
-  const counts = (d.counts ?? { adult: 0, child: 0, infant: 0 }) as { adult: number; child: number; infant: number }
-  const tourId = typeof d.tourId === 'string' ? d.tourId.trim() : ''
-  const classId = typeof d.classId === 'string' ? d.classId.trim().toLowerCase() : ''
-  const firstClassLocasRaw = Array.isArray(d.firstClassLocas) ? d.firstClassLocas : []
-  const firstClassLocas = firstClassLocasRaw
-    .map((x) => (typeof x === 'string' ? x.trim().toUpperCase() : ''))
-    .filter((x) => /^L(10|[1-9])$/.test(x))
-  const fallbackLoca = typeof d.firstClassLoca === 'string' ? d.firstClassLoca.trim().toUpperCase() : ''
-  const normalizedLocas = firstClassLocas.length
-    ? firstClassLocas
-    : /^L(10|[1-9])$/.test(fallbackLoca)
-      ? [fallbackLoca]
-      : undefined
-  const paidRaw = (d as Record<string, unknown>).paidNow
+  const { data, error } = await supabase.from('bookings').select('*').eq('id', bookingId).single()
+  if (error || !data) return null
+  const d = data as SupabaseBookingRow
+  const tourId = typeof d.tour_id === 'string' ? d.tour_id.trim() : ''
+  const classId = typeof d.class_id === 'string' ? d.class_id.trim().toLowerCase() : ''
+  const normalizedLocas = firstClassLocasFromRow(d)
+  const paidRaw = d.paid_now
   const paidNowStored = typeof paidRaw === 'number' && Number.isFinite(paidRaw) && paidRaw > 0 ? paidRaw : undefined
   return {
-    bookingId: snap.id,
+    bookingId: d.id,
     tourId,
-    tourTitle: String(d.tourTitle ?? '—'),
+    tourTitle: String(d.tour_title ?? '—'),
     date: String(d.date ?? ''),
     time: d.time != null ? String(d.time) : undefined,
-    meetingPoint: String((d as Record<string, unknown>).meetingPoint ?? 'Çeşme Marina'),
-    counts: { adult: counts.adult ?? 0, child: counts.child ?? 0, infant: counts.infant ?? 0 },
+    meetingPoint: String(d.meeting_point ?? 'Çeşme Marina'),
+    counts: {
+      adult: Number(d.adult_count ?? 0),
+      child: Number(d.child_count ?? 0),
+      infant: Number(d.infant_count ?? 0),
+    },
     classId,
-    className: String(d.className ?? '—'),
-    firstClassLocas: normalizedLocas,
-    totalPrice: Number(d.totalPrice ?? 0),
+    className: String(d.class_name ?? '—'),
+    firstClassLocas: normalizedLocas.length > 0 ? normalizedLocas : undefined,
+    totalPrice: Number(d.total_price ?? 0),
     currency: String(d.currency ?? 'TRY'),
     status: String(d.status ?? 'pending'),
-    customerName: [customer.firstName, customer.lastName].filter(Boolean).join(' ') || '—',
+    customerName: [d.customer_first_name, d.customer_last_name].filter(Boolean).join(' ') || '—',
     ...(paidNowStored != null && { paidNowStored }),
   }
 }
@@ -99,7 +90,7 @@ type TourMeta = {
   deposit?: { enabled?: boolean; type?: string; value?: number }
 }
 
-/** Bilet üzerinde gösterilecek ödenen tutar (Firestore paidNow veya kapora/tam ödeme mantığı). */
+/** Bilet üzerinde gösterilecek ödenen tutar (Supabase paid_now veya kapora/tam ödeme mantığı). */
 function resolvePaidAmountForTicket(
   totalPrice: number,
   status: string,
@@ -174,10 +165,9 @@ export default async function BiletPage({
       .join(', ') || '—'
 
   const dateFormatted = formatDate(ticket.date)
-  const qrImageUrl =
-    base && tokenForUrls
-      ? `${base}/api/qr?bookingId=${encodeURIComponent(bookingId)}&token=${encodeURIComponent(tokenForUrls)}`
-      : undefined
+  const qrImageUrl = tokenForUrls
+    ? `/api/qr?bookingId=${encodeURIComponent(bookingId)}&token=${encodeURIComponent(tokenForUrls)}`
+    : undefined
   const displayTime = ticket.time?.trim() || tourMeta?.quickFacts?.startTime?.trim() || undefined
   const arrivalTime = tourMeta?.quickFacts?.returnTime?.trim() || undefined
   const paidAmount = resolvePaidAmountForTicket(

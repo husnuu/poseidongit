@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthToken, getAdminEmail, requireAdmin } from '@/lib/adminAuth'
+import { authorizeAdmin } from '@/lib/adminAuthServer'
 
 const FONT_URL =
   'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf'
 
 export async function GET(request: NextRequest) {
-  const token = getAuthToken(request)
-  const email = getAdminEmail(request)
-  if (!requireAdmin(token, email)) {
+  if (!(await authorizeAdmin(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {

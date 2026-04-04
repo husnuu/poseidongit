@@ -3,9 +3,14 @@
  * Rate limiting: see docs/RATE_LIMITING_SUGGESTIONS.md (e.g. 20 req/min per IP).
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { getFirestore } from '@/lib/firebaseAdmin'
-
-const COLLECTION = 'bookings'
+import { supabase } from '@/lib/supabase'
+import {
+  firstClassLocasFromRow,
+  normalizeMealPreferenceColumn,
+  type SupabaseBookingRow,
+} from '@/lib/bookingsSupabase'
+import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
+import { normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -24,19 +29,38 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const db = getFirestore()
-    const snap = await db.collection(COLLECTION).doc(bookingId).get()
-
-    if (!snap.exists) {
+    let data: SupabaseBookingRow | null = null
+    const { data: byId, error: byIdError } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .maybeSingle()
+    if (byIdError) {
+      throw new Error(`Supabase booking lookup by id failed: ${byIdError.message}`)
+    }
+    if (byId) {
+      data = byId as SupabaseBookingRow
+    } else {
+      // Backward compatibility: some links may carry human reference instead of UUID id.
+      const { data: byReference, error: byReferenceError } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('reference', bookingId)
+        .maybeSingle()
+      if (byReferenceError) {
+        throw new Error(`Supabase booking lookup by reference failed: ${byReferenceError.message}`)
+      }
+      data = (byReference as SupabaseBookingRow | null) ?? null
+    }
+    if (!data) {
       return NextResponse.json(
         { error: 'Rezervasyon bulunamadı' },
         { status: 404 }
       )
     }
 
-    const data = snap.data()!
-    const customer = (data.customer ?? {}) as Record<string, string>
-    const bookingEmail = String(customer.email ?? '').trim().toLowerCase()
+    const row = data as SupabaseBookingRow
+    const bookingEmail = String(row.customer_email ?? '').trim().toLowerCase()
 
     if (bookingEmail !== email) {
       return NextResponse.json(
@@ -45,7 +69,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const status = data.status ?? 'pending'
+    const status = row.status ?? 'pending'
     if (status === 'cancelled') {
       return NextResponse.json({
         booking: null,
@@ -54,8 +78,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const dateStr = String(data.date ?? '')
-    const timeStr = data.time != null ? String(data.time) : ''
+    const dateStr = String(row.date ?? '')
+    const timeStr = row.time != null ? String(row.time) : ''
     const tourDateTime = dateStr && timeStr
       ? new Date(`${dateStr}T${timeStr}:00`)
       : dateStr
@@ -67,48 +91,54 @@ export async function GET(request: NextRequest) {
       : null
     const canCancel = typeof hoursUntilTour === 'number' && hoursUntilTour > 24
 
-    const classId = String(data.classId ?? '')
-    const firstClassLocasRaw = data.firstClassLocas
-    const firstClassLocaSingle = typeof data.firstClassLoca === 'string' ? data.firstClassLoca.trim() : ''
-    const firstClassLocas = Array.isArray(firstClassLocasRaw) && firstClassLocasRaw.length > 0
-      ? (firstClassLocasRaw as string[]).map((x) => String(x).trim().toUpperCase()).filter((x) => /^L(10|[1-9])$/.test(x))
-      : firstClassLocaSingle && /^L(10|[1-9])$/.test(firstClassLocaSingle.toUpperCase())
-        ? [firstClassLocaSingle.toUpperCase()]
+    const classId = String(row.class_id ?? '')
+    const firstClassLocas = firstClassLocasFromRow(row)
+    let accessToken =
+      typeof row.access_token === 'string' && row.access_token.trim()
+        ? row.access_token.trim()
         : undefined
+    // Legacy rows may miss token; generate one after email verification.
+    if (!accessToken) {
+      const newToken = generateBookingAccessToken()
+      const { error: tokenUpdateError } = await supabase
+        .from('bookings')
+        .update({ access_token: newToken })
+        .eq('id', row.id)
+      if (!tokenUpdateError) accessToken = newToken
+    }
+
+    const additionalTravelers = normalizeAdditionalTravelersFromStorage(row.additional_travelers)
+    const mealPreferenceNorm = normalizeMealPreferenceColumn(row.meal_preference)
 
     const booking = {
-      id: snap.id,
+      id: row.id,
       status,
-      tourId: String(data.tourId ?? ''),
-      tourTitle: data.tourTitle,
+      tourId: String(row.tour_id ?? ''),
+      tourTitle: row.tour_title ?? '',
       date: dateStr,
-      time: data.time ?? undefined,
-      meetingPoint: data.meetingPoint ?? undefined,
-      mealPreference:
-        data.mealPreference &&
-        typeof data.mealPreference === 'object' &&
-        typeof (data.mealPreference as { key?: unknown }).key === 'string' &&
-        typeof (data.mealPreference as { label?: unknown }).label === 'string'
-          ? {
-              key: String((data.mealPreference as { key: string }).key),
-              label: String((data.mealPreference as { label: string }).label),
-            }
-          : undefined,
+      time: row.time ?? undefined,
+      meetingPoint: row.meeting_point ?? undefined,
+      mealPreference: mealPreferenceNorm,
       classId,
-      className: data.className,
+      className: row.class_name ?? '',
       firstClassLocas: firstClassLocas?.length ? firstClassLocas : undefined,
-      totalPrice: data.totalPrice,
-      currency: data.currency ?? 'TRY',
-      counts: data.counts ?? { adult: 0, child: 0, infant: 0 },
-      customer: {
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        email: customer.email,
+      totalPrice: Number(row.total_price ?? 0),
+      currency: row.currency ?? 'TRY',
+      counts: {
+        adult: Number(row.adult_count ?? 0),
+        child: Number(row.child_count ?? 0),
+        infant: Number(row.infant_count ?? 0),
       },
+      customer: {
+        firstName: row.customer_first_name ?? '',
+        lastName: row.customer_last_name ?? '',
+        email: row.customer_email ?? '',
+      },
+      ...(additionalTravelers.length > 0 && { additionalTravelers }),
       canCancel,
       hoursUntilTour: hoursUntilTour != null ? Math.round(hoursUntilTour) : null,
-      /** Secure token for ticket/voucher links. Omitted for legacy bookings without token. */
-      accessToken: typeof data.accessToken === 'string' && data.accessToken.trim() ? data.accessToken.trim() : undefined,
+      /** Secure token for ticket/voucher links. */
+      accessToken,
     }
 
     return NextResponse.json({ booking })

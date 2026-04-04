@@ -34,7 +34,11 @@ function splitMenuLines(text: string): string[] {
 
 const foodMenuDetailComponents: PortableTextComponents = {
   block: {
-    normal: ({ children }) => <div className={styles.menuDishRow}>{children}</div>,
+    normal: ({ children }) => (
+      <div className={styles.menuDishRow}>
+        <div className={styles.menuDishRowText}>{children}</div>
+      </div>
+    ),
     h2: ({ children }) => <h4 className={styles.menuBlockHeading}>{children}</h4>,
     h3: ({ children }) => <h4 className={styles.menuBlockHeading}>{children}</h4>,
     h4: ({ children }) => <h4 className={styles.menuBlockHeading}>{children}</h4>,
@@ -59,7 +63,7 @@ function ExcerptMenuList({ text }: { text: string }) {
     <ul className={styles.menuDishList} aria-label="Menü satırları">
       {lines.map((line, i) => (
         <li key={i} className={styles.menuDishRow}>
-          {line}
+          <div className={styles.menuDishRowText}>{line}</div>
         </li>
       ))}
     </ul>

@@ -14,10 +14,10 @@ export interface BookingCustomer {
   note?: string
 }
 
-/** Firestore'dan okunduğunda createdAt bir Timestamp; API response'da ISO string veya Date olabilir */
+/** API response'da createdAt ISO string veya Date olabilir */
 export interface Booking {
   id: string
-  createdAt: Date | { toDate(): Date } | string
+  createdAt: Date | string
   status: BookingStatus
   tourId: string
   tourTitle: string

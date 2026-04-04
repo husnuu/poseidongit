@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getFirestore } from '@/lib/firebaseAdmin'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
 import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
-import { getAuthToken, getAdminEmail, requireAdmin } from '@/lib/adminAuth'
+import { authorizeAdmin } from '@/lib/adminAuthServer'
+import { supabase } from '@/lib/supabase'
+import { firstClassLocasFromRow, paxCountFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
-/**
- * Doluluk mantığı: Sanity’de her tur için sınıf kapasiteleri (eco/premium/first) var;
- * Firebase’den o tura ait rezervasyonları alıyoruz. Gün/sınıf bazında: capacity (Sanity) - booked (Firebase) = kalan.
- */
-const COLLECTION = 'bookings'
 const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
 
 function normalizeClassKey(classId: string): string {
@@ -24,19 +20,12 @@ export const dynamic = 'force-dynamic'
 
 const LOCA_REGEX = /^L(10|[1-9])$/
 
-function collectFirstClassLocas(d: Record<string, unknown>): string[] {
-  const out: string[] = []
-  if (Array.isArray(d.firstClassLocas)) {
-    for (const x of d.firstClassLocas) {
-      const s = typeof x === 'string' ? x.trim().toUpperCase() : ''
-      if (s && LOCA_REGEX.test(s) && !out.includes(s)) out.push(s)
-    }
-  }
-  if (out.length === 0 && typeof d.firstClassLoca === 'string') {
-    const s = d.firstClassLoca.trim().toUpperCase()
-    if (s && LOCA_REGEX.test(s)) out.push(s)
-  }
-  return out
+function collectFirstClassLocas(row: Partial<SupabaseBookingRow>): string[] {
+  return firstClassLocasFromRow(row).filter((x) => LOCA_REGEX.test(x))
+}
+
+function canonicalTourId(id: string | null | undefined): string {
+  return String(id ?? '').trim().replace(/^drafts\./, '')
 }
 
 export type DayOccupancy = {
@@ -51,9 +40,7 @@ export type DayOccupancy = {
 }
 
 export async function GET(request: NextRequest) {
-  const token = getAuthToken(request)
-  const email = getAdminEmail(request)
-  if (!requireAdmin(token, email)) {
+  if (!(await authorizeAdmin(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {
@@ -89,61 +76,60 @@ export async function GET(request: NextRequest) {
         message: 'Tur bulunamadı. Sanity\'de bu turun yayında olduğundan ve baseCapacity (eco/premium/first) tanımlı olduğundan emin olun.',
       })
     }
-    const firestoreTourId = sanityTour._id?.replace(/^drafts\./, '') ?? tourId?.replace(/^drafts\./, '') ?? tourId
-
-    const db = getFirestore()
+    const normalizedTourId = canonicalTourId(sanityTour._id ?? tourId)
+    const acceptedTourIds = [...new Set([
+      canonicalTourId(tourId),
+      canonicalTourId(sanityTour._id),
+      String(tourId ?? '').trim(),
+      String(sanityTour._id ?? '').trim(),
+      `drafts.${canonicalTourId(tourId)}`,
+      `drafts.${canonicalTourId(sanityTour._id)}`,
+    ].filter(Boolean))]
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`
     const endDate = `${year}-${String(month).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`
 
-    const snapshot = await db
-      .collection(COLLECTION)
-      .where('tourId', '==', firestoreTourId)
-      .where('date', '>=', startDate)
-      .where('date', '<=', endDate)
-      .get()
+    const { data: monthRows, error: monthRowsError } = await supabase
+      .from('bookings')
+      .select('id,tour_id,date,status,class_id,adult_count,child_count,infant_count,first_class_locas,first_class_loca')
+      .gte('date', startDate)
+      .lte('date', endDate)
+      .in('status', ACTIVE_STATUSES)
+    if (monthRowsError) {
+      throw new Error(`Supabase occupancy list failed: ${monthRowsError.message}`)
+    }
+    const monthList = ((monthRows ?? []) as SupabaseBookingRow[])
 
     const bookedByDateAndClass: Record<string, Record<string, number>> = {}
     const firstClassLocasByDate: Record<string, string[]> = {}
-    for (const doc of snapshot.docs) {
+    for (const row of monthList) {
       try {
-        const d = doc.data() as Record<string, unknown>
-        const status = d.status as string
-        if (!ACTIVE_STATUSES.includes(status)) continue
-        const date = (d.date as string)?.slice(0, 10)
+        const rowTourId = canonicalTourId(row.tour_id)
+        if (!acceptedTourIds.includes(rowTourId) && !acceptedTourIds.includes(String(row.tour_id ?? '').trim())) continue
+        const date = String(row.date ?? '').slice(0, 10)
         if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue
-        const classKey = normalizeClassKey((d.classId as string) ?? '')
-        const rawCounts = d.counts ?? { adult: 0, child: 0, infant: 0 }
-        const counts = rawCounts as Record<string, unknown>
-        const pax = Math.max(0, Number(counts?.adult) || 0) + Math.max(0, Number(counts?.child) || 0) + Math.max(0, Number(counts?.infant) || 0)
+        const classKey = normalizeClassKey(String(row.class_id ?? ''))
+        const pax = paxCountFromRow(row)
         if (pax <= 0) continue
         if (!bookedByDateAndClass[date]) bookedByDateAndClass[date] = {}
         bookedByDateAndClass[date][classKey] = (bookedByDateAndClass[date][classKey] ?? 0) + pax
       } catch (err) {
-        console.warn('occupancy: skip doc', doc.id, err)
+        console.warn('occupancy: skip row', row.id, err)
       }
     }
 
     // First Class localar turdan bağımsız ortak havuzdur: tüm turlardan global topla.
-    const firstClassGlobalSnapshot = await db
-      .collection(COLLECTION)
-      .where('date', '>=', startDate)
-      .where('date', '<=', endDate)
-      .where('classId', '==', 'first')
-      .get()
-    for (const doc of firstClassGlobalSnapshot.docs) {
+    for (const row of monthList) {
       try {
-        const d = doc.data() as Record<string, unknown>
-        const status = d.status as string
-        if (!ACTIVE_STATUSES.includes(status)) continue
-        const date = (d.date as string)?.slice(0, 10)
+        if (normalizeClassKey(String(row.class_id ?? '')) !== 'first') continue
+        const date = String(row.date ?? '').slice(0, 10)
         if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue
-        const locas = collectFirstClassLocas(d)
+        const locas = collectFirstClassLocas(row)
         if (!firstClassLocasByDate[date]) firstClassLocasByDate[date] = []
         for (const loca of locas) {
           if (loca && !firstClassLocasByDate[date].includes(loca)) firstClassLocasByDate[date].push(loca)
         }
       } catch (err) {
-        console.warn('occupancy first-class global: skip doc', doc.id, err)
+        console.warn('occupancy first-class global: skip row', row.id, err)
       }
     }
 
@@ -196,7 +182,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      tourId: firestoreTourId,
+      tourId: normalizedTourId,
       month: `${year}-${String(month).padStart(2, '0')}`,
       classFilter: classFilter === 'all' ? null : classFilter,
       days,

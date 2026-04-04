@@ -8,7 +8,7 @@ type BookingDoc = {
   tourTitle?: string
   date?: string
   time?: string
-  /** Firestore paidNow — bilet/PDF “Ödenen tutar” */
+  /** paidNow — bilet/PDF “Ödenen tutar” */
   paidNow?: number
   counts?: { adult?: number; child?: number; infant?: number }
   classId?: string
@@ -28,7 +28,7 @@ type BookingDoc = {
 }
 
 /**
- * Firestore booking doc + bookingUrl ile VoucherData üretir.
+ * Booking doc + bookingUrl ile VoucherData üretir.
  */
 export function bookingToVoucherData(
   booking: BookingDoc,

@@ -1,16 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { useAdminAuth } from '@/components/admin/AdminAuthContext'
 
-const ADMIN_TOKEN_KEY = 'poseidon_admin_token'
-const ADMIN_EMAIL_KEY = 'poseidon_admin_email'
 const AGENT_TOKEN_KEY = 'poseidon_agent_token'
 const AGENT_EMAIL_KEY = 'poseidon_agent_email'
 
 export default function AdminHeader() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { signOutAll } = useAdminAuth()
   const [menuOpen, setMenuOpen] = useState(false)
 
   const bookingsActive = pathname === '/admin/bookings'
@@ -34,13 +35,17 @@ export default function AdminHeader() {
     }
   }, [menuOpen])
 
-  const handleLogout = () => {
-    if (typeof window === 'undefined') return
-    window.sessionStorage.removeItem(ADMIN_TOKEN_KEY)
-    window.sessionStorage.removeItem(ADMIN_EMAIL_KEY)
-    window.sessionStorage.removeItem(AGENT_TOKEN_KEY)
-    window.sessionStorage.removeItem(AGENT_EMAIL_KEY)
-    window.location.href = window.location.pathname || '/admin/bookings'
+  const handleLogout = async () => {
+    await signOutAll()
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(AGENT_TOKEN_KEY)
+      window.sessionStorage.removeItem(AGENT_EMAIL_KEY)
+    }
+    if (pathname?.includes('/biletci')) {
+      window.location.href = '/admin/biletci'
+    } else {
+      router.replace('/login')
+    }
   }
 
   const navLinks = (

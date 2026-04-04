@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getFirestore } from '@/lib/firebaseAdmin'
 import type { BookingStatus } from '@/lib/firestore/bookingTypes'
 import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery, siteSettingsQuery, tourCoversByIdsQuery } from '@/lib/queries'
 import { sendBookingPaidEmails } from '@/lib/email'
 import { getBaseUrl } from '@/lib/seo'
+import { supabase } from '@/lib/supabase'
+import { mapBookingRowToApi, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
 
-const COLLECTION = 'bookings'
 const DEFAULT_LIMIT = 50
 const MAX_LIMIT = 500
 
-import { getAuthToken, getAdminEmail, requireAdmin } from '@/lib/adminAuth'
+import { authorizeAdmin } from '@/lib/adminAuthServer'
 
 /** Resolve tour cover image URL from Sanity for given tour ids. */
 async function getTourCoverMap(tourIds: string[]): Promise<Record<string, string>> {
@@ -35,9 +36,7 @@ async function getTourCoverMap(tourIds: string[]): Promise<Record<string, string
 }
 
 export async function GET(request: NextRequest) {
-  const token = getAuthToken(request)
-  const email = getAdminEmail(request)
-  if (!requireAdmin(token, email)) {
+  if (!(await authorizeAdmin(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {
@@ -57,25 +56,53 @@ export async function GET(request: NextRequest) {
     const statusFilter = searchParams.get('status') as BookingStatus | null
     const sourceFilter = searchParams.get('source')?.trim()?.toLowerCase() ?? null
 
-    const db = getFirestore()
-    let query = db.collection(COLLECTION).orderBy('createdAt', 'desc').limit(limit)
+    let query = supabase
+      .from('bookings')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit)
     if (startAfterId) {
-      const snap = await db.collection(COLLECTION).doc(startAfterId).get()
-      if (snap.exists) {
-        query = query.startAfter(snap)
+      const { data: cursorRow, error: cursorError } = await supabase
+        .from('bookings')
+        .select('created_at')
+        .eq('id', startAfterId)
+        .single()
+      if (!cursorError && cursorRow?.created_at) {
+        query = query.lt('created_at', cursorRow.created_at)
       }
     }
-    const snapshot = await query.get()
-    type DocRow = { id: string; status?: string; date?: string; classId?: string; className?: string; createdAt: string | null; tourId?: string; [k: string]: unknown }
-    let list: DocRow[] = snapshot.docs.map((doc) => {
-      const d = doc.data()
-      const createdAt = d.createdAt?.toDate?.()
-      return {
-        id: doc.id,
-        ...d,
-        createdAt: createdAt ? createdAt.toISOString() : null,
-      } as DocRow
-    })
+    const { data: rows, error: listError } = await query
+    if (listError) throw new Error(`Supabase bookings list failed: ${listError.message}`)
+    const normalizedRows: SupabaseBookingRow[] = (rows ?? []) as SupabaseBookingRow[]
+
+    // Legacy bookings may not have access_token; backfill so admin PDF links stay valid.
+    for (const row of normalizedRows) {
+      if (!row?.id) continue
+      const hasToken = typeof row.access_token === 'string' && row.access_token.trim().length > 0
+      if (hasToken) continue
+      const accessToken = generateBookingAccessToken()
+      const { error: tokenUpdateError } = await supabase
+        .from('bookings')
+        .update({ access_token: accessToken })
+        .eq('id', row.id)
+      if (!tokenUpdateError) {
+        row.access_token = accessToken
+      }
+    }
+
+    type DocRow = {
+      id: string
+      status?: string
+      date?: string
+      classId?: string
+      className?: string
+      createdAt: string | null
+      tourId?: string
+      source?: string
+      manualSource?: string
+      [k: string]: unknown
+    }
+    let list: DocRow[] = normalizedRows.map((row) => mapBookingRowToApi(row) as DocRow)
     if (statusFilter && ['pending', 'paid', 'cancelled'].includes(statusFilter)) {
       list = list.filter((b) => b.status === statusFilter)
     }
@@ -99,10 +126,7 @@ export async function GET(request: NextRequest) {
       ...b,
       tourCoverImageUrl: (b.tourId && tourCoverMap[b.tourId as string]) || null,
     }))
-    const nextStartAfter =
-      snapshot.docs.length === limit && snapshot.docs.length > 0
-        ? snapshot.docs[snapshot.docs.length - 1].id
-        : null
+    const nextStartAfter = list.length === limit && list.length > 0 ? String(list[list.length - 1].id) : null
     return NextResponse.json({
       bookings: bookingsWithCovers,
       nextStartAfter,
@@ -117,9 +141,7 @@ export async function GET(request: NextRequest) {
 const VALID_STATUSES: BookingStatus[] = ['pending', 'paid', 'cancelled']
 
 export async function PATCH(request: NextRequest) {
-  const token = getAuthToken(request)
-  const email = getAdminEmail(request)
-  if (!requireAdmin(token, email)) {
+  if (!(await authorizeAdmin(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {
@@ -139,34 +161,39 @@ export async function PATCH(request: NextRequest) {
         { status: 400 }
       )
     }
-    const db = getFirestore()
-    const ref = db.collection(COLLECTION).doc(bookingId)
-    const snap = await ref.get()
-    if (!snap.exists) {
+    const { data: snap, error: fetchError } = await supabase.from('bookings').select('*').eq('id', bookingId).single()
+    if (fetchError || !snap) {
       return NextResponse.json({ error: 'Rezervasyon bulunamadı' }, { status: 404 })
     }
-    const data = snap.data()!
+    const data = snap as SupabaseBookingRow
     const updates: Record<string, unknown> = {}
     if (status && VALID_STATUSES.includes(status)) updates.status = status
-    if (adminNote !== undefined) updates.adminNote = adminNote === '' ? null : adminNote
+    if (adminNote !== undefined) updates.admin_note = adminNote === '' ? null : adminNote
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ ok: true, bookingId })
     }
-    await ref.update(updates)
+    const { error: updateError } = await supabase.from('bookings').update(updates).eq('id', bookingId)
+    if (updateError) throw new Error(`Supabase booking update failed: ${updateError.message}`)
 
     if (status === 'paid') {
-      const customer = (data.customer ?? {}) as Record<string, unknown>
-      const counts = (data.counts ?? { adult: 0, child: 0, infant: 0 }) as {
-        adult: number
-        child: number
-        infant: number
+      const customer = {
+        firstName: String(data.customer_first_name ?? ''),
+        lastName: String(data.customer_last_name ?? ''),
+        email: String(data.customer_email ?? ''),
+        phone: String(data.customer_phone ?? ''),
+        note: data.customer_note != null ? String(data.customer_note) : undefined,
       }
-      const tourId = String(data.tourId ?? '')
+      const counts = {
+        adult: Number(data.adult_count ?? 0),
+        child: Number(data.child_count ?? 0),
+        infant: Number(data.infant_count ?? 0),
+      }
+      const tourId = String(data.tour_id ?? '')
       let tourImageUrl: string | undefined
       let pickup: string | undefined
       let logoUrl: string | undefined
       let startTime: string | undefined
-      let paidNow: number = Number(data.totalPrice ?? 0)
+      let paidNow: number = Number(data.total_price ?? 0)
       if (tourId) {
         try {
           const tourMeta = await client.fetch<{
@@ -179,12 +206,12 @@ export async function PATCH(request: NextRequest) {
             tourImageUrl = urlFor(tourMeta.mainImage.asset).width(600).height(240).url()
           }
           pickup =
-            (data.meetingPoint != null && String(data.meetingPoint).trim()) ||
+            (data.meeting_point != null && String(data.meeting_point).trim()) ||
             tourMeta?.whereSection?.meetingPointAddress?.trim() ||
             tourMeta?.quickFacts?.meetingLocation?.trim() ||
             undefined
           startTime = tourMeta?.quickFacts?.startTime?.trim() || (data.time != null ? String(data.time) : undefined)
-          const total = Number(data.totalPrice ?? 0)
+          const total = Number(data.total_price ?? 0)
           const dep = tourMeta?.deposit
           if (dep?.enabled && dep.value != null && total > 0) {
             paidNow = dep.type === 'percentage' ? Math.round((total * dep.value) / 100) : Math.round(dep.value)
@@ -208,15 +235,23 @@ export async function PATCH(request: NextRequest) {
         // Logo opsiyonel
       }
       const siteBaseUrl = getBaseUrl().replace(/\/$/, '')
-      let accessToken = typeof data.accessToken === 'string' && data.accessToken.trim() ? data.accessToken.trim() : undefined
+      let accessToken = typeof data.access_token === 'string' && data.access_token.trim() ? data.access_token.trim() : undefined
       // Eski rezervasyonlarda token yoksa şimdi üret ve kaydet; e-postada token'lı link gitsin
       if (!accessToken) {
         accessToken = generateBookingAccessToken()
-        await ref.update({ accessToken, paidNow })
+        const { error: accessTokenError } = await supabase
+          .from('bookings')
+          .update({ access_token: accessToken, paid_now: paidNow })
+          .eq('id', bookingId)
+        if (accessTokenError) throw new Error(`Supabase access token update failed: ${accessTokenError.message}`)
       } else {
-        await ref.update({ paidNow })
+        const { error: paidNowError } = await supabase
+          .from('bookings')
+          .update({ paid_now: paidNow })
+          .eq('id', bookingId)
+        if (paidNowError) throw new Error(`Supabase paidNow update failed: ${paidNowError.message}`)
       }
-      const rawMeal = data.mealPreference as { key?: unknown; label?: unknown } | undefined
+      const rawMeal = (data.meal_preference ?? undefined) as { key?: unknown; label?: unknown } | undefined
       const mealPreference =
         rawMeal &&
         typeof rawMeal === 'object' &&
@@ -227,36 +262,33 @@ export async function PATCH(request: NextRequest) {
           ? { key: rawMeal.key.trim(), label: rawMeal.label.trim() }
           : undefined
 
+      const additionalTravelers = normalizeAdditionalTravelersFromStorage(data.additional_travelers)
+
       await sendBookingPaidEmails({
         bookingId,
         accessToken,
-        tourTitle: String(data.tourTitle ?? ''),
+        tourTitle: String(data.tour_title ?? ''),
         date: String(data.date ?? ''),
         time: startTime,
         status: String(data.status ?? ''),
-        className: String(data.className ?? ''),
-        firstClassLocas: Array.isArray(data.firstClassLocas) && data.firstClassLocas.length > 0
-          ? data.firstClassLocas.filter((x: unknown) => typeof x === 'string' && /^L(10|[1-9])$/.test(String(x).trim()))
+        className: String(data.class_name ?? ''),
+        firstClassLocas: Array.isArray(data.first_class_locas) && data.first_class_locas.length > 0
+          ? data.first_class_locas.filter((x: unknown) => typeof x === 'string' && /^L(10|[1-9])$/.test(String(x).trim()))
           : undefined,
-        firstClassLoca: Array.isArray(data.firstClassLocas) && data.firstClassLocas.length > 0
+        firstClassLoca: Array.isArray(data.first_class_locas) && data.first_class_locas.length > 0
           ? undefined
-          : (typeof data.firstClassLoca === 'string' && /^L(10|[1-9])$/.test(data.firstClassLoca.trim()) ? data.firstClassLoca.trim() : undefined),
+          : (typeof data.first_class_loca === 'string' && /^L(10|[1-9])$/.test(data.first_class_loca.trim()) ? data.first_class_loca.trim() : undefined),
         counts,
-        totalPrice: Number(data.totalPrice ?? 0),
+        totalPrice: Number(data.total_price ?? 0),
         currency: String(data.currency ?? 'TRY'),
         paidNow,
-        customer: {
-          firstName: String(customer.firstName ?? ''),
-          lastName: String(customer.lastName ?? ''),
-          email: String(customer.email ?? ''),
-          phone: String(customer.phone ?? ''),
-          note: customer.note != null ? String(customer.note) : undefined,
-        },
+        customer,
         tourImageUrl,
         pickup,
         logoUrl,
         siteBaseUrl,
         ...(mealPreference && { mealPreference }),
+        ...(additionalTravelers.length > 0 && { additionalTravelers }),
       })
     }
 

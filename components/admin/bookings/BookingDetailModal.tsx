@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import type { AdminBookingRow, BookingStatus } from '@/types/adminBookings'
 import { MANUAL_SOURCE_LABELS } from '@/types/adminBookings'
 import { additionalTravelerLabels } from '@/lib/bookingAdditionalTravelers'
+import { extractMealPreferenceCountsFromBookingLike } from '@/lib/mealPreferenceCounts'
 
 const STATUS_LABELS: Record<BookingStatus, string> = {
   pending: 'Beklemede',
@@ -44,6 +45,11 @@ export default function BookingDetailModal({
 
   const totalPax = booking.counts.adult + booking.counts.child + booking.counts.infant
   const extraTravelers = booking.additionalTravelers ?? []
+  const mealCounts = extractMealPreferenceCountsFromBookingLike({
+    counts: booking.counts,
+    mealPreference: booking.mealPreference,
+    additionalTravelers: booking.additionalTravelers,
+  })
   const extraLabels = additionalTravelerLabels({
     adult: booking.counts.adult,
     child: booking.counts.child,
@@ -123,10 +129,20 @@ export default function BookingDetailModal({
               )}
             </div>
 
-            {booking.mealPreference?.label?.trim() && (
+            {(booking.mealPreference?.label?.trim() || mealCounts.length > 0) && (
               <div className="rounded-lg border border-amber-100 bg-amber-50/80 p-3">
                 <p className="text-xs font-medium uppercase text-amber-800/90">Yemek tercihi</p>
-                <p className="mt-1 text-sm font-medium text-zinc-900">{booking.mealPreference.label.trim()}</p>
+                {booking.mealPreference?.label?.trim() ? (
+                  <p className="mt-1 text-sm font-medium text-zinc-900">{booking.mealPreference.label.trim()}</p>
+                ) : null}
+                {mealCounts.length > 0 && (
+                  <p className="mt-1 text-xs text-zinc-600">
+                    Dağılım:{' '}
+                    {mealCounts
+                      .map((x) => `${x.label} (${x.count})`)
+                      .join(' · ')}
+                  </p>
+                )}
               </div>
             )}
 

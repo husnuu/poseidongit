@@ -97,7 +97,7 @@ export const tourForBookingProjection = `{
 
 const tourForBookingQuery = `*[_type == "tour" && slug.current == $slug][0] ${tourForBookingProjection}`
 
-/** Firestore’da saklanan Sanity _id veya slug ile tur çekilir (özel gün fiyatları dahil). */
+/** Rezervasyon kayıtlarında saklanan Sanity _id veya slug ile tur çekilir (özel gün fiyatları dahil). */
 export const tourForBookingBySanityIdQuery = `*[_type == "tour" && (_id == $id || slug.current == $id)][0] ${tourForBookingProjection}`
 
 export async function fetchTourForBooking(

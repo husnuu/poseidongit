@@ -9,7 +9,7 @@ import type {
   CalendarDay,
   PricingSummary,
 } from '@/lib/sanity/bookingTypes'
-import { getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
+import { getTourIdForBooking } from '@/lib/sanity/bookingTypes'
 import { computePricingForSelection, buildCalendarDaysForMonth, getFirstAvailableYearMonth, getDisplayedAdultUnitPriceForClass, getClassStatusForDate, getRemainingCapacityForDate, getCapForTicketClass, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import FirstClassSeatSelector from '../FirstClassSeatSelector'
@@ -64,7 +64,7 @@ export default function StepDateClass({
     if (state.selectedDate) return [state.selectedDate]
     return datesForMonth(viewYear, viewMonth)
   }, [viewYear, viewMonth, state.selectedDate])
-  const { usedByDate, availability } = useAvailability(getTourIdForFirebase(tour), datesToFetch, {
+  const { usedByDate, availability } = useAvailability(getTourIdForBooking(tour), datesToFetch, {
     tourSlug: tour?.slug,
     optimisticUsed,
     invalidateKey: availabilityInvalidateKey ?? '',

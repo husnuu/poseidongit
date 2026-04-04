@@ -15,7 +15,7 @@ export function TourIdField(props: StringInputProps) {
   return (
     <Box padding={3} style={{ border: '1px solid var(--card-border-color)', borderRadius: 6 }}>
       <Text size={1} weight="semibold" style={{ marginBottom: 8, display: 'block' }}>
-        Tur ID (Rezervasyon / Firestore)
+        Tur ID (Rezervasyon)
       </Text>
       <Code size={1} style={{ display: 'block', marginBottom: 6 }}>
         Document _id: {id}

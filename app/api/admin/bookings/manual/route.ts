@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import * as admin from 'firebase-admin'
-import { getFirestore } from '@/lib/firebaseAdmin'
 import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { client } from '@/lib/sanity'
 import { tourImageAndPickupQuery, siteSettingsQuery } from '@/lib/queries'
@@ -8,10 +6,12 @@ import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabil
 import { sendBookingPaidEmails, sendManualBookingAdminNotification } from '@/lib/email'
 import { getBaseUrl } from '@/lib/seo'
 import { urlFor } from '@/lib/sanity'
-import { getAuthToken, getAdminEmail, requireAdminOrAgent } from '@/lib/adminAuth'
-import { resolveMealPreferenceForBooking } from '@/lib/bookingMealPreference'
+import { getAuthToken, getAdminEmail } from '@/lib/adminAuth'
+import { authorizeAdminOrAgent } from '@/lib/adminAuthServer'
+import { resolveMealPreferenceCountsForBooking, resolveMealPreferenceForBooking } from '@/lib/bookingMealPreference'
+import { supabase } from '@/lib/supabase'
+import { paxCountFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
-const COLLECTION = 'bookings'
 const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
 
 
@@ -34,6 +34,11 @@ type ManualSource = (typeof MANUAL_SOURCES)[number]
 
 const LOCA_REGEX = /^L(10|[1-9])$/
 
+function parseMissingColumnFromSupabaseError(message: string): string | null {
+  const m = message.match(/Could not find the '([^']+)' column of 'bookings'/i)
+  return m?.[1] ?? null
+}
+
 function parseBody(body: unknown): {
   tourId: string
   tourTitle: string
@@ -54,6 +59,7 @@ function parseBody(body: unknown): {
   sendEmailToAdmin?: boolean
   firstClassLocas?: string[]
   mealPreferenceKey?: string
+  mealPreferenceCounts?: Record<string, number>
 } | { error: string } {
   if (!body || typeof body !== 'object') return { error: 'Geçersiz istek' }
   const b = body as Record<string, unknown>
@@ -105,10 +111,21 @@ function parseBody(body: unknown): {
     if (firstClassLocas.length === 0) firstClassLocas = undefined
   }
   let mealPreferenceKey: string | undefined
+  let mealPreferenceCounts: Record<string, number> | undefined
   const mp = b.mealPreference
   if (mp && typeof mp === 'object') {
     const mk = (mp as Record<string, unknown>).key
     if (typeof mk === 'string') mealPreferenceKey = mk.trim() || undefined
+    const mc = (mp as Record<string, unknown>).counts
+    if (mc && typeof mc === 'object' && !Array.isArray(mc)) {
+      const out: Record<string, number> = {}
+      for (const [k, v] of Object.entries(mc as Record<string, unknown>)) {
+        const key = typeof k === 'string' ? k.trim() : ''
+        const count = Math.max(0, Number(v) || 0)
+        if (key && count > 0) out[key] = count
+      }
+      if (Object.keys(out).length > 0) mealPreferenceCounts = out
+    }
   }
   return {
     tourId,
@@ -130,17 +147,18 @@ function parseBody(body: unknown): {
     sendEmailToAdmin,
     firstClassLocas,
     mealPreferenceKey,
+    mealPreferenceCounts,
   }
 }
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
-  const token = getAuthToken(request)
-  const email = getAdminEmail(request)
-  if (!requireAdminOrAgent(token, email)) {
+  if (!(await authorizeAdminOrAgent(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const token = getAuthToken(request)
+  const email = getAdminEmail(request)
   let body: unknown
   try {
     body = await request.json()
@@ -171,6 +189,7 @@ export async function POST(request: NextRequest) {
     sendEmailToAdmin,
     firstClassLocas: firstClassLocasParsed,
     mealPreferenceKey,
+    mealPreferenceCounts,
   } = parsed
 
   const totalPax = counts.adult + counts.child + counts.infant
@@ -190,27 +209,42 @@ export async function POST(request: NextRequest) {
   }
   const firestoreTourId = sanityTour._id ?? tourId
 
-  const mealResolve = await resolveMealPreferenceForBooking(firestoreTourId, mealPreferenceKey)
-  if (!mealResolve.ok) {
-    return NextResponse.json({ error: mealResolve.message }, { status: 400 })
+  let mealPreference: { key: string; label: string } | undefined
+  let mealPreferenceCountsStored: Array<{ key: string; label: string; count: number }> | undefined
+  if (mealPreferenceCounts && Object.keys(mealPreferenceCounts).length > 0) {
+    const mealCountsResolve = await resolveMealPreferenceCountsForBooking(
+      firestoreTourId,
+      mealPreferenceCounts,
+      totalPax
+    )
+    if (!mealCountsResolve.ok) {
+      return NextResponse.json({ error: mealCountsResolve.message }, { status: 400 })
+    }
+    mealPreference = mealCountsResolve.primary
+    mealPreferenceCountsStored = mealCountsResolve.stored
+  } else {
+    const mealResolve = await resolveMealPreferenceForBooking(firestoreTourId, mealPreferenceKey)
+    if (!mealResolve.ok) {
+      return NextResponse.json({ error: mealResolve.message }, { status: 400 })
+    }
+    mealPreference = mealResolve.stored
   }
-  const mealPreference = mealResolve.stored
 
   const capacityByClass = computeCapacityForDate(sanityTour, date)
-  const db = getFirestore()
-  const snapshot = await db
-    .collection(COLLECTION)
-    .where('tourId', '==', firestoreTourId)
-    .where('date', '==', date)
-    .where('status', 'in', ACTIVE_STATUSES)
-    .get()
+  const { data: snapshotRows, error: snapshotError } = await supabase
+    .from('bookings')
+    .select('id, class_id, adult_count, child_count, infant_count')
+    .eq('tour_id', firestoreTourId)
+    .eq('date', date)
+    .in('status', ACTIVE_STATUSES)
+  if (snapshotError) {
+    throw new Error(`Supabase manual capacity query failed: ${snapshotError.message}`)
+  }
 
   const bookedByClass: Record<string, number> = {}
-  for (const doc of snapshot.docs) {
-    const d = doc.data()
-    const ckey = normalizeClassKey((d.classId as string) ?? '')
-    const c = (d.counts ?? {}) as Record<string, unknown>
-    const pax = Math.max(0, Number(c?.adult) || 0) + Math.max(0, Number(c?.child) || 0) + Math.max(0, Number(c?.infant) || 0)
+  for (const row of (snapshotRows ?? []) as SupabaseBookingRow[]) {
+    const ckey = normalizeClassKey((row.class_id as string) ?? '')
+    const pax = paxCountFromRow(row)
     if (pax > 0) bookedByClass[ckey] = (bookedByClass[ckey] ?? 0) + pax
   }
 
@@ -234,34 +268,62 @@ export async function POST(request: NextRequest) {
 
   const reference = generateBookingReference()
   const accessToken = generateBookingAccessToken()
-  const ref = await db.collection(COLLECTION).add({
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  let manualInsertPayload: Record<string, unknown> = {
+    created_at: new Date().toISOString(),
     status,
-    tourId: firestoreTourId,
-    tourTitle,
+    tour_id: firestoreTourId,
+    tour_title: tourTitle,
     date,
-    counts,
-    classId,
-    className,
-    unitPrice,
-    totalPrice,
+    class_id: classId,
+    class_name: className,
+    unit_price: unitPrice,
+    total_price: totalPrice,
     currency,
-    customer: {
-      firstName: customer.firstName,
-      lastName: customer.lastName,
-      email: customer.email || '',
-      phone: customer.phone,
-    },
+    customer_first_name: customer.firstName,
+    customer_last_name: customer.lastName,
+    customer_email: customer.email || '',
+    customer_phone: customer.phone,
+    adult_count: counts.adult,
+    child_count: counts.child,
+    infant_count: counts.infant,
     source: 'manual',
-    manualSource,
-    createdByAdmin: true,
-    ...(adminNote != null && adminNote !== '' && { adminNote }),
+    manual_source: manualSource,
+    created_by_admin: true,
+    ...(adminNote != null && adminNote !== '' && { admin_note: adminNote }),
     reference,
-    accessToken,
-    ...(status === 'paid' && totalPrice > 0 && { paidNow: totalPrice }),
-    ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { firstClassLocas: firstClassLocasParsed }),
-    ...(mealPreference && { mealPreference }),
-  })
+    access_token: accessToken,
+    ...(status === 'paid' && totalPrice > 0 && { paid_now: totalPrice }),
+    ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { first_class_locas: firstClassLocasParsed }),
+    ...(mealPreference && {
+      meal_preference: {
+        ...mealPreference,
+        ...(mealPreferenceCountsStored?.length ? { counts: mealPreferenceCountsStored } : {}),
+      },
+    }),
+  }
+  let insertedBooking: { id: string } | null = null
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const { data, error } = await supabase
+      .from('bookings')
+      .insert(manualInsertPayload)
+      .select('id')
+      .single()
+    if (!error && data?.id) {
+      insertedBooking = data
+      break
+    }
+    if (error) {
+      const missingColumn = parseMissingColumnFromSupabaseError(error.message)
+      if (missingColumn && Object.prototype.hasOwnProperty.call(manualInsertPayload, missingColumn)) {
+        delete manualInsertPayload[missingColumn]
+        continue
+      }
+    }
+    throw new Error(`Supabase manual booking insert failed: ${error?.message ?? 'No id returned'}`)
+  }
+  if (!insertedBooking?.id) {
+    throw new Error('Supabase manual booking insert failed: No id returned')
+  }
 
   if (status === 'paid' && sendEmail && customer.email && totalPrice > 0) {
     let tourImageUrl: string | undefined
@@ -294,8 +356,16 @@ export async function POST(request: NextRequest) {
       // ignore
     }
     const siteBaseUrl = getBaseUrl().replace(/\/$/, '')
+    const mealPreferenceForEmail =
+      mealPreference && mealPreference.key && mealPreference.label
+        ? {
+            key: mealPreference.key,
+            label: mealPreference.label,
+            ...(mealPreferenceCountsStored?.length ? { counts: mealPreferenceCountsStored } : {}),
+          }
+        : undefined
     await sendBookingPaidEmails({
-      bookingId: ref.id,
+      bookingId: insertedBooking.id,
       accessToken,
       tourTitle,
       date,
@@ -317,15 +387,23 @@ export async function POST(request: NextRequest) {
       logoUrl,
       siteBaseUrl,
       ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { firstClassLocas: firstClassLocasParsed }),
-      ...(mealPreference && { mealPreference }),
+      ...(mealPreferenceForEmail && { mealPreference: mealPreferenceForEmail }),
     })
   }
 
   if (sendEmailToAdmin) {
     const adminTo = (email && email.trim()) || process.env.ADMIN_EMAIL?.trim()
     if (adminTo) {
+      const mealPreferenceForEmail =
+        mealPreference && mealPreference.key && mealPreference.label
+          ? {
+              key: mealPreference.key,
+              label: mealPreference.label,
+              ...(mealPreferenceCountsStored?.length ? { counts: mealPreferenceCountsStored } : {}),
+            }
+          : undefined
       await sendManualBookingAdminNotification(adminTo, {
-        bookingId: ref.id,
+        bookingId: insertedBooking.id,
         tourTitle,
         date,
         className,
@@ -339,14 +417,14 @@ export async function POST(request: NextRequest) {
           phone: customer.phone,
         },
         ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { firstClassLocas: firstClassLocasParsed }),
-        ...(mealPreference && { mealPreference }),
+        ...(mealPreferenceForEmail && { mealPreference: mealPreferenceForEmail }),
       })
     }
   }
 
   return NextResponse.json({
     ok: true,
-    bookingId: ref.id,
+    bookingId: insertedBooking.id,
     reference,
   })
 }

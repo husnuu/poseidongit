@@ -250,7 +250,7 @@ export default function YachtInquiryModal({
                     ? 'Devam etmek için takvimden bir gün seçin.'
                     : !rangeOk
                       ? 'Devam etmek için giriş ve ayrılış günlerini seçin (en az 1 gece).'
-                      : 'Konaklama fiyatı için gece takviminde tüm geceler tanımlı olmalı veya konaklamalı toplam fiyat girilmeli.'}
+                      : 'Konaklama fiyatı için gece takviminde tüm geceler tanımlı olmalı veya konaklamalı toplam fiyat (referans) girilmeli.'}
                 </p>
               ) : null}
               <span className="hero-primary-btn-wrap mt-0 mb-0 w-full rounded-xl p-[2px] block yacht-inquiry-cta-wrap">

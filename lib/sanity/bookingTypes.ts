@@ -142,12 +142,13 @@ export interface TourForBooking {
   mealMenu?: MealMenuForBooking
 }
 
-/** Firestore bookings: tourId = Sanity _id (UUID), date "YYYY-MM-DD", classId "eco"|"premium"|"first", counts { adult, child, infant }, status "pending"|"paid". */
-export function getTourIdForFirebase(tour: TourForBooking | null | undefined): string | undefined {
+/** Supabase bookings: tourId = Sanity _id (UUID), date "YYYY-MM-DD", classId "eco"|"premium"|"first", counts { adult, child, infant }, status "pending"|"paid". */
+export function getTourIdForBooking(tour: TourForBooking | null | undefined): string | undefined {
   if (!tour) return undefined
   const id = tour._id ?? tour.slug
   return id && String(id).trim() ? String(id).trim() : undefined
 }
+
 
 export interface CalendarDay {
   date: string // YYYY-MM-DD

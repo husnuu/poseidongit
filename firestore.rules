@@ -1,13 +1,30 @@
 rules_version = '2';
-// bookings: okuma açık (Console'da "Error loading documents" olmasın diye), yazma kapalı (sadece sunucu firebase-admin ile yazar).
-// Diğer tüm koleksiyonlar: tamamen kapalı.
-// Admin SDK kuralları bypass eder; Next.js API'leri etkilenmez.
+// Özet: İstemci (tarayıcı / mobil SDK) hiçbir hassas koleksiyona doğrudan yazamaz.
+// Okuma da kapalıdır; tüm iş mantığı Next.js API + Firebase Admin SDK üzerinden gider (kuralları bypass eder).
+//
+// KVKK / GDPR: Kişisel veri içeren koleksiyonlar için "allow read: if true" KULLANMAYIN.
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /bookings/{document} {
-      allow read: if true;
+
+    // Rezervasyonlar — yalnızca sunucu (Admin SDK). İstemciden okuma/yazma yok.
+    match /bookings/{bookingId} {
+      allow read, write: if false;
+    }
+
+    // Yat / motoryat talep formları — oluşturma ve listeleme API üzerinden (Admin SDK).
+    match /yachtInquiries/{inquiryId} {
+      allow read, write: if false;
+    }
+
+    // Yönetici hesabı: Firebase Auth ile giriş yapmış kullanıcı yalnızca kendi profilini okuyabilir (isAdmin vb.).
+    // Yazma yine sunucuda veya Console’dan; istemci users dokümanını değiştiremez.
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if false;
     }
+
+    // Diğer tüm yollar kapalı.
     match /{document=**} {
       allow read, write: if false;
     }

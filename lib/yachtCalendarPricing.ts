@@ -40,8 +40,9 @@ export function yachtDailyUnitPrice(y: YachtRentalDocument, dateIso: string): nu
 }
 
 /**
- * Konaklama toplamı: yalnızca konaklamalı gece takvimi veya “Konaklamalı — toplam fiyat (referans)”.
- * Günlük kiralama başlangıç fiyatı burada kullanılmaz. Takvimde en az bir satır varsa her gece için satır gerekir.
+ * Konaklama toplamı: `overnightNightPricing` içindeki gecelik konaklamalı tutarların toplamı.
+ * Tüm geceler aynı fiyatdaysa bu, gece sayısı × gecelik fiyat ile aynıdır. Günlük kiralama fiyatı kullanılmaz.
+ * Gece takvimi boşsa yalnızca `overnightTotalPrice` (referans).
  */
 export function yachtOvernightStayTotal(
   y: YachtRentalDocument,
@@ -69,7 +70,7 @@ export function yachtOvernightStayTotal(
   return sum
 }
 
-/** Konaklamalı takvim hücresi: yalnızca gece takvimindeki satır fiyatı (günlük kiralama fiyatı kullanılmaz). */
+/** Konaklamalı takvim hücresi: yalnızca Sanity `overnightNightPricing` (gece başına) satırı; günlük fiyat gösterilmez. */
 export function yachtOvernightCellDisplayPrice(
   y: YachtRentalDocument,
   nightStartIso: string

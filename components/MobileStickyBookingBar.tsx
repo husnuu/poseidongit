@@ -1,6 +1,7 @@
 'use client'
 
 import { openBookingModal } from '@/components/booking/bookingEvents'
+import { MOBILE_BOTTOM_CTA_BAR_ID } from '@/lib/mobileBottomCtaBarId'
 import type { DepositConfig, TourForBooking } from '@/lib/sanity/bookingTypes'
 import styles from './MobileStickyBookingBar.module.css'
 
@@ -46,7 +47,7 @@ export default function MobileStickyBookingBar({
   if (isModalOpen) return null
 
   return (
-    <div className={styles.bookingBar}>
+    <div id={MOBILE_BOTTOM_CTA_BAR_ID} className={styles.bookingBar}>
       <div className={styles.bookingBarInner}>
         <div className={styles.priceBlock}>
           <div className={styles.priceValue}>

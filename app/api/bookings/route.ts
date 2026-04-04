@@ -3,8 +3,6 @@
  * Rate limiting: see docs/RATE_LIMITING_SUGGESTIONS.md (e.g. 10 req/min per IP).
  */
 import { NextResponse } from 'next/server'
-import * as admin from 'firebase-admin'
-import { getFirestore } from '@/lib/firebaseAdmin'
 import type { BookingCreatePayload } from '@/lib/firestore/bookingTypes'
 import {
   additionalTravelerSlotCount,
@@ -20,14 +18,19 @@ import {
   resolveMealPreferenceForBooking,
   resolveAdditionalTravelerMealPreferencesForBooking,
 } from '@/lib/bookingMealPreference'
+import { supabase } from '@/lib/supabase'
+import {
+  firstClassLocasFromRow,
+  normalizeDateOnly,
+  type SupabaseBookingRow,
+} from '@/lib/bookingsSupabase'
 
-const COLLECTION = 'bookings'
 const CURRENCY = 'TRY'
 const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
 const TOTAL_FIRST_CLASS_LOCAS = 10
 const LOCA_REGEX = /^L(10|[1-9])$/
 
-/** Resolve tourId (Sanity _id or slug) to canonical Sanity _id. Firestore’da hep aynı anahtar kullanılsın diye drafts. kaldırılıyor. */
+/** Resolve tourId (Sanity _id or slug) to canonical Sanity _id. Supabase tarafında tek anahtar kullanılsın diye drafts. kaldırılıyor. */
 async function resolveTourIdToSanityId(tourId: string): Promise<string> {
   const tour = await client.fetch<{ _id?: string } | null>(tourForAvailabilityQuery, { tourId })
   const raw = (tour?._id && String(tour._id).trim()) ? String(tour._id).trim() : tourId
@@ -112,19 +115,9 @@ function normalizeClassKey(classId: string): string {
   return k || 'eco'
 }
 
-function collectFirstClassLocas(d: Record<string, unknown>): string[] {
-  const out: string[] = []
-  if (Array.isArray(d.firstClassLocas)) {
-    for (const x of d.firstClassLocas) {
-      const s = typeof x === 'string' ? x.trim().toUpperCase() : ''
-      if (s && LOCA_REGEX.test(s) && !out.includes(s)) out.push(s)
-    }
-  }
-  if (out.length === 0 && typeof d.firstClassLoca === 'string') {
-    const s = d.firstClassLoca.trim().toUpperCase()
-    if (s && LOCA_REGEX.test(s)) out.push(s)
-  }
-  return out
+function parseMissingColumnFromSupabaseError(message: string): string | null {
+  const m = message.match(/Could not find the '([^']+)' column of 'bookings'/i)
+  return m?.[1] ?? null
 }
 
 /** Sanity turu + tarih: sezon, özel gün sınıf/genel fiyatları (classPriceOverrides → priceOverrides) ile toplam. */
@@ -235,8 +228,7 @@ export async function POST(request: Request) {
       )
       timeToSave = tourMeta?.startTime?.trim() || undefined
     }
-    const db = getFirestore()
-    const dateNorm = payload.date.slice(0, 10)
+    const dateNorm = normalizeDateOnly(payload.date)
     const totalPax = payload.counts.adult + payload.counts.child + payload.counts.infant
     if (totalPax <= 0) {
       return NextResponse.json({ error: 'Kişi sayısı en az 1 olmalıdır.' }, { status: 400 })
@@ -262,15 +254,18 @@ export async function POST(request: Request) {
           { status: 400 }
         )
       }
-      const firstClassSnapshot = await db
-        .collection(COLLECTION)
-        .where('date', '==', dateNorm)
-        .where('classId', '==', 'first')
-        .where('status', 'in', ACTIVE_STATUSES)
-        .get()
+      const { data: firstClassRows, error: firstClassError } = await supabase
+        .from('bookings')
+        .select('id, first_class_locas, first_class_loca')
+        .eq('date', dateNorm)
+        .eq('class_id', 'first')
+        .in('status', ACTIVE_STATUSES)
+      if (firstClassError) {
+        throw new Error(`Supabase first class availability query failed: ${firstClassError.message}`)
+      }
       const reservedLocas = new Set<string>()
-      for (const doc of firstClassSnapshot.docs) {
-        const locas = collectFirstClassLocas(doc.data() as Record<string, unknown>)
+      for (const row of (firstClassRows ?? []) as SupabaseBookingRow[]) {
+        const locas = firstClassLocasFromRow(row)
         for (const loca of locas) reservedLocas.add(loca)
       }
       const conflicts = selectedLocas.filter((loca) => reservedLocas.has(loca))
@@ -282,7 +277,7 @@ export async function POST(request: Request) {
       }
       payload.firstClassLocas = selectedLocas
     }
-    // Firestore undefined kabul etmez; note yoksa alanı ekleme
+    // Not alanı boşsa DB'ye yazma.
     const customer: Record<string, string> = {
       firstName: payload.customer.firstName,
       lastName: payload.customer.lastName,
@@ -293,35 +288,64 @@ export async function POST(request: Request) {
       customer.note = payload.customer.note
     }
     const accessToken = generateBookingAccessToken()
-    const ref = await db.collection(COLLECTION).add({
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    const insertPayload = {
+      created_at: new Date().toISOString(),
       status: 'pending',
-      tourId: firestoreTourId,
-      tourTitle: payload.tourTitle,
+      tour_id: firestoreTourId,
+      tour_title: payload.tourTitle,
       date: /^\d{4}-\d{2}-\d{2}$/.test(dateNorm) ? dateNorm : payload.date,
       ...(timeToSave && { time: timeToSave }),
-      ...(payload.meetingPoint && { meetingPoint: payload.meetingPoint }),
-      counts: payload.counts,
-      classId: payload.classId,
-      className: payload.className,
-      ...(payload.firstClassLocas && payload.firstClassLocas.length > 0 && { firstClassLocas: payload.firstClassLocas }),
-      unitPrice,
-      totalPrice,
+      ...(payload.meetingPoint && { meeting_point: payload.meetingPoint }),
+      class_id: payload.classId,
+      class_name: payload.className,
+      ...(payload.firstClassLocas && payload.firstClassLocas.length > 0 && { first_class_locas: payload.firstClassLocas }),
+      unit_price: unitPrice,
+      total_price: totalPrice,
       currency: CURRENCY,
-      customer,
-      ...(payload.additionalTravelers &&
-        payload.additionalTravelers.length > 0 && {
-          additionalTravelers: additionalTravelersWithMeal,
-        }),
-      ...(mealPreference && { mealPreference }),
+      customer_first_name: customer.firstName,
+      customer_last_name: customer.lastName,
+      customer_email: customer.email,
+      customer_phone: customer.phone,
+      ...(customer.note ? { customer_note: customer.note } : {}),
+      adult_count: payload.counts.adult,
+      child_count: payload.counts.child,
+      infant_count: payload.counts.infant,
+      ...(additionalTravelersWithMeal.length > 0 && {
+        additional_travelers: additionalTravelersWithMeal,
+      }),
+      ...(mealPreference && { meal_preference: mealPreference }),
       source: 'web',
-      accessToken,
-    })
+      access_token: accessToken,
+    }
+    let mutableInsertPayload: Record<string, unknown> = { ...insertPayload }
+    let insertedRow: { id: string } | null = null
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const { data, error } = await supabase
+        .from('bookings')
+        .insert(mutableInsertPayload)
+        .select('id')
+        .single()
+      if (!error && data?.id) {
+        insertedRow = data
+        break
+      }
+      if (error) {
+        const missingColumn = parseMissingColumnFromSupabaseError(error.message)
+        if (missingColumn && Object.prototype.hasOwnProperty.call(mutableInsertPayload, missingColumn)) {
+          delete mutableInsertPayload[missingColumn]
+          continue
+        }
+      }
+      throw new Error(`Supabase booking insert failed: ${error?.message ?? 'No id returned'}`)
+    }
+    if (!insertedRow?.id) {
+      throw new Error('Supabase booking insert failed: No id returned')
+    }
 
     // E-posta yalnızca ödeme onaylandığında (admin "paid" yaptığında) gönderilir.
 
     return NextResponse.json({
-      bookingId: ref.id,
+      bookingId: insertedRow.id,
       accessToken,
       summary: {
         tourTitle: payload.tourTitle,
@@ -335,13 +359,13 @@ export async function POST(request: Request) {
   } catch (e) {
     const err = e instanceof Error ? e : new Error(String(e))
     console.error('POST /api/bookings error:', err.message, err.stack)
-    const isFirebase =
-      err.message.includes('Firebase') ||
+    const isInfra =
+      err.message.includes('Supabase') ||
       err.message.includes('credential') ||
       err.message.includes('private') ||
-      err.message.includes('FIREBASE_')
+      err.message.includes('SUPABASE_')
     const message =
-      process.env.NODE_ENV === 'development' ? err.message : isFirebase ? 'Ödeme servisi yapılandırma hatası.' : 'Sunucu hatası. Lütfen tekrar deneyin.'
+      process.env.NODE_ENV === 'development' ? err.message : isInfra ? 'Rezervasyon servisi yapılandırma hatası.' : 'Sunucu hatası. Lütfen tekrar deneyin.'
     return NextResponse.json(
       { error: message },
       { status: 500 }

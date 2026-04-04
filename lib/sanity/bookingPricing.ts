@@ -47,7 +47,7 @@ export function getCapacityForDate(
   return { eco, premium, first }
 }
 
-/** Kalan kapasite = base kapasite - Firebase’deki rezervasyonlar. usedByDateAndClass: API /api/availability’den. */
+/** Kalan kapasite = base kapasite - rezervasyonlar. usedByDateAndClass: API /api/availability’den. */
 export function getRemainingCapacityForDate(
   tour: TourForBooking,
   dateStr: string,

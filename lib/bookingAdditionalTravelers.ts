@@ -79,3 +79,57 @@ export function parseAdditionalTravelersFromBody(raw: unknown): AdditionalTravel
   }
   return out
 }
+
+/** API / e-posta için: DB’deki jsonb (camelCase veya snake_case) tek forma indirgenir. */
+export type AdditionalTravelerStored = {
+  firstName: string
+  lastName: string
+  mealPreference?: { key: string; label: string }
+}
+
+function mealPairFromObject(m: Record<string, unknown>): { key: string; label: string } | undefined {
+  const k = m.key != null ? String(m.key).trim() : ''
+  const lbl = m.label != null ? String(m.label).trim() : ''
+  if (!k || !lbl) return undefined
+  return { key: k, label: lbl }
+}
+
+export function normalizeAdditionalTravelersFromStorage(raw: unknown): AdditionalTravelerStored[] {
+  if (raw == null) return []
+  let listRaw: unknown = raw
+  if (typeof raw === 'string') {
+    try {
+      listRaw = JSON.parse(raw) as unknown
+    } catch {
+      return []
+    }
+  }
+  if (!Array.isArray(listRaw)) return []
+  const out: AdditionalTravelerStored[] = []
+  for (const item of listRaw) {
+    if (!item || typeof item !== 'object') continue
+    const o = item as Record<string, unknown>
+    const fnRaw =
+      typeof o.firstName === 'string'
+        ? o.firstName
+        : typeof o.first_name === 'string'
+          ? o.first_name
+          : ''
+    const lnRaw =
+      typeof o.lastName === 'string'
+        ? o.lastName
+        : typeof o.last_name === 'string'
+          ? o.last_name
+          : ''
+    const fn = fnRaw.trim().slice(0, MAX_NAME_LEN)
+    const ln = lnRaw.trim().slice(0, MAX_NAME_LEN)
+    const mpRaw = o.mealPreference ?? o.meal_preference
+    let mealPreference: { key: string; label: string } | undefined
+    if (mpRaw && typeof mpRaw === 'object' && !Array.isArray(mpRaw)) {
+      mealPreference = mealPairFromObject(mpRaw as Record<string, unknown>)
+    }
+    if (!fn && !ln) continue
+    out.push({ firstName: fn, lastName: ln, ...(mealPreference ? { mealPreference } : {}) })
+  }
+  return out
+}

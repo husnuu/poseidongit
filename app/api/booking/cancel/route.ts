@@ -3,9 +3,8 @@
  * Rate limiting: see docs/RATE_LIMITING_SUGGESTIONS.md (e.g. 10 req/min per IP).
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { getFirestore } from '@/lib/firebaseAdmin'
-
-const COLLECTION = 'bookings'
+import { supabase } from '@/lib/supabase'
+import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -27,18 +26,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const db = getFirestore()
-    const ref = db.collection(COLLECTION).doc(bookingId)
-    const snap = await ref.get()
-
-    if (!snap.exists) {
+    const { data: bookingRow, error: fetchError } = await supabase
+      .from('bookings')
+      .select('id, status, date, time, customer_email')
+      .eq('id', bookingId)
+      .single()
+    if (fetchError || !bookingRow) {
       return NextResponse.json(
         { error: 'Rezervasyon bulunamadı' },
         { status: 404 }
       )
     }
 
-    const data = snap.data()!
+    const data = bookingRow as SupabaseBookingRow
     if (data.status === 'cancelled') {
       return NextResponse.json({
         ok: true,
@@ -46,8 +46,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const customer = (data.customer ?? {}) as Record<string, string>
-    const bookingEmail = String(customer.email ?? '').trim().toLowerCase()
+    const bookingEmail = String(data.customer_email ?? '').trim().toLowerCase()
     if (bookingEmail !== email) {
       return NextResponse.json(
         { error: 'Bu e-posta adresi bu rezervasyona ait değil' },
@@ -76,7 +75,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    await ref.update({ status: 'cancelled' })
+    const { error: updateError } = await supabase
+      .from('bookings')
+      .update({ status: 'cancelled' })
+      .eq('id', bookingId)
+    if (updateError) {
+      throw new Error(`Supabase booking cancel failed: ${updateError.message}`)
+    }
 
     return NextResponse.json({
       ok: true,

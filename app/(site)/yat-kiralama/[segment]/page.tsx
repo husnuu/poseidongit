@@ -40,6 +40,10 @@ const getYachtsByLocation = cache(async (locationSlug: string) => {
 })
 
 export async function generateStaticParams() {
+  if (process.env.NODE_ENV === 'development') {
+    // Dev'de static-path worker kaynaklı chunk bozulmalarını önlemek için kapalı.
+    return []
+  }
   try {
     const [yachts, locs] = await Promise.all([
       client.fetch<{ slug: string | null; locationSlug?: string | null }[]>(yachtRentalSlugsQuery),

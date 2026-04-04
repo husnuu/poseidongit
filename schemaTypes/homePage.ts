@@ -40,6 +40,38 @@ export default defineType({
       ],
     }),
     defineField({
+      name: 'searchForm',
+      title: 'Arama formu etiketleri',
+      type: 'object',
+      description: 'Ana sayfa veya hero ile kullanılan arama alanlarının metinleri.',
+      fields: [
+        defineField({
+          name: 'dailyLabel',
+          title: 'Günlük sekme / mod etiketi',
+          type: 'string',
+          initialValue: 'Günlük',
+        }),
+        defineField({
+          name: 'overnightLabel',
+          title: 'Konaklamalı sekme / mod etiketi',
+          type: 'string',
+          initialValue: 'Konaklamalı',
+        }),
+        defineField({
+          name: 'dateLabelDaily',
+          title: 'Günlük tarih alanı etiketi',
+          type: 'string',
+          initialValue: 'Tarih',
+        }),
+        defineField({
+          name: 'guestLabel',
+          title: 'Misafir alanı etiketi',
+          type: 'string',
+          initialValue: 'Misafir',
+        }),
+      ],
+    }),
+    defineField({
       name: 'hero',
       title: 'Hero Bölümü',
       type: 'object',
@@ -214,6 +246,64 @@ export default defineType({
               type: 'reference',
               to: [{ type: 'tour' }],
             },
+          ],
+        }),
+      ],
+    }),
+    defineField({
+      name: 'popularYachtsSection',
+      title: 'En popüler tekneler (yat kiralama)',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'enabled',
+          title: 'Aktif',
+          type: 'boolean',
+          initialValue: true,
+        }),
+        defineField({
+          name: 'title',
+          title: 'Başlık',
+          type: 'string',
+          initialValue: 'En popüler tekneler',
+        }),
+        defineField({
+          name: 'subtitle',
+          title: 'Üst satır (küçük)',
+          type: 'string',
+          description: 'İsteğe bağlı; başlığın üstünde ince satır olarak görünür.',
+        }),
+        defineField({
+          name: 'items',
+          title: 'Yatlar',
+          type: 'array',
+          description:
+            'Ana sayfada gösterilecek yatları sırayla seçin (yalnızca yayındaki kayıtlar sitede listelenir).',
+          validation: (Rule) => Rule.max(8).error('En fazla 8 yat seçebilirsiniz'),
+          of: [
+            {
+              type: 'reference',
+              to: [{ type: 'yachtRental' }],
+            },
+          ],
+        }),
+        defineField({
+          name: 'ctaButton',
+          title: 'Bölüm altı link',
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'label',
+              title: 'Buton metni',
+              type: 'string',
+              initialValue: 'Tüm yatları gör',
+            }),
+            defineField({
+              name: 'href',
+              title: 'Link',
+              type: 'string',
+              initialValue: '/yat-kiralama',
+            }),
           ],
         }),
       ],

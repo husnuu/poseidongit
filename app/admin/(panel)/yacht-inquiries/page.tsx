@@ -1,7 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ADMIN_EMAIL_HEADER } from '@/lib/adminAuth'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useAdminAuth } from '@/components/admin/AdminAuthContext'
+import { adminFetchInit } from '@/lib/adminRequestInit'
 
 type InquiryStatus = 'new' | 'read' | 'contacted' | 'closed'
 
@@ -32,9 +35,6 @@ interface AdminYachtInquiry {
   createdAt: string | null
   updatedAt: string | null
 }
-
-const ADMIN_TOKEN_STORAGE_KEY = 'poseidon_admin_token'
-const ADMIN_EMAIL_STORAGE_KEY = 'poseidon_admin_email'
 
 const FETCH_TIMEOUT_MS = 20_000
 const PAGE_SIZE = 20
@@ -84,12 +84,9 @@ function formatPrice(value: number | null, currency: string | null): string {
 }
 
 export default function AdminYachtInquiriesPage() {
-  const [hydrated, setHydrated] = useState(false)
-  const [email, setEmail] = useState('')
-  const [token, setToken] = useState('')
-  const [submittedEmail, setSubmittedEmail] = useState('')
-  const [submittedToken, setSubmittedToken] = useState('')
-  const [loginChecking, setLoginChecking] = useState(false)
+  const router = useRouter()
+  const { initializing: authInitializing, isAdmin, signOutAll, user } = useAdminAuth()
+  const adminEmailHeader = user?.email?.trim().toLowerCase() ?? ''
 
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -150,24 +147,19 @@ export default function AdminYachtInquiriesPage() {
   }, [statusFilter, dateFrom, dateTo, searchQuery])
 
   const fetchInquiries = useCallback(async () => {
-    if (!submittedToken) return
+    if (!isAdmin) return
     setLoading(true)
     setError(null)
     try {
-      const headers: Record<string, string> = {
-        Authorization: `Bearer ${submittedToken}`,
-      }
-      if (submittedEmail) headers[ADMIN_EMAIL_HEADER] = submittedEmail
-      const res = await fetchWithTimeout('/api/admin/yacht-inquiries?limit=500', { headers })
+      const res = await fetchWithTimeout(
+        '/api/admin/yacht-inquiries?limit=500',
+        adminFetchInit({}, { adminEmail: adminEmailHeader || null })
+      )
       if (!res.ok) {
         if (res.status === 401) {
-          setError('E-posta veya şifre hatalı.')
-          setSubmittedToken('')
-          setSubmittedEmail('')
-          if (typeof window !== 'undefined') {
-            window.sessionStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY)
-            window.sessionStorage.removeItem(ADMIN_EMAIL_STORAGE_KEY)
-          }
+          setError('Oturum süresi doldu. Tekrar giriş yapın.')
+          await signOutAll()
+          router.replace('/login')
         } else {
           setError('Motoryat talepleri alınamadı.')
         }
@@ -181,45 +173,31 @@ export default function AdminYachtInquiriesPage() {
     } finally {
       setLoading(false)
     }
-  }, [submittedToken, submittedEmail])
+  }, [isAdmin, adminEmailHeader, signOutAll, router])
 
   useEffect(() => {
-    setHydrated(true)
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const savedToken = window.sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) ?? ''
-    const savedEmail = (window.sessionStorage.getItem(ADMIN_EMAIL_STORAGE_KEY) ?? '').toLowerCase()
-    if (!savedToken) return
-    setToken(savedToken)
-    setEmail(savedEmail)
-    setSubmittedToken(savedToken)
-    setSubmittedEmail(savedEmail)
-  }, [])
-
-  useEffect(() => {
-    if (submittedToken) fetchInquiries()
-  }, [submittedToken, fetchInquiries])
+    if (isAdmin) fetchInquiries()
+  }, [isAdmin, fetchInquiries])
 
   const updateInquiry = useCallback(async (
     inquiryId: string,
     payload: { status?: InquiryStatus; adminNote?: string; markRead?: boolean }
   ) => {
-    if (!submittedToken) return false
+    if (!isAdmin) return false
     setSaving(true)
     setError(null)
     try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${submittedToken}`,
-      }
-      if (submittedEmail) headers[ADMIN_EMAIL_HEADER] = submittedEmail
-      const res = await fetch('/api/admin/yacht-inquiries', {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ inquiryId, ...payload }),
-      })
+      const res = await fetch(
+        '/api/admin/yacht-inquiries',
+        adminFetchInit(
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inquiryId, ...payload }),
+          },
+          { adminEmail: adminEmailHeader || null }
+        )
+      )
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         setError(data.error ?? 'Güncelleme yapılamadı.')
@@ -233,7 +211,7 @@ export default function AdminYachtInquiriesPage() {
     } finally {
       setSaving(false)
     }
-  }, [submittedToken, submittedEmail, fetchInquiries])
+  }, [isAdmin, adminEmailHeader, fetchInquiries])
 
   const handleOpenDetail = async (item: AdminYachtInquiry) => {
     setSelectedInquiry(item)
@@ -242,39 +220,7 @@ export default function AdminYachtInquiriesPage() {
     }
   }
 
-  const handleTokenSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const t = token.trim()
-    const eMail = email.trim().toLowerCase()
-    if (!t) return
-    setError(null)
-    setLoginChecking(true)
-    try {
-      const headers: Record<string, string> = { Authorization: `Bearer ${t}` }
-      if (eMail) headers[ADMIN_EMAIL_HEADER] = eMail
-      const res = await fetchWithTimeout('/api/admin/yacht-inquiries?limit=1', { headers })
-      if (res.status === 401) {
-        setError('E-posta veya şifre hatalı.')
-        return
-      }
-      if (!res.ok) {
-        setError('Giriş yapılamadı.')
-        return
-      }
-      if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, t)
-        if (eMail) window.sessionStorage.setItem(ADMIN_EMAIL_STORAGE_KEY, eMail)
-      }
-      setSubmittedToken(t)
-      setSubmittedEmail(eMail)
-    } catch {
-      setError('Bağlantı hatası.')
-    } finally {
-      setLoginChecking(false)
-    }
-  }
-
-  if (!hydrated) {
+  if (authInitializing) {
     return (
       <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
@@ -282,49 +228,16 @@ export default function AdminYachtInquiriesPage() {
     )
   }
 
-  if (!submittedToken) {
+  if (!isAdmin) {
     return (
-      <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center bg-gradient-to-b from-slate-100 to-slate-200 p-6">
-        <div className="w-full max-w-[420px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-300/50">
-          <div className="bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-4 text-white">
-            <h1 className="text-lg font-bold tracking-tight">Admin Girişi</h1>
-            <p className="mt-0.5 text-xs text-teal-100">Motoryat mesaj paneli</p>
-          </div>
-          <div className="p-8">
-            {error && (
-              <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                {error}
-              </div>
-            )}
-            <form onSubmit={handleTokenSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700">E-posta adresiniz</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50/80 px-4 py-3.5 text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/25"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700">Şifreniz</label>
-                <input
-                  type="password"
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50/80 px-4 py-3.5 text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/25"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={!token.trim() || loginChecking}
-                className="w-full rounded-xl bg-teal-600 py-3.5 font-semibold text-white shadow-md hover:bg-teal-700 disabled:opacity-50"
-              >
-                {loginChecking ? 'Kontrol ediliyor…' : 'Giriş yap'}
-              </button>
-            </form>
-          </div>
-        </div>
+      <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center gap-4 p-6 text-center">
+        <p className="max-w-md text-slate-600">Bu sayfa için yönetici girişi gerekir.</p>
+        <Link
+          href="/login"
+          className="rounded-xl bg-teal-600 px-6 py-3 font-semibold text-white hover:bg-teal-700"
+        >
+          Giriş sayfasına git
+        </Link>
       </div>
     )
   }

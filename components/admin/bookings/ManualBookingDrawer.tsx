@@ -39,13 +39,14 @@ interface CapacityInfo {
   remaining: number
 }
 
-const ADMIN_EMAIL_HEADER = 'X-Admin-Email'
+import { adminFetchInit } from '@/lib/adminRequestInit'
 
 interface ManualBookingDrawerProps {
   open: boolean
   onClose: () => void
   onSuccess: () => void
   tours: TourOption[]
+  /** Boşsa yalnızca admin oturum çerezi (credentials) kullanılır. */
   authToken: string
   adminEmail?: string
   /** Tam sayfa modu (biletçi/acente): liste yok, sadece form */
@@ -99,6 +100,7 @@ export default function ManualBookingDrawer({
   const [reservedLocaIds, setReservedLocaIds] = useState<string[]>([])
   const [mealMenu, setMealMenu] = useState<AdminTourMealMenu | null>(null)
   const [mealPreferenceKey, setMealPreferenceKey] = useState('')
+  const [mealCountsByKey, setMealCountsByKey] = useState<Record<string, number>>({})
 
   const totalPax = adult + child + infant
   const isFirstClass = !!classId && (classId.toLowerCase().startsWith('first') || tourClasses.find((c) => c.id === classId)?.label?.toLowerCase().includes('first'))
@@ -107,7 +109,7 @@ export default function ManualBookingDrawer({
   const totalPrice = totalPriceOverride !== null ? totalPriceOverride : (unitPrice ? computedTotal : 0)
 
   const fetchClasses = useCallback(async () => {
-    if (!tourId || !authToken) {
+    if (!tourId) {
       setTourClasses([])
       setTourTitle('')
       setClassId('')
@@ -116,9 +118,10 @@ export default function ManualBookingDrawer({
     }
     setClassesLoading(true)
     try {
-      const headers: Record<string, string> = { Authorization: `Bearer ${authToken}` }
-      if (adminEmail) headers[ADMIN_EMAIL_HEADER] = adminEmail
-      const res = await fetch(`/api/admin/tour-classes?tourId=${encodeURIComponent(tourId)}`, { headers })
+      const res = await fetch(
+        `/api/admin/tour-classes?tourId=${encodeURIComponent(tourId)}`,
+        adminFetchInit({}, { bearerToken: authToken.trim() || null, adminEmail: adminEmail ?? null })
+      )
       const data = await res.json()
       if (res.ok) {
         const classes = data.classes?.length ? data.classes : [
@@ -129,6 +132,7 @@ export default function ManualBookingDrawer({
         setTourClasses(classes)
         setTourTitle(data.tourTitle || '')
         setMealPreferenceKey('')
+        setMealCountsByKey({})
         const mm = data.mealMenu as AdminTourMealMenu | undefined
         if (mm?.enabled && Array.isArray(mm.options) && mm.options.length > 0) {
           setMealMenu(mm)
@@ -145,11 +149,13 @@ export default function ManualBookingDrawer({
         setClassName('')
         setMealMenu(null)
         setMealPreferenceKey('')
+        setMealCountsByKey({})
       }
     } catch {
       setTourClasses([])
       setMealMenu(null)
       setMealPreferenceKey('')
+      setMealCountsByKey({})
     } finally {
       setClassesLoading(false)
     }
@@ -161,7 +167,7 @@ export default function ManualBookingDrawer({
   }, [open, tourId, fetchClasses])
 
   useEffect(() => {
-    if (!tourId || !date || !authToken) {
+    if (!tourId || !date) {
       setCapacityInfo(null)
       setReservedLocaIds([])
       return
@@ -198,7 +204,7 @@ export default function ManualBookingDrawer({
     return () => {
       cancelled = true
     }
-  }, [tourId, date, classId, authToken])
+  }, [tourId, date, classId])
 
   useEffect(() => {
     if (tourClasses.length && classId) {
@@ -217,6 +223,21 @@ export default function ManualBookingDrawer({
       setMealPreferenceKey(mealMenu.options[0].key)
     }
   }, [mealMenu])
+
+  useEffect(() => {
+    if (!mealMenu?.enabled || mealMenu.options.length === 0) {
+      setMealCountsByKey({})
+      return
+    }
+    setMealCountsByKey((prev) => {
+      const next: Record<string, number> = {}
+      for (const opt of mealMenu.options) {
+        const curr = Math.max(0, Number(prev[opt.key] ?? 0) || 0)
+        if (curr > 0) next[opt.key] = curr
+      }
+      return next
+    })
+  }, [mealMenu?.enabled, mealMenu?.options])
 
   const exceedsCapacity = capacityInfo ? totalPax > capacityInfo.remaining : false
 
@@ -251,6 +272,7 @@ export default function ManualBookingDrawer({
     setReservedLocaIds([])
     setMealMenu(null)
     setMealPreferenceKey('')
+    setMealCountsByKey({})
   }, [])
 
   const handleSubmit = async (andNew: boolean) => {
@@ -277,21 +299,25 @@ export default function ManualBookingDrawer({
       setSubmitError(`First Class için ${requiredLocas} loca seçin (${totalPax} kişi → ${requiredLocas} loca).`)
       return
     }
-    if (mealMenu?.enabled && mealMenu.options.length > 0 && !mealPreferenceKey.trim()) {
-      setSubmitError('Yemek tercihi seçin.')
-      return
+    if (mealMenu?.enabled && mealMenu.options.length > 0) {
+      const selectedMealTotal = mealMenu.options.reduce(
+        (sum, opt) => sum + Math.max(0, Number(mealCountsByKey[opt.key] ?? 0) || 0),
+        0
+      )
+      if (selectedMealTotal !== totalPax) {
+        setSubmitError(`Yemek dağılımı toplamı ${totalPax} olmalı. (Şu an: ${selectedMealTotal})`)
+        return
+      }
     }
     setSaving(true)
     try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${authToken}`,
-      }
-      if (adminEmail) headers[ADMIN_EMAIL_HEADER] = adminEmail
-      const res = await fetch('/api/admin/bookings/manual', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
+      const res = await fetch(
+        '/api/admin/bookings/manual',
+        adminFetchInit(
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
           tourId,
           tourTitle,
           date,
@@ -310,10 +336,24 @@ export default function ManualBookingDrawer({
           sendEmail,
           sendEmailToAdmin,
           ...(isFirstClass && (firstClassLocas?.length ?? 0) > 0 && { firstClassLocas: firstClassLocas!.map((id) => id.trim().toUpperCase()) }),
-          ...(mealMenu?.enabled &&
-            mealPreferenceKey.trim() && { mealPreference: { key: mealPreferenceKey.trim() } }),
-        }),
-      })
+          ...(mealMenu?.enabled && mealMenu.options.length > 0
+            ? {
+                mealPreference: {
+                  counts: mealMenu.options.reduce((acc, opt) => {
+                    const count = Math.max(0, Number(mealCountsByKey[opt.key] ?? 0) || 0)
+                    if (count > 0) acc[opt.key] = count
+                    return acc
+                  }, {} as Record<string, number>),
+                },
+              }
+            : mealPreferenceKey.trim()
+            ? { mealPreference: { key: mealPreferenceKey.trim() } }
+            : {}),
+            }),
+          },
+          { bearerToken: authToken.trim() || null, adminEmail: adminEmail ?? null }
+        )
+      )
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         if (data.error === 'capacity_exceeded') {
@@ -476,6 +516,31 @@ export default function ManualBookingDrawer({
                   namePrefix="manual-booking-meal"
                   showError={false}
                 />
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {mealMenu.options.map((opt) => (
+                    <label key={opt.key} className="rounded-lg border border-zinc-200 bg-white px-3 py-2">
+                      <span className="block text-xs font-medium text-zinc-700">{opt.label}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={mealCountsByKey[opt.key] ?? 0}
+                        onChange={(e) => {
+                          const n = Math.max(0, parseInt(e.target.value, 10) || 0)
+                          setMealCountsByKey((prev) => ({ ...prev, [opt.key]: n }))
+                        }}
+                        className="mt-1 w-full rounded border border-zinc-300 px-2 py-1 text-sm"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-zinc-500">
+                  Toplam seçilen:{' '}
+                  {mealMenu.options.reduce(
+                    (sum, opt) => sum + Math.max(0, Number(mealCountsByKey[opt.key] ?? 0) || 0),
+                    0
+                  )}{' '}
+                  / {totalPax}
+                </p>
               </div>
             )}
 

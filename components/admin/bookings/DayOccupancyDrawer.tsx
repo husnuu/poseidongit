@@ -2,6 +2,7 @@
 
 import type { DayOccupancyData } from '@/types/adminBookings'
 import type { AdminBookingRow } from '@/types/adminBookings'
+import { extractMealPreferenceCountsFromBookingLike } from '@/lib/mealPreferenceCounts'
 
 const LOCA_IDS = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8', 'L9', 'L10']
 
@@ -35,6 +36,23 @@ export default function DayOccupancyDrawer({
         year: 'numeric',
       })
     : ''
+
+  const mealSummary = (() => {
+    const map = new Map<string, { label: string; count: number }>()
+    for (const b of bookingsForDay) {
+      const counts = extractMealPreferenceCountsFromBookingLike({
+        counts: b.counts,
+        mealPreference: b.mealPreference,
+        additionalTravelers: b.additionalTravelers,
+      })
+      for (const row of counts) {
+        const curr = map.get(row.key)
+        if (curr) curr.count += row.count
+        else map.set(row.key, { label: row.label, count: row.count })
+      }
+    }
+    return [...map.values()].sort((a, b) => b.count - a.count)
+  })()
 
   return (
     <>
@@ -148,6 +166,11 @@ export default function DayOccupancyDrawer({
                 <p className="text-sm font-medium text-zinc-600">
                   O günkü rezervasyonlar ({bookingsForDay.length})
                 </p>
+                {mealSummary.length > 0 && (
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Menü özeti: {mealSummary.map((x) => `${x.label} (${x.count})`).join(' · ')}
+                  </p>
+                )}
                 <ul className="mt-2 space-y-2">
                   {bookingsForDay.map((b) => (
                     <li
@@ -168,6 +191,15 @@ export default function DayOccupancyDrawer({
                       <span className="ml-2 text-zinc-500">
                         {b.totalPrice > 0 ? `${b.totalPrice.toLocaleString('tr-TR')} ${b.currency}` : 'Fiyat belirtilmedi'}
                       </span>
+                      {(b.additionalTravelers?.length ?? 0) > 0 && (
+                        <p className="mt-1 text-xs leading-snug text-zinc-600">
+                          Diğer yolcular:{' '}
+                          {b.additionalTravelers!
+                            .map((t) => `${t.firstName} ${t.lastName}`.trim())
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+                      )}
                     </li>
                   ))}
                 </ul>

@@ -3,12 +3,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import ManualBookingDrawer from '@/components/admin/bookings/ManualBookingDrawer'
 import type { TourOption } from '@/types/adminBookings'
+import { useAdminAuth } from '@/components/admin/AdminAuthContext'
+import { adminFetchInit } from '@/lib/adminRequestInit'
 
 const AGENT_TOKEN_STORAGE_KEY = 'poseidon_agent_token'
 const AGENT_EMAIL_STORAGE_KEY = 'poseidon_agent_email'
-const ADMIN_EMAIL_HEADER = 'X-Admin-Email'
 
 export default function AdminBiletciPage() {
+  const { initializing: authInitializing, isAdmin, signOutAll, user } = useAdminAuth()
+
   const [email, setEmail] = useState('')
   const [token, setToken] = useState('')
   const [submittedEmail, setSubmittedEmail] = useState('')
@@ -16,24 +19,31 @@ export default function AdminBiletciPage() {
   const [tours, setTours] = useState<TourOption[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [hydrated, setHydrated] = useState(false)
   const [loginChecking, setLoginChecking] = useState(false)
 
+  const effectiveBearer = isAdmin ? null : submittedToken
+  const effectiveEmail = (isAdmin ? user?.email?.trim().toLowerCase() : submittedEmail) ?? ''
+
   const fetchTours = useCallback(async () => {
-    if (!submittedToken) return
+    if (!isAdmin && !submittedToken) return
     setLoading(true)
     setError(null)
     try {
-      const headers: Record<string, string> = { Authorization: `Bearer ${submittedToken}` }
-      if (submittedEmail) headers[ADMIN_EMAIL_HEADER] = submittedEmail
-      const res = await fetch('/api/admin/tours', { headers })
+      const res = await fetch(
+        '/api/admin/tours',
+        adminFetchInit({}, { bearerToken: effectiveBearer, adminEmail: effectiveEmail || null })
+      )
       if (res.status === 401) {
         setError('E-posta veya şifre hatalı.')
-        setSubmittedToken('')
-        setSubmittedEmail('')
-        if (typeof window !== 'undefined') {
-          window.sessionStorage.removeItem(AGENT_TOKEN_STORAGE_KEY)
-          window.sessionStorage.removeItem(AGENT_EMAIL_STORAGE_KEY)
+        if (!isAdmin) {
+          setSubmittedToken('')
+          setSubmittedEmail('')
+          if (typeof window !== 'undefined') {
+            window.sessionStorage.removeItem(AGENT_TOKEN_STORAGE_KEY)
+            window.sessionStorage.removeItem(AGENT_EMAIL_STORAGE_KEY)
+          }
+        } else {
+          await signOutAll()
         }
         return
       }
@@ -48,15 +58,11 @@ export default function AdminBiletciPage() {
     } finally {
       setLoading(false)
     }
-  }, [submittedToken, submittedEmail])
+  }, [isAdmin, submittedToken, effectiveBearer, effectiveEmail, signOutAll])
 
   useEffect(() => {
-    setHydrated(true)
-  }, [])
-
-  useEffect(() => {
-    if (submittedToken) fetchTours()
-  }, [submittedToken, fetchTours])
+    if (isAdmin || submittedToken) void fetchTours()
+  }, [isAdmin, submittedToken, fetchTours])
 
   const handleTokenSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,9 +72,10 @@ export default function AdminBiletciPage() {
     setError(null)
     setLoginChecking(true)
     try {
-      const headers: Record<string, string> = { Authorization: `Bearer ${t}` }
-      if (eMail) headers[ADMIN_EMAIL_HEADER] = eMail
-      const res = await fetch('/api/admin/tours', { headers })
+      const res = await fetch(
+        '/api/admin/tours',
+        adminFetchInit({}, { bearerToken: t, adminEmail: eMail || null })
+      )
       if (res.status === 401) {
         setError('E-posta veya şifre hatalı.')
         setLoginChecking(false)
@@ -104,7 +111,7 @@ export default function AdminBiletciPage() {
     }
   }
 
-  if (!hydrated) {
+  if (authInitializing) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
@@ -112,7 +119,7 @@ export default function AdminBiletciPage() {
     )
   }
 
-  if (!submittedToken) {
+  if (!isAdmin && !submittedToken) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-gradient-to-b from-slate-100 to-slate-200 p-6">
         <div className="w-full max-w-[420px]">
@@ -190,10 +197,10 @@ export default function AdminBiletciPage() {
               onClose={() => {}}
               onSuccess={() => {}}
               tours={tours}
-              authToken={submittedToken}
-              adminEmail={submittedEmail || undefined}
+              authToken={effectiveBearer ?? ''}
+              adminEmail={effectiveEmail || undefined}
               standalone
-              onLogout={handleLogout}
+              onLogout={isAdmin ? () => {} : handleLogout}
             />
           </div>
         )}

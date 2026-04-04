@@ -1,15 +1,17 @@
 import { Resend } from 'resend'
 import { buildGoogleCalendarUrl } from '@/lib/calendar'
 import { generateVoucherPdf } from '@/lib/voucher/generateVoucherPdf'
-import { buildVoucherDataFromBookingSnapshot } from '@/lib/voucher/buildVoucherDataFromBookingSnapshot'
+import { buildVoucherDataFromBookingRow } from '@/lib/voucher/buildVoucherDataFromBookingSnapshot'
 import { formatTicketDate } from '@/lib/voucher/formatTicketDate'
 import type { VoucherData } from '@/lib/voucher/types'
 import { DEFAULT_POLICIES, DEFAULT_CONTACT } from '@/lib/voucher/types'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
 import { manageBookingUrl, voucherPdfUrl, getEmailBaseUrl, customerTicketViewUrl } from '@/lib/siteUrls'
-import { getFirestore } from '@/lib/firebaseAdmin'
+import { supabase } from '@/lib/supabase'
+import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery } from '@/lib/queries'
+import { additionalTravelerLabels, normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
 
 const DEFAULT_FROM = (() => {
   const n = process.env.NEXT_PUBLIC_SITE_NAME || 'Çeşme Poseidon Booking'
@@ -49,8 +51,10 @@ export interface BookingEmailPayload {
   language?: string
   /** Opsiyonel: toplanma / pickup bilgisi. */
   pickup?: string
-  /** Tur mealMenu ile seçilen yemek (Firestore mealPreference). */
-  mealPreference?: { key: string; label: string }
+  /** Tur mealMenu ile seçilen yemek tercihi. */
+  mealPreference?: { key: string; label: string; counts?: Array<{ key: string; label: string; count: number }> }
+  /** Ana müşteri dışındaki yolcular (web rezervasyonunda girilen ad-soyad). */
+  additionalTravelers?: Array<{ firstName: string; lastName: string; mealPreference?: { key: string; label: string } }>
   /** Opsiyonel: etkinlik süresi (saat). Google Calendar linki için; yoksa 2. */
   durationHours?: number
   /** Opsiyonel: IANA timezone (örn. Europe/Istanbul). Yoksa Europe/Istanbul. */
@@ -63,7 +67,7 @@ export interface BookingEmailPayload {
   siteBaseUrl?: string
   /** Güvenli bilet/voucher linkleri için erişim tokenı. Yeni rezervasyonlarda mutlaka gönderin. */
   accessToken?: string
-  /** Firestore durumu — PDF’te ödenen tutar gösterimi için (snapshot yolu başarısız olursa). */
+  /** Durum bilgisi — PDF’te ödenen tutar gösterimi için (satır yolu başarısız olursa). */
   status?: string
 }
 
@@ -103,6 +107,35 @@ function formatParticipants(counts: { adult: number; child: number; infant: numb
 function classDisplay(p: { className?: string; firstClassLocas?: string[]; firstClassLoca?: string }): string {
   const locas = (p.firstClassLocas?.length ? p.firstClassLocas : p.firstClassLoca ? [p.firstClassLoca] : []).join(', ')
   return locas ? `${p.className?.trim() || '—'} · Loca ${locas}` : (p.className?.trim() || '—')
+}
+
+function formatAdditionalTravelersHtml(p: BookingEmailPayload): string {
+  const list = (p.additionalTravelers ?? []).filter((t) => (t.firstName?.trim() || t.lastName?.trim()))
+  if (list.length === 0) return ''
+  const labels = additionalTravelerLabels(p.counts)
+  const items = list
+    .map((t, i) => {
+      const role = escapeHtml(labels[i] ?? `Yolcu ${i + 2}`)
+      const name = escapeHtml(`${t.firstName} ${t.lastName}`.trim())
+      const meal = t.mealPreference?.label?.trim()
+        ? ` <span style="color:#64748b;">· Yemek: ${escapeHtml(t.mealPreference.label.trim())}</span>`
+        : ''
+      return `<li style="margin:0 0 6px 0;"><strong>${role}:</strong> ${name}${meal}</li>`
+    })
+    .join('')
+  return `
+    <p style="margin: 12px 0 6px;"><strong>Diğer yolcular</strong></p>
+    <ul style="margin: 0; padding-left: 18px;">${items}</ul>
+  `
+}
+
+function mealCountsLine(
+  counts: Array<{ key: string; label: string; count: number }> | undefined
+): string {
+  if (!counts || counts.length === 0) return ''
+  const normalized = counts.filter((x) => x && x.count > 0 && x.label?.trim())
+  if (normalized.length === 0) return ''
+  return normalized.map((x) => `${x.label.trim()} (${x.count})`).join(' · ')
 }
 
 /** BookingEmailPayload + voucherUrl ile e-posta ekinde gönderilecek PDF için VoucherData üretir. */
@@ -360,6 +393,10 @@ function buildAdminEmailHtml(p: BookingEmailPayload): string {
     p.mealPreference?.label?.trim()
       ? `<p style="margin: 0 0 8px;"><strong>Yemek tercihi:</strong> ${escapeHtml(p.mealPreference.label.trim())}</p>`
       : ''
+  const mealCounts = mealCountsLine(p.mealPreference?.counts)
+  const mealCountsLineHtml = mealCounts
+    ? `<p style="margin: 0 0 8px;"><strong>Yemek dağılımı:</strong> ${escapeHtml(mealCounts)}</p>`
+    : ''
 
   return `
 <!DOCTYPE html>
@@ -381,6 +418,8 @@ function buildAdminEmailHtml(p: BookingEmailPayload): string {
     <p style="margin: 0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(p.customer.email)}</p>
     <p style="margin: 0;"><strong>Telefon:</strong> ${escapeHtml(p.customer.phone || '—')}</p>
     ${mealLine}
+    ${mealCountsLineHtml}
+    ${formatAdditionalTravelersHtml(p)}
   </div>
   ${noteLine}
 </body>
@@ -445,15 +484,19 @@ export async function sendBookingEmails(
 
   const attachments: Array<{ filename: string; content: Buffer; contentId?: string }> = []
   try {
-    const db = getFirestore()
-    const snap = await db.collection('bookings').doc(payload.bookingId).get()
-    let voucherData: VoucherData | null = snap.exists
-      ? await buildVoucherDataFromBookingSnapshot(snap, payload.accessToken?.trim() ?? '')
+    const { data: bookingRow } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', payload.bookingId)
+      .single()
+    const row = bookingRow as SupabaseBookingRow | null
+    let voucherData: VoucherData | null = row
+      ? await buildVoucherDataFromBookingRow(payload.bookingId, row, payload.accessToken?.trim() ?? '')
       : null
     if (!voucherData) {
       voucherData = payloadToVoucherData(payload, voucherUrlForPdf)
       try {
-        const tourId = typeof snap.data()?.tourId === 'string' ? String(snap.data()?.tourId).trim() : ''
+        const tourId = typeof row?.tour_id === 'string' ? String(row.tour_id).trim() : ''
         if (tourId) voucherData = await enrichVoucherDataWithTour(voucherData, tourId)
       } catch {
         // Tur verisi olmadan PDF üretilir
@@ -535,6 +578,25 @@ function buildPremiumConfirmationEmailHtml(
     p.mealPreference?.label?.trim()
       ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Yemek tercihi</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(p.mealPreference.label.trim())}</td></tr>`
       : ''
+  const mealCounts = mealCountsLine(p.mealPreference?.counts)
+  const mealCountsRowHtml = mealCounts
+    ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Yemek dağılımı</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(mealCounts)}</td></tr>`
+    : ''
+  const extraList = (p.additionalTravelers ?? []).filter((t) => t.firstName?.trim() || t.lastName?.trim())
+  const travelerLabels = additionalTravelerLabels(p.counts)
+  const extraTravelersRowHtml =
+    extraList.length > 0
+      ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;vertical-align:top;">Diğer yolcular</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;line-height:1.55;">${extraList
+          .map((t, i) => {
+            const role = escapeHtml(travelerLabels[i] ?? `Yolcu ${i + 2}`)
+            const name = escapeHtml(`${t.firstName} ${t.lastName}`.trim())
+            const meal = t.mealPreference?.label?.trim()
+              ? ` · ${escapeHtml(t.mealPreference.label.trim())}`
+              : ''
+            return `${role}: <strong>${name}</strong>${meal}`
+          })
+          .join('<br/>')}</td></tr>`
+      : ''
 
   return `<!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="tr">
@@ -596,6 +658,8 @@ function buildPremiumConfirmationEmailHtml(
                 <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Misafirler</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(participants)}</td></tr>
                 <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Sınıf</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(classDisplay(p))}</td></tr>
                 ${mealRowHtml}
+                ${mealCountsRowHtml}
+                ${extraTravelersRowHtml}
                 ${paidRowHtml}
                 <tr><td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:${textMuted};font-size:13px;">Toplam Tutar</td><td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:${primary};font-size:18px;font-weight:700;text-align:right;">${escapeHtml(String(p.totalPrice))} ${escapeHtml(p.currency)}</td></tr>
               </table>
@@ -678,6 +742,10 @@ function buildAdminPaidEmailHtml(p: BookingEmailPayload): string {
     p.mealPreference?.label?.trim()
       ? `<p style="margin: 0 0 8px;"><strong>Yemek tercihi:</strong> ${escapeHtml(p.mealPreference.label.trim())}</p>`
       : ''
+  const mealCounts = mealCountsLine(p.mealPreference?.counts)
+  const mealCountsLineHtml = mealCounts
+    ? `<p style="margin: 0 0 8px;"><strong>Yemek dağılımı:</strong> ${escapeHtml(mealCounts)}</p>`
+    : ''
 
   return `
 <!DOCTYPE html>
@@ -698,6 +766,8 @@ function buildAdminPaidEmailHtml(p: BookingEmailPayload): string {
     <p style="margin: 0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(p.customer.email)}</p>
     <p style="margin: 0;"><strong>Telefon:</strong> ${escapeHtml(p.customer.phone || '—')}</p>
     ${mealLine}
+    ${mealCountsLineHtml}
+    ${formatAdditionalTravelersHtml(p)}
   </div>
 </body>
 </html>
@@ -722,19 +792,35 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
     ? voucherPdfUrl(payload.bookingId, false, payload.accessToken)
     : voucherPdfUrl(payload.bookingId, false)
 
-  const customerHtml = buildCustomerPaidEmailHtml({ ...payload, bookingUrl })
+  const { data: bookingRow } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('id', payload.bookingId)
+    .single()
+  const row = bookingRow as SupabaseBookingRow | null
+  const fromDb = normalizeAdditionalTravelersFromStorage(row?.additional_travelers)
+  const additionalTravelersMerged =
+    payload.additionalTravelers && payload.additionalTravelers.length > 0
+      ? payload.additionalTravelers
+      : fromDb.length > 0
+        ? fromDb
+        : undefined
+  const mergedPayload: BookingEmailPayload = {
+    ...payload,
+    ...(additionalTravelersMerged?.length ? { additionalTravelers: additionalTravelersMerged } : {}),
+  }
+
+  const customerHtml = buildCustomerPaidEmailHtml({ ...mergedPayload, bookingUrl })
 
   const attachments: Array<{ filename: string; content: Buffer; contentId?: string }> = []
   try {
-    const db = getFirestore()
-    const snap = await db.collection('bookings').doc(payload.bookingId).get()
-    let voucherData: VoucherData | null = snap.exists
-      ? await buildVoucherDataFromBookingSnapshot(snap, payload.accessToken?.trim() ?? '')
+    let voucherData: VoucherData | null = row
+      ? await buildVoucherDataFromBookingRow(mergedPayload.bookingId, row, mergedPayload.accessToken?.trim() ?? '')
       : null
     if (!voucherData) {
-      voucherData = payloadToVoucherData(payload, voucherUrlForPdf)
+      voucherData = payloadToVoucherData(mergedPayload, voucherUrlForPdf)
       try {
-        const tourId = typeof snap.data()?.tourId === 'string' ? String(snap.data()?.tourId).trim() : ''
+        const tourId = typeof row?.tour_id === 'string' ? String(row.tour_id).trim() : ''
         if (tourId) voucherData = await enrichVoucherDataWithTour(voucherData, tourId)
       } catch {
         // Tur verisi olmadan PDF üretilir
@@ -742,7 +828,7 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
     }
     const pdfBytes = await generateVoucherPdf(voucherData)
     attachments.push({
-      filename: `${getSiteName() || 'Bilet'}-Bilet-${payload.bookingId}.pdf`,
+      filename: `${getSiteName() || 'Bilet'}-Bilet-${mergedPayload.bookingId}.pdf`,
       content: Buffer.from(pdfBytes),
     })
   } catch (e) {
@@ -751,13 +837,13 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
 
   const { error: customerError } = await resend.emails.send({
     from,
-    to: [payload.customer.email],
-    subject: `Rezervasyonunuz onaylandı – ${payload.tourTitle}`,
+    to: [mergedPayload.customer.email],
+    subject: `Rezervasyonunuz onaylandı – ${mergedPayload.tourTitle}`,
     html: customerHtml,
     ...(attachments.length > 0 && { attachments }),
   })
   if (customerError) {
-    console.error('[email] Ödendi müşteri e-postası gönderilemedi:', payload.bookingId, customerError)
+    console.error('[email] Ödendi müşteri e-postası gönderilemedi:', mergedPayload.bookingId, customerError)
   }
 
   const adminEmail = process.env.ADMIN_EMAIL?.trim()
@@ -765,11 +851,11 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
     const { error: adminError } = await resend.emails.send({
       from,
       to: [adminEmail],
-      subject: `Rezervasyon ödendi: ${payload.tourTitle} – ${payload.date}`,
-      html: buildAdminPaidEmailHtml(payload),
+      subject: `Rezervasyon ödendi: ${mergedPayload.tourTitle} – ${mergedPayload.date}`,
+      html: buildAdminPaidEmailHtml(mergedPayload),
     })
     if (adminError) {
-      console.error('[email] Ödendi admin e-postası gönderilemedi:', payload.bookingId, adminError)
+      console.error('[email] Ödendi admin e-postası gönderilemedi:', mergedPayload.bookingId, adminError)
     }
   }
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getAuthToken, getAdminEmail, requireAdmin } from '@/lib/adminAuth'
+import { authorizeAdmin } from '@/lib/adminAuthServer'
 import { testProxyIP } from '@/lib/proxyClient'
 
 export const dynamic = 'force-dynamic'
@@ -14,9 +14,7 @@ export const runtime = 'nodejs'
 export async function GET(request: Request) {
   const dev = process.env.NODE_ENV === 'development'
   if (!dev) {
-    const token = getAuthToken(request)
-    const email = getAdminEmail(request)
-    const adminOk = requireAdmin(token, email)
+    const adminOk = await authorizeAdmin(request)
     const debugSecret = process.env.FIXIE_IP_DEBUG_SECRET?.trim()
     const provided = new URL(request.url).searchParams.get('secret')?.trim()
     const secretOk = Boolean(

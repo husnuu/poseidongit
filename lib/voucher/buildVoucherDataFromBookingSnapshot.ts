@@ -1,13 +1,13 @@
 /**
- * Firestore booking snapshot → VoucherData (/api/voucher ile birebir aynı mantık).
+ * Supabase booking row → VoucherData (/api/voucher ile birebir aynı mantık).
  * E-posta ekindeki PDF ile siteden indirilen PDF aynı kaynaktan üretilir.
  */
-import type { DocumentSnapshot } from 'firebase-admin/firestore'
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery } from '@/lib/queries'
 import { getEmailBaseUrl } from '@/lib/siteUrls'
 import { bookingToVoucherData } from './bookingToVoucher'
 import type { VoucherData } from './types'
+import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
 function voucherAccessUrl(bookingId: string, token: string): string {
   const base = getEmailBaseUrl().replace(/\/$/, '')
@@ -15,50 +15,59 @@ function voucherAccessUrl(bookingId: string, token: string): string {
 }
 
 /**
- * @param snap — bookings/{id} dokümanı
+ * @param bookingId — bookings.id (uuid)
+ * @param row — Supabase bookings satırı
  * @param requestToken — İstek veya e-posta payload’ındaki token; dokümanda accessToken yoksa kullanılır
  */
-export async function buildVoucherDataFromBookingSnapshot(
-  snap: DocumentSnapshot,
+export async function buildVoucherDataFromBookingRow(
+  bookingId: string,
+  row: SupabaseBookingRow,
   requestToken: string
 ): Promise<VoucherData | null> {
-  if (!snap.exists) return null
-
-  const data = snap.data()!
-  const paidRaw = (data as { paidNow?: unknown }).paidNow
+  const paidRaw = row.paid_now
   const paidNow =
     typeof paidRaw === 'number' && Number.isFinite(paidRaw) && paidRaw > 0 ? paidRaw : undefined
   const booking = {
-    id: snap.id,
-    tourId: data.tourId,
-    tourTitle: data.tourTitle,
-    date: data.date,
-    time: data.time,
+    id: bookingId,
+    tourId: row.tour_id ?? undefined,
+    tourTitle: row.tour_title ?? undefined,
+    date: row.date ?? undefined,
+    time: row.time ?? undefined,
     paidNow,
-    counts: data.counts,
-    classId: data.classId,
-    className: data.className,
-    firstClassLocas: Array.isArray(data.firstClassLocas) ? data.firstClassLocas : undefined,
-    firstClassLoca: typeof data.firstClassLoca === 'string' ? data.firstClassLoca : undefined,
-    totalPrice: data.totalPrice,
-    currency: data.currency,
-    status: data.status,
-    meetingPoint: typeof data.meetingPoint === 'string' ? data.meetingPoint : undefined,
-    customer: data.customer,
+    counts: {
+      adult: Number(row.adult_count ?? 0),
+      child: Number(row.child_count ?? 0),
+      infant: Number(row.infant_count ?? 0),
+    },
+    classId: row.class_id ?? undefined,
+    className: row.class_name ?? undefined,
+    firstClassLocas: Array.isArray(row.first_class_locas) ? row.first_class_locas : undefined,
+    firstClassLoca: typeof row.first_class_loca === 'string' ? row.first_class_loca : undefined,
+    totalPrice: row.total_price ?? 0,
+    currency: row.currency ?? 'TRY',
+    status: row.status ?? 'pending',
+    meetingPoint: typeof row.meeting_point === 'string' ? row.meeting_point : undefined,
+    customer: {
+      firstName: row.customer_first_name ?? '',
+      lastName: row.customer_last_name ?? '',
+      email: row.customer_email ?? '',
+      phone: row.customer_phone ?? '',
+      ...(row.customer_note ? { note: row.customer_note } : {}),
+    },
   }
 
   const storedToken =
-    typeof (data as { accessToken?: string }).accessToken === 'string'
-      ? (data as { accessToken: string }).accessToken.trim()
+    typeof row.access_token === 'string'
+      ? row.access_token.trim()
       : ''
   const urlToken = storedToken || requestToken.trim()
   if (!urlToken) return null
 
-  const voucherUrl = voucherAccessUrl(snap.id, urlToken)
+  const voucherUrl = voucherAccessUrl(bookingId, urlToken)
   let voucherData = bookingToVoucherData(booking, voucherUrl)
 
   try {
-    const tourId = typeof data.tourId === 'string' ? data.tourId.trim() : ''
+    const tourId = typeof row.tour_id === 'string' ? row.tour_id.trim() : ''
     if (tourId) {
       const tourMeta = await client.fetch<{
         mainImage?: { asset?: { _ref?: string } }

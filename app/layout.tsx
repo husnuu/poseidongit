@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import ChunkLoadErrorHandler from '@/components/ChunkLoadErrorHandler'
+import CookieConsentBannerRoot from '@/components/CookieConsentBannerRoot'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 const inter = Inter({
@@ -80,6 +81,9 @@ export default function RootLayout({
         <Suspense fallback={null}>{children}</Suspense>
         <ChunkLoadErrorHandler />
         <GoogleAnalytics />
+        <Suspense fallback={null}>
+          <CookieConsentBannerRoot />
+        </Suspense>
       </body>
     </html>
   )

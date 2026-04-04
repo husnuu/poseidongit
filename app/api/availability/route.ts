@@ -1,23 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getFirestore } from '@/lib/firebaseAdmin'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
 import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
 import type { Availability } from '@/types/availability'
+import { supabase } from '@/lib/supabase'
+import { firstClassLocasFromRow, paxCountFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
-const COLLECTION = 'bookings'
 const TOTAL_FIRST_CLASS_LOCAS = 10
 const FIRST_CLASS_CAPACITY_TOTAL = TOTAL_FIRST_CLASS_LOCAS * 2
 
-/** Statuses that count as "booked" (Firestore "in" query max 10). */
+/** Statuses that count as "booked". */
 const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
-
-function normalizeDate(raw: unknown): string {
-  if (typeof raw === 'string') return raw.slice(0, 10)
-  if (raw != null && typeof (raw as { toDate?: () => Date }).toDate === 'function')
-    return (raw as { toDate: () => Date }).toDate().toISOString().slice(0, 10)
-  return ''
-}
 
 function normalizeClassKey(classId: string): string {
   const k = classId.toLowerCase().trim()
@@ -28,6 +21,23 @@ function normalizeClassKey(classId: string): string {
 }
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
+
+function canonicalTourId(id: string | null | undefined): string {
+  return String(id ?? '').trim().replace(/^drafts\./, '')
+}
+
+function buildAcceptedTourIds(...ids: Array<string | null | undefined>): string[] {
+  const out = new Set<string>()
+  for (const raw of ids) {
+    const original = String(raw ?? '').trim()
+    const canonical = canonicalTourId(original)
+    if (!canonical) continue
+    out.add(canonical)
+    out.add(`drafts.${canonical}`)
+    if (original) out.add(original)
+  }
+  return [...out]
+}
 
 /** Response for legacy ?dates= (only used by date, no capacity). */
 export type AvailabilityUsedResponse = {
@@ -105,67 +115,55 @@ async function handleSingleDate(
         { status: 404 }
       )
     }
-    const firestoreTourId = sanityTour._id ?? tourId
+    const normalizedTourId = canonicalTourId(sanityTour._id ?? tourId)
+    const acceptedTourIds = buildAcceptedTourIds(tourId, tourSlug, sanityTour._id, normalizedTourId)
 
     const capacityByClass = computeCapacityForDate(sanityTour, dateParam)
-    const db = getFirestore()
+    const { data: snapshotRows, error: snapshotError } = await supabase
+      .from('bookings')
+      .select('id,tour_id,date,status,class_id,adult_count,child_count,infant_count')
+      .in('tour_id', acceptedTourIds)
+      .eq('date', dateParam)
+      .in('status', ACTIVE_STATUSES)
+    if (snapshotError) {
+      throw new Error(`Supabase availability single-date query failed: ${snapshotError.message}`)
+    }
 
-    const snapshot = await db
-      .collection(COLLECTION)
-      .where('tourId', '==', firestoreTourId)
-      .where('date', '==', dateParam)
-      .where('status', 'in', ACTIVE_STATUSES)
-      .get()
-
-    const firstClassGlobalSnapshot = await db
-      .collection(COLLECTION)
-      .where('date', '==', dateParam)
-      .where('classId', '==', 'first')
-      .where('status', 'in', ACTIVE_STATUSES)
-      .get()
+    const { data: firstClassGlobalRows, error: firstClassGlobalError } = await supabase
+      .from('bookings')
+      .select('id,date,status,class_id,first_class_locas,first_class_loca')
+      .eq('date', dateParam)
+      .eq('class_id', 'first')
+      .in('status', ACTIVE_STATUSES)
+    if (firstClassGlobalError) {
+      throw new Error(`Supabase availability first-class query failed: ${firstClassGlobalError.message}`)
+    }
 
     const bookedByClass: Record<string, number> = {}
     const firstClassLocasReserved: string[] = []
-    const locaRegex = /^L(10|[1-9])$/
+    const locaRegex = /^L(10|[1-9])$/i
 
-    for (const doc of snapshot.docs) {
+    for (const row of (snapshotRows ?? []) as SupabaseBookingRow[]) {
       try {
-        const d = doc.data()
-        const classId = (d.classId as string) ?? ''
-        const classKey = normalizeClassKey(classId)
-        const rawCounts = d.counts ?? { adult: 0, child: 0, infant: 0 }
-        const counts = rawCounts as Record<string, unknown>
-        const adult = Math.max(0, Number(counts?.adult) || 0)
-        const child = Math.max(0, Number(counts?.child) || 0)
-        const infant = Math.max(0, Number(counts?.infant) || 0)
-        const pax = adult + child + infant
+        const classKey = normalizeClassKey(String(row.class_id ?? ''))
+        const pax = paxCountFromRow(row)
         if (pax <= 0) continue
         bookedByClass[classKey] = (bookedByClass[classKey] ?? 0) + pax
       } catch (err) {
-        console.warn('availability: skip doc', doc.id, err)
+        console.warn('availability: skip row', row.id, err)
       }
     }
 
-    for (const doc of firstClassGlobalSnapshot.docs) {
+    for (const row of (firstClassGlobalRows ?? []) as SupabaseBookingRow[]) {
       try {
-        const d = doc.data()
-        const fromArray = Array.isArray(d.firstClassLocas)
-          ? (d.firstClassLocas as string[])
-              .map((x) => (typeof x === 'string' ? x.trim().toUpperCase() : ''))
-              .filter((x) => locaRegex.test(x))
-          : []
+        const fromArray = firstClassLocasFromRow(row)
+          .map((x) => x.trim().toUpperCase())
+          .filter((x) => locaRegex.test(x))
         for (const loca of fromArray) {
           if (loca && !firstClassLocasReserved.includes(loca)) firstClassLocasReserved.push(loca)
         }
-        if (fromArray.length === 0) {
-          const raw = typeof d.firstClassLoca === 'string' ? d.firstClassLoca.trim() : ''
-          const loca = raw ? raw.toUpperCase() : ''
-          if (loca && locaRegex.test(loca) && !firstClassLocasReserved.includes(loca)) {
-            firstClassLocasReserved.push(loca)
-          }
-        }
       } catch (err) {
-        console.warn('availability first-class global: skip doc', doc.id, err)
+        console.warn('availability first-class global: skip row', row.id, err)
       }
     }
 
@@ -189,15 +187,15 @@ async function handleSingleDate(
     }
 
     const body: Availability & { _debug?: { firestoreTourId: string; docsFound: number; bookedByClass: Record<string, number>; firstClassLocasReserved: string[] } } = {
-      tourId: firestoreTourId,
+      tourId: normalizedTourId,
       date: dateParam,
       classes,
       firstClassLocasReserved,
     }
     if (process.env.NODE_ENV === 'development') {
       body._debug = {
-        firestoreTourId,
-        docsFound: snapshot.size,
+        firestoreTourId: normalizedTourId,
+        docsFound: (snapshotRows ?? []).length,
         bookedByClass: { ...bookedByClass },
         firstClassLocasReserved: [...firstClassLocasReserved],
       }
@@ -219,73 +217,60 @@ async function handleMultipleDates(
     tourForAvailabilityQuery,
     { tourId: tourSlug && tourSlug !== tourId ? tourSlug : tourId }
   )
-  const firestoreTourId = sanityTour?._id ?? tourId
-  const idsToQuery = [firestoreTourId]
-  if (tourId !== firestoreTourId) idsToQuery.push(tourId)
-  if (tourSlug && tourSlug !== tourId && tourSlug !== firestoreTourId) idsToQuery.push(tourSlug)
-
-  const db = getFirestore()
+  const normalizedTourId = canonicalTourId(sanityTour?._id ?? tourId)
+  const idsToQuery = buildAcceptedTourIds(normalizedTourId, tourId, tourSlug, sanityTour?._id)
   const used: Record<string, Record<string, number>> = {}
   const datesSet = new Set(datesArr)
 
-  for (const id of idsToQuery) {
-    const snapshot = await db
-      .collection(COLLECTION)
-      .where('tourId', '==', id)
-      .get()
+  const { data: rows, error: rowsError } = await supabase
+    .from('bookings')
+    .select('id,tour_id,date,status,class_id,adult_count,child_count,infant_count')
+    .in('tour_id', idsToQuery)
+    .in('date', datesArr)
+    .in('status', ACTIVE_STATUSES)
+  if (rowsError) {
+    throw new Error(`Supabase availability multiple-dates query failed: ${rowsError.message}`)
+  }
 
-    for (const doc of snapshot.docs) {
-      try {
-        const d = doc.data()
-        const status = d.status as string | undefined
-        if (!ACTIVE_STATUSES.includes(status as (typeof ACTIVE_STATUSES)[number])) continue
-        const date = normalizeDate(d.date)
-        if (!date || !DATE_REGEX.test(date) || !datesSet.has(date)) continue
-        const classId = (d.classId as string) ?? ''
-        const rawCounts = d.counts ?? { adult: 0, child: 0, infant: 0 }
-        const counts = rawCounts as Record<string, unknown>
-        const pax = Math.max(0, Number(counts?.adult) || 0) + Math.max(0, Number(counts?.child) || 0) + Math.max(0, Number(counts?.infant) || 0)
-        if (pax <= 0) continue
-        const classKey = normalizeClassKey(classId)
-        if (!used[date]) used[date] = {}
-        used[date][classKey] = (used[date][classKey] ?? 0) + pax
-      } catch (err) {
-        console.warn('availability multiple dates: skip doc', doc.id, err)
-      }
+  for (const row of (rows ?? []) as SupabaseBookingRow[]) {
+    try {
+      const date = String(row.date ?? '').slice(0, 10)
+      if (!date || !DATE_REGEX.test(date) || !datesSet.has(date)) continue
+      const classKey = normalizeClassKey(String(row.class_id ?? ''))
+      const pax = paxCountFromRow(row)
+      if (pax <= 0) continue
+      if (!used[date]) used[date] = {}
+      used[date][classKey] = (used[date][classKey] ?? 0) + pax
+    } catch (err) {
+      console.warn('availability multiple dates: skip row', row.id, err)
     }
   }
 
   // First Class localar tüm turlar için ortaktır: aylık görünümde de global kullanımı yansıt.
-  const firstClassGlobalSnapshot = await db
-    .collection(COLLECTION)
-    .where('classId', '==', 'first')
-    .where('status', 'in', ACTIVE_STATUSES)
-    .get()
+  const { data: firstRows, error: firstRowsError } = await supabase
+    .from('bookings')
+    .select('id,date,status,class_id,first_class_locas,first_class_loca')
+    .eq('class_id', 'first')
+    .in('date', datesArr)
+    .in('status', ACTIVE_STATUSES)
+  if (firstRowsError) {
+    throw new Error(`Supabase availability multiple-dates first-class query failed: ${firstRowsError.message}`)
+  }
   const globalLocasByDate: Record<string, string[]> = {}
   const locaRegex = /^L(10|[1-9])$/
-  for (const doc of firstClassGlobalSnapshot.docs) {
+  for (const row of (firstRows ?? []) as SupabaseBookingRow[]) {
     try {
-      const d = doc.data()
-      const date = normalizeDate(d.date)
+      const date = String(row.date ?? '').slice(0, 10)
       if (!date || !DATE_REGEX.test(date) || !datesSet.has(date)) continue
       if (!globalLocasByDate[date]) globalLocasByDate[date] = []
-      const fromArray = Array.isArray(d.firstClassLocas)
-        ? (d.firstClassLocas as string[])
-            .map((x) => (typeof x === 'string' ? x.trim().toUpperCase() : ''))
-            .filter((x) => locaRegex.test(x))
-        : []
+      const fromArray = firstClassLocasFromRow(row)
+        .map((x) => x.trim().toUpperCase())
+        .filter((x) => locaRegex.test(x))
       for (const loca of fromArray) {
         if (loca && !globalLocasByDate[date].includes(loca)) globalLocasByDate[date].push(loca)
       }
-      if (fromArray.length === 0) {
-        const raw = typeof d.firstClassLoca === 'string' ? d.firstClassLoca.trim() : ''
-        const loca = raw ? raw.toUpperCase() : ''
-        if (loca && locaRegex.test(loca) && !globalLocasByDate[date].includes(loca)) {
-          globalLocasByDate[date].push(loca)
-        }
-      }
     } catch (err) {
-      console.warn('availability multiple dates first-class global: skip doc', doc.id, err)
+      console.warn('availability multiple dates first-class global: skip row', row.id, err)
     }
   }
   for (const date of datesArr) {

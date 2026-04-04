@@ -18,12 +18,12 @@ interface Step4PaymentProps {
 
 export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, termsHref = '/terms' }: Step4PaymentProps) {
   const [loading, setLoading] = useState(false)
-  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(!isBookingOnlinePaymentEnabled)
   const p = state.pricingSummary
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
-    if (!isBookingOnlinePaymentEnabled || ctaDisabled || loading || !termsAccepted) return
+    if (ctaDisabled || loading || !termsAccepted) return
     setLoading(true)
     try {
       await Promise.resolve(onSubmit())
@@ -94,9 +94,8 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, ter
 
       {!isBookingOnlinePaymentEnabled && (
         <div className={styles.virtualPosDisabledNotice} role="status">
-          <strong>Sanal POS şu anda aktif değil</strong>
-          Online kart ödemesi geçici olarak kapalıdır. Rezervasyonu tamamlamak için lütfen bizimle iletişime geçin. Üstteki
-          &quot;Geri&quot; ile önceki adıma dönebilirsiniz.
+          <strong>Test modu aktif</strong>
+          Sanal POS kapalı olsa da bu ekranda <em>Öde</em> ile rezervasyonu test amaçlı oluşturabilirsiniz.
         </div>
       )}
 
@@ -165,21 +164,19 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, ter
       </div>
       )}
 
-      {isBookingOnlinePaymentEnabled && (
       <div className={styles.stepActions}>
         <div className={styles.stepActionsRow}>
           <button
             type="submit"
             className={styles.stepBtnPrimary}
             disabled={ctaDisabled || loading || !termsAccepted}
-            aria-label="Ödemeyi tamamla"
+            aria-label="Öde"
             style={{ width: '100%' }}
           >
-            {loading ? 'İşleniyor…' : 'Ödemeyi Tamamla'}
+            {loading ? 'İşleniyor…' : 'Öde'}
           </button>
         </div>
       </div>
-      )}
     </form>
   )
 }

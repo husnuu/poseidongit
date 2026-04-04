@@ -7,7 +7,7 @@ import type {
   BookingWizardState,
   PricingSummary,
 } from '@/lib/sanity/bookingTypes'
-import { getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
+import { getTourIdForBooking } from '@/lib/sanity/bookingTypes'
 import { buildCalendarDaysForMonth, computePricingForSelection, getDisplayedAdultUnitPriceForClass, getClassStatusForDate, getRemainingCapacityForDate, getCapForTicketClass } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import styles from '../booking.module.css'
@@ -38,7 +38,7 @@ export default function StepClass({
     () => (state.selectedDate ? [state.selectedDate] : []),
     [state.selectedDate]
   )
-  const { usedByDate } = useAvailability(getTourIdForFirebase(tour), datesToFetch, {
+  const { usedByDate } = useAvailability(getTourIdForBooking(tour), datesToFetch, {
     tourSlug: tour?.slug,
     optimisticUsed,
   })

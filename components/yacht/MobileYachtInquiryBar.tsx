@@ -1,6 +1,7 @@
 'use client'
 
 import { DEFAULT_YACHT_INQUIRY_CTA } from '@/lib/yachtConversionCopy'
+import { MOBILE_BOTTOM_CTA_BAR_ID } from '@/lib/mobileBottomCtaBarId'
 import styles from './MobileYachtInquiryBar.module.css'
 
 interface MobileYachtInquiryBarProps {
@@ -21,7 +22,7 @@ export default function MobileYachtInquiryBar({
   if (isModalOpen) return null
 
   return (
-    <div className={styles.bookingBar}>
+    <div id={MOBILE_BOTTOM_CTA_BAR_ID} className={styles.bookingBar}>
       <div className={styles.bookingBarInner}>
         <div className={styles.priceBlock}>
           <div className={styles.priceValue}>{priceHeadline}</div>

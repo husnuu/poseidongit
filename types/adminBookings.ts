@@ -29,7 +29,7 @@ export interface AdminBookingRow {
   createdAt: string | null
   adminNote?: string | null
   meetingPoint?: string
-  mealPreference?: { key: string; label: string }
+  mealPreference?: { key: string; label: string; counts?: Array<{ key: string; label: string; count: number }> }
   source?: string
   manualSource?: string | null
   createdByAdmin?: boolean

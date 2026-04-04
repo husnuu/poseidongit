@@ -30,7 +30,7 @@ export default defineType({
       title: 'Tur ID (Rezervasyon / API)',
       type: 'string',
       readOnly: true,
-      description: 'Firestore ve availability API\'de bu tur için kullanılan ID. Değiştirilemez.',
+      description: 'Rezervasyon ve availability API\'de bu tur için kullanılan ID. Değiştirilemez.',
       components: { input: TourIdField },
     }),
     defineField({
@@ -495,7 +495,7 @@ export default defineType({
       title: 'Yemek menüsü (rezervasyon)',
       type: 'object',
       description:
-        'Açıkken rezervasyon sihirbazında “Bilgileriniz” adımında zorunlu seçim gösterilir; Firestore ve e-postalara yazılır.',
+        'Açıkken rezervasyon sihirbazında “Bilgileriniz” adımında zorunlu seçim gösterilir; rezervasyon kaydına ve e-postalara yazılır.',
       fields: [
         defineField({
           name: 'enabled',

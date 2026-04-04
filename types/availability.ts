@@ -1,6 +1,6 @@
 /**
  * Response shape for GET /api/availability?tourId=...&date=YYYY-MM-DD
- * Capacity from Sanity, booked from Firestore, remaining = capacity - booked.
+ * Capacity from Sanity, booked from Supabase, remaining = capacity - booked.
  */
 export type ClassAvailability = {
   capacity: number

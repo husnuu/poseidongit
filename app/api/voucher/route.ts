@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getFirestore } from '@/lib/firebaseAdmin'
 import { validateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { generateVoucherPdf } from '@/lib/voucher/generateVoucherPdf'
-import { buildVoucherDataFromBookingSnapshot } from '@/lib/voucher/buildVoucherDataFromBookingSnapshot'
-
-const COLLECTION = 'bookings'
+import { buildVoucherDataFromBookingRow } from '@/lib/voucher/buildVoucherDataFromBookingSnapshot'
+import { supabase } from '@/lib/supabase'
+import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -50,17 +49,19 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const db = getFirestore()
-    const snap = await db.collection(COLLECTION).doc(bookingId).get()
-
-    if (!snap.exists) {
+    const { data: bookingRow, error: fetchError } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single()
+    if (fetchError || !bookingRow) {
       return NextResponse.json(
         { error: 'Booking not found', bookingId },
         { status: 404 }
       )
     }
 
-    const voucherData = await buildVoucherDataFromBookingSnapshot(snap, token)
+    const voucherData = await buildVoucherDataFromBookingRow(bookingId, bookingRow as SupabaseBookingRow, token)
     if (!voucherData) {
       return NextResponse.json(
         { error: 'Bilet verisi oluşturulamadı. accessToken eksik olabilir.' },

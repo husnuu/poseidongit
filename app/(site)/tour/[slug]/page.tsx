@@ -225,6 +225,10 @@ export const revalidate = 3600 // ISR: tur sayfaları en fazla 1 saat sonra gün
 
 /** Yayımlanmış turların slug'ları — 404 önlemek için sayfaların build/ISR'da bilinmesi gerekir */
 export async function generateStaticParams() {
+  if (process.env.NODE_ENV === 'development') {
+    // Dev'de static-path worker kaynaklı chunk bozulmalarını önlemek için kapalı.
+    return []
+  }
   const list = await client.fetch<{ slug: string | null }[]>(tourSlugsQuery)
   return (list ?? []).map((t) => ({ slug: t.slug })).filter((p): p is { slug: string } => Boolean(p.slug))
 }

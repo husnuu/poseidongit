@@ -86,3 +86,49 @@ export async function resolveAdditionalTravelerMealPreferencesForBooking(
   }
   return { ok: true, stored: resolved }
 }
+
+export async function resolveMealPreferenceCountsForBooking(
+  tourSanityId: string,
+  countsByKey: Record<string, number> | undefined,
+  totalPax: number
+): Promise<
+  | { ok: true; stored: Array<{ key: string; label: string; count: number }>; primary: StoredMealPreference | undefined }
+  | { ok: false; message: string }
+> {
+  const { menuActive, options } = await fetchMealMenuState(tourSanityId)
+  if (!menuActive) {
+    if (countsByKey && Object.keys(countsByKey).length > 0) {
+      return { ok: false, message: 'Bu tur için yemek menüsü tanımlı değil.' }
+    }
+    return { ok: true, stored: [], primary: undefined }
+  }
+
+  if (!countsByKey || Object.keys(countsByKey).length === 0) {
+    return { ok: false, message: 'Yemek dağılımı gerekli.' }
+  }
+
+  const stored: Array<{ key: string; label: string; count: number }> = []
+  let total = 0
+  for (const [key, rawCount] of Object.entries(countsByKey)) {
+    const count = Math.max(0, Number(rawCount) || 0)
+    if (count <= 0) continue
+    const opt = options.find((o) => o.key === key)
+    if (!opt) return { ok: false, message: `Geçersiz yemek tercihi: ${key}` }
+    stored.push({ key: opt.key, label: opt.label, count })
+    total += count
+  }
+
+  if (stored.length === 0) {
+    return { ok: false, message: 'Yemek dağılımında en az bir seçenek için adet girin.' }
+  }
+  if (total !== totalPax) {
+    return { ok: false, message: `Yemek dağılımı toplamı (${total}) yolcu sayısına (${totalPax}) eşit olmalı.` }
+  }
+
+  const primary = [...stored].sort((a, b) => b.count - a.count)[0]
+  return {
+    ok: true,
+    stored,
+    primary: primary ? { key: primary.key, label: primary.label } : undefined,
+  }
+}

@@ -334,6 +334,14 @@ export default defineType({
       ],
     }),
     defineField({
+      name: 'cookiePolicyPage',
+      title: 'Çerez politikası sayfası',
+      type: 'reference',
+      to: [{type: 'legalPage'}],
+      description:
+        'Çerez bildirimindeki "Çerez politikamızı okuyun" linki. Yasal Sayfa seçin (örn. Çerez Politikası). Boş bırakılırsa site varsayılanı veya NEXT_PUBLIC_COOKIE_POLICY_PATH kullanılır.',
+    }),
+    defineField({
       name: 'contactInfo',
       title: 'İletişim Bilgileri',
       type: 'object',
@@ -349,7 +357,8 @@ export default defineType({
           name: 'whatsapp',
           title: 'WhatsApp',
           type: 'string',
-          description: 'WhatsApp numarası (örn: +90 555 123 4567)',
+          description:
+            'Ülke kodu ile numara (örn: +90 555 123 4567). Sağ alttaki sabit WhatsApp butonu ve wa.me bağlantısı bu numarayı kullanır.',
         }),
         defineField({
           name: 'email',

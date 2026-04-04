@@ -4,17 +4,22 @@ import Script from 'next/script'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+const GA_MEASUREMENT_ID =
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+
+const GA_ID_JSON = GA_MEASUREMENT_ID ? JSON.stringify(GA_MEASUREMENT_ID) : '""'
 
 export default function GoogleAnalytics() {
   const pathname = usePathname()
   const prevPathRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!GA_MEASUREMENT_ID || typeof window === 'undefined' || !(window as unknown as { gtag?: (...args: unknown[]) => void }).gtag) return
+    if (!GA_MEASUREMENT_ID || typeof window === 'undefined' || typeof window.gtag !== 'function') {
+      return
+    }
     if (pathname === prevPathRef.current) return
     prevPathRef.current = pathname
-    ;(window as unknown as { gtag: (...args: unknown[]) => void }).gtag('config', GA_MEASUREMENT_ID, {
+    window.gtag('config', GA_MEASUREMENT_ID, {
       page_path: pathname || '/',
     })
   }, [pathname])
@@ -23,8 +28,21 @@ export default function GoogleAnalytics() {
 
   return (
     <>
+      <Script id="gtag-consent-default" strategy="beforeInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('consent', 'default', {
+            analytics_storage: 'denied',
+            ad_storage: 'denied',
+            ad_user_data: 'denied',
+            ad_personalization: 'denied',
+            wait_for_update: 500
+          });
+        `}
+      </Script>
       <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+        src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_MEASUREMENT_ID)}`}
         strategy="afterInteractive"
       />
       <Script id="gtag-init" strategy="afterInteractive">
@@ -32,7 +50,7 @@ export default function GoogleAnalytics() {
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${GA_MEASUREMENT_ID}', { page_path: window.location.pathname });
+          gtag('config', ${GA_ID_JSON}, { page_path: window.location.pathname });
         `}
       </Script>
     </>

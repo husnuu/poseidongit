@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server'
-import * as admin from 'firebase-admin'
 import { verifyTurnstileToken } from '@/lib/turnstile'
 import { sendYachtInquiryEmail } from '@/lib/email'
-import { getFirestore } from '@/lib/firebaseAdmin'
 import { overnightNights } from '@/lib/yachtRentalModes'
+import { supabase } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
-const COLLECTION = 'yachtInquiries'
+function parseMissingColumnFromSupabaseError(message: string): string | null {
+  const m = message.match(/Could not find the '([^']+)' column of 'yacht_inquiries'/i)
+  return m?.[1] ?? null
+}
 
 function parseBody(body: unknown): {
   yachtSlug?: string
@@ -86,16 +88,42 @@ function parseBody(body: unknown): {
   }
 }
 
-async function saveToFirestore(data: Record<string, unknown>) {
-  try {
-    const db = getFirestore()
-    await db.collection(COLLECTION).add({
-      ...data,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    })
-  } catch (e) {
-    console.warn('[yacht-inquiry] Firestore kayıt atlandı:', e)
+async function saveToSupabase(data: Record<string, unknown>) {
+  let payload: Record<string, unknown> = {
+    yacht_slug: data.yachtSlug,
+    yacht_name: data.yachtName,
+    location: data.location ?? null,
+    rental_type: data.rentalType,
+    date: data.date,
+    check_in: data.checkIn ?? null,
+    check_out: data.checkOut ?? null,
+    nights: data.nights ?? null,
+    guest_count: data.guestCount,
+    first_name: data.firstName,
+    last_name: data.lastName,
+    email: data.email,
+    phone: data.phone,
+    message: data.message,
+    price_from: data.priceFrom ?? null,
+    currency: data.currency ?? null,
+    status: 'new',
+    source: 'web',
+    is_read: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   }
+
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const { error } = await supabase.from('yacht_inquiries').insert(payload)
+    if (!error) return
+    const missingColumn = parseMissingColumnFromSupabaseError(error.message)
+    if (missingColumn && Object.prototype.hasOwnProperty.call(payload, missingColumn)) {
+      delete payload[missingColumn]
+      continue
+    }
+    throw new Error(`Supabase yacht inquiry insert failed: ${error.message}`)
+  }
+  throw new Error('Supabase yacht inquiry insert failed: schema mismatch')
 }
 
 export async function POST(request: Request) {
@@ -215,7 +243,7 @@ export async function POST(request: Request) {
     if (priceFrom != null && Number.isFinite(priceFrom)) payload.priceFrom = priceFrom
     if (currency) payload.currency = currency
 
-    await saveToFirestore(payload)
+    await saveToSupabase(payload)
 
     const emailSummaryDate =
       mode === 'overnight' && checkIn && checkOut && nightsComputed != null

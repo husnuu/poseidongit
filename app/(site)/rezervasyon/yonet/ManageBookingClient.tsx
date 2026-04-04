@@ -15,7 +15,7 @@ type Booking = {
   date: string
   time?: string
   meetingPoint?: string
-  mealPreference?: { key: string; label: string }
+  mealPreference?: { key: string; label: string; counts?: Array<{ key: string; label: string; count: number }> }
   classId?: string
   className: string
   firstClassLocas?: string[]
@@ -23,6 +23,7 @@ type Booking = {
   currency: string
   counts: { adult: number; child: number; infant: number }
   customer: { firstName: string; lastName: string; email: string }
+  additionalTravelers?: { firstName: string; lastName: string; mealPreference?: { key: string; label: string } }[]
   canCancel: boolean
   hoursUntilTour: number | null
   accessToken?: string
@@ -375,6 +376,23 @@ export default function ManageBookingClient({
                   <td style={{ color: '#6b7280', padding: '8px 0' }}>Yolcu</td>
                   <td style={{ textAlign: 'right', fontWeight: 500 }}>{booking.customer.firstName} {booking.customer.lastName}</td>
                 </tr>
+                {booking.additionalTravelers && booking.additionalTravelers.length > 0 && (
+                  <tr>
+                    <td style={{ color: '#6b7280', padding: '8px 0', verticalAlign: 'top' }}>Diğer yolcular</td>
+                    <td style={{ textAlign: 'right', fontWeight: 500, lineHeight: 1.5 }}>
+                      {booking.additionalTravelers.map((t, iRow) => (
+                        <div key={`${t.firstName}-${t.lastName}-${iRow}`}>
+                          {t.firstName} {t.lastName}
+                          {t.mealPreference?.label?.trim() ? (
+                            <span style={{ color: '#6b7280', fontSize: 12, display: 'block' }}>
+                              Yemek: {t.mealPreference.label.trim()}
+                            </span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </td>
+                  </tr>
+                )}
                 <tr>
                   <td style={{ color: '#6b7280', padding: '8px 0' }}>Durum</td>
                   <td style={{ textAlign: 'right' }}>{booking.status === 'paid' ? 'Ödendi' : booking.status === 'confirmed' ? 'Onaylandı' : 'Beklemede'}</td>
@@ -400,7 +418,17 @@ export default function ManageBookingClient({
                 {booking.mealPreference?.label?.trim() && (
                   <tr>
                     <td style={{ color: '#6b7280', padding: '8px 0' }}>Yemek tercihi</td>
-                    <td style={{ textAlign: 'right', fontWeight: 500 }}>{booking.mealPreference.label.trim()}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 500 }}>
+                      {booking.mealPreference.label.trim()}
+                      {booking.mealPreference.counts?.length ? (
+                        <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+                          {booking.mealPreference.counts
+                            .filter((x) => x.count > 0)
+                            .map((x) => `${x.label} (${x.count})`)
+                            .join(' · ')}
+                        </div>
+                      ) : null}
+                    </td>
                   </tr>
                 )}
                 <tr>

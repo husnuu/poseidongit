@@ -3,10 +3,13 @@ import { homePageHeroQuery } from '@/lib/queries'
 import HeroBanner from '@/components/home/HeroBanner'
 import FeatureBar from '@/components/home/FeatureBar'
 import PopularToursSection from '@/components/home/PopularToursSection'
+import PopularYachtsSection from '@/components/home/PopularYachtsSection'
+import type { HomePopularYachtCardData } from '@/components/home/HomePopularYachtCard'
 import AboutTeaserSplit from '@/components/home/AboutTeaserSplit'
 import type { HeroData } from '@/components/home/HeroBanner'
 import type { FeatureBarItem } from '@/components/home/FeatureBar'
 import type { PopularToursSectionData } from '@/components/home/PopularToursSection'
+import type { PopularYachtsSectionData } from '@/components/home/PopularYachtsSection'
 import BlogSection from '@/components/home/BlogSection'
 import RouteSection from '@/components/home/RouteSection'
 import InstagramSection from '@/components/home/InstagramSection'
@@ -58,6 +61,40 @@ export async function generateMetadata(): Promise<Metadata> {
       },
     }
   }
+}
+
+type PopularYachtsSectionRaw = {
+  enabled?: boolean | null
+  title?: string | null
+  subtitle?: string | null
+  ctaButton?: { label?: string | null; href?: string | null } | null
+  items?: Array<{
+    _id: string
+    name?: string | null
+    slug?: string | null
+    isActive?: boolean | null
+    yachtType?: string | null
+    isFeatured?: boolean | null
+    badges?: string[] | null
+    included?: string[] | null
+    sailingLicenceRequired?: string | null
+    priceFrom?: number | null
+    overnightTotalPrice?: number | null
+    overnightNightPricing?: { price?: number | null }[] | null
+    currency?: string | null
+    dailyRentalEnabled?: boolean | null
+    overnightRentalEnabled?: boolean | null
+    marina?: string | null
+    locationTitle?: string | null
+    locationSlug?: string | null
+    specifications?: {
+      length?: string | null
+      cabins?: number | null
+      capacity?: number | null
+      buildYear?: number | null
+    } | null
+    mainImage?: { asset?: { _ref: string }; alt?: string | null } | null
+  }> | null
 }
 
 type PopularToursSectionRaw = {
@@ -112,11 +149,66 @@ type HomePageHeroResult = {
   hero: HeroData | null
   featureBar?: FeatureBarItem[] | null
   popularToursSection?: PopularToursSectionRaw | null
+  popularYachtsSection?: PopularYachtsSectionRaw | null
   aboutTeaser?: AboutTeaserData | null
   blogSection?: BlogSectionRaw | null
   routeSection?: RouteSectionRaw | null
   instagramSection?: InstagramSectionData | null
 } | null
+
+function mapPopularYachtsSection(raw: PopularYachtsSectionRaw | null): PopularYachtsSectionData | null {
+  if (!raw || raw.enabled === false) return null
+  type YachtRef = NonNullable<PopularYachtsSectionRaw['items']>[number]
+  const list = (raw.items ?? []).filter(
+    (y): y is YachtRef =>
+      y != null &&
+      y.isActive !== false &&
+      Boolean(y.slug) &&
+      Boolean(y._id) &&
+      Boolean(y.name?.trim())
+  )
+  if (!list.length) return null
+  const items: HomePopularYachtCardData[] = list.map((y) => {
+    const spec = y.specifications
+    const specifications =
+      spec == null
+        ? undefined
+        : {
+            length: spec.length ?? undefined,
+            cabins: spec.cabins ?? undefined,
+            capacity: spec.capacity ?? undefined,
+            buildYear: spec.buildYear ?? undefined,
+          }
+    return {
+    _id: y._id,
+    name: (y.name ?? '').trim(),
+    slug: y.slug ?? null,
+    locationTitle: y.locationTitle ?? null,
+    locationSlug: y.locationSlug ?? null,
+    coverImageUrl: y.mainImage?.asset ? urlFor(y.mainImage.asset).width(900).height(720).url() : null,
+    coverImageAlt: y.mainImage?.alt ?? null,
+    yachtType: y.yachtType ?? null,
+    badges: y.badges ?? null,
+    included: y.included ?? null,
+    specifications,
+    sailingLicenceRequired: y.sailingLicenceRequired ?? null,
+    isFeatured: y.isFeatured ?? null,
+    priceFrom: y.priceFrom ?? null,
+    overnightTotalPrice: y.overnightTotalPrice ?? null,
+    overnightNightPricing: y.overnightNightPricing ?? null,
+    currency: y.currency ?? null,
+    dailyRentalEnabled: y.dailyRentalEnabled ?? null,
+    overnightRentalEnabled: y.overnightRentalEnabled ?? null,
+  }
+  })
+  return {
+    enabled: true,
+    title: raw.title,
+    subtitle: raw.subtitle,
+    ctaButton: raw.ctaButton ?? null,
+    items,
+  }
+}
 
 function mapPopularToursToCardItems(raw: PopularToursSectionRaw | null): PopularToursSectionData | null {
   if (!raw || !raw.items?.length) return raw as PopularToursSectionData | null
@@ -178,6 +270,7 @@ export default async function HomePage() {
   let hero: HeroData | null = null
   let featureBar: FeatureBarItem[] | null = null
   let popularToursSection: PopularToursSectionData | null = null
+  let popularYachtsSection: PopularYachtsSectionData | null = null
   let aboutTeaser: AboutTeaserData | null = null
   let blogSection: BlogSectionData | null = null
   let routeSection: ReturnType<typeof mapRouteSection> = null
@@ -187,6 +280,7 @@ export default async function HomePage() {
     hero = data?.hero ?? null
     featureBar = data?.featureBar ?? null
     popularToursSection = mapPopularToursToCardItems(data?.popularToursSection ?? null)
+    popularYachtsSection = mapPopularYachtsSection(data?.popularYachtsSection ?? null)
     aboutTeaser = data?.aboutTeaser ?? null
     blogSection = mapBlogSection(data?.blogSection ?? null)
     routeSection = mapRouteSection(data?.routeSection ?? null)
@@ -195,6 +289,7 @@ export default async function HomePage() {
     hero = null
     featureBar = null
     popularToursSection = null
+    popularYachtsSection = null
     aboutTeaser = null
     blogSection = null
     routeSection = null
@@ -215,6 +310,7 @@ export default async function HomePage() {
       <HeroBanner hero={hero} />
       {featureBar && featureBar.length > 0 && <FeatureBar items={featureBar} />}
       <PopularToursSection data={popularToursSection} />
+      <PopularYachtsSection data={popularYachtsSection} />
       {routeSection && (
         <RouteSection
           heading={routeSection.heading}

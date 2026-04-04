@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [
     '@sanity/client',
     '@sanity/image-url',
-    'firebase-admin',
     '@opentelemetry/api',
   ],
   images: {
@@ -23,6 +22,11 @@ const nextConfig: NextConfig = {
   // "Jest worker encountered child process exceptions" hatası için: build worker kapatılır,
   // derleme ana process'te yapılır (biraz daha yavaş ama worker çökmesi olmaz).
   webpack: (config, { dev, isServer }) => {
+    if (dev) {
+      // Workaround for intermittent missing dev chunks (e.g. Cannot find module './1331.js').
+      // Disabling filesystem cache in dev favors stability over rebuild speed.
+      config.cache = false
+    }
     if (!isServer && config.output && typeof config.output === 'object') {
       // Dev’de ilk route derlemesi yavaşsa varsayılan 120s ChunkLoadError verir; prod’da makul üst sınır.
       ;(config.output as { chunkLoadTimeout?: number }).chunkLoadTimeout = dev

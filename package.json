@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "next dev -p 3002",
+    "dev": "rm -rf .next node_modules/.cache && NEXT_DISABLE_DEVTOOLS=1 next dev -p 3002",
     "dev:turbo": "next dev -p 3002 --turbo",
     "dev:lan": "next dev -p 3002 -H 0.0.0.0",
     "dev:3000": "next dev -p 3000",
@@ -28,9 +28,10 @@
     "@portabletext/react": "^4.0.0",
     "@sanity/client": "^6.22.0",
     "@sanity/image-url": "^1.0.2",
+    "@supabase/ssr": "^0.10.0",
+    "@supabase/supabase-js": "^2.101.0",
     "axios": "^1.13.6",
-    "firebase": "^12.10.0",
-    "firebase-admin": "^13.7.0",
+    "bcryptjs": "^3.0.3",
     "https-proxy-agent": "^8.0.0",
     "jose": "^6.2.1",
     "jspdf": "^4.2.0",
@@ -49,6 +50,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.0.0",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^18.2.0",

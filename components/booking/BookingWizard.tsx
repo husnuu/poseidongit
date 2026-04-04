@@ -4,10 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
-import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
+import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForBooking } from '@/lib/sanity/bookingTypes'
 import { isTourMealMenuActive } from '@/components/booking/steps/MealPreferenceFields'
 import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
-import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
 import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import StepPeople from './steps/StepPeople'
@@ -38,7 +37,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
   /** Rezervasyon başarılı olunca anlık kalan kontenjan = Sanity kapasitesi - (API used + bu). */
   const [optimisticUsed, setOptimisticUsed] = useState<UsedByDateAndClass | null>(null)
   const [step4TermsAccepted, setStep4TermsAccepted] = useState(false)
-  /** Step 2'ye her girildiğinde artırılır; böylece dolu loca listesi Firestore'dan yeniden çekilir. */
+  /** Step 2'ye her girildiğinde artırılır; böylece dolu loca listesi availability API'den yeniden çekilir. */
   const [step2InvalidateKey, setStep2InvalidateKey] = useState(0)
   const prevStepRef = useRef(state.step)
 
@@ -103,7 +102,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
     () => (state.selectedDate ? [state.selectedDate] : []),
     [state.selectedDate]
   )
-  const { usedByDate } = useAvailability(getTourIdForFirebase(tour), datesForAvailability, {
+  const { usedByDate } = useAvailability(getTourIdForBooking(tour), datesForAvailability, {
     tourSlug: tour?.slug,
     optimisticUsed,
   })
@@ -133,10 +132,9 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
     else if (state.step === 2 && canProceedStep2) goNext()
     else if (state.step === 3 && canProceedStep3) goNext()
     else if (state.step === 4) {
-      if (!isBookingOnlinePaymentEnabled) return
       setSubmitError(null)
       setSubmitting(true)
-      const tourId = getTourIdForFirebase(tour)
+      const tourId = getTourIdForBooking(tour)
       const phoneDisplay =
         state.customer.phone?.startsWith('+') || !state.customer.phone
           ? (state.customer.phone ?? '')
@@ -229,19 +227,15 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
     if (state.step === 1) return 'Devam'
     if (state.step === 2) return 'Devam'
     if (state.step === 3) return 'Ödemeye Geç'
-    if (state.step === 4 && !isBookingOnlinePaymentEnabled) return 'Ödeme kapalı'
     if (state.step === 4 && submitting) return 'İşleniyor…'
-    return 'ÖDEMEYİ TAMAMLA'
+    return 'ÖDE'
   }, [state.step, submitting])
 
   const ctaDisabled = useMemo(() => {
     if (state.step === 1) return !canProceedStep1
     if (state.step === 2) return !canProceedStep2
     if (state.step === 3) return !canProceedStep3
-    if (state.step === 4) {
-      if (!isBookingOnlinePaymentEnabled) return true
-      return submitting || !step4TermsAccepted
-    }
+    if (state.step === 4) return submitting || !step4TermsAccepted
     return false
   }, [state.step, canProceedStep1, canProceedStep2, canProceedStep3, submitting, step4TermsAccepted])
 

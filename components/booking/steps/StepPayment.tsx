@@ -27,7 +27,7 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
 
   useEffect(() => {
     if (!isBookingOnlinePaymentEnabled) {
-      onTermsAcceptanceChange?.(false)
+      onTermsAcceptanceChange?.(true)
       return
     }
     onTermsAcceptanceChange?.(termsAccepted)
@@ -67,9 +67,8 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
 
       {!isBookingOnlinePaymentEnabled && (
         <div className={styles.virtualPosDisabledNotice} role="status">
-          <strong>Sanal POS şu anda aktif değil</strong>
-          Online kart ödemesi geçici olarak kapalıdır. Rezervasyonu tamamlamak için lütfen bizimle iletişime geçin veya
-          önceki adıma dönüp seçiminizi gözden geçirin.
+          <strong>Test modu aktif</strong>
+          Sanal POS kapalı olsa da alttaki <em>ÖDE</em> butonu ile rezervasyon oluşturup veri/e-posta akışını test edebilirsiniz.
         </div>
       )}
 

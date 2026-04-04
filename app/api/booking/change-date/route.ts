@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import * as admin from 'firebase-admin'
-import type { DocumentData, UpdateData } from 'firebase-admin/firestore'
-import { getFirestore } from '@/lib/firebaseAdmin'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
 import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
+import { supabase } from '@/lib/supabase'
+import { firstClassLocasFromRow, paxCountFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
-const COLLECTION = 'bookings'
 const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
 const LOCA_REGEX = /^L(10|[1-9])$/
@@ -51,15 +49,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const db = getFirestore()
-    const ref = db.collection(COLLECTION).doc(bookingId)
-    const snap = await ref.get()
-
-    if (!snap.exists) {
+    const { data: currentBooking, error: currentBookingError } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single()
+    if (currentBookingError || !currentBooking) {
       return NextResponse.json({ error: 'Rezervasyon bulunamadı' }, { status: 404 })
     }
 
-    const data = snap.data()!
+    const data = currentBooking as SupabaseBookingRow
     if (data.status === 'cancelled') {
       return NextResponse.json(
         { error: 'İptal edilmiş rezervasyonun tarihi değiştirilemez.' },
@@ -67,8 +66,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const customer = (data.customer ?? {}) as Record<string, string>
-    const bookingEmail = String(customer.email ?? '').trim().toLowerCase()
+    const bookingEmail = String(data.customer_email ?? '').trim().toLowerCase()
     if (bookingEmail !== email) {
       return NextResponse.json(
         { error: 'Bu e-posta adresi bu rezervasyona ait değil' },
@@ -76,14 +74,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const tourId = String(data.tourId ?? '')
-    const classId = String(data.classId ?? '')
-    const counts = (data.counts ?? { adult: 0, child: 0, infant: 0 }) as {
-      adult?: number
-      child?: number
-      infant?: number
-    }
-    const totalPax = (counts.adult ?? 0) + (counts.child ?? 0) + (counts.infant ?? 0)
+    const tourId = String(data.tour_id ?? '')
+    const classId = String(data.class_id ?? '')
+    const totalPax = paxCountFromRow(data)
     if (totalPax <= 0) {
       return NextResponse.json(
         { error: 'Rezervasyonda yolcu bilgisi bulunamadı.' },
@@ -110,31 +103,25 @@ export async function POST(request: NextRequest) {
       /**
        * First Class: tüm turlar ortak L1–L10; rezervasyonlar turId’ye göre değil global sorgulanır.
        */
-      const globalFirstSnap = await db
-        .collection(COLLECTION)
-        .where('date', '==', newDate)
-        .where('classId', '==', 'first')
-        .where('status', 'in', ACTIVE_STATUSES)
-        .get()
+      const { data: globalFirstRows, error: globalFirstError } = await supabase
+        .from('bookings')
+        .select('id, status, adult_count, child_count, infant_count, first_class_locas, first_class_loca')
+        .eq('date', newDate)
+        .eq('class_id', 'first')
+        .in('status', ACTIVE_STATUSES)
+      if (globalFirstError) {
+        throw new Error(`Supabase first class query failed: ${globalFirstError.message}`)
+      }
 
       let globalBookedPax = 0
       const reservedOnNewDate: string[] = []
-      for (const doc of globalFirstSnap.docs) {
-        if (doc.id === bookingId) continue
-        const d = doc.data()
-        const c = (d.counts ?? {}) as Record<string, unknown>
-        globalBookedPax +=
-          Math.max(0, Number(c?.adult) || 0) +
-          Math.max(0, Number(c?.child) || 0) +
-          Math.max(0, Number(c?.infant) || 0)
-        const arr = Array.isArray(d.firstClassLocas)
-          ? (d.firstClassLocas as string[])
-              .map((x) => String(x).trim().toUpperCase())
-              .filter((x) => LOCA_REGEX.test(x))
-          : []
-        const single = typeof d.firstClassLoca === 'string' ? d.firstClassLoca.trim().toUpperCase() : ''
-        if (arr.length) arr.forEach((l) => reservedOnNewDate.includes(l) || reservedOnNewDate.push(l))
-        else if (single && LOCA_REGEX.test(single) && !reservedOnNewDate.includes(single)) reservedOnNewDate.push(single)
+      for (const row of (globalFirstRows ?? []) as SupabaseBookingRow[]) {
+        if (row.id === bookingId) continue
+        globalBookedPax += paxCountFromRow(row)
+        const locas = firstClassLocasFromRow(row)
+        for (const loca of locas) {
+          if (!reservedOnNewDate.includes(loca)) reservedOnNewDate.push(loca)
+        }
       }
 
       const remaining = Math.max(0, FIRST_CLASS_CAPACITY_TOTAL - globalBookedPax)
@@ -166,21 +153,22 @@ export async function POST(request: NextRequest) {
         }
       }
     } else {
-      const snapshot = await db
-        .collection(COLLECTION)
-        .where('tourId', '==', sanityTour._id ?? tourId)
-        .where('date', '==', newDate)
-        .where('status', 'in', ACTIVE_STATUSES)
-        .get()
+      const { data: sameDayRows, error: sameDayError } = await supabase
+        .from('bookings')
+        .select('id, class_id, adult_count, child_count, infant_count')
+        .eq('tour_id', sanityTour._id ?? tourId)
+        .eq('date', newDate)
+        .in('status', ACTIVE_STATUSES)
+      if (sameDayError) {
+        throw new Error(`Supabase same day booking query failed: ${sameDayError.message}`)
+      }
 
       let bookedForClass = 0
-      for (const doc of snapshot.docs) {
-        if (doc.id === bookingId) continue
-        const d = doc.data()
-        const cid = normalizeClassKey(String(d.classId ?? ''))
+      for (const row of (sameDayRows ?? []) as SupabaseBookingRow[]) {
+        if (row.id === bookingId) continue
+        const cid = normalizeClassKey(String(row.class_id ?? ''))
         if (cid !== classKey) continue
-        const c = (d.counts ?? {}) as Record<string, unknown>
-        bookedForClass += Math.max(0, Number(c?.adult) || 0) + Math.max(0, Number(c?.child) || 0) + Math.max(0, Number(c?.infant) || 0)
+        bookedForClass += paxCountFromRow(row)
       }
 
       const remaining = Math.max(0, capacity - bookedForClass)
@@ -196,13 +184,19 @@ export async function POST(request: NextRequest) {
       finalFirstClassLocas = undefined
     }
 
-    const updatePayload: UpdateData<DocumentData> = { date: newDate }
+    const updatePayload: Record<string, unknown> = { date: newDate }
     if (finalFirstClassLocas && finalFirstClassLocas.length > 0) {
-      updatePayload.firstClassLocas = finalFirstClassLocas
-      /** Eski tek-alan (firstClassLoca) kalsın; doluluk hesapları çift sayabilir. Tam sil. */
-      updatePayload.firstClassLoca = admin.firestore.FieldValue.delete()
+      updatePayload.first_class_locas = finalFirstClassLocas
+      /** Eski tek-alan (first_class_loca) kalsın; doluluk hesapları çift sayabilir. */
+      updatePayload.first_class_loca = null
     }
-    await ref.update(updatePayload)
+    const { error: updateError } = await supabase
+      .from('bookings')
+      .update(updatePayload)
+      .eq('id', bookingId)
+    if (updateError) {
+      throw new Error(`Supabase booking change-date update failed: ${updateError.message}`)
+    }
 
     return NextResponse.json({
       ok: true,

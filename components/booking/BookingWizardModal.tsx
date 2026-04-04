@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
-import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForFirebase } from '@/lib/sanity/bookingTypes'
+import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForBooking } from '@/lib/sanity/bookingTypes'
 import { isTourMealMenuActive } from '@/components/booking/steps/MealPreferenceFields'
 import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
 import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
@@ -175,7 +175,7 @@ export default function BookingWizardModal({
     () => (state.selectedDate ? [state.selectedDate] : []),
     [state.selectedDate]
   )
-  const { usedByDate, availability } = useAvailability(getTourIdForFirebase(tour), datesForAvailability, {
+  const { usedByDate, availability } = useAvailability(getTourIdForBooking(tour), datesForAvailability, {
     tourSlug: tour?.slug,
     optimisticUsed,
     invalidateKey: open ? availabilityInvalidateKey : '',
@@ -204,10 +204,9 @@ export default function BookingWizardModal({
     else if (state.step === 2 && canProceedStep2) goNext()
     else if (state.step === 3 && canProceedStep3) goNext()
     else if (state.step === 4) {
-      if (!isBookingOnlinePaymentEnabled) return
       setSubmitError(null)
       setSubmitting(true)
-      const tourId = getTourIdForFirebase(tour)
+      const tourId = getTourIdForBooking(tour)
       const phoneDisplay = state.customer.phoneCountryCode && state.customer.phone
         ? `+${state.customer.phoneCountryCode} ${state.customer.phone}`
         : state.customer.phone
@@ -299,15 +298,14 @@ export default function BookingWizardModal({
     if (state.step === 1) label = 'Devam'
     else if (state.step === 2) label = 'Devam'
     else if (state.step === 3) label = 'Ödemeye Geç'
-    else if (state.step === 4 && !isBookingOnlinePaymentEnabled) label = 'Ödeme kapalı'
     else if (state.step === 4 && submitting) label = 'İşleniyor…'
-    else label = 'Ödemeyi Tamamla'
+    else label = 'Öde'
 
     let disabled: boolean
     if (state.step === 1) disabled = !canProceedStep1
     else if (state.step === 2) disabled = !canProceedStep2
     else if (state.step === 3) disabled = !canProceedStep3
-    else if (state.step === 4) disabled = submitting || !isBookingOnlinePaymentEnabled
+    else if (state.step === 4) disabled = submitting
     else disabled = false
 
     return { ctaLabel: label, ctaDisabled: disabled }

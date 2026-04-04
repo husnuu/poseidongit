@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { client } from '@/lib/sanity'
 import { tourClassesForAdminQuery } from '@/lib/queries'
 
-import { getAuthToken, getAdminEmail, requireAdminOrAgent } from '@/lib/adminAuth'
+import { authorizeAdminOrAgent } from '@/lib/adminAuthServer'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const token = getAuthToken(request)
-  const email = getAdminEmail(request)
-  if (!requireAdminOrAgent(token, email)) {
+  if (!(await authorizeAdminOrAgent(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const tourId = request.nextUrl.searchParams.get('tourId')?.trim()

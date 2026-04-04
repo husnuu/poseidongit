@@ -1,5 +1,5 @@
 /**
- * Firestore bookings collection document shape.
+ * Bookings collection document shape.
  * Used for type safety when reading/writing bookings.
  */
 export type Booking = {

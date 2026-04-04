@@ -2,9 +2,13 @@
  * Admin auth: Bearer token + isteğe bağlı e-posta allowlist.
  * ADMIN_TOKEN: tam erişim. ALLOWED_ADMIN_EMAILS tanımlıysa girişte e-posta da kontrol edilir.
  * AGENT_TOKEN: biletçi. ALLOWED_AGENT_EMAILS tanımlıysa e-posta kontrol edilir.
+ *
+ * Supabase ile giriş: API rotaları `authorizeAdmin` / `authorizeAdminOrAgent` kullanır (adminAuthServer).
  */
 
-export const ADMIN_EMAIL_HEADER = 'X-Admin-Email'
+import { ADMIN_EMAIL_HEADER as ADMIN_EMAIL_HEADER_CONST } from '@/lib/adminApiHeaders'
+
+export const ADMIN_EMAIL_HEADER = ADMIN_EMAIL_HEADER_CONST
 
 function parseAllowedEmails(envValue: string | undefined): string[] {
   if (!envValue || typeof envValue !== 'string') return []

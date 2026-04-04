@@ -321,6 +321,9 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0] {
     label,
     href
   },
+  "cookiePolicyPath": select(
+    defined(cookiePolicyPage->slug.current) => "/yasal/" + cookiePolicyPage->slug.current
+  ),
   contactInfo{
     phone,
     whatsapp,
@@ -331,6 +334,18 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0] {
     platform,
     href
   }
+}`
+
+/** Çerez bildirimi: yalnızca politikası URL’si (hafif sorgu) */
+export const siteSettingsCookiePolicyQuery = `*[_type == "siteSettings"][0]{
+  "cookiePolicyPath": select(
+    defined(cookiePolicyPage->slug.current) => "/yasal/" + cookiePolicyPage->slug.current
+  )
+}`
+
+/** Sabit WhatsApp butonu */
+export const siteSettingsWhatsappQuery = `*[_type == "siteSettings"][0]{
+  "whatsapp": contactInfo.whatsapp
 }`
 
 /** Footer logosunu header ile aynı kaynaktan (siteSettings) hizalamak için hafif sorgu */
@@ -431,6 +446,34 @@ export const homePageHeroQuery = `*[_type == "homePage"][0] {
       reviewCount,
       reviewsUrl,
       isPopular,
+      mainImage{ asset, alt }
+    }
+  },
+  popularYachtsSection{
+    enabled,
+    title,
+    subtitle,
+    ctaButton{ label, href },
+    "items": items[]->{
+      _id,
+      name,
+      "slug": slug.current,
+      isActive,
+      yachtType,
+      isFeatured,
+      badges,
+      included,
+      sailingLicenceRequired,
+      priceFrom,
+      "overnightTotalPrice": coalesce(overnightTotalPrice, overnightPriceFrom),
+      currency,
+      dailyRentalEnabled,
+      overnightRentalEnabled,
+      overnightNightPricing[]{ price },
+      marina,
+      "locationTitle": location->title,
+      "locationSlug": location->slug.current,
+      specifications{ length, cabins, capacity, buildYear },
       mainImage{ asset, alt }
     }
   },

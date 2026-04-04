@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import * as admin from 'firebase-admin'
-import { getFirestore } from '@/lib/firebaseAdmin'
-import { getAuthToken, getAdminEmail, requireAdmin } from '@/lib/adminAuth'
+import { authorizeAdmin } from '@/lib/adminAuthServer'
+import { supabase } from '@/lib/supabase'
 
-const COLLECTION = 'yachtInquiries'
 const DEFAULT_LIMIT = 200
 const MAX_LIMIT = 500
 
@@ -11,25 +9,11 @@ function toIso(value: unknown): string | null {
   if (!value) return null
   if (value instanceof Date) return value.toISOString()
   if (typeof value === 'string') return value
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    'toDate' in value &&
-    typeof (value as { toDate?: unknown }).toDate === 'function'
-  ) {
-    try {
-      return ((value as { toDate: () => Date }).toDate()).toISOString()
-    } catch {
-      return null
-    }
-  }
   return null
 }
 
 export async function GET(request: NextRequest) {
-  const token = getAuthToken(request)
-  const email = getAdminEmail(request)
-  if (!requireAdmin(token, email)) {
+  if (!(await authorizeAdmin(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -39,51 +23,47 @@ export async function GET(request: NextRequest) {
       Math.max(1, parseInt(searchParams.get('limit') ?? String(DEFAULT_LIMIT), 10)),
       MAX_LIMIT
     )
-    const startAfterId = searchParams.get('startAfter')?.trim() ?? null
-
-    const db = getFirestore()
-    let query = db.collection(COLLECTION).orderBy('createdAt', 'desc').limit(limit)
-    if (startAfterId) {
-      const snap = await db.collection(COLLECTION).doc(startAfterId).get()
-      if (snap.exists) query = query.startAfter(snap)
+    const { data: rows, error } = await supabase
+      .from('yacht_inquiries')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+    if (error) {
+      throw new Error(`Supabase yacht inquiries list failed: ${error.message}`)
     }
 
-    const snapshot = await query.get()
-    const inquiries = snapshot.docs.map((doc) => {
-      const d = doc.data() as Record<string, unknown>
+    const inquiries = (rows ?? []).map((d: Record<string, unknown>) => {
+      const rowId = String(d.id ?? '')
       return {
-        id: doc.id,
-        yachtSlug: typeof d.yachtSlug === 'string' ? d.yachtSlug : '',
-        yachtName: typeof d.yachtName === 'string' ? d.yachtName : '',
+        id: rowId,
+        yachtSlug: typeof d.yacht_slug === 'string' ? d.yacht_slug : (typeof d.yachtSlug === 'string' ? d.yachtSlug : ''),
+        yachtName: typeof d.yacht_name === 'string' ? d.yacht_name : (typeof d.yachtName === 'string' ? d.yachtName : ''),
         location: typeof d.location === 'string' ? d.location : null,
         date: typeof d.date === 'string' ? d.date : null,
-        rentalType: d.rentalType === 'overnight' ? 'overnight' : 'daily',
-        checkIn: typeof d.checkIn === 'string' ? d.checkIn : null,
-        checkOut: typeof d.checkOut === 'string' ? d.checkOut : null,
+        rentalType: (d.rental_type === 'overnight' || d.rentalType === 'overnight') ? 'overnight' : 'daily',
+        checkIn: typeof d.check_in === 'string' ? d.check_in : (typeof d.checkIn === 'string' ? d.checkIn : null),
+        checkOut: typeof d.check_out === 'string' ? d.check_out : (typeof d.checkOut === 'string' ? d.checkOut : null),
         nights: typeof d.nights === 'number' ? d.nights : null,
-        guestCount: typeof d.guestCount === 'number' ? d.guestCount : null,
-        firstName: typeof d.firstName === 'string' ? d.firstName : '',
-        lastName: typeof d.lastName === 'string' ? d.lastName : '',
+        guestCount: typeof d.guest_count === 'number' ? d.guest_count : (typeof d.guestCount === 'number' ? d.guestCount : null),
+        firstName: typeof d.first_name === 'string' ? d.first_name : (typeof d.firstName === 'string' ? d.firstName : ''),
+        lastName: typeof d.last_name === 'string' ? d.last_name : (typeof d.lastName === 'string' ? d.lastName : ''),
         email: typeof d.email === 'string' ? d.email : '',
         phone: typeof d.phone === 'string' ? d.phone : '',
         message: typeof d.message === 'string' ? d.message : '',
-        priceFrom: typeof d.priceFrom === 'number' ? d.priceFrom : null,
+        priceFrom: typeof d.price_from === 'number' ? d.price_from : (typeof d.priceFrom === 'number' ? d.priceFrom : null),
         currency: typeof d.currency === 'string' ? d.currency : null,
         status: typeof d.status === 'string' ? d.status : 'new',
         source: typeof d.source === 'string' ? d.source : 'web',
-        adminNote: typeof d.adminNote === 'string' ? d.adminNote : null,
-        isRead: Boolean(d.isRead),
-        contactedAt: toIso(d.contactedAt),
-        readAt: toIso(d.readAt),
-        createdAt: toIso(d.createdAt),
-        updatedAt: toIso(d.updatedAt),
+        adminNote: typeof d.admin_note === 'string' ? d.admin_note : null,
+        isRead: Boolean(d.is_read),
+        contactedAt: toIso(d.contacted_at),
+        readAt: toIso(d.read_at),
+        createdAt: toIso(d.created_at),
+        updatedAt: toIso(d.updated_at),
       }
     })
 
-    const nextStartAfter =
-      snapshot.docs.length === limit && snapshot.docs.length > 0
-        ? snapshot.docs[snapshot.docs.length - 1].id
-        : null
+    const nextStartAfter = inquiries.length === limit && inquiries.length > 0 ? inquiries[inquiries.length - 1].id : null
 
     return NextResponse.json({ inquiries, nextStartAfter, count: inquiries.length })
   } catch (e) {
@@ -93,9 +73,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const token = getAuthToken(request)
-  const email = getAdminEmail(request)
-  if (!requireAdmin(token, email)) {
+  if (!(await authorizeAdmin(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -114,32 +92,40 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'inquiryId gerekli.' }, { status: 400 })
     }
 
-    const db = getFirestore()
-    const ref = db.collection(COLLECTION).doc(inquiryId)
-    const snap = await ref.get()
-    if (!snap.exists) {
+    const { data: currentInquiry, error: currentError } = await supabase
+      .from('yacht_inquiries')
+      .select('id')
+      .eq('id', inquiryId)
+      .single()
+    if (currentError || !currentInquiry) {
       return NextResponse.json({ error: 'Talep bulunamadı.' }, { status: 404 })
     }
 
     const updates: Record<string, unknown> = {
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: new Date().toISOString(),
     }
 
     if (status) {
       updates.status = status
       if (status === 'contacted') {
-        updates.contactedAt = admin.firestore.FieldValue.serverTimestamp()
+        updates.contacted_at = new Date().toISOString()
       }
     }
     if (adminNote !== undefined) {
-      updates.adminNote = adminNote === '' ? null : adminNote
+      updates.admin_note = adminNote === '' ? null : adminNote
     }
     if (markRead !== undefined) {
-      updates.isRead = markRead
-      updates.readAt = markRead ? admin.firestore.FieldValue.serverTimestamp() : null
+      updates.is_read = markRead
+      updates.read_at = markRead ? new Date().toISOString() : null
     }
 
-    await ref.update(updates)
+    const { error: updateError } = await supabase
+      .from('yacht_inquiries')
+      .update(updates)
+      .eq('id', inquiryId)
+    if (updateError) {
+      throw new Error(`Supabase yacht inquiry update failed: ${updateError.message}`)
+    }
 
     return NextResponse.json({ ok: true, inquiryId })
   } catch (e) {

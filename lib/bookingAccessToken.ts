@@ -1,19 +1,17 @@
 /**
  * Secure access token for booking-specific routes (voucher PDF, ticket page).
- * Token is generated once per booking and stored in Firestore; required in URL for access.
+ * Token is generated once per booking and stored in Supabase; required in URL for access.
  */
 
-import { getFirestore } from '@/lib/firebaseAdmin'
+import { supabase } from '@/lib/supabase'
 import crypto from 'crypto'
-
-const COLLECTION = 'bookings'
 
 /** Minimum length for token (bytes before encoding). */
 const TOKEN_BYTES = 32
 
 /**
  * Generates a cryptographically secure random token for a booking.
- * Use this when creating a new booking and store the result in Firestore.
+ * Use this when creating a new booking and store the result in Supabase.
  */
 export function generateBookingAccessToken(): string {
   return crypto.randomBytes(TOKEN_BYTES).toString('base64url')
@@ -30,10 +28,13 @@ export async function validateBookingAccessToken(
 ): Promise<boolean> {
   const t = typeof token === 'string' ? token.trim() : ''
   if (!bookingId?.trim() || !t) return false
-  const db = getFirestore()
-  const snap = await db.collection(COLLECTION).doc(bookingId.trim()).get()
-  if (!snap.exists) return false
-  const stored = (snap.data() as { accessToken?: string } | undefined)?.accessToken
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('access_token')
+    .eq('id', bookingId.trim())
+    .single()
+  if (error || !data) return false
+  const stored = typeof data.access_token === 'string' ? data.access_token : undefined
   if (typeof stored !== 'string' || stored.length === 0) return false
   // URL'den gelen token'da boşluk + olarak gelmiş olabilir; karşılaştırmadan önce aynı forma getir
   const normalizedInput = t.includes(' ') ? t.replace(/ /g, '+') : t
