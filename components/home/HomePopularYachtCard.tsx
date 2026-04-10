@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
 import { Check, Trophy } from 'lucide-react'
 import YachtTypeGlyph from '@/components/yacht/YachtTypeGlyph'
 import { yachtTypeLabel } from '@/lib/yachtTypes'
@@ -29,9 +31,10 @@ export type HomePopularYachtCardData = {
   overnightRentalEnabled?: boolean | null
 }
 
-function detailHref(y: HomePopularYachtCardData): string | null {
+function detailHref(y: HomePopularYachtCardData, locale: SiteLocale = 'tr'): string | null {
   if (!y.slug) return null
-  return y.locationSlug ? `/yat-kiralama/${y.locationSlug}/${y.slug}` : `/yat-kiralama/${y.slug}`
+  const path = y.locationSlug ? `/yat-kiralama/${y.locationSlug}/${y.slug}` : `/yat-kiralama/${y.slug}`
+  return withLocalePath(locale, path)
 }
 
 function specSummary(spec: YachtSpecifications | null | undefined): string | null {
@@ -47,8 +50,14 @@ function specSummary(spec: YachtSpecifications | null | undefined): string | nul
 const PILL =
   'inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs font-semibold text-zinc-700'
 
-export default function HomePopularYachtCard({ yacht }: { yacht: HomePopularYachtCardData }) {
-  const href = detailHref(yacht)
+export default function HomePopularYachtCard({
+  yacht,
+  locale = 'tr',
+}: {
+  yacht: HomePopularYachtCardData
+  locale?: SiteLocale
+}) {
+  const href = detailHref(yacht, locale)
   const typeLabel = yachtTypeLabel(yacht.yachtType ?? undefined)
   const specLine = specSummary(yacht.specifications ?? undefined)
   const year = yacht.specifications?.buildYear

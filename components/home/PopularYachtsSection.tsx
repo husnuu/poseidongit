@@ -3,6 +3,8 @@
 import { useRef, useEffect, useState } from 'react'
 import Link from 'next/link'
 import HomePopularYachtCard, { type HomePopularYachtCardData } from '@/components/home/HomePopularYachtCard'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
 
 export type PopularYachtsSectionData = {
   enabled?: boolean | null
@@ -14,9 +16,10 @@ export type PopularYachtsSectionData = {
 
 type PopularYachtsSectionProps = {
   data: PopularYachtsSectionData | null
+  locale?: SiteLocale
 }
 
-export default function PopularYachtsSection({ data }: PopularYachtsSectionProps) {
+export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYachtsSectionProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -41,7 +44,9 @@ export default function PopularYachtsSection({ data }: PopularYachtsSectionProps
   const nextTwo = words.slice(2, 4).join(' ')
   const rest = words.slice(4).join(' ')
   const ctaLabel = ctaButton?.label?.trim() || 'Tüm yatları gör'
-  const ctaHref = ctaButton?.href?.trim() || '/yat-kiralama'
+  const ctaHref = ctaButton?.href?.trim()
+    ? ctaButton.href
+    : withLocalePath(locale, '/yat-kiralama')
 
   return (
     <section
@@ -87,7 +92,7 @@ export default function PopularYachtsSection({ data }: PopularYachtsSectionProps
                 transitionDelay: visible ? `${index * 100}ms` : '0ms',
               }}
             >
-              <HomePopularYachtCard yacht={yacht} />
+              <HomePopularYachtCard yacht={yacht} locale={locale} />
             </div>
           ))}
         </div>

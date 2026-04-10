@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from 'react'
 import TourCard from '@/components/tours/TourCard'
 import type { TourListItem } from '@/components/tours/TourCard'
+import type { SiteLocale } from '@/lib/i18n/config'
 
 export type PopularToursSectionData = {
   enabled?: boolean | null
@@ -13,9 +14,10 @@ export type PopularToursSectionData = {
 
 type PopularToursSectionProps = {
   data: PopularToursSectionData | null
+  locale?: SiteLocale
 }
 
-export default function PopularToursSection({ data }: PopularToursSectionProps) {
+export default function PopularToursSection({ data, locale = 'tr' }: PopularToursSectionProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -82,7 +84,7 @@ export default function PopularToursSection({ data }: PopularToursSectionProps) 
                 transitionDelay: visible ? `${index * 100}ms` : '0ms',
               }}
             >
-              <TourCard tour={tour} />
+              <TourCard tour={tour} locale={locale} />
             </div>
           ))}
         </div>

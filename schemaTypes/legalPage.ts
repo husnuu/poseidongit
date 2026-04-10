@@ -87,6 +87,17 @@ export default defineType({
       description: 'Sayfanın son güncellendiği tarih (otomatik olarak gösterilir)',
       initialValue: () => new Date().toISOString(),
     }),
+    defineField({
+      name: 'translations',
+      title: 'Çeviriler — English / Deutsch',
+      type: 'object',
+      description:
+        'İngilizce ve Almanca başlık, slug ve içerik. Slug bu dilde /en/yasal/… veya /de/yasal/… adresinde kullanılır.',
+      fields: [
+        defineField({ name: 'en', title: 'English', type: 'legalPageTranslation' }),
+        defineField({ name: 'de', title: 'Deutsch', type: 'legalPageTranslation' }),
+      ],
+    }),
   ],
   preview: {
     select: {

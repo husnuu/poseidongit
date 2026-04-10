@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from '@/lib/adminSession'
+import { parseLocaleFromPathname } from '@/lib/i18n/paths'
+import { isSiteLocale } from '@/lib/i18n/config'
 
 /** Eski / kaldırılmış sayfalar — 410 Gone (arama motorları indeksten çıkarır). */
 const gonePaths = new Set([
@@ -45,6 +47,34 @@ export async function middleware(request: NextRequest) {
       url.hostname = hostname.slice(4)
       return NextResponse.redirect(url, 301)
     }
+  }
+
+  const skipLocaleRewrite =
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/studio') ||
+    pathname === '/login' ||
+    pathname.startsWith('/login/') ||
+    pathname.startsWith('/_next') ||
+    pathname === '/favicon.ico' ||
+    pathname === '/robots.txt' ||
+    pathname === '/sitemap.xml' ||
+    pathname === '/llms.txt' ||
+    pathname.startsWith('/ingest') ||
+    /\.[a-zA-Z0-9]+$/.test(pathname.split('/').pop() ?? '')
+
+  if (!skipLocaleRewrite) {
+    const { locale, pathWithoutLocale } = parseLocaleFromPathname(pathname)
+    if (!isSiteLocale(locale)) {
+      return new NextResponse(null, { status: 404 })
+    }
+    const internalPath = `/${locale}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`
+    const res =
+      internalPath === pathname
+        ? NextResponse.next()
+        : NextResponse.rewrite(new URL(internalPath, request.url))
+    res.headers.set('x-site-locale', locale)
+    return res
   }
 
   if (pathname.startsWith('/admin')) {

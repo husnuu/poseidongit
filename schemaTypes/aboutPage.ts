@@ -108,6 +108,36 @@ export default defineType({
       ],
     }),
 
+    defineField({
+      name: 'seo',
+      title: 'SEO (varsayılan / Türkçe)',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'metaTitle',
+          title: 'Meta başlık',
+          type: 'string',
+          description: 'Tarayıcı sekmesi; boşsa site varsayılanı kullanılır.',
+        }),
+        defineField({
+          name: 'metaDescription',
+          title: 'Meta açıklama',
+          type: 'text',
+          rows: 3,
+        }),
+      ],
+    }),
+    defineField({
+      name: 'pageTranslations',
+      title: 'Çeviriler — English / Deutsch',
+      type: 'object',
+      description: 'Hero, metinler ve timeline başlıkları. Tekne görselleri TR kaydından; metinler sırayla eşleşir.',
+      fields: [
+        defineField({ name: 'en', title: 'English', type: 'aboutPageLocaleOverlay' }),
+        defineField({ name: 'de', title: 'Deutsch', type: 'aboutPageLocaleOverlay' }),
+      ],
+    }),
+
     // E) Legacy fields (backward compatibility)
     defineField({
       name: 'heroTitle',

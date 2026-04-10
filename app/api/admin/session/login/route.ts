@@ -2,8 +2,11 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
 import { supabase } from '@/lib/supabase'
+import { rateLimitResponse } from '@/lib/rateLimit'
+import { verifyAdminLoginPanelToken } from '@/lib/adminLoginPanelToken'
 import {
   ADMIN_SESSION_COOKIE,
+  ADMIN_SESSION_MAX_AGE_SEC,
   adminSessionCookieOptions,
   signAdminSessionToken,
 } from '@/lib/adminSession'
@@ -11,10 +14,11 @@ import {
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-
 export async function POST(request: Request) {
   try {
+    const limited = await rateLimitResponse(request, 'adminLogin')
+    if (limited) return limited
+
     let body: unknown
     try {
       body = await request.json()
@@ -29,6 +33,10 @@ export async function POST(request: Request) {
     const password = typeof b.password === 'string' ? b.password : ''
     if (!email || !password) {
       return NextResponse.json({ error: 'E-posta ve şifre gerekli' }, { status: 400 })
+    }
+
+    if (!verifyAdminLoginPanelToken(b.panelToken)) {
+      return NextResponse.json({ error: 'E-posta, şifre veya panel anahtarı hatalı' }, { status: 401 })
     }
 
     const { data: row, error } = await supabase
@@ -47,12 +55,12 @@ export async function POST(request: Request) {
     const rowEmail = row && typeof row.email === 'string' ? row.email.trim().toLowerCase() : email
 
     if (!id || !hash || !bcrypt.compareSync(password, hash)) {
-      return NextResponse.json({ error: 'E-posta veya şifre hatalı' }, { status: 401 })
+      return NextResponse.json({ error: 'E-posta, şifre veya panel anahtarı hatalı' }, { status: 401 })
     }
 
     const token = await signAdminSessionToken({ sub: id, email: rowEmail })
     const jar = await cookies()
-    jar.set(ADMIN_SESSION_COOKIE, token, adminSessionCookieOptions(COOKIE_MAX_AGE))
+    jar.set(ADMIN_SESSION_COOKIE, token, adminSessionCookieOptions(ADMIN_SESSION_MAX_AGE_SEC))
 
     return NextResponse.json({ ok: true })
   } catch (e) {

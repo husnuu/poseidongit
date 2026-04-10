@@ -1,10 +1,21 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { unstable_noStore as noStore } from 'next/cache'
-import { client, urlFor } from '@/lib/sanity'
+import { client, safeSanityImageUrl } from '@/lib/sanity'
 import { siteFooterQuery, siteSettingsLogoQuery } from '@/lib/queries'
 import headerStyles from '@/components/layout/Header.module.css'
 import { getSiteName } from '@/lib/seo'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { localizeNavHref } from '@/lib/i18n/localizeNavHref'
+import {
+  awardFallbackAlts,
+  exploreLinksFallback,
+  footerUi,
+  legalLinksFallback,
+  NUMBER_LOCALE,
+  pickLocalizedString,
+  pickOptionalLinkLabel,
+} from '@/lib/i18n/localizedLabels'
 import FooterLegal from '@/components/layout/FooterLegal'
 import type { FooterLegalData } from '@/components/layout/FooterLegal'
 import {
@@ -22,12 +33,33 @@ type SiteSettingsLogo = {
   logo?: { asset?: { _ref?: string }; url?: string; alt?: string | null } | null
 } | null
 
+type SiteFooterLegalRaw = {
+  copyrightText?: string | null
+  copyrightTextEn?: string | null
+  copyrightTextDe?: string | null
+  companyLine1?: string | null
+  companyLine1En?: string | null
+  companyLine1De?: string | null
+  companyLine2?: string | null
+  companyLine2En?: string | null
+  companyLine2De?: string | null
+  secure3dLabel?: string | null
+  secure3dLabelEn?: string | null
+  secure3dLabelDe?: string | null
+  paymentLogos?: Array<{
+    asset?: { _ref?: string } | null
+    alt?: string | null
+  }> | null
+}
+
 type SiteFooterData = {
   brandName?: string | null
   logo?: { asset?: { _ref?: string }; url?: string; alt?: string | null } | null
   topRated?: {
     enabled?: boolean
     label?: string | null
+    labelEn?: string | null
+    labelDe?: string | null
     ratingValue?: number | null
     ratingMax?: number | null
     reviewCount?: number | null
@@ -36,60 +68,75 @@ type SiteFooterData = {
     email?: string | null
     phone?: string | null
     addressTitle?: string | null
+    addressTitleEn?: string | null
+    addressTitleDe?: string | null
     addressLines?: string[] | null
     chatTitle?: string | null
+    chatTitleEn?: string | null
+    chatTitleDe?: string | null
     chatValue?: string | null
     openingTitle?: string | null
+    openingTitleEn?: string | null
+    openingTitleDe?: string | null
     openingValue?: string | null
+    openingValueEn?: string | null
+    openingValueDe?: string | null
   } | null
   explore?: {
     title?: string | null
-    links?: Array<{ label?: string | null; href?: string | null; openInNewTab?: boolean }> | null
+    titleEn?: string | null
+    titleDe?: string | null
+    links?: Array<{
+      label?: string | null
+      labelEn?: string | null
+      labelDe?: string | null
+      href?: string | null
+      openInNewTab?: boolean
+    }> | null
   } | null
   social?: {
     title?: string | null
+    titleEn?: string | null
+    titleDe?: string | null
     items?: Array<{ platform?: string | null; href?: string | null; enabled?: boolean }> | null
   } | null
   brag?: {
     enabled?: boolean | null
     title?: string | null
+    titleEn?: string | null
+    titleDe?: string | null
     badges?: Array<{
       type?: string | null
       enabled?: boolean
       alt?: string | null
+      altEn?: string | null
+      altDe?: string | null
       href?: string | null
       image?: { asset?: { _ref?: string } } | null
       imageUrl?: string | null
     }> | null
   } | null
   legalLinks?: {
-    items?: Array<{ label?: string | null; href?: string | null; enabled?: boolean }> | null
+    items?: Array<{
+      label?: string | null
+      labelEn?: string | null
+      labelDe?: string | null
+      href?: string | null
+      enabled?: boolean
+    }> | null
   } | null
-  footerLegal?: FooterLegalData
+  footerLegal?: SiteFooterLegalRaw | null
   craftedBy?: {
     name?: string | null
     linkedInUrl?: string | null
   } | null
 }
 
-const AWARD_IMAGES_FALLBACK = [
-  { src: '/awards/badge1.svg', alt: 'Award 1' },
-  { src: '/awards/badge2.svg', alt: 'Award 2' },
-  { src: '/awards/badge3.svg', alt: 'Award 3' },
-  { src: '/awards/badge4.svg', alt: 'Award 4' },
-]
-
-const EXPLORE_LINKS_FALLBACK = [
-  { label: 'Turlar', href: '/turlar' },
-  { label: 'Koylar', href: '/koylar' },
-  { label: 'Hakkımızda', href: '/hakkimizda' },
-  { label: 'Blog', href: '/blog' },
-  { label: 'İletişim', href: '/contact' },
-]
-
-const LEGAL_LINKS_FALLBACK = [
-  { label: 'Terms and Conditions', href: '/terms' },
-  { label: 'Privacy Policy', href: '/privacy' },
+const AWARD_IMAGES_FALLBACK_PATHS = [
+  '/awards/badge1.svg',
+  '/awards/badge2.svg',
+  '/awards/badge3.svg',
+  '/awards/badge4.svg',
 ]
 
 const SOCIAL_ICONS: Record<string, typeof Instagram> = {
@@ -119,15 +166,37 @@ async function getSiteSettingsLogo(): Promise<SiteSettingsLogo> {
   }
 }
 
-export default async function Footer() {
+function locHref(locale: SiteLocale, href: string | null | undefined): string {
+  return localizeNavHref(locale, href)
+}
+
+function mergeFooterLegal(raw: SiteFooterLegalRaw | null | undefined, locale: SiteLocale): FooterLegalData | null {
+  if (!raw) return null
+  const pick = (b: string | null | undefined, e: string | null | undefined, d: string | null | undefined) => {
+    const v = pickLocalizedString(b, e, d, locale, '').trim()
+    return v || b?.trim() || null
+  }
+  return {
+    copyrightText: pick(raw.copyrightText, raw.copyrightTextEn, raw.copyrightTextDe),
+    companyLine1: pick(raw.companyLine1, raw.companyLine1En, raw.companyLine1De),
+    companyLine2: pick(raw.companyLine2, raw.companyLine2En, raw.companyLine2De),
+    secure3dLabel: pick(raw.secure3dLabel, raw.secure3dLabelEn, raw.secure3dLabelDe),
+    paymentLogos: raw.paymentLogos ?? null,
+  }
+}
+
+export default async function Footer({ locale }: { locale: SiteLocale }) {
   const [data, settingsForLogo] = await Promise.all([getFooterData(), getSiteSettingsLogo()])
+  const f = footerUi(locale)
+  const numLoc = NUMBER_LOCALE[locale]
 
   const brandName = (data?.brandName ?? getSiteName()) || 'Site'
-  /** Header menü ile aynı: önce Site Ayarları logosu, yoksa footer belgesindeki logo */
   const logoAsset = settingsForLogo?.logo?.asset ?? data?.logo?.asset
-  const logoUrl = logoAsset
-    ? urlFor(logoAsset).width(220).height(60).url()
-    : settingsForLogo?.logo?.url ?? data?.logo?.url ?? null
+  const logoUrl =
+    safeSanityImageUrl(logoAsset, (b) => b.width(220).height(60)) ??
+    settingsForLogo?.logo?.url ??
+    data?.logo?.url ??
+    null
   const logoAlt =
     settingsForLogo?.logo?.alt?.trim() ||
     data?.logo?.alt?.trim() ||
@@ -139,42 +208,101 @@ export default async function Footer() {
   const ratingValue = topRated?.ratingValue ?? 5
   const ratingMax = topRated?.ratingMax ?? 5
   const reviewCount = topRated?.reviewCount ?? 0
-  const topRatedLabel = topRated?.label ?? 'TOP RATED'
+  const topRatedLabel = pickLocalizedString(
+    topRated?.label,
+    topRated?.labelEn,
+    topRated?.labelDe,
+    locale,
+    'TOP RATED'
+  )
 
   const contact = data?.contact ?? {}
   const email = contact?.email ?? undefined
   const phone = contact?.phone ?? undefined
   const addressLines = contact?.addressLines ?? []
   const addressText = addressLines.filter(Boolean).join(', ') || undefined
-  const chatTitle = contact?.chatTitle ?? 'Chat With Our Team'
-  const openingTitle = contact?.openingTitle ?? 'Opening Hours'
-  const openingValue = contact?.openingValue ?? 'Pazartesi - Cuma: 09:00 - 17:00'
+  const chatTitle = pickLocalizedString(
+    contact?.chatTitle,
+    contact?.chatTitleEn,
+    contact?.chatTitleDe,
+    locale,
+    'Chat With Our Team'
+  )
+  const openingTitle = pickLocalizedString(
+    contact?.openingTitle,
+    contact?.openingTitleEn,
+    contact?.openingTitleDe,
+    locale,
+    'Opening Hours'
+  )
+  const openingValue = pickLocalizedString(
+    contact?.openingValue,
+    contact?.openingValueEn,
+    contact?.openingValueDe,
+    locale,
+    'Pazartesi - Cuma: 09:00 - 17:00'
+  )
 
+  const exploreDefaultTitle =
+    locale === 'de' ? 'Entdecken' : locale === 'en' ? 'Explore' : 'Keşfet'
+  const exploreTitle = pickLocalizedString(
+    data?.explore?.title,
+    data?.explore?.titleEn,
+    data?.explore?.titleDe,
+    locale,
+    exploreDefaultTitle
+  )
+
+  const exploreFromCms = (data?.explore?.links ?? []).filter((l) => l?.label && l?.href)
   const exploreLinks =
-    data?.explore?.links && data.explore.links.length > 0
-      ? data.explore.links.filter((l) => l?.label && l?.href)
-      : EXPLORE_LINKS_FALLBACK
-  const exploreTitle = data?.explore?.title ?? 'Explore'
+    exploreFromCms.length > 0
+      ? exploreFromCms.map((l) => ({
+          href: l.href as string,
+          label: pickOptionalLinkLabel(l, locale),
+          openInNewTab: l.openInNewTab === true,
+        }))
+      : exploreLinksFallback(locale)
 
   const socialItems =
     data?.social?.items?.filter((i) => i?.enabled !== false && i?.href) ?? []
-  const socialTitle = data?.social?.title
 
   const showBragSection = data?.brag?.enabled !== false
-  const bragTitle = data?.brag?.title?.trim() || 'Not to brag, but…'
+  const bragTitle = pickLocalizedString(
+    data?.brag?.title,
+    data?.brag?.titleEn,
+    data?.brag?.titleDe,
+    locale,
+    'Not to brag, but…'
+  )
   const bragBadges = data?.brag?.badges?.filter((b) => b?.enabled !== false) ?? []
   const hasBragImages = bragBadges.some((b) => b?.image?.asset || b?.imageUrl)
+  const awardAlts = awardFallbackAlts(locale)
   const awardImages = hasBragImages
     ? bragBadges.map((b) => ({
-        src: b?.image?.asset ? urlFor(b.image.asset).width(80).height(80).url() : b?.imageUrl ?? '',
-        alt: b?.alt ?? 'Badge',
+        src:
+          safeSanityImageUrl(b?.image?.asset ?? null, (img) => img.width(80).height(80)) ??
+          b?.imageUrl ??
+          '',
+        alt: pickLocalizedString(b?.alt, b?.altEn, b?.altDe, locale, 'Badge'),
         href: b?.href,
       }))
-    : AWARD_IMAGES_FALLBACK
+    : AWARD_IMAGES_FALLBACK_PATHS.map((src, i) => ({
+        src,
+        alt: awardAlts[i] ?? `Award ${i + 1}`,
+        href: undefined as string | undefined,
+      }))
 
-  const legalItems =
+  const legalFromCms =
     data?.legalLinks?.items?.filter((l) => l?.enabled !== false && l?.label && l?.href) ?? []
-  const legalLinks = legalItems.length > 0 ? legalItems : LEGAL_LINKS_FALLBACK
+  const legalLinks =
+    legalFromCms.length > 0
+      ? legalFromCms.map((l) => ({
+          href: l.href as string,
+          label: pickOptionalLinkLabel(l, locale),
+        }))
+      : legalLinksFallback(locale)
+
+  const footerLegalMerged = mergeFooterLegal(data?.footerLegal ?? null, locale)
 
   return (
     <footer
@@ -187,13 +315,12 @@ export default async function Footer() {
         <div
           className={`grid gap-14 lg:gap-x-24 xl:gap-x-32 ${showBragSection ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}
         >
-          {/* Sol kolon: Logo + Top Rated + Contact + Social */}
           <div className="space-y-7">
             <Link
-              href="/"
+              href={locHref(locale, '/')}
               className={headerStyles.logoLink}
               prefetch={false}
-              aria-label="Ana sayfa"
+              aria-label={f.home}
             >
               <div className={headerStyles.logoWrapper}>
                 {logoUrl ? (
@@ -224,7 +351,7 @@ export default async function Footer() {
                 </span>
                 {reviewCount > 0 && (
                   <span className="text-base text-white/80">
-                    {reviewCount.toLocaleString('tr-TR')} yorum
+                    {f.reviews(reviewCount.toLocaleString(numLoc))}
                   </span>
                 )}
               </div>
@@ -286,7 +413,6 @@ export default async function Footer() {
             )}
           </div>
 
-          {/* Orta kolon: EXPLORE */}
           <div className={showBragSection ? 'lg:pl-16 xl:pl-24' : ''}>
             <h3 className="mb-6 text-xl font-bold uppercase tracking-wide text-white md:text-2xl">
               {exploreTitle}
@@ -295,10 +421,10 @@ export default async function Footer() {
               {exploreLinks.map((item, index) => (
                 <li key={index}>
                   <Link
-                    href={item.href || '#'}
+                    href={locHref(locale, item.href || '#')}
                     className="text-base text-white/90 transition-colors hover:text-white hover:underline"
-                    target={'openInNewTab' in item && item.openInNewTab ? '_blank' : undefined}
-                    rel={'openInNewTab' in item && item.openInNewTab ? 'noopener noreferrer' : undefined}
+                    target={item.openInNewTab ? '_blank' : undefined}
+                    rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
                   >
                     {item.label}
                   </Link>
@@ -307,7 +433,6 @@ export default async function Footer() {
             </ul>
           </div>
 
-          {/* Sağ kolon: ödül / rozet (Sanity’den açılıp kapanır) */}
           {showBragSection ? (
             <div>
               <h3 className="mb-6 text-xl font-bold uppercase tracking-wide text-white md:text-2xl">
@@ -334,7 +459,7 @@ export default async function Footer() {
                     </div>
                   )
                   const linkHref =
-                    'href' in item && item.href && typeof item.href === 'string' ? item.href : null
+                    item.href && typeof item.href === 'string' ? item.href : null
                   return linkHref ? (
                     <a key={index} href={linkHref} target="_blank" rel="noopener noreferrer">
                       {content}
@@ -348,17 +473,18 @@ export default async function Footer() {
           ) : null}
         </div>
 
-        {/* Bottom bar: Sol = Legal + Ödeme, Sağ = Terms & Privacy */}
         <div className="mt-14 border-t border-white/20 pt-8">
           <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-            {data?.footerLegal && <FooterLegal data={data.footerLegal} inline />}
+            {data?.footerLegal && footerLegalMerged && (
+              <FooterLegal data={footerLegalMerged} inline regionAriaLabel={f.legalRegion} />
+            )}
             <div
               className={`flex flex-wrap gap-12 text-base text-white/80 ${data?.footerLegal ? 'justify-center md:justify-end' : 'justify-center'}`}
             >
               {legalLinks.map((item, index) => (
                 <Link
                   key={index}
-                  href={item.href || '#'}
+                  href={locHref(locale, item.href || '#')}
                   className="transition-colors hover:text-white"
                 >
                   {item.label}
@@ -367,10 +493,9 @@ export default async function Footer() {
             </div>
           </div>
 
-          {/* Crafted by */}
           {data?.craftedBy?.name && (
             <div className="mt-6 border-t border-white/20 pt-6 text-center text-sm text-white/70">
-              Crafted by{' '}
+              {f.craftedByPrefix}{' '}
               {data.craftedBy.linkedInUrl ? (
                 <a
                   href={data.craftedBy.linkedInUrl}

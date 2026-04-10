@@ -55,6 +55,16 @@ export default defineType({
       type: 'string',
       description: 'Örn: "Çeşme / Eşek Adası"',
     }),
+    defineField({
+      name: 'translations',
+      title: 'Çeviriler — English / Deutsch',
+      type: 'object',
+      description: 'Koy başlığı, açıklama ve slug; görseller Türkçe kayıttan gelir.',
+      fields: [
+        defineField({ name: 'en', title: 'English', type: 'coveTranslation' }),
+        defineField({ name: 'de', title: 'Deutsch', type: 'coveTranslation' }),
+      ],
+    }),
   ],
   preview: {
     select: { title: 'title', order: 'order' },

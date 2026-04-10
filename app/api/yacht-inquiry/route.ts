@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rateLimit'
 import { verifyTurnstileToken } from '@/lib/turnstile'
 import { sendYachtInquiryEmail } from '@/lib/email'
 import { overnightNights } from '@/lib/yachtRentalModes'
@@ -128,6 +129,9 @@ async function saveToSupabase(data: Record<string, unknown>) {
 
 export async function POST(request: Request) {
   try {
+    const limited = await rateLimitResponse(request, 'publicForm')
+    if (limited) return limited
+
     let body: unknown
     try {
       body = await request.json()

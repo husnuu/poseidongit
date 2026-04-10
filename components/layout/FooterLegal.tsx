@@ -16,9 +16,11 @@ export type FooterLegalData = {
 type FooterLegalProps = {
   data: FooterLegalData
   inline?: boolean
+  /** Bölge etiketi (erişilebilirlik); dil ile uyumlu metin geçin */
+  regionAriaLabel?: string
 }
 
-export default function FooterLegal({ data, inline }: FooterLegalProps) {
+export default function FooterLegal({ data, inline, regionAriaLabel = 'Legal and payment information' }: FooterLegalProps) {
   if (!data) return null
 
   const hasText =
@@ -76,7 +78,7 @@ export default function FooterLegal({ data, inline }: FooterLegalProps) {
 
   if (inline) {
     return (
-      <div className="min-w-0 flex-1" aria-label="Legal and payment information">
+      <div className="min-w-0 flex-1" aria-label={regionAriaLabel}>
         {content}
       </div>
     )
@@ -85,7 +87,7 @@ export default function FooterLegal({ data, inline }: FooterLegalProps) {
   return (
     <section
       className="border-t border-white/10 bg-gradient-to-b from-[#2d3b4f] to-[#1f2a3a] py-10 md:py-12"
-      aria-label="Legal and payment information"
+      aria-label={regionAriaLabel}
     >
       <div className="mx-auto max-w-6xl px-6">{content}</div>
     </section>

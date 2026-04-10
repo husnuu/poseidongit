@@ -53,6 +53,16 @@ export default defineType({
                     initialValue: 'TOP RATED',
                 }),
                 defineField({
+                    name: 'labelEn',
+                    title: 'Badge (English)',
+                    type: 'string',
+                }),
+                defineField({
+                    name: 'labelDe',
+                    title: 'Badge (Deutsch)',
+                    type: 'string',
+                }),
+                defineField({
                     name: 'ratingValue',
                     title: 'Rating Değeri',
                     type: 'number',
@@ -102,6 +112,16 @@ export default defineType({
                     initialValue: 'Office Address',
                 }),
                 defineField({
+                    name: 'addressTitleEn',
+                    title: 'Adres başlığı (English)',
+                    type: 'string',
+                }),
+                defineField({
+                    name: 'addressTitleDe',
+                    title: 'Adres başlığı (Deutsch)',
+                    type: 'string',
+                }),
+                defineField({
                     name: 'addressLines',
                     title: 'Adres Satırları',
                     type: 'array',
@@ -114,6 +134,16 @@ export default defineType({
                     type: 'string',
                     description: 'Örn: "Chat With Our Team"',
                     initialValue: 'Chat With Our Team',
+                }),
+                defineField({
+                    name: 'chatTitleEn',
+                    title: 'Chat başlığı (English)',
+                    type: 'string',
+                }),
+                defineField({
+                    name: 'chatTitleDe',
+                    title: 'Chat başlığı (Deutsch)',
+                    type: 'string',
                 }),
                 defineField({
                     name: 'chatValue',
@@ -129,10 +159,30 @@ export default defineType({
                     initialValue: 'Opening Hours',
                 }),
                 defineField({
+                    name: 'openingTitleEn',
+                    title: 'Çalışma saatleri başlığı (English)',
+                    type: 'string',
+                }),
+                defineField({
+                    name: 'openingTitleDe',
+                    title: 'Çalışma saatleri başlığı (Deutsch)',
+                    type: 'string',
+                }),
+                defineField({
                     name: 'openingValue',
                     title: 'Çalışma Saatleri',
                     type: 'string',
                     description: 'Örn: "Monday - Friday: 9am to 5pm (GMT)"',
+                }),
+                defineField({
+                    name: 'openingValueEn',
+                    title: 'Çalışma saatleri metni (English)',
+                    type: 'string',
+                }),
+                defineField({
+                    name: 'openingValueDe',
+                    title: 'Çalışma saatleri metni (Deutsch)',
+                    type: 'string',
                 }),
             ],
         }),
@@ -150,6 +200,16 @@ export default defineType({
                     initialValue: 'EXPLORE',
                 }),
                 defineField({
+                    name: 'titleEn',
+                    title: 'Başlık (English)',
+                    type: 'string',
+                }),
+                defineField({
+                    name: 'titleDe',
+                    title: 'Başlık (Deutsch)',
+                    type: 'string',
+                }),
+                defineField({
                     name: 'links',
                     title: 'Linkler',
                     type: 'array',
@@ -162,6 +222,16 @@ export default defineType({
                                     title: 'Etiket',
                                     type: 'string',
                                     validation: (Rule) => Rule.required().error('Etiket zorunludur'),
+                                }),
+                                defineField({
+                                    name: 'labelEn',
+                                    title: 'Etiket (English)',
+                                    type: 'string',
+                                }),
+                                defineField({
+                                    name: 'labelDe',
+                                    title: 'Etiket (Deutsch)',
+                                    type: 'string',
                                 }),
                                 defineField({
                                     name: 'href',
@@ -206,6 +276,16 @@ export default defineType({
                     type: 'string',
                     description: 'Örn: "See What We\'re Up To"',
                     initialValue: 'See What We\'re Up To',
+                }),
+                defineField({
+                    name: 'titleEn',
+                    title: 'Başlık (English)',
+                    type: 'string',
+                }),
+                defineField({
+                    name: 'titleDe',
+                    title: 'Başlık (Deutsch)',
+                    type: 'string',
                 }),
                 defineField({
                     name: 'items',
@@ -285,6 +365,16 @@ export default defineType({
                     initialValue: 'Not to brag, but…',
                 }),
                 defineField({
+                    name: 'titleEn',
+                    title: 'Bölüm başlığı (English)',
+                    type: 'string',
+                }),
+                defineField({
+                    name: 'titleDe',
+                    title: 'Bölüm başlığı (Deutsch)',
+                    type: 'string',
+                }),
+                defineField({
                     name: 'badges',
                     title: 'Rozetler/Sertifikalar',
                     type: 'array',
@@ -323,6 +413,16 @@ export default defineType({
                                 defineField({
                                     name: 'alt',
                                     title: 'Alternatif Metin',
+                                    type: 'string',
+                                }),
+                                defineField({
+                                    name: 'altEn',
+                                    title: 'Alternatif metin (English)',
+                                    type: 'string',
+                                }),
+                                defineField({
+                                    name: 'altDe',
+                                    title: 'Alternatif metin (Deutsch)',
                                     type: 'string',
                                 }),
                                 defineField({
@@ -377,6 +477,16 @@ export default defineType({
                                     validation: (Rule) => Rule.required().error('Etiket zorunludur'),
                                 }),
                                 defineField({
+                                    name: 'labelEn',
+                                    title: 'Etiket (English)',
+                                    type: 'string',
+                                }),
+                                defineField({
+                                    name: 'labelDe',
+                                    title: 'Etiket (Deutsch)',
+                                    type: 'string',
+                                }),
+                                defineField({
                                     name: 'href',
                                     title: 'Link',
                                     type: 'string',
@@ -421,10 +531,30 @@ export default defineType({
                     description: 'Örn: "© 2005–2026 boattripturkey.com"',
                 }),
                 defineField({
+                    name: 'copyrightTextEn',
+                    title: 'Copyright (English)',
+                    type: 'string',
+                }),
+                defineField({
+                    name: 'copyrightTextDe',
+                    title: 'Copyright (Deutsch)',
+                    type: 'string',
+                }),
+                defineField({
                     name: 'companyLine1',
                     title: 'Şirket Açıklama Satır 1',
                     type: 'string',
                     description: 'Örn: "boattripturkey.com is a trading name of ..."',
+                }),
+                defineField({
+                    name: 'companyLine1En',
+                    title: 'Şirket satır 1 (English)',
+                    type: 'string',
+                }),
+                defineField({
+                    name: 'companyLine1De',
+                    title: 'Şirket satır 1 (Deutsch)',
+                    type: 'string',
                 }),
                 defineField({
                     name: 'companyLine2',
@@ -433,10 +563,30 @@ export default defineType({
                     description: 'Örn: "Registered Travel Agency: ... Licence No: 5985"',
                 }),
                 defineField({
+                    name: 'companyLine2En',
+                    title: 'Şirket satır 2 (English)',
+                    type: 'string',
+                }),
+                defineField({
+                    name: 'companyLine2De',
+                    title: 'Şirket satır 2 (Deutsch)',
+                    type: 'string',
+                }),
+                defineField({
                     name: 'secure3dLabel',
                     title: 'Güvenli Ödeme Etiketi',
                     type: 'string',
                     initialValue: 'Secure 3D payment',
+                }),
+                defineField({
+                    name: 'secure3dLabelEn',
+                    title: 'Güvenli ödeme etiketi (English)',
+                    type: 'string',
+                }),
+                defineField({
+                    name: 'secure3dLabelDe',
+                    title: 'Güvenli ödeme etiketi (Deutsch)',
+                    type: 'string',
                 }),
                 defineField({
                     name: 'paymentLogos',

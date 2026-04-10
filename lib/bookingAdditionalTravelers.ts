@@ -1,5 +1,8 @@
 /** Ana rezervasyon sahibi `customer` alanında; `additionalTravelers` yalnızca kalan yetişkinler + çocuklar (bebekler sayı olarak counts.infant’ta). */
 
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
+
 export interface AdditionalTravelerName {
   firstName: string
   lastName: string
@@ -17,15 +20,19 @@ export function additionalTravelerSlotCount(counts: { adult: number; child: numb
 }
 
 /** Form etiketleri (ilk yetişkin = ana iletişim kişisi, listede yok; bebek satırı yok). */
-export function additionalTravelerLabels(counts: {
-  adult: number
-  child: number
-  baby?: number
-  infant?: number
-}): string[] {
+export function additionalTravelerLabels(
+  counts: {
+    adult: number
+    child: number
+    baby?: number
+    infant?: number
+  },
+  locale: SiteLocale = 'tr'
+): string[] {
+  const ui = getBookingWizardUi(locale)
   const labels: string[] = []
-  for (let i = 1; i <= counts.adult; i++) labels.push(`Yetişkin ${i}`)
-  for (let i = 1; i <= counts.child; i++) labels.push(`Çocuk ${i}`)
+  for (let i = 1; i <= counts.adult; i++) labels.push(`${ui.adult} ${i}`)
+  for (let i = 1; i <= counts.child; i++) labels.push(`${ui.child} ${i}`)
   if (labels.length <= 1) return []
   return labels.slice(1)
 }
@@ -48,17 +55,21 @@ const MAX_NAME_LEN = 80
 export function validateAdditionalTravelers(
   travelers: AdditionalTravelerName[] | undefined,
   counts: { adult: number; child: number; baby?: number; infant?: number },
-  options?: { requireMealPreference?: boolean }
+  options?: {
+    requireMealPreference?: boolean
+    messages?: { firstName: string; lastName: string; meal: string }
+  }
 ): Record<string, string> {
   const n = additionalTravelerSlotCount(counts)
   const list = travelers ?? []
   const errors: Record<string, string> = {}
+  const m = options?.messages
   for (let i = 0; i < n; i++) {
     const t = list[i]
-    if (!t?.firstName?.trim()) errors[`traveler${i}First`] = 'Ad zorunludur.'
-    if (!t?.lastName?.trim()) errors[`traveler${i}Last`] = 'Soyad zorunludur.'
+    if (!t?.firstName?.trim()) errors[`traveler${i}First`] = m?.firstName ?? 'Ad zorunludur.'
+    if (!t?.lastName?.trim()) errors[`traveler${i}Last`] = m?.lastName ?? 'Soyad zorunludur.'
     if (options?.requireMealPreference && !t?.mealPreferenceKey?.trim()) {
-      errors[`traveler${i}Meal`] = 'Yemek tercihi zorunludur.'
+      errors[`traveler${i}Meal`] = m?.meal ?? 'Yemek tercihi zorunludur.'
     }
   }
   return errors

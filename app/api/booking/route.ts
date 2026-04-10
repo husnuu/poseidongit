@@ -1,8 +1,8 @@
 /**
  * GET /api/booking — Rezervasyon detayı (bookingId + email ile).
- * Rate limiting: see docs/RATE_LIMITING_SUGGESTIONS.md (e.g. 20 req/min per IP).
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rateLimit'
 import { supabase } from '@/lib/supabase'
 import {
   firstClassLocasFromRow,
@@ -18,6 +18,9 @@ export const runtime = 'nodejs'
 /** Rezervasyon detayını döndürür; sadece e-posta eşleşirse. */
 export async function GET(request: NextRequest) {
   try {
+    const limited = await rateLimitResponse(request, 'bookingLookup')
+    if (limited) return limited
+
     const { searchParams } = new URL(request.url)
     const bookingId = searchParams.get('bookingId')?.trim()
     const email = searchParams.get('email')?.trim()?.toLowerCase()

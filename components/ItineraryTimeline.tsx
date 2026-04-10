@@ -12,9 +12,11 @@ export interface ItineraryTimelineItem {
 
 interface ItineraryTimelineProps {
   items?: ItineraryTimelineItem[] | null
+  /** Varsayılan: Türkçe başlık (tur sayfası `getTourPageUi` ile geçirir). */
+  sectionTitle?: string
 }
 
-export default function ItineraryTimeline({ items }: ItineraryTimelineProps) {
+export default function ItineraryTimeline({ items, sectionTitle = 'Neler yapacaksınız?' }: ItineraryTimelineProps) {
   if (!items || items.length === 0) return null
 
   const validItems = items.filter((item) => item.imageUrl && item.title)
@@ -23,7 +25,7 @@ export default function ItineraryTimeline({ items }: ItineraryTimelineProps) {
 
   return (
     <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Neler yapacaksınız?</h2>
+      <h2 className={styles.sectionTitle}>{sectionTitle}</h2>
       <div className={styles.timeline}>
         {validItems.length > 1 && <div className={styles.line} />}
         <ul className={styles.list}>

@@ -6,6 +6,8 @@ export interface CoveRowProps {
   alt?: string | null
   /** İleride tekrar detay sayfası açılırsa kullanılır; satır artık tıklanabilir değil. */
   slug?: string | null
+  noImageLabel?: string
+  detailHint?: string
 }
 
 export default function CoveRow({
@@ -15,6 +17,8 @@ export default function CoveRow({
   imageUrl,
   alt,
   slug: _slug,
+  noImageLabel = 'Görsel yok',
+  detailHint = 'Detay',
 }: CoveRowProps) {
   const content = (
     <>
@@ -61,7 +65,7 @@ export default function CoveRow({
           style={{ color: '#1e3a8a', fontFamily: 'var(--font-family)' }}
           aria-hidden
         >
-          <span className="font-bold uppercase">Detay</span>
+          <span className="font-bold uppercase">{detailHint}</span>
           <span aria-hidden>→</span>
         </span>
       </div>

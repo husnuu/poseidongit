@@ -3,6 +3,9 @@
 import { useRef, useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
+import { dateLocaleForSite } from '@/lib/i18n/dateLocale'
 
 export type BlogPostItem = {
   _id: string
@@ -24,12 +27,15 @@ export type BlogSectionData = {
 
 type BlogSectionProps = {
   data: BlogSectionData | null
+  locale?: SiteLocale
+  cardCtaLabel?: string
+  noImageLabel?: string
 }
 
-function formatDate(dateString: string | null | undefined): string {
+function formatDate(dateString: string | null | undefined, dateLocale: string): string {
   if (!dateString) return ''
   try {
-    return new Date(dateString).toLocaleDateString('tr-TR', {
+    return new Date(dateString).toLocaleDateString(dateLocale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -39,8 +45,19 @@ function formatDate(dateString: string | null | undefined): string {
   }
 }
 
-function BlogCard({ post }: { post: BlogPostItem }) {
-  const href = post.slug ? `/blog/${post.slug}` : '#'
+function BlogCard({
+  post,
+  locale = 'tr',
+  cardCtaLabel,
+  noImageLabel,
+}: {
+  post: BlogPostItem
+  locale?: SiteLocale
+  cardCtaLabel: string
+  noImageLabel: string
+}) {
+  const href = post.slug ? withLocalePath(locale, `/blog/${post.slug}`) : '#'
+  const dateLocale = dateLocaleForSite(locale)
   return (
     <article className="h-full flex flex-col rounded-2xl overflow-hidden bg-white shadow-[0_12px_30px_rgba(0,0,0,0.12)] border border-black/5 transition-all duration-300 hover:shadow-[0_16px_40px_rgba(0,0,0,0.14)]">
       <Link href={href} className="flex flex-col h-full">
@@ -55,7 +72,7 @@ function BlogCard({ post }: { post: BlogPostItem }) {
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-zinc-400 text-sm">
-              Görsel yok
+              {noImageLabel}
             </div>
           )}
         </div>
@@ -73,14 +90,14 @@ function BlogCard({ post }: { post: BlogPostItem }) {
           )}
           {post.publishDate && (
             <time className="text-sm text-black/70 mb-5 block" dateTime={post.publishDate}>
-              {formatDate(post.publishDate)}
+              {formatDate(post.publishDate, dateLocale)}
             </time>
           )}
           <span
             className="tour-card-cta hero-btn-shine relative mt-auto w-full rounded-xl py-2.5 md:py-3 font-black uppercase text-white text-center text-base md:text-[17px] flex items-center justify-center overflow-hidden"
             style={{ background: '#1e3a8a', boxShadow: '0 3px 12px rgba(30, 58, 138, 0.35)' }}
           >
-            Yazıyı oku
+            {cardCtaLabel}
           </span>
         </div>
       </Link>
@@ -88,7 +105,12 @@ function BlogCard({ post }: { post: BlogPostItem }) {
   )
 }
 
-export default function BlogSection({ data }: BlogSectionProps) {
+export default function BlogSection({
+  data,
+  locale = 'tr',
+  cardCtaLabel = 'Yazıyı oku',
+  noImageLabel = 'Görsel yok',
+}: BlogSectionProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -152,7 +174,12 @@ export default function BlogSection({ data }: BlogSectionProps) {
                 transitionDelay: visible ? `${index * 100}ms` : '0ms',
               }}
             >
-              <BlogCard post={post} />
+              <BlogCard
+                post={post}
+                locale={locale}
+                cardCtaLabel={cardCtaLabel}
+                noImageLabel={noImageLabel}
+              />
             </div>
           ))}
         </div>

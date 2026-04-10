@@ -2,6 +2,7 @@
 
 import type { BookingWizardState } from '@/lib/sanity/bookingTypes'
 import { additionalTravelerLabels } from '@/lib/bookingAdditionalTravelers'
+import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import FloatingInput from '@/components/ui/FloatingInput'
 import styles from '../booking.module.css'
 import MealOptionSelect from './MealOptionSelect'
@@ -14,6 +15,7 @@ interface AdditionalTravelersFieldsProps {
   /** StepCustomer: compact + default variant; Step3: outlined */
   compact?: boolean
   variant?: 'default' | 'outlined'
+  ui: BookingWizardUi
 }
 
 export default function AdditionalTravelersFields({
@@ -23,8 +25,9 @@ export default function AdditionalTravelersFields({
   mealOptions,
   compact = true,
   variant = 'default',
+  ui,
 }: AdditionalTravelersFieldsProps) {
-  const labels = additionalTravelerLabels(state.counts)
+  const labels = additionalTravelerLabels(state.counts, ui.locale)
   if (labels.length === 0) return null
 
   const list = state.additionalTravelers ?? []
@@ -39,8 +42,8 @@ export default function AdditionalTravelersFields({
   return (
     <div className="space-y-5 border-t border-zinc-200/80 pt-5 mt-2">
       <div>
-        <p className="text-sm font-medium text-zinc-800">Diğer yolcular</p>
-        <p className="text-xs text-zinc-500 mt-0.5">Diğer misafirlerin bilgilerini doldurun.</p>
+        <p className="text-sm font-medium text-zinc-800">{ui.otherGuestsTitle}</p>
+        <p className="text-xs text-zinc-500 mt-0.5">{ui.otherGuestsHint}</p>
       </div>
       {labels.map((label, i) => (
         <div key={`${label}-${i}`} className="space-y-3">
@@ -48,7 +51,7 @@ export default function AdditionalTravelersFields({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FloatingInput
               id={`booking-traveler-${i}-firstName`}
-              label="Ad *"
+              label={ui.labelFirstName}
               autoComplete="off"
               value={list[i]?.firstName ?? ''}
               onChange={(e) => setTraveler(i, 'firstName', e.target.value)}
@@ -58,7 +61,7 @@ export default function AdditionalTravelersFields({
             />
             <FloatingInput
               id={`booking-traveler-${i}-lastName`}
-              label="Soyad *"
+              label={ui.labelLastName}
               autoComplete="off"
               value={list[i]?.lastName ?? ''}
               onChange={(e) => setTraveler(i, 'lastName', e.target.value)}
@@ -73,8 +76,8 @@ export default function AdditionalTravelersFields({
                 options={mealOptions}
                 value={list[i]?.mealPreferenceKey ?? ''}
                 onChange={(key) => setTraveler(i, 'mealPreferenceKey', key)}
-                ariaLabel={`${label} yemek tercihi`}
-                label="Yemek tercihi *"
+                ariaLabel={`${label} ${ui.mealPreferenceAriaSuffix}`}
+                label={ui.labelMealPreference}
                 namePrefix={`booking-traveler-${i}-meal`}
                 showError={Boolean(errors[`traveler${i}Meal`])}
               />

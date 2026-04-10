@@ -12,6 +12,8 @@ import { getTourIdForBooking } from '@/lib/sanity/bookingTypes'
 import { computePricingForSelection, getDisplayedAdultUnitPriceForClass, getClassStatusForDate, getRemainingCapacityForDate, getCapForTicketClass, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import type { Availability } from '@/types/availability'
+import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
+import { isBadgePopular } from '@/lib/i18n/bookingWizardUi'
 import FirstClassSeatSelector from '../FirstClassSeatSelector'
 import styles from '../booking.module.css'
 
@@ -31,6 +33,7 @@ interface Step2ClassSelectProps {
   optimisticUsed?: UsedByDateAndClass | null
   /** Modal'dan gelen availability (tarih seçildiğinde Step1'de çekildi, Step2'de anında doğru kalan gösterilir). */
   availabilityFromParent?: Availability | null
+  ui: BookingWizardUi
 }
 
 export default function Step2ClassSelect({
@@ -45,6 +48,7 @@ export default function Step2ClassSelect({
   ctaDisabled,
   optimisticUsed,
   availabilityFromParent,
+  ui,
 }: Step2ClassSelectProps) {
   const locaSectionRef = useRef<HTMLDivElement>(null)
   const advance = onStepNext ?? onNext
@@ -120,7 +124,7 @@ export default function Step2ClassSelect({
   ])
 
   const dateFormatted = state.selectedDate
-    ? new Date(state.selectedDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
+    ? new Date(state.selectedDate).toLocaleDateString(ui.numberLocale, { day: 'numeric', month: 'short' })
     : '—'
 
   if (!state.selectedDate) return null
@@ -132,13 +136,13 @@ export default function Step2ClassSelect({
           type="button"
           className={`${styles.stepBackBtn} ${styles.stepBackBtnSmall}`}
           onClick={onBack}
-          aria-label="Önceki adıma dön"
+          aria-label={ui.backAria}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M19 12H5" />
             <path d="m12 19-7-7 7-7" />
           </svg>
-          Geri
+          {ui.back}
         </button>
       </div>
 
@@ -152,7 +156,7 @@ export default function Step2ClassSelect({
               <path d="M13 11v2" />
             </svg>
           </span>
-          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>Sınıf Seçimi</h3>
+          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>{ui.classSelectTitle}</h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
@@ -172,7 +176,7 @@ export default function Step2ClassSelect({
             const price = state.selectedDate
               ? getDisplayedAdultUnitPriceForClass(tour, state.selectedDate, cls)
               : undefined
-            const badgePopular = cls.badge?.toLowerCase().includes('popüler')
+            const badgePopular = isBadgePopular(cls.badge)
 
             return (
               <div
@@ -205,7 +209,15 @@ export default function Step2ClassSelect({
                   }
                 }}
                 tabIndex={available ? 0 : undefined}
-                aria-label={`${cls.label}, ${price != null ? `${price} TL` : ''}, ${available ? 'Müsait' : insufficientCap ? 'Kapasite yetersiz' : isFull ? 'Dolu' : 'Kapalı'}`}
+                aria-label={`${cls.label}, ${price != null ? `${price} TL` : ''}, ${
+                  available
+                    ? ui.classAriaAvailable
+                    : insufficientCap
+                      ? ui.classAriaInsufficient
+                      : isFull
+                        ? ui.classAriaFull
+                        : ui.classAriaClosed
+                }`}
               >
                 {isFirstClassOddPaxWarning && (
                   <div
@@ -226,7 +238,7 @@ export default function Step2ClassSelect({
                       textAlign: 'center',
                     }}
                   >
-                    Bu alandaki bungalov yataklarımız 2 kişiliktir. Tek sayılı kişi ile rezervasyon verilmemektedir.
+                    {ui.bungalowTwoPersonOdd}
                   </div>
                 )}
                 <div
@@ -272,16 +284,22 @@ export default function Step2ClassSelect({
                           textShadow: '0 1px 2px rgba(0,0,0,0.5)',
                         }}
                       >
-                        {classBlocked ? (classStatus === 'full' ? 'DOLU' : 'KAPALI') : cap === 0 ? 'DOLU' : 'KAPASİTE YETERSİZ'}
+                        {classBlocked
+                          ? classStatus === 'full'
+                            ? ui.statusFull
+                            : ui.statusClosed
+                          : cap === 0
+                            ? ui.statusFull
+                            : ui.statusInsufficientCap}
                       </span>
                       {insufficientCap && cap > 0 && (
                         <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>
-                          Mevcut rezervasyonlardan sonra kalan: {cap} kişi
+                          {ui.remainingAfterBookings(cap)}
                         </span>
                       )}
                       {cap === 0 && !classBlocked && (
                         <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>
-                          Bu tarih için kontenjan dolmuştur
+                          {ui.quotaFullThisDate}
                         </span>
                       )}
                     </div>
@@ -296,7 +314,7 @@ export default function Step2ClassSelect({
                     )}
                     {!isFull && !insufficientCap && cap > 0 && cap <= LOW_STOCK_THRESHOLD && (
                       <span className={styles.classBadge} style={{ background: '#b45309', color: '#fff' }}>
-                        Son {cap} yer
+                        {ui.lastNSpots(cap)}
                       </span>
                     )}
                     <span style={{ flex: 1 }} />
@@ -319,19 +337,19 @@ export default function Step2ClassSelect({
                   )}
                   {price != null && (
                     <p className={styles.classCardPremiumPrice}>
-                      Yetişkin ({dateFormatted}): {price.toLocaleString('tr-TR')} ₺
+                      {ui.adultPriceLine(dateFormatted, price.toLocaleString(ui.numberLocale))}
                     </p>
                   )}
                   {cap > 0 && cap < totalPax && (
                     <p className={styles.classCardPremiumCapacity} style={{ color: '#b91c1c', fontWeight: 600 }} role="alert">
-                      Mevcut rezervasyonlardan sonra kalan kontenjan: {cap} kişi. {totalPax} kişilik rezervasyon için yeterli yer yok.
+                      {ui.insufficientCapLine(cap, totalPax)}
                     </p>
                   )}
                   {cap >= totalPax && (
                     <p className={styles.classCardPremiumCapacity}>
                       {cap <= LOW_STOCK_THRESHOLD && cap > 0
-                        ? `Son ${cap} yer`
-                        : `Kalan: ${cap} kişi`}
+                        ? ui.lastNSpots(cap)
+                        : ui.remainingSpots(cap)}
                     </p>
                   )}
                   <div className={styles.classCardPremiumFooter}>
@@ -350,9 +368,13 @@ export default function Step2ClassSelect({
                           if (!isFirst) advance()
                         }
                       }}
-                      aria-label={isFirstClassKey(tour, cls.key) ? `${cls.label} seç, loca seçin` : `${cls.label} seç ve devam et`}
+                      aria-label={
+                        isFirstClassKey(tour, cls.key)
+                          ? ui.selectClassAriaPickLoca(cls.label)
+                          : ui.selectClassAriaContinue(cls.label)
+                      }
                     >
-                      Seçiniz
+                      {ui.selectClassButton}
                     </button>
                   </div>
                 </div>
@@ -373,9 +395,7 @@ export default function Step2ClassSelect({
                     aria-hidden
                   >
                     <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#374151', textAlign: 'center', lineHeight: 1.4 }}>
-                      {totalPax % 2 !== 0
-                        ? 'Bu alandaki bungalov yataklarımız 2 kişiliktir. Tek sayılı kişi ile rezervasyon verilmemektedir.'
-                        : 'First class için sadece 16 yaş üstü misafirler kabul edilmektedir.'}
+                      {totalPax % 2 !== 0 ? ui.bungalowTwoPersonOdd : ui.firstClassAdultsOnly}
                     </p>
                   </div>
                 )}
@@ -385,7 +405,7 @@ export default function Step2ClassSelect({
         </div>
         {state.selectedClassKey && capForClass(state.selectedClassKey) < totalPax && (
           <p className={styles.errorText} style={{ marginTop: 12 }} role="alert">
-            Bu sınıf için yeterli kapasite yok ({totalPax} kişi). Başka sınıf seçin veya kişi sayısını azaltın.
+            {ui.classCapacityShortage(totalPax)}
           </p>
         )}
         {state.selectedClassKey && isFirstClassKey(tour, state.selectedClassKey) && (() => {
@@ -401,7 +421,7 @@ export default function Step2ClassSelect({
           }
           return (
             <div ref={locaSectionRef} style={{ marginTop: 20 }}>
-              <h4 className={styles.cardTitle} style={{ marginBottom: 0 }}>Loca Seçimi</h4>
+              <h4 className={styles.cardTitle} style={{ marginBottom: 0 }}>{ui.locaSelectTitle}</h4>
               <FirstClassSeatSelector
                 selectedLocaIds={selected}
                 reservedLocaIds={effectiveAvailability?.date === state.selectedDate ? (effectiveAvailability?.firstClassLocasReserved || []) : []}
@@ -409,7 +429,7 @@ export default function Step2ClassSelect({
                 onToggle={handleToggle}
                 onReplace={(removeId, addId) => onUpdate({ firstClassLocas: [...(state.firstClassLocas ?? []).filter((x) => x !== removeId), addId.trim().toUpperCase()] })}
                 onAfterSelect={advance}
-                aria-label="First Class loca seçimi"
+                locaUi={ui.firstClassLoca}
               />
             </div>
           )

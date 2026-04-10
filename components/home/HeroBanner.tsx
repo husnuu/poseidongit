@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Crown } from 'lucide-react'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
 
 export type HeroData = {
   eyebrow?: string | null
@@ -26,13 +28,26 @@ function splitHeadingIntoTwoLines(heading: string): [string, string] {
   return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')]
 }
 
-export default function HeroBanner({ hero }: { hero: HeroData | null }) {
+export default function HeroBanner({
+  hero,
+  locale = 'tr',
+}: {
+  hero: HeroData | null
+  locale?: SiteLocale
+}) {
   if (!hero?.heading) return null
 
   const desktopImageUrl = hero.heroImageUrl ?? ''
   const mobileImageUrl = hero.heroImageMobileUrl ?? hero.heroImageUrl ?? ''
   const alt = hero.heroImageAlt ?? 'Hero image'
   const [line1, line2] = splitHeadingIntoTwoLines(hero.heading)
+
+  const primaryHref = hero.primaryCta?.href?.trim()
+    ? hero.primaryCta.href
+    : withLocalePath(locale, '/turlar')
+  const secondaryHref = hero.secondaryCta?.href?.trim()
+    ? hero.secondaryCta.href
+    : withLocalePath(locale, '/contact')
 
   const hasImage = !!(desktopImageUrl || mobileImageUrl)
 
@@ -125,7 +140,7 @@ export default function HeroBanner({ hero }: { hero: HeroData | null }) {
             {/* Birincil: lacivert, etrafında dönen kenar (conic-gradient + rotate) */}
             <span className="hero-primary-btn-wrap inline-flex h-[52px] w-[200px] flex-shrink-0 items-center justify-center rounded p-[2px]">
               <Link
-                href={hero.primaryCta?.href || '/turlar'}
+                href={primaryHref}
                 className="hero-primary-inner hero-btn-shine flex h-[48px] w-[196px] items-center justify-center rounded bg-[#1e3a8a] text-white no-underline transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
                 style={{ fontFamily: '"Inter-Bold", var(--font-family), sans-serif', fontWeight: 700, fontSize: '17px', textTransform: 'uppercase' }}
               >
@@ -134,7 +149,7 @@ export default function HeroBanner({ hero }: { hero: HeroData | null }) {
             </span>
             {/* İkincil: tamamen beyaz, kenar yok */}
             <Link
-              href={hero.secondaryCta?.href || '/contact'}
+              href={secondaryHref}
               className="hero-btn-shine hero-cta-secondary inline-flex h-[48px] w-[196px] flex-shrink-0 items-center justify-center rounded bg-white text-[#1e3a5f] no-underline transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent"
               style={{ fontFamily: '"Inter-Bold", var(--font-family), sans-serif', fontWeight: 700, fontSize: '17px', textTransform: 'uppercase' }}
             >

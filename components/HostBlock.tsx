@@ -1,5 +1,7 @@
 import Image from 'next/image'
 import { urlFor } from '@/lib/sanity'
+import type { TourPageUi } from '@/lib/i18n/tourPageUi'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './HostBlock.module.css'
 
 interface GalleryImage {
@@ -23,6 +25,7 @@ interface WhyYouWillLove {
 interface HostBlockProps {
   host?: Host | null
   whyYouWillLove?: WhyYouWillLove | null
+  tourUi?: TourPageUi
 }
 
 /** Normalize host title: deduplicate parts (e.g. "Owner / Co-founder, Owner / Co-founder" → "Owner / Co-founder"). */
@@ -46,7 +49,8 @@ function paragraphs(text: string | undefined): string[] {
     .filter(Boolean)
 }
 
-export default function HostBlock({ host, whyYouWillLove }: HostBlockProps) {
+export default function HostBlock({ host, whyYouWillLove, tourUi: tourUiProp }: HostBlockProps) {
+  const tourUi = tourUiProp ?? getTourPageUi('tr')
   const hasHost = host && (host.name || host.photo?.asset || host.note)
   const hasWhy =
     whyYouWillLove &&
@@ -65,7 +69,7 @@ export default function HostBlock({ host, whyYouWillLove }: HostBlockProps) {
   const mainTitle = rawTitle
     ? rawTitle.replace(/\s+/g, ' ').toUpperCase()
     : bodyParagraphs.length > 0
-      ? 'WHY I THINK YOU\'LL LOVE THIS TOUR'
+      ? tourUi.hostWhyFallbackTitle
       : ''
   const avatarAsset = host?.photo?.asset
 
@@ -79,9 +83,13 @@ export default function HostBlock({ host, whyYouWillLove }: HostBlockProps) {
           {showHostLine && (
             <p className={styles.hostLine}>
               {hostLineTitle ? (
-                <>Kaptan: {host?.name} · {hostLineTitle}</>
+                <>
+                  {tourUi.captainLabel}: {host?.name} · {hostLineTitle}
+                </>
               ) : (
-                <>Kaptan: {host?.name}</>
+                <>
+                  {tourUi.captainLabel}: {host?.name}
+                </>
               )}
             </p>
           )}
@@ -107,7 +115,7 @@ export default function HostBlock({ host, whyYouWillLove }: HostBlockProps) {
           <div className={styles.avatarWrap}>
             <Image
               src={urlFor(avatarAsset).width(320).height(320).url()}
-              alt={host?.name ?? 'Kaptan'}
+              alt={host?.name ?? tourUi.captainAvatarAltFallback}
               width={140}
               height={140}
               className={styles.avatarImg}

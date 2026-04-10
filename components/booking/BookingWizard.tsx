@@ -9,6 +9,9 @@ import { isTourMealMenuActive } from '@/components/booking/steps/MealPreferenceF
 import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
 import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
+import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import StepPeople from './steps/StepPeople'
 import StepDateClass from './steps/StepDateClass'
 import StepCustomer from './steps/StepCustomer'
@@ -18,9 +21,11 @@ import styles from './booking.module.css'
 
 interface BookingWizardProps {
   tour: TourForBooking
+  locale?: SiteLocale
 }
 
-export default function BookingWizard({ tour }: BookingWizardProps) {
+export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProps) {
+  const ui = useMemo(() => getBookingWizardUi(locale), [locale])
   const router = useRouter()
   const [state, setState] = useState<BookingWizardState>({
     ...DEFAULT_BOOKING_STATE,
@@ -184,16 +189,16 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
           data = text ? JSON.parse(text) : {}
         } catch {
           if (!res.ok) {
-            setSubmitError(`Sunucu hata döndü (${res.status}). Lütfen tekrar deneyin veya destek ile iletişime geçin.`)
+            setSubmitError(ui.serverError(res.status))
             return
           }
         }
         if (!res.ok) {
-          setSubmitError(data.error ?? `Rezervasyon kaydedilemedi (${res.status}).`)
+          setSubmitError(data.error ?? ui.bookingSaveFailed(res.status))
           return
         }
         if (!data.bookingId || !data.summary) {
-          setSubmitError('Sunucu yanıtı geçersiz. Lütfen tekrar deneyin.')
+          setSubmitError(ui.invalidServerResponse)
           return
         }
         const dateNorm = (state.selectedDate ?? '').slice(0, 10)
@@ -216,20 +221,20 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
         })
         setSubmitted(true)
       } catch {
-        setSubmitError('Bağlantı hatası. Lütfen tekrar deneyin.')
+        setSubmitError(ui.connectionError)
       } finally {
         setSubmitting(false)
       }
     }
-  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext])
+  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext, ui])
 
   const ctaLabel = useMemo(() => {
-    if (state.step === 1) return 'Devam'
-    if (state.step === 2) return 'Devam'
-    if (state.step === 3) return 'Ödemeye Geç'
-    if (state.step === 4 && submitting) return 'İşleniyor…'
-    return 'ÖDE'
-  }, [state.step, submitting])
+    if (state.step === 1) return ui.continue
+    if (state.step === 2) return ui.continue
+    if (state.step === 3) return ui.toPayment
+    if (state.step === 4 && submitting) return ui.processing
+    return ui.pay
+  }, [state.step, submitting, ui])
 
   const ctaDisabled = useMemo(() => {
     if (state.step === 1) return !canProceedStep1
@@ -244,8 +249,8 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
     setBookingResult(null)
     setOptimisticUsed(null)
     setState((prev) => ({ ...DEFAULT_BOOKING_STATE, tourSlug: prev.tourSlug }))
-    router.push(`/tour/${tour.slug}`)
-  }, [tour.slug, router])
+    router.push(withLocalePath(locale, `/tour/${tour.slug}`))
+  }, [tour.slug, router, locale])
 
   if (submitted && bookingResult) {
     return (
@@ -255,7 +260,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
             type="button"
             className={styles.closeBtn}
             onClick={goBackToTour}
-            aria-label="Kapat"
+            aria-label={ui.closeAria}
           >
             <X className="w-5 h-5" />
           </button>
@@ -266,8 +271,9 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
               bookingId={bookingResult.bookingId}
               accessToken={bookingResult.accessToken}
               summary={bookingResult.summary}
-              doneButtonLabel="Tura Dön"
+              doneButtonLabel={ui.doneReturnToTour}
               onDone={goBackToTour}
+              locale={locale}
             />
           </div>
         </div>
@@ -282,7 +288,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
           type="button"
           className={styles.closeBtn}
           onClick={() => router.back()}
-          aria-label="Kapat"
+          aria-label={ui.closeAria}
         >
           <X className="w-5 h-5" />
         </button>
@@ -318,6 +324,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
             counts={state.counts}
             maxPax={maxPax}
             onUpdate={(counts) => updateState({ counts })}
+            ui={ui}
           />
         )}
         {state.step === 2 && (
@@ -329,6 +336,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
             optimisticUsed={optimisticUsed}
             onProceedToNextStep={goNext}
             availabilityInvalidateKey={String(step2InvalidateKey)}
+            ui={ui}
           />
         )}
         {state.step === 3 && (
@@ -337,6 +345,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
             state={state}
             onUpdate={updateState}
             onValidationChange={setStep3Valid}
+            ui={ui}
           />
         )}
         {state.step === 4 && (
@@ -346,7 +355,12 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
                 {submitError}
               </div>
             )}
-            <StepPayment state={state} onTermsAcceptanceChange={setStep4TermsAccepted} />
+            <StepPayment
+              state={state}
+              onTermsAcceptanceChange={setStep4TermsAccepted}
+              ui={ui}
+              termsHref={withLocalePath(locale, '/terms')}
+            />
           </>
         )}
       </main>
@@ -354,7 +368,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
       <div className={styles.ctaWrap}>
         {state.step === 2 && !hasEnoughCapacityForClass && state.selectedClassKey && (
           <p className={styles.errorText} style={{ marginBottom: 12 }}>
-            Bu sınıf için yeterli kapasite yok ({totalPax} kişi). Başka sınıf seçin veya kişi sayısını azaltın.
+            {ui.capacityClassShortage(totalPax)}
           </p>
         )}
         {state.step > 1 && (
@@ -369,7 +383,7 @@ export default function BookingWizard({ tour }: BookingWizardProps) {
               border: '1px solid #e4e4e7',
             }}
           >
-            Geri
+            {ui.back}
           </button>
         )}
         <button

@@ -11,6 +11,7 @@ import AdditionalTravelersFields from './AdditionalTravelersFields'
 import MealPreferenceFields, { isTourMealMenuActive, tourMealOptions } from './MealPreferenceFields'
 import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
+import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import styles from '../booking.module.css'
 
 interface StepCustomerProps {
@@ -18,6 +19,7 @@ interface StepCustomerProps {
   state: BookingWizardState
   onUpdate: (patch: Partial<BookingWizardState>) => void
   onValidationChange: (valid: boolean) => void
+  ui: BookingWizardUi
 }
 
 const PHONE_MIN_DIGITS = 10
@@ -28,30 +30,36 @@ export default function StepCustomer({
   state,
   onUpdate,
   onValidationChange,
+  ui,
 }: StepCustomerProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const validate = useCallback(() => {
     const next: Record<string, string> = {}
     const c = state.customer
-    if (!c.firstName?.trim()) next.firstName = 'Ad zorunludur.'
-    if (!c.lastName?.trim()) next.lastName = 'Soyad zorunludur.'
-    if (!c.email?.trim()) next.email = 'E-posta zorunludur.'
-    else if (!EMAIL_REGEX.test(c.email)) next.email = 'Geçerli bir e-posta adresi giriniz.'
+    const v = ui.validation
+    if (!c.firstName?.trim()) next.firstName = v.firstName
+    if (!c.lastName?.trim()) next.lastName = v.lastName
+    if (!c.email?.trim()) next.email = v.emailRequired
+    else if (!EMAIL_REGEX.test(c.email)) next.email = v.emailInvalid
     const phoneDigits = (c.phone ?? '').replace(/\D/g, '')
-    if (!phoneDigits.length) next.phone = 'Telefon zorunludur.'
-    else if (phoneDigits.length < PHONE_MIN_DIGITS)
-      next.phone = 'Geçerli bir telefon numarası giriniz.'
+    if (!phoneDigits.length) next.phone = v.phoneRequired
+    else if (phoneDigits.length < PHONE_MIN_DIGITS) next.phone = v.phoneInvalid
     Object.assign(
       next,
       validateAdditionalTravelers(state.additionalTravelers, state.counts, {
         requireMealPreference: isTourMealMenuActive(tour),
+        messages: {
+          firstName: v.travelerFirst,
+          lastName: v.travelerLast,
+          meal: v.mealPreference,
+        },
       })
     )
     setErrors(next)
     const valid = Object.keys(next).length === 0
     onValidationChange(valid)
-  }, [state.customer, state.additionalTravelers, state.counts, onValidationChange])
+  }, [state.customer, state.additionalTravelers, state.counts, onValidationChange, tour, ui.validation])
 
   useEffect(() => {
     validate()
@@ -65,7 +73,7 @@ export default function StepCustomer({
 
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
   const dateStr = state.selectedDate
-    ? new Date(state.selectedDate).toLocaleDateString('tr-TR', {
+    ? new Date(state.selectedDate).toLocaleDateString(ui.numberLocale, {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
@@ -100,7 +108,7 @@ export default function StepCustomer({
               <path d="M10 9H8" />
             </svg>
           </span>
-          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>Özet</h3>
+          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>{ui.summaryTitle}</h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
@@ -114,7 +122,7 @@ export default function StepCustomer({
                 className={styles.summaryHeroImage}
                 style={{ objectFit: 'cover' }}
               />
-              <span className={styles.summaryHeroOverlay}>Tekne Turu</span>
+              <span className={styles.summaryHeroOverlay}>{ui.tourOverlayLabel}</span>
             </div>
           )}
           <h4 className={styles.summaryTourTitle}>{tour.title}</h4>
@@ -132,7 +140,7 @@ export default function StepCustomer({
                   <line x1="3" x2="21" y1="10" y2="10" />
                 </svg>
               </span>
-              <span className={styles.summaryInfoLabel}>Tarih</span>
+              <span className={styles.summaryInfoLabel}>{ui.labelDate}</span>
               <span className={styles.summaryInfoValue}>{dateStr}</span>
             </div>
             <div className={styles.summaryInfoRow}>
@@ -144,7 +152,7 @@ export default function StepCustomer({
                   <path d="M13 11v2" />
                 </svg>
               </span>
-              <span className={styles.summaryInfoLabel}>Sınıf</span>
+              <span className={styles.summaryInfoLabel}>{ui.labelClass}</span>
               <span className={styles.summaryInfoValue}>{selectedClassLabel}</span>
             </div>
             <div className={styles.summaryInfoRow}>
@@ -156,8 +164,8 @@ export default function StepCustomer({
                   <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
               </span>
-              <span className={styles.summaryInfoLabel}>Katılımcı</span>
-              <span className={styles.summaryInfoValue}>{totalPax} kişi</span>
+              <span className={styles.summaryInfoLabel}>{ui.labelParticipants}</span>
+              <span className={styles.summaryInfoValue}>{ui.peopleCount(totalPax)}</span>
             </div>
             <div className={styles.summaryInfoRow}>
               <span className={styles.summaryInfoIcon} aria-hidden>
@@ -166,20 +174,20 @@ export default function StepCustomer({
                   <line x1="2" x2="22" y1="10" y2="10" />
                 </svg>
               </span>
-              <span className={styles.summaryInfoLabel}>Birim fiyat</span>
-              <span className={styles.summaryInfoValue}>{unitPrice.toLocaleString('tr-TR')} ₺</span>
+              <span className={styles.summaryInfoLabel}>{ui.labelUnitPrice}</span>
+              <span className={styles.summaryInfoValue}>{unitPrice.toLocaleString(ui.numberLocale)} ₺</span>
             </div>
           </div>
 
           <div className={styles.summaryTotalBox}>
-            <p className={styles.summaryTotalLabel}>Toplam</p>
-            <p className={styles.summaryTotalValue}>{totalPrice.toLocaleString('tr-TR')} ₺</p>
+            <p className={styles.summaryTotalLabel}>{ui.totalLabel}</p>
+            <p className={styles.summaryTotalValue}>{totalPrice.toLocaleString(ui.numberLocale)} ₺</p>
           </div>
           {state.pricingSummary && (
             <div className={styles.summaryDueBox}>
-              <p className={styles.summaryDueLabel}>Şimdi ödenecek tutar</p>
+              <p className={styles.summaryDueLabel}>{ui.dueNowLabel}</p>
               <p className={styles.summaryDueValue}>
-                {state.pricingSummary.depositAmount.toLocaleString('tr-TR')} ₺
+                {state.pricingSummary.depositAmount.toLocaleString(ui.numberLocale)} ₺
                 <span className={styles.summaryDueBadge}>%{state.pricingSummary.depositPercent}</span>
               </p>
             </div>
@@ -189,7 +197,7 @@ export default function StepCustomer({
 
       <section className="min-w-0" aria-labelledby="booking-form-heading">
         <h2 id="booking-form-heading" className="sr-only">
-          Bilgileriniz
+          {ui.formHeadingSr}
         </h2>
         <div className={styles.card}>
           <div className={styles.cardCaption}>
@@ -199,7 +207,7 @@ export default function StepCustomer({
                 <circle cx="12" cy="7" r="4" />
               </svg>
             </span>
-            <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>Bilgileriniz</h3>
+            <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>{ui.yourDetailsTitle}</h3>
           </div>
           <hr className={styles.cardDivider} />
           <div className={styles.cardContent}>
@@ -213,7 +221,7 @@ export default function StepCustomer({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FloatingInput
                 id="booking-firstName"
-                label="Ad *"
+                label={ui.labelFirstName}
                 autoComplete="given-name"
                 value={state.customer.firstName}
                 onChange={(e) => handleField('firstName', e.target.value)}
@@ -222,7 +230,7 @@ export default function StepCustomer({
               />
               <FloatingInput
                 id="booking-lastName"
-                label="Soyad *"
+                label={ui.labelLastName}
                 autoComplete="family-name"
                 value={state.customer.lastName}
                 onChange={(e) => handleField('lastName', e.target.value)}
@@ -235,7 +243,7 @@ export default function StepCustomer({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FloatingInput
                 id="booking-email"
-                label="E-posta *"
+                label={ui.labelEmail}
                 type="email"
                 autoComplete="email"
                 value={state.customer.email}
@@ -244,7 +252,7 @@ export default function StepCustomer({
                 compact
               />
               <PhoneField
-                label="Telefon *"
+                label={ui.labelPhone}
                 name="phone"
                 value={state.customer.phone ?? ''}
                 onChange={(v) => handleField('phone', v ?? '')}
@@ -260,12 +268,13 @@ export default function StepCustomer({
               state={state}
               onUpdate={onUpdate}
               error={errors.mealPreference}
+              mealFallbackTitle={ui.mealFallbackTitle}
             />
 
             {/* Row3: Özel istek – contact’taki Message * ile aynı tam genişlik, rows=5 */}
             <FloatingTextarea
               id="booking-note"
-              label="Özel istek (opsiyonel)"
+              label={ui.labelNote}
               rows={3}
               value={state.customer.note ?? ''}
               onChange={(e) => handleField('note', e.target.value)}
@@ -277,11 +286,12 @@ export default function StepCustomer({
               errors={errors}
               mealOptions={isTourMealMenuActive(tour) ? tourMealOptions(tour) : undefined}
               compact
+              ui={ui}
             />
 
               <div className={styles.cardNoticeSuccess}>
                 <Check className={styles.cardNoticeSuccessIcon} aria-hidden />
-                <span>Bilet bilgileriniz SMS ve e-postayla ücretsiz gönderilecektir.</span>
+                <span>{ui.ticketDeliveryNotice}</span>
               </div>
             </form>
           </div>

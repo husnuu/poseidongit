@@ -1,8 +1,8 @@
 /**
  * POST /api/bookings — Web rezervasyonu oluşturur.
- * Rate limiting: see docs/RATE_LIMITING_SUGGESTIONS.md (e.g. 10 req/min per IP).
  */
 import { NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rateLimit'
 import type { BookingCreatePayload } from '@/lib/firestore/bookingTypes'
 import {
   additionalTravelerSlotCount,
@@ -151,6 +151,9 @@ async function computePrices(
 
 export async function POST(request: Request) {
   try {
+    const limited = await rateLimitResponse(request, 'booking')
+    if (limited) return limited
+
     let body: unknown
     try {
       body = await request.json()

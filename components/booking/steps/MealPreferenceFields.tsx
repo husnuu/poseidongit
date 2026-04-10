@@ -17,14 +17,14 @@ export function tourMealOptions(tour: TourForBooking): Array<{ key: string; labe
     .map((o) => ({ key: o.key!.trim(), label: o.label!.trim() }))
 }
 
-function mealOptions(tour: TourForBooking) {
+function mealOptions(tour: TourForBooking, fallbackTitle?: string) {
   const mm = tour.mealMenu
   const options = tourMealOptions(tour)
   const active = Boolean(mm?.enabled && options.length > 0)
   return {
     active,
     options,
-    sectionTitle: mm?.sectionTitle?.trim() || 'Yemek tercihi',
+    sectionTitle: mm?.sectionTitle?.trim() || fallbackTitle?.trim() || 'Yemek tercihi',
     description: mm?.description?.trim() || '',
   }
 }
@@ -34,6 +34,8 @@ interface MealPreferenceFieldsProps {
   state: BookingWizardState
   onUpdate: (patch: Partial<BookingWizardState>) => void
   error?: string
+  /** CMS başlığı yokken (ör. İngilizce arayüz). */
+  mealFallbackTitle?: string
 }
 
 export default function MealPreferenceFields({
@@ -41,8 +43,9 @@ export default function MealPreferenceFields({
   state,
   onUpdate,
   error,
+  mealFallbackTitle,
 }: MealPreferenceFieldsProps) {
-  const { active, options, sectionTitle, description } = mealOptions(tour)
+  const { active, options, sectionTitle, description } = mealOptions(tour, mealFallbackTitle)
 
   const firstOptionKey = options[0]?.key?.trim() ?? ''
 

@@ -75,23 +75,36 @@ export default defineType({
       name: 'headerNav',
       title: 'Header Menü',
       type: 'array',
-      description: 'Header navigasyon menü öğeleri',
+      description:
+        'Üst menü satırları. Türkçe etiket varsayılandır; English / Deutsch alanları doluysa /en ve /de sitede o dilde görünür, boşsa Türkçe metin kullanılır.',
       of: [
         {
           type: 'object',
           fields: [
             defineField({
               name: 'label',
-              title: 'Etiket',
+              title: 'Menü yazısı (Türkçe)',
               type: 'string',
-              description: 'Menü öğesinin görünen metni',
-              validation: (Rule) => Rule.required().error('Etiket zorunludur'),
+              description: 'Varsayılan metin (Türkçe site ve çevirisi girilmemiş diller için).',
+              validation: (Rule) => Rule.required().error('Türkçe etiket zorunludur'),
+            }),
+            defineField({
+              name: 'labelEn',
+              title: 'Menü yazısı (English)',
+              type: 'string',
+              description: '/en/… adresinde header’da gösterilir. Boşsa Türkçe etiket kullanılır.',
+            }),
+            defineField({
+              name: 'labelDe',
+              title: 'Menü yazısı (Deutsch)',
+              type: 'string',
+              description: '/de/… adresinde header’da gösterilir. Boşsa Türkçe etiket kullanılır.',
             }),
             defineField({
               name: 'href',
               title: 'Link',
               type: 'string',
-              description: 'Menü öğesinin linki (örn: /turlar, /hakkimizda)',
+              description: 'İç sayfa yolu (örn: /turlar, /blog, /contact). /en veya /de yazmayın; site dile göre otomatik ekler.',
               validation: (Rule) => Rule.required().error('Link zorunludur'),
             }),
           ],
@@ -99,11 +112,16 @@ export default defineType({
             select: {
               label: 'label',
               href: 'href',
+              labelEn: 'labelEn',
+              labelDe: 'labelDe',
             },
-            prepare({label, href}) {
+            prepare({label, href, labelEn, labelDe}) {
+              const bits: string[] = [typeof href === 'string' ? href : '']
+              if (labelEn?.trim()) bits.push(`EN: ${labelEn.trim()}`)
+              if (labelDe?.trim()) bits.push(`DE: ${labelDe.trim()}`)
               return {
-                title: label,
-                subtitle: href,
+                title: label || 'Menü',
+                subtitle: bits.filter(Boolean).join(' · '),
               }
             },
           },
@@ -118,9 +136,19 @@ export default defineType({
       fields: [
         defineField({
           name: 'text',
-          title: 'Buton Metni',
+          title: 'Buton Metni (Türkçe)',
           type: 'string',
           description: 'CTA butonunun görünen metni',
+        }),
+        defineField({
+          name: 'textEn',
+          title: 'Buton metni (English)',
+          type: 'string',
+        }),
+        defineField({
+          name: 'textDe',
+          title: 'Buton metni (Deutsch)',
+          type: 'string',
         }),
         defineField({
           name: 'href',
@@ -161,7 +189,7 @@ export default defineType({
         }),
         defineField({
           name: 'text',
-          title: 'Metin',
+          title: 'Metin (Türkçe)',
           type: 'string',
           description: 'Beyaz renkte gösterilir. Kısa ve net yazın.',
           validation: (Rule) =>
@@ -172,6 +200,16 @@ export default defineType({
               }
               return true
             }),
+        }),
+        defineField({
+          name: 'textEn',
+          title: 'Metin (English)',
+          type: 'string',
+        }),
+        defineField({
+          name: 'textDe',
+          title: 'Metin (Deutsch)',
+          type: 'string',
         }),
         defineField({
           name: 'icon',
@@ -270,9 +308,19 @@ export default defineType({
           fields: [
             defineField({
               name: 'label',
-              title: 'Etiket',
+              title: 'Etiket (Türkçe)',
               type: 'string',
               validation: (Rule) => Rule.required().error('Etiket zorunludur'),
+            }),
+            defineField({
+              name: 'labelEn',
+              title: 'Etiket (English)',
+              type: 'string',
+            }),
+            defineField({
+              name: 'labelDe',
+              title: 'Etiket (Deutsch)',
+              type: 'string',
             }),
             defineField({
               name: 'href',
@@ -307,9 +355,19 @@ export default defineType({
           fields: [
             defineField({
               name: 'label',
-              title: 'Etiket',
+              title: 'Etiket (Türkçe)',
               type: 'string',
               validation: (Rule) => Rule.required().error('Etiket zorunludur'),
+            }),
+            defineField({
+              name: 'labelEn',
+              title: 'Etiket (English)',
+              type: 'string',
+            }),
+            defineField({
+              name: 'labelDe',
+              title: 'Etiket (Deutsch)',
+              type: 'string',
             }),
             defineField({
               name: 'href',

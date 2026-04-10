@@ -1,5 +1,7 @@
 import Image from 'next/image'
 import { urlFor } from '@/lib/sanity'
+import type { TourPageUi } from '@/lib/i18n/tourPageUi'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './ReviewsSection.module.css'
 
 interface ReviewItemAvatar {
@@ -17,6 +19,7 @@ interface ReviewItem {
 }
 
 export interface ReviewsSectionProps {
+  tourUi?: TourPageUi
   reviewsUrl?: string
   reviewsSection?: {
     enabled?: boolean
@@ -34,10 +37,18 @@ function clampInt(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, Math.round(n)))
 }
 
-function RatingDots({ value, max }: { value: number; max: number }) {
+function RatingDots({
+  value,
+  max,
+  ariaLabelFn,
+}: {
+  value: number
+  max: number
+  ariaLabelFn: (v: number, m: number) => string
+}) {
   const v = clampInt(value, 0, max)
   return (
-    <span className={styles.dots} aria-label={`Puan: ${v} / ${max}`}>
+    <span className={styles.dots} aria-label={ariaLabelFn(v, max)}>
       {Array.from({ length: max }).map((_, i) => (
         <span
           key={i}
@@ -79,9 +90,11 @@ function GoogleIcon() {
 }
 
 export default function ReviewsSection({
+  tourUi: tourUiProp,
   reviewsUrl,
   reviewsSection,
 }: ReviewsSectionProps) {
+  const tourUi = tourUiProp ?? getTourPageUi('tr')
   if (!reviewsSection) return null
   if (reviewsSection.enabled === false) return null
 
@@ -101,7 +114,7 @@ export default function ReviewsSection({
       ? clampInt(reviewsSection.ratingDots, 1, 10)
       : 5
   const sourceLabel = reviewsSection.sourceLabel || 'Google'
-  const moreText = reviewsSection.moreLinkText || 'Daha fazla yorumu okuyun'
+  const moreText = reviewsSection.moreLinkText || tourUi.reviewsMoreDefault
   const reviewsLink = reviewsSection.moreLinkUrl || reviewsUrl || undefined
 
   return (
@@ -114,7 +127,7 @@ export default function ReviewsSection({
                 <span className={styles.count}>{headerCount}</span>{' '}
               </>
             ) : null}
-            Yorumlar
+            {tourUi.reviewsSectionTitle}
           </h2>
 
           {reviewsLink ? (
@@ -137,6 +150,7 @@ export default function ReviewsSection({
                 <RatingDots
                   value={ratingValue != null ? ratingValue : dotsMax}
                   max={dotsMax}
+                  ariaLabelFn={tourUi.ratingAriaLabel}
                 />
               </span>
             </a>
@@ -155,6 +169,7 @@ export default function ReviewsSection({
                 <RatingDots
                   value={ratingValue != null ? ratingValue : dotsMax}
                   max={dotsMax}
+                  ariaLabelFn={tourUi.ratingAriaLabel}
                 />
               </div>
             </div>
@@ -191,7 +206,7 @@ export default function ReviewsSection({
                 <div className={styles.content}>
                   <div className={styles.metaRow}>
                     <p className={styles.name}>{it.name}</p>
-                    <RatingDots value={rating} max={5} />
+                    <RatingDots value={rating} max={5} ariaLabelFn={tourUi.ratingAriaLabel} />
                   </div>
                   <h3 className={styles.title}>{it.title}</h3>
                   <p className={styles.desc}>{it.description}</p>

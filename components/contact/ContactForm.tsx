@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -10,32 +10,63 @@ import { Check } from 'lucide-react'
 import FloatingInput from '@/components/ui/FloatingInput'
 import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
+import type { ContactPageUiStrings } from '@/lib/i18n/strings/contactPage'
 
 const DEFAULT_SCRIPT_ID = 'cf-turnstile-script'
 const SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
 
-const contactSchema = z.object({
-  name: z.string().min(2, 'Ad soyad en az 2 karakter olmalıdır'),
-  groupSize: z.coerce.number().min(1, 'Grup büyüklüğü en az 1 olmalıdır'),
-  email: z.string().email('Geçerli bir e-posta girin'),
-  phone: z.string().optional(),
-  message: z.string().min(10, 'Mesaj en az 10 karakter olmalıdır'),
-})
-
-type ContactFormValues = z.infer<typeof contactSchema>
-
-interface ContactFormProps {
-  submitLabel?: string
-  successMessage?: string
+function buildContactSchema(s: Pick<
+  ContactPageUiStrings,
+  'valNameMin' | 'valGroupMin' | 'valEmail' | 'valMessageMin'
+>) {
+  return z.object({
+    name: z.string().min(2, s.valNameMin),
+    groupSize: z.coerce.number().min(1, s.valGroupMin),
+    email: z.string().email(s.valEmail),
+    phone: z.string().optional(),
+    message: z.string().min(10, s.valMessageMin),
+  })
 }
 
-export default function ContactForm({
-  submitLabel = 'SEND MESSAGE',
-  successMessage = 'Mesajınız alındı. En kısa sürede dönüş yapacağız.',
-}: ContactFormProps) {
+type ContactFormValues = z.infer<ReturnType<typeof buildContactSchema>>
+
+export type ContactFormProps = ContactPageUiStrings & {
+  submitLabel: string
+  successMessage: string
+}
+
+export default function ContactForm(props: ContactFormProps) {
+  const {
+    submitLabel,
+    successMessage,
+    labelFullName,
+    labelGroupSize,
+    labelEmail,
+    labelPhone,
+    labelMessage,
+    sending,
+    turnstileError,
+    submitErrorGeneric,
+    submitErrorNetwork,
+    valNameMin,
+    valGroupMin,
+    valEmail,
+    valMessageMin,
+  } = props
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+
+  const schema = useMemo(
+    () =>
+      buildContactSchema({
+        valNameMin,
+        valGroupMin,
+        valEmail,
+        valMessageMin,
+      }),
+    [valNameMin, valGroupMin, valEmail, valMessageMin],
+  )
 
   const {
     register,
@@ -44,7 +75,7 @@ export default function ContactForm({
     setValue,
     watch,
   } = useForm<ContactFormValues>({
-    resolver: zodResolver(contactSchema) as Resolver<ContactFormValues>,
+    resolver: zodResolver(schema) as Resolver<ContactFormValues>,
     defaultValues: {
       name: '',
       groupSize: 1,
@@ -66,7 +97,7 @@ export default function ContactForm({
 
   const onSubmit = async (data: ContactFormValues) => {
     if (!turnstileToken) {
-      setSubmitError('Lütfen doğrulama kutusunu işaretleyin.')
+      setSubmitError(turnstileError)
       return
     }
     setStatus('sending')
@@ -87,13 +118,13 @@ export default function ContactForm({
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
         setStatus('error')
-        setSubmitError(json.error ?? 'Gönderim başarısız. Lütfen tekrar deneyin.')
+        setSubmitError(json.error ?? submitErrorGeneric)
         return
       }
       setStatus('success')
     } catch {
       setStatus('error')
-      setSubmitError('Bağlantı hatası. Lütfen tekrar deneyin.')
+      setSubmitError(submitErrorNetwork)
     }
   }
 
@@ -129,12 +160,12 @@ export default function ContactForm({
         {/* Row1: Full Name | Group Size */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <FloatingInput
-            label="Full Name *"
+            label={labelFullName}
             error={errors.name?.message}
             {...register('name')}
           />
           <FloatingInput
-            label="Group Size *"
+            label={labelGroupSize}
             type="number"
             min={1}
             value={groupSizeValue ?? ''}
@@ -146,14 +177,14 @@ export default function ContactForm({
         {/* Row2: Email | Phone Number */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <FloatingInput
-            label="Email *"
+            label={labelEmail}
             type="email"
             autoComplete="email"
             error={errors.email?.message}
             {...register('email')}
           />
           <PhoneField
-            label="Phone Number"
+            label={labelPhone}
             name="phone"
             value={phoneValue ?? ''}
             onChange={(v) => setValue('phone', v ?? '', { shouldValidate: true })}
@@ -165,7 +196,7 @@ export default function ContactForm({
 
         {/* Row3: Message – full width */}
         <FloatingTextarea
-          label="Message *"
+          label={labelMessage}
           rows={5}
           error={errors.message?.message}
           {...register('message')}
@@ -199,7 +230,7 @@ export default function ContactForm({
             backgroundColor: '#2168b8',
           }}
         >
-          {status === 'sending' ? 'Gönderiliyor...' : submitLabel}
+          {status === 'sending' ? sending : submitLabel}
         </button>
 
         {submitError && (

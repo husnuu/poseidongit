@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -9,8 +9,33 @@ export default function LoginPage() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [panelToken, setPanelToken] = useState('')
+  const [requiresPanelToken, setRequiresPanelToken] = useState(false)
+  const [loginConfigLoaded, setLoginConfigLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const res = await fetch('/api/admin/session/login-config', { method: 'GET' })
+        const data = (await res.json().catch(() => ({}))) as { requiresPanelToken?: boolean }
+        if (!cancelled) {
+          setRequiresPanelToken(!!data.requiresPanelToken)
+          setLoginConfigLoaded(true)
+        }
+      } catch {
+        if (!cancelled) {
+          setRequiresPanelToken(true)
+          setLoginConfigLoaded(true)
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const redirectTo = useMemo(() => {
     const from = searchParams.get('from')?.trim()
@@ -22,6 +47,7 @@ export default function LoginPage() {
 
   const queryErrorMessage = useMemo(() => {
     if (queryError === 'forbidden') return 'Bu hesap admin paneline erişemiyor.'
+    if (queryError === 'session') return 'Oturum süresi doldu (1 saat). Lütfen tekrar giriş yapın.'
     if (queryError === 'config')
       return 'Sunucu yapılandırması eksik (.env içinde ADMIN_JWT_SECRET, en az 24 karakter).'
     return null
@@ -30,6 +56,7 @@ export default function LoginPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!email.trim() || !password) return
+    if (requiresPanelToken && !panelToken.trim()) return
     setSubmitting(true)
     setError(null)
     try {
@@ -37,7 +64,11 @@ export default function LoginPage() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          ...(panelToken.trim() ? { panelToken: panelToken.trim() } : {}),
+        }),
       })
       const data = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
@@ -87,12 +118,28 @@ export default function LoginPage() {
               required
             />
           </div>
+          {loginConfigLoaded && requiresPanelToken && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Panel güvenlik anahtarı
+              </label>
+              <input
+                type="password"
+                value={panelToken}
+                onChange={(e) => setPanelToken(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm"
+                autoComplete="off"
+                required
+                placeholder="Sunucuda tanımlı ADMIN_LOGIN_TOKEN"
+              />
+            </div>
+          )}
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !loginConfigLoaded}
             className="w-full rounded-lg bg-teal-600 py-2.5 font-semibold text-white hover:bg-teal-700 disabled:opacity-60"
           >
-            {submitting ? 'Giriş yapılıyor…' : 'Giriş yap'}
+            {submitting ? 'Giriş yapılıyor…' : !loginConfigLoaded ? 'Yükleniyor…' : 'Giriş yap'}
           </button>
           <p className="text-center text-sm text-slate-500">
             <Link href="/" className="text-teal-700 hover:underline">

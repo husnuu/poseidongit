@@ -35,6 +35,8 @@ interface DepositConfig {
 
 interface StickyBookingCardProps {
   tourSlug: string
+  /** Tam path; /en/rezervasyon/... gibi. Boşsa `/rezervasyon/${tourSlug}` */
+  rezervasyonHref?: string
   ticketClasses?: TicketClass[]
   bookingCard?: BookingCard
   deposit?: DepositConfig | null
@@ -99,11 +101,13 @@ function CheckIcon() {
 
 export default function StickyBookingCard({
   tourSlug,
+  rezervasyonHref,
   ticketClasses,
   bookingCard,
   deposit,
   onRezervasyonClick,
 }: StickyBookingCardProps) {
+  const reservePath = rezervasyonHref?.trim() || `/rezervasyon/${tourSlug}`
   const getAdultPrice = (): number | null => {
     if (!ticketClasses?.length) return null
     for (const ticketClass of ticketClasses) {
@@ -160,7 +164,7 @@ export default function StickyBookingCard({
             </button>
           ) : (
             <Link
-              href={`/rezervasyon/${tourSlug}`}
+              href={reservePath}
               className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${styles.yachtInquiryCta}`}
               style={{ borderRadius: 10 }}
             >

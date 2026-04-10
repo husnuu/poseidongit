@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './FAQAccordion.module.css'
 
 export interface FAQItem {
@@ -10,7 +12,9 @@ export interface FAQItem {
 
 interface FAQAccordionProps {
   faqs?: FAQItem[] | null
-  /** Başlık (verilmezse "Sık Sorulan Sorular"). Ara başlık stili için title verildiğinde diğer sayfalardaki gibi kullanılır. */
+  /** RSC sınırında `tourUi` geçirilemez; verilmezse `tr`. */
+  locale?: SiteLocale
+  /** Başlık (verilmezse tourUi veya "Sık Sorulan Sorular"). Ara başlık stili için title verildiğinde diğer sayfalardaki gibi kullanılır. */
   title?: string | null
   /** Optional WhatsApp link for "WhatsApp'tan ulaşın" button */
   whatsappUrl?: string | null
@@ -56,10 +60,12 @@ const QuestionIcon = () => (
 
 export default function FAQAccordion({
   faqs,
+  locale,
   title,
   whatsappUrl,
   showMissingQuestion = true,
 }: FAQAccordionProps) {
+  const tourUi = useMemo(() => getTourPageUi(locale ?? 'tr'), [locale])
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   const hasTitle = !!title?.trim()
@@ -71,7 +77,7 @@ export default function FAQAccordion({
     setOpenIndex(openIndex === index ? null : index)
   }
 
-  const titleContent = hasTitle ? title : 'Sık Sorulan Sorular'
+  const titleContent = hasTitle ? title : tourUi.faqDefaultTitle
   const isSectionTitle = hasTitle
 
   return (
@@ -125,7 +131,7 @@ export default function FAQAccordion({
           <span className={styles.missingQuestionIcon}>
             <QuestionIcon />
           </span>
-          <p>Sorunuz yukarıda yok mu?</p>
+          <p>{tourUi.faqMissingQuestion}</p>
         </div>
         {whatsappUrl ? (
           <a
@@ -134,11 +140,11 @@ export default function FAQAccordion({
             rel="noopener noreferrer"
             className={styles.missingQuestionCta}
           >
-            WhatsApp&apos;tan ulaşın
+            {tourUi.faqWhatsappCta}
           </a>
         ) : (
           <button type="button" className={styles.missingQuestionCta}>
-            WhatsApp&apos;tan ulaşın
+            {tourUi.faqWhatsappCta}
           </button>
         )}
       </div>

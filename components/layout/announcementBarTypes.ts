@@ -15,6 +15,8 @@ export type AnnouncementBarIcon =
 export type AnnouncementBarData = {
   enabled?: boolean | null
   text?: string | null
+  textEn?: string | null
+  textDe?: string | null
   icon?: string | null
   linkUrl?: string | null
 }

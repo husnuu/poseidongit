@@ -197,6 +197,14 @@ export default defineType({
       description: 'Google Maps\'ten "Paylaş > Haritayı yerleştir" ile alınan iframe src linki',
     }),
     defineField({
+      name: 'locationMapLink',
+      title: 'Konum linki (yol tarifi ve WhatsApp)',
+      type: 'url',
+      group: 'location',
+      description:
+        'Google Haritalar → Paylaş → Bağlantıyı kopyala (veya yer işaretinden paylaş). Yol tarifi ve konum paylaşımı bu URL’yi kullanır; boşsa otomatik çıkarım denenir.',
+    }),
+    defineField({
       name: 'locationTitle',
       title: 'Konum başlığı',
       type: 'string',
@@ -224,6 +232,24 @@ export default defineType({
       type: 'array',
       group: 'tours',
       of: [{ type: 'reference', to: [{ type: 'tour' }] }],
+    }),
+    defineField({
+      name: 'pageTranslations',
+      title: 'Çeviriler — English / Deutsch',
+      type: 'object',
+      description: 'İletişim sayfası başlık, giriş, form etiketleri ve isteğe bağlı arayüz metinleri.',
+      fields: [
+        defineField({
+          name: 'en',
+          title: 'English',
+          type: 'contactPageLocaleOverlay',
+        }),
+        defineField({
+          name: 'de',
+          title: 'Deutsch',
+          type: 'contactPageLocaleOverlay',
+        }),
+      ],
     }),
   ],
   preview: {

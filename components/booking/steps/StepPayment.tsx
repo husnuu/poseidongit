@@ -6,17 +6,19 @@ import type { BookingWizardState } from '@/lib/sanity/bookingTypes'
 import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
 import FloatingInput from '@/components/ui/FloatingInput'
 import PhoneField from '@/components/ui/PhoneField'
+import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import styles from '../booking.module.css'
 
 interface StepPaymentProps {
   state: BookingWizardState
+  ui: BookingWizardUi
   /** Şartlar & Koşullar linki (varsayılan: /terms) */
   termsHref?: string
   /** Checkbox değişince parent'ın ödeme butonunu devre dışı bırakması için */
   onTermsAcceptanceChange?: (accepted: boolean) => void
 }
 
-export default function StepPayment({ state, termsHref = '/terms', onTermsAcceptanceChange }: StepPaymentProps) {
+export default function StepPayment({ state, ui, termsHref = '/terms', onTermsAcceptanceChange }: StepPaymentProps) {
   const p = state.pricingSummary
   const [cardName, setCardName] = useState('')
   const [cardNumber, setCardNumber] = useState('')
@@ -46,19 +48,19 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
               <path d="M12 15a2 2 0 0 1 2 2v4H10v-4a2 2 0 0 1 2-2z" />
             </svg>
           </span>
-          <h3 className={styles.cardCaptionTitle}>Ödeme Bilgileri</h3>
+          <h3 className={styles.cardCaptionTitle}>{ui.paymentInfoTitle}</h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
           <div className={styles.summaryRow}>
             <span className={styles.summaryRowLabel}>
-              Şimdi öde: {p.depositAmount.toLocaleString('tr-TR')} ₺ (%{p.depositPercent})
+              {ui.payNowSummary(p.depositAmount.toLocaleString(ui.numberLocale), p.depositPercent)}
             </span>
             <span className={styles.summaryRowValue} />
           </div>
           <div className={styles.summaryRow}>
             <span className={styles.summaryRowLabel}>
-              Kalan: {p.remainingAmount.toLocaleString('tr-TR')} ₺ (tur günü öde)
+              {ui.remainingPayTourDay(p.remainingAmount.toLocaleString(ui.numberLocale))}
             </span>
             <span className={styles.summaryRowValue} />
           </div>
@@ -67,8 +69,10 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
 
       {!isBookingOnlinePaymentEnabled && (
         <div className={styles.virtualPosDisabledNotice} role="status">
-          <strong>Test modu aktif</strong>
-          Sanal POS kapalı olsa da alttaki <em>ÖDE</em> butonu ile rezervasyon oluşturup veri/e-posta akışını test edebilirsiniz.
+          <strong>{ui.testModeTitle}</strong>{' '}
+          {ui.testModePageBeforePay}
+          <em>{ui.pay}</em>
+          {ui.testModePageAfterPay}
         </div>
       )}
 
@@ -81,7 +85,7 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
               <line x1="2" x2="22" y1="10" y2="10" />
             </svg>
           </span>
-          <h3 className={styles.cardCaptionTitle}>Kart Bilgileri</h3>
+          <h3 className={styles.cardCaptionTitle}>{ui.cardDetailsTitle}</h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
@@ -89,7 +93,7 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
         <div className="space-y-4">
           <FloatingInput
             id="booking-cardName"
-            label="Kart Sahibi Adı *"
+            label={ui.cardholderName}
             type="text"
             autoComplete="cc-name"
             value={cardName}
@@ -99,7 +103,7 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
 
           <FloatingInput
             id="booking-cardNumber"
-            label="Kart Numarası *"
+            label={ui.cardNumber}
             type="text"
             autoComplete="cc-number"
             value={cardNumber}
@@ -110,7 +114,7 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FloatingInput
               id="booking-cardExpiry"
-              label="Son Kullanma (AA/YY) *"
+              label={ui.cardExpiry}
               type="text"
               autoComplete="cc-exp"
               value={cardExpiry}
@@ -119,7 +123,7 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
             />
             <FloatingInput
               id="booking-cardCvc"
-              label="CVC *"
+              label={ui.cardCvc}
               type="text"
               autoComplete="cc-csc"
               value={cardCvc}
@@ -129,7 +133,7 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
           </div>
 
           <PhoneField
-            label="Telefon *"
+            label={ui.labelPhone}
             value={contactPhone}
             onChange={(v) => setContactPhone(v ?? '')}
             onBlur={() => {}}
@@ -146,10 +150,11 @@ export default function StepPayment({ state, termsHref = '/terms', onTermsAccept
               aria-describedby="terms-checkbox-desc-step"
             />
             <span id="terms-checkbox-desc-step">
+              {ui.termsCheckboxLead}
               <Link href={termsHref} target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
-                Şartlar &amp; Koşullar
+                {ui.termsLinkText}
               </Link>
-              &apos;ı okudum ve kabul ediyorum.
+              {ui.termsCheckboxTrail}
             </span>
           </label>
         </div>

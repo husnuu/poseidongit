@@ -23,12 +23,16 @@ interface Blog {
 
 interface BlogCardProps {
   blog: Blog
+  href: string
+  readPostCta: string
+  noExcerptFallback: string
+  dateLocale: string
 }
 
-function formatDate(dateString?: string): string {
+function formatDate(dateString: string | undefined, locale: string): string {
   if (!dateString) return ''
   try {
-    return new Date(dateString).toLocaleDateString('tr-TR', {
+    return new Date(dateString).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -38,10 +42,14 @@ function formatDate(dateString?: string): string {
   }
 }
 
-export default function BlogCard({ blog }: BlogCardProps) {
+export default function BlogCard({
+  blog,
+  href,
+  readPostCta,
+  noExcerptFallback,
+  dateLocale,
+}: BlogCardProps) {
   const hasImage = Boolean(blog?.coverImage?.asset)
-  const slug = typeof blog?.slug === 'string' ? blog.slug : ''
-  const href = slug ? `/blog/${slug}` : '#'
 
   return (
     <article className={styles.blogCard}>
@@ -64,18 +72,18 @@ export default function BlogCard({ blog }: BlogCardProps) {
         <h2 className={styles.blogCardTitle}>{blog?.title ?? 'Blog'}</h2>
         {blog?.publishDate && (
           <time className={styles.blogCardDate} dateTime={blog.publishDate}>
-            {formatDate(blog.publishDate)}
+            {formatDate(blog.publishDate, dateLocale)}
           </time>
         )}
         <div className={styles.blogCardExcerptWrap}>
           {blog?.excerpt ? (
             <p className={styles.blogCardExcerpt}>{blog.excerpt}</p>
           ) : (
-            <p className={styles.blogCardExcerpt}>Bu yazı hakkında kısa özet henüz eklenmedi.</p>
+            <p className={styles.blogCardExcerpt}>{noExcerptFallback}</p>
           )}
         </div>
         <Link href={href} className={styles.blogCardCTA}>
-          BLOGU OKU
+          {readPostCta}
         </Link>
       </div>
     </article>

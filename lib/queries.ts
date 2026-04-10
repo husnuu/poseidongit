@@ -1,6 +1,14 @@
 /** Tüm yayımlanmış tur slug'ları (generateStaticParams / sitemap için) */
 export const tourSlugsQuery = `*[_type == "tour" && defined(slug.current)]{ "slug": slug.current }`
 
+/** TR + EN + DE slug satırları (locale’li static params / sitemap) */
+export const tourSlugRowsForLocalesQuery = `*[_type == "tour"]{
+  "tSlug": slug.current,
+  "enSlug": translations.en.slug.current,
+  "deSlug": translations.de.slug.current,
+  _updatedAt
+}`
+
 export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
   _id,
   title,
@@ -104,6 +112,7 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
     meetingPointLabel,
     meetingPointAddress,
     mapEmbedUrl,
+    locationMapLink,
     openInMapsLabel
   },
   pickupPoints[]{
@@ -221,7 +230,243 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
         }
       }
     }
-  }
+  },
+  translations
+}`
+
+export const tourByLocaleSlugQuery = `*[_type == "tour" && (
+  ($locale == "tr" && slug.current == $slug) ||
+  ($locale == "en" && (
+    translations.en.slug.current == $slug ||
+    (!defined(translations.en.slug.current) && slug.current == $slug)
+  )) ||
+  ($locale == "de" && (
+    translations.de.slug.current == $slug ||
+    (!defined(translations.de.slug.current) && slug.current == $slug)
+  ))
+)][0] {
+  _id,
+  title,
+  "slug": slug.current,
+  shortDescription,
+  description,
+  mainImage{
+    asset,
+    "url": asset->url,
+    "metadata": asset->metadata {
+      lqip,
+      dimensions
+    }
+  },
+  gallery[]{
+    asset,
+    "url": asset->url,
+    "metadata": asset->metadata {
+      lqip,
+      dimensions
+    }
+  },
+  tourVideo{
+    enabled,
+    type,
+    youtubeUrl,
+    vimeoUrl,
+    caption,
+    "fileUrl": file.asset->url,
+    poster{
+      asset,
+      "url": asset->url,
+      "metadata": asset->metadata {
+        lqip,
+        dimensions
+      }
+    }
+  },
+  rating,
+  reviewCount,
+  ratingLabel,
+  reviewsUrl,
+  quickFacts{
+    durationText,
+    availabilityText,
+    meetingLocation,
+    language,
+    groupType,
+    maxCapacity
+  },
+  highlights[]{
+    icon,
+    title,
+    description
+  },
+  tourDetails[]{
+    label,
+    value,
+    icon
+  },
+  itinerary[]{
+    time,
+    title,
+    description,
+    tag,
+    image{
+      asset,
+      "url": asset->url,
+      "metadata": asset->metadata {
+        lqip,
+        dimensions
+      }
+    }
+  },
+  included,
+  notIncluded,
+  faqs[]{
+    question,
+    answer
+  },
+  host{
+    name,
+    title,
+    photo{
+      asset,
+      "url": asset->url,
+      "metadata": asset->metadata {
+        lqip,
+        dimensions
+      }
+    },
+    note
+  },
+  whyYouWillLove{
+    title,
+    text
+  },
+  whereSection{
+    enabled,
+    heading,
+    meetingPointLabel,
+    meetingPointAddress,
+    mapEmbedUrl,
+    locationMapLink,
+    openInMapsLabel
+  },
+  pickupPoints[]{
+    name,
+    address,
+    description,
+    isDefault
+  },
+  mealMenu{
+    enabled,
+    sectionTitle,
+    description,
+    options[]{ key, label, description }
+  },
+  foodMenu{
+    enabled,
+    sectionTitle,
+    intro,
+    items[]{
+      title,
+      excerpt,
+      priceLabel,
+      metaLine1,
+      metaLine2,
+      image{ asset, alt },
+      detail[]
+    }
+  },
+  _updatedAt,
+  ticketClasses[]{
+    key,
+    label,
+    description,
+    badge,
+    bullets,
+    classImage{
+      asset,
+      "url": asset->url,
+      "metadata": asset->metadata { lqip, dimensions }
+    },
+    pricesByAge[]{
+      ageKey,
+      ageLabel,
+      minAge,
+      maxAge,
+      price
+    }
+  },
+  bookingRules{ show, title, bullets },
+  baseCapacity{ ecoCapacity, premiumCapacity, firstCapacity },
+  availabilityOverrides[]{
+    date,
+    eco,
+    premium,
+    first,
+    note
+  },
+  availability{
+    enabled,
+    defaultAvailable,
+    dateRanges[]{ start, end, available },
+    specificDates[]{
+      date,
+      enabled,
+      defaultAvailable,
+      available,
+      priceOverrides{ adultPrice, childPrice, infantPrice },
+      classPriceOverrides[]{ classKey, adultPrice, childPrice, infantPrice },
+      classAvailability[]{ classKey, status }
+    }
+  },
+  seasonRules[]{
+    name,
+    start,
+    end,
+    multiplier
+  },
+  deposit{
+    enabled,
+    type,
+    value
+  },
+  extras[]{
+    title,
+    description,
+    price,
+    priceType,
+    icon
+  },
+  bookingCard{
+    fromText,
+    ctaText,
+    urgencyText,
+    trustBadges
+  },
+  reviewsSection{
+    enabled,
+    reviewCount,
+    ratingValue,
+    ratingDots,
+    sourceLabel,
+    moreLinkText,
+    moreLinkUrl,
+    items[]{
+      name,
+      title,
+      description,
+      rating,
+      avatar{
+        asset,
+        "url": asset->url,
+        "metadata": asset->metadata {
+          lqip,
+          dimensions
+        }
+      }
+    }
+  },
+  translations
 }`
 
 /** Tour capacity only – for GET /api/availability (by _id or slug). */
@@ -292,15 +537,21 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0] {
   },
   headerNav[]{
     label,
+    labelEn,
+    labelDe,
     href
   },
   cta{
     text,
+    textEn,
+    textDe,
     href
   },
   announcementBar{
     enabled,
     text,
+    textEn,
+    textDe,
     icon,
     linkUrl
   },
@@ -315,10 +566,14 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0] {
   },
   footerNav[]{
     label,
+    labelEn,
+    labelDe,
     href
   },
   legalNav[]{
     label,
+    labelEn,
+    labelDe,
     href
   },
   "cookiePolicyPath": select(
@@ -371,12 +626,21 @@ export const blogsListQuery = `*[_type == "blog"] | order(publishedAt desc) {
   },
   "author": coalesce(authorName, author),
   "publishDate": coalesce(publishedAt, publishDate),
-  "readTime": select(readingTime != null => string(readingTime) + " dk", readTime),
+  readingTime,
+  readTime,
   category,
-  tags
+  tags,
+  translations,
+  seo{ metaTitle, metaDescription }
+}`
+
+export const blogPageMetaQuery = `*[_type == "blogPage"][0]{
+  seo{ metaTitle, metaDescription },
+  pageTranslations
 }`
 
 export const blogPageQuery = `*[_type == "blogPage"][0] {
+  seo{ metaTitle, metaDescription },
   heroTitle,
   heroHighlightTitlePart,
   heroDescription,
@@ -385,10 +649,15 @@ export const blogPageQuery = `*[_type == "blogPage"][0] {
     "url": asset->url,
     "metadata": asset->metadata { lqip, dimensions },
     alt
-  }
+  },
+  pageTranslations
 }`
 
-export const blogBySlugQuery = `*[_type == "blog" && slug.current == $slug][0] {
+export const blogBySlugQuery = `*[_type == "blog" && (
+  slug.current == $slug ||
+  translations.en.slug.current == $slug ||
+  translations.de.slug.current == $slug
+)][0] {
   _id,
   title,
   "slug": slug.current,
@@ -401,10 +670,14 @@ export const blogBySlugQuery = `*[_type == "blog" && slug.current == $slug][0] {
     alt
   },
   "author": coalesce(authorName, author),
+  authorName,
   "publishDate": coalesce(publishedAt, publishDate),
-  "readTime": select(readingTime != null => string(readingTime) + " dk", readTime),
+  readingTime,
+  readTime,
   category,
   tags,
+  translations,
+  seo{ metaTitle, metaDescription, ogImage },
   _updatedAt
 }`
 
@@ -446,7 +719,8 @@ export const homePageHeroQuery = `*[_type == "homePage"][0] {
       reviewCount,
       reviewsUrl,
       isPopular,
-      mainImage{ asset, alt }
+      mainImage{ asset, alt },
+      translations
     }
   },
   popularYachtsSection{
@@ -496,7 +770,8 @@ export const homePageHeroQuery = `*[_type == "homePage"][0] {
       "slug": slug.current,
       excerpt,
       "publishDate": coalesce(publishedAt, publishDate),
-      coverImage{ asset, alt }
+      coverImage{ asset, alt },
+      translations
     },
     ctaButton{ label, href }
   },
@@ -522,7 +797,8 @@ export const homePageHeroQuery = `*[_type == "homePage"][0] {
       "imageAlt": coalesce(alt, image.alt),
       postUrl
     }
-  }
+  },
+  pageTranslations
 }`
 
 // Taslak veya yayımlanmış Contact Page (singleton: _id contactPage / drafts.contactPage)
@@ -555,6 +831,7 @@ export const contactPageQuery = `coalesce(
   youtubeLabel,
   instagramLabel,
   mapEmbedUrl,
+  locationMapLink,
   locationTitle,
   showPopularTours,
   popularToursTitle,
@@ -563,9 +840,9 @@ export const contactPageQuery = `coalesce(
     title,
     "slug": slug.current,
     shortDescription,
-    durationLabel,
-    departureLabel,
-    priceFrom,
+    "durationLabel": quickFacts.durationText,
+    "departureLabel": quickFacts.meetingLocation,
+    "priceFrom": ticketClasses[0].pricesByAge[0].price,
     rating,
     reviewCount,
     reviewsUrl,
@@ -575,8 +852,10 @@ export const contactPageQuery = `coalesce(
       "url": asset->url,
       "metadata": asset->metadata { lqip, dimensions },
       alt
-    }
-  }
+    },
+    translations
+  },
+  pageTranslations
 }`
 
 export const toursListQuery = `*[_type == "tour"] | order(title asc) {
@@ -594,7 +873,8 @@ export const toursListQuery = `*[_type == "tour"] | order(title asc) {
   },
   "departureLabel": quickFacts.meetingLocation,
   "durationLabel": quickFacts.durationText,
-  "priceFrom": ticketClasses[0].pricesByAge[0].price
+  "priceFrom": ticketClasses[0].pricesByAge[0].price,
+  translations
 }`
 
 export const toursPageQuery = `*[_type == "toursPage"][0] {
@@ -621,6 +901,7 @@ export const covesPageQuery = `*[_type == "covesPage"][0] {
   description,
   metaTitle,
   metaDescription,
+  pageTranslations,
   "items": items[]->{
     _id,
     title,
@@ -628,7 +909,8 @@ export const covesPageQuery = `*[_type == "covesPage"][0] {
     description,
     image { asset, alt },
     order,
-    locationTag
+    locationTag,
+    translations
   }
 }`
 
@@ -640,7 +922,8 @@ export const covesListQuery = `*[_type == "cove"] | order(coalesce(order, 999) a
   description,
   image { asset, alt },
   order,
-  locationTag
+  locationTag,
+  translations
 }`
 
 export const footerQuery = `*[_type == "homePage"][0] {
@@ -662,6 +945,8 @@ export const siteFooterQuery = `*[_type == "siteFooter"][0] {
   topRated {
     enabled,
     label,
+    labelEn,
+    labelDe,
     ratingValue,
     ratingMax,
     reviewCount
@@ -670,22 +955,36 @@ export const siteFooterQuery = `*[_type == "siteFooter"][0] {
     email,
     phone,
     addressTitle,
+    addressTitleEn,
+    addressTitleDe,
     addressLines,
     chatTitle,
+    chatTitleEn,
+    chatTitleDe,
     chatValue,
     openingTitle,
-    openingValue
+    openingTitleEn,
+    openingTitleDe,
+    openingValue,
+    openingValueEn,
+    openingValueDe
   },
   explore {
     title,
+    titleEn,
+    titleDe,
     links[] {
       label,
+      labelEn,
+      labelDe,
       href,
       openInNewTab
     }
   },
   social {
     title,
+    titleEn,
+    titleDe,
     items[] {
       platform,
       href,
@@ -695,10 +994,14 @@ export const siteFooterQuery = `*[_type == "siteFooter"][0] {
   brag {
     enabled,
     title,
+    titleEn,
+    titleDe,
     badges[] {
       type,
       enabled,
       alt,
+      altEn,
+      altDe,
       href,
       image { asset, "url": asset->url },
       "imageUrl": image.asset->url
@@ -707,15 +1010,25 @@ export const siteFooterQuery = `*[_type == "siteFooter"][0] {
   legalLinks {
     items[] {
       label,
+      labelEn,
+      labelDe,
       href,
       enabled
     }
   },
   footerLegal {
     copyrightText,
+    copyrightTextEn,
+    copyrightTextDe,
     companyLine1,
+    companyLine1En,
+    companyLine1De,
     companyLine2,
+    companyLine2En,
+    companyLine2De,
     secure3dLabel,
+    secure3dLabelEn,
+    secure3dLabelDe,
     paymentLogos[] {
       asset,
       alt
@@ -727,8 +1040,15 @@ export const siteFooterQuery = `*[_type == "siteFooter"][0] {
   }
 }`
 
+export const aboutPageMetaQuery = `*[_type == "aboutPage"][0]{
+  seo{ metaTitle, metaDescription },
+  pageTranslations
+}`
+
 export const aboutPageQuery = `*[_type == "aboutPage"][0] {
   "slug": slug.current,
+  seo{ metaTitle, metaDescription },
+  pageTranslations,
   titleTop,
   titleBottom,
   intro,
@@ -747,15 +1067,20 @@ export const aboutPageQuery = `*[_type == "aboutPage"][0] {
   }
 }`
 
-/** Yasal sayfa slug ile (Gizlilik Politikası, Kullanım Şartları vb.) */
-export const legalPageBySlugQuery = `*[_type == "legalPage" && slug.current == $slug][0] {
+/** Yasal sayfa slug ile (TR / EN / DE slug eşlemesi; çeviriler birleştirme için projeksiyonda) */
+export const legalPageBySlugQuery = `*[_type == "legalPage" && (
+  slug.current == $slug ||
+  translations.en.slug.current == $slug ||
+  translations.de.slug.current == $slug
+)][0] {
   _id,
   title,
   "slug": slug.current,
   seoTitle,
   seoDescription,
   content,
-  updatedAt
+  updatedAt,
+  translations
 }`
 
 /** Sık Sorulanlar sayfası (singleton) */

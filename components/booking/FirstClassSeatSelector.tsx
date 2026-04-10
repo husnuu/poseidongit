@@ -1,6 +1,8 @@
 'use client'
 
 import { BedDouble, Check, Lock, ChevronRight } from 'lucide-react'
+import type { FirstClassLocaUi } from '@/lib/i18n/bookingWizardUi'
+import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 
 const LOCAS: { id: string; row: number }[] = [
   { id: 'L1', row: 1 },
@@ -35,7 +37,8 @@ export interface FirstClassSeatSelectorProps {
   onReplace?: (removeId: string, addId: string) => void
   /** Tüm localar seçildikten sonra "Devam" ile çağrılır. */
   onAfterSelect?: () => void
-  'aria-label'?: string
+  /** Yerelleştirilmiş etiketler (yoksa Türkçe). */
+  locaUi?: FirstClassLocaUi
 }
 
 export default function FirstClassSeatSelector({
@@ -46,8 +49,9 @@ export default function FirstClassSeatSelector({
   onToggle,
   onReplace,
   onAfterSelect,
-  'aria-label': ariaLabel = 'First Class loca seçimi',
+  locaUi: locaUiProp,
 }: FirstClassSeatSelectorProps) {
+  const locaUi = locaUiProp ?? getBookingWizardUi('tr').firstClassLoca
   const reservedSet = new Set(reservedLocaIds.map((id) => id.trim().toUpperCase()))
   const mineSet = new Set(
     currentBookingLocaIds.filter((id) => LOCA_REGEX.test(id.trim().toUpperCase())).map((id) => id.trim().toUpperCase())
@@ -89,7 +93,7 @@ export default function FirstClassSeatSelector({
         onClick={handleClick}
         aria-pressed={isSelected}
         aria-disabled={!available}
-        aria-label={`${loca.id} ${isReserved ? 'Dolu' : isSelected ? 'Seçildi' : isMine ? 'Sizin loca' : 'Uygun'}`}
+        aria-label={`${loca.id} ${isReserved ? locaUi.taken : isSelected ? locaUi.selected : isMine ? locaUi.yourBooth : locaUi.available}`}
         className={`
           relative flex h-[100px] min-h-[100px] w-full min-w-0 sm:min-w-[88px] flex-col items-center justify-center gap-0 rounded-2xl border-2 py-2
           text-center shadow-sm transition-all duration-200
@@ -111,20 +115,20 @@ export default function FirstClassSeatSelector({
         )}
         <span className="text-sm font-semibold leading-tight">{loca.id}</span>
         <span className="text-[10px] leading-tight text-stone-500">
-          {isReserved ? 'Dolu' : isMine && !isSelected ? 'Sizin loca' : '2 Kişilik'}
+          {isReserved ? locaUi.taken : isMine && !isSelected ? locaUi.yourBooth : locaUi.twoPerson}
         </span>
         {!isReserved && (
           isSelected ? (
-            <span className="mt-1 flex items-center justify-center rounded-full bg-[#1e3a5f]/12 p-1" aria-label="Seçildi">
+            <span className="mt-1 flex items-center justify-center rounded-full bg-[#1e3a5f]/12 p-1" aria-label={locaUi.selectedIconAria}>
               <Check className="h-6 w-6 flex-shrink-0 text-[#1e3a5f]" strokeWidth={2.5} />
             </span>
           ) : isMine ? (
             <span className="mt-1 inline-flex items-center justify-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold leading-tight text-amber-900">
-              Mevcut
+              {locaUi.current}
             </span>
           ) : (
             <span className="mt-1 inline-flex items-center justify-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-medium leading-tight text-emerald-700">
-              Uygun
+              {locaUi.availableBadge}
             </span>
           )
         )}
@@ -136,11 +140,11 @@ export default function FirstClassSeatSelector({
   const canProceed = requiredCount > 0 && selectedCount === requiredCount
 
   return (
-    <div className="min-w-0 max-w-full rounded-2xl border border-stone-200/80 p-1" role="group" aria-label={ariaLabel}>
+    <div className="min-w-0 max-w-full rounded-2xl border border-stone-200/80 p-1" role="group" aria-label={locaUi.ariaGroup}>
       <div className="relative w-full max-w-full overflow-hidden rounded-xl bg-gradient-to-b from-zinc-100/90 to-zinc-50/50 p-4 shadow-inner">
         <div className="mb-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-stone-600">
-            Teknenin önü · 1. Sıra
+            {locaUi.bowRowLabel}
           </span>
         </div>
         <div className="grid min-w-0 grid-cols-5 gap-2 sm:gap-3">
@@ -150,8 +154,7 @@ export default function FirstClassSeatSelector({
           {row2.map(renderLocaCard)}
         </div>
         <div className="mt-3 border-t border-stone-200/80 pt-3 text-center text-sm text-stone-600">
-          <span className="font-medium text-stone-700">{selectedCount}</span>
-          <span> / {requiredCount} loca seçildi</span>
+          <span className="font-medium text-stone-700">{locaUi.selectedOfRequired(selectedCount, requiredCount)}</span>
         </div>
       </div>
 
@@ -161,9 +164,9 @@ export default function FirstClassSeatSelector({
             type="button"
             onClick={onAfterSelect}
             className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#1e3a5f] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#162d47] focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2"
-            aria-label="Seçimi onayla ve devam et"
+            aria-label={locaUi.confirmContinueAria}
           >
-            Devam
+            {locaUi.continue}
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>

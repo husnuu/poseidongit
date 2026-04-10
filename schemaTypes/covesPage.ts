@@ -44,6 +44,16 @@ export default defineType({
         },
       ],
     }),
+    defineField({
+      name: 'pageTranslations',
+      title: 'Çeviriler — English / Deutsch',
+      type: 'object',
+      description: 'Sayfa başlığı ve açıklama. Koy kartları: her koy belgesindeki çeviriler kullanılır.',
+      fields: [
+        defineField({ name: 'en', title: 'English', type: 'covesPageLocaleOverlay' }),
+        defineField({ name: 'de', title: 'Deutsch', type: 'covesPageLocaleOverlay' }),
+      ],
+    }),
   ],
   preview: {
     select: { title: 'title' },

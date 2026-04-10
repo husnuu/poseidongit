@@ -1,5 +1,7 @@
 'use client'
 
+import LocationMapActions from '@/components/map/LocationMapActions'
+
 /** Toplanma noktası ikonu – düz, renksiz (currentColor) */
 function MeetingPointIcon({ className }: { className?: string }) {
   return (
@@ -26,16 +28,27 @@ export type WhereSectionData = {
   meetingPointLabel?: string | null
   meetingPointAddress?: string | null
   mapEmbedUrl?: string | null
+  /** Sanity: Paylaş → Bağlantıyı kopyala (yol tarifi + WhatsApp). */
+  locationMapLink?: string | null
   openInMapsLabel?: string | null
 }
 
 type WhereSectionProps = {
   data: WhereSectionData | null | undefined
+  /** WhatsApp paylaşımında kullanılır (örn. tur adı) */
+  shareContextLabel?: string | null
+  /** CMS başlığı yokken (örn. locale). */
+  headingFallback?: string
 }
 
-export default function WhereSection({ data }: WhereSectionProps) {
+export default function WhereSection({
+  data,
+  shareContextLabel,
+  headingFallback = 'Nerede',
+}: WhereSectionProps) {
   if (!data?.enabled) return null
-  if (!data?.mapEmbedUrl && !data?.meetingPointAddress) return null
+  const hasManagedLink = !!data?.locationMapLink?.trim()
+  if (!data?.mapEmbedUrl && !data?.meetingPointAddress && !hasManagedLink) return null
 
   return (
     <section className="mb-8" aria-labelledby="where-section-heading">
@@ -44,7 +57,7 @@ export default function WhereSection({ data }: WhereSectionProps) {
         className="text-2xl font-bold mb-4"
         style={{ color: '#1e3a5f' }}
       >
-        {data.heading || 'Nerede'}
+        {data.heading || headingFallback}
       </h2>
 
       {(data.meetingPointLabel || data.meetingPointAddress) && (
@@ -88,6 +101,15 @@ export default function WhereSection({ data }: WhereSectionProps) {
             referrerPolicy="no-referrer-when-downgrade"
           />
         </div>
+      )}
+      {(data.mapEmbedUrl || hasManagedLink) && (
+        <LocationMapActions
+          managedLocationUrl={data.locationMapLink}
+          address={data.meetingPointAddress}
+          mapEmbedUrl={data.mapEmbedUrl}
+          contextLabel={shareContextLabel}
+          variant="tour"
+        />
       )}
     </section>
   )

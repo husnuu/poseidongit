@@ -1,6 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
+import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import { createPortal } from 'react-dom'
 import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
@@ -24,6 +27,7 @@ export interface BookingWizardModalProps {
   onClose: () => void
   tourSlug: string
   initialTourData: TourForBooking
+  locale?: SiteLocale
 }
 
 export default function BookingWizardModal({
@@ -31,7 +35,9 @@ export default function BookingWizardModal({
   onClose,
   tourSlug,
   initialTourData: tour,
+  locale = 'tr',
 }: BookingWizardModalProps) {
+  const ui = useMemo(() => getBookingWizardUi(locale), [locale])
   const [state, setState] = useState<BookingWizardState>({
     ...DEFAULT_BOOKING_STATE,
     tourSlug,
@@ -253,16 +259,16 @@ export default function BookingWizardModal({
           data = text ? JSON.parse(text) : {}
         } catch {
           if (!res.ok) {
-            setSubmitError(`Sunucu hata döndü (${res.status}). Lütfen tekrar deneyin veya destek ile iletişime geçin.`)
+            setSubmitError(ui.serverError(res.status))
             return
           }
         }
         if (!res.ok) {
-          setSubmitError(data.error ?? `Rezervasyon kaydedilemedi (${res.status}).`)
+          setSubmitError(data.error ?? ui.bookingSaveFailed(res.status))
           return
         }
         if (!data.bookingId || !data.summary) {
-          setSubmitError('Sunucu yanıtı geçersiz. Lütfen tekrar deneyin.')
+          setSubmitError(ui.invalidServerResponse)
           return
         }
         const dateNorm = (state.selectedDate ?? '').slice(0, 10)
@@ -286,20 +292,20 @@ export default function BookingWizardModal({
         })
         setSubmitted(true)
       } catch {
-        setSubmitError('Bağlantı hatası. Lütfen tekrar deneyin.')
+        setSubmitError(ui.connectionError)
       } finally {
         setSubmitting(false)
       }
     }
-  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext])
+  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext, ui])
 
   const { ctaLabel, ctaDisabled } = useMemo(() => {
     let label: string
-    if (state.step === 1) label = 'Devam'
-    else if (state.step === 2) label = 'Devam'
-    else if (state.step === 3) label = 'Ödemeye Geç'
-    else if (state.step === 4 && submitting) label = 'İşleniyor…'
-    else label = 'Öde'
+    if (state.step === 1) label = ui.continue
+    else if (state.step === 2) label = ui.continue
+    else if (state.step === 3) label = ui.toPayment
+    else if (state.step === 4 && submitting) label = ui.processing
+    else label = ui.payAria
 
     let disabled: boolean
     if (state.step === 1) disabled = !canProceedStep1
@@ -309,7 +315,7 @@ export default function BookingWizardModal({
     else disabled = false
 
     return { ctaLabel: label, ctaDisabled: disabled }
-  }, [state.step, submitting, canProceedStep1, canProceedStep2, canProceedStep3])
+  }, [state.step, submitting, canProceedStep1, canProceedStep2, canProceedStep3, ui])
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) handleClose()
@@ -334,13 +340,13 @@ export default function BookingWizardModal({
       >
         <header className={styles.wizardModalHeader}>
           <h1 id="booking-wizard-title" className={styles.wizardModalTitle}>
-            Rezervasyon
+            {ui.modalTitle}
           </h1>
           <button
             type="button"
             className={`${styles.closeBtn} ${styles.wizardModalClose}`}
             onClick={handleClose}
-            aria-label="Rezervasyonu kapat"
+            aria-label={ui.modalCloseAria}
           >
             <X className="w-5 h-5" />
           </button>
@@ -352,7 +358,7 @@ export default function BookingWizardModal({
           aria-valuenow={state.step}
           aria-valuemin={1}
           aria-valuemax={4}
-          aria-label={`Adım ${state.step} / 4`}
+          aria-label={ui.stepProgressAria(state.step, 4)}
           id="booking-wizard-desc"
         >
           {[1, 2, 3, 4].map((s) => (
@@ -383,16 +389,17 @@ export default function BookingWizardModal({
                   bookingId={bookingResult.bookingId}
                   accessToken={bookingResult.accessToken}
                   summary={bookingResult.summary}
-                  doneButtonLabel="Kapat"
+                  doneButtonLabel={ui.close}
                   onDone={handleClose}
+                  locale={locale}
                 />
               ) : (
                 <>
                   <p className={styles.successText} style={{ textAlign: 'center', margin: '0 0 16px' }}>
-                    Rezervasyonunuz kaydediliyor…
+                    {ui.savingReservation}
                   </p>
                   <button type="button" className={styles.ctaButton} onClick={handleClose} style={{ width: '100%' }}>
-                    Kapat
+                    {ui.close}
                   </button>
                 </>
               )}
@@ -410,6 +417,7 @@ export default function BookingWizardModal({
                   canProceed={canProceedStep1}
                   ctaLabel={ctaLabel}
                   ctaDisabled={ctaDisabled}
+                  ui={ui}
                 />
               )}
               {state.step === 2 && Step2ClassSelect && (
@@ -426,6 +434,7 @@ export default function BookingWizardModal({
                   ctaDisabled={ctaDisabled}
                   optimisticUsed={optimisticUsed}
                   availabilityFromParent={availability}
+                  ui={ui}
                 />
               )}
               {state.step === 3 && Step3CustomerInfo && (
@@ -439,6 +448,7 @@ export default function BookingWizardModal({
                   canProceed={canProceedStep3}
                   ctaLabel={ctaLabel}
                   ctaDisabled={ctaDisabled}
+                  ui={ui}
                 />
               )}
               {state.step === 4 && (
@@ -454,27 +464,29 @@ export default function BookingWizardModal({
                       onBack={goBack}
                       onSubmit={handleCta}
                       ctaDisabled={ctaDisabled}
+                      ui={ui}
+                      termsHref={withLocalePath(locale, '/terms')}
                     />
                   ) : (
                     <div className={styles.card} style={{ padding: 24 }}>
-                      <p className={styles.errorText}>Adım bileşeni yüklenemedi. Sayfayı yenileyin.</p>
+                      <p className={styles.errorText}>{ui.stepLoadError}</p>
                     </div>
                   )}
                 </>
               )}
               {state.step === 1 && !Step1PeopleDate && (
                 <div className={styles.card} style={{ padding: 24 }}>
-                  <p className={styles.errorText}>Adım bileşeni yüklenemedi. Sayfayı yenileyin.</p>
+                  <p className={styles.errorText}>{ui.stepLoadError}</p>
                 </div>
               )}
               {state.step === 2 && !Step2ClassSelect && (
                 <div className={styles.card} style={{ padding: 24 }}>
-                  <p className={styles.errorText}>Adım bileşeni yüklenemedi. Sayfayı yenileyin.</p>
+                  <p className={styles.errorText}>{ui.stepLoadError}</p>
                 </div>
               )}
               {state.step === 3 && !Step3CustomerInfo && (
                 <div className={styles.card} style={{ padding: 24 }}>
-                  <p className={styles.errorText}>Adım bileşeni yüklenemedi. Sayfayı yenileyin.</p>
+                  <p className={styles.errorText}>{ui.stepLoadError}</p>
                 </div>
               )}
             </>

@@ -35,6 +35,18 @@ export default defineConfig({
               .title('Yat kiralama — ana sayfa')
               .id('yachtRentalsPage')
               .child(S.document().schemaType('yachtRentalsPage').documentId('yachtRentalsPage')),
+            S.listItem()
+              .title('Yardım Merkezi — sayfa ayarları')
+              .id('helpCenterPage')
+              .child(S.document().schemaType('helpCenterPage').documentId('helpCenterPage')),
+            S.listItem()
+              .title('Yardım — kategoriler')
+              .id('helpCategory-list')
+              .child(S.documentTypeList('helpCategory').title('Kategoriler')),
+            S.listItem()
+              .title('Yardım — makaleler')
+              .id('helpArticle-list')
+              .child(S.documentTypeList('helpArticle').title('Makaleler')),
             ...S.documentTypeListItems().filter(
               (item) =>
                 ![
@@ -43,6 +55,9 @@ export default defineConfig({
                   'yachtLocation',
                   'yachtRental',
                   'yachtRentalsPage',
+                  'helpCenterPage',
+                  'helpCategory',
+                  'helpArticle',
                 ].includes(item.getId() ?? '')
             ),
           ]),

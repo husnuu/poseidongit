@@ -734,6 +734,25 @@ export default defineType({
       ],
     }),
     defineField({
+      name: 'pageTranslations',
+      title: 'Çeviriler — English / Deutsch',
+      type: 'object',
+      description:
+        'Ana sayfa metinleri. Tur, yat ve blog kartları aynı referanslarla kalır; tur/yat içerikleri kendi belgelerindeki çevirilerle gelir. Linkleri /turlar gibi yazın (önek site ekler).',
+      fields: [
+        defineField({
+          name: 'en',
+          title: 'English',
+          type: 'homePageLocaleOverlay',
+        }),
+        defineField({
+          name: 'de',
+          title: 'Deutsch',
+          type: 'homePageLocaleOverlay',
+        }),
+      ],
+    }),
+    defineField({
       name: 'contactQuick',
       title: 'Hızlı İletişim',
       type: 'object',

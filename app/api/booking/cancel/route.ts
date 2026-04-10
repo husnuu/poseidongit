@@ -1,8 +1,8 @@
 /**
  * POST /api/booking/cancel — Rezervasyon iptali (bookingId + email ile).
- * Rate limiting: see docs/RATE_LIMITING_SUGGESTIONS.md (e.g. 10 req/min per IP).
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rateLimit'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
@@ -12,6 +12,9 @@ export const runtime = 'nodejs'
 /** Rezervasyonu iptal eder; e-posta eşleşir ve tura 24 saatten fazla varsa. */
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitResponse(request, 'bookingAction')
+    if (limited) return limited
+
     const body = await request.json().catch(() => null)
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Geçersiz istek' }, { status: 400 })

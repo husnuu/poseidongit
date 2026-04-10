@@ -1,25 +1,34 @@
 import { MetadataRoute } from 'next'
 import { client } from '@/lib/sanity'
 import { getBaseUrl } from '@/lib/seo'
+import { tourSlugRowsForLocalesQuery } from '@/lib/queries'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
 const BASE = getBaseUrl()
 
+type SiteLocaleKey = 'tr' | 'en' | 'de'
+
+/** Türkçe kök; EN/DE için /en ve /de öneki */
+function publicUrl(locale: SiteLocaleKey, path: string): string {
+  const p = path === '/' ? '' : path.startsWith('/') ? path : `/${path}`
+  if (locale === 'tr') return `${BASE}${p}`
+  return `${BASE}/${locale}${p}`
+}
+
 type SitemapEntry = { slug: string; lastModified: Date }
 
-async function getTourEntries(): Promise<SitemapEntry[]> {
+type TourLocaleRow = {
+  tSlug?: string | null
+  enSlug?: string | null
+  deSlug?: string | null
+  _updatedAt?: string
+}
+
+async function getTourSitemapRows(): Promise<TourLocaleRow[]> {
   try {
-    const list = await client.fetch<{ slug: string | null; _updatedAt: string }[]>(
-      `*[_type == "tour" && defined(slug.current)]{ "slug": slug.current, _updatedAt }`
-    )
-    return (list ?? [])
-      .filter((t): t is { slug: string; _updatedAt: string } => Boolean(t.slug))
-      .map((t) => ({
-        slug: t.slug,
-        lastModified: t._updatedAt ? new Date(t._updatedAt) : new Date(),
-      }))
+    return await client.fetch<TourLocaleRow[]>(tourSlugRowsForLocalesQuery)
   } catch {
     return []
   }
@@ -105,9 +114,9 @@ async function getLegalEntries(): Promise<SitemapEntry[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [tourEntriesRaw, blogEntriesRaw, legalEntriesRaw, yachtLocRaw, yachtDetailRaw] =
+  const [tourRows, blogEntriesRaw, legalEntriesRaw, yachtLocRaw, yachtDetailRaw] =
     await Promise.all([
-      getTourEntries(),
+      getTourSitemapRows(),
       getBlogEntries(),
       getLegalEntries(),
       getYachtLocationEntries(),
@@ -115,52 +124,100 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ])
 
   const now = new Date()
-  const staticPages: MetadataRoute.Sitemap = [
-    { url: BASE, lastModified: now, changeFrequency: 'weekly', priority: 1 },
-    { url: `${BASE}/turlar`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${BASE}/koylar`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE}/hakkimizda`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${BASE}/sik-sorulanlar`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE}/rezervasyon`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${BASE}/yat-kiralama`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
-  ]
+  const locales: SiteLocaleKey[] = ['tr', 'en', 'de']
+  const staticPaths = [
+    '/',
+    '/turlar',
+    '/koylar',
+    '/blog',
+    '/hakkimizda',
+    '/contact',
+    '/sik-sorulanlar',
+    '/rezervasyon',
+    '/yat-kiralama',
+    '/yardim-merkezi',
+  ] as const
 
-  const tourEntries: MetadataRoute.Sitemap = tourEntriesRaw.map(({ slug, lastModified }) => ({
-    url: `${BASE}/tour/${slug}`,
-    lastModified,
-    changeFrequency: 'weekly' as const,
-    priority: 0.85,
-  }))
+  function staticPriority(path: string): number {
+    if (path === '/') return 1
+    if (path === '/turlar') return 0.9
+    if (path === '/yat-kiralama') return 0.85
+    if (path === '/koylar' || path === '/blog') return 0.8
+    if (path === '/rezervasyon') return 0.7
+    if (path === '/yardim-merkezi') return 0.75
+    return 0.6
+  }
 
-  const blogEntries: MetadataRoute.Sitemap = blogEntriesRaw.map(({ slug, lastModified }) => ({
-    url: `${BASE}/blog/${slug}`,
-    lastModified,
-    changeFrequency: 'monthly' as const,
-    priority: 0.7,
-  }))
+  const staticPages: MetadataRoute.Sitemap = staticPaths.flatMap((path) =>
+    locales.map((loc) => ({
+      url: publicUrl(loc, path),
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: staticPriority(path),
+    }))
+  )
 
-  const legalEntries: MetadataRoute.Sitemap = legalEntriesRaw.map(({ slug, lastModified }) => ({
-    url: `${BASE}/yasal/${slug}`,
-    lastModified,
-    changeFrequency: 'monthly' as const,
-    priority: 0.5,
-  }))
+  const tourEntries: MetadataRoute.Sitemap = []
+  for (const row of tourRows ?? []) {
+    const lm = row._updatedAt ? new Date(row._updatedAt) : now
+    if (row.tSlug)
+      tourEntries.push({
+        url: publicUrl('tr', `/tour/${row.tSlug}`),
+        lastModified: lm,
+        changeFrequency: 'weekly',
+        priority: 0.85,
+      })
+    if (row.enSlug)
+      tourEntries.push({
+        url: publicUrl('en', `/tour/${row.enSlug}`),
+        lastModified: lm,
+        changeFrequency: 'weekly',
+        priority: 0.85,
+      })
+    if (row.deSlug)
+      tourEntries.push({
+        url: publicUrl('de', `/tour/${row.deSlug}`),
+        lastModified: lm,
+        changeFrequency: 'weekly',
+        priority: 0.85,
+      })
+  }
 
-  const yachtLocationEntries: MetadataRoute.Sitemap = yachtLocRaw.map(({ slug, lastModified }) => ({
-    url: `${BASE}/yat-kiralama/${slug}`,
-    lastModified,
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }))
+  const blogEntries: MetadataRoute.Sitemap = blogEntriesRaw.flatMap(({ slug, lastModified }) =>
+    locales.map((loc) => ({
+      url: publicUrl(loc, `/blog/${slug}`),
+      lastModified,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }))
+  )
 
-  const yachtDetailEntries: MetadataRoute.Sitemap = yachtDetailRaw.map(({ path, lastModified }) => ({
-    url: `${BASE}${path}`,
-    lastModified,
-    changeFrequency: 'weekly' as const,
-    priority: 0.82,
-  }))
+  const legalEntries: MetadataRoute.Sitemap = legalEntriesRaw.flatMap(({ slug, lastModified }) =>
+    locales.map((loc) => ({
+      url: publicUrl(loc, `/yasal/${slug}`),
+      lastModified,
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    }))
+  )
+
+  const yachtLocationEntries: MetadataRoute.Sitemap = yachtLocRaw.flatMap(({ slug, lastModified }) =>
+    locales.map((loc) => ({
+      url: publicUrl(loc, `/yat-kiralama/${slug}`),
+      lastModified,
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }))
+  )
+
+  const yachtDetailEntries: MetadataRoute.Sitemap = yachtDetailRaw.flatMap(({ path, lastModified }) =>
+    locales.map((loc) => ({
+      url: publicUrl(loc, path),
+      lastModified,
+      changeFrequency: 'weekly' as const,
+      priority: 0.82,
+    }))
+  )
 
   return [
     ...staticPages,

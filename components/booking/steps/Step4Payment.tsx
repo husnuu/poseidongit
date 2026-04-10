@@ -5,6 +5,7 @@ import Link from 'next/link'
 import type { BookingWizardState } from '@/lib/sanity/bookingTypes'
 import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
 import FloatingInput from '@/components/ui/FloatingInput'
+import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import styles from '../booking.module.css'
 
 interface Step4PaymentProps {
@@ -12,11 +13,19 @@ interface Step4PaymentProps {
   onBack: () => void
   onSubmit: () => void | Promise<void>
   ctaDisabled: boolean
+  ui: BookingWizardUi
   /** Şartlar & Koşullar sayfası linki (varsayılan: /terms) */
   termsHref?: string
 }
 
-export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, termsHref = '/terms' }: Step4PaymentProps) {
+export default function Step4Payment({
+  state,
+  onBack,
+  onSubmit,
+  ctaDisabled,
+  ui,
+  termsHref = '/terms',
+}: Step4PaymentProps) {
   const [loading, setLoading] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(!isBookingOnlinePaymentEnabled)
   const p = state.pricingSummary
@@ -49,13 +58,13 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, ter
           type="button"
           className={`${styles.stepBackBtn} ${styles.stepBackBtnSmall}`}
           onClick={onBack}
-          aria-label="Önceki adıma dön"
+          aria-label={ui.backAria}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M19 12H5" />
             <path d="m12 19-7-7 7-7" />
           </svg>
-          Geri
+          {ui.back}
         </button>
       </div>
 
@@ -69,33 +78,35 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, ter
             </svg>
           </span>
           <div>
-            <h3 className={styles.paymentSummaryTitle}>Ödeme Özeti</h3>
-            <p className={styles.paymentSummarySubtitle}>Toplam fiyat ve şimdi ödeyeceğiniz tutar</p>
+            <h3 className={styles.paymentSummaryTitle}>{ui.paymentSummaryTitle}</h3>
+            <p className={styles.paymentSummarySubtitle}>{ui.paymentSummarySubtitle}</p>
           </div>
         </div>
         <div className={styles.paymentSummaryBody}>
           <div className={styles.paymentSummaryRow}>
-            <span className={styles.paymentSummaryLabel}>Toplam fiyat</span>
-            <span className={styles.paymentSummaryAmount}>{p.total.toLocaleString('tr-TR')} ₺</span>
+            <span className={styles.paymentSummaryLabel}>{ui.paymentTotalPrice}</span>
+            <span className={styles.paymentSummaryAmount}>{p.total.toLocaleString(ui.numberLocale)} ₺</span>
           </div>
           <div className={styles.paymentSummaryDue}>
-            <span className={styles.paymentSummaryDueLabel}>Şimdi ödenecek tutar</span>
+            <span className={styles.paymentSummaryDueLabel}>{ui.paymentDueNow}</span>
             <span className={styles.paymentSummaryDueAmount}>
-              {p.depositAmount.toLocaleString('tr-TR')} ₺
-              <span className={styles.paymentSummaryDueBadge}>%{p.depositPercent} kapora</span>
+              {p.depositAmount.toLocaleString(ui.numberLocale)} ₺
+              <span className={styles.paymentSummaryDueBadge}>{ui.depositBadge(p.depositPercent)}</span>
             </span>
           </div>
           <div className={styles.paymentSummaryRow}>
-            <span className={styles.paymentSummaryLabel}>Kalan (tur günü öde)</span>
-            <span className={styles.paymentSummaryAmount}>{p.remainingAmount.toLocaleString('tr-TR')} ₺</span>
+            <span className={styles.paymentSummaryLabel}>{ui.paymentRemainingTourDay}</span>
+            <span className={styles.paymentSummaryAmount}>{p.remainingAmount.toLocaleString(ui.numberLocale)} ₺</span>
           </div>
         </div>
       </div>
 
       {!isBookingOnlinePaymentEnabled && (
         <div className={styles.virtualPosDisabledNotice} role="status">
-          <strong>Test modu aktif</strong>
-          Sanal POS kapalı olsa da bu ekranda <em>Öde</em> ile rezervasyonu test amaçlı oluşturabilirsiniz.
+          <strong>{ui.testModeTitle}</strong>{' '}
+          {ui.testModeModalBeforePay}
+          <em>{ui.payAria}</em>
+          {ui.testModeModalAfterPay}
         </div>
       )}
 
@@ -108,21 +119,21 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, ter
               <line x1="2" x2="22" y1="10" y2="10" />
             </svg>
           </span>
-          <h3 className={styles.cardCaptionTitle}>Kart Bilgileri</h3>
+          <h3 className={styles.cardCaptionTitle}>{ui.cardDetailsTitle}</h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
           <div className="space-y-4">
             <FloatingInput
               id="booking-cardName"
-              label="Kart Sahibi Adı *"
+              label={ui.cardholderName}
               type="text"
               autoComplete="cc-name"
               compact
             />
             <FloatingInput
               id="booking-cardNumber"
-              label="Kart Numarası *"
+              label={ui.cardNumber}
               type="text"
               autoComplete="cc-number"
               compact
@@ -130,14 +141,14 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, ter
             <div className="grid grid-cols-2 gap-4">
               <FloatingInput
                 id="booking-cardExpiry"
-                label="Son Kullanma (AA/YY) *"
+                label={ui.cardExpiry}
                 type="text"
                 autoComplete="cc-exp"
                 compact
               />
               <FloatingInput
                 id="booking-cardCvc"
-                label="CVC *"
+                label={ui.cardCvc}
                 type="text"
                 autoComplete="cc-csc"
                 compact
@@ -153,10 +164,11 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, ter
                 aria-describedby="terms-checkbox-desc"
               />
               <span id="terms-checkbox-desc">
+                {ui.termsCheckboxLead}
                 <Link href={termsHref} target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
-                  Şartlar &amp; Koşullar
+                  {ui.termsLinkText}
                 </Link>
-                &apos;ı okudum ve kabul ediyorum.
+                {ui.termsCheckboxTrail}
               </span>
             </label>
           </div>
@@ -170,10 +182,10 @@ export default function Step4Payment({ state, onBack, onSubmit, ctaDisabled, ter
             type="submit"
             className={styles.stepBtnPrimary}
             disabled={ctaDisabled || loading || !termsAccepted}
-            aria-label="Öde"
+            aria-label={ui.payAria}
             style={{ width: '100%' }}
           >
-            {loading ? 'İşleniyor…' : 'Öde'}
+            {loading ? ui.processing : ui.payAria}
           </button>
         </div>
       </div>

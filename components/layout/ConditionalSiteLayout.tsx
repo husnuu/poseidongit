@@ -18,9 +18,9 @@ export default function ConditionalSiteLayout({
 
   return (
     <>
-      <Header />
+      <Header locale="tr" />
       {children}
-      <Footer />
+      <Footer locale="tr" />
     </>
   )
 }

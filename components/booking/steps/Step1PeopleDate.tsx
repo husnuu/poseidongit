@@ -4,8 +4,8 @@ import { useState, useMemo } from 'react'
 import { Star, Info } from 'lucide-react'
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
 import { buildCalendarDaysForMonth, getFirstAvailableYearMonth } from '@/lib/sanity/bookingPricing'
+import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import styles from '../booking.module.css'
-
 
 interface Step1PeopleDateProps {
   tour: TourForBooking
@@ -17,6 +17,7 @@ interface Step1PeopleDateProps {
   canProceed: boolean
   ctaLabel: string
   ctaDisabled: boolean
+  ui: BookingWizardUi
 }
 
 export default function Step1PeopleDate({
@@ -29,6 +30,7 @@ export default function Step1PeopleDate({
   canProceed,
   ctaLabel,
   ctaDisabled,
+  ui,
 }: Step1PeopleDateProps) {
   const counts = state.counts
   const total = counts.adult + counts.child + counts.baby
@@ -54,9 +56,9 @@ export default function Step1PeopleDate({
   )
   const monthLabel = useMemo(() => {
     const d = new Date(viewYear, viewMonth - 1, 1)
-    return d.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })
-  }, [viewYear, viewMonth])
-  const weekdays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
+    return d.toLocaleDateString(ui.numberLocale, { month: 'long', year: 'numeric' })
+  }, [viewYear, viewMonth, ui.numberLocale])
+  const weekdays = ui.weekdaysShort
   const firstDayOfMonth = new Date(viewYear, viewMonth - 1, 1)
   const gridStart = (firstDayOfMonth.getDay() + 6) % 7
 
@@ -74,7 +76,7 @@ export default function Step1PeopleDate({
           <span className={styles.infoBoxAccent} aria-hidden />
           <h3 className={styles.infoBoxTitle}>
             <Info className="w-4 h-4 flex-shrink-0" aria-hidden />
-            {rules?.title ?? 'Rezervasyon Bilgileri'}
+            {rules?.title ?? ui.rulesTitleFallback}
           </h3>
           <ul className={styles.infoBoxList}>
             {(rules?.bullets ?? []).slice(0, 4).map((text, i) => (
@@ -94,15 +96,15 @@ export default function Step1PeopleDate({
               <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
           </span>
-          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>Kişi Sayısı</h3>
+          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>{ui.guestCountTitle}</h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
         <div className={styles.counterList}>
         <div className={styles.counterRow}>
           <div>
-            <div className={styles.counterLabel}>Yetişkin</div>
-            <div className={styles.counterSub}>11–99 yaş</div>
+            <div className={styles.counterLabel}>{ui.adult}</div>
+            <div className={styles.counterSub}>{ui.adultAge}</div>
           </div>
           <div className={styles.counterControls}>
             <button
@@ -110,7 +112,7 @@ export default function Step1PeopleDate({
               className={styles.counterBtn}
               disabled={!canDecrementAdult}
               onClick={() => onUpdate({ counts: { ...counts, adult: Math.max(1, counts.adult - 1) } })}
-              aria-label="Yetişkin azalt"
+              aria-label={ui.ariaDecAdult}
             >
               −
             </button>
@@ -120,7 +122,7 @@ export default function Step1PeopleDate({
               className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
               disabled={!canIncrement}
               onClick={() => onUpdate({ counts: { ...counts, adult: counts.adult + 1 } })}
-              aria-label="Yetişkin artır"
+              aria-label={ui.ariaIncAdult}
             >
               +
             </button>
@@ -128,8 +130,8 @@ export default function Step1PeopleDate({
         </div>
         <div className={styles.counterRow}>
           <div>
-            <div className={styles.counterLabel}>Çocuk</div>
-            <div className={styles.counterSub}>6–10 yaş</div>
+            <div className={styles.counterLabel}>{ui.child}</div>
+            <div className={styles.counterSub}>{ui.childAge}</div>
           </div>
           <div className={styles.counterControls}>
             <button
@@ -137,7 +139,7 @@ export default function Step1PeopleDate({
               className={styles.counterBtn}
               disabled={counts.child <= 0}
               onClick={() => onUpdate({ counts: { ...counts, child: Math.max(0, counts.child - 1) } })}
-              aria-label="Çocuk azalt"
+              aria-label={ui.ariaDecChild}
             >
               −
             </button>
@@ -147,7 +149,7 @@ export default function Step1PeopleDate({
               className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
               disabled={!canIncrement}
               onClick={() => onUpdate({ counts: { ...counts, child: counts.child + 1 } })}
-              aria-label="Çocuk artır"
+              aria-label={ui.ariaIncChild}
             >
               +
             </button>
@@ -155,8 +157,8 @@ export default function Step1PeopleDate({
         </div>
         <div className={styles.counterRow}>
           <div>
-            <div className={styles.counterLabel}>Bebek</div>
-            <div className={styles.counterSub}>0–5 yaş</div>
+            <div className={styles.counterLabel}>{ui.baby}</div>
+            <div className={styles.counterSub}>{ui.babyAge}</div>
           </div>
           <div className={styles.counterControls}>
             <button
@@ -164,7 +166,7 @@ export default function Step1PeopleDate({
               className={styles.counterBtn}
               disabled={counts.baby <= 0}
               onClick={() => onUpdate({ counts: { ...counts, baby: Math.max(0, counts.baby - 1) } })}
-              aria-label="Bebek azalt"
+              aria-label={ui.ariaDecBaby}
             >
               −
             </button>
@@ -174,7 +176,7 @@ export default function Step1PeopleDate({
               className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
               disabled={!canIncrement}
               onClick={() => onUpdate({ counts: { ...counts, baby: counts.baby + 1 } })}
-              aria-label="Bebek artır"
+              aria-label={ui.ariaIncBaby}
             >
               +
             </button>
@@ -183,7 +185,7 @@ export default function Step1PeopleDate({
         </div>
         {total > maxPax && (
           <p className={styles.errorText} style={{ marginTop: 8 }}>
-            En fazla {maxPax} kişi seçebilirsiniz.
+            {ui.maxGuestsError(maxPax)}
           </p>
         )}
         </div>
@@ -199,7 +201,7 @@ export default function Step1PeopleDate({
               <line x1="3" x2="21" y1="10" y2="10" />
             </svg>
           </span>
-          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>Tarih Seçin</h3>
+          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>{ui.selectDateTitle}</h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
@@ -207,7 +209,7 @@ export default function Step1PeopleDate({
           <button
             type="button"
             className={styles.counterBtn}
-            aria-label="Önceki ay"
+            aria-label={ui.prevMonthAria}
             disabled={isViewingFirstAvailableMonth}
             onClick={() => {
               if (viewMonth === 1) {
@@ -222,7 +224,7 @@ export default function Step1PeopleDate({
           <button
             type="button"
             className={styles.counterBtn}
-            aria-label="Sonraki ay"
+            aria-label={ui.nextMonthAria}
             onClick={() => {
               if (viewMonth === 12) {
                 setViewMonth(1)
@@ -256,7 +258,11 @@ export default function Step1PeopleDate({
                   className={`${styles.dayCell} ${selected ? styles.dayCellSelected : ''} ${!available ? styles.dayCellDisabled : ''}`}
                   onClick={() => available && onUpdate({ selectedDate: day.date })}
                   disabled={!available}
-                  aria-label={`${dayNum} ${day.date}${showPrice ? `, ${day.minPrice} TL` : ''}`}
+                  aria-label={ui.calendarDayAria(
+                    dayNum,
+                    day.date,
+                    showPrice && day.minPrice != null ? `, ${day.minPrice} TL` : ''
+                  )}
                   aria-pressed={selected}
                 >
                   {showStar && (
@@ -266,7 +272,7 @@ export default function Step1PeopleDate({
                   )}
                   <span className={styles.dayNum}>{dayNum}</span>
                   {showPrice && (
-                    <span className={styles.dayPrice}>{day.minPrice!.toLocaleString('tr-TR')} ₺</span>
+                    <span className={styles.dayPrice}>{day.minPrice!.toLocaleString(ui.numberLocale)} ₺</span>
                   )}
                 </button>
               )

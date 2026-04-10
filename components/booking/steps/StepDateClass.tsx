@@ -12,6 +12,8 @@ import type {
 import { getTourIdForBooking } from '@/lib/sanity/bookingTypes'
 import { computePricingForSelection, buildCalendarDaysForMonth, getFirstAvailableYearMonth, getDisplayedAdultUnitPriceForClass, getClassStatusForDate, getRemainingCapacityForDate, getCapForTicketClass, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
+import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
+import { isBadgePopular } from '@/lib/i18n/bookingWizardUi'
 import FirstClassSeatSelector from '../FirstClassSeatSelector'
 import styles from '../booking.module.css'
 
@@ -35,6 +37,7 @@ interface StepDateClassProps {
   onProceedToNextStep?: () => void
   /** Step 2'ye her girildiğinde değişirse availability yeniden çekilir (dolu loca'lar güncel olsun). */
   availabilityInvalidateKey?: string
+  ui: BookingWizardUi
 }
 
 export default function StepDateClass({
@@ -45,6 +48,7 @@ export default function StepDateClass({
   optimisticUsed,
   onProceedToNextStep,
   availabilityInvalidateKey,
+  ui,
 }: StepDateClassProps) {
   const locaSectionRef = useRef<HTMLDivElement>(null)
   const firstAvailable = useMemo(() => getFirstAvailableYearMonth(tour), [tour])
@@ -126,10 +130,10 @@ export default function StepDateClass({
 
   const monthLabel = useMemo(() => {
     const d = new Date(viewYear, viewMonth - 1, 1)
-    return d.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })
-  }, [viewYear, viewMonth])
+    return d.toLocaleDateString(ui.numberLocale, { month: 'long', year: 'numeric' })
+  }, [viewYear, viewMonth, ui.numberLocale])
 
-  const weekdays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
+  const weekdays = ui.weekdaysShort
   const firstDayOfMonth = new Date(viewYear, viewMonth - 1, 1)
   const gridStart = (firstDayOfMonth.getDay() + 6) % 7
 
@@ -158,12 +162,12 @@ export default function StepDateClass({
   return (
     <>
       <div className={styles.card}>
-        <h3 className={`${styles.cardTitle} ${styles.wizardMainStepTitle}`}>Tarih Seçin</h3>
+        <h3 className={`${styles.cardTitle} ${styles.wizardMainStepTitle}`}>{ui.selectDateTitle}</h3>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <button
             type="button"
             className={styles.counterBtn}
-            aria-label="Önceki ay"
+            aria-label={ui.prevMonthAria}
             disabled={isViewingFirstAvailableMonth}
             onClick={() => {
               if (viewMonth === 1) {
@@ -178,7 +182,7 @@ export default function StepDateClass({
           <button
             type="button"
             className={styles.counterBtn}
-            aria-label="Sonraki ay"
+            aria-label={ui.nextMonthAria}
             onClick={() => {
               if (viewMonth === 12) {
                 setViewMonth(1)
@@ -221,7 +225,7 @@ export default function StepDateClass({
                   <span className={styles.dayNum}>{dayNum}</span>
                   {showPrice && (
                     <span className={styles.dayPrice}>
-                      {day.minPrice!.toLocaleString('tr-TR')} ₺
+                      {day.minPrice!.toLocaleString(ui.numberLocale)} ₺
                     </span>
                   )}
                 </button>
@@ -233,7 +237,7 @@ export default function StepDateClass({
 
       {state.selectedDate && (
         <div className={styles.card}>
-          <h3 className={`${styles.cardTitle} ${styles.wizardMainStepTitle}`}>Sınıf Seçimi</h3>
+          <h3 className={`${styles.cardTitle} ${styles.wizardMainStepTitle}`}>{ui.classSelectTitle}</h3>
           {(tour.ticketClasses ?? []).map((cls) => {
             const selected = state.selectedClassKey === cls.key
             const cap = capForClass(cls.key)
@@ -249,7 +253,7 @@ export default function StepDateClass({
             const price = state.selectedDate
               ? getDisplayedAdultUnitPriceForClass(tour, state.selectedDate, cls)
               : undefined
-            const dateFormatted = new Date(state.selectedDate!).toLocaleDateString('tr-TR', {
+            const dateFormatted = new Date(state.selectedDate!).toLocaleDateString(ui.numberLocale, {
               day: 'numeric',
               month: 'short',
             })
@@ -291,7 +295,7 @@ export default function StepDateClass({
                       textAlign: 'center',
                     }}
                   >
-                    Bu alandaki bungalov yataklarımız 2 kişiliktir. Tek sayılı kişi ile rezervasyon verilmemektedir.
+                    {ui.bungalowTwoPersonOdd}
                   </div>
                 )}
                 <div
@@ -338,12 +342,12 @@ export default function StepDateClass({
                         </span>
                         {insufficientCap && cap > 0 && (
                           <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>
-                            Mevcut rezervasyonlardan sonra kalan: {cap} kişi
+                            {ui.remainingAfterBookings(cap)}
                           </span>
                         )}
                         {cap === 0 && !classBlocked && (
                           <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>
-                            Bu tarih için kontenjan dolmuştur
+                            {ui.quotaFullThisDate}
                           </span>
                         )}
                       </div>
@@ -355,7 +359,7 @@ export default function StepDateClass({
                     {cls.badge && (
                       <span
                         className={`${styles.classBadge} ${
-                          cls.badge.toLowerCase().includes('popüler') ? styles.classBadgePopular : ''
+                          isBadgePopular(cls.badge) ? styles.classBadgePopular : ''
                         }`}
                       >
                         {cls.badge}
@@ -363,12 +367,12 @@ export default function StepDateClass({
                     )}
                     {!isFull && !insufficientCap && cap > 0 && cap <= LOW_STOCK_THRESHOLD && (
                       <span className={styles.classBadge} style={{ background: '#b45309', color: '#fff' }}>
-                        Son {cap} yer
+                        {ui.lastNSpots(cap)}
                       </span>
                     )}
                     {selected && (
                       <span className={styles.classBadge} style={{ background: 'var(--primary)', color: '#fff' }}>
-                        SEÇİLDİ
+                        {ui.selectedBadge}
                       </span>
                     )}
                   </div>
@@ -387,17 +391,17 @@ export default function StepDateClass({
                   )}
                   {price != null && (
                     <p style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>
-                      Yetişkin ({dateFormatted}): {price.toLocaleString('tr-TR')} ₺
+                      {ui.adultPriceLine(dateFormatted, price.toLocaleString(ui.numberLocale))}
                     </p>
                   )}
                   {cap >= totalPax && cap > 0 && (
                     <p style={{ margin: '8px 0 0', fontSize: 13, color: '#166534', fontWeight: 500 }}>
-                      {cap <= LOW_STOCK_THRESHOLD ? `Son ${cap} yer` : `Kalan: ${cap} kişi`}
+                      {cap <= LOW_STOCK_THRESHOLD ? ui.lastNSpots(cap) : ui.remainingSpots(cap)}
                     </p>
                   )}
                   {insufficientCap && cap > 0 && (
                     <p style={{ margin: '8px 0 0', fontSize: 13, color: '#b91c1c', fontWeight: 600 }} role="alert">
-                      Mevcut rezervasyonlardan sonra kalan kontenjan: {cap} kişi. {totalPax} kişilik rezervasyon için yeterli yer yok.
+                      {ui.insufficientCapLine(cap, totalPax)}
                     </p>
                   )}
                 </div>
@@ -418,9 +422,7 @@ export default function StepDateClass({
                     aria-hidden
                   >
                     <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#374151', textAlign: 'center', lineHeight: 1.4 }}>
-                      {totalPax % 2 !== 0
-                        ? 'Bu alandaki bungalov yataklarımız 2 kişiliktir. Tek sayılı kişi ile rezervasyon verilmemektedir.'
-                        : 'First class için sadece 16 yaş üstü misafirler kabul edilmektedir.'}
+                      {totalPax % 2 !== 0 ? ui.bungalowTwoPersonOdd : ui.firstClassAdultsOnly}
                     </p>
                   </div>
                 )}
@@ -429,7 +431,7 @@ export default function StepDateClass({
           })}
           {!hasCapacity && state.selectedDate && state.selectedClassKey && (
             <p className={styles.errorText} role="alert">
-              Bu sınıf için yeterli kapasite yok ({totalPax} kişi). Başka sınıf seçin veya kişi sayısını azaltın.
+              {ui.classCapacityShortage(totalPax)}
             </p>
           )}
         </div>
@@ -450,7 +452,7 @@ export default function StepDateClass({
         }
         return (
           <div ref={locaSectionRef} className={styles.card} style={{ marginTop: 16 }}>
-            <h3 className={styles.cardTitle}>Loca Seçimi</h3>
+            <h3 className={styles.cardTitle}>{ui.locaSelectTitle}</h3>
             <FirstClassSeatSelector
               selectedLocaIds={selected}
               reservedLocaIds={availability?.date === state.selectedDate ? (availability?.firstClassLocasReserved || []) : []}
@@ -458,7 +460,7 @@ export default function StepDateClass({
               onToggle={handleToggle}
               onReplace={(removeId, addId) => onUpdate({ firstClassLocas: [...(state.firstClassLocas ?? []).filter((x) => x !== removeId), addId.trim().toUpperCase()] })}
               onAfterSelect={onProceedToNextStep}
-              aria-label="First Class loca seçimi"
+              locaUi={ui.firstClassLoca}
             />
           </div>
         )

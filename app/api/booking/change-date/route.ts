@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rateLimit'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
 import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
@@ -23,13 +24,15 @@ function normalizeClassKey(classId: string): string {
  * POST /api/booking/change-date
  * Body: { bookingId, email, newDate } (newDate YYYY-MM-DD)
  * Verifies email, checks availability for new date, updates booking date.
- * Rate limiting: see docs/RATE_LIMITING_SUGGESTIONS.md (e.g. 10 req/min per IP).
  */
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitResponse(request, 'bookingAction')
+    if (limited) return limited
+
     const body = await request.json().catch(() => null)
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Geçersiz istek' }, { status: 400 })

@@ -7,6 +7,8 @@ import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/s
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK } from '@/lib/sanity/bookingTypes'
 import { resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
 import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
+import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
+import { withLocalePath } from '@/lib/i18n/paths'
 import StepPeople from './steps/StepPeople'
 import StepDate from './steps/StepDate'
 import StepClass from './steps/StepClass'
@@ -20,6 +22,7 @@ interface BookingModalProps {
 }
 
 export default function BookingModal({ tour, onClose }: BookingModalProps) {
+  const bookingUi = useMemo(() => getBookingWizardUi('tr'), [])
   const [state, setState] = useState<BookingWizardState>({
     ...DEFAULT_BOOKING_STATE,
     tourSlug: tour.slug,
@@ -164,7 +167,13 @@ export default function BookingModal({ tour, onClose }: BookingModalProps) {
             <>
               {state.step === 1 && (
                 <>
-                  <StepPeople tour={tour} counts={state.counts} maxPax={maxPax} onUpdate={(counts) => updateState({ counts })} />
+                  <StepPeople
+                    tour={tour}
+                    counts={state.counts}
+                    maxPax={maxPax}
+                    onUpdate={(counts) => updateState({ counts })}
+                    ui={bookingUi}
+                  />
                   <StepDate tour={tour} state={state} onUpdate={updateState} />
                 </>
               )}
@@ -172,11 +181,19 @@ export default function BookingModal({ tour, onClose }: BookingModalProps) {
                 <StepClass tour={tour} state={state} onUpdate={updateState} onPricingComputed={onPricingComputed} />
               )}
               {state.step === 3 && (
-                <StepCustomer tour={tour} state={state} onUpdate={updateState} onValidationChange={setStep3Valid} />
+                <StepCustomer
+                  tour={tour}
+                  state={state}
+                  onUpdate={updateState}
+                  onValidationChange={setStep3Valid}
+                  ui={bookingUi}
+                />
               )}
               {state.step === 4 && (
                 <StepPayment
                   state={state}
+                  ui={bookingUi}
+                  termsHref={withLocalePath('tr', '/terms')}
                   onTermsAcceptanceChange={setStep4TermsAccepted}
                 />
               )}

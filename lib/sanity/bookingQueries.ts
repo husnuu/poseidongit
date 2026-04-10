@@ -1,4 +1,6 @@
 import { client } from '@/lib/sanity'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { mergeTourForLocale } from '@/lib/i18n/mergeTourForLocale'
 import type { TourForBooking, CalendarDay, PricingSummary } from './bookingTypes'
 import { buildCalendarDaysForMonth, computePricingForSelection } from './bookingPricing'
 
@@ -92,22 +94,31 @@ export const tourForBookingProjection = `{
       label,
       description
     }
-  }
+  },
+  translations
 }`
 
-const tourForBookingQuery = `*[_type == "tour" && slug.current == $slug][0] ${tourForBookingProjection}`
+const tourForBookingQuery = `*[_type == "tour" && (
+  slug.current == $slug ||
+  translations.en.slug.current == $slug ||
+  translations.de.slug.current == $slug
+)][0] ${tourForBookingProjection}`
 
 /** Rezervasyon kayıtlarında saklanan Sanity _id veya slug ile tur çekilir (özel gün fiyatları dahil). */
 export const tourForBookingBySanityIdQuery = `*[_type == "tour" && (_id == $id || slug.current == $id)][0] ${tourForBookingProjection}`
 
 export async function fetchTourForBooking(
-  slug: string
+  slug: string,
+  locale: SiteLocale = 'tr'
 ): Promise<TourForBooking | null> {
   try {
-    const tour = await client.fetch<TourForBooking | null>(tourForBookingQuery, {
-      slug,
-    })
-    return tour
+    const tour = await client.fetch<TourForBooking & { translations?: unknown } | null>(
+      tourForBookingQuery,
+      { slug }
+    )
+    if (!tour) return null
+    if (locale === 'tr') return tour
+    return mergeTourForLocale(tour as unknown as Record<string, unknown>, locale) as unknown as TourForBooking
   } catch (err) {
     console.error('fetchTourForBooking error:', err)
     return null

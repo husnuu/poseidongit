@@ -1,11 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { createPortal } from 'react-dom'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock, PortableTextComponents } from '@portabletext/react'
 import { X } from 'lucide-react'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './TourFoodMenu.module.css'
 
 export type TourFoodMenuItem = {
@@ -23,6 +25,7 @@ export type TourFoodMenuProps = {
   sectionTitle: string
   intro?: string | null
   items: TourFoodMenuItem[]
+  locale?: SiteLocale
 }
 
 function splitMenuLines(text: string): string[] {
@@ -56,11 +59,11 @@ const foodMenuDetailComponents: PortableTextComponents = {
   },
 }
 
-function ExcerptMenuList({ text }: { text: string }) {
+function ExcerptMenuList({ text, ariaLabel }: { text: string; ariaLabel: string }) {
   const lines = splitMenuLines(text)
   if (!lines.length) return null
   return (
-    <ul className={styles.menuDishList} aria-label="Menü satırları">
+    <ul className={styles.menuDishList} aria-label={ariaLabel}>
       {lines.map((line, i) => (
         <li key={i} className={styles.menuDishRow}>
           <div className={styles.menuDishRowText}>{line}</div>
@@ -70,7 +73,8 @@ function ExcerptMenuList({ text }: { text: string }) {
   )
 }
 
-export default function TourFoodMenu({ sectionTitle, intro, items }: TourFoodMenuProps) {
+export default function TourFoodMenu({ sectionTitle, intro, items, locale }: TourFoodMenuProps) {
+  const tourUi = useMemo(() => getTourPageUi(locale ?? 'tr'), [locale])
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [mounted, setMounted] = useState(false)
 
@@ -140,7 +144,7 @@ export default function TourFoodMenu({ sectionTitle, intro, items }: TourFoodMen
                   className={styles.detailBtn}
                   onClick={() => setOpenIndex(index)}
                 >
-                  Detay
+                  {tourUi.foodMenuDetailBtn}
                 </button>
               ) : null}
             </div>
@@ -171,7 +175,7 @@ export default function TourFoodMenu({ sectionTitle, intro, items }: TourFoodMen
                     type="button"
                     className={styles.closeBtn}
                     onClick={close}
-                    aria-label="Kapat"
+                    aria-label={tourUi.foodMenuCloseAria}
                   >
                     <X className="h-5 w-5" strokeWidth={2} aria-hidden />
                   </button>
@@ -198,7 +202,7 @@ export default function TourFoodMenu({ sectionTitle, intro, items }: TourFoodMen
                     <p className={styles.dialogMeta}>{active.metaLine2.trim()}</p>
                   ) : null}
                   {active.excerpt?.trim() ? (
-                    <ExcerptMenuList text={active.excerpt.trim()} />
+                    <ExcerptMenuList text={active.excerpt.trim()} ariaLabel={tourUi.foodMenuExcerptAria} />
                   ) : null}
                   {hasDetail ? (
                     <div className={styles.menuDetailStack}>
@@ -211,9 +215,7 @@ export default function TourFoodMenu({ sectionTitle, intro, items }: TourFoodMen
                   !active.metaLine1?.trim() &&
                   !active.metaLine2?.trim() &&
                   !active.imageUrl ? (
-                    <p className="m-0 text-zinc-500 text-sm">
-                      Bu menü öğesi için detay metni eklenmemiş.
-                    </p>
+                    <p className="m-0 text-zinc-500 text-sm">{tourUi.foodMenuEmptyDetail}</p>
                   ) : null}
                 </div>
               </div>

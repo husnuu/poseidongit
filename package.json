@@ -18,6 +18,8 @@
     "start": "next start",
     "lint": "next lint",
     "studio": "sanity dev --port 3333",
+    "studio:3335": "sanity dev --port 3335",
+    "studio:fix": "sh -c 'for p in $(lsof -ti :3333 2>/dev/null); do kill -9 \"$p\" 2>/dev/null; done; exec sanity dev --port 3333'",
     "studio:build": "sanity build"
   },
   "dependencies": {
@@ -30,6 +32,8 @@
     "@sanity/image-url": "^1.0.2",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "https-proxy-agent": "^8.0.0",
@@ -45,7 +49,7 @@
     "react-hook-form": "^7.71.2",
     "react-phone-number-input": "^3.4.16",
     "resend": "^6.9.3",
-    "sanity": "^3.56.0",
+    "sanity": "^3.99.0",
     "styled-components": "^6.3.11",
     "zod": "^4.3.6"
   },

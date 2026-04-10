@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { Inter } from 'next/font/google'
+import { headers } from 'next/headers'
 import './globals.css'
 import ChunkLoadErrorHandler from '@/components/ChunkLoadErrorHandler'
 import CookieConsentBannerRoot from '@/components/CookieConsentBannerRoot'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import { htmlLangForLocale, isSiteLocale } from '@/lib/i18n/config'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -68,13 +70,18 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const h = await headers()
+  const loc = h.get('x-site-locale')
+  const htmlLang =
+    loc && isSiteLocale(loc) ? htmlLangForLocale(loc) : 'tr'
+
   return (
-    <html lang="tr" className={inter.variable}>
+    <html lang={htmlLang} className={inter.variable}>
       <body
         className={`${inter.className} min-h-screen overflow-x-hidden bg-zinc-50 text-zinc-900 antialiased`}
       >

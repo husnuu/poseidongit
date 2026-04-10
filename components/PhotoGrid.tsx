@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import YachtHeroBadgeOverlay from '@/components/yacht/YachtHeroBadgeOverlay'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './PhotoGrid.module.css'
 
 export interface PhotoGridImage {
@@ -16,9 +18,12 @@ interface PhotoGridProps {
   tourTitle: string
   /** Yat detay: ana görsel üzerinde şerit rozetler (tur «En Popüler» stili) */
   heroBadges?: string[]
+  /** RSC sınırında `tourUi` nesnesi (içinde fonksiyonlar) geçirilemez; yalnızca locale. */
+  locale?: SiteLocale
 }
 
-export default function PhotoGrid({ images, tourTitle, heroBadges }: PhotoGridProps) {
+export default function PhotoGrid({ images, tourTitle, heroBadges, locale }: PhotoGridProps) {
+  const tourUi = useMemo(() => getTourPageUi(locale ?? 'tr'), [locale])
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
 
@@ -69,7 +74,7 @@ export default function PhotoGrid({ images, tourTitle, heroBadges }: PhotoGridPr
             role="button"
             tabIndex={0}
             onKeyDown={(e) => e.key === 'Enter' && openLightbox(0)}
-            aria-label="Galeriyi aç"
+            aria-label={tourUi.photoGridOpenGallery}
           >
             <Image
               src={mainImage.src}
@@ -95,7 +100,7 @@ export default function PhotoGrid({ images, tourTitle, heroBadges }: PhotoGridPr
               role="button"
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && openLightbox(1)}
-              aria-label="Galeriyi aç"
+              aria-label={tourUi.photoGridOpenGallery}
             >
               <Image
                 src={secondImage.src}
@@ -115,7 +120,7 @@ export default function PhotoGrid({ images, tourTitle, heroBadges }: PhotoGridPr
                     openLightbox(0)
                   }}
                 >
-                  TÜM FOTOĞRAFLARI GÖR (+{images.length})
+                  {tourUi.photoGridMobileSeeAllWithCount(images.length)}
                 </button>
               )}
             </div>
@@ -136,7 +141,7 @@ export default function PhotoGrid({ images, tourTitle, heroBadges }: PhotoGridPr
                 onKeyDown={(e) =>
                   e.key === 'Enter' && openLightbox(index + 1)
                 }
-                aria-label="Galeriyi aç"
+                aria-label={tourUi.photoGridOpenGallery}
               >
                 <Image
                   src={image.src}
@@ -157,8 +162,8 @@ export default function PhotoGrid({ images, tourTitle, heroBadges }: PhotoGridPr
                     }}
                   >
                     {images.length > 5
-                      ? `HEPSİNİ GÖR (+${images.length - 5})`
-                      : 'HEPSİNİ GÖR'}
+                      ? tourUi.photoGridSeeAllWithExtra(images.length - 5)
+                      : tourUi.photoGridSeeAll}
                   </button>
                 )}
               </div>
@@ -175,13 +180,13 @@ export default function PhotoGrid({ images, tourTitle, heroBadges }: PhotoGridPr
           onClick={closeLightbox}
           role="dialog"
           aria-modal="true"
-          aria-label="Fotoğraf galerisi"
+          aria-label={tourUi.photoGridLightboxAria}
         >
           <button
             type="button"
             onClick={closeLightbox}
             className={styles.lightboxClose}
-            aria-label="Kapat"
+            aria-label={tourUi.photoGridClose}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path
@@ -213,7 +218,7 @@ export default function PhotoGrid({ images, tourTitle, heroBadges }: PhotoGridPr
                 type="button"
                 onClick={prevImage}
                 className={`${styles.lightboxNav} ${styles.lightboxPrev}`}
-                aria-label="Önceki"
+                aria-label={tourUi.photoGridPrev}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path
@@ -229,7 +234,7 @@ export default function PhotoGrid({ images, tourTitle, heroBadges }: PhotoGridPr
                 type="button"
                 onClick={nextImage}
                 className={`${styles.lightboxNav} ${styles.lightboxNext}`}
-                aria-label="Sonraki"
+                aria-label={tourUi.photoGridNext}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path

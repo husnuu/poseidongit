@@ -2,8 +2,10 @@ import { SignJWT, jwtVerify } from 'jose'
 
 export const ADMIN_SESSION_COOKIE = 'pb_admin_session'
 
+/** Oturum süresi (JWT `exp` + çerez max-age). Tüm admin sayfalarında bu süre sonunda yeniden giriş gerekir. */
+export const ADMIN_SESSION_MAX_AGE_SEC = 60 * 60 // 1 saat
+
 const JWT_ALG = 'HS256'
-const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 7 // 7 gün
 
 function getJwtSecretKey(): Uint8Array {
   const s = process.env.ADMIN_JWT_SECRET?.trim()
@@ -18,7 +20,7 @@ export async function signAdminSessionToken(payload: { sub: string; email: strin
     .setProtectedHeader({ alg: JWT_ALG })
     .setSubject(payload.sub)
     .setIssuedAt()
-    .setExpirationTime(`${SESSION_MAX_AGE_SEC}s`)
+    .setExpirationTime(`${ADMIN_SESSION_MAX_AGE_SEC}s`)
     .sign(getJwtSecretKey())
 }
 

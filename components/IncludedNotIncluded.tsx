@@ -1,8 +1,11 @@
+import type { TourPageUi } from '@/lib/i18n/tourPageUi'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './IncludedNotIncluded.module.css'
 
 interface IncludedNotIncludedProps {
   included?: string[]
   notIncluded?: string[]
+  tourUi?: TourPageUi
   /** Dış section sarmalayıcı olmadan (yan galeri düzeninde) */
   embedded?: boolean
   /** Varsa kolon başlıkları bu sınıfla (örn. yat detay ortak başlık) */
@@ -59,7 +62,9 @@ export default function IncludedNotIncluded({
   notIncluded,
   embedded = false,
   columnHeadingClassName,
+  tourUi: tourUiProp,
 }: IncludedNotIncludedProps) {
+  const tourUi = tourUiProp ?? getTourPageUi('tr')
   const hasIncluded = Array.isArray(included) && included.length > 0
   const hasNotIncluded = Array.isArray(notIncluded) && notIncluded.length > 0
 
@@ -71,7 +76,7 @@ export default function IncludedNotIncluded({
     <div className={embedded ? styles.twoColEmbedded : styles.twoCol}>
         {hasIncluded && (
           <div className={styles.includedCol}>
-            <h3 className={colHeading}>Dahil olanlar</h3>
+            <h3 className={colHeading}>{tourUi.includedTitle}</h3>
             <ul className={styles.list}>
               {included!.map((item, idx) => (
                 <li key={`in-${idx}-${item}`} className={styles.item}>
@@ -87,7 +92,7 @@ export default function IncludedNotIncluded({
 
         {hasNotIncluded && (
           <div className={styles.notIncludedCol}>
-            <h3 className={colHeading}>Dahil olmayanlar</h3>
+            <h3 className={colHeading}>{tourUi.notIncludedTitle}</h3>
             <ul className={styles.list}>
               {notIncluded!.map((item, idx) => (
                 <li key={`out-${idx}-${item}`} className={styles.item}>

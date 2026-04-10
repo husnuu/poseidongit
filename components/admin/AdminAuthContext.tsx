@@ -110,6 +110,35 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     }
   }, [router, signOutAll])
 
+  /** JWT 1 saat sonra dolar; açık sekmede kalan kullanıcıyı periyodik /me ile çıkarır (yönlendirme + temizlik). */
+  useEffect(() => {
+    if (!isAdmin || !user) return
+
+    const verifySession = async () => {
+      try {
+        const me = await fetch('/api/admin/session/me', { credentials: 'include' })
+        if (!me.ok) {
+          await signOutAll()
+          router.replace('/login?error=session')
+        }
+      } catch {
+        await signOutAll()
+        router.replace('/login?error=session')
+      }
+    }
+
+    const intervalMs = 60_000
+    const id = window.setInterval(() => void verifySession(), intervalMs)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void verifySession()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [isAdmin, user, router, signOutAll])
+
   const getIdToken = useCallback(async () => {
     return null
   }, [])

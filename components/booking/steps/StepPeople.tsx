@@ -1,6 +1,7 @@
 'use client'
 
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
+import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import styles from '../booking.module.css'
 
 interface StepPeopleProps {
@@ -8,6 +9,7 @@ interface StepPeopleProps {
   counts: BookingWizardState['counts']
   maxPax: number
   onUpdate: (counts: BookingWizardState['counts']) => void
+  ui: BookingWizardUi
 }
 
 export default function StepPeople({
@@ -15,6 +17,7 @@ export default function StepPeople({
   counts,
   maxPax,
   onUpdate,
+  ui,
 }: StepPeopleProps) {
   const total = counts.adult + counts.child + counts.baby
   const canDecrementAdult = counts.adult > 1
@@ -29,7 +32,7 @@ export default function StepPeople({
       {showRules && (
         <div className={styles.card}>
           <h3 className={styles.cardTitle}>
-            {rules?.title ?? 'Rezervasyon Bilgileri'}
+            {rules?.title ?? ui.rulesTitleFallback}
           </h3>
           <ul style={{ margin: 0, paddingLeft: 20 }}>
             {(rules?.bullets ?? []).map((text, i) => (
@@ -51,15 +54,15 @@ export default function StepPeople({
               <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
           </span>
-          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>Kişi Sayısı</h3>
+          <h3 className={`${styles.cardCaptionTitle} ${styles.wizardMainStepTitle}`}>{ui.guestCountTitle}</h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
         <div className={styles.counterList}>
         <div className={styles.counterRow}>
           <div>
-            <div className={styles.counterLabel}>Yetişkin</div>
-            <div className={styles.counterSub}>11–99 yaş</div>
+            <div className={styles.counterLabel}>{ui.adult}</div>
+            <div className={styles.counterSub}>{ui.adultAge}</div>
           </div>
           <div className={styles.counterControls}>
             <button
@@ -67,7 +70,7 @@ export default function StepPeople({
               className={styles.counterBtn}
               disabled={!canDecrementAdult}
               onClick={() => onUpdate({ ...counts, adult: Math.max(1, counts.adult - 1) })}
-              aria-label="Yetişkin azalt"
+              aria-label={ui.ariaDecAdult}
             >
               −
             </button>
@@ -77,7 +80,7 @@ export default function StepPeople({
               className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
               disabled={!canIncrement}
               onClick={() => onUpdate({ ...counts, adult: counts.adult + 1 })}
-              aria-label="Yetişkin artır"
+              aria-label={ui.ariaIncAdult}
             >
               +
             </button>
@@ -86,8 +89,8 @@ export default function StepPeople({
 
         <div className={styles.counterRow}>
           <div>
-            <div className={styles.counterLabel}>Çocuk</div>
-            <div className={styles.counterSub}>6–10 yaş</div>
+            <div className={styles.counterLabel}>{ui.child}</div>
+            <div className={styles.counterSub}>{ui.childAge}</div>
           </div>
           <div className={styles.counterControls}>
             <button
@@ -95,7 +98,7 @@ export default function StepPeople({
               className={styles.counterBtn}
               disabled={counts.child <= 0}
               onClick={() => onUpdate({ ...counts, child: Math.max(0, counts.child - 1) })}
-              aria-label="Çocuk azalt"
+              aria-label={ui.ariaDecChild}
             >
               −
             </button>
@@ -105,7 +108,7 @@ export default function StepPeople({
               className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
               disabled={!canIncrement}
               onClick={() => onUpdate({ ...counts, child: counts.child + 1 })}
-              aria-label="Çocuk artır"
+              aria-label={ui.ariaIncChild}
             >
               +
             </button>
@@ -114,8 +117,8 @@ export default function StepPeople({
 
         <div className={styles.counterRow}>
           <div>
-            <div className={styles.counterLabel}>Bebek</div>
-            <div className={styles.counterSub}>0–5 yaş</div>
+            <div className={styles.counterLabel}>{ui.baby}</div>
+            <div className={styles.counterSub}>{ui.babyAge}</div>
           </div>
           <div className={styles.counterControls}>
             <button
@@ -123,7 +126,7 @@ export default function StepPeople({
               className={styles.counterBtn}
               disabled={counts.baby <= 0}
               onClick={() => onUpdate({ ...counts, baby: Math.max(0, counts.baby - 1) })}
-              aria-label="Bebek azalt"
+              aria-label={ui.ariaDecBaby}
             >
               −
             </button>
@@ -133,7 +136,7 @@ export default function StepPeople({
               className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
               disabled={!canIncrement}
               onClick={() => onUpdate({ ...counts, baby: counts.baby + 1 })}
-              aria-label="Bebek artır"
+              aria-label={ui.ariaIncBaby}
             >
               +
             </button>
@@ -143,7 +146,7 @@ export default function StepPeople({
 
         {total > maxPax && (
           <p className={styles.errorText} style={{ marginTop: 8 }}>
-            En fazla {maxPax} kişi seçebilirsiniz.
+            {ui.maxGuestsError(maxPax)}
           </p>
         )}
         </div>

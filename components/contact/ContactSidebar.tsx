@@ -1,5 +1,7 @@
 'use client'
 
+import type { ContactPageUiStrings } from '@/lib/i18n/strings/contactPage'
+
 const CARD_BG = '#f5f6f7'
 const TITLE_COLOR = '#0f172a'
 const VALUE_COLOR = '#0f172a'
@@ -126,7 +128,29 @@ function AccentLink({
   )
 }
 
-export default function ContactSidebar({ data }: { data: ContactSidebarData }) {
+export type ContactSidebarLabels = Pick<
+  ContactPageUiStrings,
+  | 'sidebarAria'
+  | 'rowEmail'
+  | 'rowHours'
+  | 'rowAddress'
+  | 'rowPhone'
+  | 'rowFriends'
+  | 'rowInspired'
+  | 'ariaEmailSend'
+  | 'ariaOpenMaps'
+  | 'ariaCall'
+  | 'ariaYoutube'
+  | 'ariaInstagram'
+>
+
+export default function ContactSidebar({
+  data,
+  labels,
+}: {
+  data: ContactSidebarData
+  labels: ContactSidebarLabels
+}) {
   const hasAny =
     data.email ||
     data.businessHours ||
@@ -145,7 +169,7 @@ export default function ContactSidebar({ data }: { data: ContactSidebarData }) {
     <aside
       className="w-full lg:sticky lg:self-start"
       style={{ top: 32 }}
-      aria-label="Contact info"
+      aria-label={labels.sidebarAria}
     >
       <div
         className="rounded-xl w-full"
@@ -158,21 +182,21 @@ export default function ContactSidebar({ data }: { data: ContactSidebarData }) {
       >
         <ul className="list-none p-0 m-0">
           {data.email && (
-            <Row title="EMAIL US" icon={<EmailIcon />}>
-              <AccentLink href={`mailto:${data.email}`} ariaLabel={`E-posta gönder: ${data.email}`}>
+            <Row title={labels.rowEmail} icon={<EmailIcon />}>
+              <AccentLink href={`mailto:${data.email}`} ariaLabel={`${labels.ariaEmailSend}: ${data.email}`}>
                 {data.email}
               </AccentLink>
             </Row>
           )}
           {data.businessHours && (
-            <Row title="BUSINESS HOURS" icon={<ClockIcon />}>
+            <Row title={labels.rowHours} icon={<ClockIcon />}>
               <span>{data.businessHours}</span>
             </Row>
           )}
           {data.address && (
-            <Row title="OFFICE LOCATION" icon={<MapPinIcon />}>
+            <Row title={labels.rowAddress} icon={<MapPinIcon />}>
               {mapsHref ? (
-                <AccentLink href={mapsHref} ariaLabel="Adresi Google Maps’te aç">
+                <AccentLink href={mapsHref} ariaLabel={labels.ariaOpenMaps}>
                   {data.address}
                 </AccentLink>
               ) : (
@@ -181,22 +205,22 @@ export default function ContactSidebar({ data }: { data: ContactSidebarData }) {
             </Row>
           )}
           {data.phone && (
-            <Row title="CALL US" icon={<PhoneIcon />}>
-              <AccentLink href={`tel:${data.phone.replace(/\s/g, '')}`} ariaLabel={`Ara: ${data.phone}`}>
+            <Row title={labels.rowPhone} icon={<PhoneIcon />}>
+              <AccentLink href={`tel:${data.phone.replace(/\s/g, '')}`} ariaLabel={`${labels.ariaCall}: ${data.phone}`}>
                 {data.phone}
               </AccentLink>
             </Row>
           )}
           {data.youtubeUrl && (
-            <Row title="LET'S BE FRIENDS" icon={<YoutubeIcon />}>
-              <AccentLink href={data.youtubeUrl} ariaLabel="YouTube kanalımız">
+            <Row title={labels.rowFriends} icon={<YoutubeIcon />}>
+              <AccentLink href={data.youtubeUrl} ariaLabel={labels.ariaYoutube}>
                 {data.youtubeLabel || 'Find us on Youtube'}
               </AccentLink>
             </Row>
           )}
           {data.instagramUrl && (
-            <Row title="GET INSPIRED" icon={<InstagramIcon />}>
-              <AccentLink href={data.instagramUrl} ariaLabel="Instagram’da takip et">
+            <Row title={labels.rowInspired} icon={<InstagramIcon />}>
+              <AccentLink href={data.instagramUrl} ariaLabel={labels.ariaInstagram}>
                 {data.instagramLabel || 'Follow us on Instagram'}
               </AccentLink>
             </Row>

@@ -2,7 +2,12 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { stripLocalePathPrefix, withLocalePath } from '@/lib/i18n/paths'
+import { localizeNavHref } from '@/lib/i18n/localizeNavHref'
+import { headerAria, pickCtaText, pickNavLabel } from '@/lib/i18n/localizedLabels'
 import {
   Anchor,
   Bell,
@@ -68,12 +73,13 @@ interface SiteSettings {
     url?: string
     metadata?: { lqip?: string; dimensions?: { width: number; height: number } }
   }
-  headerNav?: Array<{ label: string; href: string }>
-  cta?: { text?: string; href?: string }
+  headerNav?: Array<{ label: string; href: string; labelEn?: string; labelDe?: string }>
+  cta?: { text?: string; href?: string; textEn?: string; textDe?: string }
   headerLanguages?: HeaderLanguage[] | null
 }
 
 interface HeaderClientProps {
+  locale: SiteLocale
   settings: SiteSettings
   announcementBar?: AnnouncementBarData | null
   /** SSR ile spacer doğru kalsın diye tahmini yükseklik (px) */
@@ -96,12 +102,22 @@ function safeHref(href: unknown): string {
   return '#'
 }
 
-function LanguageDropdown({ languages }: { languages: HeaderLanguage[] }) {
-  const [current, setCurrent] = useState<string>(languages[0]?.code ?? 'tr')
+function LanguageDropdown({
+  languages,
+  locale,
+  ariaLabel,
+}: {
+  languages: HeaderLanguage[]
+  locale: SiteLocale
+  ariaLabel: string
+}) {
+  const pathname = usePathname() ?? '/'
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   const list = languages.length > 0 ? languages : DEFAULT_HEADER_LANGUAGES
+  const current = locale
   const currentItem = list.find((item) => item.code.toLowerCase() === current) ?? list[0]
 
   useEffect(() => {
@@ -124,7 +140,7 @@ function LanguageDropdown({ languages }: { languages: HeaderLanguage[] }) {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="listbox"
-        aria-label="Dil seçin"
+        aria-label={ariaLabel}
       >
         <span className={styles.languageTriggerLabel}>
           <span className={styles.languageTriggerFlag} aria-hidden>
@@ -173,8 +189,12 @@ function LanguageDropdown({ languages }: { languages: HeaderLanguage[] }) {
                 aria-selected={isSelected}
                 className={`${styles.languageOption} ${isSelected ? styles.languageOptionSelected : ''}`}
                 onClick={() => {
-                  setCurrent(key)
                   setOpen(false)
+                  const base = stripLocalePathPrefix(pathname)
+                  const path = base === '/' ? '' : base
+                  const next =
+                    key === 'tr' ? path || '/' : `/${key}${path}`
+                  router.push(next || '/')
                 }}
               >
                 <span className={styles.languageOptionFlag}>
@@ -233,17 +253,23 @@ function isMailtoOrTel(href: string): boolean {
 }
 
 export default function HeaderClient({
+  locale,
   settings,
   announcementBar = null,
 }: HeaderClientProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [headerVisible, setHeaderVisible] = useState(true)
   const lastScrollY = useRef(0)
+  const aria = headerAria(locale)
 
-  const announcementText = announcementBar?.text?.trim() ?? ''
+  const announcementText =
+    (locale === 'en' && announcementBar?.textEn?.trim()) ||
+    (locale === 'de' && announcementBar?.textDe?.trim()) ||
+    announcementBar?.text?.trim() ||
+    ''
   const showAnnouncement = Boolean(announcementBar?.enabled && announcementText)
   const linkTrimmed = announcementBar?.linkUrl?.trim() ?? ''
-  const linkResolved = linkTrimmed ? safeHref(linkTrimmed) : '#'
+  const linkResolved = linkTrimmed ? localizeNavHref(locale, linkTrimmed) : '#'
   const hasWorkingLink = Boolean(linkTrimmed && linkResolved !== '#')
 
   useEffect(() => {
@@ -270,6 +296,14 @@ export default function HeaderClient({
   const announcementTextClass =
     'text-sm font-medium leading-snug text-white sm:text-[15px] [&_a]:underline'
 
+  const ctaLabel = pickCtaText(settings.cta, locale)
+  const ctaHrefRaw = settings.cta?.href?.trim()
+  const ctaHref =
+    ctaHrefRaw && safeHref(ctaHrefRaw) !== '#'
+      ? localizeNavHref(locale, safeHref(ctaHrefRaw))
+      : null
+  const showCta = Boolean(ctaLabel && ctaHref)
+
   const announcementInner = (
     <>
       {AnnouncementIcon ? (
@@ -282,7 +316,7 @@ export default function HeaderClient({
   return (
     <div className={`${styles.siteHeaderStack} print:hidden`}>
       {showAnnouncement && (
-        <div className={styles.announcementStrip} role="region" aria-label="Site duyurusu">
+        <div className={styles.announcementStrip} role="region" aria-label={aria.announcement}>
           {hasWorkingLink ? (
             isExternalHttpUrl(linkResolved) ? (
               <a
@@ -316,7 +350,7 @@ export default function HeaderClient({
       <header className={`${styles.header} ${!headerVisible ? styles.headerHidden : ''}`}>
         <div className={styles.headerInner}>
           <div className={styles.headerLeft}>
-            <Link href="/" className={styles.logoLink} aria-label="Ana sayfa">
+            <Link href={withLocalePath(locale, '/')} className={styles.logoLink} aria-label={aria.home}>
               <div className={styles.logoWrapper}>
                 {logoUrl ? (
                   <Image
@@ -335,18 +369,27 @@ export default function HeaderClient({
           </div>
 
           <div className={styles.headerRight}>
-            <nav className={styles.desktopNav} aria-label="Ana menü">
+            <nav className={styles.desktopNav} aria-label={aria.mainNav}>
               <ul className={styles.desktopNavList}>
                 {(settings.headerNav || []).map((item, i) => (
                   <li key={i}>
-                    <Link href={safeHref(item.href)} className={styles.desktopNavLink}>
-                      {item.label}
+                    <Link href={localizeNavHref(locale, item.href)} className={styles.desktopNavLink}>
+                      {pickNavLabel(item, locale)}
                     </Link>
                   </li>
                 ))}
               </ul>
             </nav>
+            {showCta && ctaHref && (
+              <div className={styles.headerCtaWrap}>
+                <Link href={ctaHref} className={styles.headerCta}>
+                  {ctaLabel}
+                </Link>
+              </div>
+            )}
             <LanguageDropdown
+              locale={locale}
+              ariaLabel={aria.selectLanguage}
               languages={settings.headerLanguages?.length ? settings.headerLanguages : DEFAULT_HEADER_LANGUAGES}
             />
             <div className={styles.mobileRightBlock}>
@@ -354,7 +397,7 @@ export default function HeaderClient({
                 type="button"
                 className={styles.mobileMenuBtn}
                 onClick={() => setMobileOpen(true)}
-                aria-label="Menüyü aç"
+                aria-label={aria.openMenu}
               >
                 <span className={styles.hamburgerIcon} aria-hidden>
                   <MenuIcon />
@@ -370,14 +413,15 @@ export default function HeaderClient({
           className={`${styles.mobileMenuOverlay} ${mobileOpen ? '' : styles.closing}`}
           role="dialog"
           aria-modal="true"
-          aria-label="Mobil menü"
+          aria-label={aria.mobileMenu}
         >
           <div className={styles.mobileMenuContent}>
             <div className={styles.mobileMenuHeader}>
               <Link
-                href="/"
+                href={withLocalePath(locale, '/')}
                 className={styles.mobileMenuLogo}
                 onClick={() => setMobileOpen(false)}
+                aria-label={aria.home}
               >
                 {logoUrl ? (
                   <Image
@@ -395,26 +439,37 @@ export default function HeaderClient({
                 type="button"
                 className={styles.mobileMenuClose}
                 onClick={() => setMobileOpen(false)}
-                aria-label="Menüyü kapat"
+                aria-label={aria.closeMenu}
               >
                 <CloseIcon />
               </button>
             </div>
-            <nav className={styles.mobileMenuNav} aria-label="Mobil menü">
+            <nav className={styles.mobileMenuNav} aria-label={aria.mobileMenu}>
               <ul className={styles.mobileMenuNavList}>
                 {(settings.headerNav || []).map((item, i) => (
                   <li key={i} className={styles.mobileMenuNavItem}>
                     <Link
-                      href={safeHref(item.href)}
+                      href={localizeNavHref(locale, item.href)}
                       className={styles.mobileMenuLink}
                       onClick={() => setMobileOpen(false)}
                     >
-                      {item.label}
+                      {pickNavLabel(item, locale)}
                     </Link>
                   </li>
                 ))}
               </ul>
             </nav>
+            {showCta && ctaHref && (
+              <div className={styles.mobileMenuCta}>
+                <Link
+                  href={ctaHref}
+                  className={styles.headerCta}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {ctaLabel}
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

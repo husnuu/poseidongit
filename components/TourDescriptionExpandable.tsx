@@ -4,11 +4,15 @@ import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './TourDescriptionExpandable.module.css'
 
 interface TourDescriptionExpandableProps {
   description: PortableTextBlock[]
-  /** Varsayılan: "Tur Açıklaması" */
+  /** RSC sınırında `tourUi` geçirilemez; yat sayfası vermezse `tr` kullanılır. */
+  locale?: SiteLocale
+  /** Varsayılan: tourUi veya "Tur Açıklaması" */
   heading?: string
   /** Başlığın solunda gösterilir (örn. ikon) */
   headingIcon?: ReactNode
@@ -20,11 +24,16 @@ interface TourDescriptionExpandableProps {
 
 export default function TourDescriptionExpandable({
   description,
-  heading = 'Tur Açıklaması',
+  locale,
+  heading: headingProp,
   headingIcon,
   headingVariant = 'tour',
   headingClassName,
 }: TourDescriptionExpandableProps) {
+  const tourUi = useMemo(() => getTourPageUi(locale ?? 'tr'), [locale])
+  const heading = headingProp ?? tourUi.tourDescriptionHeading
+  const showMore = tourUi.tourDescriptionShowMore
+  const showLess = tourUi.tourDescriptionShowLess
   const [expanded, setExpanded] = useState(false)
 
   const hasContent = useMemo(
@@ -72,7 +81,7 @@ export default function TourDescriptionExpandable({
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
       >
-        <span>{expanded ? 'Daha az göster' : 'Daha fazla göster'}</span>
+        <span>{expanded ? showLess : showMore}</span>
         <span className={styles.toggleIcon} aria-hidden>
           <svg
             width="18"

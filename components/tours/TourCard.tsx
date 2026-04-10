@@ -1,6 +1,10 @@
 'use client'
 
+import { useMemo } from 'react'
 import Image from 'next/image'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 
 function ClockIcon({ className }: { className?: string }) {
   return (
@@ -104,143 +108,148 @@ function RatingDots({ value }: { value: number }) {
 
 type TourCardProps = {
   tour: TourListItem
+  locale?: SiteLocale
 }
 
-export default function TourCard({ tour }: TourCardProps) {
-  const href = tour.slug ? `/tour/${tour.slug}` : null
+export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
+  const tourUi = useMemo(() => getTourPageUi(locale), [locale])
+  const href = tour.slug ? withLocalePath(locale, `/tour/${tour.slug}`) : null
   const rating = tour.rating ?? 0
 
   const content = (
     <>
-        {/* Kapak görsel */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100">
-          {tour.coverImageUrl ? (
-            <Image
-              src={tour.coverImageUrl}
-              alt={tour.coverImageAlt || tour.title || 'Tur görseli'}
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-zinc-400 text-sm">
-              Görsel yok
-            </div>
-          )}
-          {/* Ribbon badge - sol üst, turuncu, kesik kuyruk */}
-          {tour.isPopular && (
-            <div
-              className="absolute left-0 top-4 z-10 flex items-center pl-3 pr-6 py-1.5 text-white text-xs font-bold uppercase tracking-wide"
-              style={{
-                background: 'linear-gradient(90deg, #d8832a 0%, #c97622 100%)',
-                clipPath: 'polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              }}
-            >
-              En Popüler
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col flex-1 p-6 md:p-8">
-          {/* Başlık */}
-          <h3
-            className="font-black text-xl md:text-2xl uppercase leading-tight line-clamp-2 mb-3"
-            style={{ color: 'var(--secondary)', fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100">
+        {tour.coverImageUrl ? (
+          <Image
+            src={tour.coverImageUrl}
+            alt={tour.coverImageAlt || tour.title || tourUi.tourCardCoverAltFallback}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-zinc-400 text-sm">
+            {tourUi.tourCardNoImage}
+          </div>
+        )}
+        {tour.isPopular && (
+          <div
+            className="absolute left-0 top-4 z-10 flex items-center pl-3 pr-6 py-1.5 text-white text-xs font-bold uppercase tracking-wide"
+            style={{
+              background: 'linear-gradient(90deg, #d8832a 0%, #c97622 100%)',
+              clipPath: 'polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            }}
           >
-            {tour.title}
-          </h3>
+            {tourUi.tourCardPopularBadge}
+          </div>
+        )}
+      </div>
 
-          {/* Açıklama */}
-          {tour.shortDescription && (
-            <p className="text-base text-black/60 leading-relaxed line-clamp-3 mb-5">
-              {tour.shortDescription}
-            </p>
+      <div className="flex flex-col flex-1 p-6 md:p-8">
+        <h3
+          className="font-black text-xl md:text-2xl uppercase leading-tight line-clamp-2 mb-3"
+          style={{ color: 'var(--secondary)', fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+        >
+          {tour.title}
+        </h3>
+
+        {tour.shortDescription && (
+          <p className="text-base text-black/60 leading-relaxed line-clamp-3 mb-5">
+            {tour.shortDescription}
+          </p>
+        )}
+
+        <div className="space-y-3 mb-5">
+          {tour.departureLabel && (
+            <div className="flex items-center gap-3 text-base font-semibold text-black/80">
+              <span className="flex-shrink-0 text-[var(--primary)]">
+                <PinIcon className="size-5" />
+              </span>
+              <span>
+                {tourUi.tourCardDeparturePrefix}
+                {tour.departureLabel}
+              </span>
+            </div>
           )}
-
-          {/* Meta: Kalkış, Süre, Değerlendirme (tur sayfası ikonları) */}
-          <div className="space-y-3 mb-5">
-            {tour.departureLabel && (
-              <div className="flex items-center gap-3 text-base font-semibold text-black/80">
-                <span className="flex-shrink-0 text-[var(--primary)]"><PinIcon className="size-5" /></span>
-                <span>Kalkış: {tour.departureLabel}</span>
-              </div>
-            )}
-            {tour.durationLabel && (
-              <div className="flex items-center gap-3 text-base font-semibold text-black/80">
-                <span className="flex-shrink-0 text-[var(--primary)]"><ClockIcon className="size-5" /></span>
-                <span>Süre: {tour.durationLabel}</span>
-              </div>
-            )}
-            {(rating > 0 || (tour.reviewCount != null && tour.reviewCount > 0)) && (
-              <div className="flex items-center gap-3 text-base">
-                <RatingDots value={rating} />
-                {tour.reviewsUrl ? (
-                  <span
-                    role="link"
-                    tabIndex={0}
-                    onClick={(e) => {
+          {tour.durationLabel && (
+            <div className="flex items-center gap-3 text-base font-semibold text-black/80">
+              <span className="flex-shrink-0 text-[var(--primary)]">
+                <ClockIcon className="size-5" />
+              </span>
+              <span>
+                {tourUi.tourCardDurationPrefix}
+                {tour.durationLabel}
+              </span>
+            </div>
+          )}
+          {(rating > 0 || (tour.reviewCount != null && tour.reviewCount > 0)) && (
+            <div className="flex items-center gap-3 text-base">
+              <RatingDots value={rating} />
+              {tour.reviewsUrl ? (
+                <span
+                  role="link"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    window.open(tour.reviewsUrl!, '_blank', 'noopener,noreferrer')
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
                       e.stopPropagation()
                       window.open(tour.reviewsUrl!, '_blank', 'noopener,noreferrer')
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        window.open(tour.reviewsUrl!, '_blank', 'noopener,noreferrer')
-                      }
-                    }}
-                    className="inline-flex items-center gap-2 text-emerald-600 font-semibold hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 rounded"
-                    title="Google yorumları"
-                  >
-                    <GoogleIcon />
-                    <span>
-                      {tour.reviewCount != null && tour.reviewCount > 0
-                        ? `${tour.reviewCount} değerlendirme`
-                        : rating > 0
-                          ? `${rating} puan`
-                          : ''}
-                    </span>
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 text-emerald-600 font-semibold hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 rounded"
+                  title={tourUi.tourCardGoogleReviewsTitle}
+                >
+                  <GoogleIcon />
+                  <span>
+                    {tour.reviewCount != null && tour.reviewCount > 0
+                      ? tourUi.tourCardReviews(tour.reviewCount)
+                      : rating > 0
+                        ? tourUi.tourCardRatingPoints(rating)
+                        : ''}
                   </span>
-                ) : (
-                  <span className="inline-flex items-center gap-2 text-emerald-600 font-semibold">
-                    <GoogleIcon />
-                    <span>
-                      {tour.reviewCount != null && tour.reviewCount > 0
-                        ? `${tour.reviewCount} değerlendirme`
-                        : rating > 0
-                          ? `${rating} puan`
-                          : ''}
-                    </span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2 text-emerald-600 font-semibold">
+                  <GoogleIcon />
+                  <span>
+                    {tour.reviewCount != null && tour.reviewCount > 0
+                      ? tourUi.tourCardReviews(tour.reviewCount)
+                      : rating > 0
+                        ? tourUi.tourCardRatingPoints(rating)
+                        : ''}
                   </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Fiyat */}
-          {tour.priceFrom != null && (
-            <p
-              className="text-lg font-extrabold uppercase mt-auto mb-4"
-              style={{ color: 'var(--secondary)' }}
-            >
-              Kişi başı {formatPriceFrom(tour.priceFrom)}’den
-            </p>
+                </span>
+              )}
+            </div>
           )}
-
-          {/* CTA - lacivert (hero ile aynı), kenar parıltısı + üstte hafif parlama */}
-          <span className="hero-primary-btn-wrap tour-card-cta-shimmer mt-auto w-full rounded-xl p-[2px] flex">
-            <span
-              className="hero-primary-inner hero-btn-shine w-full rounded-[10px] py-2.5 md:py-3 font-black uppercase text-white text-center text-base md:text-[17px] flex items-center justify-center overflow-hidden transition hover:brightness-110 ring-1 ring-inset ring-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(15,23,42,0.18)]"
-              style={{
-                background: 'linear-gradient(180deg, #3558b0 0%, #1e3a8a 42%, #172e6e 100%)',
-              }}
-            >
-              Turu görüntüle
-            </span>
-          </span>
         </div>
+
+        {tour.priceFrom != null && (
+          <p
+            className="text-lg font-extrabold uppercase mt-auto mb-4"
+            style={{ color: 'var(--secondary)' }}
+          >
+            {tourUi.tourCardPerPersonFrom(formatPriceFrom(tour.priceFrom))}
+          </p>
+        )}
+
+        <span className="hero-primary-btn-wrap tour-card-cta-shimmer mt-auto w-full rounded-xl p-[2px] flex">
+          <span
+            className="hero-primary-inner hero-btn-shine w-full rounded-[10px] py-2.5 md:py-3 font-black uppercase text-white text-center text-base md:text-[17px] flex items-center justify-center overflow-hidden transition hover:brightness-110 ring-1 ring-inset ring-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(15,23,42,0.18)]"
+            style={{
+              background: 'linear-gradient(180deg, #3558b0 0%, #1e3a8a 42%, #172e6e 100%)',
+            }}
+          >
+            {tourUi.tourCardViewTour}
+          </span>
+        </span>
+      </div>
     </>
   )
 

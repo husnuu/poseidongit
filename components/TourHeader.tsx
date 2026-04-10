@@ -1,5 +1,8 @@
 'use client'
 
+import { useMemo } from 'react'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './TourHeader.module.css'
 
 function LikeIcon({ className }: { className?: string }) {
@@ -104,6 +107,8 @@ export interface TourHeaderProps {
   meetingLocation?: string | null
   /** Optional Google Maps URL for departure location */
   meetingLocationUrl?: string | null
+  /** RSC → client: `TourPageUi` fonksiyonlar içerdiği için geçirilemez; locale kullanın. */
+  locale: SiteLocale
 }
 
 export function TourHeader({
@@ -115,7 +120,9 @@ export function TourHeader({
   durationText,
   meetingLocation,
   meetingLocationUrl,
+  locale,
 }: TourHeaderProps) {
+  const tourUi = useMemo(() => getTourPageUi(locale), [locale])
   const hasRating = ratingLabel != null || reviewCount != null
   const hasDuration = Boolean(durationText)
   const hasDeparture = Boolean(meetingLocation)
@@ -135,7 +142,7 @@ export function TourHeader({
               </span>
               <span className={`${styles.metaText} ${styles.reviewText}`}>
                 <span className={styles.metaLabel}>
-                  {ratingLabel ?? 'EXCELLENT'}
+                  {ratingLabel ?? tourUi.defaultRatingLabel}
                 </span>
                 {ratingDots > 0 && (
                   <span className={styles.ratingDots} aria-hidden>
@@ -153,7 +160,7 @@ export function TourHeader({
                       target={reviewsUrl?.startsWith('http') ? '_blank' : undefined}
                       rel={reviewsUrl?.startsWith('http') ? 'noopener noreferrer' : undefined}
                     >
-                      {reviewCount.toLocaleString('tr-TR')} yorum
+                      {reviewCount.toLocaleString(tourUi.numberLocale)} {tourUi.reviewsCountSuffix}
                       <span className={styles.reviewsLinkIcon} aria-hidden>
                         <GoogleIconSmall />
                       </span>
@@ -181,7 +188,7 @@ export function TourHeader({
                 <PinIcon />
               </span>
               <span className={styles.metaText}>
-                <span className={styles.metaLabel}>Kalkış:</span>{' '}
+                <span className={styles.metaLabel}>{tourUi.departureMetaLabel}</span>{' '}
                 {meetingLocationUrl ? (
                   <a
                     href={meetingLocationUrl}
