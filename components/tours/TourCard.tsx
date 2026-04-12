@@ -213,11 +213,12 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
   )
 
   const ctaInner = (
-    <span className="hero-primary-btn-wrap tour-card-cta-shimmer flex w-full rounded-xl p-[2px]">
+    <span className="hero-primary-btn-wrap tour-card-cta-shimmer flex w-full rounded-2xl p-[2px]">
       <span
-        className="hero-primary-inner hero-btn-shine flex w-full min-h-[48px] items-center justify-center overflow-hidden rounded-[11px] py-3.5 text-center text-[15px] font-black uppercase tracking-wide text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(15,23,42,0.18)] ring-1 ring-inset ring-white/20 transition hover:brightness-110 sm:min-h-[52px] sm:py-4 sm:text-[17px]"
+        className="hero-primary-inner hero-btn-shine flex w-full min-h-[50px] items-center justify-center overflow-hidden rounded-[14px] py-3.5 text-center text-[15px] font-black uppercase tracking-[0.05em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.42),inset_0_-1px_0_rgba(15,23,42,0.2)] ring-1 ring-inset ring-white/25 transition hover:brightness-[1.05] sm:min-h-[54px] sm:rounded-[15px] sm:py-4 sm:text-[17px]"
         style={{
-          background: 'linear-gradient(180deg, #3558b0 0%, #1e3a8a 42%, #172e6e 100%)',
+          background:
+            'linear-gradient(135deg, #5b7fd6 0%, #3d5eb8 28%, #1e3a8a 55%, #152d66 78%, #0f2249 100%)',
         }}
       >
         {tourUi.tourCardViewTour}
@@ -225,15 +226,24 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
     </span>
   )
 
+  const priceFormatted = tour.priceFrom != null ? formatPriceFrom(tour.priceFrom) : ''
   const priceBlock =
     tour.priceFrom != null ? (
-      <p className="text-sm font-black uppercase leading-snug text-black sm:text-base">
-        {tourUi.tourCardPerPersonFrom(formatPriceFrom(tour.priceFrom))}
+      <p
+        className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0 leading-tight"
+        aria-label={tourUi.tourCardPerPersonFrom(priceFormatted)}
+      >
+        <span className="text-[11px] font-medium text-zinc-500 sm:text-xs">{tourUi.tourCardPriceMutedBefore}</span>
+        <span className="text-xl font-bold tabular-nums tracking-tight text-zinc-900 sm:text-2xl">{priceFormatted}</span>
+        <span className="text-[11px] font-medium text-zinc-500 sm:text-xs">{tourUi.tourCardPriceMutedAfter}</span>
       </p>
     ) : null
 
+  const titleClassName =
+    'line-clamp-2 text-lg font-black uppercase leading-snug tracking-tight text-zinc-900 sm:text-xl'
+
   return (
-    <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_12px_32px_rgba(0,0,0,0.1)] transition-shadow duration-300 hover:shadow-[0_16px_40px_rgba(0,0,0,0.12)]">
+    <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-[0_25px_50px_-12px_rgba(15,23,42,0.09),0_12px_28px_-10px_rgba(15,23,42,0.06)] transition-shadow duration-300 hover:shadow-[0_32px_64px_-14px_rgba(15,23,42,0.11),0_16px_32px_-10px_rgba(15,23,42,0.07)]">
       {href ? (
         <>
           <Link
@@ -243,14 +253,11 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
           >
             {imageSection}
             <div className="px-5 pt-5 sm:px-6">
-              <h3
-                className="line-clamp-2 text-lg font-black uppercase leading-tight tracking-tight text-black sm:text-xl"
-                style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
-              >
+              <h3 className={titleClassName} style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}>
                 {tour.title}
               </h3>
               {tour.shortDescription && (
-                <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-600 sm:text-[15px]">
+                <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-zinc-600 sm:text-[15px]">
                   {tour.shortDescription}
                 </p>
               )}
@@ -275,14 +282,11 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
           <div className="shrink-0">
             {imageSection}
             <div className="px-5 pt-5 sm:px-6">
-              <h3
-                className="line-clamp-2 text-lg font-black uppercase leading-tight tracking-tight text-black sm:text-xl"
-                style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
-              >
+              <h3 className={titleClassName} style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}>
                 {tour.title}
               </h3>
               {tour.shortDescription && (
-                <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-600 sm:text-[15px]">
+                <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-zinc-600 sm:text-[15px]">
                   {tour.shortDescription}
                 </p>
               )}

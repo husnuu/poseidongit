@@ -61,6 +61,26 @@ function PinIcon({ className }: { className?: string }) {
   )
 }
 
+/** Yorum sayısı satırı — konuşma balonu, saat/pin ile aynı çizgi stili */
+function ChatReviewIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    </svg>
+  )
+}
+
 function GoogleIconSmall({ className }: { className?: string }) {
   return (
     <svg
@@ -96,8 +116,6 @@ export interface TourHeaderProps {
   title: string
   /** e.g. "EXCELLENT", "Mükemmel" */
   ratingLabel?: string | null
-  /** Number of filled dots (e.g. 5) */
-  ratingDots?: number
   reviewCount?: number | null
   /** Link for review count (e.g. "#reviews" or external URL) */
   reviewsUrl?: string | null
@@ -114,7 +132,6 @@ export interface TourHeaderProps {
 export function TourHeader({
   title,
   ratingLabel,
-  ratingDots = 5,
   reviewCount,
   reviewsUrl,
   durationText,
@@ -136,24 +153,21 @@ export function TourHeader({
       {(hasRating || hasDuration || hasDeparture) && (
         <div className={styles.metaRow}>
           {hasRating && (
-            <div className={styles.metaItem}>
+            <div className={styles.metaRatingStrip}>
               <span className={styles.metaIcon} aria-hidden>
                 <LikeIcon />
               </span>
-              <span className={`${styles.metaText} ${styles.reviewText}`}>
+              <div className={`${styles.metaStripText} ${styles.reviewText}`}>
                 <span className={styles.metaLabel}>
                   {ratingLabel ?? tourUi.defaultRatingLabel}
                 </span>
-                {ratingDots > 0 && (
-                  <span className={styles.ratingDots} aria-hidden>
-                    {Array.from({ length: ratingDots }).map((_, i) => (
-                      <span key={i} className={styles.ratingDot} />
-                    ))}
+              </div>
+              {reviewCount != null ? (
+                <>
+                  <span className={styles.metaIcon} aria-hidden>
+                    <ChatReviewIcon />
                   </span>
-                )}
-                {reviewCount != null && (
-                  <>
-                    {' '}
+                  <div className={`${styles.metaStripText} ${styles.reviewText}`}>
                     <a
                       href={reviewsUrl?.startsWith('http') ? reviewsUrl : '#reviews'}
                       className={styles.reviewsLink}
@@ -165,43 +179,63 @@ export function TourHeader({
                         <GoogleIconSmall />
                       </span>
                     </a>
-                  </>
-                )}
-              </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={styles.metaStripSpacer} aria-hidden />
+                  <div className={styles.metaStripSpacer} aria-hidden />
+                </>
+              )}
             </div>
           )}
 
-          {hasDuration && (
-            <div className={styles.metaItem}>
-              <span className={styles.metaIcon} aria-hidden>
-                <ClockIcon />
-              </span>
-              <span className={styles.metaText}>
-                <span className={styles.metaLabel}>{durationText}</span>
-              </span>
-            </div>
-          )}
-
-          {hasDeparture && (
-            <div className={styles.metaItem}>
-              <span className={styles.metaIcon} aria-hidden>
-                <PinIcon />
-              </span>
-              <span className={styles.metaText}>
-                <span className={styles.metaLabel}>{tourUi.departureMetaLabel}</span>{' '}
-                {meetingLocationUrl ? (
-                  <a
-                    href={meetingLocationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.reviewsLink}
-                  >
-                    {meetingLocation}
-                  </a>
-                ) : (
-                  <span className={styles.metaMuted}>{meetingLocation}</span>
-                )}
-              </span>
+          {(hasDuration || hasDeparture) && (
+            <div className={styles.metaFactsStrip}>
+              {hasDuration ? (
+                <>
+                  <span className={styles.metaIcon} aria-hidden>
+                    <ClockIcon />
+                  </span>
+                  <div className={styles.metaStripText}>
+                    <span className={styles.metaLabel}>{durationText}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={styles.metaStripSpacer} aria-hidden />
+                  <div className={styles.metaStripSpacer} aria-hidden />
+                </>
+              )}
+              {hasDeparture ? (
+                <>
+                  <span className={styles.metaIcon} aria-hidden>
+                    <PinIcon />
+                  </span>
+                  <div className={`${styles.metaStripText} ${styles.metaStripTextWrap}`}>
+                    <span className={styles.metaText}>
+                      <span className={styles.metaLabel}>{tourUi.departureMetaLabel}</span>{' '}
+                      {meetingLocationUrl ? (
+                        <a
+                          href={meetingLocationUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.reviewsLink}
+                        >
+                          {meetingLocation}
+                        </a>
+                      ) : (
+                        <span className={styles.metaMuted}>{meetingLocation}</span>
+                      )}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={styles.metaStripSpacer} aria-hidden />
+                  <div className={styles.metaStripSpacer} aria-hidden />
+                </>
+              )}
             </div>
           )}
         </div>

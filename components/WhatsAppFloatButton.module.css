@@ -48,18 +48,17 @@
 }
 
 /*
- * Mobil: varsayılan = alt CTA şeridi varmış gibi (SSR + tur/yat sayfası güvenli).
- * .relaxBottom = şerit yok veya gizli — buton daha aşağı.
+ * Mobil: alt CTA şeridinin üstünde kalsın diye bottom yükseltili.
+ * .relaxBottom = şerit yok — alttan rahat boşluk (sağda kalır).
  */
 @media (max-width: 1023px) {
   .anchor {
-    bottom: max(calc(5.125rem + env(safe-area-inset-bottom)), 5.65rem);
     right: max(1rem, env(safe-area-inset-right));
+    bottom: max(calc(7rem + env(safe-area-inset-bottom, 0px)), 7.25rem);
   }
 
-  /* Sticky yok: alttan boşluk */
   .anchor.relaxBottom {
-    bottom: max(2.25rem, calc(0.625rem + env(safe-area-inset-bottom)));
+    bottom: max(2.5rem, calc(1rem + env(safe-area-inset-bottom, 0px)));
   }
 }
 

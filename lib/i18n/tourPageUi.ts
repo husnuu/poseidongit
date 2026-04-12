@@ -59,6 +59,10 @@ export type TourPageUi = {
   tourCardViewTour: string
   tourCardPopularBadge: string
   tourCardPerPersonFrom: (priceFormatted: string) => string
+  /** Kart fiyat satırı: tutardan önce (küçük gri). */
+  tourCardPriceMutedBefore: string
+  /** Kart fiyat satırı: tutardan sonra (küçük gri). */
+  tourCardPriceMutedAfter: string
   tourCardReviews: (n: number) => string
   tourCardRatingPoints: (rating: number) => string
   tourCardCoverAltFallback: string
@@ -126,6 +130,8 @@ const UI: Record<SiteLocale, TourPageUi> = {
     tourCardViewTour: 'Turu görüntüle',
     tourCardPopularBadge: 'En Popüler',
     tourCardPerPersonFrom: (p) => `Kişi başı ${p}’den`,
+    tourCardPriceMutedBefore: 'Kişi başı ',
+    tourCardPriceMutedAfter: '’den',
     tourCardReviews: (n) => `${n} değerlendirme`,
     tourCardRatingPoints: (r) => `${r} puan`,
     tourCardCoverAltFallback: 'Tur görseli',
@@ -191,6 +197,8 @@ const UI: Record<SiteLocale, TourPageUi> = {
     tourCardViewTour: 'View tour',
     tourCardPopularBadge: 'Most popular',
     tourCardPerPersonFrom: (p) => `From ${p} per person`,
+    tourCardPriceMutedBefore: 'From ',
+    tourCardPriceMutedAfter: ' per person',
     tourCardReviews: (n) => (n === 1 ? '1 review' : `${n} reviews`),
     tourCardRatingPoints: (r) => `${r} rating`,
     tourCardCoverAltFallback: 'Tour image',
@@ -256,6 +264,8 @@ const UI: Record<SiteLocale, TourPageUi> = {
     tourCardViewTour: 'Tour ansehen',
     tourCardPopularBadge: 'Am beliebtesten',
     tourCardPerPersonFrom: (p) => `Ab ${p} pro Person`,
+    tourCardPriceMutedBefore: 'Ab ',
+    tourCardPriceMutedAfter: ' pro Person',
     tourCardReviews: (n) => (n === 1 ? '1 Bewertung' : `${n} Bewertungen`),
     tourCardRatingPoints: (r) => `${r} Punkte`,
     tourCardCoverAltFallback: 'Tourbild',

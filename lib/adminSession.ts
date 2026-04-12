@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose'
+import { ADMIN_SESSION_COOKIE } from '@/lib/adminSessionConstants'
 
-export const ADMIN_SESSION_COOKIE = 'pb_admin_session'
+export { ADMIN_SESSION_COOKIE }
 
 /** Oturum süresi (JWT `exp` + çerez max-age). Tüm admin sayfalarında bu süre sonunda yeniden giriş gerekir. */
 export const ADMIN_SESSION_MAX_AGE_SEC = 60 * 60 // 1 saat

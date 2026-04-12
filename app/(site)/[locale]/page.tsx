@@ -54,6 +54,11 @@ const defaultHomeTitle = siteName
 const defaultHomeDescription =
   'Tekne turu rezervasyonu. Adalar ve koylar turu, BBQ turları, günlük turlar. Online rezervasyon.'
 
+const homePageMetaQuery = `*[_type == "homePage"][0]{
+  seo{ metaTitle, metaDescription },
+  pageTranslations
+}`
+
 export async function generateMetadata({
   params,
 }: {
@@ -201,11 +206,6 @@ type HomePageHeroResult = {
   instagramSection?: InstagramSectionData | null
   pageTranslations?: unknown
 } | null
-
-const homePageMetaQuery = `*[_type == "homePage"][0]{
-  seo{ metaTitle, metaDescription },
-  pageTranslations
-}`
 
 function localizeCta(
   c: { label?: string | null; href?: string | null } | null | undefined,
@@ -435,7 +435,17 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       data?.seo?.metaDescription?.trim() ||
       'Çeşme tekne turu ve koy turları. Adalar ve koylar tekne turu rezervasyonu.',
   })
-  const travelAgencySchema = buildTravelAgencyStructuredData(travelAgencyImageOverrides)
+  let travelAgencySchema: Record<string, unknown>
+  try {
+    travelAgencySchema = buildTravelAgencyStructuredData(travelAgencyImageOverrides)
+  } catch {
+    travelAgencySchema = {
+      '@context': 'https://schema.org',
+      '@type': 'TravelAgency',
+      name: getSiteName() || 'Çeşme tekne turu',
+      url: getBaseUrl(),
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white">

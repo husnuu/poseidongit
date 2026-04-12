@@ -51,7 +51,7 @@ const SAME_AS = [
   'https://www.google.com/maps?vet=10CAAQoqAOahcKEwjgvpavhOmTAxUAAAAAHQAAAAAQDw..i&rlz=1C5MACD_enTR1078TR1079&pvq=Cg0vZy8xMXR0OGdoYmN3IiUKH1lhdCBLaXJhbGFtYSAtIMOHZcWfbWUgWWFjaHRpbmcQAhgD&lqi=CifDh2XFn21lIFlhdCBLaXJhbGFtYSAtIMOHZcWfbWUgWWFjaHRpbmdI-9Keh-W5gIAIWjsQARACEAMQBBgAGAMYBCIlw6dlxZ9tZSB5YXQga2lyYWxhbWEgw6dlxZ9tZSB5YWNodGluZyoECAIQAZIBDWNydWlzZV9hZ2VuY3k&fvr=1&cs=0&um=1&ie=UTF-8&fb=1&gl=tr&sa=X&ftid=0x14bb7b510f49d5f7:0x599400a4bd3f5d0b', // Senin paylaştığın gerçek Google linki
 ] as const
 
-const PRICE_RANGE = '1500-45000' // Günlük turlardan özel yat kiralamaya kadar olan geniş skala
+const PRICE_RANGE = '1500-2500' // Günlük turlardan özel yat kiralamaya kadar olan geniş skala
 const PAYMENT_ACCEPTED = 'Cash, Credit Card, Bank Transfer, Online Payment'
 
 /** * KRİTİK GÜNCELLEME: HTML kaynağında görünen 2017 yorum sayısı eklendi.

@@ -396,14 +396,13 @@ export default async function TourPage({
           <PhotoGrid images={galleryHeroImages} tourTitle={tour.title} locale={locale} />
         </div>
       )}
-      <div className="container mx-auto px-4 py-16 max-w-[1360px]">
+      <div className="container mx-auto px-4 pt-12 pb-16 max-w-[1360px]">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
           <main className="flex-1 min-w-0">
             <span id="reviews" className="block scroll-mt-24" aria-hidden />
             <TourHeader
           title={tour.title}
           ratingLabel={tour.ratingLabel}
-          ratingDots={5}
           reviewCount={tour.reviewCount}
           reviewsUrl={tour.reviewsUrl}
           durationText={tour.quickFacts?.durationText}

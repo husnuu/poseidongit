@@ -45,7 +45,7 @@ export default function PopularToursSection({ data, locale = 'tr' }: PopularTour
   return (
     <section
       ref={sectionRef}
-      className="w-full transition-all duration-700 ease-out pt-14 pb-12 md:pt-20 md:pb-16"
+      className="w-full transition-all duration-700 ease-out pt-14 pb-5 md:pt-20 md:pb-6"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(20px)',

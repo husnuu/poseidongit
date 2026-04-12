@@ -54,7 +54,7 @@ export default function RouteSection({
       aria-labelledby="route-section-heading"
     >
       <div
-        className={`mx-auto max-w-7xl px-6 pt-16 pb-16 transition-all duration-700 ease-out md:pt-20 md:pb-20 ${
+        className={`mx-auto max-w-7xl px-6 pt-6 pb-14 transition-all duration-700 ease-out md:pt-8 md:pb-16 ${
           visible ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
         }`}
       >
@@ -79,15 +79,15 @@ export default function RouteSection({
               </p>
             )}
             {ctaButton?.label && (
-              <span className="hero-primary-btn-wrap mt-[22px] inline-flex">
+              <p className="mt-8 md:mt-10">
                 <Link
                   href={ctaButton.href || '#'}
-                  className="hero-primary-inner hero-btn-shine inline-flex h-[48px] min-w-[200px] items-center justify-center rounded bg-[#1e3a5f] px-5 text-center text-base font-black uppercase text-white transition hover:brightness-110"
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-full border-2 border-[#1e3a5f] bg-white px-8 py-3 text-sm font-black uppercase tracking-wide text-[#1e3a5f] shadow-sm transition hover:bg-[#1e3a5f]/[0.06] outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#1e3a8a]"
                   style={{ fontFamily: 'var(--font-family)' }}
                 >
                   {ctaButton.label}
                 </Link>
-              </span>
+              </p>
             )}
           </div>
 

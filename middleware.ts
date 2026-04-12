@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from '@/lib/adminSession'
+import { ADMIN_SESSION_COOKIE } from '@/lib/adminSessionConstants'
+import { verifyAdminSessionTokenEdge } from '@/lib/adminJwtVerifyEdge'
 import { parseLocaleFromPathname } from '@/lib/i18n/paths'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { incomingPathToCanonicalRoute } from '@/lib/i18n/routeAliases'
@@ -118,7 +119,7 @@ export async function middleware(request: NextRequest) {
     let ok = false
     if (token) {
       try {
-        const p = await verifyAdminSessionToken(token)
+        const p = await verifyAdminSessionTokenEdge(token, secret)
         ok = !!(p?.sub && p.email)
       } catch {
         ok = false

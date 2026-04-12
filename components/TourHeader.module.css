@@ -5,12 +5,12 @@
 .title {
   font-family: var(--font-family-title), var(--font-family), sans-serif;
   font-weight: 900;
-  line-height: 1.2;
+  line-height: 1.18;
   text-transform: uppercase;
-  font-size: 40px;
-  margin: 0 0 20px 0;
+  font-size: 2.25rem; /* ~36px */
+  margin: 0 0 18px 0;
   letter-spacing: 0.02em;
-  -webkit-text-stroke: 0.04em currentColor;
+  -webkit-text-stroke: 0.03em currentColor;
 }
 
 .titlePrimary {
@@ -18,42 +18,141 @@
   display: block;
 }
 
-@media (min-width: 1300px) {
+@media (min-width: 640px) {
   .title {
-    font-size: 50px;
+    font-size: 2.5rem; /* 40px */
+    margin-bottom: 20px;
   }
 }
 
+@media (min-width: 768px) {
+  .title {
+    font-size: 2.75rem; /* 44px */
+  }
+}
+
+@media (min-width: 1024px) {
+  .title {
+    font-size: 3rem; /* 48px */
+    margin-bottom: 22px;
+    -webkit-text-stroke: 0.04em currentColor;
+  }
+}
+
+@media (min-width: 1300px) {
+  .title {
+    font-size: 3.5rem; /* 56px */
+  }
+}
+
+/*
+ * İki şerit × 4 sütun: [ikon][metin][ikon][metin]
+ * Yorum balonu (3. sütun) ile kalkış pini aynı dikey hizada.
+ */
 .metaRow {
+  --meta-icon-col: 2.5rem;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 16px;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
 }
 
-.metaItem {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+@media (min-width: 768px) {
+  .metaRow {
+    gap: 24px;
+  }
 }
 
+.metaRatingStrip,
+.metaFactsStrip {
+  display: grid;
+  grid-template-columns: var(--meta-icon-col) minmax(0, 1fr) var(--meta-icon-col) minmax(0, 1fr);
+  column-gap: 14px;
+  align-items: center;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .metaRatingStrip,
+  .metaFactsStrip {
+    column-gap: 22px;
+  }
+}
+
+.metaRatingStrip {
+  padding-bottom: 20px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid rgba(30, 58, 95, 0.12);
+}
+
+.metaStripText {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.metaStripTextWrap {
+  align-items: flex-start;
+}
+
+.metaStripTextWrap .metaText {
+  align-items: flex-start;
+}
+
+.metaStripSpacer {
+  min-height: 0;
+  pointer-events: none;
+}
+
+/* Tüm meta satırları (puan, süre, kalkış) aynı metin ölçeği; sığmazsa küçülür */
+.metaRow .metaLabel,
+.metaRow .metaMuted,
+.metaRow .reviewText {
+  font-size: clamp(0.75rem, 3vw, 1.125rem);
+}
+
+.metaRow .reviewsLink {
+  font-size: clamp(0.75rem, 3vw, 1.125rem);
+  margin-left: 0;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.metaRow .reviewsLinkIcon svg {
+  width: clamp(11px, 3vw, 14px);
+  height: clamp(11px, 3vw, 14px);
+}
+
+/* İkonlar: yumuşak kutu; şeritte dikey ortada, süre metni ikon ekseninde */
 .metaIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: rgba(30, 58, 95, 0.08);
+  color: var(--title-color, #1e3a5f);
+}
+
+.metaIcon svg {
+  width: 1.375rem;
+  height: 1.375rem;
   flex-shrink: 0;
 }
 
-/* Review row: like icon + EXCELLENT + dots + reviews (Inter-Bold, 18px, #181818) */
+/* Puan satırı metni — boyut .metaRow ile clamp */
 .reviewText {
   font-family: "Inter-Bold", var(--font-family), sans-serif;
   font-weight: 700;
   text-transform: uppercase;
   font-size: 18px;
   vertical-align: middle;
-  line-height: normal;
+  line-height: 1.35;
+  letter-spacing: 0.03em;
   color: #181818;
 }
 
@@ -61,7 +160,8 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px 6px;
+  gap: 8px 12px;
+  row-gap: 6px;
 }
 
 .metaLabel {
@@ -70,6 +170,8 @@
   font-weight: 700;
   font-size: 18px;
   text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
 }
 
 .metaMuted {
@@ -77,33 +179,20 @@
   text-transform: uppercase;
 }
 
-.ratingDots {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-left: 8px;
-}
-
-.ratingDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--success-color, #4bb543);
-}
-
 .reviewsLink {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   color: #181818;
   font-family: "Inter-Bold", var(--font-family), sans-serif;
   font-weight: 700;
   font-size: 18px;
   text-transform: uppercase;
   text-decoration: none;
-  margin-left: 8px;
-  padding-bottom: 2px;
+  margin-left: 12px;
+  padding: 4px 2px 6px;
+  letter-spacing: 0.02em;
 }
 
 .reviewsLinkIcon {

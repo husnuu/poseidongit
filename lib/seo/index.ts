@@ -180,5 +180,12 @@ export function buildTourSchema(params: {
 
 /** JSON-LD script tag içeriği */
 export function jsonLdScript(data: Record<string, unknown>): string {
-  return JSON.stringify(data)
+  try {
+    return JSON.stringify(data).replace(/</g, '\\u003c')
+  } catch (e) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[jsonLdScript] JSON.stringify failed', e)
+    }
+    return '{}'
+  }
 }

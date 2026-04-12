@@ -19,11 +19,16 @@ import { getBaseUrl, getSiteName } from '@/lib/seo'
 import { client, urlFor } from '@/lib/sanity'
 import { siteSettingsQuery } from '@/lib/queries'
 
-const baseUrl = getBaseUrl()
-const metadataBase =
-  baseUrl && baseUrl.startsWith('http')
-    ? new URL(baseUrl)
-    : undefined
+function safeMetadataBase(url: string): URL | undefined {
+  if (!url?.trim().startsWith('http')) return undefined
+  try {
+    return new URL(url.trim())
+  } catch {
+    return undefined
+  }
+}
+
+const metadataBase = safeMetadataBase(getBaseUrl())
 
 const FALLBACK_TITLE = 'Tekne Turu ve Rezervasyon'
 const FALLBACK_DESCRIPTION = 'Tekne turu ve koy turları. Rezervasyon ve özel turlar.'
@@ -76,10 +81,14 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const h = await headers()
-  const loc = h.get('x-site-locale')
-  const htmlLang =
-    loc && isSiteLocale(loc) ? htmlLangForLocale(loc) : 'tr'
+  let htmlLang = 'tr'
+  try {
+    const h = await headers()
+    const loc = h.get('x-site-locale')
+    if (loc && isSiteLocale(loc)) htmlLang = htmlLangForLocale(loc)
+  } catch {
+    /* headers() bazı edge durumlarda veya bozuk dev build’de patlayabilir; sayfa yine açılsın */
+  }
 
   return (
     <html lang={htmlLang} className={inter.variable}>

@@ -77,9 +77,14 @@ const COPY: Record<SiteLocale, NoScriptCopy> = {
 }
 
 export default async function NoScriptSeoFallback() {
-  const h = await headers()
-  const raw = h.get('x-site-locale')
-  const locale: SiteLocale = raw && isSiteLocale(raw) ? raw : 'tr'
+  let locale: SiteLocale = 'tr'
+  try {
+    const h = await headers()
+    const raw = h.get('x-site-locale')
+    if (raw && isSiteLocale(raw)) locale = raw
+  } catch {
+    return null
+  }
   const t = COPY[locale]
   const site = getSiteName().trim()
   const siteTitle = site ? `${t.h2Site} — ${site}` : t.h2Site
