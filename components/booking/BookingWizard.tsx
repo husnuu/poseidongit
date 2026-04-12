@@ -151,6 +151,7 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            locale,
             tourId,
             tourTitle: tour.title ?? '',
             date: state.selectedDate ?? '',
@@ -249,7 +250,7 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
     setBookingResult(null)
     setOptimisticUsed(null)
     setState((prev) => ({ ...DEFAULT_BOOKING_STATE, tourSlug: prev.tourSlug }))
-    router.push(withLocalePath(locale, `/tour/${tour.slug}`))
+    router.push(withLocalePath(locale, `/tur/${tour.slug}`))
   }, [tour.slug, router, locale])
 
   if (submitted && bookingResult) {

@@ -198,11 +198,11 @@ export default defineType({
     }),
     defineField({
       name: 'locationMapLink',
-      title: 'Konum linki (yol tarifi ve WhatsApp)',
+      title: 'Konum linki (isteğe bağlı)',
       type: 'url',
       group: 'location',
       description:
-        'Google Haritalar → Paylaş → Bağlantıyı kopyala (veya yer işaretinden paylaş). Yol tarifi ve konum paylaşımı bu URL’yi kullanır; boşsa otomatik çıkarım denenir.',
+        'Google Haritalar → Paylaş → Bağlantıyı kopyala. Şu an sitede harita iframe’i için yalnızca “Google Maps Embed URL” kullanılır; bu alan veri olarak saklanabilir.',
     }),
     defineField({
       name: 'locationTitle',

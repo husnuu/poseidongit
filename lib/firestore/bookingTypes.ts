@@ -1,3 +1,5 @@
+import type { SiteLocale } from '@/lib/i18n/config'
+
 export type BookingStatus = 'pending' | 'paid' | 'cancelled'
 
 export interface BookingCounts {
@@ -55,6 +57,8 @@ export interface BookingInput {
 }
 
 export interface BookingCreatePayload {
+  /** Rezervasyon sırasında sitede seçilen dil (e-posta / PDF / bilet URL). */
+  uiLocale?: SiteLocale
   tourId: string
   tourTitle: string
   date: string

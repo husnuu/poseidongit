@@ -469,8 +469,13 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
   translations
 }`
 
-/** Tour capacity only – for GET /api/availability (by _id or slug). */
-export const tourForAvailabilityQuery = `*[_type == "tour" && (_id == $tourId || slug.current == $tourId)][0] {
+/** Tour capacity only – for GET /api/availability (by _id or any locale slug, same as booking tour resolution). */
+export const tourForAvailabilityQuery = `*[_type == "tour" && (
+  _id == $tourId ||
+  slug.current == $tourId ||
+  translations.en.slug.current == $tourId ||
+  translations.de.slug.current == $tourId
+)][0] {
   _id,
   "slug": slug.current,
   baseCapacity{ ecoCapacity, premiumCapacity, firstCapacity },
@@ -558,6 +563,12 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0] {
   headerLanguages[]{
     code,
     label,
+    comingSoon,
+    comingSoonBadge{
+      asset,
+      "url": asset->url,
+      "metadata": asset->metadata { lqip, dimensions }
+    },
     flag{
       asset,
       "url": asset->url,
@@ -589,6 +600,19 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0] {
     platform,
     href
   }
+}`
+
+/** TravelAgency JSON-LD: logo, favicon, isteğe bağlı özel görseller */
+export const siteSettingsTravelAgencyImagesQuery = `*[_type == "siteSettings"][0]{
+  logo{ asset },
+  favicon{ asset },
+  richResultsImages[]{ asset }
+}`
+
+/** Ana sayfa hero URL’leri (JSON-LD yedeği) */
+export const homePageHeroImageUrlsQuery = `*[_type == "homePage"][0]{
+  "heroImageUrl": heroImage.asset->url,
+  "heroImageMobileUrl": heroImageMobile.asset->url
 }`
 
 /** Çerez bildirimi: yalnızca politikası URL’si (hafif sorgu) */

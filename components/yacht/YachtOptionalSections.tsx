@@ -1,13 +1,16 @@
 import Link from 'next/link'
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
 import headingStyles from '@/components/yacht/yachtDetailHeading.module.css'
 import styles from './YachtOptionalSections.module.css'
 
 interface YachtOptionalSectionsProps {
+  locale: SiteLocale
   yacht: Pick<YachtRentalDocument, 'relatedTours' | 'relatedYachts' | 'termsAndNotes'>
 }
 
-export default function YachtOptionalSections({ yacht }: YachtOptionalSectionsProps) {
+export default function YachtOptionalSections({ locale, yacht }: YachtOptionalSectionsProps) {
   const hasTours = yacht.relatedTours && yacht.relatedTours.some((t) => t.slug)
   const hasYachts = yacht.relatedYachts && yacht.relatedYachts.some((y) => y.slug)
   const hasTerms = yacht.termsAndNotes?.trim()
@@ -26,7 +29,7 @@ export default function YachtOptionalSections({ yacht }: YachtOptionalSectionsPr
               .filter((t): t is { title?: string; slug: string } => Boolean(t.slug))
               .map((t) => (
                 <li key={t.slug}>
-                  <Link href={`/tour/${t.slug}`} className={styles.link}>
+                  <Link href={withLocalePath(locale, `/tur/${t.slug}`)} className={styles.link}>
                     {t.title ?? t.slug}
                   </Link>
                 </li>

@@ -19,6 +19,7 @@ import {
   resolveAdditionalTravelerMealPreferencesForBooking,
 } from '@/lib/bookingMealPreference'
 import { supabase } from '@/lib/supabase'
+import { DEFAULT_LOCALE, isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import {
   firstClassLocasFromRow,
   normalizeDateOnly,
@@ -84,7 +85,11 @@ function normalizeBody(body: unknown): BookingCreatePayload | null {
       firstClassLocas = [b.firstClassLoca.trim().toUpperCase()]
     }
   }
+  const rawLoc = typeof b.locale === 'string' ? b.locale.trim().toLowerCase() : ''
+  const uiLocale: SiteLocale = isSiteLocale(rawLoc) ? rawLoc : DEFAULT_LOCALE
+
   return {
+    uiLocale,
     tourId,
     tourTitle,
     date,
@@ -117,7 +122,9 @@ function normalizeClassKey(classId: string): string {
 
 function parseMissingColumnFromSupabaseError(message: string): string | null {
   const m = message.match(/Could not find the '([^']+)' column of 'bookings'/i)
-  return m?.[1] ?? null
+  if (m?.[1]) return m[1]
+  const m2 = message.match(/column\s+"([^"]+)"\s+of\s+relation\s+"bookings"\s+does not exist/i)
+  return m2?.[1] ?? null
 }
 
 /** Sanity turu + tarih: sezon, özel gün sınıf/genel fiyatları (classPriceOverrides → priceOverrides) ile toplam. */
@@ -319,6 +326,7 @@ export async function POST(request: Request) {
       ...(mealPreference && { meal_preference: mealPreference }),
       source: 'web',
       access_token: accessToken,
+      ui_locale: payload.uiLocale ?? 'tr',
     }
     let mutableInsertPayload: Record<string, unknown> = { ...insertPayload }
     let insertedRow: { id: string } | null = null
@@ -335,6 +343,11 @@ export async function POST(request: Request) {
       if (error) {
         const missingColumn = parseMissingColumnFromSupabaseError(error.message)
         if (missingColumn && Object.prototype.hasOwnProperty.call(mutableInsertPayload, missingColumn)) {
+          if (missingColumn === 'ui_locale') {
+            console.error(
+              '[bookings] ui_locale column missing on public.bookings — booking language is not stored; confirmation emails default to Turkish. Run: alter table public.bookings add column if not exists ui_locale text;'
+            )
+          }
           delete mutableInsertPayload[missingColumn]
           continue
         }

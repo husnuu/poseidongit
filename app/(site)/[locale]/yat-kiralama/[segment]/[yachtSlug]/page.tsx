@@ -6,6 +6,7 @@ import { yachtRentalByLocationAndSlugQuery, yachtRentalSlugsQuery } from '@/lib/
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
 import YachtDetailView from '@/components/yacht/YachtDetailView'
 import { buildYachtDetailMetadata } from '@/lib/yachtMetadata'
+import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 
 export const revalidate = 3600
 
@@ -41,7 +42,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ segment: string; yachtSlug: string }>
+  params: Promise<{ locale: string; segment: string; yachtSlug: string }>
 }): Promise<Metadata> {
   const { segment, yachtSlug } = await params
   const yacht = await getYacht(segment, yachtSlug)
@@ -53,11 +54,13 @@ export async function generateMetadata({
 export default async function YatKiralamaLocationDetailPage({
   params,
 }: {
-  params: Promise<{ segment: string; yachtSlug: string }>
+  params: Promise<{ locale: string; segment: string; yachtSlug: string }>
 }) {
-  const { segment, yachtSlug } = await params
+  const { locale: loc, segment, yachtSlug } = await params
+  if (!isSiteLocale(loc)) notFound()
+  const locale = loc as SiteLocale
   const yacht = await getYacht(segment, yachtSlug)
   if (!yacht) notFound()
   const path = `/yat-kiralama/${segment}/${yachtSlug}`
-  return <YachtDetailView yacht={yacht} path={path} />
+  return <YachtDetailView locale={locale} yacht={yacht} path={path} />
 }

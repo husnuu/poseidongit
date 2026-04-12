@@ -3,6 +3,9 @@
  */
 
 import { getBaseUrl } from '@/lib/seo'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { DEFAULT_LOCALE, isSiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
 
 /** E-postadaki buton/linkler için base URL (site ile aynı). */
 export function getEmailBaseUrl(): string {
@@ -49,9 +52,22 @@ export function sameSitePathFromHref(href: string | null | undefined): string | 
   return path || '/'
 }
 
+function coerceSiteLocale(locale: string | undefined | null): SiteLocale {
+  const k = typeof locale === 'string' ? locale.trim().toLowerCase() : ''
+  return isSiteLocale(k) ? k : DEFAULT_LOCALE
+}
+
 /** Rezervasyonumu Yönet linki (e-posta). */
 export function manageBookingUrl(bookingId: string): string {
   return `${getEmailBaseUrl()}/rezervasyon/yonet?bookingId=${encodeURIComponent(bookingId)}`
+}
+
+/** Rezervasyon yönetimi — dil önekli kamu URL’si (e-posta). */
+export function manageBookingUrlForLocale(bookingId: string, locale?: string | null): string {
+  const loc = coerceSiteLocale(locale ?? DEFAULT_LOCALE)
+  const path = `/rezervasyon/yonet?bookingId=${encodeURIComponent(bookingId)}`
+  const rel = withLocalePath(loc, path)
+  return `${getEmailBaseUrl().replace(/\/$/, '')}${rel}`
 }
 
 /** Sitede bilet görüntüleme yolu (relative). E-posta için `ticketPageUrl` kullanın. */
@@ -71,10 +87,26 @@ export function ticketPageUrl(bookingId: string, accessToken?: string): string {
   return `${base}${ticketPagePath(bookingId, accessToken)}`
 }
 
+/** Bilet sayfası tam URL — dil önekli (/en/ticket/…). */
+export function ticketPageUrlForLocale(
+  bookingId: string,
+  accessToken: string | undefined,
+  locale?: string | null
+): string {
+  const loc = coerceSiteLocale(locale ?? DEFAULT_LOCALE)
+  const base = getEmailBaseUrl().replace(/\/$/, '')
+  const rel = withLocalePath(loc, ticketPagePath(bookingId, accessToken))
+  return `${base}${rel}`
+}
+
 /** Müşteri CTA: token varsa doğrudan bilet sayfası, yoksa Rezervasyonumu Yönet. */
-export function customerTicketViewUrl(bookingId: string, accessToken?: string): string {
-  if (accessToken?.trim()) return ticketPageUrl(bookingId, accessToken)
-  return manageBookingUrl(bookingId)
+export function customerTicketViewUrl(
+  bookingId: string,
+  accessToken?: string,
+  locale?: string | null
+): string {
+  if (accessToken?.trim()) return ticketPageUrlForLocale(bookingId, accessToken, locale)
+  return manageBookingUrlForLocale(bookingId, locale)
 }
 
 /**

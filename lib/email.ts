@@ -1,12 +1,26 @@
 import { Resend } from 'resend'
 import { buildGoogleCalendarUrl } from '@/lib/calendar'
-import { generateVoucherPdf } from '@/lib/voucher/generateVoucherPdf'
+import { generatePremiumEticketPdf } from '@/lib/ticket/generatePremiumEticketPdf'
+import { voucherDataToPremiumEticket } from '@/lib/ticket/voucherToPremiumEticket'
 import { buildVoucherDataFromBookingRow } from '@/lib/voucher/buildVoucherDataFromBookingSnapshot'
 import { formatTicketDate } from '@/lib/voucher/formatTicketDate'
 import type { VoucherData } from '@/lib/voucher/types'
 import { DEFAULT_POLICIES, DEFAULT_CONTACT } from '@/lib/voucher/types'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
-import { manageBookingUrl, voucherPdfUrl, getEmailBaseUrl, customerTicketViewUrl } from '@/lib/siteUrls'
+import {
+  manageBookingUrl,
+  manageBookingUrlForLocale,
+  voucherPdfUrl,
+  getEmailBaseUrl,
+  customerTicketViewUrl,
+} from '@/lib/siteUrls'
+import type { SiteLocale } from '@/lib/i18n/config'
+import {
+  normalizeBookingFlowLocale,
+  bookingEmailPremiumStrings,
+  formatParticipantCountsLine,
+} from '@/lib/i18n/bookingFlowLocale'
+import { VOUCHER_POLICIES } from '@/lib/i18n/bookingFlowLocale'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { client, urlFor } from '@/lib/sanity'
@@ -69,6 +83,8 @@ export interface BookingEmailPayload {
   accessToken?: string
   /** Durum bilgisi — PDF’te ödenen tutar gösterimi için (satır yolu başarısız olursa). */
   status?: string
+  /** Müşteri arayüz dili (tr/en/de) — e-posta metinleri ve bilet URL’leri. */
+  siteLocale?: SiteLocale
 }
 
 function getResend(): Resend | null {
@@ -95,36 +111,50 @@ function formatDate(dateStr: string): string {
   }
 }
 
-function formatParticipants(counts: { adult: number; child: number; infant: number }): string {
-  const parts: string[] = []
-  if (counts.adult > 0) parts.push(`${counts.adult} Yetişkin`)
-  if (counts.child > 0) parts.push(`${counts.child} Çocuk`)
-  if (counts.infant > 0) parts.push(`${counts.infant} Bebek`)
-  return parts.length > 0 ? parts.join(', ') : '—'
+function formatEmailBookingDate(dateStr: string, loc: SiteLocale): string {
+  try {
+    const raw = /^\d{4}-\d{2}-\d{2}/.test(dateStr) ? dateStr.slice(0, 10) : dateStr
+    const d = new Date(raw)
+    if (Number.isNaN(d.getTime())) return dateStr
+    const tag = loc === 'en' ? 'en-GB' : loc === 'de' ? 'de-DE' : 'tr-TR'
+    return d.toLocaleDateString(tag, { day: '2-digit', month: 'long', year: 'numeric' })
+  } catch {
+    return dateStr
+  }
+}
+
+function guestFallbackLabel(loc: SiteLocale, index: number): string {
+  if (loc === 'en') return `Guest ${index + 2}`
+  if (loc === 'de') return `Gast ${index + 2}`
+  return `Yolcu ${index + 2}`
 }
 
 /** Sınıf + First Class loca metni (tek veya çoklu). */
-function classDisplay(p: { className?: string; firstClassLocas?: string[]; firstClassLoca?: string }): string {
-  const locas = (p.firstClassLocas?.length ? p.firstClassLocas : p.firstClassLoca ? [p.firstClassLoca] : []).join(', ')
-  return locas ? `${p.className?.trim() || '—'} · Loca ${locas}` : (p.className?.trim() || '—')
+function classDisplay(p: BookingEmailPayload, loc: SiteLocale): string {
+  const t = bookingEmailPremiumStrings(loc)
+  const locas = (p.firstClassLocas?.length ? p.firstClassLocas : p.firstClassLoca ? [p.firstClassLoca] : []).join(
+    ', '
+  )
+  return locas ? `${p.className?.trim() || '—'} · ${t.locaPrefix} ${locas}` : (p.className?.trim() || '—')
 }
 
-function formatAdditionalTravelersHtml(p: BookingEmailPayload): string {
+function formatAdditionalTravelersHtml(p: BookingEmailPayload, loc: SiteLocale): string {
   const list = (p.additionalTravelers ?? []).filter((t) => (t.firstName?.trim() || t.lastName?.trim()))
   if (list.length === 0) return ''
+  const t = bookingEmailPremiumStrings(loc)
   const labels = additionalTravelerLabels(p.counts)
   const items = list
-    .map((t, i) => {
-      const role = escapeHtml(labels[i] ?? `Yolcu ${i + 2}`)
-      const name = escapeHtml(`${t.firstName} ${t.lastName}`.trim())
-      const meal = t.mealPreference?.label?.trim()
-        ? ` <span style="color:#64748b;">· Yemek: ${escapeHtml(t.mealPreference.label.trim())}</span>`
+    .map((tr, i) => {
+      const role = escapeHtml(labels[i] ?? guestFallbackLabel(loc, i))
+      const name = escapeHtml(`${tr.firstName} ${tr.lastName}`.trim())
+      const meal = tr.mealPreference?.label?.trim()
+        ? ` <span style="color:#64748b;">· ${escapeHtml(t.mealInline)}: ${escapeHtml(tr.mealPreference.label.trim())}</span>`
         : ''
       return `<li style="margin:0 0 6px 0;"><strong>${role}:</strong> ${name}${meal}</li>`
     })
     .join('')
   return `
-    <p style="margin: 12px 0 6px;"><strong>Diğer yolcular</strong></p>
+    <p style="margin: 12px 0 6px;"><strong>${escapeHtml(t.otherTravelers)}</strong></p>
     <ul style="margin: 0; padding-left: 18px;">${items}</ul>
   `
 }
@@ -140,16 +170,18 @@ function mealCountsLine(
 
 /** BookingEmailPayload + voucherUrl ile e-posta ekinde gönderilecek PDF için VoucherData üretir. */
 function payloadToVoucherData(payload: BookingEmailPayload, voucherUrl: string): VoucherData {
+  const loc = normalizeBookingFlowLocale(payload.siteLocale)
+  const pol = VOUCHER_POLICIES[loc]
   const website = getEmailBaseUrl().replace(/\/$/, '') || DEFAULT_CONTACT.website
   return {
     referenceNumber: payload.bookingId,
     bookingUrl: voucherUrl,
     tourTitle: payload.tourTitle,
-    date: formatTicketDate(payload.date),
+    date: formatTicketDate(payload.date, loc),
     time: payload.time,
     meetingPickup: payload.pickup?.trim() || '—',
     status: payload.status?.trim() || undefined,
-    language: 'Türkçe',
+    language: pol.languageLabel,
     className: payload.className?.trim() || undefined,
     firstClassLoca: (payload.firstClassLocas?.length ? payload.firstClassLocas.join(', ') : payload.firstClassLoca?.trim()) || undefined,
     customerName: `${payload.customer.firstName} ${payload.customer.lastName}`.trim() || '—',
@@ -162,8 +194,8 @@ function payloadToVoucherData(payload: BookingEmailPayload, voucherUrl: string):
     currency: payload.currency,
     paidNow: payload.paidNow,
     remainingAmount: undefined,
-    cancellationPolicy: DEFAULT_POLICIES.cancellationPolicy,
-    voucherNotice: DEFAULT_POLICIES.voucherNotice,
+    cancellationPolicy: pol.cancellationPolicy,
+    voucherNotice: pol.voucherNotice,
     supportEmail: process.env.SUPPORT_EMAIL?.trim() || DEFAULT_CONTACT.supportEmail,
     website,
     copyrightYear: new Date().getFullYear(),
@@ -231,12 +263,13 @@ function buildConfirmationEmailHtml(
   p: BookingEmailPayload,
   options: { subtitle?: string; buttonText?: string; qrImageSrc?: string } = {}
 ): string {
-  const dateFormatted = formatDate(p.date)
-  const participants = formatParticipants(p.counts)
+  const loc = normalizeBookingFlowLocale(p.siteLocale)
+  const dateFormatted = formatEmailBookingDate(p.date, loc)
+  const participants = formatParticipantCountsLine(p.counts, loc)
   const customerName = `${p.customer.firstName} ${p.customer.lastName}`.trim() || '—'
   const tourImage = p.tourImageUrl?.trim() || ''
   const bookingUrl = p.bookingUrl?.trim() || '#'
-  const viewTicketUrl = customerTicketViewUrl(p.bookingId, p.accessToken)
+  const viewTicketUrl = customerTicketViewUrl(p.bookingId, p.accessToken, loc)
   const calendarUrl = buildGoogleCalendarUrl({
     tourTitle: p.tourTitle,
     date: p.date,
@@ -257,7 +290,7 @@ function buildConfirmationEmailHtml(
     { label: 'Reference', value: p.bookingId, highlight: true },
     { label: 'Date', value: dateFormatted + (p.time ? ` · ${p.time}` : '') },
     { label: 'Participants', value: participants },
-    { label: 'Class', value: classDisplay(p) },
+    { label: 'Class', value: classDisplay(p, loc) },
     { label: 'Name', value: customerName },
     { label: 'Email', value: p.customer.email || '—' },
     { label: 'Phone', value: p.customer.phone || '—' },
@@ -410,7 +443,7 @@ function buildAdminEmailHtml(p: BookingEmailPayload): string {
     <p style="margin: 0 0 8px;"><strong>Tur:</strong> ${escapeHtml(p.tourTitle)}</p>
     <p style="margin: 0 0 8px;"><strong>Tarih:</strong> ${escapeHtml(dateFormatted)}</p>
     ${timeLine}
-    <p style="margin: 0 0 8px;"><strong>Sınıf:</strong> ${escapeHtml(classDisplay(p))}</p>
+    <p style="margin: 0 0 8px;"><strong>Sınıf:</strong> ${escapeHtml(classDisplay(p, 'tr'))}</p>
     <p style="margin: 0 0 8px;"><strong>Yetişkin:</strong> ${p.counts.adult} · <strong>Çocuk:</strong> ${p.counts.child} · <strong>Bebek:</strong> ${p.counts.infant}</p>
     <p style="margin: 0 0 8px;"><strong>Toplam:</strong> ${p.totalPrice} ${escapeHtml(p.currency)}</p>
     <hr style="border: none; border-top: 1px solid #cbd5e1; margin: 12px 0;">
@@ -419,7 +452,7 @@ function buildAdminEmailHtml(p: BookingEmailPayload): string {
     <p style="margin: 0;"><strong>Telefon:</strong> ${escapeHtml(p.customer.phone || '—')}</p>
     ${mealLine}
     ${mealCountsLineHtml}
-    ${formatAdditionalTravelersHtml(p)}
+    ${formatAdditionalTravelersHtml(p, 'tr')}
   </div>
   ${noteLine}
 </body>
@@ -480,21 +513,25 @@ export async function sendBookingEmails(
     ? voucherPdfUrl(payload.bookingId, false, payload.accessToken)
     : voucherPdfUrl(payload.bookingId, false)
 
-  const customerHtml = buildCustomerEmailHtml({ ...payload, bookingUrl })
+  const { data: bookingRow } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('id', payload.bookingId)
+    .single()
+  const row = bookingRow as SupabaseBookingRow | null
+  const loc = normalizeBookingFlowLocale(payload.siteLocale ?? row?.ui_locale)
+  const mergedPayload: BookingEmailPayload = { ...payload, siteLocale: loc }
+  const subjT = bookingEmailPremiumStrings(loc)
+
+  const customerHtml = buildCustomerEmailHtml({ ...mergedPayload, bookingUrl })
 
   const attachments: Array<{ filename: string; content: Buffer; contentId?: string }> = []
   try {
-    const { data: bookingRow } = await supabase
-      .from('bookings')
-      .select('*')
-      .eq('id', payload.bookingId)
-      .single()
-    const row = bookingRow as SupabaseBookingRow | null
     let voucherData: VoucherData | null = row
-      ? await buildVoucherDataFromBookingRow(payload.bookingId, row, payload.accessToken?.trim() ?? '')
+      ? await buildVoucherDataFromBookingRow(mergedPayload.bookingId, row, mergedPayload.accessToken?.trim() ?? '')
       : null
     if (!voucherData) {
-      voucherData = payloadToVoucherData(payload, voucherUrlForPdf)
+      voucherData = payloadToVoucherData(mergedPayload, voucherUrlForPdf)
       try {
         const tourId = typeof row?.tour_id === 'string' ? String(row.tour_id).trim() : ''
         if (tourId) voucherData = await enrichVoucherDataWithTour(voucherData, tourId)
@@ -502,24 +539,29 @@ export async function sendBookingEmails(
         // Tur verisi olmadan PDF üretilir
       }
     }
-    const pdfBytes = await generateVoucherPdf(voucherData)
+    const pdfBytes = await generatePremiumEticketPdf(voucherDataToPremiumEticket(voucherData, loc))
+    const pdfName = `${getSiteName() || 'Bilet'}-E-Bilet-${mergedPayload.bookingId}.pdf`.replace(
+      /[^a-zA-Z0-9._-]/g,
+      '_'
+    )
     attachments.push({
-      filename: `${getSiteName() || 'Bilet'}-Bilet-${payload.bookingId}.pdf`,
+      filename: pdfName,
       content: Buffer.from(pdfBytes),
     })
+    console.info('[email] Premium (koyu tema) PDF bilet eklendi:', mergedPayload.bookingId, pdfName)
   } catch (e) {
     console.warn('[email] PDF bilet eklenemedi:', e)
   }
 
   const { error: customerError } = await resend.emails.send({
     from,
-    to: [payload.customer.email],
-    subject: `Rezervasyonunuz alındı – ${payload.tourTitle}`,
+    to: [mergedPayload.customer.email],
+    subject: `${subjT.subjectReceived} – ${mergedPayload.tourTitle}`,
     html: customerHtml,
     ...(attachments.length > 0 && { attachments }),
   })
   if (customerError) {
-    console.error('[email] Müşteri e-postası gönderilemedi:', payload.bookingId, customerError)
+    console.error('[email] Müşteri e-postası gönderilemedi:', mergedPayload.bookingId, customerError)
   }
 
   const adminEmail = process.env.ADMIN_EMAIL?.trim()
@@ -527,11 +569,11 @@ export async function sendBookingEmails(
     const { error: adminError } = await resend.emails.send({
       from,
       to: [adminEmail],
-      subject: `Yeni rezervasyon: ${payload.tourTitle} – ${payload.date}`,
-      html: buildAdminEmailHtml(payload),
+      subject: `Yeni rezervasyon: ${mergedPayload.tourTitle} – ${mergedPayload.date}`,
+      html: buildAdminEmailHtml(mergedPayload),
     })
     if (adminError) {
-      console.error('[email] Admin e-postası gönderilemedi:', payload.bookingId, adminError)
+      console.error('[email] Admin e-postası gönderilemedi:', mergedPayload.bookingId, adminError)
     }
   }
 }
@@ -545,14 +587,14 @@ function buildPremiumConfirmationEmailHtml(
   p: BookingEmailPayload,
   options?: { isPaid?: boolean }
 ): string {
+  const loc = normalizeBookingFlowLocale(p.siteLocale)
+  const t = bookingEmailPremiumStrings(loc)
+  const htmlLang = loc === 'en' ? 'en' : loc === 'de' ? 'de' : 'tr'
   const isPaid = options?.isPaid !== false
-  const successTitle = isPaid ? 'Rezervasyonunuz onaylandı!' : 'Rezervasyonunuz alındı!'
-  const successSub =
-    isPaid
-      ? 'Ödemeniz başarıyla alındı. Bu e-postayı bilet olarak saklayabilirsiniz.'
-      : 'Ödemenizi tamamladığınızda biletiniz e-posta ile gönderilecektir.'
-  const dateFormatted = formatDate(p.date)
-  const participants = formatParticipants(p.counts)
+  const successTitle = isPaid ? t.successTitlePaid : t.successTitlePending
+  const successSub = isPaid ? t.successSubPaid : t.successSubPending
+  const dateFormatted = formatEmailBookingDate(p.date, loc)
+  const participants = formatParticipantCountsLine(p.counts, loc)
   const tourImage = p.tourImageUrl?.trim() || ''
   const pickup = p.pickup?.trim() || 'Çeşme Sahil'
   const primary = '#0c1929'
@@ -566,32 +608,32 @@ function buildPremiumConfirmationEmailHtml(
   const supportEmail = process.env.SUPPORT_EMAIL?.trim() || 'turkeycesme@hotmail.com'
   const emailFont = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
 
-  const manageUrl = manageBookingUrl(p.bookingId)
-  const viewTicketUrl = customerTicketViewUrl(p.bookingId, p.accessToken)
+  const manageUrl = manageBookingUrlForLocale(p.bookingId, loc)
+  const viewTicketUrl = customerTicketViewUrl(p.bookingId, p.accessToken, loc)
   const heroImg = tourImage || ''
 
   const paidRowHtml =
     p.paidNow != null && p.paidNow > 0
-      ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Ödenen Tutar</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${primary};font-size:14px;font-weight:600;text-align:right;">${escapeHtml(String(p.paidNow))} ${escapeHtml(p.currency)}</td></tr>`
+      ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.paidRow)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${primary};font-size:14px;font-weight:600;text-align:right;">${escapeHtml(String(p.paidNow))} ${escapeHtml(p.currency)}</td></tr>`
       : ''
   const mealRowHtml =
     p.mealPreference?.label?.trim()
-      ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Yemek tercihi</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(p.mealPreference.label.trim())}</td></tr>`
+      ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.mealPref)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(p.mealPreference.label.trim())}</td></tr>`
       : ''
   const mealCounts = mealCountsLine(p.mealPreference?.counts)
   const mealCountsRowHtml = mealCounts
-    ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Yemek dağılımı</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(mealCounts)}</td></tr>`
+    ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.mealDist)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(mealCounts)}</td></tr>`
     : ''
-  const extraList = (p.additionalTravelers ?? []).filter((t) => t.firstName?.trim() || t.lastName?.trim())
+  const extraList = (p.additionalTravelers ?? []).filter((x) => x.firstName?.trim() || x.lastName?.trim())
   const travelerLabels = additionalTravelerLabels(p.counts)
   const extraTravelersRowHtml =
     extraList.length > 0
-      ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;vertical-align:top;">Diğer yolcular</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;line-height:1.55;">${extraList
-          .map((t, i) => {
-            const role = escapeHtml(travelerLabels[i] ?? `Yolcu ${i + 2}`)
-            const name = escapeHtml(`${t.firstName} ${t.lastName}`.trim())
-            const meal = t.mealPreference?.label?.trim()
-              ? ` · ${escapeHtml(t.mealPreference.label.trim())}`
+      ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;vertical-align:top;">${escapeHtml(t.otherTravelers)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;line-height:1.55;">${extraList
+          .map((guest, i) => {
+            const role = escapeHtml(travelerLabels[i] ?? guestFallbackLabel(loc, i))
+            const name = escapeHtml(`${guest.firstName} ${guest.lastName}`.trim())
+            const meal = guest.mealPreference?.label?.trim()
+              ? ` · ${escapeHtml(guest.mealPreference.label.trim())}`
               : ''
             return `${role}: <strong>${name}</strong>${meal}`
           })
@@ -599,11 +641,11 @@ function buildPremiumConfirmationEmailHtml(
       : ''
 
   return `<!DOCTYPE html>
-<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="tr">
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="${htmlLang}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rezervasyon Onayı – ${getSiteName() || 'Rezervasyon'}</title>
+  <title>${escapeHtml(successTitle)} – ${escapeHtml(getSiteName() || 'Booking')}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -617,13 +659,13 @@ function buildPremiumConfirmationEmailHtml(
           <tr>
             <td style="background-color:${headerFooterBg};padding:28px 24px;text-align:center;border-radius:12px 12px 0 0;">
               <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:0.5px;font-family:${emailFont};">${getSiteName() || 'Rezervasyon için teşekkürler'}</h1>
-              <p style="margin:8px 0 0 0;color:rgba(255,255,255,0.9);font-size:14px;font-family:${emailFont};">Çeşme Tekne Turu Rezervasyonu</p>
+              <p style="margin:8px 0 0 0;color:rgba(255,255,255,0.9);font-size:14px;font-family:${emailFont};">${escapeHtml(t.subheader)}</p>
             </td>
           </tr>
           <!-- Hero image: mutlaka tur fotoğrafı (kapak ile aynı) -->
           <tr>
             <td style="padding:0;">
-              ${heroImg ? `<img src="${escapeHtml(heroImg)}" alt="Tekne turu" width="600" height="240" style="display:block;width:100%;height:auto;max-height:240px;object-fit:cover;" />` : `<div style="width:100%;height:180px;background:${headerFooterBg};"></div>`}
+              ${heroImg ? `<img src="${escapeHtml(heroImg)}" alt="${escapeHtml(t.heroAlt)}" width="600" height="240" style="display:block;width:100%;height:auto;max-height:240px;object-fit:cover;" />` : `<div style="width:100%;height:180px;background:${headerFooterBg};"></div>`}
             </td>
           </tr>
           <!-- Success message card -->
@@ -638,7 +680,7 @@ function buildPremiumConfirmationEmailHtml(
             <td style="padding:0 24px 24px 24px;background:${cardBg};">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${bgLight};border:2px solid ${accent};border-radius:10px;padding:16px 20px;">
                 <tr>
-                  <td style="color:${textMuted};font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Rezervasyon No</td>
+                  <td style="color:${textMuted};font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(t.reservationNo)}</td>
                 </tr>
                 <tr>
                   <td style="padding:4px 0 0 0;color:${primary};font-size:22px;font-weight:700;letter-spacing:1px;">${escapeHtml(p.bookingId)}</td>
@@ -650,18 +692,18 @@ function buildPremiumConfirmationEmailHtml(
           <tr>
             <td style="padding:0 24px 24px 24px;background:${cardBg};">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${bgLight};border-radius:12px;border:1px solid #e5e7eb;">
-                <tr><td colspan="2" style="padding:16px 20px 0 20px;color:${textDark};font-size:16px;font-weight:700;">Rezervasyon Detayları</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;width:140px;">Tur</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;font-weight:500;text-align:right;">${escapeHtml(p.tourTitle)}</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Tarih</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Kalkış saati</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(p.time || '—')}</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Toplanma noktası</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(pickup)}</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Misafirler</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(participants)}</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">Sınıf</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(classDisplay(p))}</td></tr>
+                <tr><td colspan="2" style="padding:16px 20px 0 20px;color:${textDark};font-size:16px;font-weight:700;">${escapeHtml(t.detailsTitle)}</td></tr>
+                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;width:140px;">${escapeHtml(t.tour)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;font-weight:500;text-align:right;">${escapeHtml(p.tourTitle)}</td></tr>
+                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.date)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}</td></tr>
+                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.depTime)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(p.time || '—')}</td></tr>
+                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.pickup)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(pickup)}</td></tr>
+                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.guests)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(participants)}</td></tr>
+                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.classLabel)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(classDisplay(p, loc))}</td></tr>
                 ${mealRowHtml}
                 ${mealCountsRowHtml}
                 ${extraTravelersRowHtml}
                 ${paidRowHtml}
-                <tr><td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:${textMuted};font-size:13px;">Toplam Tutar</td><td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:${primary};font-size:18px;font-weight:700;text-align:right;">${escapeHtml(String(p.totalPrice))} ${escapeHtml(p.currency)}</td></tr>
+                <tr><td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.totalRow)}</td><td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:${primary};font-size:18px;font-weight:700;text-align:right;">${escapeHtml(String(p.totalPrice))} ${escapeHtml(p.currency)}</td></tr>
               </table>
             </td>
           </tr>
@@ -671,12 +713,12 @@ function buildPremiumConfirmationEmailHtml(
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
                   <td style="padding:0 0 12px 0;">
-                    <a href="${escapeHtml(manageUrl)}" target="_blank" style="display:block;width:100%;background-color:${primary};color:#ffffff!important;font-size:16px;font-weight:600;text-decoration:none;text-align:center;padding:16px 24px;border-radius:10px;box-sizing:border-box;font-family:${emailFont};">Rezervasyonumu Yönet</a>
+                    <a href="${escapeHtml(manageUrl)}" target="_blank" style="display:block;width:100%;background-color:${primary};color:#ffffff!important;font-size:16px;font-weight:600;text-decoration:none;text-align:center;padding:16px 24px;border-radius:10px;box-sizing:border-box;font-family:${emailFont};">${escapeHtml(t.manageCta)}</a>
                   </td>
                 </tr>
                 <tr>
                   <td>
-                    <a href="${escapeHtml(viewTicketUrl)}" target="_blank" style="display:block;width:100%;background-color:transparent;color:${textDark}!important;font-size:15px;font-weight:600;text-decoration:none;text-align:center;padding:14px 24px;border-radius:10px;border:2px solid #d1d5db;box-sizing:border-box;font-family:${emailFont};">Biletimi Görüntüle</a>
+                    <a href="${escapeHtml(viewTicketUrl)}" target="_blank" style="display:block;width:100%;background-color:transparent;color:${textDark}!important;font-size:15px;font-weight:600;text-decoration:none;text-align:center;padding:14px 24px;border-radius:10px;border:2px solid #d1d5db;box-sizing:border-box;font-family:${emailFont};">${escapeHtml(t.viewTicketCta)}</a>
                   </td>
                 </tr>
               </table>
@@ -688,11 +730,11 @@ function buildPremiumConfirmationEmailHtml(
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fefce8;border:1px solid #fde047;border-radius:10px;">
                 <tr>
                   <td style="padding:16px 20px;">
-                    <div style="font-size:14px;font-weight:700;color:${textDark};margin-bottom:8px;">Önemli Bilgiler</div>
+                    <div style="font-size:14px;font-weight:700;color:${textDark};margin-bottom:8px;">${escapeHtml(t.importantTitle)}</div>
                     <ul style="margin:0;padding:0 0 0 18px;color:${textMuted};font-size:13px;line-height:1.6;">
-                      <li style="margin-bottom:4px;">Lütfen kalkış saatinden 30 dakika önce teknede olun.</li>
-                      <li style="margin-bottom:4px;">Biniş sırasında web sitedeki bilet sayfanızı veya e-posta ekindeki PDF biletinizi göstermeniz yeterlidir.</li>
-                      <li>Sorularınız için bizimle iletişime geçebilirsiniz.</li>
+                      <li style="margin-bottom:4px;">${escapeHtml(t.bullet30)}</li>
+                      <li style="margin-bottom:4px;">${escapeHtml(t.bulletTicket)}</li>
+                      <li>${escapeHtml(t.bulletContact)}</li>
                     </ul>
                   </td>
                 </tr>
@@ -705,7 +747,7 @@ function buildPremiumConfirmationEmailHtml(
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-top:1px solid #e5e7eb;padding-top:20px;">
                 <tr>
                   <td>
-                    <div style="font-size:13px;font-weight:700;color:${textDark};margin-bottom:8px;">İletişim</div>
+                    <div style="font-size:13px;font-weight:700;color:${textDark};margin-bottom:8px;">${escapeHtml(t.contactTitle)}</div>
                     <p style="margin:0 0 4px 0;font-size:14px;color:${textMuted};">${escapeHtml(supportPhone)}</p>
                     <p style="margin:0;font-size:14px;color:${primary};"><a href="mailto:${escapeHtml(supportEmail)}" style="color:${primary};text-decoration:none;font-family:${emailFont};">${escapeHtml(supportEmail)}</a></p>
                   </td>
@@ -717,8 +759,8 @@ function buildPremiumConfirmationEmailHtml(
           <tr>
             <td style="padding:24px 24px 32px 24px;background-color:${headerFooterBg};border-radius:0 0 12px 12px;">
               <p style="margin:0;font-size:12px;color:#ffffff;text-align:center;font-family:${emailFont};">${getSiteName() || 'Tekne Turları'}</p>
-              <p style="margin:8px 0 0 0;font-size:12px;text-align:center;"><a href="#" style="color:#ffffff;text-decoration:underline;">KVKK</a> · <a href="#" style="color:#ffffff;text-decoration:underline;">İptal-İade</a> · <a href="#" style="color:#ffffff;text-decoration:underline;">Gizlilik</a></p>
-              <p style="margin:16px 0 0 0;font-size:11px;color:#ffffff;text-align:center;opacity:0.9;">Bu e-posta otomatik olarak gönderilmiştir.</p>
+              <p style="margin:8px 0 0 0;font-size:12px;text-align:center;color:#ffffff;">${escapeHtml(t.footerLinks)}</p>
+              <p style="margin:16px 0 0 0;font-size:11px;color:#ffffff;text-align:center;opacity:0.9;">${escapeHtml(t.footerAuto)}</p>
             </td>
           </tr>
         </table>
@@ -759,7 +801,7 @@ function buildAdminPaidEmailHtml(p: BookingEmailPayload): string {
     <p style="margin: 0 0 8px;"><strong>Tur:</strong> ${escapeHtml(p.tourTitle)}</p>
     <p style="margin: 0 0 8px;"><strong>Tarih:</strong> ${escapeHtml(dateFormatted)}</p>
     ${timeLine}
-    <p style="margin: 0 0 8px;"><strong>Sınıf:</strong> ${escapeHtml(classDisplay(p))}</p>
+    <p style="margin: 0 0 8px;"><strong>Sınıf:</strong> ${escapeHtml(classDisplay(p, 'tr'))}</p>
     <p style="margin: 0 0 8px;"><strong>Toplam:</strong> ${p.totalPrice} ${escapeHtml(p.currency)}</p>
     <hr style="border: none; border-top: 1px solid #a7f3d0; margin: 12px 0;">
     <p style="margin: 0 0 8px;"><strong>Müşteri:</strong> ${escapeHtml(p.customer.firstName)} ${escapeHtml(p.customer.lastName)}</p>
@@ -767,7 +809,7 @@ function buildAdminPaidEmailHtml(p: BookingEmailPayload): string {
     <p style="margin: 0;"><strong>Telefon:</strong> ${escapeHtml(p.customer.phone || '—')}</p>
     ${mealLine}
     ${mealCountsLineHtml}
-    ${formatAdditionalTravelersHtml(p)}
+    ${formatAdditionalTravelersHtml(p, 'tr')}
   </div>
 </body>
 </html>
@@ -807,8 +849,11 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
         : undefined
   const mergedPayload: BookingEmailPayload = {
     ...payload,
+    siteLocale: normalizeBookingFlowLocale(payload.siteLocale ?? row?.ui_locale),
     ...(additionalTravelersMerged?.length ? { additionalTravelers: additionalTravelersMerged } : {}),
   }
+  const loc = normalizeBookingFlowLocale(mergedPayload.siteLocale)
+  const subjT = bookingEmailPremiumStrings(loc)
 
   const customerHtml = buildCustomerPaidEmailHtml({ ...mergedPayload, bookingUrl })
 
@@ -826,11 +871,16 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
         // Tur verisi olmadan PDF üretilir
       }
     }
-    const pdfBytes = await generateVoucherPdf(voucherData)
+    const pdfBytes = await generatePremiumEticketPdf(voucherDataToPremiumEticket(voucherData, loc))
+    const pdfName = `${getSiteName() || 'Bilet'}-E-Bilet-${mergedPayload.bookingId}.pdf`.replace(
+      /[^a-zA-Z0-9._-]/g,
+      '_'
+    )
     attachments.push({
-      filename: `${getSiteName() || 'Bilet'}-Bilet-${mergedPayload.bookingId}.pdf`,
+      filename: pdfName,
       content: Buffer.from(pdfBytes),
     })
+    console.info('[email] Premium (koyu tema) PDF bilet eklendi:', mergedPayload.bookingId, pdfName)
   } catch (e) {
     console.warn('[email] PDF bilet eklenemedi:', e)
   }
@@ -838,7 +888,7 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
   const { error: customerError } = await resend.emails.send({
     from,
     to: [mergedPayload.customer.email],
-    subject: `Rezervasyonunuz onaylandı – ${mergedPayload.tourTitle}`,
+    subject: `${subjT.subjectPaid} – ${mergedPayload.tourTitle}`,
     html: customerHtml,
     ...(attachments.length > 0 && { attachments }),
   })

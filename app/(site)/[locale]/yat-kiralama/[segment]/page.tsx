@@ -16,6 +16,7 @@ import YachtRentalListSection from '@/components/yacht/YachtRentalListSection'
 import { buildYachtDetailMetadata } from '@/lib/yachtMetadata'
 import listStyles from '../../turlar/page.module.css'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
+import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 
 export const revalidate = 3600
 
@@ -92,9 +93,11 @@ export async function generateMetadata({
 export default async function YatKiralamaSegmentPage({
   params,
 }: {
-  params: Promise<{ segment: string }>
+  params: Promise<{ locale: string; segment: string }>
 }) {
-  const { segment } = await params
+  const { locale: loc, segment } = await params
+  if (!isSiteLocale(loc)) notFound()
+  const locale = loc as SiteLocale
 
   const yacht = await getYachtBySlug(segment)
   if (yacht) {
@@ -102,7 +105,7 @@ export default async function YatKiralamaSegmentPage({
       yacht.locationSlug && yacht.slug
         ? `/yat-kiralama/${yacht.locationSlug}/${yacht.slug}`
         : `/yat-kiralama/${segment}`
-    return <YachtDetailView yacht={yacht} path={path} />
+    return <YachtDetailView locale={locale} yacht={yacht} path={path} />
   }
 
   const location = await getLocationBySlug(segment)

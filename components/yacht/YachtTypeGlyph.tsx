@@ -9,6 +9,7 @@ function GuletGlyph({ className }: { className?: string }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
+      focusable="false"
     >
       <path
         d="M3 17.5h18l-1.8-2.8H4.8L3 17.5z"

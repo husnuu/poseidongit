@@ -296,7 +296,7 @@ export default defineType({
               name: 'label',
               title: 'Buton metni',
               type: 'string',
-              initialValue: 'Tüm yatları gör',
+              initialValue: 'Tüm tekneleri gör',
             }),
             defineField({
               name: 'href',

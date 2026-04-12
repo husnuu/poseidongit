@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { urlFor } from '@/lib/sanity'
+import { formatDisplayDateForLocaleTag } from '@/lib/formatDisplayDate'
 import styles from './BlogCard.module.css'
 
 interface Blog {
@@ -27,19 +28,6 @@ interface BlogCardProps {
   readPostCta: string
   noExcerptFallback: string
   dateLocale: string
-}
-
-function formatDate(dateString: string | undefined, locale: string): string {
-  if (!dateString) return ''
-  try {
-    return new Date(dateString).toLocaleDateString(locale, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  } catch {
-    return ''
-  }
 }
 
 export default function BlogCard({
@@ -72,7 +60,7 @@ export default function BlogCard({
         <h2 className={styles.blogCardTitle}>{blog?.title ?? 'Blog'}</h2>
         {blog?.publishDate && (
           <time className={styles.blogCardDate} dateTime={blog.publishDate}>
-            {formatDate(blog.publishDate, dateLocale)}
+            {formatDisplayDateForLocaleTag(blog.publishDate, dateLocale)}
           </time>
         )}
         <div className={styles.blogCardExcerptWrap}>

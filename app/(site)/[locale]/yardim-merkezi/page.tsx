@@ -44,7 +44,6 @@ export default async function YardimMerkeziPage({ params }: { params: Promise<{ 
   const { locale: loc } = await params
   if (!isSiteLocale(loc)) notFound()
   const locale = loc as SiteLocale
-  const ui = getHelpCenterUiStrings(locale)
   const contactHref = withLocalePath(locale, '/iletisim')
 
   const [page, categories, whatsRow] = await Promise.all([
@@ -60,7 +59,6 @@ export default async function YardimMerkeziPage({ params }: { params: Promise<{ 
       categories={categories}
       whatsappHref={whatsappHref}
       locale={locale}
-      ui={ui}
       contactHref={contactHref}
     />
   )

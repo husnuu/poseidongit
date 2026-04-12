@@ -5,7 +5,6 @@ import type { PortableTextBlock } from '@portabletext/react'
 import ContactFormClient from '@/components/contact/ContactFormClient'
 import ContactSidebar from '@/components/contact/ContactSidebar'
 import type { ContactSidebarData } from '@/components/contact/ContactSidebar'
-import LocationMapActions from '@/components/map/LocationMapActions'
 import PopularToursSection from '@/components/home/PopularToursSection'
 import type { TourListItem } from '@/components/tours/TourCard'
 import { getSiteName } from '@/lib/seo'
@@ -212,7 +211,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
           </div>
         </div>
 
-        {(data?.mapEmbedUrl || data?.locationMapLink?.trim()) && (
+        {data?.mapEmbedUrl && (
           <section className="mt-16" aria-label={data?.locationTitle ?? ui.mapIframeTitle}>
             {data?.locationTitle && (
               <h2
@@ -241,16 +240,6 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                 />
               </div>
             )}
-            <LocationMapActions
-              managedLocationUrl={data.locationMapLink}
-              address={data.officeAddress}
-              mapEmbedUrl={data.mapEmbedUrl}
-              contextLabel={data.locationTitle ?? data.title ?? ui.defaultTitle}
-              variant="contact"
-              directionsLabel={ui.mapDirections}
-              shareWhatsappLabel={ui.mapWhatsapp}
-              ariaLabel={ui.mapActionsAria}
-            />
           </section>
         )}
 

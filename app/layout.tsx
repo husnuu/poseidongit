@@ -6,6 +6,7 @@ import './globals.css'
 import ChunkLoadErrorHandler from '@/components/ChunkLoadErrorHandler'
 import CookieConsentBannerRoot from '@/components/CookieConsentBannerRoot'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import NoScriptSeoFallback from '@/components/seo/NoScriptSeoFallback'
 import { htmlLangForLocale, isSiteLocale } from '@/lib/i18n/config'
 
 const inter = Inter({
@@ -91,6 +92,7 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <CookieConsentBannerRoot />
         </Suspense>
+        <NoScriptSeoFallback />
       </body>
     </html>
   )

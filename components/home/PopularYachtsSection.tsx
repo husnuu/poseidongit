@@ -43,7 +43,7 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
   const firstTwo = words.slice(0, 2).join(' ')
   const nextTwo = words.slice(2, 4).join(' ')
   const rest = words.slice(4).join(' ')
-  const ctaLabel = ctaButton?.label?.trim() || 'Tüm yatları gör'
+  const ctaLabel = ctaButton?.label?.trim() || 'Tüm tekneleri gör'
   const ctaHref = ctaButton?.href?.trim()
     ? ctaButton.href
     : withLocalePath(locale, '/yat-kiralama')
@@ -60,17 +60,9 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
     >
       <div className="mx-auto max-w-[1200px] px-4">
         <header className="mb-10 md:mb-12">
-          {subtitle ? (
-            <p
-              className="text-sm uppercase tracking-[0.1em] mb-1"
-              style={{ color: 'var(--primary)' }}
-            >
-              {subtitle}
-            </p>
-          ) : null}
           <h2
             id="popular-yachts-heading"
-            className="text-[34px] font-black uppercase leading-[1.15] mb-6 sm:text-[38px] md:text-[42px] lg:text-[46px]"
+            className="text-[34px] font-black uppercase leading-[1.15] mb-3 sm:text-[38px] md:text-[42px] lg:text-[46px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
           >
             {firstTwo ? <span style={{ color: '#1e3a8a' }}>{firstTwo}</span> : null}
@@ -79,6 +71,11 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
             ) : null}
             {rest ? <span style={{ color: '#000' }}>{' ' + rest}</span> : null}
           </h2>
+          {subtitle ? (
+            <p className="max-w-3xl text-base font-normal normal-case leading-relaxed tracking-normal text-zinc-900 md:text-lg">
+              {subtitle}
+            </p>
+          ) : null}
         </header>
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">

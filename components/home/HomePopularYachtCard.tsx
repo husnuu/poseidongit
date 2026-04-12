@@ -50,6 +50,12 @@ function specSummary(spec: YachtSpecifications | null | undefined): string | nul
 const PILL =
   'inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs font-semibold text-zinc-700'
 
+const VIEW_YACHT_CTA: Record<SiteLocale, string> = {
+  tr: 'Tekneyi incele',
+  en: 'View yacht',
+  de: 'Yacht ansehen',
+}
+
 export default function HomePopularYachtCard({
   yacht,
   locale = 'tr',
@@ -149,22 +155,30 @@ export default function HomePopularYachtCard({
         {specLine ? <p className="mt-3 text-sm text-zinc-500">{specLine}</p> : null}
       </div>
 
-      <div className="flex flex-1 flex-col justify-end gap-4 rounded-b-3xl bg-zinc-50 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
-        <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-          {included.length ? (
-            included.map((line) => (
-              <li key={line} className="flex items-start gap-2 text-sm font-semibold text-[#2168b8]">
-                <Check className="mt-0.5 size-4 shrink-0 stroke-[2.5]" aria-hidden />
-                <span>{line}</span>
-              </li>
-            ))
-          ) : (
-            <li className="text-sm text-zinc-400">Dahil olanlar için yat kaydını düzenleyin.</li>
+      <div className="flex flex-1 flex-col justify-end gap-4 rounded-b-3xl bg-zinc-50 px-5 py-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+            {included.length ? (
+              included.map((line) => (
+                <li key={line} className="flex items-start gap-2 text-sm font-semibold text-[#2168b8]">
+                  <Check className="mt-0.5 size-4 shrink-0 stroke-[2.5]" aria-hidden />
+                  <span>{line}</span>
+                </li>
+              ))
+            ) : (
+              <li className="text-sm text-zinc-400">Dahil olanlar için yat kaydını düzenleyin.</li>
+            )}
+          </ul>
+          {priceColumn ?? (
+            <div className="text-right text-sm font-semibold text-zinc-500">Teklif için iletişime geçin</div>
           )}
-        </ul>
-        {priceColumn ?? (
-          <div className="text-right text-sm font-semibold text-zinc-500">Teklif için iletişime geçin</div>
-        )}
+        </div>
+        <span
+          className="tour-card-cta hero-btn-shine relative mt-1 w-full rounded-xl py-2.5 md:py-3 font-black uppercase text-white text-center text-base md:text-[17px] flex items-center justify-center overflow-hidden"
+          style={{ background: '#1e3a8a', boxShadow: '0 3px 12px rgba(30, 58, 138, 0.35)' }}
+        >
+          {VIEW_YACHT_CTA[locale] ?? VIEW_YACHT_CTA.tr}
+        </span>
       </div>
     </article>
   )

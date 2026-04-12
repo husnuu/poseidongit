@@ -48,6 +48,8 @@ export default function LoginPage() {
   const queryErrorMessage = useMemo(() => {
     if (queryError === 'forbidden') return 'Bu hesap admin paneline erişemiyor.'
     if (queryError === 'session') return 'Oturum süresi doldu (1 saat). Lütfen tekrar giriş yapın.'
+    if (queryError === 'idle')
+      return '10 dakika boyunca işlem yapılmadığı için oturum güvenlik nedeniyle kapatıldı. Tekrar giriş yapın.'
     if (queryError === 'config')
       return 'Sunucu yapılandırması eksik (.env içinde ADMIN_JWT_SECRET, en az 24 karakter).'
     return null

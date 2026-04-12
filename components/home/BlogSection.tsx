@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
-import { dateLocaleForSite } from '@/lib/i18n/dateLocale'
+import { formatDisplayDateForSite } from '@/lib/formatDisplayDate'
 
 export type BlogPostItem = {
   _id: string
@@ -32,19 +32,6 @@ type BlogSectionProps = {
   noImageLabel?: string
 }
 
-function formatDate(dateString: string | null | undefined, dateLocale: string): string {
-  if (!dateString) return ''
-  try {
-    return new Date(dateString).toLocaleDateString(dateLocale, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  } catch {
-    return ''
-  }
-}
-
 function BlogCard({
   post,
   locale = 'tr',
@@ -57,7 +44,6 @@ function BlogCard({
   noImageLabel: string
 }) {
   const href = post.slug ? withLocalePath(locale, `/blog/${post.slug}`) : '#'
-  const dateLocale = dateLocaleForSite(locale)
   return (
     <article className="h-full flex flex-col rounded-2xl overflow-hidden bg-white shadow-[0_12px_30px_rgba(0,0,0,0.12)] border border-black/5 transition-all duration-300 hover:shadow-[0_16px_40px_rgba(0,0,0,0.14)]">
       <Link href={href} className="flex flex-col h-full">
@@ -90,7 +76,7 @@ function BlogCard({
           )}
           {post.publishDate && (
             <time className="text-sm text-black/70 mb-5 block" dateTime={post.publishDate}>
-              {formatDate(post.publishDate, dateLocale)}
+              {formatDisplayDateForSite(post.publishDate, locale)}
             </time>
           )}
           <span

@@ -1,4 +1,7 @@
 import { getEmailBaseUrl } from '@/lib/siteUrls'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { DEFAULT_LOCALE } from '@/lib/i18n/config'
+import { VOUCHER_POLICIES } from '@/lib/i18n/bookingFlowLocale'
 import type { VoucherData } from './types'
 import { DEFAULT_POLICIES, DEFAULT_CONTACT } from './types'
 import { formatTicketDate } from './formatTicketDate'
@@ -32,12 +35,14 @@ type BookingDoc = {
  */
 export function bookingToVoucherData(
   booking: BookingDoc,
-  bookingUrl: string
+  bookingUrl: string,
+  locale: SiteLocale = DEFAULT_LOCALE
 ): VoucherData {
   const customer = booking.customer ?? {}
   const counts = booking.counts ?? { adult: 0, child: 0, infant: 0 }
   const siteUrl = getEmailBaseUrl()
   const baseUrl = siteUrl || bookingUrl.replace(/\/[^/]*$/, '')
+  const pol = VOUCHER_POLICIES[locale] ?? VOUCHER_POLICIES.tr
 
   const rawDate = typeof booking.date === 'string' ? booking.date : ''
   return {
@@ -45,10 +50,10 @@ export function bookingToVoucherData(
     bookingUrl,
 
     tourTitle: booking.tourTitle ?? '—',
-    date: rawDate ? formatTicketDate(rawDate) : '—',
+    date: rawDate ? formatTicketDate(rawDate, locale) : '—',
     time: booking.time,
     meetingPickup: (booking as { meetingPoint?: string }).meetingPoint?.trim() || '—',
-    language: 'Türkçe',
+    language: pol.languageLabel,
     className: booking.className?.trim() || undefined,
     firstClassLoca: (booking.firstClassLocas?.length ? booking.firstClassLocas.join(', ') : booking.firstClassLoca?.trim()) || undefined,
     status: booking.status,
@@ -71,8 +76,8 @@ export function bookingToVoucherData(
           : undefined,
     remainingAmount: undefined,
 
-    cancellationPolicy: DEFAULT_POLICIES.cancellationPolicy,
-    voucherNotice: DEFAULT_POLICIES.voucherNotice,
+    cancellationPolicy: pol.cancellationPolicy,
+    voucherNotice: pol.voucherNotice,
 
     supportEmail: process.env.SUPPORT_EMAIL ?? DEFAULT_CONTACT.supportEmail,
     website: getEmailBaseUrl() || DEFAULT_CONTACT.website,

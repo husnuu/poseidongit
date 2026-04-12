@@ -39,7 +39,10 @@ alter table public.bookings
   add column if not exists created_by_admin boolean,
   add column if not exists admin_note text,
   add column if not exists reference text,
-  add column if not exists paid_now numeric;
+  add column if not exists paid_now numeric,
+  add column if not exists ui_locale text;
+
+comment on column public.bookings.ui_locale is 'Site language at booking (tr|en|de) — customer emails / PDF';
 
 update public.bookings
 set created_at = now()

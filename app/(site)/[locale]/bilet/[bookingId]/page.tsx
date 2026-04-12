@@ -3,28 +3,31 @@ import { notFound } from 'next/navigation'
 import { validateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery } from '@/lib/queries'
-import { manageBookingUrl, getSiteBaseUrl } from '@/lib/siteUrls'
+import { manageBookingUrlForLocale, getSiteBaseUrl } from '@/lib/siteUrls'
 import BoardingPassTicket from '@/components/boarding-pass/BoardingPassTicket'
 import { supabase } from '@/lib/supabase'
 import { firstClassLocasFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
+import { boardingPassPageCopy, formatParticipantCountsLine, voucherPdfUiStrings } from '@/lib/i18n/bookingFlowLocale'
+import { formatTicketDate } from '@/lib/voucher/formatTicketDate'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-function AccessDenied() {
-  const base = getSiteBaseUrl()
+function AccessDenied({ locale }: { locale: SiteLocale }) {
+  const copy = boardingPassPageCopy(locale)
+  const homePath = withLocalePath(locale, '/')
   return (
     <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
       <div className="max-w-md w-full text-center">
-        <h1 className="text-xl font-bold text-zinc-900 mb-2">Erişim reddedildi</h1>
-        <p className="text-zinc-600 mb-6">
-          Bilet sayfasına erişmek için e-postanızdaki veya rezervasyon yönetim sayfasındaki geçerli linki kullanın.
-        </p>
+        <h1 className="text-xl font-bold text-zinc-900 mb-2">{copy.accessDeniedTitle}</h1>
+        <p className="text-zinc-600 mb-6">{copy.accessDeniedBody}</p>
         <Link
-          href={base ? `${base}/` : '/'}
+          href={homePath}
           className="inline-block px-5 py-2.5 rounded-lg bg-[#1f3c88] text-white font-semibold hover:bg-[#0c1929]"
         >
-          Ana sayfaya dön
+          {copy.homeCta}
         </Link>
       </div>
     </div>
@@ -117,37 +120,29 @@ async function getTourMeta(tourId: string): Promise<TourMeta | null> {
   }
 }
 
-function formatDate(dateStr: string): string {
-  try {
-    const d = new Date(dateStr)
-    if (Number.isNaN(d.getTime())) return dateStr
-    return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })
-  } catch {
-    return dateStr
-  }
-}
-
 export default async function BiletPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ bookingId: string }>
+  params: Promise<{ locale: string; bookingId: string }>
   searchParams: Promise<{ token?: string }>
 }) {
-  const { bookingId } = await params
+  const { locale: rawLocale, bookingId } = await params
+  if (!isSiteLocale(rawLocale)) notFound()
+  const locale = rawLocale as SiteLocale
   const { token } = await searchParams
 
   const valid = await validateBookingAccessToken(bookingId, token)
   if (!valid) {
-    return <AccessDenied />
+    return <AccessDenied locale={locale} />
   }
 
   const ticket = await getTicketData(bookingId)
   if (!ticket) notFound()
 
-  const base = getSiteBaseUrl()
   const tokenForUrls = token ?? ''
   const tourMeta = await getTourMeta(ticket.tourId)
+  const s = voucherPdfUiStrings(locale)
   const tourImageUrl =
     tourMeta?.mainImage?.asset != null
       ? urlFor(tourMeta.mainImage.asset).width(800).height(400).url()
@@ -155,16 +150,9 @@ export default async function BiletPage({
   const meetingPoint = tourMeta?.meetingPoint?.trim() || ticket.meetingPoint
   const durationLabel = tourMeta?.durationLabel?.trim() || null
 
-  const participants =
-    [
-      ticket.counts.adult > 0 && `${ticket.counts.adult} Yetişkin`,
-      ticket.counts.child > 0 && `${ticket.counts.child} Çocuk`,
-      ticket.counts.infant > 0 && `${ticket.counts.infant} Bebek`,
-    ]
-      .filter(Boolean)
-      .join(', ') || '—'
+  const participants = formatParticipantCountsLine(ticket.counts, locale)
 
-  const dateFormatted = formatDate(ticket.date)
+  const dateFormatted = formatTicketDate(ticket.date, locale)
   const qrImageUrl = tokenForUrls
     ? `/api/qr?bookingId=${encodeURIComponent(bookingId)}&token=${encodeURIComponent(tokenForUrls)}`
     : undefined
@@ -178,8 +166,12 @@ export default async function BiletPage({
   )
   const classDisplay =
     ticket.classId === 'first' && (ticket.firstClassLocas?.length ?? 0) > 0
-      ? `${ticket.className} · Loca ${ticket.firstClassLocas!.join(', ')}`
+      ? `${ticket.className} · ${s.locaPrefix} ${ticket.firstClassLocas!.join(', ')}`
       : ticket.className
+
+  const base = getSiteBaseUrl().replace(/\/$/, '')
+  const homePath = withLocalePath(locale, '/')
+  const homeUrl = base ? `${base}${homePath}` : homePath
 
   return (
     <BoardingPassTicket
@@ -198,9 +190,10 @@ export default async function BiletPage({
       currency={ticket.currency}
       paidAmount={paidAmount}
       status={ticket.status}
-      manageUrl={manageBookingUrl(bookingId)}
-      homeUrl={base ? `${base}/` : '/'}
+      manageUrl={manageBookingUrlForLocale(bookingId, locale)}
+      homeUrl={homeUrl}
       qrImageUrl={qrImageUrl}
+      locale={locale}
     />
   )
 }

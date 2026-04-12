@@ -3,6 +3,13 @@
 import React from 'react'
 import Link from 'next/link'
 import { Ship, Printer } from 'lucide-react'
+import type { SiteLocale } from '@/lib/i18n/config'
+import {
+  boardingPassPageCopy,
+  boardingPassTicketActions,
+  numberLocaleForBooking,
+  voucherPdfUiStrings,
+} from '@/lib/i18n/bookingFlowLocale'
 
 export type BoardingPassTicketProps = {
   bookingId: string
@@ -25,6 +32,7 @@ export type BoardingPassTicketProps = {
   manageUrl: string
   homeUrl: string
   qrImageUrl?: string
+  locale?: SiteLocale
 }
 
 const BLUE = '#1e3a8a'
@@ -72,20 +80,23 @@ export default function BoardingPassTicket({
   manageUrl,
   homeUrl,
   qrImageUrl,
+  locale = 'tr',
 }: BoardingPassTicketProps) {
   void _tourImageUrl
   void _status
-  const totalPriceLabel = `${totalPrice.toLocaleString('tr-TR')} ${currency}`
+  const s = voucherPdfUiStrings(locale)
+  const a = boardingPassTicketActions(locale)
+  const pageCopy = boardingPassPageCopy(locale)
+  const nloc = numberLocaleForBooking(locale)
+  const totalPriceLabel = `${totalPrice.toLocaleString(nloc)} ${currency}`
   const paidAmountLabel =
-    paidAmount != null && paidAmount > 0 ? `${paidAmount.toLocaleString('tr-TR')} ${currency}` : null
+    paidAmount != null && paidAmount > 0 ? `${paidAmount.toLocaleString(nloc)} ${currency}` : null
   const depTime = time?.trim() || '—'
   const boardingTime = boardingTimeBefore(time) ?? depTime
   const arr = arrivalTime?.trim()
 
   const scheduleLine =
-    depTime !== '—'
-      ? `Tahmini kalkış ${depTime} · Gemiye biniş en geç ${boardingTime}`
-      : `Biniş saati: ${boardingTime}`
+    depTime !== '—' ? s.estDeparture(depTime, boardingTime) : s.boardingTimeOnly(boardingTime)
 
   return (
     <div
@@ -101,7 +112,7 @@ export default function BoardingPassTicket({
         {/* Yazdırmada tam A4 (210×297mm), dikeyde esneyen orta bölüm */}
         <article
           className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_4px_24px_rgba(15,23,42,0.08)] print:break-inside-avoid print:flex print:h-[297mm] print:max-h-[297mm] print:w-[210mm] print:flex-col print:overflow-hidden print:rounded-none print:border-0 print:shadow-none"
-          aria-label="Elektronik bilet"
+          aria-label={pageCopy.ariaTicket}
         >
           {/* —— HEADER —— */}
           <header
@@ -111,10 +122,12 @@ export default function BoardingPassTicket({
             <div className="flex flex-col gap-5 print:gap-3.5">
               <div className="flex flex-wrap items-center justify-between gap-3 print:gap-3">
                 <span className="inline-flex max-w-full items-center rounded-lg border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white sm:text-[11px] print:px-3 print:py-1.5 print:text-[10px]">
-                  E-Bilet Çeşme Poseidon
+                  {s.ebiletBadge}
                 </span>
                 {durationLabel ? (
-                  <span className="text-xs font-semibold text-white/85 print:text-sm">Süre: {durationLabel}</span>
+                  <span className="text-xs font-semibold text-white/85 print:text-sm">
+                    {s.durationPrefix} {durationLabel}
+                  </span>
                 ) : null}
               </div>
 
@@ -122,7 +135,7 @@ export default function BoardingPassTicket({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6 print:flex-row print:items-center print:gap-6">
                 <div className="flex min-w-0 flex-1 items-center gap-3 text-white print:gap-4">
                   <span className="shrink-0 text-lg font-extrabold uppercase tracking-tight sm:text-xl print:text-xl">
-                    Çeşme
+                    {s.cesme}
                   </span>
                   <div className="relative flex min-w-[3rem] flex-1 items-center justify-center px-1">
                     <div className="h-px w-full border-t border-dashed border-white/50" aria-hidden />
@@ -141,7 +154,7 @@ export default function BoardingPassTicket({
               {/* Tarih + tek satır zaman özeti */}
               <div className="rounded-xl border border-white/20 bg-black/10 px-4 py-3 sm:px-5 print:px-5 print:py-3.5">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-white/75 print:text-[11px]">
-                  Tur tarihi
+                  {s.tourDate}
                 </p>
                 <p className="mt-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl print:text-2xl print:leading-tight">
                   {dateFormatted}
@@ -151,7 +164,7 @@ export default function BoardingPassTicket({
                 </p>
                 {arr ? (
                   <p className="mt-1.5 text-sm font-semibold text-white/90 print:mt-1.5 print:text-sm">
-                    Tahmini varış: {arr}
+                    {s.estArrival(arr)}
                   </p>
                 ) : null}
               </div>
@@ -162,7 +175,7 @@ export default function BoardingPassTicket({
           <section className="space-y-6 px-5 py-6 sm:px-8 sm:py-8 print:flex print:min-h-0 print:flex-1 print:flex-col print:gap-5 print:space-y-0 print:overflow-hidden print:px-7 print:py-5">
             <div className="grid shrink-0 gap-6 sm:grid-cols-2 print:grid-cols-2 print:gap-6">
               <div className="space-y-1.5 print:space-y-1">
-                <Label>Yolcu</Label>
+                <Label>{s.passenger}</Label>
                 <p
                   className="text-lg font-bold leading-snug text-slate-900 print:text-lg print:leading-snug"
                   style={{ color: BLUE_LIGHT }}
@@ -174,13 +187,13 @@ export default function BoardingPassTicket({
                 ) : null}
               </div>
               <div className="space-y-1.5 print:space-y-1">
-                <Label>Sınıf</Label>
+                <Label>{s.classLabel}</Label>
                 <p className="text-lg font-bold text-slate-900 print:text-lg print:leading-snug">{className}</p>
               </div>
             </div>
 
             <div className="shrink-0 space-y-1.5 rounded-xl bg-slate-50 px-4 py-3 sm:px-5 print:space-y-1 print:px-5 print:py-2.5">
-              <Label>Rezervasyon numarası</Label>
+              <Label>{s.refNumber}</Label>
               <p className="font-mono text-base font-bold tracking-wide text-slate-900 sm:text-lg print:text-base print:leading-snug">
                 {bookingId}
               </p>
@@ -189,18 +202,18 @@ export default function BoardingPassTicket({
             {/* —— QR: kalan yükseklik burada esner; taşmayı önlemek için min-h-0 —— */}
             <div className="rounded-2xl border-2 border-slate-200 bg-slate-50/80 px-4 py-6 sm:px-8 sm:py-8 print:flex print:min-h-0 print:flex-1 print:flex-col print:justify-center print:overflow-hidden print:px-6 print:py-4">
               <div className="mx-auto flex min-h-0 w-full max-w-sm flex-col items-center justify-center text-center print:max-w-none">
-                <Label>Biniş doğrulama</Label>
+                <Label>{s.boardingVerify}</Label>
                 <h2 className="mt-2 text-lg font-extrabold text-slate-900 sm:text-xl print:mt-1 print:text-xl">
-                  QR kodu
+                  {s.qrCode}
                 </h2>
                 <p className="mt-1 max-w-xs text-sm font-medium leading-relaxed text-slate-600 print:mt-1 print:max-w-md print:text-sm">
-                  Binişte bu QR kodu gösteriniz.
+                  {s.qrHint}
                 </p>
                 {qrImageUrl ? (
                   <div className="mt-5 rounded-2xl border-2 border-white bg-white p-4 shadow-sm print:mt-3 print:rounded-xl print:p-3 print:border-slate-200">
                     <img
                       src={qrImageUrl}
-                      alt="Biniş QR kodu"
+                      alt={a.qrAlt}
                       width={224}
                       height={224}
                       className="h-52 w-52 object-contain sm:h-56 sm:w-56 print:h-[46mm] print:w-[46mm] print:max-h-[46mm] print:max-w-[46mm]"
@@ -208,7 +221,7 @@ export default function BoardingPassTicket({
                     />
                   </div>
                 ) : (
-                  <p className="mt-4 text-sm text-slate-500 print:mt-2 print:text-sm">QR kodu yüklenemedi.</p>
+                  <p className="mt-4 text-sm text-slate-500 print:mt-2 print:text-sm">{a.qrLoadFail}</p>
                 )}
               </div>
             </div>
@@ -219,18 +232,18 @@ export default function BoardingPassTicket({
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between print:flex-row print:items-start print:gap-x-8 print:gap-y-1">
               <div className="flex flex-col gap-4 sm:flex-row sm:gap-10 print:flex-row print:gap-8">
                 <div>
-                  <Label>Toplam tutar</Label>
+                  <Label>{s.total}</Label>
                   <p className="mt-1 text-xl font-extrabold text-slate-900 print:text-xl">{totalPriceLabel}</p>
                 </div>
                 {paidAmountLabel ? (
                   <div>
-                    <Label>Ödenen tutar</Label>
+                    <Label>{s.paid}</Label>
                     <p className="mt-1 text-lg font-bold text-emerald-800 print:text-lg">{paidAmountLabel}</p>
                   </div>
                 ) : null}
               </div>
               <div className="max-w-md sm:text-right print:max-w-[50%] print:text-right">
-                <Label>Toplanma noktası</Label>
+                <Label>{s.meeting}</Label>
                 <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-800 print:text-sm print:leading-snug">
                   {meetingPoint}
                 </p>
@@ -248,19 +261,19 @@ export default function BoardingPassTicket({
             style={{ borderColor: BLUE, color: BLUE }}
           >
             <Printer className="h-5 w-5 shrink-0" aria-hidden />
-            Yazdır veya PDF kaydet
+            {a.printSave}
           </button>
           <Link
             href={manageUrl}
             className="flex-1 rounded-xl py-3.5 text-center text-sm font-bold text-white transition-opacity hover:opacity-95 sm:max-w-xs"
             style={{ backgroundColor: BLUE }}
           >
-            Rezervasyonu Yönet
+            {a.manageBooking}
           </Link>
         </div>
         <p className="mt-4 text-center text-sm text-slate-600 print:hidden">
           <Link href={homeUrl} className="font-semibold underline decoration-slate-400 underline-offset-2 hover:text-slate-900">
-            Ana sayfaya dön
+            {a.backHome}
           </Link>
         </p>
       </div>

@@ -85,6 +85,8 @@ export type SupabaseBookingRow = {
   admin_note?: string | null
   reference?: string | null
   paid_now?: number | null
+  /** Rezervasyon sırasında seçilen site dili (tr | en | de). */
+  ui_locale?: string | null
   created_at?: string | null
 }
 

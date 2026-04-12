@@ -104,14 +104,12 @@ export default function CookieConsentBanner({ policyHref }: Props) {
           >
             <h2 id="cookie-settings-title">Çerez ayarları</h2>
             <p>
-              Zorunlu çerezler (örneğin yönetim paneli oturumu) site güvenliği için gereklidir ve bu
-              tercihlerden etkilenmez. Aşağıdaki seçenekler yalnızca analiz ve reklam amaçlı
-              çerezleri kapsar.
+              İsteğe bağlı çerezleri buradan açıp kapatabilirsiniz. Tercihinizi kaydettiğinizde ana
+              bildirim kapanır.
             </p>
             <div className={styles.row}>
               <div className={styles.rowLabel}>
                 <strong>Analitik</strong>
-                <span>Ziyaretçi sayıları ve kullanım istatistikleri (Google Analytics).</span>
               </div>
               <Toggle
                 label="Analitik çerezleri aç veya kapat"
@@ -122,7 +120,6 @@ export default function CookieConsentBanner({ policyHref }: Props) {
             <div className={styles.row}>
               <div className={styles.rowLabel}>
                 <strong>Reklam</strong>
-                <span>Reklam ve kişiselleştirme ile ilgili depolama (Consent Mode).</span>
               </div>
               <Toggle
                 label="Reklam çerezlerini aç veya kapat"

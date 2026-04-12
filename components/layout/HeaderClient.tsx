@@ -2,12 +2,12 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
-import type { SiteLocale } from '@/lib/i18n/config'
-import { stripLocalePathPrefix, withLocalePath } from '@/lib/i18n/paths'
+import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
 import { localizeNavHref } from '@/lib/i18n/localizeNavHref'
-import { headerAria, pickCtaText, pickNavLabel } from '@/lib/i18n/localizedLabels'
+import { comingSoonLabelForLanguageCode, headerAria, pickCtaText, pickNavLabel } from '@/lib/i18n/localizedLabels'
 import {
   Anchor,
   Bell,
@@ -52,6 +52,12 @@ const EMOJI_FALLBACK: Record<string, string> = {
 export interface HeaderLanguage {
   code: string
   label: string
+  comingSoon?: boolean | null
+  comingSoonBadge?: {
+    asset?: { _ref?: string }
+    url?: string
+    metadata?: { lqip?: string; dimensions?: { width: number; height: number } }
+  } | null
   flag?: {
     asset?: { _ref?: string }
     url?: string
@@ -111,10 +117,10 @@ function LanguageDropdown({
   locale: SiteLocale
   ariaLabel: string
 }) {
-  const pathname = usePathname() ?? '/'
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const aria = headerAria(locale)
 
   const list = languages.length > 0 ? languages : DEFAULT_HEADER_LANGUAGES
   const current = locale
@@ -172,6 +178,7 @@ function LanguageDropdown({
           width={16}
           height={16}
           aria-hidden
+          focusable="false"
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
@@ -181,6 +188,50 @@ function LanguageDropdown({
           {list.map((item) => {
             const key = item.code.toLowerCase()
             const isSelected = current === key
+            const soon = Boolean(item.comingSoon)
+
+            if (soon) {
+              const soonLabel = comingSoonLabelForLanguageCode(key)
+              return (
+                <div
+                  key={key}
+                  role="option"
+                  aria-disabled="true"
+                  aria-selected={false}
+                  title={`${item.label} — ${soonLabel}`}
+                  className={`${styles.languageOption} ${styles.languageOptionComingSoon}`}
+                >
+                  <span className={styles.languageOptionFlag}>
+                    {item.flag?.url ? (
+                      <Image
+                        src={item.flag.url}
+                        alt=""
+                        width={24}
+                        height={24}
+                        className={styles.languageOptionFlagImg}
+                      />
+                    ) : (
+                      <span className={styles.languageOptionFlagInner}>
+                        {EMOJI_FALLBACK[key] ?? '🇹🇷'}
+                      </span>
+                    )}
+                  </span>
+                  <span className={styles.languageOptionLabel}>{item.label}</span>
+                  {item.comingSoonBadge?.url ? (
+                    <Image
+                      src={item.comingSoonBadge.url}
+                      alt={soonLabel}
+                      width={72}
+                      height={20}
+                      className={styles.languageComingSoonBadgeImg}
+                    />
+                  ) : (
+                    <span className={styles.languageComingSoonFallback}>{soonLabel}</span>
+                  )}
+                </div>
+              )
+            }
+
             return (
               <button
                 key={key}
@@ -190,11 +241,8 @@ function LanguageDropdown({
                 className={`${styles.languageOption} ${isSelected ? styles.languageOptionSelected : ''}`}
                 onClick={() => {
                   setOpen(false)
-                  const base = stripLocalePathPrefix(pathname)
-                  const path = base === '/' ? '' : base
-                  const next =
-                    key === 'tr' ? path || '/' : `/${key}${path}`
-                  router.push(next || '/')
+                  if (!isSiteLocale(key)) return
+                  router.push(withLocalePath(key, '/'))
                 }}
               >
                 <span className={styles.languageOptionFlag}>
@@ -212,7 +260,7 @@ function LanguageDropdown({
                     </span>
                   )}
                 </span>
-                <span>{item.label}</span>
+                <span className={styles.languageOptionLabel}>{item.label}</span>
                 {isSelected && <span className={styles.languageOptionDot} aria-hidden />}
               </button>
             )
@@ -225,7 +273,16 @@ function LanguageDropdown({
 
 function MenuIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      focusable="false"
+    >
       <line x1="3" y1="6" x2="21" y2="6" />
       <line x1="3" y1="12" x2="21" y2="12" />
       <line x1="3" y1="18" x2="21" y2="18" />
@@ -235,7 +292,16 @@ function MenuIcon() {
 
 function CloseIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      focusable="false"
+    >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>

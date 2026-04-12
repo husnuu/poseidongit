@@ -67,7 +67,8 @@ export default function HeroBanner({
                 fill
                 className="object-cover object-center"
                 priority
-                sizes="100vw"
+                fetchPriority="high"
+                sizes="(max-width: 767px) 100vw, 1px"
               />
             </div>
           )}
@@ -79,7 +80,12 @@ export default function HeroBanner({
                 fill
                 className="object-cover object-center"
                 priority
-                sizes="100vw"
+                fetchPriority="high"
+                sizes={
+                  mobileImageUrl
+                    ? '(min-width: 768px) 100vw, 1px'
+                    : '(max-width: 1024px) 100vw, min(100vw, 1920px)'
+                }
               />
             </div>
           )}
@@ -104,7 +110,7 @@ export default function HeroBanner({
                 '0 4px 14px rgba(0, 0, 0, 0.22), 0 0 12px rgba(251, 146, 60, 0.5), 0 0 22px rgba(249, 115, 22, 0.35), inset 0 0 0 1px rgba(255, 244, 220, 0.32)',
             }}
           >
-            <Crown className="h-4 w-4 text-white md:h-5 md:w-5" aria-hidden />
+            <Crown className="h-4 w-4 text-white md:h-5 md:w-5" aria-hidden focusable={false} />
             <span className="relative z-[1]">
               {hero.topBadgeText?.trim() || 'Çeşme’nin En Çok Tercih Edilen Tekne Turu'}
             </span>

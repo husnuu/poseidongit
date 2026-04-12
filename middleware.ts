@@ -3,13 +3,13 @@ import type { NextRequest } from 'next/server'
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from '@/lib/adminSession'
 import { parseLocaleFromPathname } from '@/lib/i18n/paths'
 import { isSiteLocale } from '@/lib/i18n/config'
+import { incomingPathToCanonicalRoute } from '@/lib/i18n/routeAliases'
 
 /** Eski / kaldırılmış sayfalar — 410 Gone (arama motorları indeksten çıkarır). */
 const gonePaths = new Set([
   '/services',
   '/program',
   '/home',
-  '/about',
   '/admission',
   '/contact-2',
   '/category/uncategorized',
@@ -68,11 +68,33 @@ export async function middleware(request: NextRequest) {
     if (!isSiteLocale(locale)) {
       return new NextResponse(null, { status: 404 })
     }
-    const internalPath = `/${locale}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`
-    const res =
-      internalPath === pathname
-        ? NextResponse.next()
-        : NextResponse.rewrite(new URL(internalPath, request.url))
+    // TR: canonical tour detail URLs use /tur/; 301 from legacy /tour/
+    if (
+      locale === 'tr' &&
+      (pathWithoutLocale === '/tour' || pathWithoutLocale.startsWith('/tour/'))
+    ) {
+      const suffix =
+        pathWithoutLocale === '/tour' ? '' : pathWithoutLocale.slice('/tour'.length)
+      const newPathWithoutLocale = `/tur${suffix}`
+      const url = request.nextUrl.clone()
+      if (pathname.startsWith('/tr/') || pathname === '/tr') {
+        url.pathname = `/tr${newPathWithoutLocale}`
+      } else {
+        url.pathname = newPathWithoutLocale
+      }
+      return NextResponse.redirect(url, 301)
+    }
+    const canonicalPath = incomingPathToCanonicalRoute(locale, pathWithoutLocale)
+    const internalPath = `/${locale}${canonicalPath === '/' ? '' : canonicalPath}`
+    if (internalPath === pathname) {
+      const res = NextResponse.next()
+      res.headers.set('x-site-locale', locale)
+      return res
+    }
+    // clone + pathname: `new URL(internalPath, request.url)` strips ?query (bilet ?token= kaybolur)
+    const rewriteUrl = request.nextUrl.clone()
+    rewriteUrl.pathname = internalPath
+    const res = NextResponse.rewrite(rewriteUrl)
     res.headers.set('x-site-locale', locale)
     return res
   }

@@ -12,6 +12,7 @@ import YachtRouteSection from '@/components/yacht/YachtRouteSection'
 import YachtAmenitiesSection from '@/components/yacht/YachtAmenitiesSection'
 import YachtPolicySections from '@/components/yacht/YachtPolicySections'
 import YachtFAQAccordion from '@/components/yacht/YachtFAQAccordion'
+import type { SiteLocale } from '@/lib/i18n/config'
 import YachtOptionalSections from '@/components/yacht/YachtOptionalSections'
 /** Ağır client alt ağaçları ayrı chunk — ChunkLoadError / timeout riskini azaltır */
 const PhotoGrid = dynamic(() => import('@/components/PhotoGrid'), {
@@ -36,12 +37,13 @@ const YachtInquiryExperience = dynamic(
 )
 
 interface YachtDetailViewProps {
+  locale: SiteLocale
   yacht: YachtRentalDocument
   /** SEO ve breadcrumb için tam yol (örn. /yat-kiralama/cesme/gulet-ada) */
   path: string
 }
 
-export default function YachtDetailView({ yacht, path }: YachtDetailViewProps) {
+export default function YachtDetailView({ locale, yacht, path }: YachtDetailViewProps) {
   const images = buildYachtPhotoGridImages(yacht)
   const sidebarGallery = buildYachtSidebarGallery(yacht)
 
@@ -92,7 +94,7 @@ export default function YachtDetailView({ yacht, path }: YachtDetailViewProps) {
             <YachtAmenitiesSection amenities={yacht.amenities ?? []} />
             <YachtPolicySections yacht={yacht} />
             <YachtFAQAccordion items={yacht.faqs ?? []} />
-            <YachtOptionalSections yacht={yacht} />
+            <YachtOptionalSections locale={locale} yacht={yacht} />
           </main>
           <YachtInquiryExperience yacht={yacht} />
         </div>

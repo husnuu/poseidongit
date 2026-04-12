@@ -1,8 +1,10 @@
 import Image from 'next/image'
 import { client, urlFor } from '@/lib/sanity'
 import { faqPageQuery, siteFooterQuery } from '@/lib/queries'
-import { getSiteName } from '@/lib/seo'
+import { absoluteUrl, buildFAQSchema, getSiteName } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
 import FAQAccordion from '@/components/FAQAccordion'
+import { withLocalePath } from '@/lib/i18n/paths'
 import type { FAQItem } from '@/components/FAQAccordion'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
@@ -93,6 +95,20 @@ export default async function SikSorulanlarPage({
     (s) => s.sectionTitle && (s.items?.length ?? 0) > 0
   )
 
+  const faqStructuredDataPairs: Array<{ question: string; answer: string }> = []
+  for (const section of sections) {
+    for (const it of section.items ?? []) {
+      const q = it.question?.trim()
+      const a = it.answer?.trim()
+      if (q && a) faqStructuredDataPairs.push({ question: q, answer: a })
+    }
+  }
+  const faqPageUrl = absoluteUrl(withLocalePath(locale, '/sik-sorulanlar'))
+  const faqPageSchema =
+    faqStructuredDataPairs.length > 0
+      ? buildFAQSchema(faqStructuredDataPairs, { url: faqPageUrl })
+      : null
+
   const coverImageUrl = cover?.image?.asset
     ? urlFor(cover.image.asset).width(1920).height(720).url()
     : null
@@ -104,6 +120,7 @@ export default async function SikSorulanlarPage({
 
   return (
     <div className="min-h-screen bg-white">
+      {faqPageSchema && <JsonLd data={faqPageSchema} />}
       {/* Kapak – blog sayfası gibi: başlık kelimelerin yarısı lacivert, yarısı siyah */}
       <section
         className="relative w-full min-h-[320px] md:min-h-[400px] flex flex-col justify-end overflow-hidden"

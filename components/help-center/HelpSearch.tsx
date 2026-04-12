@@ -28,7 +28,7 @@ export default function HelpSearch({
   return (
     <div className="w-full max-w-2xl">
       <label htmlFor={id} className="sr-only">
-        Yardım makalelerinde ara
+        {labelSrOnly}
       </label>
       <div className="relative">
         <Search

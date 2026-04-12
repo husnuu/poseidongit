@@ -15,7 +15,7 @@ export default defineType({
       name: 'slug',
       title: 'URL slug',
       type: 'slug',
-      description: 'Bu dildeki tur adresi: /en/tour/… veya /de/tour/…',
+      description: 'Bu dildeki tur adresi: Türkçe /tur/…, İngilizce /en/tour/…, Almanca /de/tour/…',
       options: { maxLength: 96 },
     }),
     defineField({

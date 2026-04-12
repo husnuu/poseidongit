@@ -188,6 +188,139 @@
   }
 }
 
+/* Ana sayfa / locale loading: Sanity hero ile aynı blok yüksekliği + shimmer */
+.hero-skeleton {
+  position: relative;
+  width: 100%;
+  min-height: 440px;
+  height: 65vh;
+  overflow: hidden;
+  background: linear-gradient(165deg, #1e293b 0%, #334155 45%, #475569 100%);
+}
+@media (min-width: 768px) {
+  .hero-skeleton {
+    min-height: 520px;
+    height: 72vh;
+  }
+}
+.hero-skeleton__shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 38%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 62%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: hero-skeleton-shimmer 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes hero-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+.hero-skeleton__badge {
+  position: absolute;
+  left: 1.25rem;
+  top: 12px;
+  height: 34px;
+  width: min(72vw, 320px);
+  border-radius: 0 9999px 9999px 0;
+  background: rgba(255, 255, 255, 0.12);
+  z-index: 1;
+}
+@media (min-width: 768px) {
+  .hero-skeleton__badge {
+    left: 2.5rem;
+    top: 24px;
+    height: 40px;
+    width: min(48vw, 380px);
+  }
+}
+.hero-skeleton__content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  padding: 2rem 1.25rem 2.5rem;
+  max-width: min(1000px, 65vw);
+}
+@media (min-width: 768px) {
+  .hero-skeleton__content {
+    padding: 4rem 2.5rem;
+  }
+}
+.hero-skeleton__eyebrow {
+  height: 12px;
+  width: 140px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.18);
+  margin-bottom: 0.75rem;
+}
+.hero-skeleton__title-line {
+  height: clamp(36px, 9vw, 52px);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.22);
+  margin-bottom: 0.65rem;
+  max-width: 100%;
+}
+.hero-skeleton__title-line--short {
+  width: 78%;
+}
+.hero-skeleton__sub {
+  margin-top: 1.25rem;
+  height: 14px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.14);
+  max-width: 85%;
+}
+.hero-skeleton__sub--2 {
+  margin-top: 0.5rem;
+  width: 62%;
+}
+.hero-skeleton__ctas {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+@media (min-width: 640px) {
+  .hero-skeleton__ctas {
+    flex-direction: row;
+    align-items: center;
+    gap: 1.25rem;
+  }
+}
+.hero-skeleton__cta {
+  height: 48px;
+  width: 200px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.16);
+}
+.hero-skeleton__cta--secondary {
+  background: rgba(255, 255, 255, 0.1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-skeleton__shimmer {
+    animation: none;
+    background: linear-gradient(
+      105deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0.06) 100%
+    );
+    background-size: 100% 100%;
+  }
+}
+
 @layer base {
   :root {
     --primary: #2168b8;

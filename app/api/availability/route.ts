@@ -107,7 +107,7 @@ async function handleSingleDate(
 ): Promise<NextResponse<Availability | { error: string }>> {
   const sanityTour = await client.fetch<(TourCapacitySource & { _id?: string }) | null>(
       tourForAvailabilityQuery,
-      { tourId: tourSlug && tourSlug !== tourId ? tourSlug : tourId }
+      { tourId }
     )
     if (!sanityTour) {
       return NextResponse.json(
@@ -215,7 +215,7 @@ async function handleMultipleDates(
 ): Promise<NextResponse<AvailabilityUsedResponse>> {
   const sanityTour = await client.fetch<(TourCapacitySource & { _id?: string }) | null>(
     tourForAvailabilityQuery,
-    { tourId: tourSlug && tourSlug !== tourId ? tourSlug : tourId }
+    { tourId }
   )
   const normalizedTourId = canonicalTourId(sanityTour?._id ?? tourId)
   const idsToQuery = buildAcceptedTourIds(normalizedTourId, tourId, tourSlug, sanityTour?._id)

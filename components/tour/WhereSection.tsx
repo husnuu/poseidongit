@@ -1,7 +1,5 @@
 'use client'
 
-import LocationMapActions from '@/components/map/LocationMapActions'
-
 /** Toplanma noktası ikonu – düz, renksiz (currentColor) */
 function MeetingPointIcon({ className }: { className?: string }) {
   return (
@@ -28,27 +26,23 @@ export type WhereSectionData = {
   meetingPointLabel?: string | null
   meetingPointAddress?: string | null
   mapEmbedUrl?: string | null
-  /** Sanity: Paylaş → Bağlantıyı kopyala (yol tarifi + WhatsApp). */
+  /** Sanity: Paylaş → Bağlantıyı kopyala (CMS alanı; harita iframe’i ayrı). */
   locationMapLink?: string | null
   openInMapsLabel?: string | null
 }
 
 type WhereSectionProps = {
   data: WhereSectionData | null | undefined
-  /** WhatsApp paylaşımında kullanılır (örn. tur adı) */
-  shareContextLabel?: string | null
   /** CMS başlığı yokken (örn. locale). */
   headingFallback?: string
 }
 
 export default function WhereSection({
   data,
-  shareContextLabel,
   headingFallback = 'Nerede',
 }: WhereSectionProps) {
   if (!data?.enabled) return null
-  const hasManagedLink = !!data?.locationMapLink?.trim()
-  if (!data?.mapEmbedUrl && !data?.meetingPointAddress && !hasManagedLink) return null
+  if (!data.mapEmbedUrl && !(data.meetingPointLabel || data.meetingPointAddress)) return null
 
   return (
     <section className="mb-8" aria-labelledby="where-section-heading">
@@ -101,15 +95,6 @@ export default function WhereSection({
             referrerPolicy="no-referrer-when-downgrade"
           />
         </div>
-      )}
-      {(data.mapEmbedUrl || hasManagedLink) && (
-        <LocationMapActions
-          managedLocationUrl={data.locationMapLink}
-          address={data.meetingPointAddress}
-          mapEmbedUrl={data.mapEmbedUrl}
-          contextLabel={shareContextLabel}
-          variant="tour"
-        />
       )}
     </section>
   )

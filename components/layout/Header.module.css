@@ -328,6 +328,43 @@
   transition: background 0.15s ease;
 }
 
+.languageOptionLabel {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.languageOptionComingSoon {
+  cursor: not-allowed;
+  opacity: 0.9;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.languageOptionComingSoon:hover {
+  background: none;
+}
+
+.languageComingSoonBadgeImg {
+  margin-left: auto;
+  height: 20px;
+  width: auto;
+  max-width: 104px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.languageComingSoonFallback {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .languageOption:hover {
   background: #f5f6f8;
 }

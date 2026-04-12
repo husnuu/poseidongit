@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateBookingAccessToken } from '@/lib/bookingAccessToken'
-import { generateVoucherPdf } from '@/lib/voucher/generateVoucherPdf'
+import { generatePremiumEticketPdf } from '@/lib/ticket/generatePremiumEticketPdf'
+import { voucherDataToPremiumEticket } from '@/lib/ticket/voucherToPremiumEticket'
 import { buildVoucherDataFromBookingRow } from '@/lib/voucher/buildVoucherDataFromBookingSnapshot'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { normalizeBookingFlowLocale } from '@/lib/i18n/bookingFlowLocale'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -61,14 +63,16 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const voucherData = await buildVoucherDataFromBookingRow(bookingId, bookingRow as SupabaseBookingRow, token)
+    const row = bookingRow as SupabaseBookingRow
+    const voucherData = await buildVoucherDataFromBookingRow(bookingId, row, token)
     if (!voucherData) {
       return NextResponse.json(
         { error: 'Bilet verisi oluşturulamadı. accessToken eksik olabilir.' },
         { status: 500 }
       )
     }
-    const pdfBytes = await generateVoucherPdf(voucherData)
+    const loc = normalizeBookingFlowLocale(row.ui_locale)
+    const pdfBytes = await generatePremiumEticketPdf(voucherDataToPremiumEticket(voucherData, loc))
 
     const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'Bilet'
     const filename = `${siteName}-Bilet-${voucherData.referenceNumber}.pdf`

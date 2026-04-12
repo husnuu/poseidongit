@@ -221,6 +221,7 @@ export default function BookingWizardModal({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            locale,
             tourId,
             tourTitle: tour.title ?? '',
             date: state.selectedDate ?? '',

@@ -270,7 +270,7 @@ export async function generateMetadata({
   const description =
     (tour.shortDescription ?? tour.title).replace(/\s+/g, ' ').slice(0, 160) ||
     tourUi.metaDescriptionFallback(tour.title)
-  const url = absoluteUrl(withLocalePath(locale, `/tour/${slug}`))
+  const url = absoluteUrl(withLocalePath(locale, `/tur/${slug}`))
   const image =
     tour.mainImage?.asset != null
       ? urlFor(tour.mainImage.asset).width(1200).height(630).url()
@@ -353,7 +353,7 @@ export default async function TourPage({
   const galleryHeroImages = buildGalleryHeroImages(tour, tourUi)
   const itineraryTimelineItems = buildItineraryTimelineItems(tour)
 
-  const tourPath = withLocalePath(locale, `/tour/${slug}`)
+  const tourPath = withLocalePath(locale, `/tur/${slug}`)
   const tourUrl = absoluteUrl(tourPath)
   const rezervasyonHref = withLocalePath(locale, `/rezervasyon/${tour.slug}`)
   const tourImage =
@@ -553,7 +553,6 @@ export default async function TourPage({
         <div className="mt-14 mb-14">
           <WhereSection
             data={tour.whereSection}
-            shareContextLabel={tour.title}
             headingFallback={tourUi.whereHeadingFallback}
           />
         </div>

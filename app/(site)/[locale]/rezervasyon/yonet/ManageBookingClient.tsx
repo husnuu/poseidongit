@@ -6,6 +6,9 @@ import FirstClassSeatSelector from '@/components/booking/FirstClassSeatSelector'
 import type { CalendarDayAvailability } from '@/app/api/availability/calendar/route'
 import styles from '@/components/booking/booking.module.css'
 import { ticketPagePath } from '@/lib/siteUrls'
+import { withLocalePath } from '@/lib/i18n/paths'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 
 type Booking = {
   id: string
@@ -29,15 +32,6 @@ type Booking = {
   accessToken?: string
 }
 
-function buildTicketUrl(bookingId: string, accessToken?: string): string {
-  if (!bookingId) return '#'
-  const base = typeof window !== 'undefined' ? window.location.origin : ''
-  if (accessToken?.trim()) {
-    return `${base}/bilet/${encodeURIComponent(bookingId)}?token=${encodeURIComponent(accessToken.trim())}`
-  }
-  return `${base}/bilet/${encodeURIComponent(bookingId)}`
-}
-
 function buildVoucherPdfUrl(bookingId: string, accessToken?: string): string {
   if (!bookingId) return '#'
   const base = typeof window !== 'undefined' ? window.location.origin : ''
@@ -56,9 +50,12 @@ function buildVoucherPdfUrl(bookingId: string, accessToken?: string): string {
 
 export default function ManageBookingClient({
   initialBookingId,
+  locale = 'tr',
 }: {
   initialBookingId: string
+  locale?: SiteLocale
 }) {
+  const locaUi = getBookingWizardUi(locale).firstClassLoca
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -590,6 +587,7 @@ export default function ManageBookingClient({
                           prev.filter((x) => x !== removeId).concat(addId)
                         )
                       }
+                      locaUi={locaUi}
                       aria-label="First Class loca seçimi"
                     />
                   </div>
@@ -650,7 +648,7 @@ export default function ManageBookingClient({
 
           <div className="flex flex-col gap-3">
             <a
-              href={ticketPagePath(booking.id, booking.accessToken)}
+              href={withLocalePath(locale, ticketPagePath(booking.id, booking.accessToken))}
               target="_blank"
               rel="noopener noreferrer"
               className="block text-center py-3.5 px-5 rounded-xl border-2 border-[#1f3c88] text-[#1f3c88] font-semibold hover:bg-[#1f3c88] hover:text-white transition-colors"
@@ -677,7 +675,9 @@ export default function ManageBookingClient({
       )}
 
       <p style={{ marginTop: 32, fontSize: 13, color: '#9ca3af' }}>
-        <Link href="/" style={{ color: '#1f3c88' }}>Ana sayfaya dön</Link>
+        <Link href={withLocalePath(locale, '/')} style={{ color: '#1f3c88' }}>
+          Ana sayfaya dön
+        </Link>
       </p>
 
       {showCancelModal && (

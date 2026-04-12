@@ -89,7 +89,10 @@ alter table public.bookings
   add column if not exists manual_source text,
   add column if not exists created_by_admin boolean,
   add column if not exists admin_note text,
-  add column if not exists reference text;
+  add column if not exists reference text,
+  add column if not exists ui_locale text;
+
+comment on column public.bookings.ui_locale is 'Rezervasyon sırasında site dili (tr|en|de); müşteri e-postası ve PDF';
 
 -- Önerilen: token / reference aramaları için
 create unique index if not exists idx_bookings_access_token_unique

@@ -2,9 +2,12 @@
 
 import { useMemo } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
+
+const ICON_BLUE = '#1e3a8a'
 
 function ClockIcon({ className }: { className?: string }) {
   return (
@@ -19,6 +22,7 @@ function ClockIcon({ className }: { className?: string }) {
       strokeLinejoin="round"
       className={className}
       aria-hidden
+      focusable="false"
     >
       <circle cx="12" cy="12" r="10" />
       <path d="M12 6v6l4 2" />
@@ -35,6 +39,7 @@ function PinIcon({ className }: { className?: string }) {
       fill="currentColor"
       className={className}
       aria-hidden
+      focusable="false"
     >
       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
     </svg>
@@ -44,11 +49,12 @@ function PinIcon({ className }: { className?: string }) {
 function GoogleIcon({ className }: { className?: string }) {
   return (
     <svg
-      width="16"
-      height="16"
+      width="18"
+      height="18"
       viewBox="0 0 24 24"
       className={className}
       aria-hidden
+      focusable="false"
     >
       <path
         fill="#4285F4"
@@ -95,12 +101,12 @@ function RatingDots({ value }: { value: number }) {
   const full = Math.min(5, Math.round(value))
   const empty = 5 - full
   return (
-    <span className="inline-flex items-center gap-1" aria-hidden>
+    <span className="inline-flex items-center gap-1.5" aria-hidden>
       {Array.from({ length: full }, (_, i) => (
-        <span key={`f-${i}`} className="h-2 w-2 rounded-full bg-emerald-500" />
+        <span key={`f-${i}`} className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />
       ))}
       {Array.from({ length: empty }, (_, i) => (
-        <span key={`e-${i}`} className="h-2 w-2 rounded-full bg-black/15" />
+        <span key={`e-${i}`} className="h-2.5 w-2.5 shrink-0 rounded-full bg-black/15" />
       ))}
     </span>
   )
@@ -113,156 +119,183 @@ type TourCardProps = {
 
 export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
   const tourUi = useMemo(() => getTourPageUi(locale), [locale])
-  const href = tour.slug ? withLocalePath(locale, `/tour/${tour.slug}`) : null
+  const href = tour.slug ? withLocalePath(locale, `/tur/${tour.slug}`) : null
   const rating = tour.rating ?? 0
+  const titlePlain = tour.title?.trim() || tourUi.tourCardCoverAltFallback
+  const mainLinkLabel = `${titlePlain} — ${tourUi.tourCardViewTour}`
 
-  const content = (
-    <>
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100">
-        {tour.coverImageUrl ? (
-          <Image
-            src={tour.coverImageUrl}
-            alt={tour.coverImageAlt || tour.title || tourUi.tourCardCoverAltFallback}
-            fill
-            className="object-cover"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-          />
+  const reviewsLine =
+    tour.reviewCount != null && tour.reviewCount > 0
+      ? tourUi.tourCardReviews(tour.reviewCount)
+      : rating > 0
+        ? tourUi.tourCardRatingPoints(rating)
+        : ''
+
+  const reviewsBlock =
+    (rating > 0 || (tour.reviewCount != null && tour.reviewCount > 0)) && reviewsLine ? (
+      <div className="flex flex-wrap items-center gap-2.5 text-sm sm:text-base">
+        <RatingDots value={rating} />
+        {tour.reviewsUrl ? (
+          <button
+            type="button"
+            onClick={() => window.open(tour.reviewsUrl!, '_blank', 'noopener,noreferrer')}
+            className="inline-flex items-center gap-2 rounded text-left font-semibold text-emerald-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1"
+            title={tourUi.tourCardGoogleReviewsTitle}
+            aria-label={tourUi.tourCardGoogleReviewsTitle}
+          >
+            <GoogleIcon />
+            <span>{reviewsLine}</span>
+          </button>
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-zinc-400 text-sm">
-            {tourUi.tourCardNoImage}
-          </div>
-        )}
-        {tour.isPopular && (
-          <div
-            className="absolute left-0 top-4 z-10 flex items-center pl-3 pr-6 py-1.5 text-white text-xs font-bold uppercase tracking-wide"
-            style={{
-              background: 'linear-gradient(90deg, #d8832a 0%, #c97622 100%)',
-              clipPath: 'polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-            }}
-          >
-            {tourUi.tourCardPopularBadge}
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-col flex-1 p-6 md:p-8">
-        <h3
-          className="font-black text-xl md:text-2xl uppercase leading-tight line-clamp-2 mb-3"
-          style={{ color: 'var(--secondary)', fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
-        >
-          {tour.title}
-        </h3>
-
-        {tour.shortDescription && (
-          <p className="text-base text-black/60 leading-relaxed line-clamp-3 mb-5">
-            {tour.shortDescription}
-          </p>
-        )}
-
-        <div className="space-y-3 mb-5">
-          {tour.departureLabel && (
-            <div className="flex items-center gap-3 text-base font-semibold text-black/80">
-              <span className="flex-shrink-0 text-[var(--primary)]">
-                <PinIcon className="size-5" />
-              </span>
-              <span>
-                {tourUi.tourCardDeparturePrefix}
-                {tour.departureLabel}
-              </span>
-            </div>
-          )}
-          {tour.durationLabel && (
-            <div className="flex items-center gap-3 text-base font-semibold text-black/80">
-              <span className="flex-shrink-0 text-[var(--primary)]">
-                <ClockIcon className="size-5" />
-              </span>
-              <span>
-                {tourUi.tourCardDurationPrefix}
-                {tour.durationLabel}
-              </span>
-            </div>
-          )}
-          {(rating > 0 || (tour.reviewCount != null && tour.reviewCount > 0)) && (
-            <div className="flex items-center gap-3 text-base">
-              <RatingDots value={rating} />
-              {tour.reviewsUrl ? (
-                <span
-                  role="link"
-                  tabIndex={0}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    window.open(tour.reviewsUrl!, '_blank', 'noopener,noreferrer')
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      window.open(tour.reviewsUrl!, '_blank', 'noopener,noreferrer')
-                    }
-                  }}
-                  className="inline-flex items-center gap-2 text-emerald-600 font-semibold hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 rounded"
-                  title={tourUi.tourCardGoogleReviewsTitle}
-                >
-                  <GoogleIcon />
-                  <span>
-                    {tour.reviewCount != null && tour.reviewCount > 0
-                      ? tourUi.tourCardReviews(tour.reviewCount)
-                      : rating > 0
-                        ? tourUi.tourCardRatingPoints(rating)
-                        : ''}
-                  </span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-2 text-emerald-600 font-semibold">
-                  <GoogleIcon />
-                  <span>
-                    {tour.reviewCount != null && tour.reviewCount > 0
-                      ? tourUi.tourCardReviews(tour.reviewCount)
-                      : rating > 0
-                        ? tourUi.tourCardRatingPoints(rating)
-                        : ''}
-                  </span>
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {tour.priceFrom != null && (
-          <p
-            className="text-lg font-extrabold uppercase mt-auto mb-4"
-            style={{ color: 'var(--secondary)' }}
-          >
-            {tourUi.tourCardPerPersonFrom(formatPriceFrom(tour.priceFrom))}
-          </p>
-        )}
-
-        <span className="hero-primary-btn-wrap tour-card-cta-shimmer mt-auto w-full rounded-xl p-[2px] flex">
-          <span
-            className="hero-primary-inner hero-btn-shine w-full rounded-[10px] py-2.5 md:py-3 font-black uppercase text-white text-center text-base md:text-[17px] flex items-center justify-center overflow-hidden transition hover:brightness-110 ring-1 ring-inset ring-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(15,23,42,0.18)]"
-            style={{
-              background: 'linear-gradient(180deg, #3558b0 0%, #1e3a8a 42%, #172e6e 100%)',
-            }}
-          >
-            {tourUi.tourCardViewTour}
+          <span className="inline-flex items-center gap-2 font-semibold text-emerald-600">
+            <GoogleIcon />
+            <span>{reviewsLine}</span>
           </span>
-        </span>
+        )}
       </div>
-    </>
+    ) : null
+
+  const imageSection = (
+    <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-zinc-100">
+      {tour.coverImageUrl ? (
+        <Image
+          src={tour.coverImageUrl}
+          alt={tour.coverImageAlt || tour.title || tourUi.tourCardCoverAltFallback}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center text-sm text-zinc-400">
+          {tourUi.tourCardNoImage}
+        </div>
+      )}
+      {tour.isPopular && (
+        <div
+          className="absolute left-0 top-3 z-10 flex items-center py-2 pl-3 pr-8 text-[11px] font-bold uppercase tracking-[0.12em] text-white sm:text-xs"
+          style={{
+            background: 'linear-gradient(90deg, #e8892e 0%, #d97a1f 100%)',
+            clipPath: 'polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%)',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.22)',
+          }}
+        >
+          {tourUi.tourCardPopularBadge}
+        </div>
+      )}
+    </div>
   )
 
-  const wrapperClassName = 'flex flex-col h-full block'
+  const metaRows = (tour.departureLabel || tour.durationLabel) && (
+    <div className="mt-4 space-y-2.5">
+      {tour.departureLabel && (
+        <div className="flex items-start gap-3 text-sm font-semibold leading-snug text-zinc-800 sm:text-[15px]">
+          <span className="mt-0.5 shrink-0" style={{ color: ICON_BLUE }}>
+            <PinIcon className="size-5" />
+          </span>
+          <span>
+            {tourUi.tourCardDeparturePrefix}
+            {tour.departureLabel}
+          </span>
+        </div>
+      )}
+      {tour.durationLabel && (
+        <div className="flex items-start gap-3 text-sm font-semibold leading-snug text-zinc-800 sm:text-[15px]">
+          <span className="mt-0.5 shrink-0" style={{ color: ICON_BLUE }}>
+            <ClockIcon className="size-5" />
+          </span>
+          <span>
+            {tourUi.tourCardDurationPrefix}
+            {tour.durationLabel}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+
+  const ctaInner = (
+    <span className="hero-primary-btn-wrap tour-card-cta-shimmer flex w-full rounded-xl p-[2px]">
+      <span
+        className="hero-primary-inner hero-btn-shine flex w-full min-h-[48px] items-center justify-center overflow-hidden rounded-[11px] py-3.5 text-center text-[15px] font-black uppercase tracking-wide text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(15,23,42,0.18)] ring-1 ring-inset ring-white/20 transition hover:brightness-110 sm:min-h-[52px] sm:py-4 sm:text-[17px]"
+        style={{
+          background: 'linear-gradient(180deg, #3558b0 0%, #1e3a8a 42%, #172e6e 100%)',
+        }}
+      >
+        {tourUi.tourCardViewTour}
+      </span>
+    </span>
+  )
+
+  const priceBlock =
+    tour.priceFrom != null ? (
+      <p className="text-sm font-black uppercase leading-snug text-black sm:text-base">
+        {tourUi.tourCardPerPersonFrom(formatPriceFrom(tour.priceFrom))}
+      </p>
+    ) : null
+
   return (
-    <article className="h-full flex flex-col rounded-2xl overflow-hidden bg-white shadow-[0_12px_30px_rgba(0,0,0,0.12)] border border-black/5 transition-all duration-300 hover:shadow-[0_16px_40px_rgba(0,0,0,0.14)]">
+    <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_12px_32px_rgba(0,0,0,0.1)] transition-shadow duration-300 hover:shadow-[0_16px_40px_rgba(0,0,0,0.12)]">
       {href ? (
-        <a href={href} className={wrapperClassName}>
-          {content}
-        </a>
+        <>
+          <Link
+            href={href}
+            className="flex shrink-0 flex-col text-inherit no-underline outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#1e3a8a]"
+            aria-label={mainLinkLabel}
+          >
+            {imageSection}
+            <div className="px-5 pt-5 sm:px-6">
+              <h3
+                className="line-clamp-2 text-lg font-black uppercase leading-tight tracking-tight text-black sm:text-xl"
+                style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+              >
+                {tour.title}
+              </h3>
+              {tour.shortDescription && (
+                <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-600 sm:text-[15px]">
+                  {tour.shortDescription}
+                </p>
+              )}
+              {metaRows}
+            </div>
+          </Link>
+
+          <div className="flex min-h-0 flex-1 flex-col px-5 pb-5 pt-3 sm:px-6">
+            {reviewsBlock ? <div className="mb-1">{reviewsBlock}</div> : null}
+            <Link
+              href={href}
+              className="mt-auto flex flex-col gap-3 pt-2 text-inherit no-underline outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#1e3a8a]"
+              aria-label={`${tourUi.tourCardViewTour}: ${titlePlain}`}
+            >
+              {priceBlock}
+              {ctaInner}
+            </Link>
+          </div>
+        </>
       ) : (
-        <div className={`${wrapperClassName} opacity-90`}>
-          {content}
+        <div className="flex min-h-0 flex-1 flex-col opacity-90">
+          <div className="shrink-0">
+            {imageSection}
+            <div className="px-5 pt-5 sm:px-6">
+              <h3
+                className="line-clamp-2 text-lg font-black uppercase leading-tight tracking-tight text-black sm:text-xl"
+                style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+              >
+                {tour.title}
+              </h3>
+              {tour.shortDescription && (
+                <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-600 sm:text-[15px]">
+                  {tour.shortDescription}
+                </p>
+              )}
+              {metaRows}
+            </div>
+          </div>
+          <div className="flex flex-1 flex-col px-5 pb-5 pt-3 sm:px-6">
+            {reviewsBlock ? <div className="mb-1">{reviewsBlock}</div> : null}
+            <div className="mt-auto flex flex-col gap-3 pt-2">
+              {priceBlock}
+              {ctaInner}
+            </div>
+          </div>
         </div>
       )}
     </article>

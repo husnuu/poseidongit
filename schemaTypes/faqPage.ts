@@ -94,16 +94,20 @@ export default defineType({
                   type: 'object',
                   name: 'faqItem',
                   title: 'Soru / Cevap',
+                  description:
+                    'Site + JSON-LD: schema.org Question.name (soru) ve Answer.text (cevap). Google Rich Results için sayfada da aynı metin görünmeli.',
                   fields: [
                     defineField({
                       name: 'question',
                       title: 'Soru',
+                      description: 'JSON-LD: Question.name',
                       type: 'string',
                       validation: (Rule) => Rule.required(),
                     }),
                     defineField({
                       name: 'answer',
                       title: 'Cevap',
+                      description: 'JSON-LD: Answer.text',
                       type: 'text',
                       rows: 4,
                       validation: (Rule) => Rule.required(),

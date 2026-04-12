@@ -3,6 +3,9 @@
  */
 import { PDFDocument, rgb, StandardFonts, PageSizes, type PDFFont } from 'pdf-lib'
 import QRCode from 'qrcode'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { DEFAULT_LOCALE } from '@/lib/i18n/config'
+import { numberLocaleForBooking, voucherPdfUiStrings, formatParticipantCountsLine } from '@/lib/i18n/bookingFlowLocale'
 import type { VoucherData } from './types'
 
 const BLUE = rgb(30 / 255, 58 / 255, 138 / 255)
@@ -79,14 +82,6 @@ function boardingTimeBefore(time: string | undefined): string | null {
   return `${h.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`
 }
 
-function formatParticipantsLine(d: VoucherData): string {
-  const p: string[] = []
-  if (d.adults > 0) p.push(`${d.adults} Yetişkin`)
-  if (d.children > 0) p.push(`${d.children} Çocuk`)
-  if (d.babies > 0) p.push(`${d.babies} Bebek`)
-  return p.length ? p.join(', ') : '—'
-}
-
 /** Web bilet sayfasındaki “ödenen tutar” mantığına yakın */
 function resolvePaidAmountForPdf(data: VoucherData): number | null {
   if (typeof data.paidNow === 'number' && data.paidNow > 0) return data.paidNow
@@ -116,7 +111,10 @@ function estimateWrappedLines(text: string, maxW: number, lineH: number, size: n
   return Math.max(1, lines)
 }
 
-export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array> {
+export async function generateVoucherPdf(
+  data: VoucherData,
+  locale: SiteLocale = DEFAULT_LOCALE
+): Promise<Uint8Array> {
   const doc = await PDFDocument.create()
   const { font, bold } = await loadFonts(doc)
   const page = doc.addPage(PageSizes.A4)
@@ -124,25 +122,28 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
   const H = page.getHeight()
   const pad = 22
   const innerW = W - pad * 2
+  const s = voucherPdfUiStrings(locale)
+  const numLoc = numberLocaleForBooking(locale)
 
   page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: WHITE })
 
   const depTime = data.time?.trim() || '—'
   const boardingTime = boardingTimeBefore(data.time) ?? depTime
   const scheduleLine =
-    depTime !== '—'
-      ? `Tahmini kalkış ${depTime} · Gemiye biniş en geç ${boardingTime}`
-      : `Biniş saati: ${boardingTime}`
+    depTime !== '—' ? s.estDeparture(depTime, boardingTime) : s.boardingTimeOnly(boardingTime)
 
   const tourTitle = (data.tourTitle ?? '—').trim()
   const tourUpper =
     tourTitle.length > 96 ? `${tourTitle.slice(0, 93).toUpperCase()}…` : tourTitle.toUpperCase()
   const classDisplay = data.firstClassLoca?.trim()
-    ? `${(data.className ?? '—').trim()} · Loca ${data.firstClassLoca.trim()}`
+    ? `${(data.className ?? '—').trim()} · ${s.locaPrefix} ${data.firstClassLoca.trim()}`
     : (data.className ?? '—').trim() || '—'
 
   const paidShown = resolvePaidAmountForPdf(data)
-  const participantsLine = formatParticipantsLine(data)
+  const participantsLine = formatParticipantCountsLine(
+    { adult: data.adults, child: data.children, infant: data.babies },
+    locale
+  )
   const arr = data.arrivalTime?.trim()
 
   // —— Mavi başlık (web ile aynı tam genişlik) ——
@@ -155,12 +156,12 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
   page.drawRectangle({ x: 0, y: headerBottom, width: W, height: headerH, color: BLUE })
 
   let ty = H - 18
-  page.drawText('E-BİLET ÇEŞME POSEIDON', { x: pad, y: ty, size: 8, font: bold, color: WHITE })
+  page.drawText(s.ebiletBadge, { x: pad, y: ty, size: 8, font: bold, color: WHITE })
   const dur = data.durationLabel?.trim()
   if (dur) {
-    const s = `Süre: ${dur}`
-    page.drawText(s, {
-      x: W - pad - bold.widthOfTextAtSize(s, 8),
+    const durLine = `${s.durationPrefix} ${dur}`
+    page.drawText(durLine, {
+      x: W - pad - bold.widthOfTextAtSize(durLine, 8),
       y: ty,
       size: 8,
       font: bold,
@@ -170,7 +171,7 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
   }
   ty -= 26
 
-  page.drawText('ÇEŞME', { x: pad, y: ty, size: 14, font: bold, color: WHITE })
+  page.drawText(s.cesme, { x: pad, y: ty, size: 14, font: bold, color: WHITE })
   page.drawText(tourUpper, {
     x: pad + 108,
     y: ty,
@@ -199,7 +200,7 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
   })
 
   let dty = insetTop - 14
-  page.drawText('Tur tarihi', {
+  page.drawText(s.tourDate, {
     x: insetX + 14,
     y: dty,
     size: 8,
@@ -224,7 +225,7 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
   dty -= 10 + (schedLines - 1) * 11
   if (arr) {
     dty -= 12
-    page.drawText(`Tahmini varış: ${arr}`, {
+    page.drawText(s.estArrival(arr), {
       x: insetX + 14,
       y: dty,
       size: 9,
@@ -241,8 +242,8 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
   const colW = (innerW - colGap) / 2
   const baseX = pad
 
-  page.drawText('Yolcu', { x: baseX, y: y, size: 8, font: bold, color: GRAY_LABEL })
-  page.drawText('Sınıf', { x: baseX + colW + colGap, y: y, size: 8, font: bold, color: GRAY_LABEL })
+  page.drawText(s.passenger, { x: baseX, y: y, size: 8, font: bold, color: GRAY_LABEL })
+  page.drawText(s.classLabel, { x: baseX + colW + colGap, y: y, size: 8, font: bold, color: GRAY_LABEL })
   y -= 18
   page.drawText(data.customerName, {
     x: baseX,
@@ -281,7 +282,7 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
     borderColor: CARD_BORDER,
     borderWidth: 0.5,
   })
-  page.drawText('Rezervasyon numarası', {
+  page.drawText(s.refNumber, {
     x: baseX + 12,
     y: y - 2,
     size: 8,
@@ -318,23 +319,23 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
 
   let qy = y - 12
   const qrCenter = qx0 + (qrTarget + 40) / 2
-  page.drawText('Biniş doğrulama', {
-    x: qrCenter - bold.widthOfTextAtSize('Biniş doğrulama', 8) / 2,
+  page.drawText(s.boardingVerify, {
+    x: qrCenter - bold.widthOfTextAtSize(s.boardingVerify, 8) / 2,
     y: qy,
     size: 8,
     font: bold,
     color: GRAY_LABEL,
   })
   qy -= 20
-  page.drawText('QR kodu', {
-    x: qrCenter - bold.widthOfTextAtSize('QR kodu', 12) / 2,
+  page.drawText(s.qrCode, {
+    x: qrCenter - bold.widthOfTextAtSize(s.qrCode, 12) / 2,
     y: qy,
     size: 12,
     font: bold,
     color: GRAY_VALUE,
   })
   qy -= 16
-  const hint = 'Binişte bu QR kodu gösteriniz.'
+  const hint = s.qrHint
   page.drawText(hint, {
     x: qrCenter - font.widthOfTextAtSize(hint, 9) / 2,
     y: qy,
@@ -380,20 +381,20 @@ export async function generateVoucherPdf(data: VoucherData): Promise<Uint8Array>
   })
 
   const fy = y - 18
-  page.drawText('Toplam tutar', { x: pad, y: fy, size: 8, font: bold, color: GRAY_LABEL })
-  const totalStr = `${Number(data.totalPrice).toLocaleString('tr-TR')} ${data.currency}`
+  page.drawText(s.total, { x: pad, y: fy, size: 8, font: bold, color: GRAY_LABEL })
+  const totalStr = `${Number(data.totalPrice).toLocaleString(numLoc)} ${data.currency}`
   page.drawText(totalStr, { x: pad, y: fy - 20, size: 15, font: bold, color: GRAY_VALUE })
 
   let fx2 = pad + 200
   if (paidShown != null) {
-    page.drawText('Ödenen tutar', { x: fx2, y: fy, size: 8, font: bold, color: GRAY_LABEL })
-    const paidStr = `${paidShown.toLocaleString('tr-TR')} ${data.currency}`
+    page.drawText(s.paid, { x: fx2, y: fy, size: 8, font: bold, color: GRAY_LABEL })
+    const paidStr = `${paidShown.toLocaleString(numLoc)} ${data.currency}`
     page.drawText(paidStr, { x: fx2, y: fy - 20, size: 12, font: bold, color: EMERALD_800 })
     fx2 += 150
   }
 
   const meetX = Math.min(W - pad - 200, fx2 + 20)
-  page.drawText('Toplanma noktası', { x: meetX, y: fy, size: 8, font: bold, color: GRAY_LABEL })
+  page.drawText(s.meeting, { x: meetX, y: fy, size: 8, font: bold, color: GRAY_LABEL })
   page.drawText(data.meetingPickup, {
     x: meetX,
     y: fy - 20,

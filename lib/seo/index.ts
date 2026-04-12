@@ -3,6 +3,8 @@
  * Site adı: NEXT_PUBLIC_SITE_NAME (örn. .env). Boş bırakılırsa JSON-LD/meta fallback boş veya generic olur.
  */
 
+import { buildFaqPageLd, faqPairsFromQuestionAnswer } from './faqStructuredData'
+
 /** Site adı: ortam değişkeninden. Hardcoded marka yok. */
 export function getSiteName(): string {
   return process.env.NEXT_PUBLIC_SITE_NAME?.trim() ?? ''
@@ -79,22 +81,15 @@ export function buildBreadcrumbSchema(
   }
 }
 
-/** FAQPage JSON-LD */
+export type { FaqAnswerLd, FaqMainEntityInput, FaqPageLd, FaqQuestionLd } from './faqStructuredData'
+export { buildFaqPageLd, faqPairsFromQuestionAnswer }
+
+/** FAQPage JSON-LD — şema modeli: {@link FaqPageLd} / schema.org Question + Answer */
 export function buildFAQSchema(
-  faqs: Array<{ question: string; answer: string }>
+  faqs: Array<{ question: string; answer: string }>,
+  options?: { url?: string }
 ): Record<string, unknown> {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqs.map((faq) => ({
-      '@type': 'Question',
-      name: faq.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: faq.answer,
-      },
-    })),
-  }
+  return buildFaqPageLd(faqPairsFromQuestionAnswer(faqs), options) as Record<string, unknown>
 }
 
 /** BlogPosting JSON-LD */

@@ -1,5 +1,9 @@
 import { client, urlFor } from '@/lib/sanity'
-import { homePageHeroQuery } from '@/lib/queries'
+import {
+  homePageHeroImageUrlsQuery,
+  homePageHeroQuery,
+  siteSettingsTravelAgencyImagesQuery,
+} from '@/lib/queries'
 import HeroBanner from '@/components/home/HeroBanner'
 import FeatureBar from '@/components/home/FeatureBar'
 import PopularToursSection from '@/components/home/PopularToursSection'
@@ -19,7 +23,18 @@ import type { InstagramSectionData } from '@/components/home/InstagramSection'
 import type { RouteSectionLocation } from '@/components/home/RouteSection'
 import type { TourListItem } from '@/components/tours/TourCard'
 import JsonLd from '@/components/seo/JsonLd'
-import { buildOrganizationSchema, buildWebSiteSchema, getBaseUrl, getSiteName } from '@/lib/seo'
+import {
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+  getBaseUrl,
+  getSiteName,
+} from '@/lib/seo'
+import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
+import {
+  buildTravelAgencyStructuredData,
+  type TravelAgencyStructuredDataImageOverrides,
+} from '@/lib/seo/travelAgencyStructuredData'
+import { travelAgencyImageOverridesFromSanity } from '@/lib/seo/travelAgencySanityImages'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -64,7 +79,10 @@ export async function generateMetadata({
     return {
       title: title.includes('|') ? title : siteName ? `${title} | ${siteName}` : title,
       description,
-      alternates: { canonical: canonicalBase },
+      alternates: {
+        canonical: canonicalBase,
+        languages: alternateLanguageAbsoluteUrls('/'),
+      },
       openGraph: {
         title: title.includes('|') ? title : siteName ? `${title} | ${siteName}` : title,
         description,
@@ -75,7 +93,10 @@ export async function generateMetadata({
     return {
       title: defaultHomeTitle,
       description: defaultHomeDescription,
-      alternates: { canonical: canonicalBase },
+      alternates: {
+        canonical: canonicalBase,
+        languages: alternateLanguageAbsoluteUrls('/'),
+      },
       openGraph: {
         title: siteName ? `Tekne Turu | ${siteName}` : 'Tekne Turu',
         description: 'Tekne turu ve koy turları. Rezervasyon.',
@@ -365,8 +386,17 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   let blogSection: BlogSectionData | null = null
   let routeSection: ReturnType<typeof mapRouteSection> = null
   let instagramSection: InstagramSectionData | null = null
+  let travelAgencyImageOverrides: TravelAgencyStructuredDataImageOverrides = {}
   try {
-    const raw = await client.fetch<HomePageHeroResult>(homePageHeroQuery, {}, { useCdn: false })
+    const [raw, settingsRow, heroRow] = await Promise.all([
+      client.fetch<HomePageHeroResult>(homePageHeroQuery, {}, { useCdn: false }),
+      client.fetch(siteSettingsTravelAgencyImagesQuery, {}, { useCdn: false }),
+      client.fetch(homePageHeroImageUrlsQuery, {}, { useCdn: false }),
+    ])
+    travelAgencyImageOverrides = travelAgencyImageOverridesFromSanity({
+      settings: settingsRow,
+      hero: heroRow,
+    })
     data = mergeHomePageLocale(raw as unknown as Record<string, unknown>, locale) as HomePageHeroResult
     hero = localizeHero(data?.hero ?? null, locale)
     featureBar = data?.featureBar ?? null
@@ -405,15 +435,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       data?.seo?.metaDescription?.trim() ||
       'Çeşme tekne turu ve koy turları. Adalar ve koylar tekne turu rezervasyonu.',
   })
+  const travelAgencySchema = buildTravelAgencyStructuredData(travelAgencyImageOverrides)
 
   return (
     <div className="min-h-screen bg-white">
       <JsonLd data={organizationSchema} />
       <JsonLd data={websiteSchema} />
+      <JsonLd data={travelAgencySchema} />
       <HeroBanner hero={hero} locale={locale} />
       {featureBar && featureBar.length > 0 && <FeatureBar items={featureBar} />}
       <PopularToursSection data={popularToursSection} locale={locale} />
-      <PopularYachtsSection data={popularYachtsSection} locale={locale} />
       {routeSection && (
         <RouteSection
           heading={routeSection.heading}
@@ -423,6 +454,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         />
       )}
       <AboutTeaserSplit data={aboutTeaser} />
+      <PopularYachtsSection data={popularYachtsSection} locale={locale} />
       <BlogSection
         data={blogSection}
         locale={locale}

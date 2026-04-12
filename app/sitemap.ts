@@ -2,6 +2,8 @@ import { MetadataRoute } from 'next'
 import { client } from '@/lib/sanity'
 import { getBaseUrl } from '@/lib/seo'
 import { tourSlugRowsForLocalesQuery } from '@/lib/queries'
+import { canonicalRouteToPublicPath } from '@/lib/i18n/routeAliases'
+import type { SiteLocale } from '@/lib/i18n/config'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
@@ -10,10 +12,15 @@ const BASE = getBaseUrl()
 
 type SiteLocaleKey = 'tr' | 'en' | 'de'
 
-/** Türkçe kök; EN/DE için /en ve /de öneki */
+/** Kanonik iç path; EN/DE için hem önek hem slug’lar yerelleştirilir (örn. /hakkimizda → /en/about). */
 function publicUrl(locale: SiteLocaleKey, path: string): string {
-  const p = path === '/' ? '' : path.startsWith('/') ? path : `/${path}`
-  if (locale === 'tr') return `${BASE}${p}`
+  const canonical = path === '/' ? '/' : path.startsWith('/') ? path : `/${path}`
+  if (locale === 'tr') {
+    const p = canonical === '/' ? '' : canonical
+    return `${BASE}${p}`
+  }
+  const localized = canonicalRouteToPublicPath(locale as SiteLocale, canonical)
+  const p = localized === '/' ? '' : localized
   return `${BASE}/${locale}${p}`
 }
 
@@ -162,21 +169,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const lm = row._updatedAt ? new Date(row._updatedAt) : now
     if (row.tSlug)
       tourEntries.push({
-        url: publicUrl('tr', `/tour/${row.tSlug}`),
+        url: publicUrl('tr', `/tur/${row.tSlug}`),
         lastModified: lm,
         changeFrequency: 'weekly',
         priority: 0.85,
       })
     if (row.enSlug)
       tourEntries.push({
-        url: publicUrl('en', `/tour/${row.enSlug}`),
+        url: publicUrl('en', `/tur/${row.enSlug}`),
         lastModified: lm,
         changeFrequency: 'weekly',
         priority: 0.85,
       })
     if (row.deSlug)
       tourEntries.push({
-        url: publicUrl('de', `/tour/${row.deSlug}`),
+        url: publicUrl('de', `/tur/${row.deSlug}`),
         lastModified: lm,
         changeFrequency: 'weekly',
         priority: 0.85,

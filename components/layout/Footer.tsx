@@ -479,7 +479,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
               <FooterLegal data={footerLegalMerged} inline regionAriaLabel={f.legalRegion} />
             )}
             <div
-              className={`flex flex-wrap gap-12 text-base text-white/80 ${data?.footerLegal ? 'justify-center md:justify-end' : 'justify-center'}`}
+              className={`flex flex-wrap gap-x-12 gap-y-4 text-sm text-white/80 ${data?.footerLegal ? 'justify-center md:justify-end' : 'justify-center'}`}
             >
               {legalLinks.map((item, index) => (
                 <Link

@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -31,6 +32,9 @@ const AGENT_TOKEN_KEY = 'poseidon_agent_token'
 const AGENT_EMAIL_KEY = 'poseidon_agent_email'
 const LEGACY_ADMIN_TOKEN_KEY = 'poseidon_admin_token'
 const LEGACY_ADMIN_EMAIL_KEY = 'poseidon_admin_email'
+
+/** Hareket yoksa oturumu kapat (klavye, tıklama, dokunma, kaydırma, tekerlek). */
+const ADMIN_IDLE_LOGOUT_MS = 10 * 60 * 1000
 
 async function fetchAdminStatsOk(): Promise<boolean> {
   try {
@@ -136,6 +140,54 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     return () => {
       window.clearInterval(id)
       document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [isAdmin, user, router, signOutAll])
+
+  /** 10 dk boyunca etkileşim yoksa çıkış + giriş sayfası. */
+  const idleLogoutRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
+  useEffect(() => {
+    if (!isAdmin || !user) return
+
+    const clearIdleTimer = () => {
+      if (idleLogoutRef.current != null) {
+        window.clearTimeout(idleLogoutRef.current)
+        idleLogoutRef.current = null
+      }
+    }
+
+    const armIdleTimer = () => {
+      clearIdleTimer()
+      idleLogoutRef.current = window.setTimeout(() => {
+        idleLogoutRef.current = null
+        void (async () => {
+          await signOutAll()
+          router.replace('/login?reason=idle')
+        })()
+      }, ADMIN_IDLE_LOGOUT_MS)
+    }
+
+    armIdleTimer()
+
+    const bump = () => armIdleTimer()
+    const wheelOpts: AddEventListenerOptions = { passive: true }
+
+    window.addEventListener('keydown', bump)
+    window.addEventListener('mousedown', bump)
+    window.addEventListener('touchstart', bump)
+    window.addEventListener('pointerdown', bump)
+    window.addEventListener('click', bump)
+    window.addEventListener('wheel', bump, wheelOpts)
+    document.addEventListener('scroll', bump, true)
+
+    return () => {
+      clearIdleTimer()
+      window.removeEventListener('keydown', bump)
+      window.removeEventListener('mousedown', bump)
+      window.removeEventListener('touchstart', bump)
+      window.removeEventListener('pointerdown', bump)
+      window.removeEventListener('click', bump)
+      window.removeEventListener('wheel', bump)
+      document.removeEventListener('scroll', bump, true)
     }
   }, [isAdmin, user, router, signOutAll])
 

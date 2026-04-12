@@ -697,10 +697,10 @@ export default defineType({
         }),
         defineField({
           name: 'locationMapLink',
-          title: 'Konum linki (yol tarifi ve WhatsApp)',
+          title: 'Konum linki (isteğe bağlı)',
           type: 'url',
           description:
-            'Google Haritalar’da konuma sağ tık / Paylaş → "Bağlantıyı kopyala" ile alınan tam URL (maps.app.goo.gl veya google.com/maps/...). Yol tarifi ve "Konumu paylaş" bu adrese gider; boşsa eski otomatik çıkarım denenir.',
+            'Google Haritalar → Paylaş → Bağlantıyı kopyala. Şu an tur sayfasında harita için yalnızca “Harita gömme URL” kullanılır; bu alan veri olarak saklanabilir.',
         }),
         defineField({
           name: 'openInMapsLabel',

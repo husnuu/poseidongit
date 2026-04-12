@@ -36,9 +36,6 @@ export type ContactPageUiStrings = {
   ariaCall: string
   ariaYoutube: string
   ariaInstagram: string
-  mapDirections: string
-  mapWhatsapp: string
-  mapActionsAria: string
   mapIframeTitle: string
   defaultPopularToursTitle: string
 }
@@ -74,9 +71,6 @@ const TR: ContactPageUiStrings = {
   ariaCall: 'Ara',
   ariaYoutube: 'YouTube kanalımız',
   ariaInstagram: 'Instagram’da takip et',
-  mapDirections: 'Yol tarifi al',
-  mapWhatsapp: 'Konumu WhatsApp’ta paylaş',
-  mapActionsAria: 'Konum işlemleri',
   mapIframeTitle: 'Harita',
   defaultPopularToursTitle: 'EN POPÜLER TURLARIMIZA BURADAN ULAŞABİLİRSİNİZ!',
 }
@@ -112,9 +106,6 @@ const EN: ContactPageUiStrings = {
   ariaCall: 'Call',
   ariaYoutube: 'Our YouTube channel',
   ariaInstagram: 'Follow on Instagram',
-  mapDirections: 'Get directions',
-  mapWhatsapp: 'Share location on WhatsApp',
-  mapActionsAria: 'Location actions',
   mapIframeTitle: 'Map',
   defaultPopularToursTitle: 'OR YOU CAN FIND OUR MOST POPULAR TOURS HERE!',
 }
@@ -150,9 +141,6 @@ const DE: ContactPageUiStrings = {
   ariaCall: 'Anrufen',
   ariaYoutube: 'YouTube-Kanal',
   ariaInstagram: 'Auf Instagram folgen',
-  mapDirections: 'Route anzeigen',
-  mapWhatsapp: 'Standort per WhatsApp teilen',
-  mapActionsAria: 'Kartenaktionen',
   mapIframeTitle: 'Karte',
   defaultPopularToursTitle: 'HIER FINDEN SIE UNSERE BELIEBTESTEN TOUREN!',
 }

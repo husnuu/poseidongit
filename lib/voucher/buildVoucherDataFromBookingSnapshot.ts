@@ -5,6 +5,7 @@
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery } from '@/lib/queries'
 import { getEmailBaseUrl } from '@/lib/siteUrls'
+import { normalizeBookingFlowLocale } from '@/lib/i18n/bookingFlowLocale'
 import { bookingToVoucherData } from './bookingToVoucher'
 import type { VoucherData } from './types'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
@@ -64,7 +65,8 @@ export async function buildVoucherDataFromBookingRow(
   if (!urlToken) return null
 
   const voucherUrl = voucherAccessUrl(bookingId, urlToken)
-  let voucherData = bookingToVoucherData(booking, voucherUrl)
+  const flowLocale = normalizeBookingFlowLocale(row.ui_locale)
+  let voucherData = bookingToVoucherData(booking, voucherUrl, flowLocale)
 
   try {
     const tourId = typeof row.tour_id === 'string' ? row.tour_id.trim() : ''

@@ -51,6 +51,18 @@ export const NUMBER_LOCALE: Record<SiteLocale, string> = {
   de: 'de-DE',
 }
 
+/**
+ * Header dil satırındaki dil koduna göre “yakında” metni (satır hangi dil ise o dilde).
+ * Örn. Almanca satırda “Demnächst”, İngilizce satırda “Coming soon”.
+ */
+export function comingSoonLabelForLanguageCode(code: string): string {
+  const k = code.trim().toLowerCase()
+  if (k === 'tr') return 'Yakında'
+  if (k === 'en') return 'Coming soon'
+  if (k === 'de') return 'Demnächst'
+  return 'Coming soon'
+}
+
 export function headerAria(locale: SiteLocale) {
   const m: Record<
     SiteLocale,

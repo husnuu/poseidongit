@@ -39,6 +39,27 @@ export default defineType({
       },
     }),
     defineField({
+      name: 'richResultsImages',
+      title: 'Zengin sonuç (JSON-LD) görselleri',
+      type: 'array',
+      description:
+        'Google TravelAgency şemasındaki "image" listesi. Buraya yükleyin; boşsa ana sayfa hero + aşağıdaki public/ yedekleri kullanılır.',
+      of: [
+        {
+          type: 'image',
+          options: { hotspot: true },
+          fields: [
+            defineField({
+              name: 'alt',
+              type: 'string',
+              title: 'Alternatif metin',
+            }),
+          ],
+        },
+      ],
+      validation: (Rule) => Rule.max(4),
+    }),
+    defineField({
       name: 'tagline',
       title: 'Kısa Slogan',
       type: 'string',
@@ -178,20 +199,20 @@ export default defineType({
       title: 'Üst duyuru çubuğu',
       type: 'object',
       description:
-        'Header’ın üzerinde tam genişlikte lacivert şerit (isteğe bağlı). Kampanya, önemli haber veya uyarı için.',
+        'Header’ın üzerinde tam genişlikte lacivert şerit (isteğe bağlı). Kampanya, önemli haber veya uyarı için. Metin (English) ve Metin (Deutsch) doldurulursa /en ve /de sitede o dilde gösterilir; boşsa Türkçe metne düşülür.',
       fields: [
         defineField({
           name: 'enabled',
           title: 'Göster',
           type: 'boolean',
-          description: 'Açıkken şerit tüm sayfalarda header üstünde görünür.',
+          description: 'Açıkken şerit tüm dillerde header üstünde görünür (metin, aşağıdaki alanlara göre seçilir).',
           initialValue: false,
         }),
         defineField({
           name: 'text',
           title: 'Metin (Türkçe)',
           type: 'string',
-          description: 'Beyaz renkte gösterilir. Kısa ve net yazın.',
+          description: 'Ana site (TR) ve yabancı metin boşsa yedek olarak kullanılır. Beyaz renkte, kısa tutun.',
           validation: (Rule) =>
             Rule.custom((text, context) => {
               const parent = context.parent as { enabled?: boolean }
@@ -205,11 +226,13 @@ export default defineType({
           name: 'textEn',
           title: 'Metin (English)',
           type: 'string',
+          description: '/en/… adreslerinde gösterilir. Boş bırakılırsa Türkçe metin kullanılır.',
         }),
         defineField({
           name: 'textDe',
           title: 'Metin (Deutsch)',
           type: 'string',
+          description: '/de/… adreslerinde gösterilir. Boş bırakılırsa Türkçe metin kullanılır.',
         }),
         defineField({
           name: 'icon',
@@ -280,11 +303,31 @@ export default defineType({
               description: 'Küçük kare bayrak ikonu (örn. 40x40 px). Yüklemezseniz emoji kullanılır.',
               options: { hotspot: true },
             }),
+            defineField({
+              name: 'comingSoon',
+              title: 'Yakında (dil henüz yayında değil)',
+              type: 'boolean',
+              description:
+                'Açıkken bu dil menüde görünür ama seçilemez; yayına aldığınızda kapatın.',
+              initialValue: false,
+            }),
+            defineField({
+              name: 'comingSoonBadge',
+              title: 'Yakında rozeti (görsel)',
+              type: 'image',
+              description:
+                'Örn. “Yakında” şeritli PNG/SVG. Boş bırakırsanız kısa metin gösterilir.',
+              options: { hotspot: true },
+              hidden: ({ parent }) => !parent?.comingSoon,
+            }),
           ],
           preview: {
-            select: { code: 'code', label: 'label' },
-            prepare({ code, label }) {
-              return { title: label || code, subtitle: code }
+            select: { code: 'code', label: 'label', comingSoon: 'comingSoon' },
+            prepare({ code, label, comingSoon }) {
+              return {
+                title: label || code,
+                subtitle: comingSoon ? `${code} · Yakında` : code,
+              }
             },
           },
         },

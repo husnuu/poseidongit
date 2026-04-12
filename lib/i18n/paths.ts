@@ -1,9 +1,33 @@
 import type { SiteLocale } from './config'
 import { DEFAULT_LOCALE, LOCALE_PATH_PREFIX } from './config'
+import { canonicalRouteToPublicPath } from './routeAliases'
+
+/** Eski veya hatalı kanonik path’leri dosya yapısına uyarlar */
+function normalizeLegacyCanonicalStripped(path: string): string {
+  if (path === '/iletisim') return '/contact'
+  if (path.startsWith('/iletisim/')) return `/contact${path.slice('/iletisim'.length)}`
+  return path
+}
+
+/** Path ile ?query ve #hash'i ayırır; yalnızca path segmentleri yerelleştirilir. */
+function splitPathQueryAndHash(full: string): { pathname: string; rest: string } {
+  let pathname = full
+  let rest = ''
+  const q = pathname.indexOf('?')
+  const h = pathname.indexOf('#')
+  if (q >= 0 && (h < 0 || q < h)) {
+    rest = pathname.slice(q)
+    pathname = pathname.slice(0, q)
+  } else if (h >= 0) {
+    rest = pathname.slice(h)
+    pathname = pathname.slice(0, h)
+  }
+  return { pathname, rest }
+}
 
 /**
  * Browser path without /en or /de (always starts with /).
- * `/en/tour/foo` → `/tour/foo`, `/` → `/`
+ * `/en/tour/foo` → `/tour/foo` (kanonik iç rota `/tur/foo`), `/` → `/`
  */
 export function stripLocalePathPrefix(pathname: string): string {
   if (!pathname || pathname === '/') return '/'
@@ -38,13 +62,17 @@ export function withLocalePath(locale: SiteLocale, path: string): string {
     return p
   }
   const normalized = p.startsWith('/') ? p : `/${p}`
-  const stripped = stripLocalePathPrefix(normalized)
+  const { pathname, rest } = splitPathQueryAndHash(normalized)
+  const stripped = normalizeLegacyCanonicalStripped(stripLocalePathPrefix(pathname))
+  const publicPath = canonicalRouteToPublicPath(locale, stripped)
+  let out: string
   if (locale === DEFAULT_LOCALE) {
-    return stripped === '/' ? '/' : stripped
+    out = publicPath === '/' ? '/' : publicPath
+  } else {
+    const prefix = LOCALE_PATH_PREFIX[locale]
+    out = publicPath === '/' ? prefix || '/' : `${prefix}${publicPath}`
   }
-  const prefix = LOCALE_PATH_PREFIX[locale]
-  if (stripped === '/') return prefix || '/'
-  return `${prefix}${stripped}`
+  return `${out}${rest}`
 }
 
 export function parseLocaleFromPathname(pathname: string): {

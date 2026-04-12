@@ -7,7 +7,7 @@ import HelpSearch from '@/components/help-center/HelpSearch'
 import HelpSupportCTA from '@/components/help-center/HelpSupportCTA'
 import type { HelpCategoryWithArticles, HelpCenterPageDoc } from '@/lib/sanity/types/helpCenter'
 import type { SiteLocale } from '@/lib/i18n/config'
-import { helpSearchLocaleTag, type HelpCenterUiStrings } from '@/lib/i18n/strings/helpCenter'
+import { getHelpCenterUiStrings, helpSearchLocaleTag } from '@/lib/i18n/strings/helpCenter'
 
 function normalizeSearch(s: string, locale: SiteLocale) {
   return s.toLocaleLowerCase(helpSearchLocaleTag(locale)).trim()
@@ -29,11 +29,11 @@ type Props = {
   categories: HelpCategoryWithArticles[]
   whatsappHref: string | null
   locale: SiteLocale
-  ui: HelpCenterUiStrings
   contactHref: string
 }
 
-export default function HelpCenterHome({ page, categories, whatsappHref, locale, ui, contactHref }: Props) {
+export default function HelpCenterHome({ page, categories, whatsappHref, locale, contactHref }: Props) {
+  const ui = useMemo(() => getHelpCenterUiStrings(locale), [locale])
   const [search, setSearch] = useState('')
 
   const filtered = useMemo(() => {
