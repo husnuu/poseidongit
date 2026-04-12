@@ -143,8 +143,8 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isAdmin, user, router, signOutAll])
 
-  /** 10 dk boyunca etkileşim yoksa çıkış + giriş sayfası. */
-  const idleLogoutRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
+  /** 10 dk boyunca etkileşim yoksa çıkış + giriş sayfası. (Tarayıcıda setTimeout id = number; NodeJS.Timeout ile karışmaması için.) */
+  const idleLogoutRef = useRef<number | null>(null)
   useEffect(() => {
     if (!isAdmin || !user) return
 

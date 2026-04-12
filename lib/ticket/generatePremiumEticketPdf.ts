@@ -244,7 +244,6 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
     size: 9,
     font: bold,
     color: TEXT_ACCENT,
-    letterSpacing: 0.8,
   })
 
   let headerLowY = pillY - 4
@@ -266,7 +265,6 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
       size: 11,
       font: bold,
       color: TEXT_PRIMARY,
-      letterSpacing: 1.2,
     })
     headerLowY = Math.min(headerLowY, pillY - 26)
   }
@@ -298,7 +296,6 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
     size: 7.5,
     font: bold,
     color: TEXT_MUTED,
-    letterSpacing: 0.6,
   })
   cy -= 20
   page.drawText(payload.passengerName, {
@@ -357,7 +354,6 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
     size: 8,
     font: bold,
     color: TEXT_MUTED,
-    letterSpacing: 0.5,
   })
   ty -= 26
   const tw = (cardW - 40) / 3
@@ -375,7 +371,6 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
       size: 6.5,
       font: bold,
       color: TEXT_MUTED,
-      letterSpacing: 0.4,
     })
     page.drawText(val, {
       x: tx,
@@ -459,11 +454,10 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
     size: 7,
     font: bold,
     color: TEXT_MUTED,
-    letterSpacing: 0.5,
   })
   const pw = (cardW - 40) / 3
   const payY = y - 40
-  const amounts: [string, string, typeof TEXT_PRIMARY][] = [
+  const amounts: [string, string, ReturnType<typeof rgb>][] = [
     [L.total, fmtMoney(payload.totalAmount, payload.currency, numLocale), TEXT_PRIMARY],
     [L.paid, fmtMoney(payload.paidAmount, payload.currency, numLocale), PAID_GREEN],
     [
@@ -497,7 +491,6 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
     size: 15,
     font: bold,
     color: TEXT_ACCENT,
-    letterSpacing: 1,
   })
 
   const contactBits = [payload.contactPhone, payload.contactEmail, payload.contactWebsite].filter(
@@ -529,7 +522,7 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
     y: 28,
     width: cardW,
     height: 2,
-    color: NAVY_MID,
+    color: rgb(NAVY_MID.r, NAVY_MID.g, NAVY_MID.b),
     opacity: 0.9,
   })
   page.drawRectangle({
