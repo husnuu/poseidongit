@@ -7,6 +7,7 @@ import { MANUAL_SOURCE_LABELS } from '@/types/adminBookings'
 const STATUS_LABELS: Record<BookingStatus, string> = {
   pending: 'Beklemede',
   paid: 'Ödendi',
+  confirmed: 'Onaylandı',
   failed: 'Ödeme başarısız',
   cancelled: 'İptal',
 }
@@ -14,6 +15,7 @@ const STATUS_LABELS: Record<BookingStatus, string> = {
 const STATUS_BADGE_CLASS: Record<BookingStatus, string> = {
   pending: 'bg-amber-100 text-amber-800',
   paid: 'bg-emerald-100 text-emerald-800',
+  confirmed: 'bg-emerald-100 text-emerald-800',
   failed: 'bg-rose-100 text-rose-800',
   cancelled: 'bg-red-100 text-red-800',
 }
@@ -201,6 +203,7 @@ export default function BookingsTable({
                   >
                     <option value="pending">Beklemede</option>
                     <option value="paid">Ödendi</option>
+                    <option value="confirmed">Onaylandı</option>
                     <option value="failed">Ödeme başarısız</option>
                     <option value="cancelled">İptal</option>
                   </select>
@@ -319,6 +322,7 @@ export default function BookingsTable({
                   >
                     <option value="pending">Beklemede</option>
                     <option value="paid">Ödendi</option>
+                    <option value="confirmed">Onaylandı</option>
                     <option value="failed">Ödeme başarısız</option>
                     <option value="cancelled">İptal</option>
                   </select>

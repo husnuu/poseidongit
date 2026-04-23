@@ -22,7 +22,7 @@ function compactCallbackPayloadForStorage(record: Record<string, string>): Recor
   }
 }
 
-export type BookingStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'overbooked'
+export type BookingStatus = 'pending' | 'paid' | 'confirmed' | 'failed' | 'refunded' | 'overbooked'
 
 /** Nestpay formu ve doğrulama için: ödeme öncesi zaten oluşturulmuş web rezervasyonu. */
 export type PendingBookingPaymentSnapshot = {
@@ -185,7 +185,7 @@ export async function markBookingPaid(
   bookingId: string,
   meta?: MarkBookingPaidFromCallbackMeta
 ): Promise<BookingStatusResult> {
-  const updates: Record<string, unknown> = { status: 'paid' }
+  const updates: Record<string, unknown> = { status: 'confirmed' }
   if (meta) {
     updates.payment_status = 'paid'
     updates.nestpay_auth_code = meta.authCode || null
@@ -227,7 +227,7 @@ export async function markBookingPaid(
 
   return {
     id: data.id,
-    status: (data.status as BookingStatus | null) ?? 'paid',
+    status: (data.status as BookingStatus | null) ?? 'confirmed',
   }
 }
 

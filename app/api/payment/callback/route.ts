@@ -11,16 +11,24 @@ import {
   triggerRefundForOverbookedBooking,
 } from '@/lib/services/bookingService'
 import {
+  diagnoseNestpayCallbackHashVerification,
   emitPaytenReturnDiagnostics,
   getNestpayConfig,
-  isNestpayPaymentSuccessful,
+  getPaymentResult,
   isPaymentDebugLoggingEnabled,
-  verifyNestpayCallbackHash,
 } from '@/lib/services/paymentService'
 
 function shouldLogPaytenCallbackRawBody(): boolean {
   const r = process.env.PAYMENT_LOG_CALLBACK_RAW
   return isPaymentDebugLoggingEnabled() || r === '1' || r === 'true'
+}
+
+/** Log için HASH tam değerini basmayız; uzunluk + kısa önek yeterli. */
+function maskHashForCallbackLog(hash: string): string | Record<string, string | number> {
+  const t = (hash ?? '').trim()
+  if (!t) return '(empty)'
+  if (t.length <= 24) return `${t.slice(0, 8)}…(${t.length} chars)`
+  return { length: t.length, prefix: t.slice(0, 12), suffix: t.slice(-8) }
 }
 
 export const runtime = 'nodejs'
@@ -36,9 +44,8 @@ function plainOk(): Response {
 }
 
 export async function POST(request: Request) {
+  console.info('[payment:callback] CALLBACK HIT')
   try {
-    console.info('[payten][callback] POST — NestPay sunucu bildirimi')
-
     const config = getNestpayConfig()
 
     if (shouldLogPaytenCallbackRawBody()) {
@@ -57,59 +64,108 @@ export async function POST(request: Request) {
 
     const payload = await parsePaytenPostToRecord(request)
     if (!payload || Object.keys(payload).length === 0) {
-      console.error('[payten][callback] Gövde çözülemedi veya boş; yine de OK dönülüyor (banka tekrarını sınırlamak için).')
+      console.error(
+        '[payment:callback] STAGE=EMPTY_BODY — Gövde çözülemedi veya boş (callback route’a ulaşıldı ama alan yok). OK dönülüyor.'
+      )
       return plainOk()
     }
 
     emitPaytenReturnDiagnostics('callback', payload)
 
     const normalized = normalizeCaseInsensitivePaymentFields(payload)
-    console.info('[payten][callback] normalize edilmiş çekirdek alanlar:', {
-      Response: normalized.Response,
-      ProcReturnCode: normalized.ProcReturnCode,
-      mdStatus: normalized.mdStatus,
-      oid: normalized.oid ? `${normalized.oid.slice(0, 8)}…` : '',
-      ReturnOid: normalized.ReturnOid ? `${normalized.ReturnOid.slice(0, 8)}…` : '',
+    console.info('[payment:callback] normalized fields:', {
+      Response: normalized.Response || '(empty)',
+      ProcReturnCode: normalized.ProcReturnCode || '(empty)',
+      mdStatus: normalized.mdStatus || '(empty)',
+      oid: normalized.oid || '(empty)',
+      ReturnOid: normalized.ReturnOid || '(empty)',
+      HASH: maskHashForCallbackLog(normalized.HASH),
     })
+
+    const successByFields = getPaymentResult({
+      response: normalized.Response,
+      procReturnCode: normalized.ProcReturnCode,
+      mdStatus: normalized.mdStatus,
+    })
+    const paymentApproved = successByFields === 'approved'
+    console.info('[payment:callback] successByFields result:', {
+      paymentResult: successByFields,
+      approvedByTriple: paymentApproved,
+    })
+
+    const oidNorm = normalized.oid.replace(/-/g, '').toLowerCase()
+    const returnOidNorm = normalized.ReturnOid.replace(/-/g, '').toLowerCase()
+    if (normalized.oid && normalized.ReturnOid && oidNorm !== returnOidNorm) {
+      console.warn(
+        '[payment:callback] oid ve ReturnOid ham metin olarak farklı; rezervasyon çözümü yine de oid veya ReturnOid ile yapılır (NestPay bazen farklı biçim gönderir).',
+        { oid: normalized.oid, ReturnOid: normalized.ReturnOid }
+      )
+    }
 
     const resolvedBookingId = await resolveSupabaseBookingIdFromPaytenOrderFields(
       normalized.oid,
       normalized.ReturnOid
     )
+    console.info('[payment:callback] booking lookup result:', {
+      ok: Boolean(resolvedBookingId),
+      resolvedBookingId: resolvedBookingId ?? null,
+      lookedUpOid: Boolean(normalized.oid?.trim()),
+      lookedUpReturnOid: Boolean(normalized.ReturnOid?.trim()),
+    })
+
     if (!resolvedBookingId) {
-      console.warn('[payment:callback] oid/ReturnOid rezervasyona çözülemedi', {
-        oid: normalized.oid ? `${normalized.oid.slice(0, 24)}…` : '',
-        returnOid: normalized.ReturnOid ? `${normalized.ReturnOid.slice(0, 24)}…` : '',
+      console.warn('[payment:callback] STAGE=BOOKING_LOOKUP_FAIL — FINALIZATION BLOCKED', {
+        oid: normalized.oid || '',
+        returnOid: normalized.ReturnOid || '',
       })
       return plainOk()
     }
 
     const currentStatus = await getBookingStatusById(resolvedBookingId)
+    console.info('[payment:callback] current booking status from DB:', { resolvedBookingId, currentStatus })
     if (!currentStatus) {
-      console.error('[payment:callback] Bilinmeyen rezervasyon', { resolvedBookingId })
+      console.error('[payment:callback] STAGE=BOOKING_STATUS_READ_FAIL — Bilinmeyen rezervasyon', { resolvedBookingId })
       return plainOk()
     }
 
     const terminalPaid = currentStatus === 'paid' || currentStatus === 'confirmed'
     if (terminalPaid) {
-      console.info('[payment:callback] Yinelenen callback — rezervasyon zaten ödendi/onaylı; işlem yapılmadı', {
+      console.info('[payment:callback] booking update result:', {
+        ok: true,
+        skipped: true,
+        reason: 'already_paid_or_confirmed',
         bookingId: resolvedBookingId,
         currentStatus,
       })
       return plainOk()
     }
 
-    const hashOk = verifyNestpayCallbackHash(payload, config.storeKey)
-    console.info('[payment:callback] NestPay HASH doğrulama sonucı:', hashOk ? 'MATCH' : 'MISMATCH')
+    const hashDiag = diagnoseNestpayCallbackHashVerification(payload, config.storeKey)
+    const hashVerified = hashDiag.hashVerified
+    console.info('[payment:callback] hashVerified result:', hashVerified)
+    if (isPaymentDebugLoggingEnabled() || process.env.PAYMENT_LOG_CALLBACK_RAW === '1' || process.env.PAYMENT_LOG_CALLBACK_RAW === 'true') {
+      console.info('[payment:callback] HASH diagnostic detail:', JSON.stringify(hashDiag))
+    }
 
-    const paymentApproved = isNestpayPaymentSuccessful(
-      normalized.Response,
-      normalized.ProcReturnCode,
-      normalized.mdStatus
-    )
-    console.info('[payment:callback] Ödeme üçlü kararı (Response/Proc/mdStatus):', paymentApproved ? 'approved' : 'failed')
-
-    if (!hashOk) {
+    if (!hashVerified) {
+      console.info('[payment:callback] booking update result:', {
+        ok: false,
+        skipped: true,
+        reason: 'hash_verification_failed',
+        bookingId: resolvedBookingId,
+        primaryFailureCode: hashDiag.primaryFailureCode,
+        paymentApprovedButBlocked: paymentApproved,
+      })
+      if (paymentApproved) {
+        console.error('[payment:callback] STAGE=HASH_FAIL — FINALIZATION BLOCKED (üçlü onaylı ama imza eşleşmedi)', {
+          bookingId: resolvedBookingId,
+          primaryFailureCode: hashDiag.primaryFailureCode,
+          postKeysOutsideHashAllowlist: hashDiag.postKeysOutsideHashAllowlist,
+          primaryStoreIncomingPairMatches: hashDiag.primaryStoreIncomingPairMatches,
+          sortedCanonicalKeysInSignature: hashDiag.sortedCanonicalKeysInSignature,
+          allowlistSignableParamCount: hashDiag.allowlistSignableParamCount,
+        })
+      }
       if (paymentApproved && currentStatus === 'pending') {
         console.error('[payment:callback] ŞÜPHELİ: onay üçlüsü geldi ancak HASH doğrulanamadı; ödeme onaylanmadı', {
           bookingId: resolvedBookingId,
@@ -128,23 +184,12 @@ export async function POST(request: Request) {
       return plainOk()
     }
 
-    const oidRaw = normalized.oid
-    const returnOidRaw = normalized.ReturnOid
-    if (oidRaw && returnOidRaw) {
-      const a = oidRaw.replace(/-/g, '').toLowerCase()
-      const b = returnOidRaw.replace(/-/g, '').toLowerCase()
-      if (a !== b) {
-        console.error('[payment:callback] ReturnOid oid ile eşleşmiyor (HASH geçerli olsa bile işlem yok)', {
-          oid: oidRaw,
-          returnOid: returnOidRaw,
-        })
-        return plainOk()
-      }
-    }
-
     if (paymentApproved) {
       if (currentStatus !== 'pending') {
-        console.warn('[payment:callback] Onaylı callback yok sayıldı: rezervasyon pending değil', {
+        console.info('[payment:callback] booking update result:', {
+          ok: false,
+          skipped: true,
+          reason: 'booking_not_pending',
           bookingId: resolvedBookingId,
           currentStatus,
         })
@@ -153,18 +198,43 @@ export async function POST(request: Request) {
       const hasCapacity = await checkCapacityAvailability(resolvedBookingId)
       if (hasCapacity) {
         const paidAtIso = new Date().toISOString()
-        await markBookingPaid(resolvedBookingId, {
-          authCode: normalized.AuthCode,
-          hostRefNum: normalized.HostRefNum,
-          transId: normalized.TransId,
-          paidAtIso,
-          rawCallback: payload,
-        })
-        console.info('[payment:callback] Rezervasyon ödendi olarak kaydedildi', { bookingId: resolvedBookingId })
+        try {
+          const paidResult = await markBookingPaid(resolvedBookingId, {
+            authCode: normalized.AuthCode,
+            hostRefNum: normalized.HostRefNum,
+            transId: normalized.TransId,
+            paidAtIso,
+            rawCallback: payload,
+          })
+          console.info('[payment:callback] booking update result:', {
+            ok: true,
+            skipped: false,
+            bookingId: paidResult.id,
+            newStatus: paidResult.status,
+            paymentStatus: 'paid',
+            authCode: normalized.AuthCode || null,
+            hostRefNum: normalized.HostRefNum || null,
+            transId: normalized.TransId || null,
+            paidAt: paidAtIso,
+          })
+        } catch (markPaidErr) {
+          const err = markPaidErr instanceof Error ? markPaidErr : new Error(String(markPaidErr))
+          console.error('[payment:callback] booking update result:', {
+            ok: false,
+            skipped: false,
+            stage: 'markBookingPaid_exception',
+            bookingId: resolvedBookingId,
+            message: err.message,
+            stack: err.stack,
+          })
+        }
       } else {
         await markBookingOverbooked(resolvedBookingId)
         await triggerRefundForOverbookedBooking(resolvedBookingId)
-        console.warn('[payment:callback] Kapasite yok — overbooked + iade tetikleme', {
+        console.info('[payment:callback] booking update result:', {
+          ok: true,
+          skipped: false,
+          reason: 'overbooked_no_capacity',
           bookingId: resolvedBookingId,
         })
       }
@@ -180,8 +250,12 @@ export async function POST(request: Request) {
           errMsg: normalized.ErrMsg || `Response=${normalized.Response} Proc=${normalized.ProcReturnCode} md=${normalized.mdStatus}`,
           rawCallback: payload,
         })
-        console.info('[payment:callback] Rezervasyon ödeme başarısız olarak işaretlendi', {
+        console.info('[payment:callback] booking update result:', {
+          ok: true,
+          skipped: false,
           bookingId: resolvedBookingId,
+          newStatus: 'failed',
+          detail: 'markBookingFailed',
         })
       } else {
         console.warn('[payment:callback] Başarısız callback — durum değiştirilmedi', {

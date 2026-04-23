@@ -1,6 +1,6 @@
 import type { SiteLocale } from '@/lib/i18n/config'
 
-export type BookingStatus = 'pending' | 'paid' | 'failed' | 'cancelled'
+export type BookingStatus = 'pending' | 'paid' | 'confirmed' | 'failed' | 'cancelled'
 
 export interface BookingCounts {
   adult: number

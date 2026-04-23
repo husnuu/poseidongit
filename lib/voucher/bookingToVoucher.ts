@@ -71,7 +71,7 @@ export function bookingToVoucherData(
     paidNow:
       typeof booking.paidNow === 'number' && booking.paidNow > 0
         ? booking.paidNow
-        : booking.status === 'paid'
+        : booking.status === 'paid' || booking.status === 'confirmed'
           ? (booking.totalPrice ?? 0)
           : undefined,
     remainingAmount: undefined,

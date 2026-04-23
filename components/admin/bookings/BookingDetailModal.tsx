@@ -9,6 +9,7 @@ import { extractMealPreferenceCountsFromBookingLike } from '@/lib/mealPreference
 const STATUS_LABELS: Record<BookingStatus, string> = {
   pending: 'Beklemede',
   paid: 'Ödendi',
+  confirmed: 'Onaylandı',
   failed: 'Ödeme başarısız',
   cancelled: 'İptal',
 }
@@ -199,6 +200,7 @@ export default function BookingDetailModal({
               >
                 <option value="pending">Beklemede</option>
                 <option value="paid">Ödendi</option>
+                <option value="confirmed">Onaylandı</option>
                 <option value="failed">Ödeme başarısız</option>
                 <option value="cancelled">İptal</option>
               </select>

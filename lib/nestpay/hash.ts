@@ -190,6 +190,79 @@ export function countNestpayV3ResponseHashSignableParams(record: Record<string, 
   return n
 }
 
+function collectV3ResponseHashAllowlistedKeyLowerSet(): Set<string> {
+  const s = new Set<string>()
+  for (const c of NESTPAY_V3_RESPONSE_HASH_CANONICAL_NAMES) {
+    if (c === 'HASH') continue
+    s.add(c.toLowerCase())
+  }
+  for (const { acceptKeys } of NESTPAY_V3_RESPONSE_KEY_ALIASES) {
+    for (const k of acceptKeys) {
+      s.add(k.toLowerCase())
+    }
+  }
+  return s
+}
+
+/**
+ * İmza zincirine hiç girmediği için NestPay Ver3 yanıt doğrulamasında yok sayılan POST alanları
+ * (ör. `oid`). Banka bu alanları imzaya dahil ediyorsa uygulama tarafında MISMATCH görülür.
+ */
+export function listPostKeysOutsideNestpayV3ResponseHashAllowlist(record: Record<string, string>): string[] {
+  const allowed = collectV3ResponseHashAllowlistedKeyLowerSet()
+  const extras: string[] = []
+  const seen = new Set<string>()
+  for (const k of Object.keys(record)) {
+    const low = k.toLowerCase()
+    if (low === 'hash') continue
+    if (isBlockedResponseHashParamKey(k)) continue
+    if (allowed.has(low)) continue
+    if (!seen.has(k)) {
+      seen.add(k)
+      extras.push(k)
+    }
+  }
+  return extras.sort(comparePaytenHashParamKeysAlphabetical)
+}
+
+export type NestpayV3ResponseHashBuild = {
+  sortedKeys: string[]
+  /** UTF-8; sonda storeKey — PAYMENT_DEBUG dışında loglamayın. */
+  plaintext: string
+  expectedHashBase64: string
+}
+
+/**
+ * NestPay Generic Ver3 sunucu yanıtı: izin listesindeki alanlar + sonda storeKey ile SHA-512 → Base64.
+ */
+export function buildNestpayV3ResponseHashSignature(record: Record<string, string>, storeKey: string): NestpayV3ResponseHashBuild {
+  const hashKey = Object.keys(record).find((k) => k.toLowerCase() === 'hash')
+
+  const normalized: Record<string, string> = {}
+  for (const [k, v] of Object.entries(record)) {
+    if (k.toLowerCase() === 'hash') continue
+    if (isBlockedResponseHashParamKey(k)) continue
+    normalized[k] = normalizeResponseHashValueText(v)
+  }
+
+  const valueByCanonical = new Map<string, string>()
+
+  for (const canonical of NESTPAY_V3_RESPONSE_HASH_CANONICAL_NAMES) {
+    if (canonical === 'HASH') continue
+    const e = getNestpayV3ResponseHashEntryForCanonical(normalized, canonical)
+    if (e) valueByCanonical.set(canonical, e.value)
+  }
+  if (hashKey) {
+    valueByCanonical.set('HASH', '')
+  }
+
+  const sortedKeys = [...valueByCanonical.keys()].sort(comparePaytenHashParamKeysAlphabetical)
+  const valueParts = sortedKeys.map((k) => escapePaytenHashValue(valueByCanonical.get(k) ?? ''))
+  const plaintext = [...valueParts, escapePaytenHashValue(storeKey)].join('|')
+  const expectedHashBase64 = hashVer3PlaintextToBase64(plaintext)
+  return { sortedKeys, plaintext, expectedHashBase64 }
+}
+
 function secureB64StringEquals(a: string, b: string): boolean {
   const l = Buffer.from(a, 'utf8')
   const r = Buffer.from(b, 'utf8')
@@ -225,28 +298,7 @@ export function verifyNestpayResponseHash(
     return false
   }
 
-  const normalized: Record<string, string> = {}
-  for (const [k, v] of Object.entries(record)) {
-    if (k.toLowerCase() === 'hash') continue
-    if (isBlockedResponseHashParamKey(k)) continue
-    normalized[k] = normalizeResponseHashValueText(v)
-  }
-
-  const valueByCanonical = new Map<string, string>()
-
-  for (const canonical of NESTPAY_V3_RESPONSE_HASH_CANONICAL_NAMES) {
-    if (canonical === 'HASH') continue
-    const e = getNestpayV3ResponseHashEntryForCanonical(normalized, canonical)
-    if (e) valueByCanonical.set(canonical, e.value)
-  }
-  if (hashKey) {
-    valueByCanonical.set('HASH', '')
-  }
-
-  const sortedKeys = [...valueByCanonical.keys()].sort(comparePaytenHashParamKeysAlphabetical)
-  const valueParts = sortedKeys.map((k) => escapePaytenHashValue(valueByCanonical.get(k) ?? ''))
-  const plaintext = [...valueParts, escapePaytenHashValue(storeKey)].join('|')
-  const expectedHash = hashVer3PlaintextToBase64(plaintext)
+  const { sortedKeys, plaintext, expectedHashBase64: expectedHash } = buildNestpayV3ResponseHashSignature(record, storeKey)
   const ok = secureB64StringEquals(expectedHash, incomingRaw)
 
   if (!options?.quiet) {

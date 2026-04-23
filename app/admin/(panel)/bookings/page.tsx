@@ -61,6 +61,7 @@ async function loadTurkishFont(doc: jsPDF, adminEmail?: string): Promise<void> {
 const STATUS_LABELS: Record<BookingStatus, string> = {
   pending: 'Beklemede',
   paid: 'Ödendi',
+  confirmed: 'Onaylandı',
   failed: 'Ödeme başarısız',
   cancelled: 'İptal',
 }

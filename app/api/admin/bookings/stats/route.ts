@@ -18,7 +18,7 @@ export async function GET(request: Request) {
       supabase.from('bookings').select('id', { count: 'exact', head: true }),
       supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('date', today),
       supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('source', 'manual'),
-      supabase.from('bookings').select('status, total_price').in('status', ['pending', 'paid']),
+      supabase.from('bookings').select('status, total_price').in('status', ['pending', 'paid', 'confirmed']),
       supabase
         .from('bookings')
         .select('status, adult_count, child_count, infant_count')

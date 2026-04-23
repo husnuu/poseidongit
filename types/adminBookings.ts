@@ -1,5 +1,5 @@
 /** Admin panelinde kullanılan rezervasyon satırı (API'den gelen + tourCoverImageUrl). */
-export type BookingStatus = 'pending' | 'paid' | 'failed' | 'cancelled'
+export type BookingStatus = 'pending' | 'paid' | 'confirmed' | 'failed' | 'cancelled'
 
 export interface AdminBookingRow {
   id: string

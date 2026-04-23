@@ -101,8 +101,12 @@ export async function GET(request: NextRequest) {
       [k: string]: unknown
     }
     let list: DocRow[] = normalizedRows.map((row) => mapBookingRowToApi(row) as DocRow)
-    if (statusFilter && ['pending', 'paid', 'failed', 'cancelled'].includes(statusFilter)) {
-      list = list.filter((b) => b.status === statusFilter)
+    if (statusFilter && ['pending', 'paid', 'confirmed', 'failed', 'cancelled'].includes(statusFilter)) {
+      if (statusFilter === 'paid') {
+        list = list.filter((b) => b.status === 'paid' || b.status === 'confirmed')
+      } else {
+        list = list.filter((b) => b.status === statusFilter)
+      }
     }
     if (dateFrom) list = list.filter((b) => (b.date ?? '') >= dateFrom)
     if (dateTo) list = list.filter((b) => (b.date ?? '') <= dateTo)
@@ -136,7 +140,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-const VALID_STATUSES: BookingStatus[] = ['pending', 'paid', 'failed', 'cancelled']
+const VALID_STATUSES: BookingStatus[] = ['pending', 'paid', 'confirmed', 'failed', 'cancelled']
 
 export async function PATCH(request: NextRequest) {
   if (!(await authorizeAdmin(request))) {
@@ -173,7 +177,7 @@ export async function PATCH(request: NextRequest) {
     const { error: updateError } = await supabase.from('bookings').update(updates).eq('id', bookingId)
     if (updateError) throw new Error(`Supabase booking update failed: ${updateError.message}`)
 
-    if (status === 'paid') {
+    if (status === 'paid' || status === 'confirmed') {
       await runBookingPaidEmailSideEffects(bookingId, data)
     }
 
