@@ -16,6 +16,34 @@ import { createHash, timingSafeEqual } from 'node:crypto'
  */
 const EXCLUDED_HASH_KEYS = new Set(['hash', 'encoding', 'countdown'])
 
+export type NestpayCallbackPostHashBuild = {
+  /** POST alan adları (HASH/encoding/countdown hariç), alfabetik İngilizce locale, büyük/küçük harf duyarsız sıra. */
+  includedKeys: string[]
+  excludedKeys: string[]
+  plaintext: string
+  expectedHashBase64: string
+}
+
+/**
+ * NestPay / Payten sunucu → callbackUrl POST: imzada **tüm** alanlar (yalnızca `hash`, `encoding`, `countdown` hariç),
+ * anahtar sırası case-insensitive alfabetik; değer kaçışı ve SHA-512→Base64 `generateHash` ile aynı.
+ */
+export function buildNestpayCallbackPostHashSignature(
+  record: Record<string, string>,
+  storeKey: string
+): NestpayCallbackPostHashBuild {
+  const allKeys = Object.keys(record)
+  const excludedKeys = allKeys
+    .filter((key) => EXCLUDED_HASH_KEYS.has(key.toLowerCase()))
+    .sort(comparePaytenHashParamKeysAlphabetical)
+  const includedKeys = allKeys
+    .filter((key) => !EXCLUDED_HASH_KEYS.has(key.toLowerCase()))
+    .sort(comparePaytenHashParamKeysAlphabetical)
+  const plaintext = buildPaytenHashPlaintext(record, storeKey)
+  const expectedHashBase64 = hashVer3PlaintextToBase64(plaintext)
+  return { includedKeys, excludedKeys, plaintext, expectedHashBase64 }
+}
+
 /** Payten hash parametre adlarını alfabetik sıralar (döküman: A→Z, case-insensitive). */
 export function comparePaytenHashParamKeysAlphabetical(a: string, b: string): number {
   return a.localeCompare(b, 'en', { sensitivity: 'base' })
@@ -77,9 +105,8 @@ const EXACT_BLOCKED_RESPONSE_HASH_KEY = new Set(
 
 /**
  * 3D Pay Hosting sunucu yanıtında imzada kullanılabilecek alan adları (yalnızca bunlar, varsa).
- * Dökümandaki listede `HASH` da bulunur: anahtar POST’ta varsa imza zincirine **HASH** adı eklenir; değer
- * daima `""` (özet, önceki tüm alanlardan türetildiği için dâhil edilmez).
- * @see Payten / NestPay Generic Ver3 — yanıt imzası
+ * İmza doğrulamada `HASH` parametresi zincire **dahil edilmez** (yalnızca karşılaştırma hedefi).
+ * @see Payten / NestPay Generic Ver3 — yanıt imzası (dar izin listesi; tarayıcı dönüşü bilgi amaçlı).
  */
 const NESTPAY_V3_RESPONSE_HASH_CANONICAL_NAMES: readonly string[] = [
   'AuthCode',
@@ -89,7 +116,6 @@ const NESTPAY_V3_RESPONSE_HASH_CANONICAL_NAMES: readonly string[] = [
   'eci',
   'ErrMsg',
   'EXTRA.TRXDATE',
-  'HASH',
   'HostRefNum',
   'iReqCode',
   'iReqDetail',
@@ -169,10 +195,8 @@ function getNestpayV3ResponseHashEntryForCanonical(
 
 /**
  * Gelen yanıttan imzaya dâhil edilebilecek (izin listesinde, gerçekten gelmiş) alan sayısı.
- * `HASH` anahtarı: POST’ta varsa 1; imza değeri boş sayılır.
  */
 export function countNestpayV3ResponseHashSignableParams(record: Record<string, string>): number {
-  const hasHashParam = Object.keys(record).some((k) => k.toLowerCase() === 'hash')
   const normalized: Record<string, string> = {}
   for (const [k, v] of Object.entries(record)) {
     if (k.toLowerCase() === 'hash') continue
@@ -181,10 +205,6 @@ export function countNestpayV3ResponseHashSignableParams(record: Record<string, 
   }
   let n = 0
   for (const canonical of NESTPAY_V3_RESPONSE_HASH_CANONICAL_NAMES) {
-    if (canonical === 'HASH') {
-      if (hasHashParam) n += 1
-      continue
-    }
     if (getNestpayV3ResponseHashEntryForCanonical(normalized, canonical) !== null) n += 1
   }
   return n
@@ -193,7 +213,6 @@ export function countNestpayV3ResponseHashSignableParams(record: Record<string, 
 function collectV3ResponseHashAllowlistedKeyLowerSet(): Set<string> {
   const s = new Set<string>()
   for (const c of NESTPAY_V3_RESPONSE_HASH_CANONICAL_NAMES) {
-    if (c === 'HASH') continue
     s.add(c.toLowerCase())
   }
   for (const { acceptKeys } of NESTPAY_V3_RESPONSE_KEY_ALIASES) {
@@ -236,8 +255,6 @@ export type NestpayV3ResponseHashBuild = {
  * NestPay Generic Ver3 sunucu yanıtı: izin listesindeki alanlar + sonda storeKey ile SHA-512 → Base64.
  */
 export function buildNestpayV3ResponseHashSignature(record: Record<string, string>, storeKey: string): NestpayV3ResponseHashBuild {
-  const hashKey = Object.keys(record).find((k) => k.toLowerCase() === 'hash')
-
   const normalized: Record<string, string> = {}
   for (const [k, v] of Object.entries(record)) {
     if (k.toLowerCase() === 'hash') continue
@@ -248,12 +265,8 @@ export function buildNestpayV3ResponseHashSignature(record: Record<string, strin
   const valueByCanonical = new Map<string, string>()
 
   for (const canonical of NESTPAY_V3_RESPONSE_HASH_CANONICAL_NAMES) {
-    if (canonical === 'HASH') continue
     const e = getNestpayV3ResponseHashEntryForCanonical(normalized, canonical)
     if (e) valueByCanonical.set(canonical, e.value)
-  }
-  if (hashKey) {
-    valueByCanonical.set('HASH', '')
   }
 
   const sortedKeys = [...valueByCanonical.keys()].sort(comparePaytenHashParamKeysAlphabetical)
@@ -270,6 +283,16 @@ function secureB64StringEquals(a: string, b: string): boolean {
   return timingSafeEqual(l, r)
 }
 
+/** Callback tam alan imzası: `generateHash` / banka HASH ile zamanlamaya dayanıklı karşılaştırma. */
+export function verifyNestpayCallbackPostHash(
+  record: Record<string, string>,
+  storeKey: string,
+  incomingHashCandidate: string
+): boolean {
+  const expected = generateHash(record, storeKey)
+  return secureB64StringEquals(expected, incomingHashCandidate.trim())
+}
+
 /**
  * NestPay Hash Ver3 — yalnız ca izin listesindeki 3D hosting / MPI alanlarını (varsa) alır; bilinmeyen
  * dönüş alanlarını dışlar. Değerler kaçırılır, adlar (case-insensitive) alfabetik, SHA-512 → Base64.
@@ -278,7 +301,7 @@ function secureB64StringEquals(a: string, b: string): boolean {
 export type VerifyNestpayResponseHashOptions = {
   /** Dışarıda normalize (padding / URL-safe) aday stringleri denemek için; verilmezse `record` içindeki HASH kullanılır. */
   incomingHashCandidate?: string
-  /** `verifyNestpayCallbackHash` birden çok aday dener; her denemede log basmamak için `true` verin. */
+  /** `verifyNestpayBrowserReturnHashAllowlist` vb. birden çok aday dener; her denemede log basmamak için `true` verin. */
   quiet?: boolean
 }
 

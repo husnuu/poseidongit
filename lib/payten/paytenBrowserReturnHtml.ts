@@ -1,7 +1,7 @@
 import {
   escapeHtmlForPaytenAttribute,
   getNestpayConfig,
-  verifyNestpayCallbackHash,
+  verifyNestpayBrowserReturnHashAllowlist,
 } from '@/lib/services/paymentService'
 import { isSafePaytenOrderLookupToken } from '@/lib/payten/resolvePaytenBookingLookup'
 
@@ -158,12 +158,12 @@ function verifyBrowserReturnHash(record: Record<string, string>): {
   }
   try {
     const { storeKey } = getNestpayConfig()
-    const ok = verifyNestpayCallbackHash(record, storeKey)
+    const ok = verifyNestpayBrowserReturnHashAllowlist(record, storeKey)
     if (ok) {
       return {
         verified: true,
         detail:
-          'HASH (bilgi amaçlı) izin listesine göre eşleşti. Yine de: Tarayıcı dönüşü kesin kaynak değildir; kesin onay callback ile işlenir.',
+          'HASH (bilgi amaçlı) MPI/yanıt izin listesine göre eşleşti. Yine de: Tarayıcı dönüşü kesin kaynak değildir; kesin onay callback ile işlenir.',
       }
     }
     return {

@@ -1,12 +1,12 @@
 import { randomBytes } from 'node:crypto'
 import { getBaseUrl } from '@/lib/seo'
 import {
+  buildNestpayCallbackPostHashSignature,
   buildNestpayV3ResponseHashSignature,
   buildPaytenHashPlaintext,
   comparePaytenHashParamKeysAlphabetical,
-  countNestpayV3ResponseHashSignableParams,
   generateHash,
-  listPostKeysOutsideNestpayV3ResponseHashAllowlist,
+  verifyNestpayCallbackPostHash,
   verifyNestpayResponseHash,
 } from '@/lib/nestpay/hash'
 
@@ -449,7 +449,35 @@ export function logPaytenInboundForm(label: string, record: Record<string, strin
   console.log(`[payment:${label}] BANK RESPONSE ENTRIES:\n` + JSON.stringify(Object.entries(record), null, 2))
 }
 
+/**
+ * callbackUrl POST: tüm alanlar (HASH / encoding / countdown hariç) ile NestPay Generic Ver3 imzası.
+ */
 export function verifyNestpayCallbackHash(payload: Record<string, string>, storeKey: string): boolean {
+  const hashKey = Object.keys(payload).find((key) => key.toLowerCase() === 'hash')
+  const incomingRaw = hashKey ? payload[hashKey]! : ''
+  if (!normalizeText(incomingRaw)) return false
+
+  const incomingCandidates = nestpayIncomingHashCandidates(incomingRaw)
+  const storeCandidates = nestpayStoreKeyCandidates(storeKey)
+
+  for (const sk of storeCandidates) {
+    for (const inc of incomingCandidates) {
+      if (verifyNestpayCallbackPostHash(payload, sk, inc)) return true
+    }
+  }
+
+  if (isPaymentDebugLoggingEnabled()) {
+    console.warn('[payment] HASH verify: callback — tam alan imzası eşleşmedi', {
+      storeKeyLengths: storeCandidates.map((s) => s.length),
+      incomingHashLengths: incomingCandidates.map((s) => s.length),
+    })
+  }
+
+  return false
+}
+
+/** okUrl / failUrl: dar izin listesi + çoklu storeKey/HASH adayı (bilgi amaçlı; finalizasyonu etkilemez). */
+export function verifyNestpayBrowserReturnHashAllowlist(payload: Record<string, string>, storeKey: string): boolean {
   const hashKey = Object.keys(payload).find((key) => key.toLowerCase() === 'hash')
   const incomingRaw = hashKey ? payload[hashKey]! : ''
   if (!normalizeText(incomingRaw)) return false
@@ -463,16 +491,6 @@ export function verifyNestpayCallbackHash(payload: Record<string, string>, store
     }
   }
 
-  if (isPaymentDebugLoggingEnabled() && storeCandidates.length > 0 && incomingCandidates.length > 0) {
-    verifyNestpayResponseHash(payload, storeCandidates[0]!, { incomingHashCandidate: incomingCandidates[0]! })
-  }
-  if (isPaymentDebugLoggingEnabled()) {
-    console.warn('[payment] HASH verify: callback — NestPay V3 yanıt (izin listesi) eşleşmedi', {
-      storeKeyLengths: storeCandidates.map((s) => s.length),
-      incomingHashLengths: incomingCandidates.map((s) => s.length),
-    })
-  }
-
   return false
 }
 
@@ -481,7 +499,7 @@ export type NestpayCallbackHashDiagnosis = {
   /**
    * HASH_MATCH: doğrulama geçti.
    * MISSING_HASH_PARAM / EMPTY_HASH_VALUE: imza doğrulanamaz → finalizasyon yapılmaz.
-   * NESTPAY_V3_COMPUTED_MISMATCH: HASH var ama hiçbir storeKey/hash adayı eşleşmedi (yanlış store key, farklı imza algoritması veya izin listesi dışı imzalı alanlar).
+   * NESTPAY_V3_COMPUTED_MISMATCH: HASH var ama hiçbir storeKey/hash adayı eşleşmedi (yanlış store key veya farklı imza girdisi).
    */
   primaryFailureCode:
     | 'HASH_MATCH'
@@ -493,17 +511,35 @@ export type NestpayCallbackHashDiagnosis = {
   incomingHashCandidateCount: number
   storeKeyCandidateCount: number
   primaryStoreKeyLength: number
-  /** Yalnızca ilk storeKey + ilk incoming adayı ile `verifyNestpayResponseHash(quiet)` — tüm döngüyle aynı sonuç olmayabilir. */
+  /** İlk storeKey + ilk incoming HASH adayı ile tam-alan doğrulama (çoklu aday döngüsüyle uyumlu olmayabilir). */
   primaryStoreIncomingPairMatches: boolean
+  /** Callback imzasında kullanılan POST anahtarları (HASH/encoding/countdown hariç), alfabetik sıra. */
   sortedCanonicalKeysInSignature: string[]
-  allowlistSignableParamCount: number
+  callbackHashExcludedKeys: string[]
   postBodyFieldCount: number
-  /** Banka POST’ta gönderir; NestPay Ver3 yanıt izin listemizde yoksa imza zincirine alınmazlar. */
-  postKeysOutsideHashAllowlist: string[]
   expectedHashPrefix: string
   incomingPrimaryPrefix: string
   /** PAYMENT_DEBUG / non-production: imza düz metin uzunluğu (içinde storeKey vardır; tam metni loglamayın). */
   plaintextUtf8Length: number | null
+}
+
+function logNestpayCallbackHashVerification(args: {
+  includedKeys: string[]
+  excludedKeys: string[]
+  plaintext: string
+  generatedHash: string
+  incomingHash: string
+  finalMatchResult: 'MATCH' | 'MISMATCH'
+}): void {
+  const dbg = isPaymentDebugLoggingEnabled()
+  console.info('[payment:callback-hash]', {
+    includedKeys: args.includedKeys,
+    excludedKeys: args.excludedKeys,
+    plaintext: dbg ? args.plaintext : `[omitted ${args.plaintext.length} UTF-8 chars; PAYMENT_DEBUG=1 for full plaintext]`,
+    generatedHash: args.generatedHash,
+    incomingHash: args.incomingHash,
+    finalMatchResult: args.finalMatchResult,
+  })
 }
 
 /**
@@ -518,9 +554,8 @@ export function diagnoseNestpayCallbackHashVerification(
   const incomingTrim = normalizeText(incomingRaw)
   const storeCandidates = nestpayStoreKeyCandidates(storeKey)
   const sk0 = storeCandidates[0] ?? ''
-  const outside = listPostKeysOutsideNestpayV3ResponseHashAllowlist(payload)
-  const signableCount = countNestpayV3ResponseHashSignableParams(payload)
   const postCount = Object.keys(payload).length
+  const callbackBuildBase = sk0 ? buildNestpayCallbackPostHashSignature(payload, sk0) : null
 
   if (!hashKey) {
     return {
@@ -532,10 +567,9 @@ export function diagnoseNestpayCallbackHashVerification(
       storeKeyCandidateCount: storeCandidates.length,
       primaryStoreKeyLength: sk0.length,
       primaryStoreIncomingPairMatches: false,
-      sortedCanonicalKeysInSignature: sk0 ? buildNestpayV3ResponseHashSignature(payload, sk0).sortedKeys : [],
-      allowlistSignableParamCount: signableCount,
+      sortedCanonicalKeysInSignature: callbackBuildBase?.includedKeys ?? [],
+      callbackHashExcludedKeys: callbackBuildBase?.excludedKeys ?? [],
       postBodyFieldCount: postCount,
-      postKeysOutsideHashAllowlist: outside,
       expectedHashPrefix: '',
       incomingPrimaryPrefix: '',
       plaintextUtf8Length: null,
@@ -543,7 +577,6 @@ export function diagnoseNestpayCallbackHashVerification(
   }
 
   if (!incomingTrim) {
-    const builtEmpty = sk0 ? buildNestpayV3ResponseHashSignature(payload, sk0) : null
     return {
       hashVerified: false,
       primaryFailureCode: 'EMPTY_HASH_VALUE',
@@ -553,27 +586,37 @@ export function diagnoseNestpayCallbackHashVerification(
       storeKeyCandidateCount: storeCandidates.length,
       primaryStoreKeyLength: sk0.length,
       primaryStoreIncomingPairMatches: false,
-      sortedCanonicalKeysInSignature: builtEmpty?.sortedKeys ?? [],
-      allowlistSignableParamCount: signableCount,
+      sortedCanonicalKeysInSignature: callbackBuildBase?.includedKeys ?? [],
+      callbackHashExcludedKeys: callbackBuildBase?.excludedKeys ?? [],
       postBodyFieldCount: postCount,
-      postKeysOutsideHashAllowlist: outside,
-      expectedHashPrefix: builtEmpty?.expectedHashBase64.slice(0, 16) ?? '',
+      expectedHashPrefix: callbackBuildBase?.expectedHashBase64.slice(0, 16) ?? '',
       incomingPrimaryPrefix: '',
       plaintextUtf8Length:
-        builtEmpty && isPaymentDebugLoggingEnabled() ? builtEmpty.plaintext.length : null,
+        callbackBuildBase && isPaymentDebugLoggingEnabled() ? callbackBuildBase.plaintext.length : null,
     }
   }
 
   const hashVerified = verifyNestpayCallbackHash(payload, storeKey)
   const incomingCandidates = nestpayIncomingHashCandidates(incomingRaw)
   const inc0 = incomingCandidates[0] ?? ''
-  const built = sk0 ? buildNestpayV3ResponseHashSignature(payload, sk0) : null
+  const built = callbackBuildBase ?? (sk0 ? buildNestpayCallbackPostHashSignature(payload, sk0) : null)
   const primaryPair =
-    sk0 && inc0 ? verifyNestpayResponseHash(payload, sk0, { incomingHashCandidate: inc0, quiet: true }) : false
+    sk0 && inc0 ? verifyNestpayCallbackPostHash(payload, sk0, inc0) : false
 
   const primaryCode: NestpayCallbackHashDiagnosis['primaryFailureCode'] = hashVerified
     ? 'HASH_MATCH'
     : 'NESTPAY_V3_COMPUTED_MISMATCH'
+
+  if (built) {
+    logNestpayCallbackHashVerification({
+      includedKeys: built.includedKeys,
+      excludedKeys: built.excludedKeys,
+      plaintext: built.plaintext,
+      generatedHash: built.expectedHashBase64,
+      incomingHash: inc0,
+      finalMatchResult: hashVerified ? 'MATCH' : 'MISMATCH',
+    })
+  }
 
   return {
     hashVerified,
@@ -584,10 +627,9 @@ export function diagnoseNestpayCallbackHashVerification(
     storeKeyCandidateCount: storeCandidates.length,
     primaryStoreKeyLength: sk0.length,
     primaryStoreIncomingPairMatches: primaryPair,
-    sortedCanonicalKeysInSignature: built?.sortedKeys ?? [],
-    allowlistSignableParamCount: signableCount,
+    sortedCanonicalKeysInSignature: built?.includedKeys ?? [],
+    callbackHashExcludedKeys: built?.excludedKeys ?? [],
     postBodyFieldCount: postCount,
-    postKeysOutsideHashAllowlist: outside,
     expectedHashPrefix: built?.expectedHashBase64.slice(0, 16) ?? '',
     incomingPrimaryPrefix: inc0.slice(0, 16),
     plaintextUtf8Length: built && isPaymentDebugLoggingEnabled() ? built.plaintext.length : null,

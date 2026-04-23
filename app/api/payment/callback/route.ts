@@ -160,10 +160,9 @@ export async function POST(request: Request) {
         console.error('[payment:callback] STAGE=HASH_FAIL — FINALIZATION BLOCKED (üçlü onaylı ama imza eşleşmedi)', {
           bookingId: resolvedBookingId,
           primaryFailureCode: hashDiag.primaryFailureCode,
-          postKeysOutsideHashAllowlist: hashDiag.postKeysOutsideHashAllowlist,
+          callbackHashExcludedKeys: hashDiag.callbackHashExcludedKeys,
           primaryStoreIncomingPairMatches: hashDiag.primaryStoreIncomingPairMatches,
           sortedCanonicalKeysInSignature: hashDiag.sortedCanonicalKeysInSignature,
-          allowlistSignableParamCount: hashDiag.allowlistSignableParamCount,
         })
       }
       if (paymentApproved && currentStatus === 'pending') {
