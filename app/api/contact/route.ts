@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { rateLimitResponse } from '@/lib/rateLimit'
 import { verifyTurnstileToken } from '@/lib/turnstile'
 import { sendContactFormEmail } from '@/lib/email'
+import { sanitizeMultilineText, sanitizePhoneDisplay, sanitizeTourTitleText } from '@/lib/inputSanitize'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,16 +16,20 @@ function parseBody(body: unknown): {
 } | null {
   if (!body || typeof body !== 'object') return null
   const b = body as Record<string, unknown>
-  const name = typeof b.name === 'string' ? b.name.trim() : undefined
+  const name =
+    typeof b.name === 'string' ? sanitizeTourTitleText(b.name, 200) : undefined
   const groupSize =
     typeof b.groupSize === 'number'
       ? b.groupSize
       : typeof b.groupSize === 'string'
         ? parseInt(b.groupSize, 10)
         : undefined
-  const email = typeof b.email === 'string' ? b.email.trim() : undefined
-  const phone = typeof b.phone === 'string' ? b.phone.trim() || undefined : undefined
-  const message = typeof b.message === 'string' ? b.message.trim() : undefined
+  const email =
+    typeof b.email === 'string' ? b.email.trim().toLowerCase().slice(0, 254) : undefined
+  const phoneSan = typeof b.phone === 'string' ? sanitizePhoneDisplay(b.phone, 48) : ''
+  const phone = phoneSan.length > 0 ? phoneSan : undefined
+  const message =
+    typeof b.message === 'string' ? sanitizeMultilineText(b.message, 4000) : undefined
   const turnstileToken = typeof b.turnstileToken === 'string' ? b.turnstileToken.trim() : undefined
   return { name, groupSize, email, phone, message, turnstileToken }
 }

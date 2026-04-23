@@ -1,0 +1,514 @@
+import { randomBytes, timingSafeEqual } from 'node:crypto'
+import { getBaseUrl } from '@/lib/seo'
+import {
+  buildPaytenHashPlaintext,
+  comparePaytenHashParamKeysAlphabetical,
+  escapePaytenHashValue,
+  generateHash,
+  paytenHash512PlaintextUtf8,
+  paytenHashSha1PlaintextUtf8,
+} from '@/lib/nestpay/hash'
+
+const PAYTEN_ISLEM_TIPLERI = new Set(['Auth', 'PreAuth', 'PostAuth', 'Void', 'Credit'])
+
+function normalizePaytenIslemTipi(raw: string): string {
+  const key = raw.trim().toLowerCase()
+  const map: Record<string, string> = {
+    auth: 'Auth',
+    preauth: 'PreAuth',
+    postauth: 'PostAuth',
+    void: 'Void',
+    credit: 'Credit',
+  }
+  return map[key] ?? raw.trim()
+}
+
+export type NestpayConfig = {
+  clientId: string
+  storeKey: string
+  gatewayUrl: string
+  /** ISO 4217 numerik kod (ör. TRY = 949) */
+  currencyNumeric: string
+  /** Payten ödeme sayfası dili: tr | en */
+  lang: 'tr' | 'en'
+  /** Payten işlem tipi (satış için genelde Auth) — POST alanı `islemtipi`. */
+  islemTipi: string
+  /**
+   * Payten 3D Pay Hosting: `3D_PAY_HOSTING`. Ortamda farklı verilmişse `NESTPAY_STORETYPE` ile eşleştirin.
+   */
+  storeType: string
+}
+
+export type NestpayInitiateContext = {
+  bookingId: string
+  rnd: string
+  okUrl: string
+  failUrl: string
+  callbackUrl: string
+  amount: string
+}
+
+export type PaymentResult = 'approved' | 'failed'
+
+type CallbackResultInput = {
+  response?: string
+  procReturnCode?: string
+  mdStatus?: string
+}
+
+/**
+ * Payten HTTP örneği: `…/fim/Paytengate`. Banka sadece kök URL verdiyse bu path eklenir.
+ * Eski dökümanlarda `est3Dgate` geçebilir — o zaman `NESTPAY_GATEWAY_URL` içinde tam path verin.
+ */
+const NESTPAY_GATEWAY_PATH = '/fim/Paytengate'
+/** Postgres / Supabase varsayılan UUID formatı (sürüm bağımsız gevşek doğrulama). */
+const BOOKING_ID_UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+function normalizeText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+/**
+ * Ödeme en son adım: istekte yalnızca mevcut `pending` rezervasyonun `bookingId` değeri gelir.
+ * İsim, e-posta, tarih, misafir ve tutar Supabase kaydından okunur (istemci ile oynanamaz).
+ */
+export function parsePaymentInitiateBookingId(raw: unknown): { ok: true; bookingId: string } | { ok: false; error: string } {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ok: false, error: 'Request body must be a JSON object.' }
+  }
+
+  const record = raw as Record<string, unknown>
+  const bookingId = normalizeText(record.bookingId ?? record.booking_id)
+
+  if (!bookingId) {
+    return { ok: false, error: 'Missing bookingId. Create the booking first, then start payment.' }
+  }
+
+  if (!BOOKING_ID_UUID_REGEX.test(bookingId)) {
+    return { ok: false, error: 'Invalid bookingId.' }
+  }
+
+  return { ok: true, bookingId }
+}
+
+export function getNestpayConfig(): NestpayConfig {
+  const clientId = normalizeText(process.env.NESTPAY_CLIENT_ID)
+  const storeKey = normalizeText(process.env.NESTPAY_STORE_KEY)
+  const rawGatewayUrl = normalizeText(process.env.NESTPAY_GATEWAY_URL)
+  const currencyNumeric =
+    normalizeText(process.env.NESTPAY_CURRENCY_NUMERIC) || normalizeText(process.env.NESTPAY_CURRENCY) || '949'
+  const langRaw = (normalizeText(process.env.NESTPAY_LANG) || 'tr').toLowerCase()
+  const lang: 'tr' | 'en' = langRaw === 'en' ? 'en' : 'tr'
+  const islemTipiRaw =
+    normalizeText(process.env.NESTPAY_ISLEM_TIPI) ||
+    normalizeText(process.env.NESTPAY_TRANSACTION_TYPE) ||
+    'Auth'
+  const islemTipi = normalizePaytenIslemTipi(islemTipiRaw)
+  const storeType =
+    normalizeText(process.env.NESTPAY_STORETYPE) || normalizeText(process.env.NESTPAY_STORE_TYPE) || '3D_PAY_HOSTING'
+
+  if (!clientId) {
+    throw new Error('Missing NESTPAY_CLIENT_ID environment variable.')
+  }
+  if (!/^[A-Za-z0-9]{1,15}$/.test(clientId)) {
+    throw new Error('NESTPAY_CLIENT_ID must be 1–15 alphanumeric characters (Payten üye iş yeri numarası).')
+  }
+  if (!storeKey) {
+    throw new Error('Missing NESTPAY_STORE_KEY environment variable.')
+  }
+  if (!/^\d{3}$/.test(currencyNumeric)) {
+    throw new Error('NESTPAY_CURRENCY_NUMERIC or NESTPAY_CURRENCY must be exactly 3 digits (e.g. 949 for TRY).')
+  }
+  if (!PAYTEN_ISLEM_TIPLERI.has(islemTipi)) {
+    throw new Error(`NESTPAY_ISLEM_TIPI / NESTPAY_TRANSACTION_TYPE must be one of: ${[...PAYTEN_ISLEM_TIPLERI].join(', ')}.`)
+  }
+  if (!rawGatewayUrl || !/^https?:\/\//i.test(rawGatewayUrl)) {
+    throw new Error('Missing or invalid NESTPAY_GATEWAY_URL environment variable.')
+  }
+
+  let gatewayUrl: string
+  try {
+    const parsed = new URL(rawGatewayUrl)
+    if (!parsed.pathname || parsed.pathname === '/') {
+      parsed.pathname = NESTPAY_GATEWAY_PATH
+      parsed.search = ''
+      parsed.hash = ''
+    }
+    gatewayUrl = parsed.toString()
+  } catch {
+    throw new Error('NESTPAY_GATEWAY_URL is not a valid URL.')
+  }
+
+  return { clientId, storeKey, gatewayUrl, currencyNumeric, lang, islemTipi, storeType }
+}
+
+/** Payten: rnd sabit uzunluk 20 karakter (hash için rastgele dize). */
+function getRnd(): string {
+  return randomBytes(10).toString('hex')
+}
+
+function formatAmount(totalPrice: number): string {
+  return totalPrice.toFixed(2)
+}
+
+/** Payten’den gelen metinleri HTML’de güvenli göstermek için (form + dönüş sayfaları). */
+export function escapeHtmlForPaytenAttribute(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+/**
+ * Payten okUrl/failUrl POST gövdesinde alan adı büyük/küçük harf farklı gelebilir.
+ * Dokümanda örnek: Response " Approved " → trim ile normalize.
+ */
+export function readPaytenReturnField(formData: FormData, fieldName: string): string {
+  const target = fieldName.toLowerCase()
+  for (const [key, value] of formData.entries()) {
+    if (key.toLowerCase() === target && typeof value === 'string') {
+      return value.trim()
+    }
+  }
+  return ''
+}
+
+/**
+ * Tarayıcının bu API’ye ulaştığı public kök (Payten ok/fail/callback URL’leri).
+ * `NEXT_PUBLIC_SITE_URL` ile localhost uyuşmazsa geçit isteği reddedilebilir veya yanlış domain’e dönersiniz.
+ */
+export function getPaymentPublicOrigin(request: Request): string {
+  const hostPart =
+    request.headers.get('x-forwarded-host')?.split(',')[0]?.trim() ||
+    request.headers.get('host')?.trim() ||
+    ''
+  if (!hostPart) {
+    return getBaseUrl()
+  }
+  let proto =
+    request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase() || ''
+  if (!proto) {
+    const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])(:|$)/i.test(hostPart)
+    proto = isLocal ? 'http' : 'https'
+  }
+  return `${proto}://${hostPart}`.replace(/\/$/, '')
+}
+
+export function createPaymentContext(
+  bookingOid: string,
+  totalPrice: number,
+  options?: { publicOrigin?: string }
+): NestpayInitiateContext {
+  const baseUrl = (options?.publicOrigin ?? getBaseUrl()).replace(/\/$/, '')
+  /**
+   * Payten: başarılı/başarısız işlemde müşteri okUrl / failUrl’e yönlendirilir; geçit parametreleri geri döner.
+   * Rezervasyon durumu yalnızca callbackUrl ile güncellenir — bu sayfalar bilgilendirme amaçlıdır.
+   */
+  return {
+    bookingId: bookingOid,
+    rnd: getRnd(),
+    okUrl: `${baseUrl}/odeme/basarili`,
+    failUrl: `${baseUrl}/odeme/basarisiz`,
+    callbackUrl: `${baseUrl}/api/payment/callback`,
+    amount: formatAmount(totalPrice),
+  }
+}
+
+export type NestpayFormBuildResult = {
+  formParams: Record<string, string>
+  /** NestPay Hash Ver3: alfabetik sıralı değer zinciri + storeKey (debug). */
+  hashPlaintext: string
+}
+
+/**
+ * NestPay Hash Ver3 (§2.1): Gönderilen **tüm** parametreler (hash/encoding hariç) alfabetik A→Z sırayla
+ * değerleri `|` ile birleştirilir; `|` ve `\` kaçışlanır; sonda storeKey. Dökümandaki “Sample order” bu sıranın örneğidir.
+ */
+export function buildNestpayFormParams(config: NestpayConfig, context: NestpayInitiateContext): NestpayFormBuildResult {
+  const formParams: Record<string, string> = {
+    amount: context.amount,
+    callbackUrl: context.callbackUrl,
+    clientid: config.clientId,
+    currency: config.currencyNumeric,
+    failUrl: context.failUrl,
+    hashAlgorithm: 'ver3',
+    islemtipi: config.islemTipi,
+    lang: config.lang,
+    oid: context.bookingId,
+    okUrl: context.okUrl,
+    rnd: context.rnd,
+    storetype: config.storeType,
+  }
+
+  const hashPlaintext = buildPaytenHashPlaintext(formParams, config.storeKey)
+  formParams.hash = generateHash(formParams, config.storeKey)
+  return { formParams, hashPlaintext }
+}
+
+/** Form alanlarını alfabetik sıraya diz (hash en sonda). */
+function orderPaytenFormEntries(params: Record<string, string>): Array<[string, string]> {
+  const entries = Object.entries(params)
+  const hashIndex = entries.findIndex(([k]) => k.toLowerCase() === 'hash')
+  const rest: Array<[string, string]> = []
+  let hashEntry: [string, string] | undefined
+  for (let i = 0; i < entries.length; i += 1) {
+    if (i === hashIndex) {
+      hashEntry = entries[i]
+    } else {
+      rest.push(entries[i]!)
+    }
+  }
+  rest.sort(([a], [b]) => comparePaytenHashParamKeysAlphabetical(a, b))
+  return hashEntry ? [...rest, hashEntry] : rest
+}
+
+export function renderAutoSubmitPaymentForm(actionUrl: string, params: Record<string, string>): string {
+  const hiddenInputs = orderPaytenFormEntries(params)
+    .map(
+      ([key, value]) =>
+        `<input type="hidden" name="${escapeHtmlForPaytenAttribute(key)}" value="${escapeHtmlForPaytenAttribute(value)}" />`
+    )
+    .join('\n        ')
+
+  return `<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <title>Ödeme geçidine yönlendiriliyor</title>
+    <meta http-equiv="Content-Language" content="tr" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body onload="(function(){var f=document.getElementById('pay_form');if(f)f.submit();})();">
+    <form name="pay_form" id="pay_form" method="post" action="${escapeHtmlForPaytenAttribute(actionUrl)}">
+        ${hiddenInputs}
+    </form>
+    <noscript><p>Lütfen formu gönderin.</p></noscript>
+  </body>
+</html>`
+}
+
+function secureStringEquals(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left, 'utf8')
+  const rightBuffer = Buffer.from(right, 'utf8')
+  if (leftBuffer.length !== rightBuffer.length) return false
+  return timingSafeEqual(leftBuffer, rightBuffer)
+}
+
+function pushUnique(out: string[], seen: Set<string>, value: string | undefined) {
+  if (typeof value !== 'string') return
+  const t = value.trim()
+  if (!t || seen.has(t)) return
+  seen.add(t)
+  out.push(t)
+}
+
+/** .env’de BOM / görünmez boşluk; bazı geçitler URL-safe base64. */
+function nestpayStoreKeyCandidates(normalizedStoreKey: string): string[] {
+  const seen = new Set<string>()
+  const list: string[] = []
+  const raw = process.env.NESTPAY_STORE_KEY
+  pushUnique(list, seen, normalizedStoreKey)
+  if (typeof raw === 'string') {
+    pushUnique(list, seen, raw)
+    pushUnique(list, seen, raw.replace(/\u200b|\u200c|\u200d|\ufeff/g, ''))
+  }
+  return list
+}
+
+function padBase64Url(s: string): string {
+  const t = s.trim()
+  const m = t.length % 4
+  if (m === 0) return t
+  return `${t}${'='.repeat(4 - m)}`
+}
+
+/** Gelen HASH: boşluk, URL-safe (- _), eksik padding. */
+function nestpayIncomingHashCandidates(incoming: string): string[] {
+  const seen = new Set<string>()
+  const list: string[] = []
+  const raw = incoming.trim().replace(/\s+/g, '')
+  pushUnique(list, seen, raw)
+  pushUnique(list, seen, padBase64Url(raw))
+  if (raw.includes('-') && !raw.includes('+')) {
+    const std = raw.replace(/-/g, '+').replace(/_/g, '/')
+    pushUnique(list, seen, std)
+    pushUnique(list, seen, padBase64Url(std))
+  }
+  return list
+}
+
+function stripCarriageReturnsFromPayload(payload: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(payload)) {
+    out[k] = v.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  }
+  return out
+}
+
+function collectExpectedNestpayHashes(payload: Record<string, string>, storeKey: string): string[] {
+  const seen = new Set<string>()
+  const hashes: string[] = []
+  const add = (h: string) => {
+    if (!seen.has(h)) {
+      seen.add(h)
+      hashes.push(h)
+    }
+  }
+
+  const payloadVariants = [payload, stripCarriageReturnsFromPayload(payload)]
+  for (const body of payloadVariants) {
+    add(generateHash(body, storeKey))
+
+    const nonHashKeys = Object.keys(body).filter((k) => !['hash', 'encoding', 'countdown'].includes(k.toLowerCase()))
+    if (nonHashKeys.length === 1 && nonHashKeys[0]!.toLowerCase() === 'rnd') {
+      const rndKey = nonHashKeys[0]!
+      const r0 = (body[rndKey] ?? '').trim()
+      const rndCandidates = new Set<string>()
+      if (r0) rndCandidates.add(r0)
+      /** Bazı istemciler `+` / boşluk çözümlemesinde sapma yapar; imza için olası `rnd` varyantları. */
+      if (r0.includes(' ')) rndCandidates.add(r0.replace(/\s+/g, '+'))
+      if (r0.includes('+')) rndCandidates.add(r0.replace(/\+/g, ' '))
+      for (const r of rndCandidates) {
+        if (!r) continue
+        const one = { ...body, [rndKey]: r }
+        add(generateHash(one, storeKey))
+        add(paytenHash512PlaintextUtf8(`${r}${storeKey}`))
+        add(paytenHashSha1PlaintextUtf8(`${r}${storeKey}`))
+        add(paytenHash512PlaintextUtf8(`${escapePaytenHashValue(r)}${escapePaytenHashValue(storeKey)}`))
+        add(paytenHashSha1PlaintextUtf8(`${escapePaytenHashValue(r)}${escapePaytenHashValue(storeKey)}`))
+        add(paytenHash512PlaintextUtf8(`${escapePaytenHashValue(r)}${storeKey}`))
+        add(paytenHashSha1PlaintextUtf8(`${escapePaytenHashValue(r)}${storeKey}`))
+      }
+    }
+  }
+
+  const hashParamsValKey = Object.keys(payload).find((key) => key.toLowerCase() === 'hashparamsval')
+  const hashParamsVal = hashParamsValKey ? normalizeText(payload[hashParamsValKey]) : ''
+  if (hashParamsVal) {
+    add(paytenHash512PlaintextUtf8(`${hashParamsVal}${storeKey}`))
+    add(paytenHashSha1PlaintextUtf8(`${hashParamsVal}${storeKey}`))
+  }
+
+  return hashes
+}
+
+export function normalizeCallbackPayload(rawEntries: Iterable<[string, FormDataEntryValue]>): Record<string, string> {
+  const output: Record<string, string> = {}
+  for (const [key, value] of rawEntries) {
+    output[key] = typeof value === 'string' ? value : ''
+  }
+  return output
+}
+
+/**
+ * Ayrıntılı ödeme logları (HASH PLAINTEXT içinde store key görünür).
+ * - `PAYMENT_DEBUG=1` veya `true` → her ortamda açık
+ * - Aksi halde yalnızca `NODE_ENV !== 'production'` (yerel `next dev` / staging)
+ */
+export function isPaymentDebugLoggingEnabled(): boolean {
+  const p = process.env.PAYMENT_DEBUG
+  if (p === '1' || p === 'true') return true
+  return process.env.NODE_ENV !== 'production'
+}
+
+/** Production’da bile terminalde görünür özet (`console.error`). Tam JSON için `.env` → `PAYMENT_DEBUG=1` veya `npm run dev`. */
+export function emitPaytenReturnDiagnostics(routeLabel: string, record: Record<string, string>): void {
+  const pick = (name: string) => {
+    const key = Object.keys(record).find((k) => k.toLowerCase() === name.toLowerCase())
+    return key ? normalizeText(record[key]) : ''
+  }
+  console.error(`[payten][${routeLabel}] POST alındı — alan sayısı=${Object.keys(record).length}`)
+  console.error(
+    `[payten][${routeLabel}] Response=${pick('Response')} | ProcReturnCode=${pick('ProcReturnCode')} | mdStatus=${pick('mdStatus')} | ErrMsg=${pick('ErrMsg')}`
+  )
+  if (isPaymentDebugLoggingEnabled()) {
+    logPaytenInboundForm(routeLabel, record)
+  }
+}
+
+/** Ödeme başlat: gönderilen form alanları, düz metin imza zinciri, hash (terminalden kopyalanabilir). */
+export function logPaymentInitiateDebug(
+  formParams: Record<string, string>,
+  storeKey: string,
+  hostingHashPlaintext?: string
+): void {
+  if (!isPaymentDebugLoggingEnabled()) return
+  console.log('[payment:initiate] PAYMENT PARAMS:\n' + JSON.stringify(formParams, null, 2))
+  if (hostingHashPlaintext !== undefined) {
+    console.log('[payment:initiate] HASH PLAINTEXT (NestPay Ver3 §2.1, alfabetik):\n' + hostingHashPlaintext)
+  } else {
+    console.log('[payment:initiate] HASH PLAINTEXT (NestPay Ver3 §2.1, alfabetik):\n' + buildPaytenHashPlaintext(formParams, storeKey))
+  }
+  const hashParamKey = Object.keys(formParams).find((k) => k.toLowerCase() === 'hash')
+  const hash = hashParamKey ? formParams[hashParamKey]! : generateHash(formParams, storeKey)
+  console.log('[payment:initiate] GENERATED HASH:\n' + hash)
+}
+
+/** Banka → okUrl / failUrl / callback POST (tek obje + entries). */
+/**
+ * NestPay tarayıcı/failUrl yanıtlarında çoğu zaman yalnızca rnd (+HASH), bazen oid+rnd (+HASH) gelir.
+ * Hash Ver3 doğrulaması için alfabetik tam parametre kümesi gerekir; **3’ten az** iş parametresinde doğrulama anlamsızdır.
+ */
+export function hasInsufficientParamsForNestpayHashVerification(payload: Record<string, string>): boolean {
+  const keys = Object.keys(payload).filter((k) => !['hash', 'encoding', 'countdown'].includes(k.toLowerCase()))
+  return keys.length < 3
+}
+
+export function logPaytenInboundForm(label: string, record: Record<string, string>): void {
+  if (!isPaymentDebugLoggingEnabled()) return
+  console.log(`[payment:${label}] BANK RESPONSE:\n` + JSON.stringify(record, null, 2))
+  console.log(`[payment:${label}] BANK RESPONSE ENTRIES:\n` + JSON.stringify(Object.entries(record), null, 2))
+}
+
+export function verifyNestpayCallbackHash(payload: Record<string, string>, storeKey: string): boolean {
+  const hashKey = Object.keys(payload).find((key) => key.toLowerCase() === 'hash')
+  const incomingRaw = hashKey ? payload[hashKey] : ''
+  if (!normalizeText(incomingRaw)) return false
+
+  const incomingCandidates = nestpayIncomingHashCandidates(incomingRaw)
+  const storeCandidates = nestpayStoreKeyCandidates(storeKey)
+
+  for (const sk of storeCandidates) {
+    const expected = collectExpectedNestpayHashes(payload, sk)
+    for (const exp of expected) {
+      for (const inc of incomingCandidates) {
+        if (secureStringEquals(exp, inc)) return true
+      }
+    }
+  }
+
+  if (isPaymentDebugLoggingEnabled()) {
+    const keys = Object.keys(payload)
+      .filter((k) => !['hash', 'encoding', 'countdown'].includes(k.toLowerCase()))
+      .sort(comparePaytenHashParamKeysAlphabetical)
+    const rndOnly = keys.length === 1 && keys[0]!.toLowerCase() === 'rnd'
+    if (rndOnly) {
+      console.info(
+        '[payment] HASH verify: yalnızca rnd (+HASH) — tarayıcı dönüşünde NestPay imzası çoğu zaman eşleşmez; callback doğrulaması önceliklidir.'
+      )
+    } else {
+      console.warn('[payment] HASH verify failed (dev)', {
+        sortedParamKeys: keys,
+        storeKeyLengths: storeCandidates.map((s) => s.length),
+        incomingHashLengths: incomingCandidates.map((s) => s.length),
+      })
+    }
+  }
+
+  return false
+}
+
+export function getPaymentResult(input: CallbackResultInput): PaymentResult {
+  const response = normalizeText(input.response)
+  const procReturnCode = normalizeText(input.procReturnCode)
+  const mdStatus = normalizeText(input.mdStatus)
+
+  if (response === 'Approved' && procReturnCode === '00' && mdStatus === '1') {
+    return 'approved'
+  }
+  return 'failed'
+}

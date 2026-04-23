@@ -4,6 +4,8 @@ import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
+import type { PortableTextComponents } from '@portabletext/react'
+import { ShipWheel } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './TourDescriptionExpandable.module.css'
@@ -41,6 +43,22 @@ export default function TourDescriptionExpandable({
     [description]
   )
 
+  const portableComponents = useMemo<Partial<PortableTextComponents>>(
+    () => ({
+      block: {
+        normal: ({ children }) => (
+          <p className={styles.paragraphRow}>
+            <span className={styles.paragraphIconWrap} aria-hidden>
+              <ShipWheel className={styles.paragraphIcon} size={21} strokeWidth={1.7} />
+            </span>
+            <span className={styles.paragraphText}>{children}</span>
+          </p>
+        ),
+      },
+    }),
+    []
+  )
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setExpanded(false)
@@ -71,7 +89,7 @@ export default function TourDescriptionExpandable({
             : `${styles.content} ${styles.contentCollapsed}`
         }
       >
-        <PortableText value={description} />
+        <PortableText value={description} components={portableComponents} />
         {!expanded && <div className={styles.fade} aria-hidden />}
       </div>
 

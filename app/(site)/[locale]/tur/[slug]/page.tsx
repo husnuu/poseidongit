@@ -26,6 +26,7 @@ import type { TourForBooking } from '@/lib/sanity/bookingTypes'
 import ReviewsSection from '@/components/ReviewsSection'
 import WhereSection, { type WhereSectionData } from '@/components/tour/WhereSection'
 import TourFoodMenu from '@/components/tour/TourFoodMenu'
+import TourReelsRail from '@/components/tour/TourReelsRail'
 import JsonLd from '@/components/seo/JsonLd'
 import {
   buildBreadcrumbSchema,
@@ -187,6 +188,18 @@ interface TourFoodMenuData {
   items?: FoodMenuItemRaw[] | null
 }
 
+interface TourReelsItem {
+  caption?: string
+  videoUrl?: string
+  poster?: GalleryImage
+}
+
+interface TourReelsSectionData {
+  enabled?: boolean
+  sectionTitle?: string | null
+  items?: TourReelsItem[] | null
+}
+
 interface Tour {
   _id?: string
   title: string
@@ -218,6 +231,7 @@ interface Tour {
   whereSection?: WhereSectionData | null
   pickupPoints?: { name?: string; address?: string; description?: string; isDefault?: boolean }[]
   foodMenu?: TourFoodMenuData | null
+  reelsSection?: TourReelsSectionData | null
   _updatedAt?: string
   translations?: unknown
 }
@@ -312,7 +326,7 @@ function buildItineraryTimelineItems(tour: Tour): ItineraryTimelineItem[] {
       time: item.time ?? null,
       tag: item.tag ?? null,
       imageUrl: item.image?.asset
-        ? urlFor(item.image.asset).width(500).height(500).url()
+        ? urlFor(item.image.asset).width(500).height(630).url()
         : null,
       imageBlurDataURL: item.image?.metadata?.lqip ?? null,
     }))
@@ -352,6 +366,18 @@ export default async function TourPage({
   const videoEmbedUrl = tour.tourVideo ? getVideoEmbedUrl(tour.tourVideo) : null
   const galleryHeroImages = buildGalleryHeroImages(tour, tourUi)
   const itineraryTimelineItems = buildItineraryTimelineItems(tour)
+
+  const reelsSlides =
+    tour.reelsSection?.enabled && Array.isArray(tour.reelsSection.items)
+      ? tour.reelsSection.items
+          .filter((it) => typeof it?.videoUrl === 'string' && it.videoUrl.trim().length > 0)
+          .map((it) => ({
+            videoUrl: it.videoUrl!.trim(),
+            posterUrl: it.poster?.asset
+              ? urlFor(it.poster.asset).width(720).height(1280).quality(80).url()
+              : it.poster?.url?.trim() || undefined,
+          }))
+      : []
 
   const tourPath = withLocalePath(locale, `/tur/${slug}`)
   const tourUrl = absoluteUrl(tourPath)
@@ -418,6 +444,10 @@ export default async function TourPage({
         />
 
         <ItineraryTimeline items={itineraryTimelineItems} sectionTitle={tourUi.itineraryTitle} />
+
+        {reelsSlides.length > 0 ? (
+          <TourReelsRail slides={reelsSlides} locale={locale} />
+        ) : null}
 
         <TourDescription description={tour.description} locale={locale} />
 

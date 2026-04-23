@@ -18,6 +18,7 @@ const CANONICAL_FIRST_SEGMENTS = new Set([
   'contact',
   'blog',
   'tur',
+  'menu',
 ])
 
 const EN_FIRST_IN: Record<string, string> = {

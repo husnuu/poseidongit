@@ -106,6 +106,27 @@ function mergeExtrasByIndex(base: unknown, patch: unknown): unknown {
   })
 }
 
+function mergeReelsSection(base: unknown, patch: unknown): unknown {
+  if (!isPlainObject(base) || !isPlainObject(patch)) return base
+  const out: Record<string, unknown> = { ...base }
+  if (typeof patch.sectionTitle === 'string' && patch.sectionTitle.trim()) {
+    out.sectionTitle = patch.sectionTitle.trim()
+  }
+  const bItems = base.items
+  const pItems = patch.items
+  if (Array.isArray(bItems) && Array.isArray(pItems) && pItems.length > 0) {
+    out.items = (bItems as Record<string, unknown>[]).map((item, i) => {
+      const p = pItems[i] as Record<string, unknown> | undefined
+      if (!p) return item
+      return {
+        ...item,
+        ...(p.caption !== undefined ? { caption: p.caption } : {}),
+      }
+    })
+  }
+  return out
+}
+
 /**
  * Applies `translations.en` or `translations.de` onto the Turkish base tour for rendering.
  */
@@ -126,12 +147,14 @@ export function mergeTourForLocale<T extends Record<string, unknown>>(tour: T, l
   const foodPatch = patch.foodMenu
   const revPatch = patch.reviewsSection
   const exPatch = patch.extras
+  const reelsPatch = patch.reelsSection
 
   delete patch.itinerary
   delete patch.mealMenu
   delete patch.foodMenu
   delete patch.reviewsSection
   delete patch.extras
+  delete patch.reelsSection
   delete patch.translations
 
   let merged = mergeDeep(tour, patch as Partial<T>)
@@ -164,6 +187,12 @@ export function mergeTourForLocale<T extends Record<string, unknown>>(tour: T, l
     merged = {
       ...merged,
       extras: mergeExtrasByIndex(merged.extras, exPatch),
+    } as T
+  }
+  if (reelsPatch) {
+    merged = {
+      ...merged,
+      reelsSection: mergeReelsSection(merged.reelsSection, reelsPatch),
     } as T
   }
 

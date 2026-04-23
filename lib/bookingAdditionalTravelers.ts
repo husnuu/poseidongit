@@ -1,5 +1,6 @@
 /** Ana rezervasyon sahibi `customer` alanında; `additionalTravelers` yalnızca kalan yetişkinler + çocuklar (bebekler sayı olarak counts.infant’ta). */
 
+import { sanitizePersonName, sanitizeSingleLineText } from '@/lib/inputSanitize'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 
@@ -82,10 +83,14 @@ export function parseAdditionalTravelersFromBody(raw: unknown): AdditionalTravel
   for (const item of raw) {
     if (!item || typeof item !== 'object') return null
     const o = item as Record<string, unknown>
-    const firstName = typeof o.firstName === 'string' ? o.firstName.trim().slice(0, MAX_NAME_LEN) : ''
-    const lastName = typeof o.lastName === 'string' ? o.lastName.trim().slice(0, MAX_NAME_LEN) : ''
+    const firstName =
+      typeof o.firstName === 'string' ? sanitizePersonName(o.firstName, MAX_NAME_LEN) : ''
+    const lastName =
+      typeof o.lastName === 'string' ? sanitizePersonName(o.lastName, MAX_NAME_LEN) : ''
     const mealPreferenceKey =
-      typeof o.mealPreferenceKey === 'string' ? o.mealPreferenceKey.trim().slice(0, 80) : ''
+      typeof o.mealPreferenceKey === 'string'
+        ? sanitizeSingleLineText(o.mealPreferenceKey, 80)
+        : ''
     out.push({ firstName, lastName, ...(mealPreferenceKey ? { mealPreferenceKey } : {}) })
   }
   return out

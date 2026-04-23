@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { authorizeAdmin } from '@/lib/adminAuthServer'
-import { testProxyIP } from '@/lib/proxyClient'
+import { getOutboundHttpsProxyUrl, testProxyIP } from '@/lib/proxyClient'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -25,16 +25,17 @@ export async function GET(request: Request) {
     }
   }
 
-  const fixieUrlConfigured = Boolean(process.env.FIXIE_URL?.trim())
+  const outboundProxyConfigured = Boolean(getOutboundHttpsProxyUrl())
 
   try {
     const { ip } = await testProxyIP()
     return NextResponse.json({
       ip,
-      fixieUrlConfigured,
-      message: fixieUrlConfigured
-        ? 'Bu IP Fixie panelinde gördüğünüz statik çıkış IP’si ile aynı olmalı.'
-        : 'FIXIE_URL tanımlı değil; gördüğünüz IP makineniz / Vercel’in çıkış IP’sidir.',
+      outboundProxyConfigured,
+      fixieUrlConfigured: outboundProxyConfigured,
+      message: outboundProxyConfigured
+        ? 'Bu IP FIXIE_URL (Fixie) üzerinden çıkıyorsa bankanın whitelist sabit IP’leri ile eşleşmeli.'
+        : 'FIXIE_URL tanımlı değil; gördüğünüz IP makineniz / hosting çıkış IP’sidir.',
     })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Bilinmeyen hata'
@@ -42,7 +43,8 @@ export async function GET(request: Request) {
       {
         error: 'ipify veya proxy bağlantısı başarısız',
         detail: msg,
-        fixieUrlConfigured,
+        outboundProxyConfigured,
+        fixieUrlConfigured: outboundProxyConfigured,
       },
       { status: 502 }
     )

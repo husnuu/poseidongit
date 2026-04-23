@@ -47,6 +47,22 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
       }
     }
   },
+  reelsSection{
+    enabled,
+    sectionTitle,
+    items[]{
+      caption,
+      "videoUrl": video.asset->url,
+      poster{
+        asset,
+        "url": asset->url,
+        "metadata": asset->metadata {
+          lqip,
+          dimensions
+        }
+      }
+    }
+  },
   rating,
   reviewCount,
   ratingLabel,
@@ -279,6 +295,22 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
       "metadata": asset->metadata {
         lqip,
         dimensions
+      }
+    }
+  },
+  reelsSection{
+    enabled,
+    sectionTitle,
+    items[]{
+      caption,
+      "videoUrl": video.asset->url,
+      poster{
+        asset,
+        "url": asset->url,
+        "metadata": asset->metadata {
+          lqip,
+          dimensions
+        }
       }
     }
   },
@@ -1124,5 +1156,21 @@ export const faqPageQuery = `*[_type == "faqPage"][0] {
       question,
       answer
     }
+  }
+}`
+
+/** Tekne menüsü — tüm ürünler */
+export const menuItemsQuery = `*[_type == "menuItem"] | order(category asc, title asc) {
+  _id,
+  title,
+  category,
+  price,
+  description,
+  inStock,
+  image{
+    asset,
+    "url": asset->url,
+    "metadata": asset->metadata { lqip, dimensions },
+    alt
   }
 }`

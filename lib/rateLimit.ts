@@ -8,6 +8,11 @@ export type RateLimitBucket =
   | 'booking'
   | 'bookingAction'
   | 'bookingLookup'
+  | 'availability'
+  | 'voucherAccess'
+  | 'voucherPdf'
+  | 'qr'
+  | 'ticketPdf'
 
 type UpstashWindow = '15 m' | '10 m' | '1 h'
 
@@ -18,6 +23,16 @@ const UPSTASH_WINDOWS: Record<RateLimitBucket, { max: number; window: UpstashWin
   booking: { max: 35, window: '1 h' },
   bookingAction: { max: 30, window: '1 h' },
   bookingLookup: { max: 90, window: '1 h' },
+  // Public takvim/kapasite sorguları için daha yumuşak sınır.
+  availability: { max: 180, window: '10 m' },
+  // E-posta linkinden gelen kısa süreli bilet yönlendirmesi.
+  voucherAccess: { max: 80, window: '10 m' },
+  // PDF üretimi CPU maliyetli olduğundan biraz daha sıkı.
+  voucherPdf: { max: 40, window: '10 m' },
+  // QR üretimi PDF'e göre daha hafif ama yine de hesaplama yapar.
+  qr: { max: 90, window: '10 m' },
+  // Genel PDF üretim endpoint'i için koruma.
+  ticketPdf: { max: 25, window: '10 m' },
 }
 
 /** Bellek yedekleri (Upstash yok veya hata): sabit pencere, ms. */
@@ -27,6 +42,11 @@ const MEMORY_MS: Record<RateLimitBucket, { max: number; windowMs: number }> = {
   booking: { max: 35, windowMs: 60 * 60 * 1000 },
   bookingAction: { max: 30, windowMs: 60 * 60 * 1000 },
   bookingLookup: { max: 90, windowMs: 60 * 60 * 1000 },
+  availability: { max: 180, windowMs: 10 * 60 * 1000 },
+  voucherAccess: { max: 80, windowMs: 10 * 60 * 1000 },
+  voucherPdf: { max: 40, windowMs: 10 * 60 * 1000 },
+  qr: { max: 90, windowMs: 10 * 60 * 1000 },
+  ticketPdf: { max: 25, windowMs: 10 * 60 * 1000 },
 }
 
 function createRedis(): Redis | null {

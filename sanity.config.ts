@@ -47,6 +47,10 @@ export default defineConfig({
               .title('Yardım — makaleler')
               .id('helpArticle-list')
               .child(S.documentTypeList('helpArticle').title('Makaleler')),
+            S.listItem()
+              .title('Tekne menüsü')
+              .id('menuItem-list')
+              .child(S.documentTypeList('menuItem').title('Menü ürünleri')),
             ...S.documentTypeListItems().filter(
               (item) =>
                 ![
@@ -58,6 +62,7 @@ export default defineConfig({
                   'helpCenterPage',
                   'helpCategory',
                   'helpArticle',
+                  'menuItem',
                 ].includes(item.getId() ?? '')
             ),
           ]),

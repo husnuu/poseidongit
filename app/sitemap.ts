@@ -139,6 +139,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/blog',
     '/hakkimizda',
     '/contact',
+    '/menu',
     '/sik-sorulanlar',
     '/rezervasyon',
     '/yat-kiralama',
@@ -149,7 +150,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (path === '/') return 1
     if (path === '/turlar') return 0.9
     if (path === '/yat-kiralama') return 0.85
-    if (path === '/koylar' || path === '/blog') return 0.8
+    if (path === '/koylar' || path === '/blog' || path === '/menu') return 0.8
     if (path === '/rezervasyon') return 0.7
     if (path === '/yardim-merkezi') return 0.75
     return 0.6

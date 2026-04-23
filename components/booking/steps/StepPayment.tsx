@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import type { BookingWizardState } from '@/lib/sanity/bookingTypes'
 import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
-import FloatingInput from '@/components/ui/FloatingInput'
-import PhoneField from '@/components/ui/PhoneField'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import styles from '../booking.module.css'
 
@@ -20,11 +18,6 @@ interface StepPaymentProps {
 
 export default function StepPayment({ state, ui, termsHref = '/terms', onTermsAcceptanceChange }: StepPaymentProps) {
   const p = state.pricingSummary
-  const [cardName, setCardName] = useState('')
-  const [cardNumber, setCardNumber] = useState('')
-  const [cardExpiry, setCardExpiry] = useState('')
-  const [cardCvc, setCardCvc] = useState('')
-  const [contactPhone, setContactPhone] = useState(state.customer.phone ?? '')
   const [termsAccepted, setTermsAccepted] = useState(false)
 
   useEffect(() => {
@@ -77,89 +70,39 @@ export default function StepPayment({ state, ui, termsHref = '/terms', onTermsAc
       )}
 
       {isBookingOnlinePaymentEnabled && (
-      <div className={styles.card} style={{ fontFamily: 'var(--font-family)' }}>
-        <div className={styles.cardCaption}>
-          <span className={styles.cardCaptionIcon} aria-hidden>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="20" height="14" x="2" y="5" rx="2" />
-              <line x1="2" x2="22" y1="10" y2="10" />
-            </svg>
-          </span>
-          <h3 className={styles.cardCaptionTitle}>{ui.cardDetailsTitle}</h3>
-        </div>
-        <hr className={styles.cardDivider} />
-        <div className={styles.cardContent}>
-
-        <div className="space-y-4">
-          <FloatingInput
-            id="booking-cardName"
-            label={ui.cardholderName}
-            type="text"
-            autoComplete="cc-name"
-            value={cardName}
-            onChange={(e) => setCardName(e.target.value)}
-            compact
-          />
-
-          <FloatingInput
-            id="booking-cardNumber"
-            label={ui.cardNumber}
-            type="text"
-            autoComplete="cc-number"
-            value={cardNumber}
-            onChange={(e) => setCardNumber(e.target.value)}
-            compact
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FloatingInput
-              id="booking-cardExpiry"
-              label={ui.cardExpiry}
-              type="text"
-              autoComplete="cc-exp"
-              value={cardExpiry}
-              onChange={(e) => setCardExpiry(e.target.value)}
-              compact
-            />
-            <FloatingInput
-              id="booking-cardCvc"
-              label={ui.cardCvc}
-              type="text"
-              autoComplete="cc-csc"
-              value={cardCvc}
-              onChange={(e) => setCardCvc(e.target.value)}
-              compact
-            />
-          </div>
-
-          <PhoneField
-            label={ui.labelPhone}
-            value={contactPhone}
-            onChange={(v) => setContactPhone(v ?? '')}
-            onBlur={() => {}}
-            defaultCountry="TR"
-            compact
-          />
-
-          <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm text-zinc-600">
-            <input
-              type="checkbox"
-              checked={termsAccepted}
-              onChange={(e) => setTermsAccepted(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-zinc-300 text-[var(--primary)] focus:ring-[var(--primary)]"
-              aria-describedby="terms-checkbox-desc-step"
-            />
-            <span id="terms-checkbox-desc-step">
-              {ui.termsCheckboxLead}
-              <Link href={termsHref} target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
-                {ui.termsLinkText}
-              </Link>
-              {ui.termsCheckboxTrail}
+        <div className={styles.card} style={{ fontFamily: 'var(--font-family)' }}>
+          <div className={styles.cardCaption}>
+            <span className={styles.cardCaptionIcon} aria-hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
             </span>
-          </label>
+            <h3 className={styles.cardCaptionTitle}>{ui.nestpayRedirectTitle}</h3>
+          </div>
+          <hr className={styles.cardDivider} />
+          <div className={styles.cardContent}>
+            <p className="text-sm leading-relaxed text-zinc-600" style={{ margin: 0 }}>
+              {ui.nestpayRedirectBody}
+            </p>
+            <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm text-zinc-600">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-zinc-300 text-[var(--primary)] focus:ring-[var(--primary)]"
+                aria-describedby="terms-checkbox-desc-step"
+              />
+              <span id="terms-checkbox-desc-step">
+                {ui.termsCheckboxLead}
+                <Link href={termsHref} target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
+                  {ui.termsLinkText}
+                </Link>
+                {ui.termsCheckboxTrail}
+              </span>
+            </label>
+          </div>
         </div>
-        </div>
-      </div>
       )}
     </>
   )

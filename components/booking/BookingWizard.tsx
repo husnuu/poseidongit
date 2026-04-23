@@ -12,6 +12,8 @@ import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailab
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
+import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
+import { navigateWithNestpayCheckoutHtml, requestNestpayCheckoutHtml } from '@/lib/nestpay/checkoutFromBrowser'
 import StepPeople from './steps/StepPeople'
 import StepDateClass from './steps/StepDateClass'
 import StepCustomer from './steps/StepCustomer'
@@ -213,6 +215,17 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
             },
           }))
         }
+
+        if (isBookingOnlinePaymentEnabled) {
+          const checkout = await requestNestpayCheckoutHtml(data.bookingId)
+          if (!checkout.ok) {
+            setSubmitError(checkout.error)
+            return
+          }
+          navigateWithNestpayCheckoutHtml(checkout.html)
+          return
+        }
+
         const summary = data.summary as { tourTitle: string; date: string; className: string; totalPrice: number; currency: string; status: string }
         const accessToken = typeof data.accessToken === 'string' && data.accessToken.trim() ? data.accessToken.trim() : undefined
         setBookingResult({
@@ -227,7 +240,7 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
         setSubmitting(false)
       }
     }
-  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext, ui])
+  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext, ui, locale])
 
   const ctaLabel = useMemo(() => {
     if (state.step === 1) return ui.continue

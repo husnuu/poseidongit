@@ -52,6 +52,7 @@ export async function middleware(request: NextRequest) {
 
   const skipLocaleRewrite =
     pathname.startsWith('/api') ||
+    pathname.startsWith('/odeme') ||
     pathname.startsWith('/admin') ||
     pathname.startsWith('/studio') ||
     pathname === '/login' ||

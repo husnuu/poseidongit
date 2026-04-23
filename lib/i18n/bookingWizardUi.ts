@@ -90,6 +90,9 @@ export type BookingWizardUi = {
   testModePageAfterPay: string
   testModeModalBeforePay: string
   testModeModalAfterPay: string
+  /** Nestpay 3D: kart banka sayfasında; bizde kart alanı yok */
+  nestpayRedirectTitle: string
+  nestpayRedirectBody: string
   cardDetailsTitle: string
   cardholderName: string
   cardNumber: string
@@ -245,6 +248,9 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     testModePageAfterPay: ' butonu ile rezervasyon oluşturup veri/e-posta akışını test edebilirsiniz.',
     testModeModalBeforePay: 'Sanal POS kapalı olsa da bu ekranda ',
     testModeModalAfterPay: ' ile rezervasyonu test amaçlı oluşturabilirsiniz.',
+    nestpayRedirectTitle: 'Güvenli ödeme',
+    nestpayRedirectBody:
+      'Ödeme, bankanın güvenli sayfasında tamamlanır; kart bilgisi sitemizde toplanmaz. «Öde»ye bastığınızda kısa süre içinde ödeme ekranına yönlendirileceksiniz.',
     cardDetailsTitle: 'Kart Bilgileri',
     cardholderName: 'Kart Sahibi Adı *',
     cardNumber: 'Kart Numarası *',
@@ -401,6 +407,9 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     testModePageAfterPay: ' button below to test data and email flow.',
     testModeModalBeforePay: 'Even with the virtual POS disabled, you can use ',
     testModeModalAfterPay: ' on this screen to create a test booking.',
+    nestpayRedirectTitle: 'Secure payment',
+    nestpayRedirectBody:
+      'You will complete payment on your bank’s secure page; card details are not collected on this site. After you tap Pay, you will be redirected to the payment screen.',
     cardDetailsTitle: 'Card details',
     cardholderName: 'Name on card *',
     cardNumber: 'Card number *',
@@ -556,6 +565,9 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     testModePageAfterPay: ' unten eine Buchung testen und Daten-/E-Mail-Flow prüfen.',
     testModeModalBeforePay: 'Auch wenn das virtuelle POS deaktiviert ist, können Sie hier mit ',
     testModeModalAfterPay: ' eine Testbuchung anlegen.',
+    nestpayRedirectTitle: 'Sichere Zahlung',
+    nestpayRedirectBody:
+      'Die Zahlung erfolgt auf der sicheren Seite Ihrer Bank; Kartendaten werden auf dieser Website nicht erfasst. Nach „Bezahlen“ werden Sie zur Zahlungsseite weitergeleitet.',
     cardDetailsTitle: 'Kartendaten',
     cardholderName: 'Name auf der Karte *',
     cardNumber: 'Kartennummer *',

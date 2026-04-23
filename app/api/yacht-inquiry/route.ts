@@ -4,6 +4,13 @@ import { verifyTurnstileToken } from '@/lib/turnstile'
 import { sendYachtInquiryEmail } from '@/lib/email'
 import { overnightNights } from '@/lib/yachtRentalModes'
 import { supabase } from '@/lib/supabase'
+import {
+  sanitizeMultilineText,
+  sanitizePersonName,
+  sanitizePhoneDisplay,
+  sanitizeTourSlugOrId,
+  sanitizeTourTitleText,
+} from '@/lib/inputSanitize'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,9 +40,14 @@ function parseBody(body: unknown): {
 } | null {
   if (!body || typeof body !== 'object') return null
   const b = body as Record<string, unknown>
-  const yachtSlug = typeof b.yachtSlug === 'string' ? b.yachtSlug.trim() : undefined
-  const yachtName = typeof b.yachtName === 'string' ? b.yachtName.trim() : undefined
-  const location = typeof b.location === 'string' ? b.location.trim() || undefined : undefined
+  const yachtSlug =
+    typeof b.yachtSlug === 'string' ? sanitizeTourSlugOrId(b.yachtSlug, 200) : undefined
+  const yachtName =
+    typeof b.yachtName === 'string' ? sanitizeTourTitleText(b.yachtName, 200) : undefined
+  const location =
+    typeof b.location === 'string'
+      ? sanitizeTourTitleText(b.location, 200) || undefined
+      : undefined
   const rentalTypeRaw = typeof b.rentalType === 'string' ? b.rentalType.trim() : undefined
   const rentalType =
     rentalTypeRaw === 'overnight' ? 'overnight' : rentalTypeRaw === 'daily' ? 'daily' : undefined
@@ -55,11 +67,16 @@ function parseBody(body: unknown): {
       : typeof b.guestCount === 'string'
         ? parseInt(b.guestCount, 10)
         : undefined
-  const firstName = typeof b.firstName === 'string' ? b.firstName.trim() : undefined
-  const lastName = typeof b.lastName === 'string' ? b.lastName.trim() : undefined
-  const email = typeof b.email === 'string' ? b.email.trim() : undefined
-  const phone = typeof b.phone === 'string' ? b.phone.trim() : undefined
-  const message = typeof b.message === 'string' ? b.message.trim() : undefined
+  const firstName =
+    typeof b.firstName === 'string' ? sanitizePersonName(b.firstName, 80) : undefined
+  const lastName =
+    typeof b.lastName === 'string' ? sanitizePersonName(b.lastName, 80) : undefined
+  const email =
+    typeof b.email === 'string' ? b.email.trim().toLowerCase().slice(0, 254) : undefined
+  const phone =
+    typeof b.phone === 'string' ? sanitizePhoneDisplay(b.phone, 48) : undefined
+  const message =
+    typeof b.message === 'string' ? sanitizeMultilineText(b.message, 4000) : undefined
   const priceFrom =
     typeof b.priceFrom === 'number'
       ? b.priceFrom

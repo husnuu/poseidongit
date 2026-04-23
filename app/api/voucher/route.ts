@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rateLimit'
 import { validateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { generatePremiumEticketPdf } from '@/lib/ticket/generatePremiumEticketPdf'
 import { voucherDataToPremiumEticket } from '@/lib/ticket/voucherToPremiumEticket'
@@ -12,6 +13,9 @@ export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest) {
   try {
+    const limited = await rateLimitResponse(request, 'voucherPdf')
+    if (limited) return limited
+
     const searchParams = request.nextUrl.searchParams
     const bookingId = searchParams.get('bookingId')?.trim()
     let token = searchParams.get('token')?.trim() ?? ''

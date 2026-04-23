@@ -4,6 +4,7 @@
  * Her gün için first class kapasite, dolu, kalan ve dolu loca listesi döner.
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rateLimit'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
 import type { TourCapacitySource } from '@/lib/availabilityCapacity'
@@ -38,6 +39,9 @@ export const revalidate = 0
 
 export async function GET(request: NextRequest) {
   try {
+    const limited = await rateLimitResponse(request, 'availability')
+    if (limited) return limited
+
     const { searchParams } = new URL(request.url)
     const tourId = searchParams.get('tourId')?.trim()
     const monthParam = searchParams.get('month')?.trim()

@@ -232,6 +232,68 @@ export default defineType({
         }),
       ],
     }),
+    defineField({
+      name: 'reelsSection',
+      title: 'Reels / kısa videolar (dikey)',
+      type: 'object',
+      description:
+        'Tur sayfasında foto galerisinin hemen altında yatay kaydırmalı, 9:16 dikey kısa videolar. Öneri: 10–15 sn, sessiz otomatik oynatma; ziyaretçi ikonla ses açar.',
+      fields: [
+        defineField({
+          name: 'enabled',
+          title: 'Göster',
+          type: 'boolean',
+          initialValue: false,
+        }),
+        defineField({
+          name: 'sectionTitle',
+          title: 'Bölüm başlığı',
+          type: 'string',
+          initialValue: 'Turdan kısa videolar',
+        }),
+        defineField({
+          name: 'items',
+          title: 'Videolar',
+          type: 'array',
+          description: 'Dikey (9:16) video dosyaları; isteğe bağlı kapak görseli ve kısa açıklama.',
+          of: [
+            {
+              type: 'object',
+              name: 'tourReelItem',
+              title: 'Reel',
+              fields: [
+                defineField({
+                  name: 'video',
+                  title: 'Video dosyası',
+                  type: 'file',
+                  options: { accept: 'video/*' },
+                  validation: (Rule) => Rule.required().error('Video gerekli'),
+                }),
+                defineField({
+                  name: 'poster',
+                  title: 'Kapak (poster)',
+                  type: 'image',
+                  description: 'Yüklenene kadar veya yavaş ağda gösterilir.',
+                  options: { hotspot: true },
+                }),
+                defineField({
+                  name: 'caption',
+                  title: 'Kısa açıklama',
+                  type: 'string',
+                  description: 'Videonun altında, kaydırma şeridinin altında.',
+                }),
+              ],
+              preview: {
+                select: { title: 'caption', media: 'poster' },
+                prepare({ title, media }) {
+                  return { title: title?.trim() || 'Reel', media }
+                },
+              },
+            },
+          ],
+        }),
+      ],
+    }),
 
     // 3) Puan & Sosyal Kanıt
     defineField({

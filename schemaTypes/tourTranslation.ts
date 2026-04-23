@@ -260,5 +260,27 @@ export default defineType({
         },
       ],
     }),
+    defineField({
+      name: 'reelsSection',
+      title: 'Reels bölümü (metinler)',
+      description: 'Başlık ve sırayla her reel için açıklama; videolar Türkçe kayıttan gelir.',
+      type: 'object',
+      fields: [
+        defineField({ name: 'sectionTitle', type: 'string', title: 'Bölüm başlığı' }),
+        defineField({
+          name: 'items',
+          type: 'array',
+          title: 'Öğeler (sıra ile eşleşir)',
+          of: [
+            {
+              type: 'object',
+              fields: [
+                defineField({ name: 'caption', type: 'string', title: 'Kısa açıklama' }),
+              ],
+            },
+          ],
+        }),
+      ],
+    }),
   ],
 })

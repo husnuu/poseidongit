@@ -1,6 +1,7 @@
 /**
- * Online ödeme (sanal POS) açık mı?
- * Kapalıyken 4. adımda kart formu ve ödeme tamamlama yok; bilgilendirme gösterilir.
+ * Online ödeme (Nestpay / sanal POS) açık mı?
+ * Açıkken: 4. adımda bankaya yönlendiren güvenli ödeme akışı (`/api/payment/initiate`).
+ * Kapalıyken: test modu; rezervasyon ödeme sayfasına gitmeden tamamlanır.
  * Açmak için: NEXT_PUBLIC_BOOKING_PAYMENT_ENABLED=true
  */
 export const isBookingOnlinePaymentEnabled =

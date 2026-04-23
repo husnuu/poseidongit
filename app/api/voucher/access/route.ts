@@ -3,6 +3,7 @@
  * E-posta veya tarayıcı query parametrelerini sildiğinde cookie sayesinde PDF açılır.
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rateLimit'
 import { validateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { getEmailBaseUrl } from '@/lib/siteUrls'
 
@@ -19,6 +20,9 @@ const COOKIE_OPTS = {
 }
 
 export async function GET(request: NextRequest) {
+  const limited = await rateLimitResponse(request, 'voucherAccess')
+  if (limited) return limited
+
   const searchParams = request.nextUrl.searchParams
   const bookingId = searchParams.get('bookingId')?.trim()
   let token = searchParams.get('token')?.trim() ?? ''

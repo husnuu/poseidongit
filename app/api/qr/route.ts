@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import QRCode from 'qrcode'
+import { rateLimitResponse } from '@/lib/rateLimit'
 import { getBaseUrl } from '@/lib/seo'
 import { validateBookingAccessToken } from '@/lib/bookingAccessToken'
 
@@ -14,6 +15,9 @@ function getVoucherUrl(bookingId: string, token: string): string {
 /** GET /api/qr?bookingId=xxx&token=xxx — bilet doğrulama QR kodu PNG döndürür. Token gerekli. */
 export async function GET(request: NextRequest) {
   try {
+    const limited = await rateLimitResponse(request, 'qr')
+    if (limited) return limited
+
     const { searchParams } = new URL(request.url)
     const bookingId = searchParams.get('bookingId')?.trim()
     const token = searchParams.get('token')?.trim()

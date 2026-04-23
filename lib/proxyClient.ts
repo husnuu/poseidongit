@@ -1,15 +1,23 @@
 /**
- * Fixie (FIXIE_URL) üzerinden çıkan sabit IP ile dış HTTPS istekleri için axios instance.
- * Banka / ödeme entegrasyonlarında bu client'ı kullanın; FIXIE_URL yoksa normal axios davranır (yerel geliştirme).
+ * Sabit çıkış IP: yalnızca **Fixie** (`FIXIE_URL`). Banka whitelist’i bu IP’lere göre tanımlıysa
+ * sunucudan yapılan tüm dış HTTPS istekleri (bu modülü kullananlar) bu proxy üzerinden çıkar.
+ *
+ * `NESTPAY_HTTPS_PROXY` / `HTTPS_PROXY` bilinçli olarak kullanılmıyor.
+ *
  * Yalnızca Node.js runtime (API route, Server Action); Edge’de çalışmaz.
  */
 import axios, { type AxiosInstance } from 'axios'
 import { HttpsProxyAgent } from 'https-proxy-agent'
 
+/** Dışarı çıkış proxy’si: sadece Fixie. */
+export function getOutboundHttpsProxyUrl(): string | undefined {
+  return process.env.FIXIE_URL?.trim() || undefined
+}
+
 function createProxyAxios(): AxiosInstance {
-  const fixieUrl = process.env.FIXIE_URL?.trim()
-  if (fixieUrl) {
-    const agent = new HttpsProxyAgent(fixieUrl)
+  const proxyUrl = getOutboundHttpsProxyUrl()
+  if (proxyUrl) {
+    const agent = new HttpsProxyAgent(proxyUrl)
     return axios.create({
       httpsAgent: agent,
       httpAgent: agent,
@@ -27,7 +35,7 @@ export const proxyClient: AxiosInstance = createProxyAxios()
 
 export type IpifyResponse = { ip: string }
 
-/** Çıkış IP’sini döndürür. FIXIE_URL tanımlıysa Fixie panelindeki statik IP ile eşleşmeli. */
+/** Çıkış IP’sini döndürür. Fixie/proxy tanımlıysa bankanın whitelist IP’leri ile eşleşmeli. */
 export async function testProxyIP(): Promise<IpifyResponse> {
   const { data } = await proxyClient.get<IpifyResponse>('https://api.ipify.org?format=json')
   return data

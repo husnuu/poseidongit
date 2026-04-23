@@ -23,6 +23,7 @@ import homePage from './homePage'
 import homePageLocaleOverlay from './homePageLocaleOverlay'
 import legalPage from './legalPage'
 import legalPageTranslation from './legalPageTranslation'
+import menuItem from './menuItem'
 import siteFooter from './siteFooter'
 import siteSettings from './siteSettings'
 import tour from './tour'
@@ -58,6 +59,7 @@ export const schemaTypes = [
   homePageLocaleOverlay,
   legalPageTranslation,
   legalPage,
+  menuItem,
   siteFooter,
   siteSettings,
   tour,

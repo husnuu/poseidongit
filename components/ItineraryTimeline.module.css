@@ -42,7 +42,7 @@
 
 .thumb {
   width: 200px;
-  height: 200px;
+  height: 252px;
   border-radius: 20px;
   overflow: hidden;
   position: relative;
@@ -96,12 +96,12 @@
 .line {
   position: absolute;
   left: 110px;
-  top: 200px;
+  top: 252px;
   width: 2px;
   background: #e5e7eb;
   border-radius: 2px;
   z-index: 0;
-  bottom: 200px;
+  bottom: 252px;
 }
 
 .right {
@@ -148,7 +148,7 @@
 
   .thumb {
     width: 140px;
-    height: 140px;
+    height: 176px;
     border-radius: 16px;
   }
 
@@ -169,8 +169,8 @@
 
   .line {
     left: 70px;
-    top: 140px;
-    bottom: 140px;
+    top: 176px;
+    bottom: 176px;
   }
 
   .itemTitle {

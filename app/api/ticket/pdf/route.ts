@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rateLimit'
 import { generatePremiumEticketPdf } from '@/lib/ticket/generatePremiumEticketPdf'
 import {
   premiumEticketPayloadSchema,
@@ -36,6 +37,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const limited = await rateLimitResponse(request, 'ticketPdf')
+  if (limited) return limited
+
   if (!checkSecret(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

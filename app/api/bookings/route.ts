@@ -3,11 +3,7 @@
  */
 import { NextResponse } from 'next/server'
 import { rateLimitResponse } from '@/lib/rateLimit'
-import type { BookingCreatePayload } from '@/lib/firestore/bookingTypes'
-import {
-  additionalTravelerSlotCount,
-  parseAdditionalTravelersFromBody,
-} from '@/lib/bookingAdditionalTravelers'
+import { parseBookingWebPayload } from '@/lib/bookingWebPayload'
 import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
@@ -19,7 +15,6 @@ import {
   resolveAdditionalTravelerMealPreferencesForBooking,
 } from '@/lib/bookingMealPreference'
 import { supabase } from '@/lib/supabase'
-import { DEFAULT_LOCALE, isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import {
   firstClassLocasFromRow,
   normalizeDateOnly,
@@ -36,72 +31,6 @@ async function resolveTourIdToSanityId(tourId: string): Promise<string> {
   const tour = await client.fetch<{ _id?: string } | null>(tourForAvailabilityQuery, { tourId })
   const raw = (tour?._id && String(tour._id).trim()) ? String(tour._id).trim() : tourId
   return raw.replace(/^drafts\./, '')
-}
-
-function normalizeBody(body: unknown): BookingCreatePayload | null {
-  if (!body || typeof body !== 'object') return null
-  const b = body as Record<string, unknown>
-  const tourId = typeof b.tourId === 'string' ? b.tourId.trim() : ''
-  const tourTitle = typeof b.tourTitle === 'string' ? b.tourTitle.trim() : ''
-  const date = typeof b.date === 'string' ? b.date.trim() : ''
-  const classId = typeof b.classId === 'string' ? b.classId.trim() : ''
-  const className = typeof b.className === 'string' ? b.className.trim() : ''
-  const counts = b.counts as Record<string, unknown> | undefined
-  const customer = b.customer as Record<string, unknown> | undefined
-  if (!tourId || !tourTitle || !date || !classId || !className || !counts || !customer) {
-    return null
-  }
-  const adult = typeof counts.adult === 'number' ? counts.adult : 0
-  const child = typeof counts.child === 'number' ? counts.child : 0
-  const infant = typeof counts.infant === 'number' ? counts.infant : 0
-  const firstName = typeof customer.firstName === 'string' ? customer.firstName.trim() : ''
-  const lastName = typeof customer.lastName === 'string' ? customer.lastName.trim() : ''
-  const email = typeof customer.email === 'string' ? customer.email.trim() : ''
-  const phone = typeof customer.phone === 'string' ? customer.phone.trim() : ''
-  const note = typeof customer.note === 'string' ? customer.note.trim() : undefined
-  if (!firstName || !lastName || !email) return null
-  const parsedExtras = parseAdditionalTravelersFromBody(b.additionalTravelers)
-  if (parsedExtras === null) return null
-  const extraN = additionalTravelerSlotCount({ adult, child, infant })
-  if (extraN === 0) {
-    if (parsedExtras.length > 0) return null
-  } else {
-    if (parsedExtras.length !== extraN) return null
-    for (const t of parsedExtras) {
-      if (!t.firstName.trim() || !t.lastName.trim()) return null
-    }
-  }
-  const time = typeof b.time === 'string' ? b.time.trim() || undefined : undefined
-  const meetingPoint = typeof b.meetingPoint === 'string' ? b.meetingPoint.trim() || undefined : undefined
-  let firstClassLocas: string[] | undefined
-  if (classId === 'first') {
-    if (Array.isArray(b.firstClassLocas)) {
-      firstClassLocas = (b.firstClassLocas as unknown[])
-        .map((x) => (typeof x === 'string' ? x.trim().toUpperCase() : ''))
-        .filter((x) => LOCA_REGEX.test(x))
-      if (firstClassLocas.length === 0) firstClassLocas = undefined
-    }
-    if (!firstClassLocas && typeof b.firstClassLoca === 'string' && LOCA_REGEX.test(b.firstClassLoca.trim())) {
-      firstClassLocas = [b.firstClassLoca.trim().toUpperCase()]
-    }
-  }
-  const rawLoc = typeof b.locale === 'string' ? b.locale.trim().toLowerCase() : ''
-  const uiLocale: SiteLocale = isSiteLocale(rawLoc) ? rawLoc : DEFAULT_LOCALE
-
-  return {
-    uiLocale,
-    tourId,
-    tourTitle,
-    date,
-    time,
-    meetingPoint,
-    counts: { adult, child, infant },
-    classId,
-    className,
-    ...(firstClassLocas && firstClassLocas.length > 0 && { firstClassLocas }),
-    customer: { firstName, lastName, email, phone, note },
-    ...(extraN > 0 ? { additionalTravelers: parsedExtras } : {}),
-  }
 }
 
 function parseMealPreferenceKey(body: unknown): string | undefined {
@@ -133,7 +62,7 @@ async function computePrices(
   date: string,
   classId: string,
   counts: { adult: number; child: number; infant: number }
-): Promise<{ unitPrice: number; totalPrice: number }> {
+): Promise<{ unitPrice: number; totalPrice: number; depositAmount: number }> {
   try {
     const tour = await client.fetch<TourForBooking | null>(tourForBookingBySanityIdQuery, {
       id: tourId,
@@ -146,13 +75,16 @@ async function computePrices(
     })
     const totalPax = counts.adult + counts.child + counts.infant
     if (!summary || totalPax <= 0) {
-      return { unitPrice: 0, totalPrice: 0 }
+      return { unitPrice: 0, totalPrice: 0, depositAmount: 0 }
     }
     const unitPrice = Math.round(summary.total / totalPax)
-    return { unitPrice, totalPrice: summary.total }
+    return {
+      unitPrice,
+      totalPrice: summary.total,
+      depositAmount: Math.max(0, Math.min(summary.total, summary.depositAmount)),
+    }
   } catch {
-    const totalPax = (counts.adult || 0) + (counts.child || 0) + (counts.infant || 0)
-    return { unitPrice: 0, totalPrice: 0 }
+    return { unitPrice: 0, totalPrice: 0, depositAmount: 0 }
   }
 }
 
@@ -170,38 +102,11 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    const payload = normalizeBody(body)
-    if (!payload) {
-      const b = body as Record<string, unknown>
-      const missing: string[] = []
-      if (!(typeof b?.tourId === 'string' && b.tourId.trim())) missing.push('tur')
-      if (!(typeof b?.tourTitle === 'string' && b.tourTitle.trim())) missing.push('tur adı')
-      if (!(typeof b?.date === 'string' && b.date.trim())) missing.push('tarih')
-      if (!(typeof b?.classId === 'string' && b.classId.trim())) missing.push('sınıf')
-      if (!(typeof b?.counts === 'object' && b.counts)) missing.push('kişi sayısı')
-      const cust = b?.customer as Record<string, unknown> | undefined
-      if (!cust) missing.push('müşteri bilgisi')
-      else {
-        if (!(typeof cust.firstName === 'string' && cust.firstName.trim())) missing.push('ad')
-        if (!(typeof cust.lastName === 'string' && cust.lastName.trim())) missing.push('soyad')
-        if (!(typeof cust.email === 'string' && cust.email.trim())) missing.push('e-posta')
-      }
-      const counts = b?.counts as Record<string, unknown> | undefined
-      const ad = typeof counts?.adult === 'number' ? counts.adult : 0
-      const ch = typeof counts?.child === 'number' ? counts.child : 0
-      const inf = typeof counts?.infant === 'number' ? counts.infant : 0
-      const needExtra = additionalTravelerSlotCount({ adult: ad, child: ch, infant: inf })
-      const parsed = parseAdditionalTravelersFromBody(b?.additionalTravelers)
-      if (parsed === null) missing.push('diğer yolcu listesi geçersiz')
-      else if (needExtra > 0 && parsed.length !== needExtra) missing.push('tüm yolcuların ad-soyadı')
-      else if (needExtra > 0 && parsed.some((t) => !t.firstName.trim() || !t.lastName.trim())) {
-        missing.push('tüm yolcuların ad-soyadı')
-      }
-      return NextResponse.json(
-        { error: missing.length ? `Eksik veya geçersiz alan: ${missing.join(', ')}.` : 'Eksik veya geçersiz istek.' },
-        { status: 400 }
-      )
+    const parsedBody = parseBookingWebPayload(body)
+    if (!parsedBody.ok) {
+      return NextResponse.json({ error: `${parsedBody.error}.` }, { status: 400 })
     }
+    const payload = parsedBody.payload
     const firestoreTourId = await resolveTourIdToSanityId(payload.tourId)
     const mealResolve = await resolveMealPreferenceForBooking(
       firestoreTourId,
@@ -223,7 +128,7 @@ export async function POST(request: Request) {
       lastName: t.lastName,
       ...(extrasMealResolve.stored[i] && { mealPreference: extrasMealResolve.stored[i] }),
     }))
-    const { unitPrice, totalPrice } = await computePrices(
+    const { unitPrice, totalPrice, depositAmount } = await computePrices(
       firestoreTourId,
       payload.date,
       payload.classId,
@@ -311,6 +216,7 @@ export async function POST(request: Request) {
       ...(payload.firstClassLocas && payload.firstClassLocas.length > 0 && { first_class_locas: payload.firstClassLocas }),
       unit_price: unitPrice,
       total_price: totalPrice,
+      ...(depositAmount > 0 && { paid_now: depositAmount }),
       currency: CURRENCY,
       customer_first_name: customer.firstName,
       customer_last_name: customer.lastName,

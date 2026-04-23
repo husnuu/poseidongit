@@ -68,15 +68,47 @@
   box-sizing: border-box;
 }
 
-.content p {
+/* Paragraflar: dümen (gemi dümeni) ikonu — PortableText `block.normal` */
+.paragraphRow {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin: 0;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(30, 58, 95, 0.14);
   font-family: var(--font-family), sans-serif;
   font-weight: 400;
+  font-size: 16px;
   line-height: 24px;
-  margin: 0 0 16px 0;
+  color: var(--secondary, #000);
 }
 
-.content p:last-child {
+.paragraphRow:last-child {
   margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.paragraphIconWrap {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  background: #fff;
+  color: #1e3a5f;
+  border: none;
+  box-shadow: none;
+}
+
+.paragraphIcon {
+  display: block;
+}
+
+.paragraphText {
+  flex: 1;
+  min-width: 0;
 }
 
 .contentCollapsed {
@@ -163,7 +195,20 @@
     line-height: 1.65;
   }
 
-  .content p {
-    margin-bottom: 18px;
+  .paragraphRow {
+    font-size: 17px;
+    line-height: 1.65;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    gap: 12px;
+  }
+
+  .paragraphRow:last-child {
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .paragraphIconWrap {
+    margin-top: 3px;
   }
 }

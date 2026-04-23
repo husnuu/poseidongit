@@ -11,6 +11,13 @@ import { authorizeAdminOrAgent } from '@/lib/adminAuthServer'
 import { resolveMealPreferenceCountsForBooking, resolveMealPreferenceForBooking } from '@/lib/bookingMealPreference'
 import { supabase } from '@/lib/supabase'
 import { paxCountFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import {
+  sanitizeAdminNote,
+  sanitizePersonName,
+  sanitizePhoneDisplay,
+  sanitizeTourSlugOrId,
+  sanitizeTourTitleText,
+} from '@/lib/inputSanitize'
 
 const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
 
@@ -63,11 +70,12 @@ function parseBody(body: unknown): {
 } | { error: string } {
   if (!body || typeof body !== 'object') return { error: 'Geçersiz istek' }
   const b = body as Record<string, unknown>
-  const tourId = typeof b.tourId === 'string' ? b.tourId.trim() : ''
-  const tourTitle = typeof b.tourTitle === 'string' ? b.tourTitle.trim() : ''
+  const tourId = typeof b.tourId === 'string' ? sanitizeTourSlugOrId(b.tourId, 200) : ''
+  const tourTitle = typeof b.tourTitle === 'string' ? sanitizeTourTitleText(b.tourTitle, 300) : ''
   const date = typeof b.date === 'string' ? b.date.trim().slice(0, 10) : ''
   const classId = typeof b.classId === 'string' ? b.classId.trim() : ''
-  const className = typeof b.className === 'string' ? b.className.trim() : ''
+  const className =
+    typeof b.className === 'string' ? sanitizeTourTitleText(b.className, 120) : ''
   const counts = b.counts as Record<string, unknown> | undefined
   const customer = b.customer as Record<string, unknown> | undefined
   if (!tourId || !date || !classId || !className || !counts || !customer) {
@@ -78,10 +86,14 @@ function parseBody(body: unknown): {
   const infant = typeof counts.infant === 'number' ? counts.infant : Number(counts.infant) || 0
   if (adult < 0 || child < 0 || infant < 0) return { error: 'Kişi sayıları 0 veya pozitif olmalı' }
   if (adult + child + infant === 0) return { error: 'En az 1 kişi gerekli' }
-  const firstName = typeof customer.firstName === 'string' ? customer.firstName.trim() : ''
-  const lastName = typeof customer.lastName === 'string' ? customer.lastName.trim() : ''
-  const phone = typeof customer.phone === 'string' ? customer.phone.trim() : ''
-  const email = typeof customer.email === 'string' ? customer.email.trim() : ''
+  const firstName =
+    typeof customer.firstName === 'string' ? sanitizePersonName(customer.firstName, 80) : ''
+  const lastName =
+    typeof customer.lastName === 'string' ? sanitizePersonName(customer.lastName, 80) : ''
+  const phone =
+    typeof customer.phone === 'string' ? sanitizePhoneDisplay(customer.phone, 48) : ''
+  const email =
+    typeof customer.email === 'string' ? customer.email.trim().toLowerCase().slice(0, 254) : ''
   if (!firstName || !lastName || !phone) {
     return { error: 'Müşteri ad, soyad ve telefon zorunludur' }
   }
@@ -95,7 +107,8 @@ function parseBody(body: unknown): {
   const manualSource: ManualSource = MANUAL_SOURCES.includes(manualSourceRaw as ManualSource)
     ? (manualSourceRaw as ManualSource)
     : 'other'
-  const adminNote = typeof b.adminNote === 'string' ? b.adminNote.trim() || undefined : undefined
+  const adminNote =
+    typeof b.adminNote === 'string' ? sanitizeAdminNote(b.adminNote, 4000) : undefined
   const forceCreate = b.forceCreate === true
   const sendVoucher = b.sendVoucher === true
   const sendEmail = b.sendEmail === true

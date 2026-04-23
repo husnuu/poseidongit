@@ -70,6 +70,12 @@ export type TourPageUi = {
   tourCardDeparturePrefix: string
   tourCardDurationPrefix: string
   tourCardGoogleReviewsTitle: string
+  /** Görünmez; yalnızca ekran okuyucu için bölüm adı. */
+  reelsAriaLabel: string
+  /** Klip sırası; görünmez, video `aria-label`. */
+  reelsVideoAria: (indexOneBased: number, total: number) => string
+  reelsMuteAria: string
+  reelsUnmuteAria: string
 }
 
 const UI: Record<SiteLocale, TourPageUi> = {
@@ -139,6 +145,10 @@ const UI: Record<SiteLocale, TourPageUi> = {
     tourCardDeparturePrefix: 'Kalkış: ',
     tourCardDurationPrefix: 'Süre: ',
     tourCardGoogleReviewsTitle: 'Google yorumları',
+    reelsAriaLabel: 'Tur videoları',
+    reelsVideoAria: (n, t) => `Video ${n} / ${t}`,
+    reelsMuteAria: 'Sesi aç',
+    reelsUnmuteAria: 'Sessize al',
   },
   en: {
     locale: 'en',
@@ -206,6 +216,10 @@ const UI: Record<SiteLocale, TourPageUi> = {
     tourCardDeparturePrefix: 'Departure: ',
     tourCardDurationPrefix: 'Duration: ',
     tourCardGoogleReviewsTitle: 'Google reviews',
+    reelsAriaLabel: 'Tour videos',
+    reelsVideoAria: (n, t) => `Video ${n} of ${t}`,
+    reelsMuteAria: 'Unmute sound',
+    reelsUnmuteAria: 'Mute sound',
   },
   de: {
     locale: 'de',
@@ -273,6 +287,10 @@ const UI: Record<SiteLocale, TourPageUi> = {
     tourCardDeparturePrefix: 'Abfahrt: ',
     tourCardDurationPrefix: 'Dauer: ',
     tourCardGoogleReviewsTitle: 'Google-Bewertungen',
+    reelsAriaLabel: 'Tourvideos',
+    reelsVideoAria: (n, t) => `Video ${n} von ${t}`,
+    reelsMuteAria: 'Ton einschalten',
+    reelsUnmuteAria: 'Stummschalten',
   },
 }
 

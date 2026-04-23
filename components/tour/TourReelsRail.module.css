@@ -1,0 +1,42 @@
+.section {
+  margin-top: 28px;
+  width: 100%;
+  min-width: 0;
+}
+
+.scrollerBleed {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.scroller {
+  position: relative;
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  padding-top: 4px;
+  padding-left: 0;
+  padding-right: 1rem;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 0 1rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .scroller {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .section {
+    margin-top: 20px;
+  }
+}
