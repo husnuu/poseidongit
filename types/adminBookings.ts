@@ -1,5 +1,5 @@
 /** Admin panelinde kullanılan rezervasyon satırı (API'den gelen + tourCoverImageUrl). */
-export type BookingStatus = 'pending' | 'paid' | 'cancelled'
+export type BookingStatus = 'pending' | 'paid' | 'failed' | 'cancelled'
 
 export interface AdminBookingRow {
   id: string
@@ -36,6 +36,13 @@ export interface AdminBookingRow {
   reference?: string | null
   /** Secure token for voucher/ticket links. Required for new bookings. */
   accessToken?: string | null
+  paymentStatus?: string | null
+  nestpayAuthCode?: string | null
+  nestpayHostRefNum?: string | null
+  nestpayTransId?: string | null
+  paidAt?: string | null
+  paymentLastError?: string | null
+  paymentVerificationStatus?: string | null
 }
 
 export const MANUAL_SOURCE_LABELS: Record<string, string> = {

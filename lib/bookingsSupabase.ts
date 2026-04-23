@@ -88,6 +88,16 @@ export type SupabaseBookingRow = {
   /** Rezervasyon sırasında seçilen site dili (tr | en | de). */
   ui_locale?: string | null
   created_at?: string | null
+  /** NestPay callback: paid | failed */
+  payment_status?: string | null
+  nestpay_auth_code?: string | null
+  nestpay_host_ref_num?: string | null
+  nestpay_trans_id?: string | null
+  paid_at?: string | null
+  payment_callback_payload?: JsonValue | null
+  payment_last_error?: string | null
+  /** verified | hash_mismatch */
+  payment_verification_status?: string | null
 }
 
 export function normalizeDateOnly(date: string): string {
@@ -154,5 +164,19 @@ export function mapBookingRowToApi(row: SupabaseBookingRow): Record<string, unkn
     ...(row.paid_now != null && { paidNow: Number(row.paid_now) }),
     ...(row.access_token && { accessToken: row.access_token }),
     createdAt: row.created_at ?? null,
+    ...(row.payment_status != null && String(row.payment_status).trim() && { paymentStatus: String(row.payment_status).trim() }),
+    ...(row.nestpay_auth_code != null &&
+      String(row.nestpay_auth_code).trim() && { nestpayAuthCode: String(row.nestpay_auth_code).trim() }),
+    ...(row.nestpay_host_ref_num != null &&
+      String(row.nestpay_host_ref_num).trim() && { nestpayHostRefNum: String(row.nestpay_host_ref_num).trim() }),
+    ...(row.nestpay_trans_id != null &&
+      String(row.nestpay_trans_id).trim() && { nestpayTransId: String(row.nestpay_trans_id).trim() }),
+    ...(row.paid_at != null && String(row.paid_at).trim() && { paidAt: String(row.paid_at).trim() }),
+    ...(row.payment_last_error != null &&
+      String(row.payment_last_error).trim() && { paymentLastError: String(row.payment_last_error).trim() }),
+    ...(row.payment_verification_status != null &&
+      String(row.payment_verification_status).trim() && {
+        paymentVerificationStatus: String(row.payment_verification_status).trim(),
+      }),
   }
 }

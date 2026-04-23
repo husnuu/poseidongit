@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
       email: snapshot.email,
       amount: context.amount,
       gateway: config.gatewayUrl,
+      storetype: config.storeType,
       publicOrigin,
     })
 

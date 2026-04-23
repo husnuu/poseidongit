@@ -9,6 +9,7 @@ import { extractMealPreferenceCountsFromBookingLike } from '@/lib/mealPreference
 const STATUS_LABELS: Record<BookingStatus, string> = {
   pending: 'Beklemede',
   paid: 'Ödendi',
+  failed: 'Ödeme başarısız',
   cancelled: 'İptal',
 }
 
@@ -198,10 +199,67 @@ export default function BookingDetailModal({
               >
                 <option value="pending">Beklemede</option>
                 <option value="paid">Ödendi</option>
+                <option value="failed">Ödeme başarısız</option>
                 <option value="cancelled">İptal</option>
               </select>
               <span className="text-xs text-zinc-400">Referans: {booking.reference ?? booking.id.slice(0, 8)}…</span>
             </div>
+
+            {(booking.paymentStatus ||
+              booking.nestpayAuthCode ||
+              booking.nestpayHostRefNum ||
+              booking.nestpayTransId ||
+              booking.paidAt ||
+              booking.paymentLastError ||
+              booking.paymentVerificationStatus) && (
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-3 text-sm">
+                <p className="text-xs font-medium uppercase text-emerald-900/80">Ödeme (NestPay)</p>
+                <dl className="mt-2 space-y-1 text-zinc-800">
+                  {booking.paymentStatus ? (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-zinc-500">payment_status</dt>
+                      <dd className="font-medium">{booking.paymentStatus}</dd>
+                    </div>
+                  ) : null}
+                  {booking.paymentVerificationStatus ? (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-zinc-500">HASH doğrulama</dt>
+                      <dd className="font-medium">{booking.paymentVerificationStatus}</dd>
+                    </div>
+                  ) : null}
+                  {booking.nestpayAuthCode ? (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-zinc-500">AuthCode</dt>
+                      <dd className="font-mono text-xs">{booking.nestpayAuthCode}</dd>
+                    </div>
+                  ) : null}
+                  {booking.nestpayHostRefNum ? (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-zinc-500">HostRefNum</dt>
+                      <dd className="font-mono text-xs break-all">{booking.nestpayHostRefNum}</dd>
+                    </div>
+                  ) : null}
+                  {booking.nestpayTransId ? (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-zinc-500">TransId</dt>
+                      <dd className="font-mono text-xs break-all">{booking.nestpayTransId}</dd>
+                    </div>
+                  ) : null}
+                  {booking.paidAt ? (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-zinc-500">paidAt</dt>
+                      <dd>{new Date(booking.paidAt).toLocaleString('tr-TR')}</dd>
+                    </div>
+                  ) : null}
+                  {booking.paymentLastError ? (
+                    <div>
+                      <dt className="text-zinc-500">Son hata</dt>
+                      <dd className="mt-0.5 text-xs text-rose-800 break-words">{booking.paymentLastError}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+              </div>
+            )}
 
             <div className="text-sm">
               <span className="text-zinc-500">Kaynak: </span>

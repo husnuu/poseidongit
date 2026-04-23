@@ -42,7 +42,20 @@ alter table public.bookings
   add column if not exists paid_now numeric,
   add column if not exists ui_locale text;
 
+-- NestPay / Payten callback sonrası ödeme metadatası (callbackUrl güvenilir kaynak)
+alter table public.bookings
+  add column if not exists payment_status text,
+  add column if not exists nestpay_auth_code text,
+  add column if not exists nestpay_host_ref_num text,
+  add column if not exists nestpay_trans_id text,
+  add column if not exists paid_at timestamptz,
+  add column if not exists payment_callback_payload jsonb,
+  add column if not exists payment_last_error text,
+  add column if not exists payment_verification_status text;
+
 comment on column public.bookings.ui_locale is 'Site language at booking (tr|en|de) — customer emails / PDF';
+comment on column public.bookings.payment_status is 'Ödeme durumu özeti: paid | failed (status ile uyumlu olmalı)';
+comment on column public.bookings.payment_verification_status is 'NestPay HASH: verified | hash_mismatch';
 
 update public.bookings
 set created_at = now()

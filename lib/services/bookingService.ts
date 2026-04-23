@@ -1,5 +1,26 @@
 import { supabase } from '@/lib/supabase'
-import { normalizeDateOnly } from '@/lib/bookingsSupabase'
+import { normalizeDateOnly, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { runBookingPaidEmailSideEffects } from '@/lib/services/bookingPaidEmailSideEffects'
+
+const MAX_CALLBACK_JSON_CHARS = 28_000
+
+function compactCallbackPayloadForStorage(record: Record<string, string>): Record<string, unknown> {
+  const base: Record<string, unknown> = { ...record }
+  let s = JSON.stringify(base)
+  if (s.length <= MAX_CALLBACK_JSON_CHARS) return base
+  const shrunk: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(record)) {
+    const str = typeof v === 'string' ? v : String(v)
+    shrunk[k] = str.length > 400 ? `${str.slice(0, 180)}…[${str.length}]` : str
+  }
+  s = JSON.stringify(shrunk)
+  if (s.length <= MAX_CALLBACK_JSON_CHARS) return shrunk
+  return {
+    _truncated: true,
+    keys: Object.keys(record),
+    preview: s.slice(0, 12_000),
+  }
+}
 
 export type BookingStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'overbooked'
 
@@ -144,12 +165,125 @@ export async function markBookingOverbooked(bookingId: string): Promise<BookingS
   return updateBookingStatus(bookingId, 'overbooked')
 }
 
-export async function markBookingPaid(bookingId: string): Promise<BookingStatusResult> {
-  return updateBookingStatus(bookingId, 'paid')
+export type MarkBookingPaidFromCallbackMeta = {
+  authCode: string
+  hostRefNum: string
+  transId: string
+  paidAtIso: string
+  rawCallback: Record<string, string>
 }
 
-export async function markBookingFailed(bookingId: string): Promise<BookingStatusResult> {
-  return updateBookingStatus(bookingId, 'failed')
+export type MarkBookingFailedOpts = {
+  errMsg?: string
+  rawCallback?: Record<string, string> | null
+}
+
+/**
+ * NestPay callback veya manuel onay: ödendi. `meta` verilirse ödeme banka alanları ve ham callback özeti yazılır.
+ */
+export async function markBookingPaid(
+  bookingId: string,
+  meta?: MarkBookingPaidFromCallbackMeta
+): Promise<BookingStatusResult> {
+  const updates: Record<string, unknown> = { status: 'paid' }
+  if (meta) {
+    updates.payment_status = 'paid'
+    updates.nestpay_auth_code = meta.authCode || null
+    updates.nestpay_host_ref_num = meta.hostRefNum || null
+    updates.nestpay_trans_id = meta.transId || null
+    updates.paid_at = meta.paidAtIso
+    updates.payment_verification_status = 'verified'
+    updates.payment_callback_payload = compactCallbackPayloadForStorage(meta.rawCallback)
+    updates.payment_last_error = null
+  }
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .update(updates)
+    .eq('id', bookingId)
+    .select('id, status')
+    .single()
+
+  if (error) {
+    throw new Error(`Failed to mark booking paid: ${error.message}`)
+  }
+  if (!data?.id) {
+    throw new Error(`Failed to mark booking paid: booking ${bookingId} not found`)
+  }
+
+  if (meta) {
+    const { data: row, error: fetchErr } = await supabase.from('bookings').select('*').eq('id', bookingId).single()
+    if (!fetchErr && row) {
+      try {
+        await runBookingPaidEmailSideEffects(bookingId, row as SupabaseBookingRow)
+      } catch (e) {
+        console.error('[payment] Paid email side effects failed', {
+          bookingId,
+          message: e instanceof Error ? e.message : String(e),
+        })
+      }
+    }
+  }
+
+  return {
+    id: data.id,
+    status: (data.status as BookingStatus | null) ?? 'paid',
+  }
+}
+
+export async function markBookingFailed(
+  bookingId: string,
+  opts?: MarkBookingFailedOpts
+): Promise<BookingStatusResult> {
+  const updates: Record<string, unknown> = {
+    status: 'failed',
+    payment_status: 'failed',
+    payment_last_error: opts?.errMsg?.trim() ? opts.errMsg.trim().slice(0, 4000) : null,
+  }
+  if (opts?.rawCallback && Object.keys(opts.rawCallback).length > 0) {
+    updates.payment_callback_payload = compactCallbackPayloadForStorage(opts.rawCallback)
+  }
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .update(updates)
+    .eq('id', bookingId)
+    .select('id, status')
+    .single()
+
+  if (error) {
+    throw new Error(`Failed to mark booking failed: ${error.message}`)
+  }
+  if (!data?.id) {
+    throw new Error(`Failed to mark booking failed: booking ${bookingId} not found`)
+  }
+
+  return {
+    id: data.id,
+    status: (data.status as BookingStatus | null) ?? 'failed',
+  }
+}
+
+/**
+ * Üçlü onay görünüyor ama NestPay HASH doğrulanamadı: ödeme **onaylanmaz**; kayıt şüpheli işaretlenir.
+ */
+export async function markBookingPaymentCallbackSuspicious(
+  bookingId: string,
+  input: { rawCallback: Record<string, string>; detail: string }
+): Promise<void> {
+  const payload = compactCallbackPayloadForStorage(input.rawCallback)
+  const { error } = await supabase
+    .from('bookings')
+    .update({
+      payment_verification_status: 'hash_mismatch',
+      payment_callback_payload: payload,
+      payment_last_error: input.detail.slice(0, 4000),
+    })
+    .eq('id', bookingId)
+
+  if (error) {
+    console.error('[payment] Failed to persist suspicious callback metadata', { bookingId, message: error.message })
+  }
 }
 
 export async function markBookingRefunded(bookingId: string): Promise<BookingStatusResult> {

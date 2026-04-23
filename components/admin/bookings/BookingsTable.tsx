@@ -7,12 +7,14 @@ import { MANUAL_SOURCE_LABELS } from '@/types/adminBookings'
 const STATUS_LABELS: Record<BookingStatus, string> = {
   pending: 'Beklemede',
   paid: 'Ödendi',
+  failed: 'Ödeme başarısız',
   cancelled: 'İptal',
 }
 
 const STATUS_BADGE_CLASS: Record<BookingStatus, string> = {
   pending: 'bg-amber-100 text-amber-800',
   paid: 'bg-emerald-100 text-emerald-800',
+  failed: 'bg-rose-100 text-rose-800',
   cancelled: 'bg-red-100 text-red-800',
 }
 
@@ -199,6 +201,7 @@ export default function BookingsTable({
                   >
                     <option value="pending">Beklemede</option>
                     <option value="paid">Ödendi</option>
+                    <option value="failed">Ödeme başarısız</option>
                     <option value="cancelled">İptal</option>
                   </select>
                   {b.status !== 'cancelled' && (
@@ -212,6 +215,13 @@ export default function BookingsTable({
                     </button>
                   )}
                 </div>
+                {(b.nestpayAuthCode || b.nestpayHostRefNum || b.nestpayTransId || b.paidAt) && (
+                  <p className="mt-1 text-[11px] text-zinc-500 font-mono truncate" title={`${b.nestpayTransId ?? ''}`}>
+                    {b.paidAt ? `Ödeme: ${new Date(b.paidAt).toLocaleString('tr-TR')} · ` : ''}
+                    {b.nestpayAuthCode ? `Auth ${b.nestpayAuthCode}` : ''}
+                    {b.nestpayHostRefNum ? ` · HostRef ${b.nestpayHostRefNum}` : ''}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -309,6 +319,7 @@ export default function BookingsTable({
                   >
                     <option value="pending">Beklemede</option>
                     <option value="paid">Ödendi</option>
+                    <option value="failed">Ödeme başarısız</option>
                     <option value="cancelled">İptal</option>
                   </select>
                   {updatingId === b.id && (

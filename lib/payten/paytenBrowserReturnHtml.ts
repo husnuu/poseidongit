@@ -1,10 +1,9 @@
 import {
   escapeHtmlForPaytenAttribute,
   getNestpayConfig,
-  getPaymentResult,
-  hasInsufficientParamsForNestpayHashVerification,
   verifyNestpayCallbackHash,
 } from '@/lib/services/paymentService'
+import { isSafePaytenOrderLookupToken } from '@/lib/payten/resolvePaytenBookingLookup'
 
 export type PaytenBrowserReturnVariant = 'success' | 'failure'
 
@@ -121,46 +120,78 @@ function buildDl(record: Record<string, string>, fields: FieldRow[]): string {
   return parts.length ? `<dl>${parts.join('')}</dl>` : '<p><em>Bu bölümde gösterilecek alan gelmedi.</em></p>'
 }
 
+/**
+ * okUrl / failUrl POST: banka her zaman `mdStatus` veya tüm MPI alanlarını göndermez.
+ * Yalnızca callback’teki üçlü (Response + Proc + mdStatus) operasyonel; burada yanıltıcı “ret” metni göstermeyiz.
+ */
+function postReturnResultHintLine(record: Record<string, string>): string {
+  const response = recordGetInsensitive(record, 'Response')
+  const proc = recordGetInsensitive(record, 'ProcReturnCode')
+  const md = recordGetInsensitive(record, 'mdStatus')
+
+  if (response === 'Approved' && proc === '00' && md === '1') {
+    return 'İşlem yanıtı (bilgi): Response=Approved, ProcReturnCode=00, mdStatus=1 — bu POST’ta birlikte görünüyor. Kesin sonuç yine de callbackUrl’dir.'
+  }
+  if (response === 'Approved' && proc === '00' && !md) {
+    return 'İşlem yanıtı (bilgi): Response=Approved ve ProcReturnCode=00 bu sayfada görünüyor. mdStatus çoğu okUrl yanıtında post edilmez; bu “eksik alan” ödemenin başarısız olduğu anlamına gelmez. 3D sonucu ve tutar: callbackUrl.'
+  }
+  if (response === 'Approved' && proc === '00' && md && md !== '1') {
+    return `İşlem yanıtı (bilgi): Approved / 00 görünüyor; mdStatus bu POST’ta “${md}”. Tarayıcı dönüşü her zaman bütün MPI alanlarını taşımaz. Kesin değerlendirme callbackUrl.`
+  }
+  if (response || proc) {
+    return 'İşlem yanıtı (bilgi): aşağıdaki alanlara bakın. Bu sayfa sadece bankanın tarayıcıya gönderdiklerini yansıtır; onay/ret ve rezervasyon sunucu callback’iyle kesinleşir.'
+  }
+  return 'Banka yanıtı kısımlı post etmiş olabilir. Rezervasyon ve ödeme durumu yalnızca callbackUrl üzerinde işlenir.'
+}
+
 function verifyBrowserReturnHash(record: Record<string, string>): {
   verified: boolean | null
   detail: string
 } {
   const hasIncoming = !!pickField(record, ['HASH', 'hash'])
   if (!hasIncoming) {
-    return { verified: null, detail: 'HASH parametresi yok; sunucu tarafında doğrulama yapılamadı.' }
-  }
-  if (hasInsufficientParamsForNestpayHashVerification(record)) {
     return {
       verified: null,
       detail:
-        'Banka bu POST’ta tam parametre seti göndermedi (hash dışında 3’ten az alan). Bu yüzden tarayıcıda NestPay Hash Ver3 doğrulaması yapılmadı — erken red veya test akışı sık görülür. Kesin sonuç sunucu callbackUrl kayıtlarındadır.',
+        'HASH yok veya tarayıcı seti eksik; tarayıcıda sıkı doğrulama yapılmaz. Tarayıcı dönüşü kesin kaynak değildir; kesin onay callback ile işlenir.',
     }
   }
   try {
     const { storeKey } = getNestpayConfig()
     const ok = verifyNestpayCallbackHash(record, storeKey)
     if (ok) {
-      return { verified: true, detail: 'HASH, storeKey ile yeniden hesaplanan değerle eşleşti (Ver3).' }
+      return {
+        verified: true,
+        detail:
+          'HASH (bilgi amaçlı) izin listesine göre eşleşti. Yine de: Tarayıcı dönüşü kesin kaynak değildir; kesin onay callback ile işlenir.',
+      }
     }
     return {
-      verified: false,
-      detail: 'HASH doğrulaması başarısız; bu sayfadaki verilere tam güvenmeyin.',
+      verified: null,
+      detail:
+        'Tarayıcı dönüşünde HASH eşleşmedi (yalnızca uyarı; müşteri akışını engellemez). Tarayıcı dönüşü kesin kaynak değildir; kesin onay callback ile işlenir.',
     }
   } catch {
     return {
       verified: null,
-      detail: 'Ödeme yapılandırması eksik veya hatalı; HASH doğrulanamadı.',
+      detail:
+        'Ödeme yapılandırması eksik; tarayıcıda HASH denenmedi. Tarayıcı dönüşü kesin kaynak değildir; kesin onay callback ile işlenir.',
     }
   }
 }
 
 function hashBanner(verified: boolean | null, detail: string): string {
-  const cls =
-    verified === true ? 'hash-ok' : verified === false ? 'hash-bad' : 'hash-warn'
-  return `<div class="banner ${cls}"><strong>HASH doğrulaması:</strong> ${escapeHtmlForPaytenAttribute(detail)}</div>`
+  /** Tarayıcı dönüşünde hash uyuşmazlığı asla “ret” gibi gösterilmez — yalnızca uyarı tonu. */
+  const cls = verified === true ? 'hash-ok' : 'hash-warn'
+  return `<div class="banner ${cls}"><strong>HASH (bilgi):</strong> ${escapeHtmlForPaytenAttribute(detail)}</div>`
 }
 
-function layout(title: string, variant: PaytenBrowserReturnVariant, body: string): string {
+function layout(
+  title: string,
+  variant: PaytenBrowserReturnVariant,
+  body: string,
+  metaRefreshUrl?: string
+): string {
   const noteBg = variant === 'success' ? '#f0f4f8' : '#f8f0f0'
   return `<!DOCTYPE html>
 <html lang="tr">
@@ -168,6 +199,7 @@ function layout(title: string, variant: PaytenBrowserReturnVariant, body: string
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex,nofollow" />
+    ${metaRefreshUrl ? `<meta http-equiv="refresh" content="5;url=${escapeHtmlForPaytenAttribute(metaRefreshUrl)}" />` : ''}
     <title>${escapeHtmlForPaytenAttribute(title)}</title>
     <style>
       body { font-family: system-ui, sans-serif; margin: 0; padding: 2rem; background: #f4f6f8; color: #1a1a1a; }
@@ -222,16 +254,19 @@ export function renderPaytenBrowserReturnPostPage(
 ): string {
   const hashCheck = verifyBrowserReturnHash(record)
   const oidCheck = returnOidMatchesOid(record)
-
-  const paymentHint = getPaymentResult({
-    response: recordGetInsensitive(record, 'Response'),
-    procReturnCode: recordGetInsensitive(record, 'ProcReturnCode'),
-    mdStatus: recordGetInsensitive(record, 'mdStatus'),
-  })
-  const hintLine =
-    paymentHint === 'approved'
-      ? 'Dokümandaki tam onay seti (bilgi): Response=Approved, ProcReturnCode=00, mdStatus=1 — bu sayfada görünüyor.'
-      : 'Dokümandaki tam onay seti (bilgi): Response / ProcReturnCode / mdStatus tam seti sağlanmıyor veya işlem reddedildi.'
+  const hintLine = postReturnResultHintLine(record)
+  const bookingNo =
+    pickField(record, ['oid', 'Oid', 'ReturnOid', 'returnOid']).trim() || '—'
+  const browserTripleOk =
+    recordGetInsensitive(record, 'Response') === 'Approved' &&
+    recordGetInsensitive(record, 'ProcReturnCode') === '00' &&
+    recordGetInsensitive(record, 'mdStatus') === '1'
+  const canLinkConfirmation =
+    bookingNo !== '—' && isSafePaytenOrderLookupToken(bookingNo)
+  const confirmHref =
+    variant === 'success' && browserTripleOk && canLinkConfirmation
+      ? `/rezervasyon/onaylandi?bookingId=${encodeURIComponent(bookingNo)}`
+      : undefined
 
   const title = variant === 'success' ? 'Ödeme sonucu' : 'Ödeme başarısız'
   const h1 = variant === 'success' ? 'Ödeme işlemi' : 'Ödeme başarısız'
@@ -245,13 +280,28 @@ export function renderPaytenBrowserReturnPostPage(
     : ''
 
   const minimalHashNote =
-    variant === 'failure' && paytenReturnHasFewNonHashKeys(record) && hashCheck.verified === false
-      ? `<p class="note">Bu yanıtta çoğu zaman çok az alan gelir (ör. rnd ve HASH). Bu durumda sayfadaki HASH doğrulaması sık başarısız olur; bu, tek başına “sahte sayfa” anlamına gelmez. Ödeme reddi genelde kart / test kartı / 3D doğrulama veya banka kurallarından kaynaklanır; kesin sonuç sunucudaki <strong>callbackUrl</strong> kayıtlarına bakın.</p>`
+    variant === 'failure' && paytenReturnHasFewNonHashKeys(record) && hashCheck.verified === null
+      ? `<p class="note">Bu yanıtta çoğu zaman çok az alan gelir (ör. rnd ve HASH). Tarayıcıda HASH, callback’e göre farklı hesaplanabilir; bu tek başına “sahte sayfa” anlamına gelmez. Ödeme reddi genelde kart / test kartı / 3D veya banka kurallarından kaynaklanır; kesin sonuç sunucudaki <strong>callbackUrl</strong> kayıtlarındadır.</p>`
+      : ''
+
+  const bookingSummary =
+    variant === 'success'
+      ? `<p class="note"><strong>Rezervasyon / sipariş no:</strong> ${escapeHtmlForPaytenAttribute(bookingNo)}</p>`
+      : ''
+
+  const redirectBlock =
+    confirmHref != null
+      ? `<p class="note">Birkaç saniye içinde sitemizdeki onay sayfasına yönlendiriliyorsunuz. Otomatik gitmezse: <a href="${escapeHtmlForPaytenAttribute(confirmHref)}">onay sayfasına geç</a>.</p>`
       : ''
 
   const body = `
     <h1>${escapeHtmlForPaytenAttribute(h1)}</h1>
     <p>${escapeHtmlForPaytenAttribute(lead)}</p>
+    <div class="note" style="margin-bottom:1rem;border-left:4px solid #1f3c88;padding-left:0.75rem;">
+      Tarayıcı dönüşü kesin kaynak değildir; kesin onay callback ile işlenir.
+    </div>
+    ${bookingSummary}
+    ${redirectBlock}
     ${hashBanner(hashCheck.verified, hashCheck.detail)}
     ${minimalHashNote}
     ${oidBanner}
@@ -260,8 +310,8 @@ export function renderPaytenBrowserReturnPostPage(
     ${buildDl(record, TRANSACTION_RESPONSE_FIELDS)}
     <h2>MPI (3D Secure) yanıt parametreleri</h2>
     ${buildDl(record, MPI_RESPONSE_FIELDS)}
-    <div class="note">Rezervasyon ve tutarın kesin onayı yalnızca <strong>callbackUrl</strong> üzerinde işlenir; HASH doğrulaması bu sayfadaki verinin Payten kaynaklı olma ihtimalini artırır.</div>
+    <div class="note">Rezervasyon ve tutarın kesin onayı yalnızca <strong>callbackUrl</strong> üzerinde işlenir; bu sayfadaki HASH bilgisi yalnızca teyit amaçlıdır.</div>
     <p><a href="/">Ana sayfaya dön</a></p>
   `
-  return layout(title, variant, body)
+  return layout(title, variant, body, confirmHref)
 }

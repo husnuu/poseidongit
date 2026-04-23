@@ -61,6 +61,7 @@ async function loadTurkishFont(doc: jsPDF, adminEmail?: string): Promise<void> {
 const STATUS_LABELS: Record<BookingStatus, string> = {
   pending: 'Beklemede',
   paid: 'Ödendi',
+  failed: 'Ödeme başarısız',
   cancelled: 'İptal',
 }
 
@@ -435,6 +436,14 @@ export default function AdminBookingsPage() {
           manualSource: b.manualSource ?? null,
           createdByAdmin: b.createdByAdmin ?? false,
           reference: b.reference ?? null,
+          paymentStatus: typeof b.paymentStatus === 'string' ? b.paymentStatus : undefined,
+          nestpayAuthCode: typeof b.nestpayAuthCode === 'string' ? b.nestpayAuthCode : undefined,
+          nestpayHostRefNum: typeof b.nestpayHostRefNum === 'string' ? b.nestpayHostRefNum : undefined,
+          nestpayTransId: typeof b.nestpayTransId === 'string' ? b.nestpayTransId : undefined,
+          paidAt: typeof b.paidAt === 'string' ? b.paidAt : undefined,
+          paymentLastError: typeof b.paymentLastError === 'string' ? b.paymentLastError : undefined,
+          paymentVerificationStatus:
+            typeof b.paymentVerificationStatus === 'string' ? b.paymentVerificationStatus : undefined,
         }
         })
         setBookings(startAfter ? (prev) => [...prev, ...list] : list)

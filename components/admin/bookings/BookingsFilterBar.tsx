@@ -42,6 +42,7 @@ const STATUS_OPTIONS: { value: BookingStatus | ''; label: string }[] = [
   { value: '', label: 'Tümü' },
   { value: 'pending', label: 'Beklemede' },
   { value: 'paid', label: 'Ödendi' },
+  { value: 'failed', label: 'Ödeme başarısız' },
   { value: 'cancelled', label: 'İptal' },
 ]
 

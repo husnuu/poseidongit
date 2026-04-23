@@ -1,12 +1,10 @@
-import { randomBytes, timingSafeEqual } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
 import { getBaseUrl } from '@/lib/seo'
 import {
   buildPaytenHashPlaintext,
   comparePaytenHashParamKeysAlphabetical,
-  escapePaytenHashValue,
   generateHash,
-  paytenHash512PlaintextUtf8,
-  paytenHashSha1PlaintextUtf8,
+  verifyNestpayResponseHash,
 } from '@/lib/nestpay/hash'
 
 const PAYTEN_ISLEM_TIPLERI = new Set(['Auth', 'PreAuth', 'PostAuth', 'Void', 'Credit'])
@@ -34,7 +32,7 @@ export type NestpayConfig = {
   /** Payten işlem tipi (satış için genelde Auth) — POST alanı `islemtipi`. */
   islemTipi: string
   /**
-   * Payten 3D Pay Hosting: `3D_PAY_HOSTING`. Ortamda farklı verilmişse `NESTPAY_STORETYPE` ile eşleştirin.
+   * 3D Pay Hosting: uygulama `3d_pay_hosting` (küçük harf) gönderir; `NESTPAY_STORETYPE` ile override.
    */
   storeType: string
 }
@@ -46,6 +44,8 @@ export type NestpayInitiateContext = {
   failUrl: string
   callbackUrl: string
   amount: string
+  /** Payten: okUrl / failUrl’e yönlendirme öncesi sayaç (saniye). Form alanı `refreshtime`. */
+  refreshtime: string
 }
 
 export type PaymentResult = 'approved' | 'failed'
@@ -105,8 +105,7 @@ export function getNestpayConfig(): NestpayConfig {
     normalizeText(process.env.NESTPAY_TRANSACTION_TYPE) ||
     'Auth'
   const islemTipi = normalizePaytenIslemTipi(islemTipiRaw)
-  const storeType =
-    normalizeText(process.env.NESTPAY_STORETYPE) || normalizeText(process.env.NESTPAY_STORE_TYPE) || '3D_PAY_HOSTING'
+  const storeType = resolveNestpayStoreType()
 
   if (!clientId) {
     throw new Error('Missing NESTPAY_CLIENT_ID environment variable.')
@@ -150,6 +149,43 @@ function getRnd(): string {
 
 function formatAmount(totalPrice: number): string {
   return totalPrice.toFixed(2)
+}
+
+/**
+ * 3D Pay Hosting: Asseco/Payten PHP örneklerinde `storetype` neredeyse daima **`3d_pay_hosting`** (küçük harf).
+ * `3D_PAY_HOSTING` bırakılmış eski değerler aynı ürüne eşlenir. Yanlış tür, kart/3D sayfası yerine düz yanıt
+ * veya farklı akış verir — **NESTPAY_STORETYPE** ve **NESTPAY_GATEWAY_URL** banka dökümanıyla aynı olmalı.
+ */
+function resolveNestpayStoreType(): string {
+  const raw = normalizeText(process.env.NESTPAY_STORETYPE) || normalizeText(process.env.NESTPAY_STORE_TYPE)
+  if (!raw) return '3d_pay_hosting'
+  if (raw === '3D_PAY_HOSTING' || raw.toLowerCase() === '3d_pay_hosting') {
+    return '3d_pay_hosting'
+  }
+  return raw
+}
+
+/** Payten form alanı `firmaadi` (opsiyonel; boş bırakılabilir; hash’e girer). */
+function resolveNestpayFirmaAdi(): string {
+  return (
+    normalizeText(process.env.NESTPAY_FIRMA_ADI) ||
+    normalizeText(process.env.NESTPAY_COMPANY_NAME) ||
+    normalizeText(process.env.NEXT_PUBLIC_SITE_NAME)
+  )
+}
+
+/** Payten `refreshtime`: 1–600 sn; varsayılan 10. `NESTPAY_REFRESHTIME` veya `options.refreshTimeSeconds`. */
+function resolvePaytenRefreshtime(options?: { refreshTimeSeconds?: number }): string {
+  if (options?.refreshTimeSeconds != null && Number.isFinite(options.refreshTimeSeconds)) {
+    const n = Math.min(600, Math.max(1, Math.floor(options.refreshTimeSeconds)))
+    return String(n)
+  }
+  const raw = normalizeText(process.env.NESTPAY_REFRESHTIME)
+  if (raw && /^\d+$/.test(raw)) {
+    const n = Math.min(600, Math.max(1, parseInt(raw, 10)))
+    return String(n)
+  }
+  return '10'
 }
 
 /** Payten’den gelen metinleri HTML’de güvenli göstermek için (form + dönüş sayfaları). */
@@ -199,7 +235,7 @@ export function getPaymentPublicOrigin(request: Request): string {
 export function createPaymentContext(
   bookingOid: string,
   totalPrice: number,
-  options?: { publicOrigin?: string }
+  options?: { publicOrigin?: string; refreshTimeSeconds?: number }
 ): NestpayInitiateContext {
   const baseUrl = (options?.publicOrigin ?? getBaseUrl()).replace(/\/$/, '')
   /**
@@ -213,6 +249,7 @@ export function createPaymentContext(
     failUrl: `${baseUrl}/odeme/basarisiz`,
     callbackUrl: `${baseUrl}/api/payment/callback`,
     amount: formatAmount(totalPrice),
+    refreshtime: resolvePaytenRefreshtime(options),
   }
 }
 
@@ -238,8 +275,14 @@ export function buildNestpayFormParams(config: NestpayConfig, context: NestpayIn
     lang: config.lang,
     oid: context.bookingId,
     okUrl: context.okUrl,
+    refreshtime: context.refreshtime,
     rnd: context.rnd,
     storetype: config.storeType,
+  }
+
+  const firmaadi = resolveNestpayFirmaAdi()
+  if (firmaadi) {
+    formParams.firmaadi = firmaadi
   }
 
   const hashPlaintext = buildPaytenHashPlaintext(formParams, config.storeKey)
@@ -291,13 +334,6 @@ export function renderAutoSubmitPaymentForm(actionUrl: string, params: Record<st
 </html>`
 }
 
-function secureStringEquals(left: string, right: string): boolean {
-  const leftBuffer = Buffer.from(left, 'utf8')
-  const rightBuffer = Buffer.from(right, 'utf8')
-  if (leftBuffer.length !== rightBuffer.length) return false
-  return timingSafeEqual(leftBuffer, rightBuffer)
-}
-
 function pushUnique(out: string[], seen: Set<string>, value: string | undefined) {
   if (typeof value !== 'string') return
   const t = value.trim()
@@ -339,61 +375,6 @@ function nestpayIncomingHashCandidates(incoming: string): string[] {
     pushUnique(list, seen, padBase64Url(std))
   }
   return list
-}
-
-function stripCarriageReturnsFromPayload(payload: Record<string, string>): Record<string, string> {
-  const out: Record<string, string> = {}
-  for (const [k, v] of Object.entries(payload)) {
-    out[k] = v.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-  }
-  return out
-}
-
-function collectExpectedNestpayHashes(payload: Record<string, string>, storeKey: string): string[] {
-  const seen = new Set<string>()
-  const hashes: string[] = []
-  const add = (h: string) => {
-    if (!seen.has(h)) {
-      seen.add(h)
-      hashes.push(h)
-    }
-  }
-
-  const payloadVariants = [payload, stripCarriageReturnsFromPayload(payload)]
-  for (const body of payloadVariants) {
-    add(generateHash(body, storeKey))
-
-    const nonHashKeys = Object.keys(body).filter((k) => !['hash', 'encoding', 'countdown'].includes(k.toLowerCase()))
-    if (nonHashKeys.length === 1 && nonHashKeys[0]!.toLowerCase() === 'rnd') {
-      const rndKey = nonHashKeys[0]!
-      const r0 = (body[rndKey] ?? '').trim()
-      const rndCandidates = new Set<string>()
-      if (r0) rndCandidates.add(r0)
-      /** Bazı istemciler `+` / boşluk çözümlemesinde sapma yapar; imza için olası `rnd` varyantları. */
-      if (r0.includes(' ')) rndCandidates.add(r0.replace(/\s+/g, '+'))
-      if (r0.includes('+')) rndCandidates.add(r0.replace(/\+/g, ' '))
-      for (const r of rndCandidates) {
-        if (!r) continue
-        const one = { ...body, [rndKey]: r }
-        add(generateHash(one, storeKey))
-        add(paytenHash512PlaintextUtf8(`${r}${storeKey}`))
-        add(paytenHashSha1PlaintextUtf8(`${r}${storeKey}`))
-        add(paytenHash512PlaintextUtf8(`${escapePaytenHashValue(r)}${escapePaytenHashValue(storeKey)}`))
-        add(paytenHashSha1PlaintextUtf8(`${escapePaytenHashValue(r)}${escapePaytenHashValue(storeKey)}`))
-        add(paytenHash512PlaintextUtf8(`${escapePaytenHashValue(r)}${storeKey}`))
-        add(paytenHashSha1PlaintextUtf8(`${escapePaytenHashValue(r)}${storeKey}`))
-      }
-    }
-  }
-
-  const hashParamsValKey = Object.keys(payload).find((key) => key.toLowerCase() === 'hashparamsval')
-  const hashParamsVal = hashParamsValKey ? normalizeText(payload[hashParamsValKey]) : ''
-  if (hashParamsVal) {
-    add(paytenHash512PlaintextUtf8(`${hashParamsVal}${storeKey}`))
-    add(paytenHashSha1PlaintextUtf8(`${hashParamsVal}${storeKey}`))
-  }
-
-  return hashes
 }
 
 export function normalizeCallbackPayload(rawEntries: Iterable<[string, FormDataEntryValue]>): Record<string, string> {
@@ -450,12 +431,13 @@ export function logPaymentInitiateDebug(
 
 /** Banka → okUrl / failUrl / callback POST (tek obje + entries). */
 /**
- * NestPay tarayıcı/failUrl yanıtlarında çoğu zaman yalnızca rnd (+HASH), bazen oid+rnd (+HASH) gelir.
- * Hash Ver3 doğrulaması için alfabetik tam parametre kümesi gerekir; **3’ten az** iş parametresinde doğrulama anlamsızdır.
+ * Callback’te HASH yoksa veya boşsa sunucu tarafı doğrulama yapılamaz.
+ * (Tarayıcı dönüşünde hash eşleşmesi zorunlu değildir; bkz. `paytenBrowserReturnHtml`.)
  */
 export function hasInsufficientParamsForNestpayHashVerification(payload: Record<string, string>): boolean {
-  const keys = Object.keys(payload).filter((k) => !['hash', 'encoding', 'countdown'].includes(k.toLowerCase()))
-  return keys.length < 3
+  const hashKey = Object.keys(payload).find((k) => k.toLowerCase() === 'hash')
+  if (!hashKey) return true
+  return !normalizeText(payload[hashKey] ?? '')
 }
 
 export function logPaytenInboundForm(label: string, record: Record<string, string>): void {
@@ -466,37 +448,26 @@ export function logPaytenInboundForm(label: string, record: Record<string, strin
 
 export function verifyNestpayCallbackHash(payload: Record<string, string>, storeKey: string): boolean {
   const hashKey = Object.keys(payload).find((key) => key.toLowerCase() === 'hash')
-  const incomingRaw = hashKey ? payload[hashKey] : ''
+  const incomingRaw = hashKey ? payload[hashKey]! : ''
   if (!normalizeText(incomingRaw)) return false
 
   const incomingCandidates = nestpayIncomingHashCandidates(incomingRaw)
   const storeCandidates = nestpayStoreKeyCandidates(storeKey)
 
   for (const sk of storeCandidates) {
-    const expected = collectExpectedNestpayHashes(payload, sk)
-    for (const exp of expected) {
-      for (const inc of incomingCandidates) {
-        if (secureStringEquals(exp, inc)) return true
-      }
+    for (const inc of incomingCandidates) {
+      if (verifyNestpayResponseHash(payload, sk, { incomingHashCandidate: inc, quiet: true })) return true
     }
   }
 
+  if (isPaymentDebugLoggingEnabled() && storeCandidates.length > 0 && incomingCandidates.length > 0) {
+    verifyNestpayResponseHash(payload, storeCandidates[0]!, { incomingHashCandidate: incomingCandidates[0]! })
+  }
   if (isPaymentDebugLoggingEnabled()) {
-    const keys = Object.keys(payload)
-      .filter((k) => !['hash', 'encoding', 'countdown'].includes(k.toLowerCase()))
-      .sort(comparePaytenHashParamKeysAlphabetical)
-    const rndOnly = keys.length === 1 && keys[0]!.toLowerCase() === 'rnd'
-    if (rndOnly) {
-      console.info(
-        '[payment] HASH verify: yalnızca rnd (+HASH) — tarayıcı dönüşünde NestPay imzası çoğu zaman eşleşmez; callback doğrulaması önceliklidir.'
-      )
-    } else {
-      console.warn('[payment] HASH verify failed (dev)', {
-        sortedParamKeys: keys,
-        storeKeyLengths: storeCandidates.map((s) => s.length),
-        incomingHashLengths: incomingCandidates.map((s) => s.length),
-      })
-    }
+    console.warn('[payment] HASH verify: callback — NestPay V3 yanıt (izin listesi) eşleşmedi', {
+      storeKeyLengths: storeCandidates.map((s) => s.length),
+      incomingHashLengths: incomingCandidates.map((s) => s.length),
+    })
   }
 
   return false
@@ -512,3 +483,14 @@ export function getPaymentResult(input: CallbackResultInput): PaymentResult {
   }
   return 'failed'
 }
+
+/** NestPay 3D Pay Hosting: işlem + MPI başarı üçlüsü (callback’te kesin onay için HASH ile birlikte kullanılır). */
+export function isNestpayPaymentSuccessful(
+  response: string,
+  procReturnCode: string,
+  mdStatus: string
+): boolean {
+  return getPaymentResult({ response, procReturnCode, mdStatus }) === 'approved'
+}
+
+export { verifyNestpayResponseHash }
