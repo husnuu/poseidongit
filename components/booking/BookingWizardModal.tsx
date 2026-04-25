@@ -10,8 +10,6 @@ import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/s
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForBooking } from '@/lib/sanity/bookingTypes'
 import { isTourMealMenuActive } from '@/components/booking/steps/MealPreferenceFields'
 import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
-import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
-import { navigateWithNestpayCheckoutHtml, requestNestpayCheckoutHtml } from '@/lib/nestpay/checkoutFromBrowser'
 import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import {
@@ -286,15 +284,6 @@ export default function BookingWizardModal({
           }))
         }
 
-        if (isBookingOnlinePaymentEnabled) {
-          const checkout = await requestNestpayCheckoutHtml(data.bookingId)
-          if (!checkout.ok) {
-            setSubmitError(checkout.error)
-            return
-          }
-          navigateWithNestpayCheckoutHtml(checkout.html)
-          return
-        }
 
         const summary = data.summary as { tourTitle: string; date: string; className: string; totalPrice: number; currency: string; status: string }
         const accessToken = typeof data.accessToken === 'string' && data.accessToken.trim() ? data.accessToken.trim() : undefined

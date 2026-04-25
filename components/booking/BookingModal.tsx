@@ -6,7 +6,6 @@ import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK } from '@/lib/sanity/bookingTypes'
 import { resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
-import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
 import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import { withLocalePath } from '@/lib/i18n/paths'
 import StepPeople from './steps/StepPeople'
@@ -84,8 +83,6 @@ export default function BookingModal({ tour, onClose }: BookingModalProps) {
     else if (state.step === 2 && canProceedStep2) goNext()
     else if (state.step === 3 && canProceedStep3) goNext()
     else if (state.step === 4) {
-      if (!isBookingOnlinePaymentEnabled) return
-      console.log('Booking payload (mock):', { tourSlug: state.tourSlug, date: state.selectedDate, classKey: state.selectedClassKey, counts: state.counts, customer: state.customer, pricing: state.pricingSummary })
       setSubmitted(true)
     }
   }, [state, canProceedStep1, canProceedStep2, canProceedStep3, goNext])
@@ -94,18 +91,14 @@ export default function BookingModal({ tour, onClose }: BookingModalProps) {
     if (state.step === 1) return 'Devam'
     if (state.step === 2) return 'Devam'
     if (state.step === 3) return 'Ödemeye Geç'
-    if (state.step === 4 && !isBookingOnlinePaymentEnabled) return 'Ödeme kapalı'
-    return 'ÖDEMEYİ TAMAMLA'
+    return 'TAMAMLA'
   }, [state.step])
 
   const ctaDisabled = useMemo(() => {
     if (state.step === 1) return !canProceedStep1
     if (state.step === 2) return !canProceedStep2
     if (state.step === 3) return !canProceedStep3
-    if (state.step === 4) {
-      if (!isBookingOnlinePaymentEnabled) return true
-      return !step4TermsAccepted
-    }
+    if (state.step === 4) return !step4TermsAccepted
     return false
   }, [state.step, canProceedStep1, canProceedStep2, canProceedStep3, step4TermsAccepted])
 

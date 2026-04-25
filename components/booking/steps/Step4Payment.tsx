@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import type { BookingWizardState } from '@/lib/sanity/bookingTypes'
-import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import styles from '../booking.module.css'
 
@@ -26,7 +25,7 @@ export default function Step4Payment({
   termsHref = '/terms',
 }: Step4PaymentProps) {
   const [loading, setLoading] = useState(false)
-  const [termsAccepted, setTermsAccepted] = useState(!isBookingOnlinePaymentEnabled)
+  const [termsAccepted, setTermsAccepted] = useState(true)
   const p = state.pricingSummary
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -100,50 +99,6 @@ export default function Step4Payment({
         </div>
       </div>
 
-      {!isBookingOnlinePaymentEnabled && (
-        <div className={styles.virtualPosDisabledNotice} role="status">
-          <strong>{ui.testModeTitle}</strong>{' '}
-          {ui.testModeModalBeforePay}
-          <em>{ui.payAria}</em>
-          {ui.testModeModalAfterPay}
-        </div>
-      )}
-
-      {isBookingOnlinePaymentEnabled && (
-        <div className={styles.card}>
-          <div className={styles.cardCaption}>
-            <span className={styles.cardCaptionIcon} aria-hidden>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-            </span>
-            <h3 className={styles.cardCaptionTitle}>{ui.nestpayRedirectTitle}</h3>
-          </div>
-          <hr className={styles.cardDivider} />
-          <div className={styles.cardContent}>
-            <p className="text-sm leading-relaxed text-zinc-600" style={{ margin: 0 }}>
-              {ui.nestpayRedirectBody}
-            </p>
-            <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm text-zinc-600">
-              <input
-                type="checkbox"
-                checked={termsAccepted}
-                onChange={(e) => setTermsAccepted(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-zinc-300 text-[var(--primary)] focus:ring-[var(--primary)]"
-                aria-describedby="terms-checkbox-desc-nestpay"
-              />
-              <span id="terms-checkbox-desc-nestpay">
-                {ui.termsCheckboxLead}
-                <Link href={termsHref} target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
-                  {ui.termsLinkText}
-                </Link>
-                {ui.termsCheckboxTrail}
-              </span>
-            </label>
-          </div>
-        </div>
-      )}
 
       <div className={styles.stepActions}>
         <div className={styles.stepActionsRow}>

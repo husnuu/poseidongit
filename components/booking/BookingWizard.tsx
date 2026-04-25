@@ -12,8 +12,6 @@ import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailab
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
-import { isBookingOnlinePaymentEnabled } from '@/lib/bookingVirtualPos'
-import { navigateWithNestpayCheckoutHtml, requestNestpayCheckoutHtml } from '@/lib/nestpay/checkoutFromBrowser'
 import StepPeople from './steps/StepPeople'
 import StepDateClass from './steps/StepDateClass'
 import StepCustomer from './steps/StepCustomer'
@@ -214,16 +212,6 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
               [classKey]: (prev?.[dateNorm]?.[classKey] ?? 0) + totalPax,
             },
           }))
-        }
-
-        if (isBookingOnlinePaymentEnabled) {
-          const checkout = await requestNestpayCheckoutHtml(data.bookingId)
-          if (!checkout.ok) {
-            setSubmitError(checkout.error)
-            return
-          }
-          navigateWithNestpayCheckoutHtml(checkout.html)
-          return
         }
 
         const summary = data.summary as { tourTitle: string; date: string; className: string; totalPrice: number; currency: string; status: string }

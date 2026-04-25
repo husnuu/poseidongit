@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
-import {
-  isSafePaytenOrderLookupToken,
-  resolveSupabaseBookingIdFromPaytenOrderFields,
-} from '@/lib/payten/resolvePaytenBookingLookup'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+
+function isSafeBookingId(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+}
 
 export default async function RezervasyonBasarisizPage({
   searchParams,
@@ -17,7 +17,7 @@ export default async function RezervasyonBasarisizPage({
   const sp = await searchParams
   const orderToken = typeof sp.bookingId === 'string' ? sp.bookingId.trim() : ''
 
-  if (!orderToken || !isSafePaytenOrderLookupToken(orderToken)) {
+  if (!orderToken || !isSafeBookingId(orderToken)) {
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
         <div className="max-w-md w-full rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm text-center">
@@ -40,7 +40,7 @@ export default async function RezervasyonBasarisizPage({
     )
   }
 
-  const resolvedId = await resolveSupabaseBookingIdFromPaytenOrderFields(orderToken, '')
+  const resolvedId = orderToken
   if (!resolvedId) {
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
