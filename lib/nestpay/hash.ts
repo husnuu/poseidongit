@@ -25,17 +25,33 @@ const CALLBACK_HASH_DOC_EXCLUDE = new Set(['hash', 'encoding', 'countdown'])
  * Payten dönüşünde imzada olmayan / banka içi alanlar (callback doğrulaması için çıkarılır).
  * `TDS2.*` ve `RREQEXTENSIONS` gibi büyük harfle gelen isimler `toLowerCase` ile eşlenir; `TDS2.*` öneki
  * ayrıca `tds2.*` altında dışlanır.
+ *
+ * Banka/gateway; HASH hesaplandıktan SONRA POST'a eklediği alanlar (imzaya dahil edilmez):
+ * - *hash (checkIfMandatoryHash, girogateParamReqHash, showdcchash, querydcchash, querycampainghash, vb.)
+ * - validation flag'leri (CheckIfMandatory, CheckIfMandatoryState, MandatoryFieldControl)
+ * - UI / meta parametreler (pageparam, callbackCall, ErrCode)
  */
 const CALLBACK_HASH_BANK_INTERNAL_EXCLUDE = new Set([
+  // Hash alanları
   'signature',
   'digest',
   'showdcchash',
   'querycampainghash',
   'querydcchash',
   'girogateparamreqhash',
-  'rrextensions',
+  'checkifmandatoryhash',
   'hashparams',
   'hashparamsval',
+  // Banka validation / kontrol flag'leri
+  'checkifmandatory',
+  'checkifmandatorystate',
+  'mandatoryfieldcontrol',
+  // Gateway UI / meta alanları
+  'pageparam',
+  'callbackcall',
+  'errcode',
+  // RReq uzantıları
+  'rrextensions',
 ])
 
 function parseNestpayCallbackExtraExcludeFromEnv(): Set<string> {
