@@ -3,11 +3,12 @@
  * Supabase içermez; ödeme route handler’ları bu modülü yüklerek ağır istemci zincirinden kaçınır.
  */
 
-/** Onay / hata sayfası `bookingId` query param güvenliği (ham metin). */
+/** Onay / hata sayfası `bookingId` query param güvenliği (ham metin).
+ *  UUID formatı (tire içerir) ve alfanümerik/tire/nokta/alt çizgi değerler kabul edilir. */
 export function isSafePaytenOrderLookupToken(value: string): boolean {
   const t = value.trim()
   if (t.length < 1 || t.length > 80) return false
-  return /^[A-Za-z0-9_.-]+$/.test(t)
+  return /^[A-Za-z0-9_.\-]+$/.test(t)
 }
 
 /**
