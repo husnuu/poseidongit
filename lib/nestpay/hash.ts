@@ -371,20 +371,33 @@ export function verifyNestpayCallbackPostHash(
   storeKey: string,
   incomingHashCandidate: string
 ): boolean {
-  const { includedKeys, plaintext } = buildNestpayCallbackPostHashPlaintextParts(record, storeKey)
+  const { includedKeys, excludedKeys, plaintext } = buildNestpayCallbackPostHashPlaintextParts(record, storeKey)
   const expected = hashVer3PlaintextToBase64(plaintext)
   const ok = secureB64StringEquals(expected, incomingHashCandidate.trim())
 
-  const logDetails =
+  const isDebug =
     process.env.PAYMENT_DEBUG === '1' ||
     process.env.PAYMENT_DEBUG === 'true' ||
     process.env.NODE_ENV !== 'production'
+
   console.info('[nestpay:hash][callback] verify', {
     includedKeyCount: includedKeys.length,
+    excludedKeyCount: excludedKeys.length,
     plaintextUtf8Length: Buffer.byteLength(plaintext, 'utf8'),
     result: ok ? 'MATCH' : 'MISMATCH',
-    ...(logDetails ? { sortedKeys: includedKeys } : {}),
+    ...(isDebug ? { sortedKeys: includedKeys, excludedKeys } : {}),
   })
+
+  if (isDebug && !ok) {
+    // Her key ve kaçışlı değeri ayrı ayrı logla — hangi değerlerin platntexte girdiğini görmek için.
+    const parts = includedKeys.map((k) => ({
+      key: k,
+      rawLen: (record[k] ?? '').length,
+      escapedVal: escapePaytenHashValue(record[k] ?? ''),
+    }))
+    console.info('[nestpay:hash][callback] MISMATCH — key/value detayı:', parts)
+    console.info('[nestpay:hash][callback] MISMATCH — tam plaintext:', plaintext)
+  }
 
   return ok
 }
