@@ -469,6 +469,7 @@ export function verifyNestpayCallbackHash(payload: Record<string, string>, store
   if (isPaymentDebugLoggingEnabled()) {
     console.warn('[payment] HASH verify: callback — tam alan imzası eşleşmedi', {
       storeKeyLengths: storeCandidates.map((s) => s.length),
+      storeKeyHints: storeCandidates.map((s) => `${s.slice(0, 3)}...${s.slice(-3)}`),
       incomingHashLengths: incomingCandidates.map((s) => s.length),
     })
   }
