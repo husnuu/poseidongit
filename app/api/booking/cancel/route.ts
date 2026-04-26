@@ -71,11 +71,18 @@ export async function POST(request: NextRequest) {
       ? (tourDateTime.getTime() - Date.now()) / (1000 * 60 * 60)
       : null
 
-    if (typeof hoursUntilTour !== 'number' || hoursUntilTour <= 24) {
+    // Son iptal vakti: tur gününden bir önceki gün saat 11:00 TR saatiyle (UTC+3).
+    const cancelDeadline = dateStr
+      ? new Date(new Date(`${dateStr}T00:00:00+03:00`).getTime() - 13 * 60 * 60 * 1000)
+      : null
+    const cancellationAllowed = cancelDeadline != null && Date.now() < cancelDeadline.getTime()
+
+    if (!cancellationAllowed) {
       return NextResponse.json(
         {
           error:
-            'Tura 24 saatten az kaldığı için iptal yapılamaz. Lütfen bizimle iletişime geçin.',
+            'Tur gününden bir önceki gün saat 11:00\'den sonra iptal yapılamaz. Değişiklik için lütfen bizimle iletişime geçin.',
+          hoursUntilTour: hoursUntilTour != null ? Math.round(hoursUntilTour) : null,
         },
         { status: 400 }
       )

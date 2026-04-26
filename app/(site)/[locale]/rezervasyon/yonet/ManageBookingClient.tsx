@@ -665,9 +665,9 @@ export default function ManageBookingClient({
                 Rezervasyonu İptal Et
               </button>
             )}
-            {!booking.canCancel && booking.hoursUntilTour != null && booking.hoursUntilTour <= 24 && (
+            {!booking.canCancel && (
               <p className="text-sm text-zinc-500">
-                Tura 24 saatten az kaldığı için iptal işlemi yapılamaz. Değişiklik için lütfen bizimle iletişime geçin.
+                Tur gününden bir önceki gün saat 11:00&apos;den sonra iptal işlemi yapılamaz. Değişiklik için lütfen bizimle iletişime geçin.
               </p>
             )}
           </div>

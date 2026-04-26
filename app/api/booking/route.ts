@@ -92,7 +92,14 @@ export async function GET(request: NextRequest) {
     const hoursUntilTour = tourDateTime
       ? (tourDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
       : null
-    const canCancel = typeof hoursUntilTour === 'number' && hoursUntilTour > 24
+
+    // Son iptal vakti: tur gününden bir önceki gün saat 11:00 (Türkiye saati = UTC+3).
+    // Türkiye 2016'dan beri kalıcı UTC+3 — yaz/kış saati değişikliği yok.
+    // tourMidnightTR: tur günü 00:00 TR saatiyle. - 13 saat = önceki gün 11:00 TR.
+    const cancelDeadline = dateStr
+      ? new Date(new Date(`${dateStr}T00:00:00+03:00`).getTime() - 13 * 60 * 60 * 1000)
+      : null
+    const canCancel = cancelDeadline != null && now < cancelDeadline
 
     const classId = String(row.class_id ?? '')
     const firstClassLocas = firstClassLocasFromRow(row)
