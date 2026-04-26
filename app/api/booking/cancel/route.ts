@@ -7,6 +7,7 @@ import { rateLimitResponse } from '@/lib/rateLimit'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { smartRefund, parseProcReturnCodeMessage } from '@/lib/nestpay-refund'
+import { sendBookingCancelledEmails } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -138,6 +139,32 @@ export async function POST(request: NextRequest) {
     if (updateError) {
       throw new Error(`Supabase booking cancel failed: ${updateError.message}`)
     }
+
+    // İptal bildirimi: müşteri + admin
+    void sendBookingCancelledEmails({
+      bookingId,
+      tourTitle: String(data.tour_title ?? ''),
+      date: String(data.date ?? ''),
+      time: data.time ?? null,
+      customer: {
+        firstName: String(data.customer_first_name ?? ''),
+        lastName: String(data.customer_last_name ?? ''),
+        email: String(data.customer_email ?? ''),
+        phone: data.customer_phone ?? null,
+      },
+      counts: {
+        adult: Number(data.adult_count ?? 0),
+        child: Number(data.child_count ?? 0),
+        infant: Number(data.infant_count ?? 0),
+      },
+      totalPrice: Number(data.total_price ?? 0),
+      currency: String(data.currency ?? 'TRY'),
+      cancelledBy: 'customer',
+      refundOk: isPaidOnline ? refundOk : undefined,
+      refundStatus: isPaidOnline ? refundStatus : null,
+      refundAmount: isPaidOnline && refundOk ? Number(data.total_price ?? 0) : null,
+      refundErrMsg: isPaidOnline && !refundOk ? refundErrMsg : null,
+    })
 
     if (isPaidOnline && refundOk) {
       return NextResponse.json({

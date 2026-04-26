@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { mapBookingRowToApi, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { runBookingPaidEmailSideEffects } from '@/lib/services/bookingPaidEmailSideEffects'
 import { smartRefund, parseProcReturnCodeMessage } from '@/lib/nestpay-refund'
+import { sendBookingCancelledEmails } from '@/lib/email'
 import { getAdminEmail } from '@/lib/adminAuth'
 import { extractAdminSessionTokenFromRequest, verifyAdminSessionToken } from '@/lib/adminSession'
 
@@ -236,6 +237,36 @@ export async function PATCH(request: NextRequest) {
 
     if (status === 'paid') {
       await runBookingPaidEmailSideEffects(bookingId, data)
+    }
+
+    if (status === 'cancelled' && data.status !== 'cancelled') {
+      const adminEmail = refundAttempted
+        ? (await resolveAdminEmailFromRequest(request))
+        : await resolveAdminEmailFromRequest(request)
+      void sendBookingCancelledEmails({
+        bookingId,
+        tourTitle: String(data.tour_title ?? ''),
+        date: String(data.date ?? ''),
+        time: data.time ?? null,
+        customer: {
+          firstName: String(data.customer_first_name ?? ''),
+          lastName: String(data.customer_last_name ?? ''),
+          email: String(data.customer_email ?? ''),
+          phone: data.customer_phone ?? null,
+        },
+        counts: {
+          adult: Number(data.adult_count ?? 0),
+          child: Number(data.child_count ?? 0),
+          infant: Number(data.infant_count ?? 0),
+        },
+        totalPrice: Number(data.total_price ?? 0),
+        currency: String(data.currency ?? 'TRY'),
+        cancelledBy: adminEmail,
+        refundOk: refundAttempted ? refundOk : undefined,
+        refundStatus: refundAttempted ? refundStatus : null,
+        refundAmount: refundAttempted && refundOk ? Number(data.total_price ?? 0) : null,
+        refundErrMsg: refundAttempted && !refundOk ? refundErrMsg : null,
+      })
     }
 
     return NextResponse.json({

@@ -916,6 +916,187 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
   }
 }
 
+// ─── İptal e-postaları ────────────────────────────────────────────────────────
+
+export type CancellationEmailOpts = {
+  bookingId: string
+  tourTitle: string
+  date: string
+  time?: string | null
+  customer: { firstName: string; lastName: string; email: string; phone?: string | null }
+  counts: { adult: number; child: number; infant: number }
+  totalPrice: number
+  currency: string
+  /** 'customer' | 'admin' | admin e-posta adresi */
+  cancelledBy?: string
+  refundOk?: boolean
+  refundStatus?: string | null
+  refundAmount?: number | null
+  refundErrMsg?: string | null
+  siteLocale?: SiteLocale
+}
+
+function buildCancellationCustomerHtml(o: CancellationEmailOpts): string {
+  const siteName = getSiteName() || 'Booking'
+  const supportPhone = process.env.SUPPORT_PHONE?.trim() || '+90 533 417 36 56'
+  const supportEmail = process.env.SUPPORT_EMAIL?.trim() || 'turkeycesme@hotmail.com'
+  const customerName = `${o.customer.firstName} ${o.customer.lastName}`.trim() || '—'
+  const dateFormatted = formatDate(o.date)
+
+  let refundLine = ''
+  if (o.refundOk) {
+    refundLine = `<div style="margin:20px 0;padding:16px 20px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;">
+      <p style="margin:0;font-size:14px;font-weight:700;color:#065f46;">İade Bilgisi</p>
+      <p style="margin:8px 0 0;font-size:14px;color:#047857;">
+        ${o.refundAmount != null ? `${o.refundAmount} ${o.currency} tutarındaki ödemeniz iade edilecektir.` : 'Ödemeniz iade edilecektir.'}
+        İade süreciniz bankanıza göre 3–10 iş günü içinde tamamlanır.
+      </p>
+    </div>`
+  } else if (o.refundStatus === 'refund_failed' && o.refundErrMsg) {
+    refundLine = `<div style="margin:20px 0;padding:16px 20px;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;">
+      <p style="margin:0;font-size:14px;font-weight:700;color:#991b1b;">İade Bilgisi</p>
+      <p style="margin:8px 0 0;font-size:14px;color:#7f1d1d;">${escapeHtml(o.refundErrMsg)}</p>
+      <p style="margin:8px 0 0;font-size:13px;color:#991b1b;">Daha fazla yardım için bize ulaşın.</p>
+    </div>`
+  }
+
+  return `<!DOCTYPE html>
+<html lang="tr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rezervasyon İptal</title></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f5f5f5;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;">
+        <tr><td style="background:#0c1929;padding:28px 24px;text-align:center;border-radius:12px 12px 0 0;">
+          <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">${escapeHtml(siteName)}</h1>
+        </td></tr>
+        <tr><td style="background:#fff;padding:32px 24px;">
+          <h2 style="margin:0 0 8px;font-size:20px;color:#1a1a1a;">Rezervasyonunuz İptal Edildi</h2>
+          <p style="margin:0 0 20px;color:#6b7280;font-size:15px;">Sayın ${escapeHtml(customerName)}, rezervasyonunuz başarıyla iptal edilmiştir.</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;">
+            <tr><td colspan="2" style="padding:16px 20px 0;font-size:15px;font-weight:700;color:#1a1a1a;">Rezervasyon Detayları</td></tr>
+            <tr>
+              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;width:130px;">Rezervasyon No</td>
+              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#0c1929;font-size:13px;font-weight:600;font-family:monospace;">${escapeHtml(o.bookingId)}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;">Tur</td>
+              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#1a1a1a;font-size:13px;">${escapeHtml(o.tourTitle)}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;">Tarih</td>
+              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#1a1a1a;font-size:13px;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;">Misafirler</td>
+              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#1a1a1a;font-size:13px;">${o.counts.adult} Yetişkin${o.counts.child ? `, ${o.counts.child} Çocuk` : ''}${o.counts.infant ? `, ${o.counts.infant} Bebek` : ''}</td>
+            </tr>
+            <tr>
+              <td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:#6b7280;font-size:13px;">Toplam</td>
+              <td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:#0c1929;font-size:16px;font-weight:700;">${o.totalPrice} ${escapeHtml(o.currency)}</td>
+            </tr>
+          </table>
+          ${refundLine}
+          <div style="margin:24px 0 0;padding:16px 20px;background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;">
+            <p style="margin:0;font-size:13px;font-weight:700;color:#1a1a1a;">Yardım ve iletişim</p>
+            <p style="margin:6px 0 0;font-size:14px;color:#6b7280;">${escapeHtml(supportPhone)}</p>
+            <p style="margin:4px 0 0;font-size:14px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:#0c1929;text-decoration:none;">${escapeHtml(supportEmail)}</a></p>
+          </div>
+        </td></tr>
+        <tr><td style="background:#0c1929;padding:20px 24px;text-align:center;border-radius:0 0 12px 12px;">
+          <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.8);">&copy; ${new Date().getFullYear()} ${escapeHtml(siteName)}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+}
+
+function buildCancellationAdminHtml(o: CancellationEmailOpts): string {
+  const dateFormatted = formatDate(o.date)
+  const timeLine = o.time ? `<p style="margin:0 0 8px;"><strong>Saat:</strong> ${escapeHtml(o.time)}</p>` : ''
+  const cancelledByLabel = o.cancelledBy === 'customer'
+    ? 'Müşteri tarafından iptal edildi'
+    : o.cancelledBy === 'admin'
+      ? 'Admin tarafından iptal edildi'
+      : o.cancelledBy
+        ? `Admin tarafından iptal edildi (${escapeHtml(o.cancelledBy)})`
+        : 'İptal edildi'
+
+  let refundLine = ''
+  if (o.refundOk) {
+    refundLine = `<p style="margin:0 0 8px;color:#047857;"><strong>İade:</strong> ✅ Başarılı${o.refundAmount != null ? ` — ${o.refundAmount} ${o.currency}` : ''}</p>`
+  } else if (o.refundStatus === 'refund_failed') {
+    refundLine = `<p style="margin:0 0 8px;color:#dc2626;"><strong>İade:</strong> ❌ Başarısız${o.refundErrMsg ? ` — ${escapeHtml(o.refundErrMsg)}` : ''}</p>`
+  } else if (!o.refundStatus) {
+    refundLine = `<p style="margin:0 0 8px;color:#6b7280;"><strong>İade:</strong> Uygulanamaz (online ödeme yok)</p>`
+  }
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Rezervasyon İptal Bildirimi</title></head>
+<body style="font-family:system-ui,sans-serif;line-height:1.5;color:#333;max-width:560px;margin:0 auto;padding:24px;">
+  <h1 style="color:#991b1b;">Rezervasyon İptal Edildi</h1>
+  <p style="color:#6b7280;">${escapeHtml(cancelledByLabel)}</p>
+  <div style="background:#fef2f2;border-radius:8px;padding:16px;margin:20px 0;border:1px solid #fecaca;">
+    <p style="margin:0 0 8px;"><strong>Rezervasyon No:</strong> ${escapeHtml(o.bookingId)}</p>
+    <p style="margin:0 0 8px;"><strong>Tur:</strong> ${escapeHtml(o.tourTitle)}</p>
+    <p style="margin:0 0 8px;"><strong>Tarih:</strong> ${escapeHtml(dateFormatted)}</p>
+    ${timeLine}
+    <p style="margin:0 0 8px;"><strong>Misafirler:</strong> ${o.counts.adult} Yetişkin${o.counts.child ? `, ${o.counts.child} Çocuk` : ''}${o.counts.infant ? `, ${o.counts.infant} Bebek` : ''}</p>
+    <p style="margin:0 0 8px;"><strong>Toplam:</strong> ${o.totalPrice} ${escapeHtml(o.currency)}</p>
+    <hr style="border:none;border-top:1px solid #fecaca;margin:12px 0;">
+    <p style="margin:0 0 8px;"><strong>Müşteri:</strong> ${escapeHtml(o.customer.firstName)} ${escapeHtml(o.customer.lastName)}</p>
+    <p style="margin:0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(o.customer.email)}</p>
+    <p style="margin:0 0 8px;"><strong>Telefon:</strong> ${escapeHtml(o.customer.phone || '—')}</p>
+    <hr style="border:none;border-top:1px solid #fecaca;margin:12px 0;">
+    ${refundLine}
+  </div>
+</body>
+</html>`
+}
+
+/**
+ * İptal sonrası müşteri ve admin'e bildirim e-postası gönderir.
+ * RESEND_API_KEY yoksa sessizce atlar.
+ */
+export async function sendBookingCancelledEmails(opts: CancellationEmailOpts): Promise<void> {
+  const resend = getResend()
+  if (!resend) {
+    console.warn('[email] İptal e-postası gönderilmedi: RESEND_API_KEY tanımlı değil.')
+    return
+  }
+  const from = getFrom()
+  const siteName = getSiteName() || 'Booking'
+
+  const [customerResult, adminResult] = await Promise.allSettled([
+    resend.emails.send({
+      from,
+      to: [opts.customer.email],
+      subject: `Rezervasyonunuz iptal edildi — ${escapeHtml(opts.tourTitle)}`,
+      html: buildCancellationCustomerHtml(opts),
+    }),
+    process.env.ADMIN_EMAIL?.trim()
+      ? resend.emails.send({
+          from,
+          to: [process.env.ADMIN_EMAIL.trim()],
+          subject: `İptal bildirimi: ${opts.tourTitle} – ${opts.date}`,
+          html: buildCancellationAdminHtml(opts),
+        })
+      : Promise.resolve({ data: null, error: null }),
+  ])
+
+  if (customerResult.status === 'fulfilled' && customerResult.value.error) {
+    console.error('[email] İptal müşteri e-postası gönderilemedi:', opts.bookingId, customerResult.value.error)
+  }
+  if (adminResult.status === 'fulfilled' && adminResult.value.error) {
+    console.error('[email] İptal admin e-postası gönderilemedi:', opts.bookingId, adminResult.value.error)
+  }
+
+  void siteName
+}
+
 export interface ContactFormPayload {
   name: string
   groupSize: number
