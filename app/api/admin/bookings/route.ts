@@ -203,7 +203,7 @@ export async function PATCH(request: NextRequest) {
       refundAttempted = true
       const amount = Number(data.total_price ?? 0)
       const adminEmail = await resolveAdminEmailFromRequest(request)
-      const result = await smartRefund(bookingId, amount, data.paid_at)
+      const result = await smartRefund({ orderId: bookingId, amount, paidAt: data.paid_at })
 
       refundOk = result.ok
       refundStatus = result.ok ? 'refunded' : 'refund_failed'

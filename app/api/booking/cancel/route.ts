@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     if (isPaidOnline) {
       const amount = Number(data.total_price ?? 0)
-      const refundResult = await smartRefund(bookingId, amount, data.paid_at)
+      const refundResult = await smartRefund({ orderId: bookingId, amount, paidAt: data.paid_at })
 
       refundOk = refundResult.ok
       refundStatus = refundResult.ok ? 'refunded' : 'refund_failed'

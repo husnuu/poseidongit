@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     const adminEmail = await resolveAdminEmail(request)
 
-    const result = await smartRefund(bookingId, refundAmountRaw, booking.paid_at)
+    const result = await smartRefund({ orderId: bookingId, amount: refundAmountRaw, paidAt: booking.paid_at })
 
     const isPartial = refundAmountRaw < originalAmount
     const refundStatus = result.ok

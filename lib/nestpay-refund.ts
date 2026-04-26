@@ -1,30 +1,19 @@
 /**
  * İşbankası NestPay — İptal (Void) ve İade (Credit) API entegrasyonu.
  *
- * XML POST → https://entegrasyon.asseco-see.com.tr/fim/api (test)
- *           → https://spos.isbank.com.tr/fim/api          (prod)
- *
- * Env: NESTPAY_API_USER, NESTPAY_API_PASSWORD
- *   ClientId: NESTPAY_API_CLIENT_ID (önce) → NESTPAY_CLIENT_ID (yedek) →
- *             NESTPAY_API_USER'dan otomatik türetme ([sayı]api → sayı kısmı)
- * Opsiyonel: NESTPAY_API_URL (otomatik algılanmazsa)
+ * API Post Adresi: NESTPAY_API_URL (örn. https://istest.asseco-see.com.tr/fim/api)
+ * ClientId       : NESTPAY_CLIENT_ID (Üye İşyeri / Mağaza Numarası)
+ * Auth           : NESTPAY_API_USER + NESTPAY_API_PASSWORD
  */
 
-export type NestpayApiResponse = {
-  ok: boolean
-  response?: string
-  procReturnCode?: string
-  transId?: string
-  orderId?: string
-  groupId?: string
-  authCode?: string
-  hostRefNum?: string
-  errMsg?: string
-  raw?: string
-}
+import { XMLParser } from 'fast-xml-parser'
 
-export type SmartRefundResult = NestpayApiResponse & {
-  refundType?: 'void' | 'credit'
+// ─── Config ───────────────────────────────────────────────────────────────────
+
+function requireEnv(key: string): string {
+  const val = process.env[key]?.trim()
+  if (!val) throw new Error(`${key} env var eksik`)
+  return val
 }
 
 type RefundConfig = {
@@ -35,43 +24,27 @@ type RefundConfig = {
 }
 
 function loadRefundConfig(): RefundConfig {
-  const apiUser = process.env.NESTPAY_API_USER?.trim()
-  const apiPassword = process.env.NESTPAY_API_PASSWORD?.trim()
-
-  if (!apiUser) throw new Error('NESTPAY_API_USER env var eksik')
-  if (!apiPassword) throw new Error('NESTPAY_API_PASSWORD env var eksik')
-
-  // ClientId öncelik sırası:
-  //   1. NESTPAY_API_CLIENT_ID (açıkça set edilmişse)
-  //   2. NESTPAY_CLIENT_ID (3D gateway ile aynıysa)
-  //   3. API user'ın baştaki sayı kısmı: "700703152165api" → "700703152165"
-  let clientId =
-    process.env.NESTPAY_API_CLIENT_ID?.trim() ||
-    process.env.NESTPAY_CLIENT_ID?.trim() ||
-    apiUser.replace(/api$/i, '')
-
-  if (!clientId) throw new Error('ClientId çözümlenemedi; NESTPAY_API_CLIENT_ID veya NESTPAY_CLIENT_ID set edin')
-
-  let apiUrl = process.env.NESTPAY_API_URL?.trim()
-  if (!apiUrl) {
-    const gatewayUrl = process.env.NESTPAY_GATEWAY_URL ?? ''
-    if (gatewayUrl.includes('istest') || gatewayUrl.includes('asseco-see')) {
-      apiUrl = 'https://entegrasyon.asseco-see.com.tr/fim/api'
-    } else {
-      apiUrl = 'https://spos.isbank.com.tr/fim/api'
-    }
+  const config: RefundConfig = {
+    apiUrl: requireEnv('NESTPAY_API_URL'),
+    apiUser: requireEnv('NESTPAY_API_USER'),
+    apiPassword: requireEnv('NESTPAY_API_PASSWORD'),
+    clientId: requireEnv('NESTPAY_CLIENT_ID'),
   }
-
   if (process.env.PAYMENT_DEBUG === '1') {
-    console.info('[nestpay-refund] config', { apiUrl, apiUser, clientId })
+    console.info('[nestpay-refund] config', {
+      apiUrl: config.apiUrl,
+      apiUser: config.apiUser,
+      clientId: config.clientId,
+    })
   }
-
-  return { apiUrl, apiUser, apiPassword, clientId }
+  return config
 }
 
-/** XML özel karakterlerini kaçırır. */
-function xmlEscape(value: string): string {
-  return value
+// ─── XML helpers ──────────────────────────────────────────────────────────────
+
+/** 5 özel karakteri XML escape eder. */
+function xmlEsc(v: string | number): string {
+  return String(v)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -79,74 +52,176 @@ function xmlEscape(value: string): string {
     .replace(/'/g, '&apos;')
 }
 
-function buildVoidXml(config: RefundConfig, oid: string): string {
-  return `<?xml version="1.0" encoding="utf-8"?>\n<CC5Request>\n  <Name>${xmlEscape(config.apiUser)}</Name>\n  <Password>${xmlEscape(config.apiPassword)}</Password>\n  <ClientId>${xmlEscape(config.clientId)}</ClientId>\n  <OrderId>${xmlEscape(oid)}</OrderId>\n  <Type>Void</Type>\n</CC5Request>`
+type BuildParams = {
+  type: 'Void' | 'Credit'
+  orderId?: string
+  transId?: string
+  /** Sadece kısmi iade için gönderilir. Tam iade veya Void'de YOK. */
+  total?: number
 }
 
-function buildCreditXml(config: RefundConfig, oid: string, amount: number): string {
-  return `<?xml version="1.0" encoding="utf-8"?>\n<CC5Request>\n  <Name>${xmlEscape(config.apiUser)}</Name>\n  <Password>${xmlEscape(config.apiPassword)}</Password>\n  <ClientId>${xmlEscape(config.clientId)}</ClientId>\n  <OrderId>${xmlEscape(oid)}</OrderId>\n  <Type>Credit</Type>\n  <Total>${xmlEscape(amount.toFixed(2))}</Total>\n</CC5Request>`
+/** CC5Request XML body üretir. Currency alanı gönderilmez (banka orijinalden alır). */
+function buildRequestXml(cfg: RefundConfig, params: BuildParams): string {
+  const lines: string[] = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<CC5Request>',
+    `  <Name>${xmlEsc(cfg.apiUser)}</Name>`,
+    `  <Password>${xmlEsc(cfg.apiPassword)}</Password>`,
+    `  <ClientId>${xmlEsc(cfg.clientId)}</ClientId>`,
+    `  <Type>${params.type}</Type>`,
+  ]
+
+  if (params.orderId) lines.push(`  <OrderId>${xmlEsc(params.orderId)}</OrderId>`)
+  if (params.transId) lines.push(`  <TransId>${xmlEsc(params.transId)}</TransId>`)
+
+  // <Total> SADECE kısmi iade Credit'te gönderilir
+  if (params.type === 'Credit' && params.total != null) {
+    lines.push(`  <Total>${xmlEsc(params.total.toFixed(2))}</Total>`)
+  }
+
+  lines.push('</CC5Request>')
+  return lines.join('\n')
 }
 
-function parseXmlValue(xml: string, tag: string): string {
-  const m = xml.match(new RegExp(`<${tag}>([^<]*)</${tag}>`))
-  return m ? m[1].trim() : ''
+// ─── Response parse ───────────────────────────────────────────────────────────
+
+export type ParsedResponse = {
+  orderId?: string
+  response: string
+  procReturnCode?: string
+  authCode?: string
+  hostRefNum?: string
+  transId?: string
+  errMsg?: string
 }
 
-export function parseXmlResponse(xml: string): NestpayApiResponse {
-  const response = parseXmlValue(xml, 'Response')
-  const procReturnCode = parseXmlValue(xml, 'ProcReturnCode')
-  const errMsg = parseXmlValue(xml, 'ErrMsg')
-  const transId = parseXmlValue(xml, 'TransId')
-  const orderId = parseXmlValue(xml, 'OrderId')
-  const groupId = parseXmlValue(xml, 'GroupId')
-  const authCode = parseXmlValue(xml, 'AuthCode')
-  const hostRefNum = parseXmlValue(xml, 'HostRefNum')
+const xmlParser = new XMLParser({ ignoreAttributes: false, parseTagValue: true })
 
-  const ok = response === 'Approved' && procReturnCode === '00'
-
-  return { ok, response, procReturnCode, errMsg, transId, orderId, groupId, authCode, hostRefNum, raw: xml }
+function parseResponseXml(xml: string): ParsedResponse {
+  try {
+    const doc = xmlParser.parse(xml) as { CC5Response?: Record<string, unknown> }
+    const r = doc?.CC5Response ?? {}
+    const str = (k: string) => (r[k] != null ? String(r[k]).trim() : undefined)
+    return {
+      orderId: str('OrderId'),
+      response: str('Response') ?? '',
+      procReturnCode: str('ProcReturnCode'),
+      authCode: str('AuthCode'),
+      hostRefNum: str('HostRefNum'),
+      transId: str('TransId'),
+      errMsg: str('ErrMsg'),
+    }
+  } catch {
+    // Regex fallback — parse tam başarısız olursa
+    const get = (tag: string) => xml.match(new RegExp(`<${tag}>([^<]*)</${tag}>`))?.[1]?.trim()
+    return {
+      orderId: get('OrderId'),
+      response: get('Response') ?? '',
+      procReturnCode: get('ProcReturnCode'),
+      authCode: get('AuthCode'),
+      hostRefNum: get('HostRefNum'),
+      transId: get('TransId'),
+      errMsg: get('ErrMsg'),
+    }
+  }
 }
 
-async function postXmlRequest(config: RefundConfig, xml: string): Promise<NestpayApiResponse> {
-  const res = await fetch(config.apiUrl, {
+// ─── HTTP POST ────────────────────────────────────────────────────────────────
+
+export type RefundResult = {
+  ok: boolean
+  transId?: string
+  orderId?: string
+  authCode?: string
+  hostRefNum?: string
+  procReturnCode?: string
+  errMsg?: string
+  raw?: string
+}
+
+async function postToNestpay(
+  cfg: RefundConfig,
+  xmlBody: string
+): Promise<RefundResult> {
+  if (process.env.PAYMENT_DEBUG === '1') {
+    console.info('[nestpay-refund] → POST', cfg.apiUrl)
+    console.info('[nestpay-refund] → XML\n', xmlBody)
+  }
+
+  const res = await fetch(cfg.apiUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'text/xml; charset=UTF-8' },
-    body: xml,
+    body: xmlBody,
   })
-  const responseXml = await res.text()
-  return parseXmlResponse(responseXml)
+
+  const raw = await res.text()
+
+  if (process.env.PAYMENT_DEBUG === '1') {
+    console.info('[nestpay-refund] ← HTTP', res.status)
+    console.info('[nestpay-refund] ← XML\n', raw)
+  }
+
+  const parsed = parseResponseXml(raw)
+  const ok = parsed.response === 'Approved' && parsed.procReturnCode === '00'
+
+  return {
+    ok,
+    transId: parsed.transId,
+    orderId: parsed.orderId,
+    authCode: parsed.authCode,
+    hostRefNum: parsed.hostRefNum,
+    procReturnCode: parsed.procReturnCode,
+    errMsg: parsed.errMsg,
+    raw,
+  }
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
+/**
+ * İptal (Void) — aynı gün, gün sonu öncesi.
+ * orderId veya transId'den en az biri gerekli.
+ */
+export async function voidPayment(opts: {
+  orderId?: string
+  transId?: string
+}): Promise<RefundResult> {
+  const cfg = loadRefundConfig()
+  const xml = buildRequestXml(cfg, { type: 'Void', ...opts })
+  return postToNestpay(cfg, xml)
 }
 
 /**
- * İptal (Void) — aynı gün ve gün sonu kapanmadan önce kullanılır.
- * Tutar gönderilmez; tüm satış iptal edilir.
+ * İade (Credit) — gün sonu sonrası.
+ * amount verilmezse tam iade (Total alanı gönderilmez).
+ * amount verilirse kısmi iade (Total alanı gönderilir).
  */
-export async function voidPayment(oid: string): Promise<NestpayApiResponse> {
-  const config = loadRefundConfig()
-  const xml = buildVoidXml(config, oid)
-  return postXmlRequest(config, xml)
+export async function refundPayment(opts: {
+  orderId: string
+  amount?: number
+}): Promise<RefundResult> {
+  const cfg = loadRefundConfig()
+  const xml = buildRequestXml(cfg, {
+    type: 'Credit',
+    orderId: opts.orderId,
+    total: opts.amount,          // undefined ise XML'e eklenmez → tam iade
+  })
+  return postToNestpay(cfg, xml)
 }
 
 /**
- * İade (Credit) — gün sonu kapandıktan sonra veya ertesi gün için kullanılır.
- * Kısmi iade destekler; Currency gönderilmez (banka orijinal işlemden alır).
+ * Akıllı iade: önce Void dener; 1 yıldan eski veya Void başarısız olursa Credit.
  */
-export async function refundPayment(oid: string, amount: number): Promise<NestpayApiResponse> {
-  const config = loadRefundConfig()
-  const xml = buildCreditXml(config, oid, amount)
-  return postXmlRequest(config, xml)
-}
+export type SmartRefundResult = RefundResult & { refundType: 'void' | 'credit' }
 
-/**
- * Akıllı iade: önce Void, başarısız olursa Credit dener.
- * paidAt aynı günse Void'le başlar; komisyon iadesi de yapılır.
- * 1 yıldan eski işlemlerde erken çıkar.
- */
-export async function smartRefund(
-  oid: string,
-  amount: number,
+export async function smartRefund(opts: {
+  orderId: string
+  amount?: number
   paidAt?: string | null
-): Promise<SmartRefundResult> {
+}): Promise<SmartRefundResult> {
+  const { orderId, amount, paidAt } = opts
+
+  // 1 yıldan eski işlem kontrolü
   if (paidAt) {
     const paidDate = new Date(paidAt)
     const oneYearAgo = new Date()
@@ -155,8 +230,7 @@ export async function smartRefund(
       return {
         ok: false,
         procReturnCode: 'PL408',
-        errMsg:
-          'İşlem 1 yıldan eski, otomatik iade yapılamıyor. Manuel iade için bankayla iletişime geçin.',
+        errMsg: 'İşlem 1 yıldan eski, otomatik iade yapılamıyor. Manuel iade için bankayla iletişime geçin.',
         refundType: 'credit',
       }
     }
@@ -167,45 +241,38 @@ export async function smartRefund(
     : false
 
   if (isSameDay) {
-    const voidResult = await voidPayment(oid)
+    console.info('[nestpay-refund] Aynı gün → Void deneniyor', { orderId })
+    const voidResult = await voidPayment({ orderId })
     if (voidResult.ok) return { ...voidResult, refundType: 'void' }
-
-    console.warn('[nestpay-refund] Void başarısız → Credit deneniyor:', voidResult.errMsg)
-    const creditResult = await refundPayment(oid, amount)
-    return { ...creditResult, refundType: 'credit' }
+    console.warn('[nestpay-refund] Void başarısız → Credit deneniyor', voidResult.errMsg)
   }
 
-  const creditResult = await refundPayment(oid, amount)
+  const creditResult = await refundPayment({ orderId, amount })
   return { ...creditResult, refundType: 'credit' }
 }
 
-/**
- * ProcReturnCode'u anlamlı Türkçe mesaja çevirir.
- * Yaygın İşbankası NestPay hata kodlarını kapsar.
- */
+// ─── Hata kodu çevirici ───────────────────────────────────────────────────────
+
 export function parseProcReturnCodeMessage(code: string, errMsg?: string): string {
   const messages: Record<string, string> = {
     '00': 'İşlem başarılı',
     PL009: 'İade tutarı orijinal satış tutarını geçemez',
-    PL408:
-      'İşlem 1 yıldan eski, otomatik iade yapılamıyor. Manuel iade için banka şubesine veya mutabakat birimine başvurun.',
+    PL408: 'İşlem 1 yıldan eski, otomatik iade yapılamıyor. Banka şubesiyle iletişime geçin.',
     PL845: 'İade için banka onayı alınamadı',
-    PL846:
-      'Günlük iade limiti aşıldı. İşyeri bakiyesi yetersiz. İşbankası mutabakat birimini arayın: 02124730606',
-    PL848:
-      'İşlem 1 yıldan eski, otomatik iade yapılamıyor. Müşteriyi banka şubesine yönlendirin.',
+    PL846: 'Günlük iade limiti aşıldı. İşbankası mutabakat birimini arayın: 02124730606',
+    PL848: 'İşlem 1 yıldan eski, müşteriyi banka şubesine yönlendirin.',
   }
 
   if (code in messages) return messages[code]
 
-  const lowerErr = (errMsg ?? '').toLowerCase()
-  if (lowerErr.includes('insuffic') && lowerErr.includes('perm')) {
-    return 'API kullanıcısının yetkisi yetersiz. Banka tarafında IP whitelist kontrolü gerekebilir.'
+  const lower = (errMsg ?? '').toLowerCase()
+  if (lower.includes('insuffic') && lower.includes('perm')) {
+    return 'API yetkisi yetersiz. Banka tarafında IP whitelist kontrolü gerekebilir.'
   }
-  if (lowerErr.includes('currency mismatch')) {
+  if (lower.includes('currency mismatch')) {
     return 'Para birimi uyumsuzluğu. Currency alanı gönderilmiş olabilir.'
   }
-  if (lowerErr.includes('iade edilmeye uygun') || lowerErr.includes('no suitable')) {
+  if (lower.includes('iade edilmeye uygun') || lower.includes('no suitable')) {
     return 'Bu işlem için iade yapılamıyor (gün sonu kapandı veya uygun kayıt bulunamadı).'
   }
 
