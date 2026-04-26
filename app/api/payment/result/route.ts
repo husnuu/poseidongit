@@ -19,7 +19,6 @@ import {
   isPaymentApproved,
   loadNestpayConfig,
 } from '@/lib/nestpay/hash'
-import { writeNestpayDebugLog } from '@/lib/nestpay/debugLogger'
 import {
   getBookingStatusById,
   markBookingPaid,
@@ -74,7 +73,6 @@ export async function POST(request: NextRequest) {
   }
 
   const hashOk = verifyResponseHash(params, config.storeKey)
-  writeNestpayDebugLog('result', oid, params, config.storeKey, hashOk)
   if (!hashOk) {
     console.warn('[payment/result] HASH doğrulama BAŞARISIZ — devam ediliyor (Girogate proxy)', {
       oid,
@@ -88,24 +86,19 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // ── Ödeme onay kontrolü ────────────────────────────────────────────────────
+  // Response=Approved + ProcReturnCode=00 → banka ödemeyi onaylamış
+  const approved = isPaymentApproved(params)
+
   // ── 3D doğrulama kontrolü ──────────────────────────────────────────────────
+  // Ödeme onaylıysa mdStatus eksik/boş olsa bile geçer (banka zaten onayladı).
+  // Ödeme onaylı DEĞİLSE mdStatus'a bakarak 3D doğrulama yapılır.
   const mdStatus = params['mdStatus'] ?? ''
-  const accepted3D = isMdStatusAuthenticated(mdStatus, config.acceptHalf3D)
-  if (!accepted3D) {
+  const accepted3D = approved || isMdStatusAuthenticated(mdStatus, config.acceptHalf3D)
+  if (!approved && !accepted3D) {
     console.warn('[payment/result] 3D doğrulama kabul edilmedi', { oid, mdStatus })
-    try {
-      await markBookingFailed(oid, {
-        errMsg: `3D doğrulama başarısız (mdStatus=${mdStatus})`,
-        rawCallback: params,
-      })
-    } catch (dbErr) {
-      console.error('[payment/result] DB güncelleme hatası (3D fail)', dbErr)
-    }
     return NextResponse.redirect(new URL(`/payment/fail?oid=${encodeURIComponent(oid)}`, request.url))
   }
-
-  // ── Ödeme onay kontrolü ────────────────────────────────────────────────────
-  const approved = isPaymentApproved(params)
 
   if (approved) {
     try {
