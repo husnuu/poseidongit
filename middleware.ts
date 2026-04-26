@@ -54,7 +54,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api') ||
     pathname.startsWith('/payment') ||
     pathname.startsWith('/odeme') ||
-    pathname.startsWith('/rezervasyon') ||
+    pathname.startsWith('/rezervasyon/basarisiz') ||
+    pathname.startsWith('/rezervasyon/onaylandi') ||
     pathname.startsWith('/admin') ||
     pathname.startsWith('/studio') ||
     pathname === '/login' ||

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   applyGtagConsent,
   loadStoredConsent,
@@ -38,20 +38,27 @@ type Props = {
   policyHref: string
 }
 
+const SHOW_DELAY_MS = 3500
+
 export default function CookieConsentBanner({ policyHref }: Props) {
   const [ready, setReady] = useState(false)
   const [showBanner, setShowBanner] = useState(false)
+  const [visible, setVisible] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [draft, setDraft] = useState<CookieConsentPreferences>({
     analytics: false,
     ads: false,
   })
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const persistAndClose = useCallback((prefs: CookieConsentPreferences) => {
     saveConsent(prefs)
     applyGtagConsent(prefs)
-    setShowBanner(false)
-    setSettingsOpen(false)
+    setVisible(false)
+    setTimeout(() => {
+      setShowBanner(false)
+      setSettingsOpen(false)
+    }, 350)
   }, [])
 
   useEffect(() => {
@@ -59,10 +66,15 @@ export default function CookieConsentBanner({ policyHref }: Props) {
     if (stored) {
       applyGtagConsent(stored)
       setShowBanner(false)
+      setReady(true)
     } else {
       setShowBanner(true)
+      setReady(true)
+      timerRef.current = setTimeout(() => setVisible(true), SHOW_DELAY_MS)
     }
-    setReady(true)
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
   }, [])
 
   useEffect(() => {
@@ -102,14 +114,15 @@ export default function CookieConsentBanner({ policyHref }: Props) {
             aria-labelledby="cookie-settings-title"
             aria-modal="true"
           >
-            <h2 id="cookie-settings-title">Çerez ayarları</h2>
+            <h2 id="cookie-settings-title">Çerez Ayarları</h2>
             <p>
-              İsteğe bağlı çerezleri buradan açıp kapatabilirsiniz. Tercihinizi kaydettiğinizde ana
+              İsteğe bağlı çerezleri buradan açıp kapatabilirsiniz. Tercihinizi kaydettiğinizde
               bildirim kapanır.
             </p>
             <div className={styles.row}>
               <div className={styles.rowLabel}>
                 <strong>Analitik</strong>
+                <span>Siteyi nasıl kullandığınızı anlamamıza yardımcı olur.</span>
               </div>
               <Toggle
                 label="Analitik çerezleri aç veya kapat"
@@ -120,6 +133,7 @@ export default function CookieConsentBanner({ policyHref }: Props) {
             <div className={styles.row}>
               <div className={styles.rowLabel}>
                 <strong>Reklam</strong>
+                <span>Size ilgili reklamlar göstermemizi sağlar.</span>
               </div>
               <Toggle
                 label="Reklam çerezlerini aç veya kapat"
@@ -133,7 +147,7 @@ export default function CookieConsentBanner({ policyHref }: Props) {
                 className={`${styles.btn} ${styles.btnPrimary}`}
                 onClick={() => persistAndClose(draft)}
               >
-                Seçimleri kaydet
+                Seçimleri Kaydet
               </button>
               <button
                 type="button"
@@ -147,39 +161,37 @@ export default function CookieConsentBanner({ policyHref }: Props) {
         </>
       ) : null}
 
-      <div className={styles.banner} role="region" aria-label="Çerez tercihleri">
+      <div
+        className={`${styles.banner} ${visible ? styles.bannerVisible : ''}`}
+        role="region"
+        aria-label="Çerez tercihleri"
+      >
         <div className={styles.card}>
-          <div className={styles.cardInner}>
-            <div className={styles.textBlock}>
-              <p>
-                Size daha iyi hizmet sunabilmek için çerezlerden faydalanıyoruz.{' '}
-                <Link href={policyHref} className={styles.policyLink}>
-                  Çerez politikamızı okuyun
-                </Link>
-                .
-              </p>
-            </div>
-            <div className={styles.actionsWrap}>
-              <div className={styles.btnRow}>
-                <button
-                  type="button"
-                  className={styles.btnAccept}
-                  onClick={() => persistAndClose({ analytics: true, ads: true })}
-                >
-                  Hepsini kabul et
-                </button>
-                <button
-                  type="button"
-                  className={styles.btnReject}
-                  onClick={() => persistAndClose({ analytics: false, ads: false })}
-                >
-                  Reddet
-                </button>
-              </div>
-              <button type="button" className={styles.linkSettings} onClick={openSettings}>
-                Çerez ayarları
-              </button>
-            </div>
+          <h3 className={styles.cardTitle}>Gizliliğinize değer veriyoruz</h3>
+          <p className={styles.cardText}>
+            Deneyiminizi iyileştirmek için çerez kullanıyoruz.{' '}
+            <Link href={policyHref} className={styles.policyLink}>
+              Daha Fazla Bilgi
+            </Link>
+          </p>
+          <div className={styles.btnRow}>
+            <button type="button" className={styles.btnCustomize} onClick={openSettings}>
+              Ayarlar
+            </button>
+            <button
+              type="button"
+              className={styles.btnReject}
+              onClick={() => persistAndClose({ analytics: false, ads: false })}
+            >
+              Reddet
+            </button>
+            <button
+              type="button"
+              className={styles.btnAccept}
+              onClick={() => persistAndClose({ analytics: true, ads: true })}
+            >
+              Kabul Et
+            </button>
           </div>
         </div>
       </div>

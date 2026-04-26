@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 import { Inter } from 'next/font/google'
 import { headers } from 'next/headers'
@@ -32,6 +32,12 @@ const metadataBase = safeMetadataBase(getBaseUrl())
 
 const FALLBACK_TITLE = 'Tekne Turu ve Rezervasyon'
 const FALLBACK_DESCRIPTION = 'Tekne turu ve koy turları. Rezervasyon ve özel turlar.'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const siteName = getSiteName()
@@ -94,6 +100,7 @@ export default async function RootLayout({
     <html lang={htmlLang} className={inter.variable}>
       <body
         className={`${inter.className} min-h-screen overflow-x-hidden bg-zinc-50 text-zinc-900 antialiased`}
+        suppressHydrationWarning
       >
         <Suspense fallback={null}>{children}</Suspense>
         <ChunkLoadErrorHandler />
