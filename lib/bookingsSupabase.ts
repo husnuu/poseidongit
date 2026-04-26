@@ -98,6 +98,16 @@ export type SupabaseBookingRow = {
   payment_last_error?: string | null
   /** verified | hash_mismatch */
   payment_verification_status?: string | null
+  /** refunded | partial_refunded | refund_failed | null */
+  refund_status?: string | null
+  refund_amount?: number | null
+  refunded_at?: string | null
+  refund_trans_id?: string | null
+  refund_error?: string | null
+  /** void | credit */
+  refund_type?: string | null
+  refund_reason?: string | null
+  refunded_by?: string | null
 }
 
 export function normalizeDateOnly(date: string): string {
@@ -178,5 +188,13 @@ export function mapBookingRowToApi(row: SupabaseBookingRow): Record<string, unkn
       String(row.payment_verification_status).trim() && {
         paymentVerificationStatus: String(row.payment_verification_status).trim(),
       }),
+    ...(row.refund_status != null && String(row.refund_status).trim() && { refundStatus: String(row.refund_status).trim() }),
+    ...(row.refund_amount != null && { refundAmount: Number(row.refund_amount) }),
+    ...(row.refunded_at != null && String(row.refunded_at).trim() && { refundedAt: String(row.refunded_at).trim() }),
+    ...(row.refund_trans_id != null && String(row.refund_trans_id).trim() && { refundTransId: String(row.refund_trans_id).trim() }),
+    ...(row.refund_error != null && String(row.refund_error).trim() && { refundError: String(row.refund_error).trim() }),
+    ...(row.refund_type != null && String(row.refund_type).trim() && { refundType: String(row.refund_type).trim() }),
+    ...(row.refund_reason != null && String(row.refund_reason).trim() && { refundReason: String(row.refund_reason).trim() }),
+    ...(row.refunded_by != null && String(row.refunded_by).trim() && { refundedBy: String(row.refunded_by).trim() }),
   }
 }

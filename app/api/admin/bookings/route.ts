@@ -6,6 +6,9 @@ import { tourCoversByIdsQuery } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
 import { mapBookingRowToApi, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { runBookingPaidEmailSideEffects } from '@/lib/services/bookingPaidEmailSideEffects'
+import { smartRefund, parseProcReturnCodeMessage } from '@/lib/nestpay-refund'
+import { getAdminEmail } from '@/lib/adminAuth'
+import { extractAdminSessionTokenFromRequest, verifyAdminSessionToken } from '@/lib/adminSession'
 
 const DEFAULT_LIMIT = 50
 const MAX_LIMIT = 500
@@ -138,6 +141,15 @@ export async function GET(request: NextRequest) {
 
 const VALID_STATUSES: BookingStatus[] = ['pending', 'paid', 'failed', 'cancelled']
 
+async function resolveAdminEmailFromRequest(request: Request): Promise<string> {
+  const raw = extractAdminSessionTokenFromRequest(request)
+  if (raw) {
+    const p = await verifyAdminSessionToken(raw)
+    if (p?.email) return p.email as string
+  }
+  return getAdminEmail(request) ?? 'admin'
+}
+
 export async function PATCH(request: NextRequest) {
   if (!(await authorizeAdmin(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -170,6 +182,55 @@ export async function PATCH(request: NextRequest) {
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ ok: true, bookingId })
     }
+
+    // Ödeme iadesi: admin iptal → online ödemeli rezervasyonlarda otomatik smartRefund
+    let refundAttempted = false
+    let refundOk = false
+    let refundStatus: string | null = null
+    let refundTransId: string | null = null
+    let refundErrMsg: string | null = null
+    let refundType: string | null = null
+
+    const isNewCancellation =
+      status === 'cancelled' &&
+      data.status !== 'cancelled' &&
+      data.payment_status === 'paid' &&
+      typeof data.nestpay_trans_id === 'string' &&
+      data.nestpay_trans_id.trim().length > 0 &&
+      data.refund_status == null
+
+    if (isNewCancellation) {
+      refundAttempted = true
+      const amount = Number(data.total_price ?? 0)
+      const adminEmail = await resolveAdminEmailFromRequest(request)
+      const result = await smartRefund(bookingId, amount, data.paid_at)
+
+      refundOk = result.ok
+      refundStatus = result.ok ? 'refunded' : 'refund_failed'
+      refundTransId = result.transId ?? null
+      refundType = result.refundType ?? null
+      refundErrMsg = result.ok
+        ? null
+        : parseProcReturnCodeMessage(result.procReturnCode ?? '', result.errMsg)
+
+      updates.refund_status = refundStatus
+      updates.refunded_at = new Date().toISOString()
+      updates.refund_trans_id = refundTransId
+      updates.refund_error = refundErrMsg
+      updates.refund_type = refundType
+      updates.refund_amount = amount
+      updates.refunded_by = adminEmail
+
+      console.info('[admin/bookings PATCH] refund', {
+        bookingId,
+        refundOk,
+        refundType,
+        transId: refundTransId,
+        procReturnCode: result.procReturnCode,
+        adminEmail,
+      })
+    }
+
     const { error: updateError } = await supabase.from('bookings').update(updates).eq('id', bookingId)
     if (updateError) throw new Error(`Supabase booking update failed: ${updateError.message}`)
 
@@ -177,7 +238,17 @@ export async function PATCH(request: NextRequest) {
       await runBookingPaidEmailSideEffects(bookingId, data)
     }
 
-    return NextResponse.json({ ok: true, bookingId, status })
+    return NextResponse.json({
+      ok: true,
+      bookingId,
+      status,
+      refundAttempted,
+      refundOk,
+      refundStatus,
+      refundTransId,
+      refundErrMsg,
+      refundType,
+    })
   } catch (e) {
     console.error('PATCH /api/admin/bookings error:', e)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

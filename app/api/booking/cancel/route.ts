@@ -1,15 +1,16 @@
 /**
  * POST /api/booking/cancel — Rezervasyon iptali (bookingId + email ile).
+ * Ödeme online (NestPay) ise otomatik iade denemesi yapar.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimitResponse } from '@/lib/rateLimit'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { smartRefund, parseProcReturnCodeMessage } from '@/lib/nestpay-refund'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-/** Rezervasyonu iptal eder; e-posta eşleşir ve tura 24 saatten fazla varsa. */
 export async function POST(request: NextRequest) {
   try {
     const limited = await rateLimitResponse(request, 'bookingAction')
@@ -31,9 +32,10 @@ export async function POST(request: NextRequest) {
 
     const { data: bookingRow, error: fetchError } = await supabase
       .from('bookings')
-      .select('id, status, date, time, customer_email')
+      .select('*')
       .eq('id', bookingId)
       .single()
+
     if (fetchError || !bookingRow) {
       return NextResponse.json(
         { error: 'Rezervasyon bulunamadı' },
@@ -42,6 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = bookingRow as SupabaseBookingRow
+
     if (data.status === 'cancelled') {
       return NextResponse.json({
         ok: true,
@@ -78,12 +81,86 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const isPaidOnline =
+      data.payment_status === 'paid' &&
+      typeof data.nestpay_trans_id === 'string' &&
+      data.nestpay_trans_id.trim().length > 0 &&
+      data.refund_status == null
+
+    let refundOk = false
+    let refundStatus: string | null = null
+    let refundTransId: string | null = null
+    let refundErrMsg: string | null = null
+
+    if (isPaidOnline) {
+      const amount = Number(data.total_price ?? 0)
+      const refundResult = await smartRefund(bookingId, amount, data.paid_at)
+
+      refundOk = refundResult.ok
+      refundStatus = refundResult.ok ? 'refunded' : 'refund_failed'
+      refundTransId = refundResult.transId ?? null
+      refundErrMsg = refundResult.ok
+        ? null
+        : parseProcReturnCodeMessage(refundResult.procReturnCode ?? '', refundResult.errMsg)
+
+      console.info('[booking/cancel] refund attempt', {
+        bookingId,
+        refundOk,
+        refundType: refundResult.refundType,
+        transId: refundTransId,
+        procReturnCode: refundResult.procReturnCode,
+      })
+    }
+
+    const updates: Record<string, unknown> = { status: 'cancelled' }
+    if (isPaidOnline) {
+      updates.refund_status = refundStatus
+      updates.refunded_at = new Date().toISOString()
+      updates.refund_trans_id = refundTransId
+      updates.refund_error = refundErrMsg
+      updates.refund_type = isPaidOnline ? 'credit' : null
+      updates.refund_amount = isPaidOnline ? Number(data.total_price ?? 0) : null
+      updates.refunded_by = 'customer'
+    }
+
     const { error: updateError } = await supabase
       .from('bookings')
-      .update({ status: 'cancelled' })
+      .update(updates)
       .eq('id', bookingId)
+
     if (updateError) {
       throw new Error(`Supabase booking cancel failed: ${updateError.message}`)
+    }
+
+    if (isPaidOnline && refundOk) {
+      return NextResponse.json({
+        ok: true,
+        message: 'Rezervasyonunuz iptal edildi. Ödemeniz en kısa sürede iade edilecektir.',
+        refundOk: true,
+        refundStatus: 'refunded',
+        refundTransId,
+      })
+    }
+
+    if (isPaidOnline && !refundOk) {
+      if (refundErrMsg?.includes('1 yıldan eski')) {
+        return NextResponse.json({
+          ok: true,
+          message:
+            'Rezervasyonunuz iptal edildi. Ödemeniz 1 yıldan eski olduğu için otomatik iade yapılamadı. Lütfen banka şubeniyle iletişime geçin.',
+          refundOk: false,
+          refundStatus: 'refund_failed',
+          refundErrMsg,
+        })
+      }
+      return NextResponse.json({
+        ok: true,
+        message:
+          'Rezervasyonunuz iptal edildi. Ödeme iadesi işlemi başlatılamadı — destek ekibimiz sizinle iletişime geçecektir.',
+        refundOk: false,
+        refundStatus: 'refund_failed',
+        refundErrMsg,
+      })
     }
 
     return NextResponse.json({

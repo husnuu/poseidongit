@@ -43,6 +43,16 @@ export interface AdminBookingRow {
   paidAt?: string | null
   paymentLastError?: string | null
   paymentVerificationStatus?: string | null
+  /** refunded | partial_refunded | refund_failed | null */
+  refundStatus?: string | null
+  refundAmount?: number | null
+  refundedAt?: string | null
+  refundTransId?: string | null
+  refundError?: string | null
+  /** void | credit */
+  refundType?: string | null
+  refundReason?: string | null
+  refundedBy?: string | null
 }
 
 export const MANUAL_SOURCE_LABELS: Record<string, string> = {

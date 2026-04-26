@@ -626,16 +626,71 @@ export default function AdminBookingsPage() {
         setError(data.error || 'Durum güncellenemedi.')
         return
       }
+
+      const refundPatch: Partial<AdminBookingRow> = {}
+      if (data.refundAttempted) {
+        refundPatch.refundStatus = data.refundStatus ?? null
+        refundPatch.refundTransId = data.refundTransId ?? null
+        refundPatch.refundError = data.refundErrMsg ?? null
+        refundPatch.refundType = data.refundType ?? null
+        if (data.refundOk) {
+          refundPatch.refundedAt = new Date().toISOString()
+        }
+      }
+
       setBookings((prev) =>
-        prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
+        prev.map((b) =>
+          b.id === bookingId ? { ...b, status: newStatus, ...refundPatch } : b
+        )
       )
       if (detailBooking?.id === bookingId) {
-        setDetailBooking((prev) => (prev ? { ...prev, status: newStatus } : null))
+        setDetailBooking((prev) =>
+          prev ? { ...prev, status: newStatus, ...refundPatch } : null
+        )
       }
     } catch {
       setError('Bağlantı hatası.')
     } finally {
       setUpdatingId(null)
+    }
+  }
+
+  const handleRefund = async (bookingId: string, amount: number, reason: string) => {
+    try {
+      const res = await fetch(
+        '/api/payment/refund',
+        adminFetchInit(
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bookingId, amount, reason }),
+          },
+          { adminEmail: adminEmailHeader || null }
+        )
+      )
+      const data = await res.json().catch(() => ({}))
+      if (data.refundStatus) {
+        const refundPatch: Partial<AdminBookingRow> = {
+          refundStatus: data.refundStatus,
+          refundTransId: data.transId ?? null,
+          refundError: data.errMsg ?? null,
+          refundType: data.refundType ?? null,
+          refundedAt: data.ok ? new Date().toISOString() : undefined,
+        }
+        setBookings((prev) =>
+          prev.map((b) => (b.id === bookingId ? { ...b, ...refundPatch } : b))
+        )
+        if (detailBooking?.id === bookingId) {
+          setDetailBooking((prev) => (prev ? { ...prev, ...refundPatch } : null))
+        }
+      }
+      return {
+        ok: data.ok ?? false,
+        errMsg: data.errMsg ?? null,
+        refundStatus: data.refundStatus ?? null,
+      }
+    } catch {
+      return { ok: false, errMsg: 'Bağlantı hatası.' }
     }
   }
 
@@ -854,6 +909,7 @@ export default function AdminBookingsPage() {
         getVoucherPdfUrl={getVoucherPdfUrl}
         onStatusChange={handleStatusChange}
         onAdminNoteSave={handleAdminNoteSave}
+        onRefund={handleRefund}
         updating={updatingId !== null}
       />
 

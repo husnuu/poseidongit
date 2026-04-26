@@ -149,7 +149,7 @@ export default function ManageBookingClient({
         return
       }
       setBooking('cancelled')
-      setSuccess('Rezervasyonunuz iptal edildi.')
+      setSuccess(data.message || 'Rezervasyonunuz iptal edildi.')
     } catch {
       setError('Bağlantı hatası.')
     } finally {

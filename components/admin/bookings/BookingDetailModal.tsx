@@ -6,6 +6,12 @@ import { MANUAL_SOURCE_LABELS } from '@/types/adminBookings'
 import { additionalTravelerLabels } from '@/lib/bookingAdditionalTravelers'
 import { extractMealPreferenceCountsFromBookingLike } from '@/lib/mealPreferenceCounts'
 
+const REFUND_STATUS_LABELS: Record<string, string> = {
+  refunded: 'İade edildi',
+  partial_refunded: 'Kısmi iade',
+  refund_failed: 'İade başarısız',
+}
+
 const STATUS_LABELS: Record<BookingStatus, string> = {
   pending: 'Beklemede',
   paid: 'Ödendi',
@@ -21,6 +27,7 @@ interface BookingDetailModalProps {
   getVoucherPdfUrl: (bookingId: string, accessToken?: string | null) => string
   onStatusChange: (bookingId: string, status: BookingStatus) => void
   onAdminNoteSave: (bookingId: string, adminNote: string) => Promise<void>
+  onRefund?: (bookingId: string, amount: number, reason: string) => Promise<{ ok: boolean; errMsg?: string | null; refundStatus?: string | null }>
   updating: boolean
 }
 
@@ -32,13 +39,26 @@ export default function BookingDetailModal({
   getVoucherPdfUrl,
   onStatusChange,
   onAdminNoteSave,
+  onRefund,
   updating,
 }: BookingDetailModalProps) {
   const [adminNote, setAdminNote] = useState(booking?.adminNote ?? '')
   const [savingNote, setSavingNote] = useState(false)
 
+  const [showRefundPanel, setShowRefundPanel] = useState(false)
+  const [refundAmount, setRefundAmount] = useState('')
+  const [refundReason, setRefundReason] = useState('')
+  const [refunding, setRefunding] = useState(false)
+  const [refundMsg, setRefundMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
   useEffect(() => {
-    if (booking) setAdminNote(booking.adminNote ?? '')
+    if (booking) {
+      setAdminNote(booking.adminNote ?? '')
+      setShowRefundPanel(false)
+      setRefundAmount(String(booking.totalPrice ?? ''))
+      setRefundReason('')
+      setRefundMsg(null)
+    }
   }, [booking?.id, booking?.adminNote])
 
   if (!open) return null
@@ -65,6 +85,39 @@ export default function BookingDetailModal({
       setSavingNote(false)
     }
   }
+
+  const handleRefundSubmit = async () => {
+    if (!onRefund || !booking) return
+    const amount = parseFloat(refundAmount)
+    if (isNaN(amount) || amount <= 0) {
+      setRefundMsg({ ok: false, text: 'Geçerli bir tutar girin.' })
+      return
+    }
+    if (amount > booking.totalPrice) {
+      setRefundMsg({ ok: false, text: `İade tutarı (${amount}) orijinal satış tutarını (${booking.totalPrice}) geçemez.` })
+      return
+    }
+    setRefunding(true)
+    setRefundMsg(null)
+    try {
+      const res = await onRefund(booking.id, amount, refundReason)
+      if (res.ok) {
+        setRefundMsg({ ok: true, text: `İade başarılı. TransId: ${res.refundStatus ?? 'refunded'}` })
+        setShowRefundPanel(false)
+      } else {
+        setRefundMsg({ ok: false, text: res.errMsg ?? 'İade başarısız.' })
+      }
+    } finally {
+      setRefunding(false)
+    }
+  }
+
+  const canRefund =
+    !!onRefund &&
+    booking.paymentStatus === 'paid' &&
+    !!booking.nestpayTransId &&
+    booking.refundStatus !== 'refunded' &&
+    booking.refundStatus !== 'partial_refunded'
 
   return (
     <>
@@ -258,6 +311,119 @@ export default function BookingDetailModal({
                     </div>
                   ) : null}
                 </dl>
+              </div>
+            )}
+
+            {/* İade bilgisi */}
+            {booking.refundStatus && (
+              <div className={`rounded-lg border p-3 text-sm ${booking.refundStatus === 'refund_failed' ? 'border-rose-200 bg-rose-50/60' : 'border-teal-100 bg-teal-50/60'}`}>
+                <p className={`text-xs font-medium uppercase mb-2 ${booking.refundStatus === 'refund_failed' ? 'text-rose-900/80' : 'text-teal-900/80'}`}>İade / İptal</p>
+                <dl className="space-y-1 text-zinc-800">
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-zinc-500">Durum</dt>
+                    <dd className="font-medium">{REFUND_STATUS_LABELS[booking.refundStatus] ?? booking.refundStatus}</dd>
+                  </div>
+                  {booking.refundAmount != null && (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-zinc-500">Tutar</dt>
+                      <dd>{booking.refundAmount.toLocaleString('tr-TR')} {booking.currency}</dd>
+                    </div>
+                  )}
+                  {booking.refundType && (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-zinc-500">Yöntem</dt>
+                      <dd className="capitalize">{booking.refundType === 'void' ? 'Void (iptal)' : 'Credit (iade)'}</dd>
+                    </div>
+                  )}
+                  {booking.refundTransId && (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-zinc-500">TransId</dt>
+                      <dd className="font-mono text-xs break-all">{booking.refundTransId}</dd>
+                    </div>
+                  )}
+                  {booking.refundedAt && (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-zinc-500">Tarih</dt>
+                      <dd>{new Date(booking.refundedAt).toLocaleString('tr-TR')}</dd>
+                    </div>
+                  )}
+                  {booking.refundedBy && (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-zinc-500">Yapan</dt>
+                      <dd>{booking.refundedBy}</dd>
+                    </div>
+                  )}
+                  {booking.refundError && (
+                    <div>
+                      <dt className="text-zinc-500">Hata</dt>
+                      <dd className="mt-0.5 text-xs text-rose-800 break-words">{booking.refundError}</dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+            )}
+
+            {/* Manuel iade paneli */}
+            {canRefund && !showRefundPanel && (
+              <button
+                type="button"
+                onClick={() => { setShowRefundPanel(true); setRefundMsg(null) }}
+                className="w-full rounded-lg border-2 border-orange-400 bg-orange-50 px-3 py-2.5 text-sm font-semibold text-orange-800 hover:bg-orange-100"
+              >
+                {booking.refundStatus === 'refund_failed' ? 'İadeyi Tekrar Dene' : 'İade Et'}
+              </button>
+            )}
+
+            {refundMsg && (
+              <div className={`rounded-lg px-3 py-2 text-sm ${refundMsg.ok ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+                {refundMsg.text}
+              </div>
+            )}
+
+            {showRefundPanel && (
+              <div className="rounded-lg border-2 border-orange-300 bg-orange-50 p-4 space-y-3">
+                <p className="text-sm font-semibold text-orange-900">İade İşlemi</p>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 mb-1">
+                    İade tutarı ({booking.currency}) — tam: {booking.totalPrice.toLocaleString('tr-TR')}
+                  </label>
+                  <input
+                    type="number"
+                    min="0.01"
+                    max={booking.totalPrice}
+                    step="0.01"
+                    value={refundAmount}
+                    onChange={(e) => setRefundAmount(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 mb-1">Sebep (isteğe bağlı)</label>
+                  <input
+                    type="text"
+                    value={refundReason}
+                    onChange={(e) => setRefundReason(e.target.value)}
+                    placeholder="Müşteri talebi, hizmet iptali..."
+                    className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleRefundSubmit}
+                    disabled={refunding}
+                    className="flex-1 rounded-lg bg-orange-600 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
+                  >
+                    {refunding ? 'İade yapılıyor…' : 'İadeyi Onayla'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRefundPanel(false)}
+                    className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                  >
+                    İptal
+                  </button>
+                </div>
               </div>
             )}
 

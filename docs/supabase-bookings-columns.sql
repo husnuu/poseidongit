@@ -53,9 +53,22 @@ alter table public.bookings
   add column if not exists payment_last_error text,
   add column if not exists payment_verification_status text;
 
+-- NestPay iptal/iade (Void / Credit) sonrası yazılan alanlar
+alter table public.bookings
+  add column if not exists refund_status text,
+  add column if not exists refund_amount numeric,
+  add column if not exists refunded_at timestamptz,
+  add column if not exists refund_trans_id text,
+  add column if not exists refund_error text,
+  add column if not exists refund_type text,
+  add column if not exists refund_reason text,
+  add column if not exists refunded_by text;
+
 comment on column public.bookings.ui_locale is 'Site language at booking (tr|en|de) — customer emails / PDF';
 comment on column public.bookings.payment_status is 'Ödeme durumu özeti: paid | failed (status ile uyumlu olmalı)';
 comment on column public.bookings.payment_verification_status is 'NestPay HASH: verified | hash_mismatch';
+comment on column public.bookings.refund_status is 'İade durumu: refunded | partial_refunded | refund_failed | null';
+comment on column public.bookings.refund_type is 'İade yöntemi: void | credit';
 
 update public.bookings
 set created_at = now()
