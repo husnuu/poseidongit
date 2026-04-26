@@ -214,14 +214,23 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
           }))
         }
 
-        const summary = data.summary as { tourTitle: string; date: string; className: string; totalPrice: number; currency: string; status: string }
-        const accessToken = typeof data.accessToken === 'string' && data.accessToken.trim() ? data.accessToken.trim() : undefined
-        setBookingResult({
-          bookingId: data.bookingId,
-          accessToken,
-          summary,
+        // Ödeme başlatma
+        const payRes = await fetch('/api/payment/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookingId: data.bookingId }),
         })
-        setSubmitted(true)
+        const payText = await payRes.text()
+        let payData: { action?: string; fields?: Record<string, string>; error?: string } = {}
+        try { payData = payText ? JSON.parse(payText) : {} } catch { /* ignore */ }
+
+        if (!payRes.ok || !payData.action || !payData.fields) {
+          setSubmitError(payData.error ?? 'Ödeme sayfası başlatılamadı. Lütfen tekrar deneyin.')
+          return
+        }
+
+        sessionStorage.setItem('nestpay_payment_init', JSON.stringify({ action: payData.action, fields: payData.fields }))
+        router.push('/payment/redirect')
       } catch {
         setSubmitError(ui.connectionError)
       } finally {
