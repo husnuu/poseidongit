@@ -4,7 +4,9 @@
  * XML POST → https://entegrasyon.asseco-see.com.tr/fim/api (test)
  *           → https://spos.isbank.com.tr/fim/api          (prod)
  *
- * Env: NESTPAY_API_USER, NESTPAY_API_PASSWORD, NESTPAY_CLIENT_ID
+ * Env: NESTPAY_API_USER, NESTPAY_API_PASSWORD
+ *   ClientId: NESTPAY_API_CLIENT_ID (önce) → NESTPAY_CLIENT_ID (yedek) →
+ *             NESTPAY_API_USER'dan otomatik türetme ([sayı]api → sayı kısmı)
  * Opsiyonel: NESTPAY_API_URL (otomatik algılanmazsa)
  */
 
@@ -35,11 +37,20 @@ type RefundConfig = {
 function loadRefundConfig(): RefundConfig {
   const apiUser = process.env.NESTPAY_API_USER?.trim()
   const apiPassword = process.env.NESTPAY_API_PASSWORD?.trim()
-  const clientId = process.env.NESTPAY_CLIENT_ID?.trim()
 
   if (!apiUser) throw new Error('NESTPAY_API_USER env var eksik')
   if (!apiPassword) throw new Error('NESTPAY_API_PASSWORD env var eksik')
-  if (!clientId) throw new Error('NESTPAY_CLIENT_ID env var eksik')
+
+  // ClientId öncelik sırası:
+  //   1. NESTPAY_API_CLIENT_ID (açıkça set edilmişse)
+  //   2. NESTPAY_CLIENT_ID (3D gateway ile aynıysa)
+  //   3. API user'ın baştaki sayı kısmı: "700703152165api" → "700703152165"
+  let clientId =
+    process.env.NESTPAY_API_CLIENT_ID?.trim() ||
+    process.env.NESTPAY_CLIENT_ID?.trim() ||
+    apiUser.replace(/api$/i, '')
+
+  if (!clientId) throw new Error('ClientId çözümlenemedi; NESTPAY_API_CLIENT_ID veya NESTPAY_CLIENT_ID set edin')
 
   let apiUrl = process.env.NESTPAY_API_URL?.trim()
   if (!apiUrl) {
@@ -49,6 +60,10 @@ function loadRefundConfig(): RefundConfig {
     } else {
       apiUrl = 'https://spos.isbank.com.tr/fim/api'
     }
+  }
+
+  if (process.env.PAYMENT_DEBUG === '1') {
+    console.info('[nestpay-refund] config', { apiUrl, apiUser, clientId })
   }
 
   return { apiUrl, apiUser, apiPassword, clientId }
