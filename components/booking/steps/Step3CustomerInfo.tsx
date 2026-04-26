@@ -62,6 +62,10 @@ export default function Step3CustomerInfo({
     const phoneDigits = (c.phone ?? '').replace(/\D/g, '')
     if (!phoneDigits.length) next.phone = v.phoneRequired
     else if (phoneDigits.length < PHONE_MIN_LENGTH) next.phone = v.phoneInvalid
+    // Ana yolcu yemek tercihi — tur menüsü aktifse zorunlu
+    if (isTourMealMenuActive(tour) && !state.mealPreferenceKey?.trim()) {
+      next.mealPreference = v.mealPreference ?? 'Lütfen yemek tercihinizi seçin.'
+    }
     Object.assign(
       next,
       validateAdditionalTravelers(state.additionalTravelers, state.counts, {
@@ -76,7 +80,7 @@ export default function Step3CustomerInfo({
     setErrors(next)
     const valid = Object.keys(next).length === 0
     onValidationChange(valid)
-  }, [state.customer, state.additionalTravelers, state.counts, onValidationChange, tour, ui.validation])
+  }, [state.customer, state.additionalTravelers, state.counts, state.mealPreferenceKey, onValidationChange, tour, ui.validation])
 
   useEffect(() => {
     validate()
