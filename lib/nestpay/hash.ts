@@ -85,6 +85,30 @@ export function generateRequestHash(params: Record<string, string>, storeKey: st
 const RESPONSE_EXCLUDE = new Set(['encoding', 'hash', 'countdown'])
 
 /**
+ * Debug amaçlı: plaintext, dahil/hariç alanlar ve hesaplanan hash'i döner.
+ * Sadece PAYMENT_DEBUG=1 modunda çağrılmalıdır.
+ */
+export function buildPlaintextForDebug(
+  params: Record<string, string>,
+  storeKey: string
+): { plaintext: string; includedKeys: string[]; excludedKeys: string[] } {
+  const includedKeys = Object.keys(params)
+    .filter((k) => !RESPONSE_EXCLUDE.has(k.toLowerCase()))
+    .sort(caseInsensitiveSort)
+  const excludedKeys = Object.keys(params).filter((k) => RESPONSE_EXCLUDE.has(k.toLowerCase()))
+  const plaintext = buildPlaintext(params, storeKey, RESPONSE_EXCLUDE)
+  return { plaintext, includedKeys, excludedKeys }
+}
+
+export function computeHashForDebug(
+  params: Record<string, string>,
+  storeKey: string
+): { plaintext: string; includedKeys: string[]; excludedKeys: string[]; computedHash: string } {
+  const { plaintext, includedKeys, excludedKeys } = buildPlaintextForDebug(params, storeKey)
+  return { plaintext, includedKeys, excludedKeys, computedHash: sha512Base64(plaintext) }
+}
+
+/**
  * Timing-safe base64 string karşılaştırması.
  * Farklı uzunluklarda false döner.
  */

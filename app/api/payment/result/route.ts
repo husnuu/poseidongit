@@ -19,6 +19,7 @@ import {
   isPaymentApproved,
   loadNestpayConfig,
 } from '@/lib/nestpay/hash'
+import { writeNestpayDebugLog } from '@/lib/nestpay/debugLogger'
 import {
   getBookingStatusById,
   markBookingPaid,
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
   }
 
   const hashOk = verifyResponseHash(params, config.storeKey)
+  writeNestpayDebugLog('result', oid, params, config.storeKey, hashOk)
   if (!hashOk) {
     console.warn('[payment/result] HASH doğrulama BAŞARISIZ — devam ediliyor (Girogate proxy)', {
       oid,

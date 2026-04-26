@@ -18,6 +18,7 @@ import {
   isPaymentApproved,
   loadNestpayConfig,
 } from '@/lib/nestpay/hash'
+import { writeNestpayDebugLog } from '@/lib/nestpay/debugLogger'
 import {
   getBookingStatusById,
   markBookingPaid,
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest) {
   }
 
   const hashOk = verifyResponseHash(params, config.storeKey)
+  writeNestpayDebugLog('callback', oid, params, config.storeKey, hashOk)
   if (!hashOk) {
     // Hash doğrulanamadı — ancak ödeme onaylıysa yine de işliyoruz.
     // Girogate gibi proxy'ler kendi alanlarını ekler ve HASH hesabı değişebilir.
