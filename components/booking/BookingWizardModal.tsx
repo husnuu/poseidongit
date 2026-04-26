@@ -302,10 +302,12 @@ export default function BookingWizardModal({
           return
         }
 
+        // Form bankaya submit edildi — tarayıcı sayfayı terk edene kadar overlay göstermek için
+        // setSubmitting(false) ÇAĞIRILMAZ. Bileşen zaten unmount olacak.
         submitNestpayForm(payData.action, payData.fields)
+        return
       } catch {
         setSubmitError(ui.connectionError)
-      } finally {
         setSubmitting(false)
       }
     }
