@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { submitNestpayForm } from '@/lib/nestpay/submitPaymentForm'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
@@ -285,14 +286,22 @@ export default function BookingWizardModal({
         }
 
 
-        const summary = data.summary as { tourTitle: string; date: string; className: string; totalPrice: number; currency: string; status: string }
-        const accessToken = typeof data.accessToken === 'string' && data.accessToken.trim() ? data.accessToken.trim() : undefined
-        setBookingResult({
-          bookingId: data.bookingId,
-          accessToken,
-          summary,
+        // Ödeme başlatma
+        const payRes = await fetch('/api/payment/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookingId: data.bookingId }),
         })
-        setSubmitted(true)
+        const payText = await payRes.text()
+        let payData: { action?: string; fields?: Record<string, string>; error?: string } = {}
+        try { payData = payText ? JSON.parse(payText) : {} } catch { /* ignore */ }
+
+        if (!payRes.ok || !payData.action || !payData.fields) {
+          setSubmitError(payData.error ?? 'Ödeme sayfası başlatılamadı. Lütfen tekrar deneyin.')
+          return
+        }
+
+        submitNestpayForm(payData.action, payData.fields)
       } catch {
         setSubmitError(ui.connectionError)
       } finally {

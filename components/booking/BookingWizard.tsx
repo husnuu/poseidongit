@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { submitNestpayForm } from '@/lib/nestpay/submitPaymentForm'
 import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForBooking } from '@/lib/sanity/bookingTypes'
@@ -229,8 +230,7 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
           return
         }
 
-        sessionStorage.setItem('nestpay_payment_init', JSON.stringify({ action: payData.action, fields: payData.fields }))
-        router.push('/payment/redirect')
+        submitNestpayForm(payData.action, payData.fields)
       } catch {
         setSubmitError(ui.connectionError)
       } finally {
