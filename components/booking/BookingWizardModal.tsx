@@ -20,6 +20,7 @@ import {
   Step4Payment,
 } from './steps'
 import PaymentSuccessPanel from './PaymentSuccessPanel'
+import PaymentLoadingOverlay from './PaymentLoadingOverlay'
 import styles from './booking.module.css'
 
 export interface BookingWizardModalProps {
@@ -331,6 +332,8 @@ export default function BookingWizardModal({
   }
 
   if (!open) return null
+
+  if (submitting) return <PaymentLoadingOverlay />
 
   const modalContent = (
     <div
