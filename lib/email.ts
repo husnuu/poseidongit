@@ -759,7 +759,13 @@ function buildPremiumConfirmationEmailHtml(
           <tr>
             <td style="padding:24px 24px 32px 24px;background-color:${headerFooterBg};border-radius:0 0 12px 12px;">
               <p style="margin:0;font-size:12px;color:#ffffff;text-align:center;font-family:${emailFont};">${getSiteName() || 'Tekne Turları'}</p>
-              <p style="margin:8px 0 0 0;font-size:12px;text-align:center;color:#ffffff;">${escapeHtml(t.footerLinks)}</p>
+              <p style="margin:8px 0 0 0;font-size:12px;text-align:center;color:#ffffff;">
+                <a href="https://cesmetekneturu.net/yasal/gizlilik-politikasi" style="color:#ffffff;text-decoration:underline;" target="_blank">Gizlilik Politikası</a>
+                &nbsp;·&nbsp;
+                <a href="https://cesmetekneturu.net/yasal/iptal-ve-iade-politikasi" style="color:#ffffff;text-decoration:underline;" target="_blank">İptal-İade</a>
+                &nbsp;·&nbsp;
+                <a href="https://cesmetekneturu.net/yasal/guvenlik" style="color:#ffffff;text-decoration:underline;" target="_blank">Güvenlik</a>
+              </p>
               <p style="margin:16px 0 0 0;font-size:11px;color:#ffffff;text-align:center;opacity:0.9;">${escapeHtml(t.footerAuto)}</p>
             </td>
           </tr>

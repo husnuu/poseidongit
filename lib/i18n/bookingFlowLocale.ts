@@ -157,7 +157,7 @@ const TR = {
   bulletTicket: 'Biniş sırasında web sitedeki bilet sayfanızı veya e-posta ekindeki PDF biletinizi göstermeniz yeterlidir.',
   bulletContact: 'Sorularınız için bizimle iletişime geçebilirsiniz.',
   contactTitle: 'İletişim',
-  footerLinks: 'KVKK · İptal-İade · Gizlilik',
+  footerLinks: 'Gizlilik Politikası · İptal-İade · Güvenlik',
   footerAuto: 'Bu e-posta otomatik olarak gönderilmiştir.',
   subjectReceived: 'Rezervasyonunuz alındı',
   subjectPaid: 'Rezervasyonunuz onaylandı',
