@@ -17,6 +17,10 @@
 
 import { createHash, timingSafeEqual, randomBytes } from 'node:crypto'
 
+function sha1Base64(plaintext: string): string {
+  return createHash('sha1').update(plaintext, 'utf8').digest('base64')
+}
+
 // ─── Escape ────────────────────────────────────────────────────────────────────
 
 /** Önce \ → \\, sonra | → \| (PHP str_replace sırası ile aynı). */
@@ -81,23 +85,94 @@ export function generateRequestHash(params: Record<string, string>, storeKey: st
 const RESPONSE_EXCLUDE = new Set(['encoding', 'hash', 'countdown'])
 
 /**
- * Banka yanıtındaki HASH'i timing-safe olarak doğrular.
- * encoding, hash ve countdown parametreleri hariç tutulur.
- * Başarısız ise false döner (fırlatmaz).
+ * Timing-safe base64 string karşılaştırması.
+ * Farklı uzunluklarda false döner.
+ */
+function safeB64Equals(a: string, b: string): boolean {
+  try {
+    const ba = Buffer.from(a, 'base64')
+    const bb = Buffer.from(b, 'base64')
+    if (ba.length !== bb.length) return false
+    return timingSafeEqual(ba, bb)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Hash Ver3 (SHA-512, tüm alanlar hariç encoding/hash/countdown, alfabetik sıralı).
+ * Döküman §2.2: Tüm parametreler alphabetik, '|' ile birleştirilir, sonda storeKey.
+ */
+function verifyHashVer3(params: Record<string, string>, storeKey: string, incoming: string): boolean {
+  const computed = sha512Base64(buildPlaintext(params, storeKey, RESPONSE_EXCLUDE))
+  return safeB64Equals(computed, incoming)
+}
+
+/**
+ * Eski NestPay SHA1 callback hash doğrulaması.
+ * Belirli sıra: clientid + oid + amount + okUrl + failUrl + islemtipi + taksit + rnd + storeKey
+ * Parametre adları büyük/küçük harf duyarsız aranır.
+ */
+function verifyHashSha1Legacy(params: Record<string, string>, storeKey: string, incoming: string): boolean {
+  const get = (...names: string[]): string => {
+    for (const name of names) {
+      const key = Object.keys(params).find((k) => k.toLowerCase() === name.toLowerCase())
+      if (key !== undefined) return params[key] ?? ''
+    }
+    return ''
+  }
+
+  const plain =
+    get('clientid') +
+    get('oid', 'ReturnOid') +
+    get('amount') +
+    get('okUrl', 'okurl') +
+    get('failUrl', 'failurl') +
+    get('islemtipi', 'trantype', 'TranType') +
+    get('taksit', 'Instalment', 'instalment') +
+    get('rnd') +
+    storeKey
+
+  const computed = sha1Base64(plain)
+  return safeB64Equals(computed, incoming)
+}
+
+/**
+ * Banka yanıtındaki HASH'i doğrular.
+ * Önce Hash Ver3 (SHA-512, tüm alanlar) denenir.
+ * Başarısız olursa SHA1 legacy (belirli alan sırası) denenir.
+ * Debug modda hangi yöntemin tuttuğu loglanır.
+ * Her iki yöntem de başarısız olursa false döner.
  */
 export function verifyResponseHash(params: Record<string, string>, storeKey: string): boolean {
   const incoming = (params['HASH'] ?? params['hash'] ?? '').trim()
   if (!incoming) return false
 
-  const computed = sha512Base64(buildPlaintext(params, storeKey, RESPONSE_EXCLUDE))
-  try {
-    const a = Buffer.from(computed, 'base64')
-    const b = Buffer.from(incoming, 'base64')
-    if (a.length !== b.length) return false
-    return timingSafeEqual(a, b)
-  } catch {
-    return false
+  const debug = process.env.PAYMENT_DEBUG === '1' || process.env.NODE_ENV !== 'production'
+
+  const ver3Ok = verifyHashVer3(params, storeKey, incoming)
+  if (ver3Ok) {
+    if (debug) console.info('[nestpay:hash] doğrulama: SHA-512 Ver3 ✓')
+    return true
   }
+
+  const sha1Ok = verifyHashSha1Legacy(params, storeKey, incoming)
+  if (sha1Ok) {
+    if (debug) console.info('[nestpay:hash] doğrulama: SHA1 legacy ✓')
+    return true
+  }
+
+  if (debug) {
+    const ver3Plain = buildPlaintext(params, storeKey, RESPONSE_EXCLUDE)
+    console.warn('[nestpay:hash] doğrulama BAŞARISIZ — her iki yöntem denendi', {
+      incomingLen: incoming.length,
+      ver3PlaintextLen: ver3Plain.length,
+      fieldCount: Object.keys(params).length,
+      storeKeyLen: storeKey.length,
+    })
+  }
+
+  return false
 }
 
 // ─── İş kararı yardımcıları ────────────────────────────────────────────────────

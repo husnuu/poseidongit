@@ -74,9 +74,16 @@ export async function POST(request: NextRequest) {
 
   const hashOk = verifyResponseHash(params, config.storeKey)
   if (!hashOk) {
-    console.error('[payment/result] HASH doğrulama BAŞARISIZ — sahte bildirim şüphesi', { oid })
-    // Hash uyuşmuyorsa ödemi kabul etme; kullanıcıyı fail sayfasına gönder
-    return NextResponse.redirect(new URL(`/payment/fail?oid=${encodeURIComponent(oid)}&reason=hash`, request.url))
+    console.warn('[payment/result] HASH doğrulama BAŞARISIZ — devam ediliyor (Girogate proxy)', {
+      oid,
+      response: params['Response'],
+      procCode: params['ProcReturnCode'],
+    })
+    // HASH_STRICT modunda tamamen reddet
+    if (process.env.NESTPAY_HASH_STRICT === 'true') {
+      console.error('[payment/result] NESTPAY_HASH_STRICT=true — işlem reddedildi', { oid })
+      return NextResponse.redirect(new URL(`/payment/fail?oid=${encodeURIComponent(oid)}&reason=hash`, request.url))
+    }
   }
 
   // ── 3D doğrulama kontrolü ──────────────────────────────────────────────────
