@@ -77,8 +77,18 @@ export default async function PaymentSuccessPage({
         <p className="mt-2 text-center text-sm text-slate-600">
           {status === 'paid' || status === 'confirmed'
             ? 'Ödemeniz başarıyla tamamlandı. İyi yolculuklar dileriz.'
-            : 'Kesin onay ve e-posta bildirimi kısa süre içinde iletilecektir.'}
+            : 'Kesin onay kısa süre içinde tamamlanacaktır.'}
         </p>
+
+        {/* E-posta bildirimi */}
+        <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <span>
+            Rezervasyon detayları ve biletiniz <strong>e-posta olarak yollanmıştır.</strong>
+          </span>
+        </div>
 
         <dl className="mt-6 space-y-3 rounded-xl bg-slate-50/90 px-4 py-4 text-sm">
           <div className="flex justify-between gap-4">
