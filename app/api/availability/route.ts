@@ -10,8 +10,8 @@ import { firstClassLocasFromRow, paxCountFromRow, type SupabaseBookingRow } from
 const TOTAL_FIRST_CLASS_LOCAS = 10
 const FIRST_CLASS_CAPACITY_TOTAL = TOTAL_FIRST_CLASS_LOCAS * 2
 
-/** Statuses that count as "booked". */
-const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
+/** Statuses that count as "booked" — sadece ödeme tamamlananlar kapasiteden düşülür. */
+const ACTIVE_STATUSES = ['paid', 'confirmed']
 
 function normalizeClassKey(classId: string): string {
   const k = classId.toLowerCase().trim()
