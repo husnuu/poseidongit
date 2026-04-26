@@ -135,9 +135,9 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         console.error('[payment/callback] DB güncelleme hatası (paid)', { oid, err })
       }
-    }
-  } else {
-    if (currentStatus === 'pending') {
+      }
+    } else {
+      if (currentStatus === 'pending') {
       const errMsg =
         params['ErrMsg'] ||
         `Response=${params['Response']} Proc=${params['ProcReturnCode']} mdStatus=${mdStatus}`

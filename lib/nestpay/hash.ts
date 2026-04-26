@@ -95,7 +95,7 @@ function safeB64Equals(a: string, b: string): boolean {
     if (ba.length !== bb.length) return false
     return timingSafeEqual(ba, bb)
   } catch {
-    return false
+  return false
   }
 }
 
