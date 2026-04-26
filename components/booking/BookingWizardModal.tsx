@@ -51,6 +51,7 @@ export default function BookingWizardModal({
     summary: { tourTitle: string; date: string; className: string; totalPrice: number; currency: string; status: string }
   } | null>(null)
   const [step3Valid, setStep3Valid] = useState(false)
+  const [step3TermsAccepted, setStep3TermsAccepted] = useState(false)
   /** Rezervasyon başarılı olunca anlık kalan kontenjan = Sanity kapasitesi - (API used + bu). */
   const [optimisticUsed, setOptimisticUsed] = useState<UsedByDateAndClass | null>(null)
   /** Modal her açıldığında güncellenir; useAvailability bu sayede önceki rezervasyonları yeniden çeker. */
@@ -203,13 +204,12 @@ export default function BookingWizardModal({
       hasEnoughCapacityStep2 &&
       (!requiresFirstClassLoca || hasRequiredLocas)
   )
-  const canProceedStep3 = step3Valid
+  const canProceedStep3 = step3Valid && step3TermsAccepted
 
   const handleCta = useCallback(async () => {
     if (state.step === 1 && canProceedStep1) goNext()
     else if (state.step === 2 && canProceedStep2) goNext()
-    else if (state.step === 3 && canProceedStep3) goNext()
-    else if (state.step === 4) {
+    else if (state.step === 3 && canProceedStep3) {
       setSubmitError(null)
       setSubmitting(true)
       const tourId = getTourIdForBooking(tour)
@@ -314,15 +314,13 @@ export default function BookingWizardModal({
     let label: string
     if (state.step === 1) label = ui.continue
     else if (state.step === 2) label = ui.continue
-    else if (state.step === 3) label = ui.toPayment
-    else if (state.step === 4 && submitting) label = ui.processing
-    else label = ui.payAria
+    else if (submitting) label = ui.processing
+    else label = ui.toPayment
 
     let disabled: boolean
     if (state.step === 1) disabled = !canProceedStep1
     else if (state.step === 2) disabled = !canProceedStep2
-    else if (state.step === 3) disabled = !canProceedStep3
-    else if (state.step === 4) disabled = submitting
+    else if (state.step === 3) disabled = !canProceedStep3 || submitting
     else disabled = false
 
     return { ctaLabel: label, ctaDisabled: disabled }
@@ -368,11 +366,11 @@ export default function BookingWizardModal({
           role="progressbar"
           aria-valuenow={state.step}
           aria-valuemin={1}
-          aria-valuemax={4}
-          aria-label={ui.stepProgressAria(state.step, 4)}
+          aria-valuemax={3}
+          aria-label={ui.stepProgressAria(state.step, 3)}
           id="booking-wizard-desc"
         >
-          {[1, 2, 3, 4].map((s) => (
+          {[1, 2, 3].map((s) => (
             <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div
                 className={`${styles.stepCircle} ${
@@ -382,7 +380,7 @@ export default function BookingWizardModal({
               >
                 {state.step > s ? <Check className="w-3.5 h-3.5" aria-hidden /> : s}
               </div>
-              {s < 4 && (
+              {s < 3 && (
                 <div
                   className={`${styles.connector} ${state.step > s ? styles.connectorDone : ''}`}
                   aria-hidden
@@ -449,40 +447,26 @@ export default function BookingWizardModal({
                 />
               )}
               {state.step === 3 && Step3CustomerInfo && (
-                <Step3CustomerInfo
-                  tour={tour}
-                  state={state}
-                  onUpdate={updateState}
-                  onValidationChange={setStep3Valid}
-                  onBack={goBack}
-                  onNext={handleCta}
-                  canProceed={canProceedStep3}
-                  ctaLabel={ctaLabel}
-                  ctaDisabled={ctaDisabled}
-                  ui={ui}
-                />
-              )}
-              {state.step === 4 && (
                 <>
                   {submitError && (
                     <div className={styles.errorText} style={{ marginBottom: 12 }} role="alert">
                       {submitError}
                     </div>
                   )}
-                  {Step4Payment ? (
-                    <Step4Payment
-                      state={state}
-                      onBack={goBack}
-                      onSubmit={handleCta}
-                      ctaDisabled={ctaDisabled}
-                      ui={ui}
-                      termsHref={withLocalePath(locale, '/terms')}
-                    />
-                  ) : (
-                    <div className={styles.card} style={{ padding: 24 }}>
-                      <p className={styles.errorText}>{ui.stepLoadError}</p>
-                    </div>
-                  )}
+                  <Step3CustomerInfo
+                    tour={tour}
+                    state={state}
+                    onUpdate={updateState}
+                    onValidationChange={setStep3Valid}
+                    onTermsAcceptanceChange={setStep3TermsAccepted}
+                    onBack={goBack}
+                    onNext={handleCta}
+                    canProceed={canProceedStep3}
+                    ctaLabel={ctaLabel}
+                    ctaDisabled={ctaDisabled}
+                    ui={ui}
+                    termsHref={withLocalePath(locale, '/terms')}
+                  />
                 </>
               )}
               {state.step === 1 && !Step1PeopleDate && (

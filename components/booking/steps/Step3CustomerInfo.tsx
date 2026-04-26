@@ -21,12 +21,14 @@ interface Step3CustomerInfoProps {
   state: BookingWizardState
   onUpdate: (patch: Partial<BookingWizardState>) => void
   onValidationChange: (valid: boolean) => void
+  onTermsAcceptanceChange?: (accepted: boolean) => void
   onBack: () => void
   onNext: () => void
   canProceed: boolean
   ctaLabel: string
   ctaDisabled: boolean
   ui: BookingWizardUi
+  termsHref?: string
 }
 
 export default function Step3CustomerInfo({
@@ -34,13 +36,20 @@ export default function Step3CustomerInfo({
   state,
   onUpdate,
   onValidationChange,
+  onTermsAcceptanceChange,
   onBack,
   onNext,
   ctaLabel,
   ctaDisabled,
   ui,
+  termsHref = '/terms',
 }: Step3CustomerInfoProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [termsAccepted, setTermsAccepted] = useState(false)
+
+  useEffect(() => {
+    onTermsAcceptanceChange?.(termsAccepted)
+  }, [termsAccepted, onTermsAcceptanceChange])
 
   const validate = useCallback(() => {
     const next: Record<string, string> = {}
@@ -348,6 +357,31 @@ export default function Step3CustomerInfo({
             ui={ui}
           />
         </div>
+      </div>
+
+      {/* Mesafeli Satış Sözleşmesi */}
+      <div style={{ padding: '0 20px 4px' }}>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: 13, color: '#52525b', lineHeight: 1.5 }}>
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            style={{ marginTop: 2, flexShrink: 0, width: 16, height: 16, accentColor: 'var(--primary, #1f3c88)' }}
+            aria-describedby="terms-desc-step3"
+          />
+          <span id="terms-desc-step3">
+            <a
+              href={termsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--primary, #1f3c88)', textDecoration: 'underline' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              Mesafeli Satış Sözleşmesi
+            </a>
+            {`'ni okudum ve kabul ediyorum.`}
+          </span>
+        </label>
       </div>
 
       <div className={styles.stepActions}>
