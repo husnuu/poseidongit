@@ -7,9 +7,15 @@ import type { SiteLocale } from '@/lib/i18n/config'
 import { DEFAULT_LOCALE, isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 
-/** E-postadaki buton/linkler için base URL (site ile aynı). */
+/** E-postadaki buton/linkler için base URL.
+ * EMAIL_BASE_URL (server-only) → NEXT_PUBLIC_SITE_URL → production domain.
+ * Lokal testte NEXT_PUBLIC_SITE_URL tünel URL'si olsa bile email linkleri production'a gider.
+ */
 export function getEmailBaseUrl(): string {
-  return getBaseUrl()
+  return (
+    process.env.EMAIL_BASE_URL?.trim() ||
+    'https://cesmetekneturu.net'
+  ).replace(/\/$/, '')
 }
 
 /** Sitede (SSR/client) kullanılan base URL. */
