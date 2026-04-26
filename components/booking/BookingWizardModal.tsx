@@ -465,7 +465,7 @@ export default function BookingWizardModal({
                     ctaLabel={ctaLabel}
                     ctaDisabled={ctaDisabled}
                     ui={ui}
-                    termsHref={withLocalePath(locale, '/terms')}
+                    termsHref="https://cesmetekneturu.net/yasal/mesafeli-satis-sozlesmesi"
                   />
                 </>
               )}
