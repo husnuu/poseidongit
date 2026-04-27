@@ -13,7 +13,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server'
 import {
-  verifyResponseHash,
+  verifyCallbackHash,
   isMdStatusAuthenticated,
   isPaymentApproved,
   loadNestpayConfig,
@@ -79,17 +79,16 @@ export async function POST(request: NextRequest) {
     return ok()
   }
 
-  const hashOk = verifyResponseHash(params, config.storeKey)
+  // verifyCallbackHash: RESPONSE_EXCLUDE + girogate ek alanları (girogateParamReqHash,
+  // querycampainghash, querydcchash, showdcchash, callbackCall) + NESTPAY_CALLBACK_EXTRA_EXCLUDE env
+  const hashOk = verifyCallbackHash(params, config.storeKey)
   if (!hashOk) {
-    // Hash doğrulanamadı — ancak ödeme onaylıysa yine de işliyoruz.
-    // Girogate gibi proxy'ler kendi alanlarını ekler ve HASH hesabı değişebilir.
-    // Güvenlik notu: bu durum loglanır ve ileride sıkılaştırılmalıdır.
-    console.warn('[payment/callback] HASH doğrulama BAŞARISIZ — Girogate proxy şüphesiyle devam ediliyor', {
+    console.warn('[payment/callback] HASH doğrulama BAŞARISIZ', {
       oid,
       response: params['Response'],
       procCode: params['ProcReturnCode'],
+      fieldCount: Object.keys(params).length,
     })
-    // HASH_STRICT=true ise tamamen reddet
     if (process.env.NESTPAY_HASH_STRICT === 'true') {
       console.error('[payment/callback] NESTPAY_HASH_STRICT=true — işlem reddedildi', { oid })
       return ok()

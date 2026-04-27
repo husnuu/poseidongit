@@ -85,6 +85,46 @@ export function generateRequestHash(params: Record<string, string>, storeKey: st
 const RESPONSE_EXCLUDE = new Set(['encoding', 'hash', 'countdown'])
 
 /**
+ * Callback doğrulamasında banka/girogate tarafından HASH hesabından SONRA eklenen
+ * alanlar. Bu alanlar orijinal hash'e dahil edilmediğinden doğrulama dışında tutulur.
+ * Kaan Bayrakdar (İşbankası): "dinamik bir yapı kurgularsanız ek parametrelerde
+ * sorun yaşamazsınız — test/prod ek parametre sayısı farklı olabilir."
+ */
+const CALLBACK_EXTRA_EXCLUDE = new Set([
+  'girogateParamReqHash',   // girogate proxy hash'i
+  'querycampainghash',      // kampanya hash'i
+  'querydcchash',           // DCC hash'i
+  'showdcchash',            // DCC görüntüleme hash'i
+  'callbackCall',           // "bu bir callback" bayrağı
+])
+
+/**
+ * NESTPAY_CALLBACK_EXTRA_EXCLUDE env değişkeninden dinamik dışlama listesi üretir.
+ * Virgülle ayrılmış alan adları (büyük/küçük harf yoksayılır).
+ */
+function getEnvCallbackExclude(): Set<string> {
+  const raw = process.env.NESTPAY_CALLBACK_EXTRA_EXCLUDE ?? ''
+  const extra = raw
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+  return new Set(extra)
+}
+
+/**
+ * Callback hash doğrulaması için tam dışlama kümesi:
+ *   RESPONSE_EXCLUDE  +  CALLBACK_EXTRA_EXCLUDE  +  NESTPAY_CALLBACK_EXTRA_EXCLUDE (env)
+ */
+export function buildCallbackExcludeSet(): Set<string> {
+  const envExclude = getEnvCallbackExclude()
+  return new Set([
+    ...RESPONSE_EXCLUDE,
+    ...[...CALLBACK_EXTRA_EXCLUDE].map((k) => k.toLowerCase()),
+    ...envExclude,
+  ])
+}
+
+/**
  * Debug amaçlı: plaintext, dahil/hariç alanlar ve hesaplanan hash'i döner.
  * Sadece PAYMENT_DEBUG=1 modunda çağrılmalıdır.
  */
@@ -132,6 +172,16 @@ function verifyHashVer3(params: Record<string, string>, storeKey: string, incomi
   return safeB64Equals(computed, incoming)
 }
 
+function verifyHashVer3WithExclude(
+  params: Record<string, string>,
+  storeKey: string,
+  incoming: string,
+  excludeSet: Set<string>
+): boolean {
+  const computed = sha512Base64(buildPlaintext(params, storeKey, excludeSet))
+  return safeB64Equals(computed, incoming)
+}
+
 /**
  * Eski NestPay SHA1 callback hash doğrulaması.
  * Belirli sıra: clientid + oid + amount + okUrl + failUrl + islemtipi + taksit + rnd + storeKey
@@ -165,16 +215,23 @@ function verifyHashSha1Legacy(params: Record<string, string>, storeKey: string, 
  * Banka yanıtındaki HASH'i doğrular.
  * Önce Hash Ver3 (SHA-512, tüm alanlar) denenir.
  * Başarısız olursa SHA1 legacy (belirli alan sırası) denenir.
- * Debug modda hangi yöntemin tuttuğu loglanır.
- * Her iki yöntem de başarısız olursa false döner.
+ * extraExcludeSet: standart RESPONSE_EXCLUDE'a ek dışlama kümesi.
  */
-export function verifyResponseHash(params: Record<string, string>, storeKey: string): boolean {
+export function verifyResponseHash(
+  params: Record<string, string>,
+  storeKey: string,
+  extraExcludeSet?: Set<string>
+): boolean {
   const incoming = (params['HASH'] ?? params['hash'] ?? '').trim()
   if (!incoming) return false
 
   const debug = process.env.PAYMENT_DEBUG === '1' || process.env.NODE_ENV !== 'production'
 
-  const ver3Ok = verifyHashVer3(params, storeKey, incoming)
+  const effectiveExclude = extraExcludeSet
+    ? new Set([...RESPONSE_EXCLUDE, ...[...extraExcludeSet].map((k) => k.toLowerCase())])
+    : RESPONSE_EXCLUDE
+
+  const ver3Ok = verifyHashVer3WithExclude(params, storeKey, incoming, effectiveExclude)
   if (ver3Ok) {
     if (debug) console.info('[nestpay:hash] doğrulama: SHA-512 Ver3 ✓')
     return true
@@ -187,16 +244,43 @@ export function verifyResponseHash(params: Record<string, string>, storeKey: str
   }
 
   if (debug) {
-    const ver3Plain = buildPlaintext(params, storeKey, RESPONSE_EXCLUDE)
+    const ver3Plain = buildPlaintext(params, storeKey, effectiveExclude)
     console.warn('[nestpay:hash] doğrulama BAŞARISIZ — her iki yöntem denendi', {
       incomingLen: incoming.length,
       ver3PlaintextLen: ver3Plain.length,
       fieldCount: Object.keys(params).length,
+      excludedCount: effectiveExclude.size,
       storeKeyLen: storeKey.length,
     })
   }
 
   return false
+}
+
+/**
+ * Callback'e özgü hash doğrulaması.
+ * Banka HASH hesapladıktan SONRA eklediği alanları (girogateParamReqHash vb.)
+ * ve NESTPAY_CALLBACK_EXTRA_EXCLUDE env değişkenini de dışlar.
+ * Kaan Bayrakdar (İşbankası): "dinamik yapı kurgularsanız ek parametrelerde
+ * sorun yaşamazsınız; test/prod ek parametre sayısı farklı olabilir."
+ */
+export function verifyCallbackHash(
+  params: Record<string, string>,
+  storeKey: string
+): boolean {
+  const excludeSet = buildCallbackExcludeSet()
+  const debug = process.env.PAYMENT_DEBUG === '1' || process.env.NODE_ENV !== 'production'
+
+  if (debug) {
+    const extraExcluded = Object.keys(params).filter((k) =>
+      excludeSet.has(k.toLowerCase()) && !RESPONSE_EXCLUDE.has(k.toLowerCase())
+    )
+    if (extraExcluded.length > 0) {
+      console.info('[nestpay:hash] Callback dışlanan ek alanlar:', extraExcluded)
+    }
+  }
+
+  return verifyResponseHash(params, storeKey, excludeSet)
 }
 
 // ─── İş kararı yardımcıları ────────────────────────────────────────────────────
