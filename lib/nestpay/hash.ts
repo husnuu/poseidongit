@@ -30,9 +30,19 @@ export function escapeValue(v: string): string {
 
 // ─── Sıralama ──────────────────────────────────────────────────────────────────
 
-/** Case-insensitive alfabetik karşılaştırıcı. */
+/**
+ * Case-insensitive karşılaştırıcı — Java String.CASE_INSENSITIVE_ORDER ile birebir aynı.
+ * toLowerCase() sonrası karakter kodu karşılaştırması yapar.
+ * Neden önemli: `localeCompare({ sensitivity: 'base' })` noktalama karakterlerini
+ * ('.' gibi) bazı locale'lerde harflerden sonra sıralar, Java ise önce sıralar.
+ * `EXTRA.AVSAPPROVE` gibi noktalı alan adları için sıralama farklılığı hash mismatch'e yol açar.
+ */
 export function caseInsensitiveSort(a: string, b: string): number {
-  return a.localeCompare(b, 'en', { sensitivity: 'base' })
+  const aL = a.toLowerCase()
+  const bL = b.toLowerCase()
+  if (aL < bL) return -1
+  if (aL > bL) return 1
+  return 0
 }
 
 // ─── Yardımcı üreticiler ────────────────────────────────────────────────────────
@@ -278,6 +288,17 @@ export function verifyCallbackHash(
     if (extraExcluded.length > 0) {
       console.info('[nestpay:hash] Callback dışlanan ek alanlar:', extraExcluded)
     }
+
+    // Hash hesabına giren tüm alanlar (sıralı) — mismatch debug için
+    const includedKeys = Object.keys(params)
+      .filter((k) => !excludeSet.has(k.toLowerCase()))
+      .sort(caseInsensitiveSort)
+    console.info('[nestpay:hash] Hash hesabına giren alanlar (sıralı):', includedKeys)
+
+    const incomingHash = (params['HASH'] ?? params['hash'] ?? '').trim()
+    const plaintext = buildPlaintext(params, storeKey, excludeSet)
+    console.info('[nestpay:hash] Plaintext uzunluğu:', plaintext.length)
+    console.info('[nestpay:hash] Banka HASH:', incomingHash)
   }
 
   return verifyResponseHash(params, storeKey, excludeSet)
