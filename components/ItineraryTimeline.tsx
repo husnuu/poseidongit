@@ -86,14 +86,6 @@ function ItineraryTimelineClient({
                   {item.tag && <span className={styles.badgeTag}>{item.tag}</span>}
                 </div>
 
-                {/* Çizgi: thumb'ın hemen dibinden başlar, absolute pozisyon */}
-                {index < validItems.length - 1 && (
-                  <div className={styles.connector}>
-                    <div
-                      className={`${styles.connectorFill} ${visible[index + 1] ? styles.connectorFillActive : ''}`}
-                    />
-                  </div>
-                )}
               </div>
               <div className={styles.right}>
                 <h3 className={styles.itemTitle}>{item.title}</h3>
