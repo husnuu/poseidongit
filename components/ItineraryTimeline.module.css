@@ -52,9 +52,7 @@
   position: relative;
   display: flex;
   justify-content: center;
-  flex-direction: column;
-  align-items: center;
-  gap: 0; /* thumb ile connector arasında boşluk yok */
+  align-items: flex-start;
 }
 
 .thumb {
@@ -112,13 +110,18 @@
 }
 
 /* ── Bağlantı çizgisi (item'lar arası) ──────────── */
+/* Absolute: thumb'ın tam dibinden (top: 252px) başlar, list gap (44px) kadar iner */
 .connector {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 252px; /* thumb yüksekliği */
   width: 3px;
-  height: 44px; /* list gap kadar */
+  height: 44px; /* list gap */
   background: #e2e8f0;
-  border-radius: 2px;
+  border-radius: 0 0 2px 2px;
   overflow: hidden;
-  flex-shrink: 0;
+  z-index: 2;
 }
 
 .connectorFill {
@@ -200,7 +203,8 @@
   }
 
   .connector {
-    height: 28px;
+    top: 176px; /* mobil thumb yüksekliği */
+    height: 28px; /* mobil list gap */
   }
 
   .itemTitle {

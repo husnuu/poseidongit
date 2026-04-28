@@ -86,7 +86,7 @@ function ItineraryTimelineClient({
                   {item.tag && <span className={styles.badgeTag}>{item.tag}</span>}
                 </div>
 
-                {/* Bir sonraki item'a bağlayan çizgi */}
+                {/* Çizgi: thumb'ın hemen dibinden başlar, absolute pozisyon */}
                 {index < validItems.length - 1 && (
                   <div className={styles.connector}>
                     <div
