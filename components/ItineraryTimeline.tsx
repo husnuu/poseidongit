@@ -43,15 +43,13 @@ function ItineraryTimelineClient({
       if (!el) return null
       const obs = new IntersectionObserver(
         ([entry]) => {
-          if (entry.isIntersecting) {
-            setVisible((prev) => {
-              if (prev[index]) return prev
-              const next = [...prev]
-              next[index] = true
-              return next
-            })
-            obs.disconnect()
-          }
+          // Her iki yönde çalışır: aşağı scroll → true, yukarı scroll → false
+          setVisible((prev) => {
+            if (prev[index] === entry.isIntersecting) return prev
+            const next = [...prev]
+            next[index] = entry.isIntersecting
+            return next
+          })
         },
         { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
       )
