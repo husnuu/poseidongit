@@ -26,6 +26,20 @@
   gap: 44px;
 }
 
+/* ── Scroll animasyonu ───────────────────────────── */
+.itemHidden {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.itemVisible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+/* ── Item layout ─────────────────────────────────── */
 .item {
   display: grid;
   grid-template-columns: 220px 1fr;
@@ -38,6 +52,8 @@
   position: relative;
   display: flex;
   justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
 .thumb {
@@ -48,6 +64,7 @@
   position: relative;
   background: #f3f4f6;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  z-index: 1;
 }
 
 .image {
@@ -71,7 +88,7 @@
   box-shadow: 0 2px 8px rgba(33, 104, 184, 0.35);
 }
 
-/* Sağ köşe: etiket — farklı renk (amber/terracotta) */
+/* Sağ köşe: etiket */
 .badgeTag {
   position: absolute;
   right: 12px;
@@ -93,17 +110,29 @@
   text-overflow: ellipsis;
 }
 
-.line {
-  position: absolute;
-  left: 110px;
-  top: 252px;
-  width: 2px;
-  background: #e5e7eb;
+/* ── Bağlantı çizgisi (item'lar arası) ──────────── */
+.connector {
+  width: 3px;
+  height: 44px; /* list gap kadar */
+  background: #e2e8f0;
   border-radius: 2px;
-  z-index: 0;
-  bottom: 252px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
+.connectorFill {
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(to bottom, #1e3a8a, #2563eb);
+  border-radius: 2px;
+  transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.connectorFillActive {
+  height: 100%;
+}
+
+/* ── Sağ içerik ──────────────────────────────────── */
 .right {
   position: relative;
   z-index: 1;
@@ -127,6 +156,7 @@
   margin: 0;
 }
 
+/* ── Mobil ───────────────────────────────────────── */
 @media (max-width: 768px) {
   .section {
     margin-top: 36px;
@@ -167,10 +197,8 @@
     max-width: 65%;
   }
 
-  .line {
-    left: 70px;
-    top: 176px;
-    bottom: 176px;
+  .connector {
+    height: 28px;
   }
 
   .itemTitle {
