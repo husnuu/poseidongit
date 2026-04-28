@@ -27,6 +27,7 @@ import ReviewsSection from '@/components/ReviewsSection'
 import WhereSection, { type WhereSectionData } from '@/components/tour/WhereSection'
 import TourFoodMenu from '@/components/tour/TourFoodMenu'
 import TourReelsRail from '@/components/tour/TourReelsRail'
+import PoseidonSecure from '@/components/tour/PoseidonSecure'
 import JsonLd from '@/components/seo/JsonLd'
 import {
   buildBreadcrumbSchema,
@@ -444,6 +445,8 @@ export default async function TourPage({
         />
 
         <ItineraryTimeline items={itineraryTimelineItems} sectionTitle={tourUi.itineraryTitle} />
+
+        <PoseidonSecure />
 
         {reelsSlides.length > 0 ? (
           <TourReelsRail slides={reelsSlides} locale={locale} />

@@ -1,0 +1,80 @@
+.container {
+  max-width: 80rem; /* 1280px = max-w-7xl */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.wrapper {
+  margin-top: 56px;
+  margin-bottom: 56px;
+  background: #eaf4fb;
+  border-radius: 16px;
+  padding: 40px 48px;
+  text-align: center;
+}
+
+.inner {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shieldIcon {
+  color: #1e7ac9;
+  flex-shrink: 0;
+}
+
+.logoText {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.logoBold {
+  color: #1e3a5f;
+}
+
+.logoAccent {
+  color: #1e7ac9;
+}
+
+.description {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #3a4a5c;
+  margin: 0;
+}
+
+.description strong {
+  color: #1e3a5f;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .wrapper {
+    padding: 32px 24px;
+    border-radius: 12px;
+    margin-top: 40px;
+    margin-bottom: 40px;
+  }
+
+  .logoText {
+    font-size: 24px;
+  }
+
+  .description {
+    font-size: 14px;
+  }
+}

@@ -16,6 +16,7 @@ import type { PopularToursSectionData } from '@/components/home/PopularToursSect
 import type { PopularYachtsSectionData } from '@/components/home/PopularYachtsSection'
 import BlogSection from '@/components/home/BlogSection'
 import RouteSection from '@/components/home/RouteSection'
+import PoseidonSecure from '@/components/tour/PoseidonSecure'
 import InstagramSection from '@/components/home/InstagramSection'
 import type { AboutTeaserData } from '@/components/home/AboutTeaserSplit'
 import type { BlogSectionData } from '@/components/home/BlogSection'
@@ -455,6 +456,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <HeroBanner hero={hero} locale={locale} />
       {featureBar && featureBar.length > 0 && <FeatureBar items={featureBar} />}
       <PopularToursSection data={popularToursSection} locale={locale} />
+      <PoseidonSecure contained />
       {routeSection && (
         <RouteSection
           heading={routeSection.heading}

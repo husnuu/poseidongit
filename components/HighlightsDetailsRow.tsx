@@ -54,44 +54,11 @@ function getHighlightIcon(iconKey?: string | null) {
 
 export default function HighlightsDetailsRow({
   highlights,
-  tourDetails,
-  quickFacts,
   tourUi,
 }: HighlightsDetailsRowProps) {
-  const details: TourDetail[] = []
-
-  if (quickFacts) {
-    if (quickFacts.durationText) {
-      details.push({ label: tourUi.quickFactDuration, value: quickFacts.durationText })
-    }
-    if (quickFacts.availabilityText) {
-      details.push({ label: tourUi.quickFactAvailability, value: quickFacts.availabilityText })
-    }
-    if (quickFacts.meetingLocation) {
-      details.push({ label: tourUi.quickFactDeparture, value: quickFacts.meetingLocation })
-    }
-    if (quickFacts.language) {
-      details.push({ label: tourUi.quickFactLanguage, value: quickFacts.language })
-    }
-    if (quickFacts.groupType) {
-      details.push({ label: tourUi.quickFactGroupType, value: quickFacts.groupType })
-    }
-    if (quickFacts.maxCapacity != null) {
-      details.push({
-        label: tourUi.quickFactCapacity,
-        value: tourUi.quickFactCapacityValue(quickFacts.maxCapacity),
-      })
-    }
-  }
-
-  if (tourDetails?.length) {
-    details.push(...tourDetails)
-  }
-
   const hasHighlights = highlights && highlights.length > 0
-  const hasDetails = details.length > 0
 
-  if (!hasHighlights && !hasDetails) return null
+  if (!hasHighlights) return null
 
   return (
     <div className={styles.highlightsDetailsRow}>
@@ -123,22 +90,6 @@ export default function HighlightsDetailsRow({
         </div>
       )}
 
-      {hasDetails && (
-        <div className={styles.sectionColumn}>
-          <h2 className={styles.sectionTitleSmall}>{tourUi.tourDetailsTitle}</h2>
-          <ul className={styles.bulletList}>
-            {details.map((detail, index) => (
-              <li key={index} className={styles.detailLine}>
-                <CheckIcon />
-                <div className={styles.detailContent}>
-                  <span className={styles.detailLabel}>{detail.label}:</span>
-                  <span className={styles.detailValue}>{detail.value}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   )
 }
