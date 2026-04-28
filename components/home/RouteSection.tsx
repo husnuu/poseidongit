@@ -94,12 +94,12 @@ export default function RouteSection({
           {/* Sağ: Foto grid - dikey kartlar tam yükseklik (row-span-2) */}
           {hasAnyLocations && (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:grid-rows-[1fr_1fr]">
-              {/* Mobil: tüm kartlar alt alta aspect-[4/3] */}
-              <div className="flex flex-col gap-6 sm:hidden">
+              {/* Mobil: 2 sütun grid */}
+              <div className="grid grid-cols-2 gap-3 sm:hidden">
                 {displayLocations.map((loc, index) => (
                   <div
                     key={index}
-                    className="relative aspect-[4/3] overflow-hidden rounded-2xl transition-transform duration-300 hover:scale-[1.04]"
+                    className="relative aspect-[3/4] overflow-hidden rounded-2xl transition-transform duration-300 hover:scale-[1.04]"
                     style={{
                       transitionDelay: visible ? `${index * 100}ms` : '0ms',
                     }}
@@ -111,7 +111,7 @@ export default function RouteSection({
                           alt={loc.alt || loc.name}
                           fill
                           className="object-cover"
-                          sizes="(max-width: 640px) 100vw, 33vw"
+                          sizes="(max-width: 640px) 50vw, 33vw"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                         <div className="absolute bottom-0 left-0 right-0 p-4">
