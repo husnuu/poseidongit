@@ -119,18 +119,19 @@
 .itemTitle {
   font-family: var(--font-family), sans-serif;
   font-weight: 700;
-  font-size: 16px;
-  line-height: 24px;
-  color: var(--secondary, #131719);
-  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #0f172a;
+  margin: 0 0 6px;
+  letter-spacing: 0;
 }
 
 .itemDesc {
   font-family: var(--font-family), sans-serif;
   font-weight: 400;
-  font-size: 16px;
-  line-height: 24px;
-  color: var(--text-color, #58595b);
+  font-size: 14px;
+  line-height: 1.75;
+  color: #374151;
   margin: 0;
 }
 
@@ -176,14 +177,14 @@
   }
 
   .itemTitle {
-    font-size: 16px !important;
-    line-height: 24px !important;
-    margin: 0 0 6px !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    margin: 0 0 5px !important;
   }
 
   .itemDesc {
-    font-size: 15px !important;
-    line-height: 24px !important;
+    font-size: 14px !important;
+    line-height: 1.75 !important;
     word-break: break-word;
   }
 

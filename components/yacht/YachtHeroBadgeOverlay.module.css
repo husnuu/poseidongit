@@ -16,7 +16,7 @@
   align-items: center;
   padding: 6px 24px 6px 12px;
   color: #fff;
-  background: linear-gradient(90deg, #d8832a 0%, #c97622 100%);
+  background: linear-gradient(90deg, #fc6c4f 0%, #e85a3d 100%);
   clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }

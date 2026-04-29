@@ -39,6 +39,16 @@ export default function BookingWizardModal({
   locale = 'tr',
 }: BookingWizardModalProps) {
   const ui = useMemo(() => getBookingWizardUi(locale), [locale])
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    const el = document.createElement('div')
+    el.id = 'booking-wizard-portal'
+    document.body.appendChild(el)
+    setPortalEl(el)
+    return () => { if (el.parentNode) el.parentNode.removeChild(el) }
+  }, [])
+
   const [state, setState] = useState<BookingWizardState>({
     ...DEFAULT_BOOKING_STATE,
     tourSlug,
@@ -496,6 +506,6 @@ export default function BookingWizardModal({
     </div>
   )
 
-  if (typeof document === 'undefined') return null
-  return createPortal(modalContent, document.body)
+  if (!portalEl) return null
+  return createPortal(modalContent, portalEl)
 }

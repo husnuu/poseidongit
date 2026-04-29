@@ -334,6 +334,6 @@
     --font-family-title: var(--font-inter, "Inter"), var(--font-family), sans-serif;
     --title-color: #1e3a5f;
     /* Hakkımızda split section sol panel (WakeUp tarzı); lacivert için gradient kullanılabilir */
-    --about-bg: #d8832a;
+    --about-bg: #fc6c4f;
   }
 }

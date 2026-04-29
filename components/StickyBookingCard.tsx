@@ -64,12 +64,12 @@ function DemandIcon() {
     >
       <path
         d="M12 22C6.477 22 2 17.523 2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22Z"
-        stroke="#1e3a5f"
+        stroke="#fc6c4f"
         strokeWidth="2"
       />
       <path
         d="M12 7V12L15 14"
-        stroke="#1e3a5f"
+        stroke="#fc6c4f"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -127,18 +127,25 @@ export default function StickyBookingCard({
       : ['En İyi Fiyat Garantisi', 'Küçük Grup Deneyimi', 'Esnek İptal']
   const ctaText = bookingCard?.ctaText || 'REZERVASYON YAP'
 
-  const priceText = adultPrice
-    ? `${adultPrice.toLocaleString('tr-TR')} ₺'den başlayan fiyatlarla`
-    : 'Fiyat bilgisi için rezervasyon adımına geçiniz'
-
   return (
     <div className={styles.sidebar}>
       <div className={styles.content}>
         <h2 className={styles.title}>REZERVE ET</h2>
-        <p className={styles.price}>{priceText}</p>
-        {depositLabel && (
-          <p className={styles.depositLine}>{depositLabel}</p>
-        )}
+
+        {/* Price block — mobil sticky bar ile aynı dil */}
+        <div className={styles.priceBlock}>
+          <span className={styles.priceFrom}>Kişi başı</span>
+          {adultPrice ? (
+            <span className={styles.priceValue}>
+              {adultPrice.toLocaleString('tr-TR')} ₺
+            </span>
+          ) : (
+            <span className={styles.priceValueSmall}>Fiyat için devam edin</span>
+          )}
+          {depositLabel && (
+            <span className={styles.depositLine}>{depositLabel}</span>
+          )}
+        </div>
 
         <ul className={styles.list}>
           {trustBadges.map((badge, index) => (
@@ -149,29 +156,22 @@ export default function StickyBookingCard({
           ))}
         </ul>
 
-        <span className="hero-primary-btn-wrap tour-reserve-cta-wrap mt-0 w-full rounded-xl p-[2px] block">
-          {onRezervasyonClick ? (
-            <button
-              type="button"
-              className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${styles.yachtInquiryCta}`}
-              style={{ borderRadius: 10 }}
-              onClick={() => {
-                openBookingModal()
-                onRezervasyonClick()
-              }}
-            >
-              {ctaText}
-            </button>
-          ) : (
-            <Link
-              href={reservePath}
-              className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${styles.yachtInquiryCta}`}
-              style={{ borderRadius: 10 }}
-            >
-              {ctaText}
-            </Link>
-          )}
-        </span>
+        {onRezervasyonClick ? (
+          <button
+            type="button"
+            className={styles.ctaButton}
+            onClick={() => {
+              openBookingModal()
+              onRezervasyonClick()
+            }}
+          >
+            {ctaText}
+          </button>
+        ) : (
+          <Link href={reservePath} className={styles.ctaButton}>
+            {ctaText}
+          </Link>
+        )}
 
         <div className={styles.demand} role="note" aria-label="Talep uyarısı">
           <DemandIcon />

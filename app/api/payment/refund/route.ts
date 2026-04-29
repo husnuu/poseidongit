@@ -73,7 +73,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const originalAmount = Number(booking.total_price ?? 0)
+    // paid_now = bankaya ödenen gerçek tutar (kapora); total_price = tam tur fiyatı
+    const originalAmount =
+      booking.paid_now != null && Number(booking.paid_now) > 0
+        ? Number(booking.paid_now)
+        : Number(booking.total_price ?? 0)
     const refundAmountRaw = body.amount != null ? Number(body.amount) : originalAmount
     if (isNaN(refundAmountRaw) || refundAmountRaw <= 0) {
       return NextResponse.json({ error: 'Geçersiz iade tutarı' }, { status: 400 })

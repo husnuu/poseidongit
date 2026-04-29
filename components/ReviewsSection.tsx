@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { urlFor } from '@/lib/sanity'
 import type { TourPageUi } from '@/lib/i18n/tourPageUi'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
+import ReviewCardExpand from './ReviewCardExpand'
 import styles from './ReviewsSection.module.css'
 
 interface ReviewItemAvatar {
@@ -37,53 +38,48 @@ function clampInt(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, Math.round(n)))
 }
 
-function RatingDots({
-  value,
-  max,
-  ariaLabelFn,
-}: {
-  value: number
-  max: number
-  ariaLabelFn: (v: number, m: number) => string
-}) {
-  const v = clampInt(value, 0, max)
+/** Trustpilot-style: green rounded-square with white star cutout */
+function TpStar({ filled }: { filled: boolean }) {
   return (
-    <span className={styles.dots} aria-label={ariaLabelFn(v, max)}>
+    <span
+      className={styles.tpStar}
+      style={{ background: filled ? '#00b67a' : '#dcdce6' }}
+      aria-hidden
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+      </svg>
+    </span>
+  )
+}
+
+function StarRow({ value, max = 5, size = 'md' }: { value: number; max?: number; size?: 'sm' | 'md' | 'lg' }) {
+  const filled = clampInt(value, 0, max)
+  return (
+    <span className={`${styles.starRow} ${styles[`starRow_${size}`]}`} aria-label={`${filled} / ${max} yıldız`}>
       {Array.from({ length: max }).map((_, i) => (
-        <span
-          key={i}
-          className={`${styles.dot} ${i < v ? styles.dotOn : ''}`}
-        />
+        <TpStar key={i} filled={i < filled} />
       ))}
     </span>
   )
 }
 
-function GoogleIcon() {
+/** Trustpilot-style shield checkmark */
+function ShieldCheck() {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
-        d="M21.2 12.2c0-.6-.05-1.2-.17-1.76H12v3.33h5.16c-.22 1.14-.9 2.1-1.92 2.74v2.16h3.1c1.8-1.65 2.86-4.1 2.86-6.47Z"
-        fill="#4285F4"
+        d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z"
+        stroke="#6b7280"
+        strokeWidth="1.8"
+        fill="none"
       />
       <path
-        d="M12 22c2.6 0 4.78-.86 6.37-2.33l-3.1-2.16c-.86.58-1.97.93-3.27.93-2.52 0-4.65-1.7-5.42-3.99H3.4v2.23A10 10 0 0 0 12 22Z"
-        fill="#34A853"
-      />
-      <path
-        d="M6.58 14.45A6.3 6.3 0 0 1 6.23 12c0-.44.07-.86.18-1.26V8.51H3.4A10 10 0 0 0 2 12c0 1.67.41 3.24 1.4 4.74l3.18-2.29Z"
-        fill="#FBBC05"
-      />
-      <path
-        d="M12 5.56c1.42 0 2.7.49 3.7 1.46l2.78-2.78C16.78 2.78 14.6 2 12 2A10 10 0 0 0 3.4 8.51l3.01 2.23C7.15 7.35 9.38 5.56 12 5.56Z"
-        fill="#EA4335"
+        d="M9 12l2 2 4-4"
+        stroke="#6b7280"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   )
@@ -101,132 +97,98 @@ export default function ReviewsSection({
   const items = (reviewsSection.items || []).slice(0, 4)
   if (items.length < 1) return null
 
-  const headerCount =
-    typeof reviewsSection.reviewCount === 'number'
-      ? reviewsSection.reviewCount
-      : undefined
   const ratingValue =
-    typeof reviewsSection.ratingValue === 'number'
-      ? reviewsSection.ratingValue
-      : undefined
-  const dotsMax =
-    typeof reviewsSection.ratingDots === 'number'
-      ? clampInt(reviewsSection.ratingDots, 1, 10)
-      : 5
-  const sourceLabel = reviewsSection.sourceLabel || 'Google'
+    typeof reviewsSection.ratingValue === 'number' ? reviewsSection.ratingValue : 4.9
+  const reviewCount =
+    typeof reviewsSection.reviewCount === 'number' ? reviewsSection.reviewCount : undefined
   const moreText = reviewsSection.moreLinkText || tourUi.reviewsMoreDefault
   const reviewsLink = reviewsSection.moreLinkUrl || reviewsUrl || undefined
 
+  const ratingLabel = ratingValue >= 4.5 ? 'Mükemmel' : ratingValue >= 4 ? 'Çok İyi' : 'İyi'
+
   return (
-    <div className={styles.sectionWrapper}>
-      <div id="reviews" className={styles.section}>
-        <div className={styles.headerRow}>
-          <h2 className={styles.bigTitle}>
-            {headerCount != null ? (
-              <>
-                <span className={styles.count}>{headerCount}</span>{' '}
-              </>
-            ) : null}
-            {tourUi.reviewsSectionTitle}
-          </h2>
+    <div id="reviews" className={styles.sectionWrapper}>
 
-          {reviewsLink ? (
-            <a
-              href={reviewsLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.sourceLink}
-            >
-              <span className={styles.sourceIconWrap} aria-hidden>
-                <GoogleIcon />
-              </span>
-              <span className={styles.sourceText}>
-                <span>{sourceLabel}</span>
-                {ratingValue != null && (
-                  <span className={styles.ratingValue}>
-                    {ratingValue.toFixed(1)}
-                  </span>
-                )}
-                <RatingDots
-                  value={ratingValue != null ? ratingValue : dotsMax}
-                  max={dotsMax}
-                  ariaLabelFn={tourUi.ratingAriaLabel}
-                />
-              </span>
-            </a>
-          ) : (
-            <div className={styles.sourceBlock}>
-              <span className={styles.sourceIconWrap} aria-hidden>
-                <GoogleIcon />
-              </span>
-              <div className={styles.sourceText}>
-                <span>{sourceLabel}</span>
-                {ratingValue != null && (
-                  <span className={styles.ratingValue}>
-                    {ratingValue.toFixed(1)}
-                  </span>
-                )}
-                <RatingDots
-                  value={ratingValue != null ? ratingValue : dotsMax}
-                  max={dotsMax}
-                  ariaLabelFn={tourUi.ratingAriaLabel}
-                />
-              </div>
-            </div>
-          )}
+      {/* ── Header ── */}
+      <div className={styles.header}>
+        <div className={styles.headerTitleRow}>
+          <p className={styles.ratingLabel}>{ratingLabel}</p>
+          <StarRow value={Math.round(ratingValue)} size="lg" />
         </div>
-
-        <ul className={styles.list}>
-          {items.map((it, idx) => {
-            const rating = typeof it.rating === 'number' ? it.rating : 5
-            const initial = (it.name || '?').trim().charAt(0).toUpperCase()
-            const avatarSrc =
-              it.avatar?.asset
-                ? urlFor(it.avatar.asset).width(88).height(88).url()
-                : it.avatar?.url ?? null
-
-            return (
-              <li key={`${it.name}-${idx}`} className={styles.item}>
-                <div className={styles.avatarWrap} aria-hidden>
-                  {avatarSrc ? (
-                    <Image
-                      src={avatarSrc}
-                      alt={it.name}
-                      width={44}
-                      height={44}
-                      className={styles.avatarImg}
-                      placeholder={it.avatar?.metadata?.lqip ? 'blur' : 'empty'}
-                      blurDataURL={it.avatar?.metadata?.lqip}
-                    />
-                  ) : (
-                    <span className={styles.avatarFallback}>{initial}</span>
-                  )}
-                </div>
-
-                <div className={styles.content}>
-                  <div className={styles.metaRow}>
-                    <p className={styles.name}>{it.name}</p>
-                    <RatingDots value={rating} max={5} ariaLabelFn={tourUi.ratingAriaLabel} />
-                  </div>
-                  <h3 className={styles.title}>{it.title}</h3>
-                  <p className={styles.desc}>{it.description}</p>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-
+        <p className={styles.ratingMeta}>
+          <strong>{ratingValue.toFixed(1)}</strong>
+          {' / 5'}
+          {reviewCount != null && (
+            <> &nbsp;·&nbsp; {reviewCount.toLocaleString('tr-TR')}+ doğrulanmış kullanıcı yorumu</>
+          )}
+        </p>
         {reviewsLink && (
           <a
             href={reviewsLink}
             target="_blank"
             rel="noopener noreferrer"
-            className={styles.moreLink}
+            className={styles.allReviewsLink}
           >
-            {moreText} <span aria-hidden>›</span>
+            {moreText}
           </a>
         )}
       </div>
+
+      {/* ── Cards ── */}
+      <ul className={styles.grid}>
+        {items.map((it, idx) => {
+          const rating = typeof it.rating === 'number' ? it.rating : 5
+          const initial = (it.name || '?').trim().charAt(0).toUpperCase()
+          const avatarSrc = it.avatar?.asset
+            ? urlFor(it.avatar.asset).width(88).height(88).url()
+            : it.avatar?.url ?? null
+
+          return (
+            <li key={`${it.name}-${idx}`} className={styles.card}>
+              {/* Top: stars + verified */}
+              <div className={styles.cardTop}>
+                <StarRow value={rating} size="sm" />
+                <span className={styles.verifiedBadge}>
+                  <ShieldCheck />
+                  <span>Doğrulanmış</span>
+                </span>
+              </div>
+
+              {/* Reviewer name + date */}
+              <div className={styles.cardMeta}>
+                <span className={styles.reviewerName}>{it.name}</span>
+                {it.title && <span className={styles.reviewDate}>{it.title}</span>}
+              </div>
+
+              {/* Review text with expand */}
+              <ReviewCardExpand text={it.description} />
+
+              {/* Footer */}
+              <div className={styles.cardDivider} />
+              <div className={styles.cardFooter}>
+                <div className={styles.footerAvatarWrap}>
+                  {avatarSrc ? (
+                    <Image
+                      src={avatarSrc}
+                      alt={it.name}
+                      width={48}
+                      height={48}
+                      className={styles.footerAvatarImg}
+                      placeholder={it.avatar?.metadata?.lqip ? 'blur' : 'empty'}
+                      blurDataURL={it.avatar?.metadata?.lqip}
+                    />
+                  ) : (
+                    <span className={styles.footerAvatarFallback}>{initial}</span>
+                  )}
+                </div>
+                <div className={styles.footerInfo}>
+                  <span className={styles.footerName}>{it.name}</span>
+                </div>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
     </div>
   )
 }

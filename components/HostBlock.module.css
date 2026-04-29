@@ -17,11 +17,11 @@
   padding-right: 0;
 }
 
-/* Host üst satırı (job): Inter-Regular 18px, muted */
+/* Host üst satırı (job): Inter-Regular, muted */
 .hostLine {
-  margin: 0 0 20px 0;
+  margin: 0 0 16px 0;
   font-family: "Inter-Regular", Inter, var(--font-family), sans-serif;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 160%;
   letter-spacing: -0.01em;
@@ -29,13 +29,13 @@
   border-radius: 8px;
 }
 
-/* Ana başlık: Inter-Bold, 24px, uppercase */
+/* Ana başlık */
 .mainTitle {
-  margin: 0 0 20px 0;
+  margin: 0 0 16px 0;
   font-family: "Inter-Bold", var(--font-family), sans-serif;
   font-style: normal;
   font-weight: 700;
-  font-size: 24px;
+  font-size: 20px;
   line-height: 150%;
   text-transform: uppercase;
   color: #1e3a5f;
@@ -45,14 +45,14 @@
 .body {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .paragraph {
   margin: 0;
   font-family: "Inter-Regular", Inter, var(--font-family), sans-serif;
-  font-size: 18px;
-  line-height: 160%;
+  font-size: 14px;
+  line-height: 1.7;
   letter-spacing: -0.01em;
   color: #58595b;
 }
@@ -108,16 +108,16 @@
   }
 
   .hostLine {
-    font-size: 18px;
-    margin-bottom: 16px;
+    font-size: 13px;
+    margin-bottom: 12px;
   }
 
   .mainTitle {
-    font-size: 22px;
-    margin-bottom: 16px;
+    font-size: 18px;
+    margin-bottom: 12px;
   }
 
   .paragraph {
-    font-size: 18px;
+    font-size: 14px;
   }
 }

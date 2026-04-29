@@ -40,38 +40,36 @@ export default function MobileStickyBookingBar({
   const ctaText = bookingCard?.ctaText || 'REZERVE ET'
   const depositLabel = deposit ? getDepositLabel(deposit) : null
 
-  const priceText = adultPrice
-    ? `Kişi başı ${adultPrice.toLocaleString('tr-TR')} ₺`
-    : 'Fiyat bilgisi için rezervasyon adımına geçiniz'
-
   if (isModalOpen) return null
 
   return (
     <div id={MOBILE_BOTTOM_CTA_BAR_ID} className={styles.bookingBar}>
       <div className={styles.bookingBarInner}>
         <div className={styles.priceBlock}>
-          <div className={styles.priceValue}>
-            {adultPrice ? `Fiyat: ${priceText}` : priceText}
-          </div>
+          <span className={styles.priceFrom}>Kişi başı</span>
+          {adultPrice ? (
+            <span className={styles.priceValue}>
+              {adultPrice.toLocaleString('tr-TR')} ₺
+            </span>
+          ) : (
+            <span className={styles.priceValueSmall}>Fiyat için devam edin</span>
+          )}
           {depositLabel && (
             <div className={styles.depositLine}>{depositLabel}</div>
           )}
         </div>
         <div className={styles.rightBlock}>
-          <span className="hero-primary-btn-wrap inline-flex rounded-xl p-[2px]">
-            <button
-              type="button"
-              className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${styles.ctaButton}`}
-              style={{ borderRadius: 10 }}
-              onClick={() => {
-                openBookingModal()
-                onReserve()
-              }}
-              aria-label={ctaText}
-            >
-              {ctaText}
-            </button>
-          </span>
+          <button
+            type="button"
+            className={styles.ctaButton}
+            onClick={() => {
+              openBookingModal()
+              onReserve()
+            }}
+            aria-label={ctaText}
+          >
+            {ctaText}
+          </button>
         </div>
       </div>
     </div>

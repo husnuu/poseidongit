@@ -17,6 +17,7 @@ import type { PopularYachtsSectionData } from '@/components/home/PopularYachtsSe
 import BlogSection from '@/components/home/BlogSection'
 import RouteSection from '@/components/home/RouteSection'
 import PoseidonSecure from '@/components/tour/PoseidonSecure'
+import Image from 'next/image'
 import InstagramSection from '@/components/home/InstagramSection'
 import type { AboutTeaserData } from '@/components/home/AboutTeaserSplit'
 import type { BlogSectionData } from '@/components/home/BlogSection'
@@ -387,6 +388,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   let blogSection: BlogSectionData | null = null
   let routeSection: ReturnType<typeof mapRouteSection> = null
   let instagramSection: InstagramSectionData | null = null
+  let loyaltyBanner: { imageUrl?: string | null; imageAlt?: string | null; href?: string | null } | null = null
   let travelAgencyImageOverrides: TravelAgencyStructuredDataImageOverrides = {}
   try {
     const [raw, settingsRow, heroRow] = await Promise.all([
@@ -419,6 +421,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         }
       : null
     instagramSection = data?.instagramSection ?? null
+    const lb = (data as Record<string, unknown>)?.loyaltyBanner as { enabled?: boolean; imageUrl?: string; imageAlt?: string; href?: string } | null
+    loyaltyBanner = lb?.enabled && lb?.imageUrl ? lb : null
   } catch {
     hero = null
     featureBar = null
@@ -428,6 +432,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     blogSection = null
     routeSection = null
     instagramSection = null
+    loyaltyBanner = null
   }
 
   const organizationSchema = buildOrganizationSchema()
@@ -466,6 +471,35 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         />
       )}
       <AboutTeaserSplit data={aboutTeaser} />
+
+      {loyaltyBanner && (
+        <div className="mx-auto max-w-7xl px-6 mt-10 mb-4 lg:hidden">
+          {loyaltyBanner.href ? (
+            <a href={loyaltyBanner.href} className="block w-full overflow-hidden rounded-2xl">
+              <Image
+                src={loyaltyBanner.imageUrl!}
+                alt={loyaltyBanner.imageAlt || 'Sadakat Programı'}
+                width={1280}
+                height={400}
+                className="w-full h-auto"
+                sizes="(max-width: 1280px) 100vw, 1280px"
+              />
+            </a>
+          ) : (
+            <div className="w-full overflow-hidden rounded-2xl">
+              <Image
+                src={loyaltyBanner.imageUrl!}
+                alt={loyaltyBanner.imageAlt || 'Sadakat Programı'}
+                width={1280}
+                height={400}
+                className="w-full h-auto"
+                sizes="(max-width: 1280px) 100vw, 1280px"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       <PopularYachtsSection data={popularYachtsSection} locale={locale} />
       <BlogSection
         data={blogSection}

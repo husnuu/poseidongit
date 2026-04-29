@@ -734,6 +734,40 @@ export default defineType({
       ],
     }),
     defineField({
+      name: 'loyaltyBanner',
+      title: 'Sadakat Programı Görseli',
+      type: 'object',
+      description: 'Hakkımızda bölümünün altında tam genişlikte gösterilen görsel',
+      fields: [
+        defineField({
+          name: 'enabled',
+          title: 'Aktif',
+          type: 'boolean',
+          initialValue: true,
+        }),
+        defineField({
+          name: 'image',
+          title: 'Görsel',
+          type: 'image',
+          options: { hotspot: true },
+          fields: [
+            defineField({
+              name: 'alt',
+              title: 'Alternatif Metin',
+              type: 'string',
+              description: 'Örn: "Poseidon Sadakat Programı"',
+            }),
+          ],
+        }),
+        defineField({
+          name: 'href',
+          title: 'Tıklanınca gidilecek link (opsiyonel)',
+          type: 'string',
+          description: 'Örn: /sadakat-programi — görsele link eklemek istersen',
+        }),
+      ],
+    }),
+    defineField({
       name: 'pageTranslations',
       title: 'Çeviriler — English / Deutsch',
       type: 'object',

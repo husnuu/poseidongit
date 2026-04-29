@@ -202,7 +202,11 @@ export async function PATCH(request: NextRequest) {
 
     if (isNewCancellation) {
       refundAttempted = true
-      const amount = Number(data.total_price ?? 0)
+      // paid_now = bankaya ödenen gerçek tutar (kapora); total_price = tam tur fiyatı
+      const amount =
+        data.paid_now != null && Number(data.paid_now) > 0
+          ? Number(data.paid_now)
+          : Number(data.total_price ?? 0)
       const adminEmail = await resolveAdminEmailFromRequest(request)
       const result = await smartRefund({ orderId: bookingId, amount, paidAt: data.paid_at })
 
@@ -264,7 +268,9 @@ export async function PATCH(request: NextRequest) {
         cancelledBy: adminEmail,
         refundOk: refundAttempted ? refundOk : undefined,
         refundStatus: refundAttempted ? refundStatus : null,
-        refundAmount: refundAttempted && refundOk ? Number(data.total_price ?? 0) : null,
+        refundAmount: refundAttempted && refundOk
+          ? (data.paid_now != null && Number(data.paid_now) > 0 ? Number(data.paid_now) : Number(data.total_price ?? 0))
+          : null,
         refundErrMsg: refundAttempted && !refundOk ? refundErrMsg : null,
       })
     }

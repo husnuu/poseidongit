@@ -28,6 +28,7 @@ export type TourPageUi = {
   includedTitle: string
   notIncludedTitle: string
   departureMetaLabel: string
+  durationMetaLabel: string
   captainLabel: string
   captainAvatarAltFallback: string
   hostWhyFallbackTitle: string
@@ -106,6 +107,7 @@ const UI: Record<SiteLocale, TourPageUi> = {
     includedTitle: 'Dahil olanlar',
     notIncludedTitle: 'Dahil olmayanlar',
     departureMetaLabel: 'Kalkış:',
+    durationMetaLabel: 'Süre:',
     captainLabel: 'Kaptan',
     captainAvatarAltFallback: 'Kaptan',
     hostWhyFallbackTitle: "WHY I THINK YOU'LL LOVE THIS TOUR",
@@ -177,6 +179,7 @@ const UI: Record<SiteLocale, TourPageUi> = {
     includedTitle: "What's included",
     notIncludedTitle: 'Not included',
     departureMetaLabel: 'Departure:',
+    durationMetaLabel: 'Duration:',
     captainLabel: 'Captain',
     captainAvatarAltFallback: 'Captain',
     hostWhyFallbackTitle: "WHY I THINK YOU'LL LOVE THIS TOUR",
@@ -248,6 +251,7 @@ const UI: Record<SiteLocale, TourPageUi> = {
     includedTitle: 'Inklusive',
     notIncludedTitle: 'Nicht inbegriffen',
     departureMetaLabel: 'Abfahrt:',
+    durationMetaLabel: 'Dauer:',
     captainLabel: 'Kapitän',
     captainAvatarAltFallback: 'Kapitän',
     hostWhyFallbackTitle: 'WARUM SIE DIESE TOUR LIEBEN WERDEN',

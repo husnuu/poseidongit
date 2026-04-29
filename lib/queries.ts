@@ -842,6 +842,12 @@ export const homePageHeroQuery = `*[_type == "homePage"][0] {
       image{ asset, alt }
     }
   },
+  loyaltyBanner{
+    enabled,
+    "imageUrl": image.asset->url,
+    "imageAlt": image.alt,
+    href
+  },
   instagramSection{
     enabled,
     heading,

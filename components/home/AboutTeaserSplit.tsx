@@ -30,8 +30,8 @@ const bodyComponents = {
   block: {
     normal: ({ children }: { children?: React.ReactNode }) => (
       <p
-        className="text-[20px] md:text-[21px] leading-[1.7] max-w-[540px] mb-5 last:mb-0"
-        style={{ color: 'rgba(255,255,255,0.9)' }}
+        className="text-[16px] md:text-[17px] leading-[1.65] max-w-[540px] mb-3 last:mb-0"
+        style={{ color: 'rgba(255,255,255,0.88)' }}
       >
         {children}
       </p>
@@ -69,7 +69,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
     >
       {/* Text panel - mobile'da altta (order-2) */}
       <div
-        className="flex items-center justify-center px-6 py-20 lg:px-28 lg:py-32 min-h-[480px] lg:min-h-[720px] order-2 lg:order-1"
+        className="flex items-center justify-center px-6 py-14 lg:px-28 lg:py-24 min-h-[380px] lg:min-h-[540px] order-2 lg:order-1"
         style={{ background: 'var(--about-bg, #d8832a)' }}
       >
         <div
@@ -83,7 +83,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
           {heading && (
             <h2
               id="about-teaser-heading"
-              className="uppercase font-extrabold text-[36px] lg:text-[56px] leading-[1.05] text-white mb-6"
+              className="uppercase font-extrabold text-[28px] lg:text-[38px] leading-[1.1] text-white mb-4 -mt-6"
               style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
             >
               {heading}
@@ -148,7 +148,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
       </div>
 
       {/* Image panel - mobile'da üstte (order-1) */}
-      <div className="relative w-full min-h-[480px] lg:min-h-[720px] order-1 lg:order-2 bg-zinc-200">
+      <div className="relative w-full min-h-[380px] lg:min-h-[540px] order-1 lg:order-2 bg-zinc-200">
         {imageUrl ? (
           <Image
             src={imageUrl}

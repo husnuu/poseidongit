@@ -101,7 +101,11 @@ export async function POST(request: NextRequest) {
     let refundErrMsg: string | null = null
 
     if (isPaidOnline) {
-      const amount = Number(data.total_price ?? 0)
+      // paid_now = bankaya ödenen gerçek tutar (kapora); total_price = tam tur fiyatı
+      const amount =
+        data.paid_now != null && Number(data.paid_now) > 0
+          ? Number(data.paid_now)
+          : Number(data.total_price ?? 0)
       const refundResult = await smartRefund({ orderId: bookingId, amount, paidAt: data.paid_at })
 
       refundOk = refundResult.ok
@@ -127,7 +131,11 @@ export async function POST(request: NextRequest) {
       updates.refund_trans_id = refundTransId
       updates.refund_error = refundErrMsg
       updates.refund_type = isPaidOnline ? 'credit' : null
-      updates.refund_amount = isPaidOnline ? Number(data.total_price ?? 0) : null
+      const paidAmount =
+        data.paid_now != null && Number(data.paid_now) > 0
+          ? Number(data.paid_now)
+          : Number(data.total_price ?? 0)
+      updates.refund_amount = isPaidOnline ? paidAmount : null
       updates.refunded_by = 'customer'
     }
 
@@ -162,7 +170,7 @@ export async function POST(request: NextRequest) {
       cancelledBy: 'customer',
       refundOk: isPaidOnline ? refundOk : undefined,
       refundStatus: isPaidOnline ? refundStatus : null,
-      refundAmount: isPaidOnline && refundOk ? Number(data.total_price ?? 0) : null,
+      refundAmount: isPaidOnline && refundOk ? (data.paid_now != null && Number(data.paid_now) > 0 ? Number(data.paid_now) : Number(data.total_price ?? 0)) : null,
       refundErrMsg: isPaidOnline && !refundOk ? refundErrMsg : null,
     })
 

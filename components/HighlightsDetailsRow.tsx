@@ -1,4 +1,10 @@
-import { Check, UtensilsCrossed, Sparkles, Anchor, Sofa, Bus } from 'lucide-react'
+import {
+  ThumbsUp, Anchor, Utensils, Sparkles, Sofa, Bus,
+  Sun, Waves, Music, Camera, Fish, Flame, Shield,
+  Clock, Users, Map, Fuel, Wifi, Wind, Star,
+  LifeBuoy, CheckCircle2, Sailboat,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { TourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './HighlightsDetailsRow.module.css'
 
@@ -8,48 +14,42 @@ interface Highlight {
   description?: string
 }
 
-interface TourDetail {
-  label: string
-  value: string
-  icon?: string
-}
-
 interface HighlightsDetailsRowProps {
   highlights?: Highlight[]
-  tourDetails?: TourDetail[]
-  quickFacts?: {
-    durationText?: string
-    availabilityText?: string
-    meetingLocation?: string
-    language?: string
-    groupType?: string
-    maxCapacity?: number
-  }
+  tourDetails?: unknown
+  quickFacts?: unknown
   tourUi: TourPageUi
 }
 
-const iconSize = 20
-const iconStroke = 2
-
-const CheckIcon = () => <Check size={iconSize} strokeWidth={iconStroke} className={styles.bulletIcon} aria-hidden />
-const FoodIcon = () => <UtensilsCrossed size={iconSize} strokeWidth={iconStroke} className={styles.bulletIcon} aria-hidden />
-const NewIcon = () => <Sparkles size={iconSize} strokeWidth={iconStroke} className={styles.bulletIcon} aria-hidden />
-const CaptainIcon = () => <Anchor size={iconSize} strokeWidth={iconStroke} className={styles.bulletIcon} aria-hidden />
-const ComfortIcon = () => <Sofa size={iconSize} strokeWidth={iconStroke} className={styles.bulletIcon} aria-hidden />
-const LuxuryBusIcon = () => <Bus size={iconSize} strokeWidth={iconStroke} className={styles.bulletIcon} aria-hidden />
-
-const HIGHLIGHT_ICONS: Record<string, () => JSX.Element> = {
-  food: FoodIcon,
-  new: NewIcon,
-  captain: CaptainIcon,
-  comfort: ComfortIcon,
-  'luxury-bus': LuxuryBusIcon,
+const ICON_MAP: Record<string, LucideIcon> = {
+  food:          Utensils,
+  new:           Sparkles,
+  captain:       Sailboat,
+  comfort:       Sofa,
+  'luxury-bus':  Bus,
+  anchor:        Anchor,
+  star:          Star,
+  shield:        Shield,
+  sun:           Sun,
+  wave:          Waves,
+  music:         Music,
+  camera:        Camera,
+  fish:          Fish,
+  swim:          Waves,
+  bbq:           Flame,
+  life:          LifeBuoy,
+  clock:         Clock,
+  group:         Users,
+  map:           Map,
+  fuel:          Fuel,
+  wifi:          Wifi,
+  ac:            Wind,
+  thumbs:        ThumbsUp,
 }
 
-function getHighlightIcon(iconKey?: string | null) {
-  if (!iconKey?.trim()) return CheckIcon
-  const key = iconKey.trim().toLowerCase()
-  return HIGHLIGHT_ICONS[key] ?? CheckIcon
+function getIcon(iconKey?: string | null): LucideIcon {
+  if (!iconKey?.trim()) return ThumbsUp
+  return ICON_MAP[iconKey.trim().toLowerCase()] ?? CheckCircle2
 }
 
 export default function HighlightsDetailsRow({
@@ -57,39 +57,29 @@ export default function HighlightsDetailsRow({
   tourUi,
 }: HighlightsDetailsRowProps) {
   const hasHighlights = highlights && highlights.length > 0
-
   if (!hasHighlights) return null
 
   return (
-    <div className={styles.highlightsDetailsRow}>
-      {hasHighlights && (
-        <div className={styles.sectionColumn}>
-          <h2 className={styles.sectionTitleSmall}>{tourUi.highlightsTitle}</h2>
-          <ul className={styles.bulletList}>
-            {highlights.map((highlight, index) => {
-              const IconComponent = getHighlightIcon(highlight.icon)
-              return (
-              <li key={index} className={styles.bulletItem}>
-                <IconComponent />
-                <div className={styles.bulletText}>
-                  {highlight.description ? (
-                    <>
-                      <div className={styles.bulletTitle}>{highlight.title}</div>
-                      <div className={styles.bulletDescription}>
-                        {highlight.description}
-                      </div>
-                    </>
-                  ) : (
-                    <div className={styles.bulletTitle}>{highlight.title}</div>
-                  )}
-                </div>
-              </li>
-              )
-            })}
-          </ul>
-        </div>
-      )}
-
+    <div className={styles.wrapper}>
+      <h2 className={styles.heading}>{tourUi.highlightsTitle}</h2>
+      <ul className={styles.grid}>
+        {highlights.map((highlight, index) => {
+          const Icon = getIcon(highlight.icon)
+          return (
+            <li key={index} className={styles.item}>
+              <span className={styles.iconBox} aria-hidden>
+                <Icon size={24} strokeWidth={1.6} />
+              </span>
+              <div className={styles.textBlock}>
+                <p className={styles.title}>{highlight.title}</p>
+                {highlight.description && (
+                  <p className={styles.desc}>{highlight.description}</p>
+                )}
+              </div>
+            </li>
+          )
+        })}
+      </ul>
     </div>
   )
 }

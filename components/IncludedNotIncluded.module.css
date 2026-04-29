@@ -3,175 +3,90 @@
   max-width: 977px;
 }
 
-.sectionTitle {
-  font-family: var(--font-family), sans-serif;
-  font-weight: 700;
-  font-size: 24px;
-  line-height: 36px;
-  text-transform: uppercase;
-  color: var(--secondary, #131719);
-  margin: 0 0 16px 0;
-}
-
 .embeddedRoot {
   width: 100%;
   min-width: 0;
 }
 
-.twoCol {
+/* ── Side-by-side: heading left, list right ── */
+.row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
-}
-
-.twoColEmbedded {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 200px 1fr;
   gap: 32px;
+  align-items: start;
+  padding: 28px 0;
+  border-top: 1px solid #e9edf3;
+  border-bottom: 1px solid #e9edf3;
 }
 
-.colTitle {
+.heading {
   font-family: var(--font-family), sans-serif;
-  font-weight: 700;
   font-size: 24px;
+  font-weight: 700;
   line-height: 36px;
   text-transform: uppercase;
   color: #1e3a5f;
-  letter-spacing: 0.02em;
-  margin: 0 0 16px 0;
+  margin: 0;
+  letter-spacing: 0;
 }
 
+/* ── List ── */
 .list {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 32px;
 }
 
 .item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  margin: 0 0 12px 0;
-}
-
-.item:last-child {
-  margin-bottom: 0;
-}
-
-.icon {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 auto;
-  display: block;
-  color: var(--text-color, #58595b);
+  gap: 10px;
 }
 
 .iconWrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
   margin-top: 2px;
-  border-radius: 50%;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, background-color 0.2s ease;
-}
-
-/* Dahil olanlar: yeşil tik – modern pill + glow */
-.includedCol .iconWrap {
-  background: linear-gradient(135deg, rgba(22, 163, 74, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%);
-  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-.includedCol .icon {
-  color: #15803d;
-  transition: color 0.2s ease;
-}
-
-.includedCol .item:hover .iconWrap {
-  transform: scale(1.12);
-  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-
-.includedCol .item:hover .icon {
-  color: #16a34a;
-}
-
-/* Dahil olmayanlar: kırmızı çarpı – modern pill + glow */
-.notIncludedCol .iconWrap {
-  background: linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(239, 68, 68, 0.06) 100%);
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-.notIncludedCol .icon {
-  color: #b91c1c;
-  transition: color 0.2s ease;
-}
-
-.notIncludedCol .item:hover .iconWrap {
-  transform: scale(1.12);
-  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-
-.notIncludedCol .item:hover .icon {
-  color: #dc2626;
+  display: inline-flex;
 }
 
 .text {
   font-family: var(--font-family), sans-serif;
-  font-weight: 400;
   font-size: 15px;
-  line-height: 24px;
-  color: var(--text-color, #58595b);
+  line-height: 1.55;
+  color: #1e293b;
+  font-weight: 400;
 }
 
+.textMuted {
+  color: #64748b;
+}
+
+/* ── Mobile ── */
 @media (max-width: 768px) {
   .section {
     max-width: none;
-    padding: 0;
   }
 
-  .twoCol,
-  .twoColEmbedded {
+  .row {
     grid-template-columns: 1fr;
-    gap: 0;
+    gap: 16px;
+    padding: 24px 0;
   }
 
-  /* Yığılmış düzende: iki blok arasında net boşluk + ince ayırıcı */
-  .includedCol + .notIncludedCol {
-    margin-top: 3rem;
-    padding-top: 2rem;
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
+  .list {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 
-  .sectionTitle {
+  .heading {
     font-size: 20px;
-    line-height: 28px;
-    margin-bottom: 18px;
-  }
-
-  .colTitle {
-    font-size: 20px;
-    line-height: 30px;
-    margin-bottom: 14px;
+    line-height: 1.4;
   }
 
   .text {
-    font-size: 17px;
-    line-height: 1.6;
-  }
-
-  .item {
-    margin-bottom: 12px;
-  }
-
-  /* Dahil olmayanlar maddeleri arasında biraz daha nefes */
-  .notIncludedCol .item {
-    margin-bottom: 16px;
-  }
-
-  .notIncludedCol .item:last-child {
-    margin-bottom: 0;
+    font-size: 15px;
   }
 }

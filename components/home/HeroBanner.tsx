@@ -104,10 +104,10 @@ export default function HeroBanner({
             className="relative inline-flex items-center gap-2 overflow-hidden rounded-l-none rounded-r-full border px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-white md:px-5 md:py-2 md:text-sm"
             style={{
               fontFamily: 'var(--font-family)',
-              background: 'linear-gradient(90deg, #d8832a 0%, #c97622 100%)',
-              borderColor: 'rgba(255, 235, 205, 0.7)',
+              background: 'linear-gradient(90deg, #fc6c4f 0%, #e85a3d 100%)',
+              borderColor: 'rgba(255, 220, 210, 0.7)',
               boxShadow:
-                '0 4px 14px rgba(0, 0, 0, 0.22), 0 0 12px rgba(251, 146, 60, 0.5), 0 0 22px rgba(249, 115, 22, 0.35), inset 0 0 0 1px rgba(255, 244, 220, 0.32)',
+                '0 4px 14px rgba(0, 0, 0, 0.22), 0 0 12px rgba(252, 108, 79, 0.5), 0 0 22px rgba(232, 90, 61, 0.35), inset 0 0 0 1px rgba(255, 230, 220, 0.32)',
             }}
           >
             <Crown className="h-4 w-4 text-white md:h-5 md:w-5" aria-hidden focusable={false} />

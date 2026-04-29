@@ -29,6 +29,15 @@ export default function BookingModal({ tour, onClose }: BookingModalProps) {
   const [submitted, setSubmitted] = useState(false)
   const [step3Valid, setStep3Valid] = useState(false)
   const [step4TermsAccepted, setStep4TermsAccepted] = useState(false)
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    const el = document.createElement('div')
+    el.id = 'booking-modal-portal'
+    document.body.appendChild(el)
+    setPortalEl(el)
+    return () => { if (el.parentNode) el.parentNode.removeChild(el) }
+  }, [])
 
   const maxPax = tour.quickFacts?.maxCapacity ?? MAX_PAX_FALLBACK
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
@@ -215,6 +224,6 @@ export default function BookingModal({ tour, onClose }: BookingModalProps) {
     </div>
   )
 
-  if (typeof document === 'undefined') return null
-  return createPortal(modalContent, document.body)
+  if (!portalEl) return null
+  return createPortal(modalContent, portalEl)
 }

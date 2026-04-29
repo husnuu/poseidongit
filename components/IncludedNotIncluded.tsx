@@ -6,52 +6,30 @@ interface IncludedNotIncludedProps {
   included?: string[]
   notIncluded?: string[]
   tourUi?: TourPageUi
-  /** Dış section sarmalayıcı olmadan (yan galeri düzeninde) */
   embedded?: boolean
-  /** Varsa kolon başlıkları bu sınıfla (örn. yat detay ortak başlık) */
   columnHeadingClassName?: string
 }
 
 const CheckIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={styles.icon}
-    aria-hidden
-  >
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+    <circle cx="9" cy="9" r="9" fill="#16a34a" fillOpacity="0.12" />
     <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M9.70711 14.2929L19 5L20.4142 6.41421L9.70711 17.1213L4 11.4142L5.41421 10L9.70711 14.2929Z"
-      fill="currentColor"
+      d="M5.5 9.25l2.5 2.5 4.5-5"
+      stroke="#16a34a"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </svg>
 )
 
 const XIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={styles.icon}
-    aria-hidden
-  >
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+    <circle cx="9" cy="9" r="9" fill="#ef4444" fillOpacity="0.1" />
     <path
-      d="M6 6L18 18"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-    <path
-      d="M18 6L6 18"
-      stroke="currentColor"
-      strokeOpacity="0.6"
-      strokeWidth="2"
+      d="M6 6l6 6M12 6l-6 6"
+      stroke="#ef4444"
+      strokeWidth="1.75"
       strokeLinecap="round"
     />
   </svg>
@@ -61,7 +39,6 @@ export default function IncludedNotIncluded({
   included,
   notIncluded,
   embedded = false,
-  columnHeadingClassName,
   tourUi: tourUiProp,
 }: IncludedNotIncludedProps) {
   const tourUi = tourUiProp ?? getTourPageUi('tr')
@@ -70,47 +47,34 @@ export default function IncludedNotIncluded({
 
   if (!hasIncluded && !hasNotIncluded) return null
 
-  const colHeading = columnHeadingClassName ?? styles.colTitle
-
   const inner = (
-    <div className={embedded ? styles.twoColEmbedded : styles.twoCol}>
-        {hasIncluded && (
-          <div className={styles.includedCol}>
-            <h3 className={colHeading}>{tourUi.includedTitle}</h3>
-            <ul className={styles.list}>
-              {included!.map((item, idx) => (
-                <li key={`in-${idx}-${item}`} className={styles.item}>
-                  <span className={styles.iconWrap}>
-                    <CheckIcon />
-                  </span>
-                  <span className={styles.text}>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+    <div className={styles.row}>
+      <h3 className={styles.heading}>{tourUi.includedTitle}</h3>
 
-        {hasNotIncluded && (
-          <div className={styles.notIncludedCol}>
-            <h3 className={colHeading}>{tourUi.notIncludedTitle}</h3>
-            <ul className={styles.list}>
-              {notIncluded!.map((item, idx) => (
-                <li key={`out-${idx}-${item}`} className={styles.item}>
-                  <span className={styles.iconWrap}>
-                    <XIcon />
-                  </span>
-                  <span className={styles.text}>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
+      <ul className={styles.list}>
+        {hasIncluded &&
+          included!.map((item, idx) => (
+            <li key={`in-${idx}`} className={styles.item}>
+              <span className={styles.iconWrap}>
+                <CheckIcon />
+              </span>
+              <span className={styles.text}>{item}</span>
+            </li>
+          ))}
+
+        {hasNotIncluded &&
+          notIncluded!.map((item, idx) => (
+            <li key={`out-${idx}`} className={styles.item}>
+              <span className={styles.iconWrap}>
+                <XIcon />
+              </span>
+              <span className={`${styles.text} ${styles.textMuted}`}>{item}</span>
+            </li>
+          ))}
+      </ul>
+    </div>
   )
 
-  if (embedded) {
-    return <div className={styles.embeddedRoot}>{inner}</div>
-  }
-
+  if (embedded) return <div className={styles.embeddedRoot}>{inner}</div>
   return <section className={styles.section}>{inner}</section>
 }

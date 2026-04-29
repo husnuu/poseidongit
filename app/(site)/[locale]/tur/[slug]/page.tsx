@@ -430,6 +430,7 @@ export default async function TourPage({
             <TourHeader
           title={tour.title}
           ratingLabel={tour.ratingLabel}
+          score={tour.rating}
           reviewCount={tour.reviewCount}
           reviewsUrl={tour.reviewsUrl}
           durationText={tour.quickFacts?.durationText}

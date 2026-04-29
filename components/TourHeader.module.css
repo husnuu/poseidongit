@@ -2,13 +2,14 @@
   margin-bottom: 1.5rem;
 }
 
+/* ── Başlık ── */
 .title {
   font-family: var(--font-family-title), var(--font-family), sans-serif;
   font-weight: 900;
   line-height: 1.18;
   text-transform: uppercase;
-  font-size: 2.25rem; /* ~36px */
-  margin: 0 0 18px 0;
+  font-size: 2.25rem;
+  margin: 0 0 20px 0;
   letter-spacing: 0.02em;
   -webkit-text-stroke: 0.03em currentColor;
 }
@@ -18,216 +19,139 @@
   display: block;
 }
 
-@media (min-width: 640px) {
-  .title {
-    font-size: 2.5rem; /* 40px */
-    margin-bottom: 20px;
-  }
-}
+@media (min-width: 640px)  { .title { font-size: 2.5rem;  margin-bottom: 22px; } }
+@media (min-width: 768px)  { .title { font-size: 2.75rem; } }
+@media (min-width: 1024px) { .title { font-size: 3rem; margin-bottom: 24px; -webkit-text-stroke: 0.04em currentColor; } }
+@media (min-width: 1300px) { .title { font-size: 3.5rem; } }
 
-@media (min-width: 768px) {
-  .title {
-    font-size: 2.75rem; /* 44px */
-  }
-}
-
-@media (min-width: 1024px) {
-  .title {
-    font-size: 3rem; /* 48px */
-    margin-bottom: 22px;
-    -webkit-text-stroke: 0.04em currentColor;
-  }
-}
-
-@media (min-width: 1300px) {
-  .title {
-    font-size: 3.5rem; /* 56px */
-  }
-}
-
-/*
- * İki şerit × 4 sütun: [ikon][metin][ikon][metin]
- * Yorum balonu (3. sütun) ile kalkış pini aynı dikey hizada.
- */
-.metaRow {
-  --meta-icon-col: 2.5rem;
+/* ── Meta blok ── */
+.metaBlock {
+  border-top: 1px solid rgba(0, 0, 0, 0.09);
+  padding: 4px 0 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  min-width: 0;
+  gap: 0;
 }
 
-@media (min-width: 768px) {
-  .metaRow {
-    gap: 24px;
-  }
-}
-
-.metaRatingStrip,
-.metaFactsStrip {
-  display: grid;
-  grid-template-columns: var(--meta-icon-col) minmax(0, 1fr) var(--meta-icon-col) minmax(0, 1fr);
-  column-gap: 14px;
-  align-items: center;
-  min-width: 0;
-}
-
-@media (min-width: 768px) {
-  .metaRatingStrip,
-  .metaFactsStrip {
-    column-gap: 22px;
-  }
-}
-
-.metaRatingStrip {
-  padding-bottom: 20px;
-  margin-bottom: 2px;
-  border-bottom: 1px solid rgba(30, 58, 95, 0.12);
-}
-
-.metaStripText {
+/* ── Her satır: ikon + içerik ── */
+.metaItem {
   display: flex;
   align-items: center;
-  min-width: 0;
+  gap: 10px;
+  padding: 9px 0;
 }
 
-.metaStripTextWrap {
-  align-items: flex-start;
-}
-
-.metaStripTextWrap .metaText {
-  align-items: flex-start;
-}
-
-.metaStripSpacer {
-  min-height: 0;
-  pointer-events: none;
-}
-
-/* Tüm meta satırları (puan, süre, kalkış) aynı metin ölçeği; sığmazsa küçülür */
-.metaRow .metaLabel,
-.metaRow .metaMuted,
-.metaRow .reviewText {
-  font-size: clamp(0.75rem, 3vw, 1.125rem);
-}
-
-.metaRow .reviewsLink {
-  font-size: clamp(0.75rem, 3vw, 1.125rem);
-  margin-left: 0;
-  max-width: 100%;
-  min-width: 0;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.metaRow .reviewsLinkIcon svg {
-  width: clamp(11px, 3vw, 14px);
-  height: clamp(11px, 3vw, 14px);
-}
-
-/* İkonlar: yumuşak kutu; şeritte dikey ortada, süre metni ikon ekseninde */
+/* ── İkon ── */
 .metaIcon {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
   flex-shrink: 0;
-  border-radius: 12px;
-  background: rgba(30, 58, 95, 0.08);
-  color: var(--title-color, #1e3a5f);
+  color: #52525b;
 }
 
-.metaIcon svg {
-  width: 1.375rem;
-  height: 1.375rem;
-  flex-shrink: 0;
-}
-
-/* Puan satırı metni — boyut .metaRow ile clamp */
-.reviewText {
-  font-family: "Inter-Bold", var(--font-family), sans-serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 18px;
-  vertical-align: middle;
-  line-height: 1.35;
-  letter-spacing: 0.03em;
-  color: #181818;
-}
-
+/* ── Metin ── */
 .metaText {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  row-gap: 6px;
-}
-
-.metaLabel {
-  color: #181818;
-  font-family: "Inter-Bold", var(--font-family), sans-serif;
+  font-family: var(--font-family), sans-serif;
+  font-size: 14px;
   font-weight: 700;
-  font-size: 18px;
+  color: #1a1a2e;
+  line-height: 1.4;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  line-height: 1.35;
+  letter-spacing: 0.04em;
 }
 
-.metaMuted {
-  color: var(--muted);
-  text-transform: uppercase;
-}
-
-.reviewsLink {
-  position: relative;
+/* ── Yeşil daireler ── */
+.ratingDots {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  color: #181818;
-  font-family: "Inter-Bold", var(--font-family), sans-serif;
-  font-weight: 700;
-  font-size: 18px;
-  text-transform: uppercase;
-  text-decoration: none;
-  margin-left: 12px;
-  padding: 4px 2px 6px;
-  letter-spacing: 0.02em;
-}
-
-.reviewsLinkIcon {
-  display: inline-flex;
-  align-items: center;
+  gap: 3px;
   flex-shrink: 0;
 }
 
-/* Kalın lacivert çizgi, aşağı doğru açıklaşan gradient */
-.reviewsLink::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 4px;
-  background: linear-gradient(
-    to bottom,
-    #1e3a5f 0%,
-    rgba(30, 58, 95, 0.55) 50%,
-    rgba(30, 58, 95, 0.15) 100%
-  );
-  border-radius: 0 0 2px 2px;
-  pointer-events: none;
+.dotFilled {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #34d399;
+}
+
+.dotEmpty {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #d1fae5;
+}
+
+/* ── Yorum linki ── */
+.reviewsLink {
+  font-family: var(--font-family), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  text-decoration: none;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: color 0.15s;
 }
 
 .reviewsLink:hover {
-  color: #1e3a5f;
+  color: #1a1a2e;
 }
 
-.reviewsLink:hover::after {
-  background: linear-gradient(
-    to bottom,
-    #1e3a5f 0%,
-    rgba(30, 58, 95, 0.7) 50%,
-    rgba(30, 58, 95, 0.2) 100%
-  );
+.factLink {
+  font-weight: 400;
+  color: #1e3a8a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── Özellik pill'leri ── */
+.featuresRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #f4f4f5;
+  border-radius: 10px;
+  padding: 7px 12px 7px 9px;
+}
+
+.pillIcon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: #3f3f46;
+}
+
+.pillLabel {
+  font-family: var(--font-family), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #18181b;
+  line-height: 1.4;
+}
+
+.pillArrow {
+  display: inline-flex;
+  align-items: center;
+  color: #71717a;
+  margin-left: 1px;
+}
+
+@media (max-width: 479px) {
+  .metaText, .reviewsLink { font-size: 13px; }
+  .dotFilled, .dotEmpty   { width: 11px; height: 11px; }
 }

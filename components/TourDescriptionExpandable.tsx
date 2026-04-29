@@ -2,26 +2,54 @@
 
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
 import type { PortableTextComponents } from '@portabletext/react'
-import { ShipWheel } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './TourDescriptionExpandable.module.css'
 
 interface TourDescriptionExpandableProps {
   description: PortableTextBlock[]
-  /** RSC sınırında `tourUi` geçirilemez; yat sayfası vermezse `tr` kullanılır. */
   locale?: SiteLocale
-  /** Varsayılan: tourUi veya "Tur Açıklaması" */
   heading?: string
-  /** Başlığın solunda gösterilir (örn. ikon) */
   headingIcon?: ReactNode
-  /** `yacht`: yat detay — başlık dahil/galeri kolon başlıklarıyla aynı; ikon kutusu yok */
   headingVariant?: 'tour' | 'yacht'
-  /** Varsa h2 bu sınıfla (örn. yat detay ortak başlık modülü) */
   headingClassName?: string
+}
+
+function AnchorIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="5" r="3" />
+      <line x1="12" y1="22" x2="12" y2="8" />
+      <path d="M5 12H2a10 10 0 0 0 20 0h-3" />
+    </svg>
+  )
+}
+
+const portableComponents: Partial<PortableTextComponents> = {
+  block: {
+    normal: ({ children, value }) => {
+      // Boş paragrafları (sadece boşluk veya içeriksiz) atla
+      const text = value?.children
+        ?.map((c: { text?: string }) => c.text ?? '')
+        .join('')
+        .trim()
+      if (!text) return null
+
+      return (
+        <div className={styles.timelineItem}>
+          <div className={styles.timelineLeft}>
+            <span className={styles.timelineIconWrap}><AnchorIcon /></span>
+            <span className={styles.timelineLine} aria-hidden />
+          </div>
+          <p className={styles.paragraphRow}>{children}</p>
+        </div>
+      )
+    },
+  },
 }
 
 export default function TourDescriptionExpandable({
@@ -35,37 +63,35 @@ export default function TourDescriptionExpandable({
   const tourUi = useMemo(() => getTourPageUi(locale ?? 'tr'), [locale])
   const heading = headingProp ?? tourUi.tourDescriptionHeading
   const showMore = tourUi.tourDescriptionShowMore
-  const showLess = tourUi.tourDescriptionShowLess
-  const [expanded, setExpanded] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null)
 
   const hasContent = useMemo(
     () => Array.isArray(description) && description.length > 0,
     [description]
   )
 
-  const portableComponents = useMemo<Partial<PortableTextComponents>>(
-    () => ({
-      block: {
-        normal: ({ children }) => (
-          <p className={styles.paragraphRow}>
-            <span className={styles.paragraphIconWrap} aria-hidden>
-              <ShipWheel className={styles.paragraphIcon} size={21} strokeWidth={1.7} />
-            </span>
-            <span className={styles.paragraphText}>{children}</span>
-          </p>
-        ),
-      },
-    }),
-    []
-  )
+  useEffect(() => {
+    const el = document.createElement('div')
+    el.id = 'tour-desc-portal'
+    document.body.appendChild(el)
+    setPortalEl(el)
+    return () => {
+      if (el.parentNode) el.parentNode.removeChild(el)
+    }
+  }, [])
 
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setExpanded(false)
+    if (!modalOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setModalOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prev
+      window.removeEventListener('keydown', onKey)
     }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [modalOpen])
 
   if (!hasContent) return null
 
@@ -75,48 +101,70 @@ export default function TourDescriptionExpandable({
     headingClassName ??
     (headingVariant === 'yacht' ? styles.headingYacht : styles.heading)
 
+  const modal = portalEl
+    ? createPortal(
+        <div
+          className={`${styles.overlay} ${modalOpen ? styles.overlayVisible : ''}`}
+          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false) }}
+          role="dialog"
+          aria-modal
+          aria-hidden={!modalOpen}
+          aria-label={heading}
+        >
+          <div className={styles.sheet}>
+            <div className={styles.sheetHandle} aria-hidden />
+
+            <div className={styles.sheetHeader}>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={() => setModalOpen(false)}
+                aria-label="Kapat"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            <div className={styles.sheetBody}>
+              <h2 className={styles.sheetTitle}>{heading}</h2>
+              <PortableText value={description} components={portableComponents} />
+            </div>
+          </div>
+        </div>,
+        portalEl
+      )
+    : null
+
   return (
-    <div className={styles.section}>
-      <div className={headingVariant === 'yacht' ? styles.headingRowYacht : styles.headingRow}>
-        {headingIcon ? <span className={iconWrapClass}>{headingIcon}</span> : null}
-        <h2 className={headingClass}>{heading}</h2>
+    <>
+      <div className={styles.section}>
+        <div className={headingVariant === 'yacht' ? styles.headingRowYacht : styles.headingRow}>
+          {headingIcon ? <span className={iconWrapClass}>{headingIcon}</span> : null}
+          <h2 className={headingClass}>{heading}</h2>
+        </div>
+
+        <div className={`${styles.content} ${styles.contentCollapsed}`}>
+          <PortableText value={description} components={portableComponents} />
+          <div className={styles.fade} aria-hidden />
+        </div>
+
+        <button
+          type="button"
+          className={styles.toggle}
+          onClick={() => setModalOpen(true)}
+        >
+          <span>{showMore}</span>
+          <span className={styles.toggleIcon} aria-hidden>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M19.293 7.793L20.707 9.207 12 17.914 3.293 9.207 4.707 7.793 12 15.086l7.293-7.293z" fill="currentColor" />
+            </svg>
+          </span>
+        </button>
       </div>
 
-      <div
-        className={
-          expanded
-            ? styles.content
-            : `${styles.content} ${styles.contentCollapsed}`
-        }
-      >
-        <PortableText value={description} components={portableComponents} />
-        {!expanded && <div className={styles.fade} aria-hidden />}
-      </div>
-
-      <button
-        type="button"
-        className={styles.toggle}
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-      >
-        <span>{expanded ? showLess : showMore}</span>
-        <span className={styles.toggleIcon} aria-hidden>
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M19.293 7.79297L20.7072 9.20718L12.0001 17.9143L3.29297 9.20718L4.70718 7.79297L12.0001 15.0859L19.293 7.79297Z"
-              fill="currentColor"
-            />
-          </svg>
-        </span>
-      </button>
-    </div>
+      {modal}
+    </>
   )
 }

@@ -32,10 +32,14 @@ export default function Step1PeopleDate({
   ctaDisabled,
   ui,
 }: Step1PeopleDateProps) {
+  const MAX_PER_CATEGORY = 9
   const counts = state.counts
   const total = counts.adult + counts.child + counts.baby
   const canDecrementAdult = counts.adult > 1
   const canIncrement = total < maxPax
+  const canIncrementAdult = canIncrement && counts.adult < MAX_PER_CATEGORY
+  const canIncrementChild = canIncrement && counts.child < MAX_PER_CATEGORY
+  const canIncrementBaby  = canIncrement && counts.baby  < MAX_PER_CATEGORY
 
   const rules = tour.bookingRules
   const showRules = rules?.show !== false && (rules?.bullets?.length ?? 0) > 0
@@ -120,7 +124,7 @@ export default function Step1PeopleDate({
             <button
               type="button"
               className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
-              disabled={!canIncrement}
+              disabled={!canIncrementAdult}
               onClick={() => onUpdate({ counts: { ...counts, adult: counts.adult + 1 } })}
               aria-label={ui.ariaIncAdult}
             >
@@ -147,7 +151,7 @@ export default function Step1PeopleDate({
             <button
               type="button"
               className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
-              disabled={!canIncrement}
+              disabled={!canIncrementChild}
               onClick={() => onUpdate({ counts: { ...counts, child: counts.child + 1 } })}
               aria-label={ui.ariaIncChild}
             >
@@ -174,7 +178,7 @@ export default function Step1PeopleDate({
             <button
               type="button"
               className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
-              disabled={!canIncrement}
+              disabled={!canIncrementBaby}
               onClick={() => onUpdate({ counts: { ...counts, baby: counts.baby + 1 } })}
               aria-label={ui.ariaIncBaby}
             >
