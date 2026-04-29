@@ -33,8 +33,8 @@ const portableComponents: Partial<PortableTextComponents> = {
   block: {
     normal: ({ children, value }) => {
       // Boş paragrafları (sadece boşluk veya içeriksiz) atla
-      const text = value?.children
-        ?.map((c: { text?: string }) => c.text ?? '')
+      const text = (value?.children as Array<{ text?: string }> | undefined)
+        ?.map((c) => c.text ?? '')
         .join('')
         .trim()
       if (!text) return null
