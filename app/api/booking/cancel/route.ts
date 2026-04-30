@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
       } else {
         // "Gün sonu bekleniyor" → pending (otomatik retry sabah çalışır)
         const isSettlementPending =
+          refundResult.errMsg === 'GUN_SONU_BEKLENIYOR' ||
           (refundResult.errMsg ?? '').toLowerCase().includes('günson') ||
           (refundResult.errMsg ?? '').toLowerCase().includes('gün son') ||
           (refundResult.errMsg ?? '').toLowerCase().includes('gün sonuna') ||

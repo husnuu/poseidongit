@@ -236,53 +236,77 @@ export async function smartRefund(opts: {
     }
   }
 
-  // Türkiye saatiyle (UTC+3) tarih karşılaştırması
+  // ─── Yöntem seçimi: Void mu Credit mi? ───────────────────────────────────────
+  //
+  //  Void  → aynı gün, gün sonu öncesi. Banka havuzundan siler, limit anında döner.
+  //  Credit → gün sonu geçmiş (muhasebeleşmiş). 3-10 iş günü sürer.
+  //
+  //  paidAt bilinmiyorsa Void'i dene — işlem günün içindeyse çalışır,
+  //  değilse banka zaten "uygun işlem yok" diyerek reddeder, o zaman Credit'e geçeriz.
+
   function toTrDateStr(d: Date): string {
     return d.toLocaleDateString('tr-TR', { timeZone: 'Europe/Istanbul' })
   }
 
   const nowTr   = toTrDateStr(new Date())
   const paidTr  = paidAt ? toTrDateStr(new Date(paidAt)) : null
-  const isSameDay = paidTr !== null && paidTr === nowTr
+  // paidAt yoksa "bugün olabilir" diye Void dene (güvenli: banka reddederse Credit'e geçeriz)
+  const tryVoidFirst = paidTr === null || paidTr === nowTr
 
-  if (isSameDay) {
-    // Aynı gün → Void dene (gün sonu öncesi iptal, komisyon iadeli)
-    console.info('[nestpay-refund] Aynı gün → Void deneniyor', { orderId })
+  if (tryVoidFirst) {
+    console.info('[nestpay-refund] Void deneniyor', { orderId, paidTr, nowTr })
     const voidResult = await voidPayment({ orderId })
-    if (voidResult.ok) return { ...voidResult, refundType: 'void' }
+
+    if (voidResult.ok) {
+      console.info('[nestpay-refund] ✅ Void başarılı')
+      return { ...voidResult, refundType: 'void' }
+    }
 
     const voidErr = (voidResult.errMsg ?? '').toLowerCase()
-    console.warn('[nestpay-refund] Void başarısız', { errMsg: voidResult.errMsg, procReturnCode: voidResult.procReturnCode })
+    console.warn('[nestpay-refund] Void başarısız', {
+      errMsg: voidResult.errMsg,
+      procReturnCode: voidResult.procReturnCode,
+    })
 
-    // Void başarısız: eğer gün sonu henüz gerçekleşmemişse Credit de çalışmaz.
-    // "günsonuna girmemiş" veya "suitable" gibi ifadeler bunu belirtir.
-    const isUnsettled =
+    // Gün sonu bekleniyorsa → Credit de çalışmaz, pending kuyruğuna al
+    const isSettlementPending =
       voidErr.includes('günson') ||
-      voidErr.includes('gun son') ||
       voidErr.includes('gün son') ||
+      voidErr.includes('gun son') ||
       voidErr.includes('settle') ||
-      voidErr.includes('no suitable') ||
-      voidErr.includes('iade edilmeye uygun') ||
-      voidErr.includes('suitable transaction') ||
+      voidErr.includes('sipariş günsonuna') ||
+      voidErr.includes('günsonu') ||
       voidResult.procReturnCode === '99'
 
-    if (isUnsettled) {
-      // Gün sonu bekleniyor — Credit'e geçmek de anlamsız, hata mesajı döndür
+    if (isSettlementPending) {
+      console.info('[nestpay-refund] Gün sonu bekleniyor → pending kuyruğu')
       return {
         ok: false,
         procReturnCode: voidResult.procReturnCode,
-        errMsg:
-          'Bu işlem henüz bankada gün sonuna girmemiş (muhasebeleşmemiş). ' +
-          'İptal ve iade yalnızca gün sonu tamamlandıktan sonra (genellikle ertesi gün) yapılabilir. ' +
-          'Lütfen yarın tekrar deneyin veya bankayla iletişime geçin.',
+        errMsg: 'GUN_SONU_BEKLENIYOR',  // cancel route bunu pending olarak işaretler
         refundType: 'void',
       }
     }
 
-    // Void başka bir sebeple başarısız olduysa Credit'i dene
-    console.info('[nestpay-refund] Void başarısız (diğer hata) → Credit deneniyor')
+    // Void "uygun işlem yok" dedi ama gün sonu değil → işlem muhasebeleşmiş, Credit dene
+    const isAlreadySettled =
+      voidErr.includes('no suitable') ||
+      voidErr.includes('iade edilmeye uygun') ||
+      voidErr.includes('suitable transaction') ||
+      voidErr.includes('bulunamad')
+
+    if (isAlreadySettled) {
+      console.info('[nestpay-refund] Void: işlem zaten muhasebeleşmiş → Credit deneniyor')
+      // Credit'e düş (aşağıda)
+    } else if (paidTr === nowTr) {
+      // Aynı gün ama Void başka sebeple başarısız → yine de Credit dene
+      console.info('[nestpay-refund] Aynı gün Void başarısız (diğer hata) → Credit deneniyor')
+    }
+    // paidAt bilinmiyordu ve Void başarısız → Credit dene
   }
 
+  // Credit: gün sonu geçmiş işlemler için
+  console.info('[nestpay-refund] Credit deneniyor', { orderId, amount })
   const creditResult = await refundPayment({ orderId, amount })
   return { ...creditResult, refundType: 'credit' }
 }
