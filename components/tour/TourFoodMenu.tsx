@@ -113,44 +113,47 @@ export default function TourFoodMenu({ sectionTitle, intro, items, locale }: Tou
     )
 
   return (
-    <section className={styles.section} aria-label={sectionTitle}>
-      <h2 className={styles.heading}>{sectionTitle}</h2>
+    <section className={styles.section} aria-labelledby="tour-food-menu-heading">
+      <h2 id="tour-food-menu-heading" className={styles.heading}>
+        {sectionTitle}
+      </h2>
       {intro?.trim() ? (
         <p className={styles.intro}>{intro.trim()}</p>
       ) : null}
-      <div className={styles.grid}>
+      <ul className={styles.list}>
         {items.map((item, index) => (
-          <article key={`${item.title}-${index}`} className={styles.card}>
-            <div className={styles.cardImageWrap}>
+          <li key={`${item.title}-${index}`} className={styles.row}>
+            <div className={styles.thumb}>
               {item.imageUrl ? (
                 <Image
                   src={item.imageUrl}
-                  alt={item.imageAlt || item.title}
+                  alt=""
                   fill
-                  className={styles.cardImage}
-                  sizes="(max-width: 479px) 100vw, (max-width: 899px) 50vw, 33vw"
+                  className={styles.thumbImg}
+                  sizes="160px"
+                  aria-hidden
                 />
               ) : (
-                <div className={styles.cardImagePlaceholder} aria-hidden>
+                <span className={styles.thumbPlaceholder} aria-hidden>
                   ···
-                </div>
+                </span>
               )}
             </div>
-            <div className={styles.cardBody}>
-              <h3 className={styles.cardTitle}>{item.title}</h3>
+            <div className={styles.rowMain}>
+              <h3 className={styles.rowTitle}>{item.title}</h3>
               {hasAnyModalContent(item) ? (
                 <button
                   type="button"
-                  className={styles.detailBtn}
+                  className={styles.detailLink}
                   onClick={() => setOpenIndex(index)}
                 >
                   {tourUi.foodMenuDetailBtn}
                 </button>
               ) : null}
             </div>
-          </article>
+          </li>
         ))}
-      </div>
+      </ul>
       {mounted && active
         ? createPortal(
             <div

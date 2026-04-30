@@ -1,4 +1,4 @@
-import { urlFor } from '@/lib/sanity'
+import { safeSanityImageUrl } from '@/lib/sanity'
 import type { PhotoGridImage } from '@/components/PhotoGrid'
 import type { YachtGalleryImage, YachtRentalDocument } from '@/lib/yachtTypes'
 
@@ -9,17 +9,23 @@ export function buildYachtSidebarGallery(yacht: YachtRentalDocument): YachtSideb
   const out: YachtSidebarGalleryItem[] = []
   for (const img of yacht.gallery ?? []) {
     if (img?.asset) {
-      out.push({
-        src: urlFor(img.asset).width(720).height(540).url(),
-        alt: img.alt?.trim() || `${yacht.name} — galeri`,
-      })
+      const src = safeSanityImageUrl(img.asset, (b) => b.width(720).height(540))
+      if (src) {
+        out.push({
+          src,
+          alt: img.alt?.trim() || `${yacht.name} — galeri`,
+        })
+      }
     }
   }
   if (out.length === 0 && yacht.mainImage?.asset) {
-    out.push({
-      src: urlFor(yacht.mainImage.asset).width(720).height(540).url(),
-      alt: yacht.mainImage.alt?.trim() || yacht.name,
-    })
+    const src = safeSanityImageUrl(yacht.mainImage.asset, (b) => b.width(720).height(540))
+    if (src) {
+      out.push({
+        src,
+        alt: yacht.mainImage.alt?.trim() || yacht.name,
+      })
+    }
   }
   return out
 }
@@ -30,9 +36,15 @@ export function buildYachtPhotoGridImages(yacht: YachtRentalDocument): PhotoGrid
   const all = [...main, ...gallery].filter(
     (img): img is YachtGalleryImage => Boolean(img?.asset)
   )
-  return all.map((img, i) => ({
-    src: urlFor(img.asset!).width(1200).url(),
-    blurDataURL: img.metadata?.lqip ?? null,
-    alt: `${yacht.name} - Görsel ${i + 1}`,
-  }))
+  const out: PhotoGridImage[] = []
+  for (const img of all) {
+    const src = safeSanityImageUrl(img.asset!, (b) => b.width(1200))
+    if (!src) continue
+    out.push({
+      src,
+      blurDataURL: img.metadata?.lqip ?? null,
+      alt: `${yacht.name} - Görsel ${out.length + 1}`,
+    })
+  }
+  return out
 }

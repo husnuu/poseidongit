@@ -7,15 +7,15 @@ const WRAPPER_STYLE = {
   borderWidth: 1,
   borderStyle: 'solid',
   borderColor: '#e2e8f0',
-  borderRadius: 12,
+  borderRadius: 10,
   boxShadow: 'none',
 }
 const FOCUS_STYLE = {
   borderColor: '#fc6c4f',
-  boxShadow: '0 0 0 3px rgba(252,108,79,0.12)',
+  boxShadow: '0 0 0 2px rgba(252,108,79,0.1)',
 }
-const INPUT_HEIGHT = 56
-const INPUT_HEIGHT_COMPACT = 48
+const INPUT_HEIGHT = 52
+const INPUT_HEIGHT_COMPACT = 42
 const LABEL_COLOR = '#94a3b8'
 const LABEL_COLOR_FOCUS = '#fc6c4f'
 
@@ -62,9 +62,9 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
   const active = focused || effectiveHasValue
   const isOutlined = variant === 'outlined'
   const height = compact ? INPUT_HEIGHT_COMPACT : INPUT_HEIGHT
-  const paddingX = compact ? 12 : 16
-  const paddingTop = isOutlined ? (compact ? 16 : 20) : (compact ? 14 : 20)
-  const paddingBottom = compact ? 6 : 8
+  const paddingX = compact ? 11 : 14
+  const paddingTop = isOutlined ? (compact ? 13 : 18) : (compact ? 12 : 18)
+  const paddingBottom = compact ? 5 : 7
   /* En az 16px: mobilde (iOS) focus’ta zoom’u engeller */
   const inputFontSize = 16
   /* Sol üstte, kutunun kenarının içinde (border içi) */
@@ -88,7 +88,7 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
           id={id}
           value={value}
           defaultValue={defaultValue}
-          className={`w-full bg-transparent text-[#334155] outline-none rounded-[5px] ${className}`}
+          className={`w-full bg-transparent text-[#475569] outline-none rounded-[5px] ${className}`}
           style={{
             height,
             paddingLeft: paddingX,
@@ -124,7 +124,7 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
                   left: labelInsetLeft,
                   background: '#fff',
                   padding: '0 6px',
-                  fontSize: 12,
+                  fontSize: compact ? 11 : 12,
                   fontWeight: 500,
                   color: focused || effectiveHasValue ? LABEL_COLOR_FOCUS : LABEL_COLOR,
                 }
@@ -149,7 +149,7 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
         </label>
       </div>
       {error && (
-        <p id={`${id}-error`} className="mt-1.5 text-sm text-red-600" role="alert">
+        <p id={`${id}-error`} className="mt-1 text-xs text-red-600 font-medium" role="alert">
           {error}
         </p>
       )}

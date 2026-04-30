@@ -10,26 +10,26 @@ interface IncludedNotIncludedProps {
   columnHeadingClassName?: string
 }
 
+/** Minimal çizgi tik — yeşil (currentColor) */
 const CheckIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-    <circle cx="9" cy="9" r="9" fill="#16a34a" fillOpacity="0.12" />
+  <svg width="17" height="17" viewBox="0 0 17 17" fill="none" aria-hidden className={styles.svgStroke}>
     <path
-      d="M5.5 9.25l2.5 2.5 4.5-5"
-      stroke="#16a34a"
-      strokeWidth="1.75"
+      d="M4 8.5l3 3 6-6"
+      stroke="currentColor"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
   </svg>
 )
 
+/** Minimal çarpı — kırmızı (currentColor) */
 const XIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-    <circle cx="9" cy="9" r="9" fill="#ef4444" fillOpacity="0.1" />
+  <svg width="17" height="17" viewBox="0 0 17 17" fill="none" aria-hidden className={styles.svgStroke}>
     <path
-      d="M6 6l6 6M12 6l-6 6"
-      stroke="#ef4444"
-      strokeWidth="1.75"
+      d="M4.5 4.5l8 8M12.5 4.5l-8 8"
+      stroke="currentColor"
+      strokeWidth="2"
       strokeLinecap="round"
     />
   </svg>
@@ -40,6 +40,7 @@ export default function IncludedNotIncluded({
   notIncluded,
   embedded = false,
   tourUi: tourUiProp,
+  columnHeadingClassName,
 }: IncludedNotIncludedProps) {
   const tourUi = tourUiProp ?? getTourPageUi('tr')
   const hasIncluded = Array.isArray(included) && included.length > 0
@@ -47,15 +48,17 @@ export default function IncludedNotIncluded({
 
   if (!hasIncluded && !hasNotIncluded) return null
 
+  const headingClass = columnHeadingClassName ?? styles.heading
+
   const inner = (
     <div className={styles.row}>
-      <h3 className={styles.heading}>{tourUi.includedTitle}</h3>
+      <h3 className={headingClass}>{tourUi.includedTitle}</h3>
 
       <ul className={styles.list}>
         {hasIncluded &&
           included!.map((item, idx) => (
             <li key={`in-${idx}`} className={styles.item}>
-              <span className={styles.iconWrap}>
+              <span className={styles.iconIncluded} aria-hidden>
                 <CheckIcon />
               </span>
               <span className={styles.text}>{item}</span>
@@ -65,7 +68,7 @@ export default function IncludedNotIncluded({
         {hasNotIncluded &&
           notIncluded!.map((item, idx) => (
             <li key={`out-${idx}`} className={styles.item}>
-              <span className={styles.iconWrap}>
+              <span className={styles.iconExcluded} aria-hidden>
                 <XIcon />
               </span>
               <span className={`${styles.text} ${styles.textMuted}`}>{item}</span>
@@ -75,6 +78,15 @@ export default function IncludedNotIncluded({
     </div>
   )
 
+  const sectionAria =
+    hasIncluded && hasNotIncluded
+      ? `${tourUi.includedTitle}; ${tourUi.notIncludedTitle}`
+      : tourUi.includedTitle
+
   if (embedded) return <div className={styles.embeddedRoot}>{inner}</div>
-  return <section className={styles.section}>{inner}</section>
+  return (
+    <section className={styles.section} aria-label={sectionAria}>
+      {inner}
+    </section>
+  )
 }

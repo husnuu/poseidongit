@@ -155,7 +155,7 @@ export default function HomePopularYachtCard({
         {specLine ? <p className="mt-3 text-sm text-zinc-500">{specLine}</p> : null}
       </div>
 
-      <div className="flex flex-1 flex-col justify-end gap-4 rounded-b-3xl bg-zinc-50 px-5 py-4">
+      <div className="flex flex-1 flex-col justify-end gap-4 rounded-b-3xl bg-white px-5 py-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
             {included.length ? (

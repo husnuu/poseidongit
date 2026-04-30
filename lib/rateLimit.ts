@@ -91,14 +91,29 @@ function memoryRateLimit(key: string, max: number, windowMs: number): { ok: bool
   return { ok: true, retryAfterSec: 0 }
 }
 
+/**
+ * Rate limit anahtarı için istemci IP’si.
+ *
+ * - **Upstash:** Tüm instance’lar aynı Redis sayacını kullanır; çoklu pod/Vercel region için env’de Upstash doldurun.
+ * - **IP güvenilirliği:** İstemci doğrudan Node’a bağlanabiliyorsa `X-Forwarded-For` sahte gönderilebilir.
+ *   Üretimde uygulamayı güvenilir edge/proxy arkasında çalıştırın (Vercel bu başlığı platform tarafında üretir).
+ *   Kendi sunucunuzda nginx/caddy: yalnızca CDN/load balancer’dan gelen istekleri kabul edin; `real_ip`/trusted hops yapılandırın.
+ *
+ * Sıra: Cloudflare gerçek IP → nginx vb. `X-Real-IP` → `X-Forwarded-For` ilk hop (proxy zinciri soldan müşteri modeli).
+ */
 export function getClientIp(request: Request): string {
+  const cf = request.headers.get('cf-connecting-ip')?.trim()
+  if (cf) return cf.slice(0, 128)
+
+  const real = request.headers.get('x-real-ip')?.trim()
+  if (real) return real.slice(0, 128)
+
   const forwarded = request.headers.get('x-forwarded-for')
   if (forwarded) {
     const first = forwarded.split(',')[0]?.trim()
     if (first) return first.slice(0, 128)
   }
-  const real = request.headers.get('x-real-ip')?.trim()
-  if (real) return real.slice(0, 128)
+
   return 'unknown'
 }
 

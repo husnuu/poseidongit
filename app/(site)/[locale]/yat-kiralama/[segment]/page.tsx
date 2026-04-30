@@ -1,7 +1,7 @@
 import { cache } from 'react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { client, urlFor } from '@/lib/sanity'
+import { client, safeSanityImageUrl } from '@/lib/sanity'
 import {
   yachtRentalBySlugQuery,
   yachtLocationBySlugQuery,
@@ -21,15 +21,29 @@ import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 export const revalidate = 3600
 
 const getYachtBySlug = cache(async (slug: string) => {
-  return client.fetch<YachtRentalDocument | null>(yachtRentalBySlugQuery, { slug }, { useCdn: true })
+  try {
+    return await client.fetch<YachtRentalDocument | null>(
+      yachtRentalBySlugQuery,
+      { slug },
+      { useCdn: true }
+    )
+  } catch (err) {
+    console.error('[yat-kiralama segment] Sanity fetch yacht', { slug, err })
+    return null
+  }
 })
 
 const getLocationBySlug = cache(async (slug: string) => {
-  return client.fetch<{ title?: string; slug?: string; intro?: string } | null>(
-    yachtLocationBySlugQuery,
-    { slug },
-    { useCdn: true }
-  )
+  try {
+    return await client.fetch<{ title?: string; slug?: string; intro?: string } | null>(
+      yachtLocationBySlugQuery,
+      { slug },
+      { useCdn: true }
+    )
+  } catch (err) {
+    console.error('[yat-kiralama segment] Sanity fetch location', { slug, err })
+    return null
+  }
 })
 
 type YachtListRaw = Omit<YachtListItem, 'coverImageUrl' | 'coverImageAlt'> & {
@@ -37,7 +51,16 @@ type YachtListRaw = Omit<YachtListItem, 'coverImageUrl' | 'coverImageAlt'> & {
 }
 
 const getYachtsByLocation = cache(async (locationSlug: string) => {
-  return client.fetch<YachtListRaw[]>(yachtRentalsByLocationQuery, { locationSlug }, { useCdn: true })
+  try {
+    return await client.fetch<YachtListRaw[]>(
+      yachtRentalsByLocationQuery,
+      { locationSlug },
+      { useCdn: true }
+    )
+  } catch (err) {
+    console.error('[yat-kiralama segment] Sanity fetch yachts by location', { locationSlug, err })
+    return []
+  }
 })
 
 export async function generateStaticParams() {
@@ -75,7 +98,12 @@ export async function generateMetadata({
       yacht.locationSlug && yacht.slug
         ? `/yat-kiralama/${yacht.locationSlug}/${yacht.slug}`
         : `/yat-kiralama/${segment}`
-    return buildYachtDetailMetadata(yacht, path)
+    try {
+      return buildYachtDetailMetadata(yacht, path)
+    } catch (err) {
+      console.error('[yat-kiralama segment] generateMetadata yacht', { segment, err })
+      return { title: yacht.name || 'Yat kiralama' }
+    }
   }
   const loc = await getLocationBySlug(segment)
   if (loc?.title) {
@@ -131,9 +159,9 @@ export default async function YatKiralamaSegmentPage({
         yachtType: y.yachtType,
         isFeatured: y.isFeatured,
         specifications: y.specifications ?? undefined,
-        coverImageUrl: y.mainImage?.asset
-          ? urlFor(y.mainImage.asset).width(800).height(600).url()
-          : null,
+        coverImageUrl: safeSanityImageUrl(y.mainImage?.asset ?? undefined, (b) =>
+          b.width(800).height(600)
+        ),
         coverImageAlt: y.mainImage?.alt ?? null,
       }))
     } catch {

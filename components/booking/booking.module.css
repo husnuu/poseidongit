@@ -308,17 +308,17 @@
   cursor: wait;
 }
 
-/* Input: radius 12px, turuncu odak */
+/* Input: kompakt, turuncu odak */
 .input {
   width: 100%;
-  min-height: 48px;
-  padding: 12px 16px;
+  min-height: 44px;
+  padding: 10px 14px;
   font-size: 16px;
   font-family: var(--font-family);
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fff;
-  color: #1e3a5f;
+  color: #475569;
   box-shadow: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -326,20 +326,20 @@
 .input:focus {
   outline: none;
   border-color: #fc6c4f;
-  box-shadow: 0 0 0 3px rgba(252, 108, 79, 0.12);
+  box-shadow: 0 0 0 2px rgba(252, 108, 79, 0.1);
 }
 
-/* Select — modern ok ikonu, turuncu odak */
+/* Select — kompakt ok ikonu */
 .select {
   font-family: var(--font-family);
   width: 100%;
-  min-height: 48px;
-  padding: 12px 44px 12px 16px;
+  min-height: 44px;
+  padding: 10px 40px 10px 14px;
   font-size: 15px;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%2394A3B8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 14px center;
-  color: #1e3a5f;
+  border-radius: 10px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%2394A3B8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  color: #475569;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
@@ -350,7 +350,7 @@
 .select:focus {
   outline: none;
   border-color: #fc6c4f;
-  box-shadow: 0 0 0 3px rgba(252, 108, 79, 0.12);
+  box-shadow: 0 0 0 2px rgba(252, 108, 79, 0.1);
 }
 
 /* Yemek tercihi select: daha modern ok ve mobilde daha büyük dokunma alanı */
@@ -361,11 +361,11 @@
 
 .mealOptionFloatingLabel {
   position: absolute;
-  top: 9px;
-  left: 16px;
-  font-size: 11px;
+  top: 8px;
+  left: 14px;
+  font-size: 10px;
   font-weight: 500;
-  color: #6b7280;
+  color: #94a3b8;
   pointer-events: none;
   line-height: 1;
 }
@@ -374,32 +374,32 @@
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  min-height: 56px;
-  padding: 20px 48px 8px 16px;
-  border-radius: 12px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5.75 7.75L10 12L14.25 7.75' stroke='%23475569' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  min-height: 44px;
+  padding: 18px 40px 8px 14px;
+  border-radius: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5.75 7.75L10 12L14.25 7.75' stroke='%2394A3B8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 14px center;
-  background-size: 18px;
+  background-position: right 12px center;
+  background-size: 14px;
 }
 
 @media (max-width: 640px) {
   .mealOptionSelect {
-    min-height: 58px;
+    min-height: 44px;
     font-size: 16px;
-    padding-right: 50px;
-    background-size: 19px;
-    background-position: right 13px center;
+    padding-right: 42px;
+    background-size: 14px;
+    background-position: right 11px center;
   }
 }
 
 /* İletişim sayfası ile aynı etiket stili */
 .formLabel {
   display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
+  margin-bottom: 5px;
+  font-size: 12px;
   font-weight: 500;
-  color: #64748B;
+  color: #94a3b8;
   font-family: var(--font-family);
 }
 
@@ -426,17 +426,17 @@
 
 .errorText {
   font-family: var(--font-family);
-  font-size: 13px;
+  font-size: 12px;
   color: #dc2626;
-  margin-top: 6px;
+  margin-top: 5px;
 }
 
 /* Yemek menüsü: açıklama metni (seçim alanı MealOptionSelect — Bilgileriniz’teki input ile aynı kutu) */
 .mealOptionDescription {
   font-family: var(--font-family);
-  font-size: 13px;
-  color: #6b7280;
-  margin-top: 4px;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
   margin-bottom: 6px;
   line-height: 1.45;
 }
@@ -458,11 +458,11 @@
 
 .mealOptionBtn {
   font-family: var(--font-family);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 1.5px solid #e2e8f0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
   background: #fff;
   color: #475569;
   cursor: pointer;
@@ -472,7 +472,7 @@
     color 0.15s,
     box-shadow 0.15s;
   text-align: center;
-  min-height: 44px;
+  min-height: 40px;
   line-height: 1.3;
 }
 
@@ -1734,31 +1734,31 @@
 .formGrid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 @media (max-width: 480px) {
   .formGrid2 {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 8px;
   }
 }
 
 .formField {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 /* Sözleşme checkbox satırı */
 .termsRow {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 14px 16px 16px;
+  gap: 8px;
+  padding: 12px 16px 14px;
   cursor: pointer;
-  font-size: 13px;
-  color: #52525b;
-  line-height: 1.55;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
   font-family: var(--font-family);
 }
 
@@ -1892,11 +1892,12 @@
 }
 
 .sectionTitle {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #1e3a5f;
   margin: 0;
   font-family: var(--font-family);
+  letter-spacing: -0.01em;
 }
 
 /* CTA alanı (flat sayfada) */
@@ -1928,11 +1929,11 @@
 
 .stepBtnBack {
   font-family: var(--font-family);
-  padding: 14px 18px;
-  font-size: 15px;
+  padding: 11px 14px;
+  font-size: 14px;
   font-weight: 600;
-  border-radius: 14px;
-  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
   background: #fff;
   color: #64748B;
   cursor: pointer;
@@ -1952,24 +1953,24 @@
 
 .stepBtnPrimary {
   font-family: var(--font-family);
-  padding: 15px 28px;
-  font-size: 15px;
+  padding: 12px 22px;
+  font-size: 14px;
   font-weight: 600;
-  border-radius: 14px;
+  border-radius: 12px;
   border: none;
   background: #fc6c4f;
   color: #fff;
   cursor: pointer;
   transition: background 0.2s, transform 0.1s, box-shadow 0.2s, opacity 0.2s;
   letter-spacing: 0.01em;
-  box-shadow: 0 4px 14px rgba(252, 108, 79, 0.35);
+  box-shadow: 0 2px 10px rgba(252, 108, 79, 0.28);
   flex: 1;
   min-width: 0;
 }
 
 .stepBtnPrimary:hover:not(:disabled) {
   background: #f85a3a;
-  box-shadow: 0 6px 20px rgba(252, 108, 79, 0.45);
+  box-shadow: 0 4px 14px rgba(252, 108, 79, 0.38);
   transform: translateY(-1px);
 }
 
@@ -2001,7 +2002,7 @@
   }
   .stepActionsRow .stepBtnBack {
     flex: 0 0 auto;
-    padding: 14px 16px;
+    padding: 11px 12px;
     min-width: 0;
   }
   .stepActionsRow .stepBtnPrimary {

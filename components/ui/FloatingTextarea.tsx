@@ -7,12 +7,12 @@ const WRAPPER_STYLE = {
   borderWidth: 1,
   borderStyle: 'solid',
   borderColor: '#e2e8f0',
-  borderRadius: 12,
+  borderRadius: 10,
   boxShadow: 'none',
 }
 const FOCUS_STYLE = {
   borderColor: '#fc6c4f',
-  boxShadow: '0 0 0 3px rgba(252,108,79,0.12)',
+  boxShadow: '0 0 0 2px rgba(252,108,79,0.1)',
 }
 const LABEL_COLOR = '#94a3b8'
 const LABEL_COLOR_FOCUS = '#fc6c4f'
@@ -75,13 +75,13 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
           rows={rows}
           className={`w-full bg-transparent resize-y outline-none rounded-xl ${className}`}
           style={{
-            paddingLeft: 16,
-            paddingRight: 16,
-            paddingTop: isOutlined ? 20 : (active ? 24 : 16),
-            paddingBottom: 16,
+            paddingLeft: 14,
+            paddingRight: 14,
+            paddingTop: isOutlined ? 16 : (active ? 22 : 14),
+            paddingBottom: 12,
             fontSize: 16,
-            minHeight: 120,
-            color: '#111',
+            minHeight: isOutlined ? 96 : 108,
+            color: '#475569',
           }}
           onFocus={(e) => {
             setFocused(true)
@@ -110,7 +110,7 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
                   left: 12,
                   background: '#fff',
                   padding: '0 6px',
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: 500,
                   color: focused || effectiveHasValue ? LABEL_COLOR_FOCUS : LABEL_COLOR,
                 }
@@ -135,7 +135,7 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
         </label>
       </div>
       {error && (
-        <p id={`${id}-error`} className="mt-1.5 text-sm text-red-600" role="alert">
+        <p id={`${id}-error`} className="mt-1 text-xs text-red-600 font-medium" role="alert">
           {error}
         </p>
       )}

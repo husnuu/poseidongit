@@ -1,5 +1,5 @@
 .section {
-  margin: 32px 0 2.5rem 0;
+  margin: 32px 0 2.5rem;
   max-width: 977px;
 }
 
@@ -8,7 +8,7 @@
   min-width: 0;
 }
 
-/* ── Side-by-side: heading left, list right ── */
+/* Başlık solda, tek liste sağda — düz, kart yok */
 .row {
   display: grid;
   grid-template-columns: 200px 1fr;
@@ -20,17 +20,15 @@
 }
 
 .heading {
-  font-family: var(--font-family), sans-serif;
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-size: 24px;
   font-weight: 700;
-  line-height: 36px;
+  line-height: 1.35;
   text-transform: uppercase;
   color: #1e3a5f;
   margin: 0;
-  letter-spacing: 0;
 }
 
-/* ── List ── */
 .list {
   list-style: none;
   margin: 0;
@@ -46,10 +44,27 @@
   gap: 10px;
 }
 
-.iconWrap {
+.svgStroke {
+  display: block;
+}
+
+/* Arkasız — sadece ikon rengi */
+.iconIncluded {
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 3px;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #16a34a;
+}
+
+.iconExcluded {
+  flex-shrink: 0;
+  margin-top: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #dc2626;
 }
 
 .text {
@@ -64,7 +79,6 @@
   color: #64748b;
 }
 
-/* ── Mobile ── */
 @media (max-width: 768px) {
   .section {
     max-width: none;

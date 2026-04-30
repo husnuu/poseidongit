@@ -11,11 +11,16 @@ import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 export const revalidate = 3600
 
 const getYacht = cache(async (locationSlug: string, yachtSlug: string) => {
-  return client.fetch<YachtRentalDocument | null>(
-    yachtRentalByLocationAndSlugQuery,
-    { locationSlug, yachtSlug },
-    { useCdn: true }
-  )
+  try {
+    return await client.fetch<YachtRentalDocument | null>(
+      yachtRentalByLocationAndSlugQuery,
+      { locationSlug, yachtSlug },
+      { useCdn: true }
+    )
+  } catch (err) {
+    console.error('[yat-kiralama] Sanity fetch failed', { locationSlug, yachtSlug, err })
+    return null
+  }
 })
 
 export async function generateStaticParams() {
@@ -48,7 +53,12 @@ export async function generateMetadata({
   const yacht = await getYacht(segment, yachtSlug)
   if (!yacht) return { title: 'Yat bulunamadı' }
   const path = `/yat-kiralama/${segment}/${yachtSlug}`
-  return buildYachtDetailMetadata(yacht, path)
+  try {
+    return buildYachtDetailMetadata(yacht, path)
+  } catch (err) {
+    console.error('[yat-kiralama] generateMetadata failed', { segment, yachtSlug, err })
+    return { title: yacht.name || 'Yat kiralama' }
+  }
 }
 
 export default async function YatKiralamaLocationDetailPage({

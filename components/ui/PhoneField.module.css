@@ -16,16 +16,16 @@
 .wrapper :global(.PhoneInput) {
   display: flex;
   align-items: center;
-  min-height: 54px;
-  padding-left: 12px;
-  padding-right: 16px;
+  min-height: 52px;
+  padding-left: 10px;
+  padding-right: 14px;
   width: 100%;
   box-sizing: border-box;
 }
 
 .wrapperCompact :global(.PhoneInput) {
   min-height: 42px;
-  padding-left: 10px;
+  padding-left: 8px;
   padding-right: 12px;
 }
 
@@ -37,9 +37,9 @@
   outline: none !important;
   background: transparent !important;
   font-size: 16px;
-  color: #111;
+  color: #475569;
   padding-left: 8px;
-  height: 54px !important;
+  height: 52px !important;
   box-sizing: border-box;
 }
 
@@ -106,11 +106,11 @@
 
 /* Label border üstünde (Material outlined) */
 .labelOutlined {
-  top: -10px !important;
-  left: 12px !important;
+  top: -9px !important;
+  left: 11px !important;
   background: #fff;
-  padding: 0 6px;
-  font-size: 12px;
+  padding: 0 5px;
+  font-size: 11px;
   font-weight: 500;
   transform: none !important;
 }

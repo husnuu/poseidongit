@@ -10,15 +10,15 @@ const WRAPPER_STYLE = {
   borderWidth: 1,
   borderStyle: 'solid',
   borderColor: '#e2e8f0',
-  borderRadius: 12,
+  borderRadius: 10,
   boxShadow: 'none',
 }
 const FOCUS_STYLE = {
   borderColor: '#fc6c4f',
-  boxShadow: '0 0 0 3px rgba(252,108,79,0.12)',
+  boxShadow: '0 0 0 2px rgba(252,108,79,0.1)',
 }
-const INPUT_HEIGHT = 56
-const INPUT_HEIGHT_COMPACT = 48
+const INPUT_HEIGHT = 52
+const INPUT_HEIGHT_COMPACT = 42
 const LABEL_COLOR = '#94a3b8'
 
 export interface PhoneFieldProps {
@@ -100,7 +100,7 @@ export default function PhoneField({
         </label>
       </div>
       {error && (
-        <p id={`${id}-error`} className="mt-1.5 text-sm text-red-600" role="alert">
+        <p id={`${id}-error`} className="mt-1 text-xs text-red-600 font-medium" role="alert">
           {error}
         </p>
       )}

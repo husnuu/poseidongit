@@ -1,7 +1,17 @@
 import type { Metadata } from 'next'
-import { urlFor } from '@/lib/sanity'
+import { safeSanityImageUrl } from '@/lib/sanity'
 import { absoluteUrl } from '@/lib/seo'
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
+
+function metaDescription(yacht: YachtRentalDocument): string {
+  const seod = yacht.seo?.description?.trim()
+  if (seod) return seod.slice(0, 160)
+  const short = yacht.shortDescription
+  const text = typeof short === 'string' ? short : ''
+  const collapsed = text.replace(/\s+/g, ' ').trim().slice(0, 160)
+  if (collapsed) return collapsed
+  return `Özel yat: ${yacht.name}. Müsaitlik sorun, teklif alın.`
+}
 
 export function buildYachtDetailMetadata(
   yacht: YachtRentalDocument,
@@ -10,15 +20,11 @@ export function buildYachtDetailMetadata(
   const title =
     yacht.seo?.title?.trim() ||
     `${yacht.name} | Özel yat kiralama`
-  const description =
-    yacht.seo?.description?.trim() ||
-    (yacht.shortDescription ?? `${yacht.name} — günlük charter ve müsaitlik talebi.`)
-      .replace(/\s+/g, ' ')
-      .slice(0, 160) ||
-    `Özel yat: ${yacht.name}. Müsaitlik sorun, teklif alın.`
+  const description = metaDescription(yacht)
   const url = absoluteUrl(canonicalPath)
   const ogAsset = yacht.seo?.ogImage?.asset ?? yacht.mainImage?.asset
-  const image = ogAsset ? urlFor(ogAsset).width(1200).height(630).url() : undefined
+  const image =
+    safeSanityImageUrl(ogAsset, (b) => b.width(1200).height(630)) ?? undefined
   return {
     title,
     description,
