@@ -109,11 +109,22 @@ export async function POST(request: NextRequest) {
       const refundResult = await smartRefund({ orderId: bookingId, amount, paidAt: data.paid_at })
 
       refundOk = refundResult.ok
-      refundStatus = refundResult.ok ? 'refunded' : 'refund_failed'
       refundTransId = refundResult.transId ?? null
-      refundErrMsg = refundResult.ok
-        ? null
-        : parseProcReturnCodeMessage(refundResult.procReturnCode ?? '', refundResult.errMsg)
+
+      if (refundResult.ok) {
+        refundStatus = 'refunded'
+        refundErrMsg = null
+      } else {
+        // "Gün sonu bekleniyor" → pending (otomatik retry sabah çalışır)
+        const isSettlementPending =
+          (refundResult.errMsg ?? '').toLowerCase().includes('günson') ||
+          (refundResult.errMsg ?? '').toLowerCase().includes('gün son') ||
+          (refundResult.errMsg ?? '').toLowerCase().includes('gün sonuna') ||
+          (refundResult.errMsg ?? '').toLowerCase().includes('settle') ||
+          refundResult.procReturnCode === '99'
+        refundStatus = isSettlementPending ? 'refund_pending' : 'refund_failed'
+        refundErrMsg = parseProcReturnCodeMessage(refundResult.procReturnCode ?? '', refundResult.errMsg)
+      }
 
       console.info('[booking/cancel] refund attempt', {
         bookingId,
@@ -177,10 +188,19 @@ export async function POST(request: NextRequest) {
     if (isPaidOnline && refundOk) {
       return NextResponse.json({
         ok: true,
-        message: 'Rezervasyonunuz iptal edildi. Ödemeniz en kısa sürede iade edilecektir.',
+        message: 'Rezervasyonunuz iptal edildi. Ödemeniz en kısa sürede kartınıza iade edilecektir.',
         refundOk: true,
         refundStatus: 'refunded',
         refundTransId,
+      })
+    }
+
+    if (isPaidOnline && refundStatus === 'refund_pending') {
+      return NextResponse.json({
+        ok: true,
+        message: 'Rezervasyonunuz iptal edildi. Ödemeniz otomatik olarak işleme alınmıştır ve en geç 1–3 iş günü içinde kartınıza iade edilecektir.',
+        refundOk: false,
+        refundStatus: 'refund_pending',
       })
     }
 
