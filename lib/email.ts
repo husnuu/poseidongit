@@ -612,167 +612,152 @@ function buildPremiumConfirmationEmailHtml(
   const viewTicketUrl = customerTicketViewUrl(p.bookingId, p.accessToken, loc)
   const heroImg = tourImage || ''
 
-  const paidRowHtml =
-    p.paidNow != null && p.paidNow > 0
-      ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.paidRow)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${primary};font-size:14px;font-weight:600;text-align:right;">${escapeHtml(String(p.paidNow))} ${escapeHtml(p.currency)}</td></tr>`
-      : ''
-  const mealRowHtml =
-    p.mealPreference?.label?.trim()
-      ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.mealPref)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(p.mealPreference.label.trim())}</td></tr>`
-      : ''
-  const mealCounts = mealCountsLine(p.mealPreference?.counts)
-  const mealCountsRowHtml = mealCounts
-    ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.mealDist)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(mealCounts)}</td></tr>`
-    : ''
+  const coral = '#fc6c4f'
+  const navy  = '#0f172a'
+  const bg    = '#f8fafc'
+
+  function fmtPrice(amount: number, currency: string) {
+    try {
+      return new Intl.NumberFormat(htmlLang === 'tr' ? 'tr-TR' : 'en-US', {
+        style: 'currency', currency,
+        minimumFractionDigits: 0, maximumFractionDigits: 0,
+      }).format(amount)
+    } catch { return `${amount} ${currency}` }
+  }
+
+  const detailRow = (label: string, value: string, bold = false) =>
+    `<tr>
+      <td style="padding:11px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;width:44%;vertical-align:top;">${escapeHtml(label)}</td>
+      <td style="padding:11px 0;border-bottom:1px solid #f1f5f9;color:${bold ? navy : '#334155'};font-size:13px;font-weight:${bold ? '700' : '500'};text-align:right;vertical-align:top;">${escapeHtml(value)}</td>
+    </tr>`
+
   const extraList = (p.additionalTravelers ?? []).filter((x) => x.firstName?.trim() || x.lastName?.trim())
   const travelerLabels = additionalTravelerLabels(p.counts)
-  const extraTravelersRowHtml =
-    extraList.length > 0
-      ? `<tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;vertical-align:top;">${escapeHtml(t.otherTravelers)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;line-height:1.55;">${extraList
-          .map((guest, i) => {
-            const role = escapeHtml(travelerLabels[i] ?? guestFallbackLabel(loc, i))
-            const name = escapeHtml(`${guest.firstName} ${guest.lastName}`.trim())
-            const meal = guest.mealPreference?.label?.trim()
-              ? ` · ${escapeHtml(guest.mealPreference.label.trim())}`
-              : ''
-            return `${role}: <strong>${name}</strong>${meal}`
-          })
-          .join('<br/>')}</td></tr>`
-      : ''
+  const extraTravelersRowHtml = extraList.length > 0
+    ? detailRow(escapeHtml(t.otherTravelers), extraList.map((g, i) => {
+        const role = travelerLabels[i] ?? guestFallbackLabel(loc, i)
+        const name = `${g.firstName} ${g.lastName}`.trim()
+        const meal = g.mealPreference?.label?.trim() ? ` · ${g.mealPreference.label.trim()}` : ''
+        return `${role}: ${name}${meal}`
+      }).join(' | '))
+    : ''
+  const mealCounts = mealCountsLine(p.mealPreference?.counts)
 
   return `<!DOCTYPE html>
-<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="${htmlLang}">
+<html lang="${htmlLang}">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(successTitle)} – ${escapeHtml(getSiteName() || 'Booking')}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>${escapeHtml(successTitle)}</title>
 </head>
-<body style="margin:0;padding:0;background-color:${bgLight};font-family:${emailFont};">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${bgLight};font-family:${emailFont};">
-    <tr>
-      <td align="center" style="padding:32px 16px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;">
-          <!-- Header (navy lacivert, yazılar beyaz) -->
-          <tr>
-            <td style="background-color:${headerFooterBg};padding:28px 24px;text-align:center;border-radius:12px 12px 0 0;">
-              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:0.5px;font-family:${emailFont};">${getSiteName() || 'Rezervasyon için teşekkürler'}</h1>
-              <p style="margin:8px 0 0 0;color:rgba(255,255,255,0.9);font-size:14px;font-family:${emailFont};">${escapeHtml(t.subheader)}</p>
-            </td>
-          </tr>
-          <!-- Hero image: mutlaka tur fotoğrafı (kapak ile aynı) -->
-          <tr>
-            <td style="padding:0;">
-              ${heroImg ? `<img src="${escapeHtml(heroImg)}" alt="${escapeHtml(t.heroAlt)}" width="600" height="240" style="display:block;width:100%;height:auto;max-height:240px;object-fit:cover;" />` : `<div style="width:100%;height:180px;background:${headerFooterBg};"></div>`}
-            </td>
-          </tr>
-          <!-- Success message card -->
-          <tr>
-            <td style="padding:24px 24px 16px 24px;background:${cardBg};">
-              <h2 style="margin:0;color:${primary};font-size:20px;font-weight:700;font-family:${emailFont};">${successTitle}</h2>
-              <p style="margin:10px 0 0 0;color:${textMuted};font-size:15px;line-height:1.5;font-family:${emailFont};">${successSub}</p>
-            </td>
-          </tr>
-          <!-- Reservation ID badge -->
-          <tr>
-            <td style="padding:0 24px 24px 24px;background:${cardBg};">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${bgLight};border:2px solid ${accent};border-radius:10px;padding:16px 20px;">
-                <tr>
-                  <td style="color:${textMuted};font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(t.reservationNo)}</td>
-                </tr>
-                <tr>
-                  <td style="padding:4px 0 0 0;color:${primary};font-size:22px;font-weight:700;letter-spacing:1px;">${escapeHtml(p.bookingId)}</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <!-- Booking details (QR kaldırıldı) -->
-          <tr>
-            <td style="padding:0 24px 24px 24px;background:${cardBg};">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${bgLight};border-radius:12px;border:1px solid #e5e7eb;">
-                <tr><td colspan="2" style="padding:16px 20px 0 20px;color:${textDark};font-size:16px;font-weight:700;">${escapeHtml(t.detailsTitle)}</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;width:140px;">${escapeHtml(t.tour)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;font-weight:500;text-align:right;">${escapeHtml(p.tourTitle)}</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.date)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.depTime)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(p.time || '—')}</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.pickup)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(pickup)}</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.guests)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(participants)}</td></tr>
-                <tr><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.classLabel)}</td><td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:${textDark};font-size:13px;text-align:right;">${escapeHtml(classDisplay(p, loc))}</td></tr>
-                ${mealRowHtml}
-                ${mealCountsRowHtml}
-                ${extraTravelersRowHtml}
-                ${paidRowHtml}
-                <tr><td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:${textMuted};font-size:13px;">${escapeHtml(t.totalRow)}</td><td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:${primary};font-size:18px;font-weight:700;text-align:right;">${escapeHtml(String(p.totalPrice))} ${escapeHtml(p.currency)}</td></tr>
-              </table>
-            </td>
-          </tr>
-          <!-- Buttons -->
-          <tr>
-            <td style="padding:0 24px 24px 24px;background:${cardBg};">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td style="padding:0 0 12px 0;">
-                    <a href="${escapeHtml(manageUrl)}" target="_blank" style="display:block;width:100%;background-color:${primary};color:#ffffff!important;font-size:16px;font-weight:600;text-decoration:none;text-align:center;padding:16px 24px;border-radius:10px;box-sizing:border-box;font-family:${emailFont};">${escapeHtml(t.manageCta)}</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a href="${escapeHtml(viewTicketUrl)}" target="_blank" style="display:block;width:100%;background-color:transparent;color:${textDark}!important;font-size:15px;font-weight:600;text-decoration:none;text-align:center;padding:14px 24px;border-radius:10px;border:2px solid #d1d5db;box-sizing:border-box;font-family:${emailFont};">${escapeHtml(t.viewTicketCta)}</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <!-- Important info -->
-          <tr>
-            <td style="padding:0 24px 24px 24px;background:${cardBg};">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fefce8;border:1px solid #fde047;border-radius:10px;">
-                <tr>
-                  <td style="padding:16px 20px;">
-                    <div style="font-size:14px;font-weight:700;color:${textDark};margin-bottom:8px;">${escapeHtml(t.importantTitle)}</div>
-                    <ul style="margin:0;padding:0 0 0 18px;color:${textMuted};font-size:13px;line-height:1.6;">
-                      <li style="margin-bottom:4px;">${escapeHtml(t.bullet30)}</li>
-                      <li style="margin-bottom:4px;">${escapeHtml(t.bulletTicket)}</li>
-                      <li>${escapeHtml(t.bulletContact)}</li>
-                    </ul>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <!-- Contact -->
-          <tr>
-            <td style="padding:0 24px 24px 24px;background:${cardBg};">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-top:1px solid #e5e7eb;padding-top:20px;">
-                <tr>
-                  <td>
-                    <div style="font-size:13px;font-weight:700;color:${textDark};margin-bottom:8px;">${escapeHtml(t.contactTitle)}</div>
-                    <p style="margin:0 0 4px 0;font-size:14px;color:${textMuted};">${escapeHtml(supportPhone)}</p>
-                    <p style="margin:0;font-size:14px;color:${primary};"><a href="mailto:${escapeHtml(supportEmail)}" style="color:${primary};text-decoration:none;font-family:${emailFont};">${escapeHtml(supportEmail)}</a></p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <!-- Footer (navy lacivert, yazılar beyaz) -->
-          <tr>
-            <td style="padding:24px 24px 32px 24px;background-color:${headerFooterBg};border-radius:0 0 12px 12px;">
-              <p style="margin:0;font-size:12px;color:#ffffff;text-align:center;font-family:${emailFont};">${getSiteName() || 'Tekne Turları'}</p>
-              <p style="margin:8px 0 0 0;font-size:12px;text-align:center;color:#ffffff;">
-                <a href="https://cesmetekneturu.net/yasal/gizlilik-politikasi" style="color:#ffffff;text-decoration:underline;" target="_blank">Gizlilik Politikası</a>
-                &nbsp;·&nbsp;
-                <a href="https://cesmetekneturu.net/yasal/iptal-ve-iade-politikasi" style="color:#ffffff;text-decoration:underline;" target="_blank">İptal-İade</a>
-                &nbsp;·&nbsp;
-                <a href="https://cesmetekneturu.net/yasal/guvenlik" style="color:#ffffff;text-decoration:underline;" target="_blank">Güvenlik</a>
-              </p>
-              <p style="margin:16px 0 0 0;font-size:11px;color:#ffffff;text-align:center;opacity:0.9;">${escapeHtml(t.footerAuto)}</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<body style="margin:0;padding:0;background:${bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${bg};">
+<tr><td align="center" style="padding:32px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
+
+  <!-- Top coral bar -->
+  <tr><td style="background:${coral};height:5px;border-radius:8px 8px 0 0;"></td></tr>
+
+  <!-- Header -->
+  <tr><td style="background:#ffffff;padding:28px 32px 20px;text-align:center;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+    <p style="margin:0;font-size:22px;font-weight:800;color:${navy};letter-spacing:-0.3px;">${escapeHtml(getSiteName() || 'Poseidon Booking')}</p>
+    <p style="margin:4px 0 0;font-size:13px;color:#64748b;">${escapeHtml(t.subheader)}</p>
+  </td></tr>
+
+  <!-- Hero image -->
+  ${heroImg
+    ? `<tr><td style="padding:0;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;"><img src="${escapeHtml(heroImg)}" alt="${escapeHtml(t.heroAlt)}" width="580" style="display:block;width:100%;max-height:220px;object-fit:cover;" /></td></tr>`
+    : ''
+  }
+
+  <!-- Success badge -->
+  <tr><td style="background:#ffffff;padding:28px 32px 0;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+    <table role="presentation" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="width:44px;vertical-align:top;padding-right:14px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:${isPaid ? '#dcfce7' : '#fef9c3'};display:flex;align-items:center;justify-content:center;text-align:center;line-height:40px;font-size:20px;">${isPaid ? '✅' : '⏳'}</div>
+        </td>
+        <td>
+          <p style="margin:0;font-size:18px;font-weight:700;color:${navy};">${escapeHtml(successTitle)}</p>
+          <p style="margin:5px 0 0;font-size:14px;color:#64748b;line-height:1.5;">${escapeHtml(successSub)}</p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <!-- Reservation no -->
+  <tr><td style="background:#ffffff;padding:20px 32px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+    <div style="background:#f8fafc;border:1.5px solid ${coral};border-radius:10px;padding:16px 20px;">
+      <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;">${escapeHtml(t.reservationNo)}</p>
+      <p style="margin:6px 0 0;font-size:20px;font-weight:800;color:${navy};letter-spacing:1px;font-family:monospace;">${escapeHtml(p.bookingId)}</p>
+    </div>
+  </td></tr>
+
+  <!-- Booking details -->
+  <tr><td style="background:#ffffff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+    <p style="margin:0 0 12px;font-size:14px;font-weight:700;color:${navy};text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(t.detailsTitle)}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      ${detailRow(t.tour, p.tourTitle)}
+      ${detailRow(t.date, dateFormatted)}
+      ${p.time ? detailRow(t.depTime, p.time) : ''}
+      ${detailRow(t.pickup, pickup)}
+      ${detailRow(t.guests, participants)}
+      ${detailRow(t.classLabel, classDisplay(p, loc))}
+      ${p.mealPreference?.label?.trim() ? detailRow(t.mealPref, p.mealPreference.label.trim()) : ''}
+      ${mealCounts ? detailRow(t.mealDist, mealCounts) : ''}
+      ${extraTravelersRowHtml}
+      ${p.paidNow != null && p.paidNow > 0 ? detailRow(t.paidRow, fmtPrice(p.paidNow, p.currency)) : ''}
+      <tr>
+        <td style="padding:14px 0 0;color:#64748b;font-size:13px;font-weight:700;">${escapeHtml(t.totalRow)}</td>
+        <td style="padding:14px 0 0;color:${coral};font-size:20px;font-weight:800;text-align:right;">${fmtPrice(p.totalPrice, p.currency)}</td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <!-- Buttons -->
+  <tr><td style="background:#ffffff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+    <a href="${escapeHtml(viewTicketUrl)}" target="_blank"
+       style="display:block;width:100%;background:${coral};color:#ffffff!important;font-size:15px;font-weight:700;text-decoration:none;text-align:center;padding:15px 24px;border-radius:10px;box-sizing:border-box;margin-bottom:10px;">
+      🎫 ${escapeHtml(t.viewTicketCta)}
+    </a>
+    <a href="${escapeHtml(manageUrl)}" target="_blank"
+       style="display:block;width:100%;background:#ffffff;color:${navy}!important;font-size:14px;font-weight:600;text-decoration:none;text-align:center;padding:13px 24px;border-radius:10px;border:1.5px solid #e2e8f0;box-sizing:border-box;">
+      ${escapeHtml(t.manageCta)}
+    </a>
+  </td></tr>
+
+  <!-- Important info -->
+  <tr><td style="background:#ffffff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+    <div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:6px;padding:14px 16px;">
+      <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#92400e;">${escapeHtml(t.importantTitle)}</p>
+      <ul style="margin:0;padding:0 0 0 16px;color:#78350f;font-size:13px;line-height:1.6;">
+        <li style="margin-bottom:3px;">${escapeHtml(t.bullet30)}</li>
+        <li style="margin-bottom:3px;">${escapeHtml(t.bulletTicket)}</li>
+        <li>${escapeHtml(t.bulletContact)}</li>
+      </ul>
+    </div>
+  </td></tr>
+
+  <!-- Contact -->
+  <tr><td style="background:#ffffff;padding:0 32px 28px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+    <p style="margin:0 0 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;">${escapeHtml(t.contactTitle)}</p>
+    <p style="margin:0 0 3px;font-size:13px;color:#334155;">📞 ${escapeHtml(supportPhone)}</p>
+    <p style="margin:0;font-size:13px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:${coral};text-decoration:none;">✉️ ${escapeHtml(supportEmail)}</a></p>
+  </td></tr>
+
+  <!-- Footer -->
+  <tr><td style="background:#f1f5f9;padding:20px 32px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:none;">
+    <p style="margin:0;font-size:12px;color:#64748b;text-align:center;">
+      &copy; ${new Date().getFullYear()} ${escapeHtml(getSiteName() || 'Poseidon')} &nbsp;·&nbsp;
+      <a href="https://cesmetekneturu.net/yasal/gizlilik-politikasi" style="color:#94a3b8;text-decoration:none;" target="_blank">Gizlilik</a> &nbsp;·&nbsp;
+      <a href="https://cesmetekneturu.net/yasal/iptal-ve-iade-politikasi" style="color:#94a3b8;text-decoration:none;" target="_blank">İptal-İade</a>
+    </p>
+    <p style="margin:6px 0 0;font-size:11px;color:#94a3b8;text-align:center;">${escapeHtml(t.footerAuto)}</p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
 </body>
 </html>`
 }
@@ -960,55 +945,77 @@ function buildCancellationCustomerHtml(o: CancellationEmailOpts): string {
     </div>`
   }
 
+  const coral = '#fc6c4f'
+  const navy  = '#0f172a'
+
   return `<!DOCTYPE html>
 <html lang="tr">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rezervasyon İptal</title></head>
-<body style="margin:0;padding:0;background:#f5f5f5;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f5f5f5;">
-    <tr><td align="center" style="padding:32px 16px;">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;">
-        <tr><td style="background:#0c1929;padding:28px 24px;text-align:center;border-radius:12px 12px 0 0;">
-          <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">${escapeHtml(siteName)}</h1>
-        </td></tr>
-        <tr><td style="background:#fff;padding:32px 24px;">
-          <h2 style="margin:0 0 8px;font-size:20px;color:#1a1a1a;">Rezervasyonunuz İptal Edildi</h2>
-          <p style="margin:0 0 20px;color:#6b7280;font-size:15px;">Sayın ${escapeHtml(customerName)}, rezervasyonunuz başarıyla iptal edilmiştir.</p>
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;">
-            <tr><td colspan="2" style="padding:16px 20px 0;font-size:15px;font-weight:700;color:#1a1a1a;">Rezervasyon Detayları</td></tr>
-            <tr>
-              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;width:130px;">Rezervasyon No</td>
-              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#0c1929;font-size:13px;font-weight:600;font-family:monospace;">${escapeHtml(o.bookingId)}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;">Tur</td>
-              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#1a1a1a;font-size:13px;">${escapeHtml(o.tourTitle)}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;">Tarih</td>
-              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#1a1a1a;font-size:13px;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;">Misafirler</td>
-              <td style="padding:12px 20px;border-top:1px solid #e5e7eb;color:#1a1a1a;font-size:13px;">${o.counts.adult} Yetişkin${o.counts.child ? `, ${o.counts.child} Çocuk` : ''}${o.counts.infant ? `, ${o.counts.infant} Bebek` : ''}</td>
-            </tr>
-            <tr>
-              <td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:#6b7280;font-size:13px;">Toplam</td>
-              <td style="padding:16px 20px;border-top:2px solid #e5e7eb;color:#0c1929;font-size:16px;font-weight:700;">${o.totalPrice} ${escapeHtml(o.currency)}</td>
-            </tr>
-          </table>
-          ${refundLine}
-          <div style="margin:24px 0 0;padding:16px 20px;background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;">
-            <p style="margin:0;font-size:13px;font-weight:700;color:#1a1a1a;">Yardım ve iletişim</p>
-            <p style="margin:6px 0 0;font-size:14px;color:#6b7280;">${escapeHtml(supportPhone)}</p>
-            <p style="margin:4px 0 0;font-size:14px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:#0c1929;text-decoration:none;">${escapeHtml(supportEmail)}</a></p>
-          </div>
-        </td></tr>
-        <tr><td style="background:#0c1929;padding:20px 24px;text-align:center;border-radius:0 0 12px 12px;">
-          <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.8);">&copy; ${new Date().getFullYear()} ${escapeHtml(siteName)}</p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;">
+<tr><td align="center" style="padding:32px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
+
+  <tr><td style="background:${coral};height:5px;border-radius:8px 8px 0 0;"></td></tr>
+
+  <tr><td style="background:#fff;padding:24px 32px 16px;text-align:center;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+    <p style="margin:0;font-size:20px;font-weight:800;color:${navy};">${escapeHtml(siteName)}</p>
+  </td></tr>
+
+  <tr><td style="background:#fff;padding:20px 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+    <table role="presentation" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="width:44px;padding-right:14px;vertical-align:top;">
+          <div style="width:40px;height:40px;border-radius:50%;background:#fee2e2;text-align:center;line-height:40px;font-size:20px;">❌</div>
+        </td>
+        <td>
+          <p style="margin:0;font-size:17px;font-weight:700;color:${navy};">Rezervasyonunuz İptal Edildi</p>
+          <p style="margin:5px 0 0;font-size:14px;color:#64748b;">Sayın ${escapeHtml(customerName)}, rezervasyonunuz başarıyla iptal edilmiştir.</p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="background:#fff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;width:44%;">Rezervasyon No</td>
+        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:${navy};font-size:13px;font-weight:700;text-align:right;font-family:monospace;">${escapeHtml(o.bookingId)}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;">Tur</td>
+        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;">Tarih</td>
+        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;">Misafirler</td>
+        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13px;text-align:right;">${o.counts.adult} Yetişkin${o.counts.child ? `, ${o.counts.child} Çocuk` : ''}${o.counts.infant ? `, ${o.counts.infant} Bebek` : ''}</td>
+      </tr>
+      <tr>
+        <td style="padding:13px 0 0;color:#64748b;font-size:13px;font-weight:700;">Toplam</td>
+        <td style="padding:13px 0 0;color:${coral};font-size:18px;font-weight:800;text-align:right;">${o.totalPrice.toLocaleString('tr-TR')} ${escapeHtml(o.currency)}</td>
+      </tr>
+    </table>
+  </td></tr>
+
+  ${refundLine ? `<tr><td style="background:#fff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">${refundLine}</td></tr>` : ''}
+
+  <tr><td style="background:#fff;padding:0 32px 28px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+    <p style="margin:0 0 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;">Yardım ve İletişim</p>
+    <p style="margin:0 0 3px;font-size:13px;color:#334155;">📞 ${escapeHtml(supportPhone)}</p>
+    <p style="margin:0;font-size:13px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:${coral};text-decoration:none;">✉️ ${escapeHtml(supportEmail)}</a></p>
+  </td></tr>
+
+  <tr><td style="background:#f1f5f9;padding:16px 32px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:none;text-align:center;">
+    <p style="margin:0;font-size:12px;color:#64748b;">&copy; ${new Date().getFullYear()} ${escapeHtml(siteName)}</p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
 </body>
 </html>`
 }
