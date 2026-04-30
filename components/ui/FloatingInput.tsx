@@ -8,16 +8,16 @@ const WRAPPER_STYLE = {
   borderStyle: 'solid',
   borderColor: '#e2e8f0',
   borderRadius: 12,
-  boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
+  boxShadow: 'none',
 }
 const FOCUS_STYLE = {
-  borderColor: '#2563eb',
-  boxShadow: '0 0 0 3px rgba(37,99,235,0.12)',
+  borderColor: '#fc6c4f',
+  boxShadow: '0 0 0 3px rgba(252,108,79,0.12)',
 }
 const INPUT_HEIGHT = 56
-const INPUT_HEIGHT_COMPACT = 44
-const LABEL_COLOR = '#6b7280'
-const LABEL_COLOR_FOCUS = '#2563eb'
+const INPUT_HEIGHT_COMPACT = 48
+const LABEL_COLOR = '#94a3b8'
+const LABEL_COLOR_FOCUS = '#fc6c4f'
 
 export interface FloatingInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'placeholder'> {

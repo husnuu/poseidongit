@@ -12,7 +12,6 @@ interface AdditionalTravelersFieldsProps {
   onUpdate: (patch: Partial<BookingWizardState>) => void
   errors: Record<string, string>
   mealOptions?: Array<{ key: string; label: string }>
-  /** StepCustomer: compact + default variant; Step3: outlined */
   compact?: boolean
   variant?: 'default' | 'outlined'
   ui: BookingWizardUi
@@ -32,7 +31,11 @@ export default function AdditionalTravelersFields({
 
   const list = state.additionalTravelers ?? []
 
-  const setTraveler = (index: number, field: 'firstName' | 'lastName' | 'mealPreferenceKey', value: string) => {
+  const setTraveler = (
+    index: number,
+    field: 'firstName' | 'lastName' | 'mealPreferenceKey',
+    value: string
+  ) => {
     const next = [...list]
     while (next.length <= index) next.push({ firstName: '', lastName: '', mealPreferenceKey: '' })
     next[index] = { ...next[index], [field]: value }
@@ -40,15 +43,53 @@ export default function AdditionalTravelersFields({
   }
 
   return (
-    <div className="space-y-5 border-t border-zinc-200/80 pt-5 mt-2">
-      <div>
-        <p className="text-sm font-medium text-zinc-800">{ui.otherGuestsTitle}</p>
-        <p className="text-xs text-zinc-500 mt-0.5">{ui.otherGuestsHint}</p>
+    <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: 20, marginTop: 8 }}>
+      {/* Başlık */}
+      <div style={{ marginBottom: 16 }}>
+        <p style={{
+          fontSize: 14,
+          fontWeight: 600,
+          color: '#1e3a5f',
+          margin: '0 0 3px',
+          fontFamily: 'var(--font-family)',
+        }}>
+          {ui.otherGuestsTitle}
+        </p>
+        <p style={{
+          fontSize: 12,
+          color: '#94A3B8',
+          margin: 0,
+          fontFamily: 'var(--font-family)',
+        }}>
+          {ui.otherGuestsHint}
+        </p>
       </div>
+
+      {/* Her yolcu */}
       {labels.map((label, i) => (
-        <div key={`${label}-${i}`} className="space-y-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div
+          key={`${label}-${i}`}
+          style={{
+            marginBottom: i < labels.length - 1 ? 20 : 0,
+            paddingBottom: i < labels.length - 1 ? 20 : 0,
+            borderBottom: i < labels.length - 1 ? '1px dashed #F1F5F9' : 'none',
+          }}
+        >
+          {/* Yolcu numarası etiketi */}
+          <p style={{
+            fontSize: 11,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            color: '#94A3B8',
+            margin: '0 0 10px',
+            fontFamily: 'var(--font-family)',
+          }}>
+            {label}
+          </p>
+
+          {/* Ad — Soyad */}
+          <div className={styles.formGrid2}>
             <FloatingInput
               id={`booking-traveler-${i}-firstName`}
               label={ui.labelFirstName}
@@ -70,8 +111,10 @@ export default function AdditionalTravelersFields({
               variant={variant}
             />
           </div>
+
+          {/* Yemek tercihi */}
           {mealOptions && mealOptions.length > 0 && (
-            <div>
+            <div style={{ marginTop: 10 }}>
               <MealOptionSelect
                 options={mealOptions}
                 value={list[i]?.mealPreferenceKey ?? ''}
@@ -81,9 +124,9 @@ export default function AdditionalTravelersFields({
                 namePrefix={`booking-traveler-${i}-meal`}
                 showError={Boolean(errors[`traveler${i}Meal`])}
               />
-              {errors[`traveler${i}Meal`] ? (
+              {errors[`traveler${i}Meal`] && (
                 <p className={styles.errorText}>{errors[`traveler${i}Meal`]}</p>
-              ) : null}
+              )}
             </div>
           )}
         </div>

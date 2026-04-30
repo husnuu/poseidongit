@@ -7,15 +7,15 @@ const WRAPPER_STYLE = {
   borderWidth: 1,
   borderStyle: 'solid',
   borderColor: '#e2e8f0',
-  borderRadius: 6,
-  boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
+  borderRadius: 12,
+  boxShadow: 'none',
 }
 const FOCUS_STYLE = {
-  borderColor: '#2563eb',
-  boxShadow: '0 0 0 2px rgba(37,99,235,0.2)',
+  borderColor: '#fc6c4f',
+  boxShadow: '0 0 0 3px rgba(252,108,79,0.12)',
 }
-const LABEL_COLOR = '#6b7280'
-const LABEL_COLOR_FOCUS = '#2563eb'
+const LABEL_COLOR = '#94a3b8'
+const LABEL_COLOR_FOCUS = '#fc6c4f'
 
 export interface FloatingTextareaProps
   extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'placeholder'> {

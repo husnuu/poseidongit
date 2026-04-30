@@ -10,16 +10,16 @@ const WRAPPER_STYLE = {
   borderWidth: 1,
   borderStyle: 'solid',
   borderColor: '#e2e8f0',
-  borderRadius: 6,
-  boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
+  borderRadius: 12,
+  boxShadow: 'none',
 }
 const FOCUS_STYLE = {
-  borderColor: 'var(--primary, #2563eb)',
-  boxShadow: '0 0 0 2px rgba(37,99,235,0.15)',
+  borderColor: '#fc6c4f',
+  boxShadow: '0 0 0 3px rgba(252,108,79,0.12)',
 }
 const INPUT_HEIGHT = 56
-const INPUT_HEIGHT_COMPACT = 44
-const LABEL_COLOR = '#6b7280'
+const INPUT_HEIGHT_COMPACT = 48
+const LABEL_COLOR = '#94a3b8'
 
 export interface PhoneFieldProps {
   label?: string
@@ -93,7 +93,7 @@ export default function PhoneField({
           htmlFor={id}
           className={`${styles.label} ${active ? styles.labelActive : styles.labelInactive} ${compact ? styles.labelCompact : ''} ${isOutlined ? styles.labelOutlined : ''}`}
           style={{
-            color: active && isOutlined ? '#2563eb' : LABEL_COLOR,
+            color: active && isOutlined ? '#fc6c4f' : LABEL_COLOR,
           }}
         >
           {label}
