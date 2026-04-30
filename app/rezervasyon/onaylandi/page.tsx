@@ -49,7 +49,7 @@ export default async function RezervasyonOnaylandiPage({
   const tourTitle = String(row.tour_title ?? '—')
   const date = formatDate(String(row.date ?? ''))
   const customerName = [row.customer_first_name, row.customer_last_name].filter(Boolean).join(' ').trim() || '—'
-  const paidAt = row.paid_at ? new Date(String(row.paid_at)).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' }) : null
+  const paidAt = row.paid_at ? new Date(String(row.paid_at)).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Istanbul' }) : null
   const accessToken = typeof row.access_token === 'string' ? row.access_token.trim() : ''
   const paidAmount = row.paid_now ?? row.total_price
   const currency = String(row.currency ?? 'TRY')
