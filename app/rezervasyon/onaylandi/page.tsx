@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { withLocalePath } from '@/lib/i18n/paths'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -9,62 +10,70 @@ function isSafeBookingId(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
 }
 
+function formatDate(d: string): string {
+  if (!d) return '—'
+  try {
+    return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })
+  } catch {
+    return d
+  }
+}
+
 export default async function RezervasyonOnaylandiPage({
   searchParams,
 }: {
   searchParams: Promise<{ bookingId?: string }>
 }) {
   const sp = await searchParams
-  const orderToken = typeof sp.bookingId === 'string' ? sp.bookingId.trim() : ''
+  const bookingId = typeof sp.bookingId === 'string' ? sp.bookingId.trim() : ''
 
-  if (!orderToken || !isSafeBookingId(orderToken)) {
-    return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm text-center">
-          <h1 className="text-lg font-semibold text-zinc-900">Geçersiz bağlantı</h1>
-          <p className="mt-2 text-sm text-zinc-600">
-            Rezervasyon / sipariş numarası eksik veya güvenli biçimde değil. Bankanın gösterdiği <strong>oid</strong> veya
-            sitedeki rezervasyon kodunuzu kullanın (işlem no TransId değildir).
-          </p>
-          <Link href="/" className="mt-6 inline-block text-sm font-medium text-[#1f3c88] hover:underline">
-            Ana sayfaya dön
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
-  const resolvedId = orderToken
-  if (!resolvedId) {
-    return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm text-center">
-          <h1 className="text-lg font-semibold text-zinc-900">Rezervasyon bulunamadı</h1>
-          <p className="mt-2 text-sm text-zinc-600">
-            Bu kod veritabanındaki bir kayıtla eşleşmedi. Ödeme formuna gönderilen sipariş numarası (genelde rezervasyon
-            UUID’si) ile paneldeki kayıt aynı olmalıdır; banka dekontundaki <strong>TransId</strong> rezervasyon ID’si
-            değildir.
-          </p>
-          <Link href="/" className="mt-6 inline-block text-sm font-medium text-[#1f3c88] hover:underline">
-            Ana sayfaya dön
-          </Link>
-        </div>
-      </div>
-    )
+  if (!bookingId || !isSafeBookingId(bookingId)) {
+    return <ErrorCard title="Geçersiz bağlantı" desc="Rezervasyon numarası eksik veya geçersiz." />
   }
 
   const { data, error } = await supabase
     .from('bookings')
-    .select('id, status, reference, tour_title, date, customer_first_name, customer_last_name, paid_at')
-    .eq('id', resolvedId)
+    .select('id, status, reference, tour_title, date, time, customer_first_name, customer_last_name, paid_at, access_token, paid_now, total_price, currency, adult_count, child_count, infant_count')
+    .eq('id', bookingId)
     .maybeSingle()
 
   if (error || !data) {
+    return <ErrorCard title="Rezervasyon bulunamadı" desc="Kayıt yüklenemedi veya mevcut değil." />
+  }
+
+  const row = data as SupabaseBookingRow
+  const status = String(row.status ?? 'pending').toLowerCase()
+  const isPaid = status === 'paid' || status === 'confirmed'
+  const isFailed = status === 'failed'
+  const ref = (typeof row.reference === 'string' && row.reference.trim()) || row.id.slice(0, 8).toUpperCase()
+  const tourTitle = String(row.tour_title ?? '—')
+  const date = formatDate(String(row.date ?? ''))
+  const customerName = [row.customer_first_name, row.customer_last_name].filter(Boolean).join(' ').trim() || '—'
+  const paidAt = row.paid_at ? new Date(String(row.paid_at)).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' }) : null
+  const accessToken = typeof row.access_token === 'string' ? row.access_token.trim() : ''
+  const paidAmount = row.paid_now ?? row.total_price
+  const currency = String(row.currency ?? 'TRY')
+
+  const ticketPath = accessToken && isPaid
+    ? withLocalePath('tr', `/bilet/${encodeURIComponent(row.id)}?token=${encodeURIComponent(accessToken)}`)
+    : null
+  const pdfPath = accessToken && isPaid
+    ? `/api/voucher/access?bookingId=${encodeURIComponent(row.id)}&token=${encodeURIComponent(accessToken)}&download=1`
+    : null
+
+  if (isFailed) {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm text-center">
-          <h1 className="text-lg font-semibold text-zinc-900">Rezervasyon bulunamadı</h1>
-          <p className="mt-2 text-sm text-zinc-600">Kayıt yüklenemedi veya mevcut değil.</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="max-w-sm w-full rounded-2xl border border-slate-200 bg-white p-8 shadow-sm text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h1 className="text-base font-semibold text-slate-900">Ödeme tamamlanamadı</h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Bu rezervasyon ödeme aşamasında başarısız olarak işaretlendi. Sorun devam ederse lütfen bizimle iletişime geçin.
+          </p>
           <Link href="/" className="mt-6 inline-block text-sm font-medium text-[#1f3c88] hover:underline">
             Ana sayfaya dön
           </Link>
@@ -73,106 +82,129 @@ export default async function RezervasyonOnaylandiPage({
     )
   }
 
-  const row = data as SupabaseBookingRow
-  const status = String(row.status ?? 'pending').toLowerCase()
-  const ref = (typeof row.reference === 'string' && row.reference.trim()) || row.id.slice(0, 8).toUpperCase()
-  const tourTitle = String(row.tour_title ?? '—')
-  const date = String(row.date ?? '')
-  const customerName = [row.customer_first_name, row.customer_last_name].filter(Boolean).join(' ').trim()
-  const paidAt = row.paid_at != null ? String(row.paid_at) : ''
-  const isPaid = status === 'paid' || status === 'confirmed'
-  const isFailed = status === 'failed'
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/40 to-slate-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
 
-  const heroIcon = isFailed ? (
-    <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-700">
-      <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </div>
-  ) : (
-    <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-      <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-      </svg>
+        {/* Başarı ikonu */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="relative flex h-20 w-20 items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-emerald-100 animate-ping opacity-30" style={{ animationDuration: '2s' }} />
+            <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-200">
+              <svg className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+          <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 text-center">
+            {isPaid ? 'Rezervasyonunuz onaylandı!' : 'Ödemeniz alındı'}
+          </h1>
+          <p className="mt-2 text-sm text-slate-500 text-center max-w-xs">
+            {isPaid
+              ? 'Ödemeniz başarıyla tamamlandı. Biletiniz e-posta adresinize gönderilmiştir.'
+              : 'Kesin onay ve biletiniz birkaç saniye içinde e-postanıza ulaşacaktır.'}
+          </p>
+        </div>
+
+        {/* Kart */}
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+
+          {/* E-posta bildirimi */}
+          <div className="flex items-center gap-3 border-b border-slate-100 bg-emerald-50 px-5 py-3">
+            <svg className="h-4 w-4 shrink-0 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <p className="text-xs text-emerald-800">
+              Biletiniz <strong>e-posta olarak gönderilmiştir.</strong>
+            </p>
+          </div>
+
+          {/* Detaylar */}
+          <div className="divide-y divide-slate-100 px-5">
+            <DetailRow label="Rezervasyon no" value={<span className="font-mono font-semibold text-slate-900">{ref}</span>} />
+            <DetailRow label="Misafir" value={customerName} />
+            <DetailRow label="Tur" value={tourTitle} />
+            <DetailRow label="Tarih" value={date} />
+            {paidAmount != null && Number(paidAmount) > 0 && (
+              <DetailRow
+                label="Ödenen tutar"
+                value={
+                  <span className="font-semibold text-slate-900">
+                    {Number(paidAmount).toLocaleString('tr-TR')} {currency}
+                  </span>
+                }
+              />
+            )}
+            {paidAt && <DetailRow label="Ödeme zamanı" value={paidAt} />}
+          </div>
+
+          {/* Butonlar */}
+          {ticketPath && (
+            <div className="flex flex-col gap-3 px-5 pb-5 pt-5">
+              <a
+                href={ticketPath}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl bg-[#fc6c4f] px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-orange-200 transition hover:bg-[#f85a3a] active:scale-[.98]"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                </svg>
+                Biletimi Görüntüle
+              </a>
+
+              {pdfPath && (
+                <a
+                  href={pdfPath}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-[.98]"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Biletimi İndir (PDF)
+                </a>
+              )}
+            </div>
+          )}
+
+          <div className="border-t border-slate-100 px-5 py-4 text-center">
+            <Link href="/" className="text-sm text-slate-500 hover:text-slate-700 hover:underline">
+              Ana sayfaya dön
+            </Link>
+          </div>
+        </div>
+
+        <p className="mt-4 text-center text-xs text-slate-400">
+          Sorularınız için bizimle iletişime geçebilirsiniz.
+        </p>
+      </div>
     </div>
   )
+}
 
-  const title = isFailed
-    ? 'Ödeme tamamlanamadı'
-    : isPaid
-      ? 'Rezervasyonunuz onaylandı.'
-      : 'Ödemeniz alındı, rezervasyonunuz işleniyor.'
-  const subtitle = isFailed
-    ? 'Bu sayfa yalnızca bilgilendirme içindir. Rezervasyon durumu sunucu kayıtlarına göre güncellenir.'
-    : isPaid
-      ? 'Ödemeniz kayıtlarımıza işlendi. İyi yolculuklar dileriz.'
-      : 'Kesin onay ve e-posta bildirimi sunucumuza gelen banka callback’i ile tamamlanır; birkaç saniye sürebilir.'
-
+function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-6">
-      <div className="w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white p-8 shadow-md">
-        {heroIcon}
-        <h1 className="text-center text-xl font-semibold tracking-tight text-slate-900">{title}</h1>
-        <p className="mt-2 text-center text-sm text-slate-600">{subtitle}</p>
+    <div className="flex items-center justify-between gap-4 py-3">
+      <span className="text-sm text-slate-500 shrink-0">{label}</span>
+      <span className="text-sm text-slate-700 text-right">{value}</span>
+    </div>
+  )
+}
 
-        {isFailed && (
-          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-900">
-            Bu rezervasyon ödeme aşamasında başarısız olarak işaretlendi. Sorun devam ederse bizimle iletişime geçin.
-          </div>
-        )}
-
-        <dl className="mt-6 space-y-3 rounded-xl bg-slate-50/90 px-4 py-4 text-sm">
-          <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Rezervasyon no</dt>
-            <dd className="font-mono text-right text-slate-900">{ref}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Kayıt ID</dt>
-            <dd className="font-mono text-right text-xs text-slate-700 break-all">{row.id}</dd>
-          </div>
-          {customerName ? (
-            <div className="flex justify-between gap-4">
-              <dt className="text-slate-500">Misafir</dt>
-              <dd className="text-right text-slate-900">{customerName}</dd>
-            </div>
-          ) : null}
-          <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Tur</dt>
-            <dd className="text-right text-slate-900">{tourTitle}</dd>
-          </div>
-          {date ? (
-            <div className="flex justify-between gap-4">
-              <dt className="text-slate-500">Tarih</dt>
-              <dd className="text-right text-slate-900">{date}</dd>
-            </div>
-          ) : null}
-          <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Durum</dt>
-            <dd className="text-right text-slate-900 capitalize">{status}</dd>
-          </div>
-          {paidAt ? (
-            <div className="flex justify-between gap-4">
-              <dt className="text-slate-500">Ödeme zamanı</dt>
-              <dd className="text-right text-slate-900">
-                {new Date(paidAt).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })}
-              </dd>
-            </div>
-          ) : null}
-        </dl>
-
-        <p className="mt-5 text-center text-xs leading-relaxed text-slate-500">
-          Tarayıcıdaki banka yanıtı ile sunucu durumu birkaç saniye farklı olabilir; bilet ve e-posta callback sonrası
-          güncellenir.
-        </p>
-
-        <div className="mt-8 flex flex-col gap-2 sm:flex-row sm:justify-center">
-          <Link
-            href="/"
-            className="inline-flex justify-center rounded-xl bg-[#1f3c88] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#162d66]"
-          >
-            Ana sayfa
-          </Link>
+function ErrorCard({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="max-w-sm w-full rounded-2xl border border-slate-200 bg-white p-8 shadow-sm text-center">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </div>
+        <h1 className="text-base font-semibold text-slate-900">{title}</h1>
+        <p className="mt-2 text-sm text-slate-500">{desc}</p>
+        <Link href="/" className="mt-6 inline-block text-sm font-medium text-[#1f3c88] hover:underline">
+          Ana sayfaya dön
+        </Link>
       </div>
     </div>
   )
