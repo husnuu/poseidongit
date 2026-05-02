@@ -63,14 +63,13 @@
   display: inline-block;
 }
 
-/* Title */
 .blogCardTitle {
   font-family: var(--font-family), sans-serif;
   font-weight: 900;
   font-size: 1.15rem;
   line-height: 1.25;
   text-transform: uppercase;
-  color: var(--secondary);
+  color: #000;
   margin: 0 0 12px 0;
   -webkit-text-stroke: 0.02em currentColor;
 }

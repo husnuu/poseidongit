@@ -65,7 +65,7 @@ const TR: ContactPageUiStrings = {
   rowAddress: 'OFİS ADRESİ',
   rowPhone: 'TELEFON',
   rowFriends: 'BİZİMLE İLETİŞİMDE KALIN',
-  rowInspired: 'İLHAN ALIN',
+  rowInspired: 'İLHAM ALIN',
   ariaEmailSend: 'E-posta gönder',
   ariaOpenMaps: 'Adresi Google Haritalar’da aç',
   ariaCall: 'Ara',

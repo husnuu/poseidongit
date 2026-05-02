@@ -1,18 +1,21 @@
-.container {
-  max-width: 80rem; /* 1280px = max-w-7xl */
+/* Tam ekran genişliğinde arka plan (içerik max-w ile sınırlı) */
+.fullBleed {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  background: var(--poseidon-secure-bg, var(--section-turquoise-bg, #dff4fc));
+  margin-top: 56px;
+  margin-bottom: 56px;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+.maxWidth {
+  max-width: 80rem;
   margin-left: auto;
   margin-right: auto;
   padding-left: 1.5rem;
   padding-right: 1.5rem;
-}
-
-.wrapper {
-  margin-top: 56px;
-  margin-bottom: 56px;
-  background: #eaf4fb;
-  border-radius: 16px;
-  padding: 40px 48px;
-  text-align: center;
 }
 
 .inner {
@@ -22,6 +25,7 @@
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  text-align: center;
 }
 
 .logoRow {
@@ -63,11 +67,11 @@
 }
 
 @media (max-width: 640px) {
-  .wrapper {
-    padding: 32px 24px;
-    border-radius: 12px;
+  .fullBleed {
     margin-top: 40px;
     margin-bottom: 40px;
+    padding-top: 32px;
+    padding-bottom: 32px;
   }
 
   .logoText {

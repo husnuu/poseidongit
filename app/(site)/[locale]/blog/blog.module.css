@@ -1,6 +1,6 @@
 .main {
   min-height: 100vh;
-  background: #fff;
+  background: #fafafa;
 }
 
 /* Hero: başlık + açıklama */
@@ -49,11 +49,11 @@
 }
 
 .heroH1Line1 {
-  color: var(--primary);
+  color: #1e3a8a;
 }
 
 .heroH1Line2 {
-  color: var(--secondary);
+  color: #000;
 }
 
 .heroLead {

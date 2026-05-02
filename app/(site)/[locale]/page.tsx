@@ -2,6 +2,7 @@ import { client, urlFor } from '@/lib/sanity'
 import {
   homePageHeroImageUrlsQuery,
   homePageHeroQuery,
+  siteFooterContactQuery,
   siteSettingsTravelAgencyImagesQuery,
 } from '@/lib/queries'
 import HeroBanner from '@/components/home/HeroBanner'
@@ -15,6 +16,7 @@ import type { FeatureBarItem } from '@/components/home/FeatureBar'
 import type { PopularToursSectionData } from '@/components/home/PopularToursSection'
 import type { PopularYachtsSectionData } from '@/components/home/PopularYachtsSection'
 import BlogSection from '@/components/home/BlogSection'
+import HelpContactBanner from '@/components/home/HelpContactBanner'
 import RouteSection from '@/components/home/RouteSection'
 import PoseidonSecure from '@/components/tour/PoseidonSecure'
 import Image from 'next/image'
@@ -46,6 +48,7 @@ import { mergeTourForLocale } from '@/lib/i18n/mergeTourForLocale'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
 import { mergeHomePageLocale, mergeHomePageSeoForLocale } from '@/lib/i18n/mergeHomePageLocale'
 import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
+import { pickLocalizedString } from '@/lib/i18n/localizedLabels'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,6 +58,17 @@ const defaultHomeTitle = siteName
   : 'Tekne Turu | Adalar ve Koylar'
 const defaultHomeDescription =
   'Tekne turu rezervasyonu. Adalar ve koylar turu, BBQ turları, günlük turlar. Online rezervasyon.'
+
+type SiteFooterContactPayload = {
+  contact?: {
+    email?: string | null
+    phone?: string | null
+    chatValue?: string | null
+    openingValue?: string | null
+    openingValueEn?: string | null
+    openingValueDe?: string | null
+  } | null
+} | null
 
 const homePageMetaQuery = `*[_type == "homePage"][0]{
   seo{ metaTitle, metaDescription },
@@ -389,13 +403,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   let routeSection: ReturnType<typeof mapRouteSection> = null
   let instagramSection: InstagramSectionData | null = null
   let loyaltyBanner: { imageUrl?: string | null; imageAlt?: string | null; href?: string | null } | null = null
+  let footerContact: SiteFooterContactPayload = null
   let travelAgencyImageOverrides: TravelAgencyStructuredDataImageOverrides = {}
   try {
-    const [raw, settingsRow, heroRow] = await Promise.all([
+    const [raw, settingsRow, heroRow, footerRow] = await Promise.all([
       client.fetch<HomePageHeroResult>(homePageHeroQuery, {}, { useCdn: false }),
       client.fetch(siteSettingsTravelAgencyImagesQuery, {}, { useCdn: false }),
       client.fetch(homePageHeroImageUrlsQuery, {}, { useCdn: false }),
+      client.fetch<SiteFooterContactPayload>(siteFooterContactQuery, {}, { useCdn: false }),
     ])
+    footerContact = footerRow
     travelAgencyImageOverrides = travelAgencyImageOverridesFromSanity({
       settings: settingsRow,
       hero: heroRow,
@@ -433,7 +450,19 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     routeSection = null
     instagramSection = null
     loyaltyBanner = null
+    footerContact = null
   }
+
+  const footerFields = footerContact?.contact
+  const helpBannerOpening =
+    footerFields &&
+    pickLocalizedString(
+      footerFields.openingValue,
+      footerFields.openingValueEn,
+      footerFields.openingValueDe,
+      locale,
+      '',
+    ).trim()
 
   const organizationSchema = buildOrganizationSchema()
   const websiteSchema = buildWebSiteSchema({
@@ -461,7 +490,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <HeroBanner hero={hero} locale={locale} />
       {featureBar && featureBar.length > 0 && <FeatureBar items={featureBar} />}
       <PopularToursSection data={popularToursSection} locale={locale} />
-      <PoseidonSecure contained />
+      <PoseidonSecure locale={locale} />
       {routeSection && (
         <RouteSection
           heading={routeSection.heading}
@@ -473,27 +502,27 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <AboutTeaserSplit data={aboutTeaser} />
 
       {loyaltyBanner && (
-        <div className="mx-auto max-w-7xl px-6 mt-10 mb-4 lg:hidden">
+        <div className="mx-auto mb-3 mt-8 max-w-2xl px-4 lg:hidden">
           {loyaltyBanner.href ? (
-            <a href={loyaltyBanner.href} className="block w-full overflow-hidden rounded-2xl">
+            <a href={loyaltyBanner.href} className="block w-full overflow-hidden rounded-xl">
               <Image
                 src={loyaltyBanner.imageUrl!}
                 alt={loyaltyBanner.imageAlt || 'Sadakat Programı'}
                 width={1280}
                 height={400}
-                className="w-full h-auto"
-                sizes="(max-width: 1280px) 100vw, 1280px"
+                className="h-auto w-full"
+                sizes="(max-width: 672px) 100vw, 672px"
               />
             </a>
           ) : (
-            <div className="w-full overflow-hidden rounded-2xl">
+            <div className="w-full overflow-hidden rounded-xl">
               <Image
                 src={loyaltyBanner.imageUrl!}
                 alt={loyaltyBanner.imageAlt || 'Sadakat Programı'}
                 width={1280}
                 height={400}
-                className="w-full h-auto"
-                sizes="(max-width: 1280px) 100vw, 1280px"
+                className="h-auto w-full"
+                sizes="(max-width: 672px) 100vw, 672px"
               />
             </div>
           )}
@@ -501,12 +530,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       )}
 
       <PopularYachtsSection data={popularYachtsSection} locale={locale} />
-      <BlogSection
-        data={blogSection}
+      <HelpContactBanner
         locale={locale}
-        cardCtaLabel={blogUi.homeBlogCardCta}
-        noImageLabel={blogUi.noCoverImage}
+        email={footerFields?.email}
+        phone={footerFields?.phone}
+        chatValue={footerFields?.chatValue}
+        openingHoursLine={helpBannerOpening || undefined}
       />
+      <BlogSection data={blogSection} locale={locale} noImageLabel={blogUi.noCoverImage} />
       <InstagramSection data={instagramSection} />
     </div>
   )

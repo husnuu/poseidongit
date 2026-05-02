@@ -105,6 +105,9 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
 
   const ui = mergeContactUiFromSanity(getContactPageUiStrings(locale), data?.ui)
 
+  const localeUpper = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
+  const toHeadingUpper = (s: string) => s.trim().toLocaleUpperCase(localeUpper)
+
   const title = data?.title ?? ui.defaultTitle
   const intro = data?.intro ?? []
   const form = data?.form ?? {}
@@ -149,17 +152,20 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
       <div className="mx-auto max-w-[1400px] px-4 py-12 sm:py-16">
         <header className="mb-12">
           <h1
-            className="text-[40px] sm:text-[48px] font-black uppercase leading-[1.1] mb-6"
+            className="text-[32px] sm:text-[40px] font-black leading-[1.1] mb-5 sm:mb-6"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
           >
-            {(title || 'CONTACT US').toUpperCase().split(/\s+/).map((word, i) => (
-              <span
-                key={i}
-                style={{ color: i === 0 ? '#1e3a8a' : '#000' }}
-              >
-                {i > 0 ? ' ' : ''}{word}
-              </span>
-            ))}
+            {toHeadingUpper(title || ui.defaultTitle)
+              .split(/\s+/)
+              .map((word, i) => (
+                <span
+                  key={i}
+                  style={{ color: i === 0 ? '#1e3a8a' : '#000' }}
+                >
+                  {i > 0 ? ' ' : ''}
+                  {word}
+                </span>
+              ))}
           </h1>
           {intro.length > 0 && (
             <div
@@ -215,17 +221,20 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
           <section className="mt-16" aria-label={data?.locationTitle ?? ui.mapIframeTitle}>
             {data?.locationTitle && (
               <h2
-                className="text-[40px] sm:text-[48px] font-black uppercase leading-[1.1] mb-6"
+                className="text-[32px] sm:text-[40px] font-black leading-[1.1] mb-5 sm:mb-6"
                 style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
               >
-                {(data.locationTitle || 'KONUM').toUpperCase().split(/\s+/).map((word, i) => (
-                  <span
-                    key={i}
-                    style={{ color: i === 0 ? '#1e3a8a' : '#000' }}
-                  >
-                    {i > 0 ? ' ' : ''}{word}
-                  </span>
-                ))}
+                {toHeadingUpper(data.locationTitle || (locale === 'tr' ? 'Konum' : locale === 'de' ? 'Standort' : 'Location'))
+                  .split(/\s+/)
+                  .map((word, i) => (
+                    <span
+                      key={i}
+                      style={{ color: i === 0 ? '#1e3a8a' : '#000' }}
+                    >
+                      {i > 0 ? ' ' : ''}
+                      {word}
+                    </span>
+                  ))}
               </h2>
             )}
             {data.mapEmbedUrl && (

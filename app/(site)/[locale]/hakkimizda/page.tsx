@@ -41,7 +41,10 @@ type AboutPageData = {
 const defaultBlockComponents = {
   block: {
     normal: ({ children }: { children?: React.ReactNode }) => (
-      <p className="text-base md:text-lg text-black/85 leading-relaxed mb-4 last:mb-0">
+      <p
+        className="text-base md:text-[17px] leading-relaxed mb-4 last:mb-0"
+        style={{ color: 'var(--text-color, #58595b)' }}
+      >
         {children}
       </p>
     ),
@@ -107,7 +110,7 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center px-4">
         <p className="text-black/60 text-center" style={{ fontFamily: 'var(--font-family)' }}>
           {ui.loadError}
         </p>
@@ -124,45 +127,57 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
       imageAlt: b.image?.alt ?? b.name ?? ui.defaultBoatImageAlt,
     }))
 
-  const wordsTop = (data.titleTop || '').toUpperCase().trim().split(/\s+/)
+  const localeTag = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
+  const toHeadingUpper = (s: string) => s.trim().toLocaleUpperCase(localeTag)
+
+  const wordsTop = toHeadingUpper(data.titleTop || '').split(/\s+/).filter(Boolean)
   const firstTwoTop = wordsTop.slice(0, 2).join(' ')
   const restTop = wordsTop.slice(2).join(' ')
-  const timelineWords = (data.timelineTitle || '').toUpperCase().trim().split(/\s+/).filter(Boolean)
+  const timelineWords = toHeadingUpper(data.timelineTitle || '').trim().split(/\s+/).filter(Boolean)
   const timelineMid = Math.ceil(timelineWords.length / 2)
   const timelineBlue = timelineWords.slice(0, timelineMid).join(' ')
   const timelineBlack = timelineWords.slice(timelineMid).join(' ')
 
   return (
-    <div className="min-h-screen bg-white">
-      <section className="w-full py-14 md:py-20">
-        <div className="mx-auto max-w-[1200px] px-4">
-          <h1
-            className="text-[40px] md:text-[48px] font-black uppercase leading-[1.1] mb-6"
-            style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
-          >
-            {firstTwoTop && <span style={{ color: '#1e3a8a' }}>{firstTwoTop}</span>}
-            {restTop && <span style={{ color: '#000' }}>{' ' + restTop}</span>}
-          </h1>
-          {data.titleBottom && (
-            <p
-              className="text-xl md:text-2xl font-bold uppercase"
-              style={{ color: 'var(--primary)' }}
-            >
-              {data.titleBottom}
-            </p>
-          )}
-        </div>
-      </section>
-
-      {data.intro && data.intro.length > 0 && (
-        <section className="w-full py-8 border-t border-black/10">
-          <div className="mx-auto max-w-[1200px] px-4">
-            <div className="max-w-3xl">
-              <PortableText value={data.intro} components={defaultBlockComponents} />
+    <div className="min-h-screen bg-zinc-50">
+      <section className="relative w-full pt-10 pb-8 md:pt-14 md:pb-11">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-[min(55vh,420px)] bg-gradient-to-b from-white via-zinc-50 to-transparent"
+          aria-hidden
+        />
+        <div className="relative mx-auto max-w-[1200px] px-4">
+          <div className="relative overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-[0_8px_40px_-12px_rgba(15,23,42,0.12)]">
+            <div
+              className="pointer-events-none absolute inset-y-3 left-0 w-1 rounded-full bg-gradient-to-b from-[#1e3a8a] via-[#2563eb] to-[#2168b8]"
+              aria-hidden
+            />
+            <div className="relative px-6 py-9 sm:px-9 sm:py-10 md:px-11 md:py-12 lg:pl-12 lg:pr-14">
+              <h1
+                className="text-[28px] sm:text-[32px] md:text-[38px] font-black uppercase leading-[1.08] tracking-tight"
+                style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+              >
+                {firstTwoTop && <span style={{ color: '#1e3a8a' }}>{firstTwoTop}</span>}
+                {restTop && <span style={{ color: '#000' }}>{' ' + restTop}</span>}
+              </h1>
+              {data.titleBottom && (
+                <p
+                  className="mt-4 text-lg font-bold uppercase tracking-wide text-[#2168b8] sm:text-xl md:text-2xl"
+                  style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
+                >
+                  {data.titleBottom}
+                </p>
+              )}
+              {data.intro && data.intro.length > 0 && (
+                <div className="mt-8 border-t border-zinc-100 pt-8 md:mt-10 md:pt-10">
+                  <div className="max-w-3xl">
+                    <PortableText value={data.intro} components={defaultBlockComponents} />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {(data.sectionTitle || data.sectionBody?.length) && (
         <section className="w-full py-12 md:py-16">

@@ -64,7 +64,7 @@ export default function PopularToursSection({ data, locale = 'tr' }: PopularTour
           )}
           <h2
             id="popular-tours-heading"
-            className="text-[34px] font-black uppercase leading-[1.15] mb-6 sm:text-[38px] md:text-[42px] lg:text-[46px]"
+            className="text-[30px] font-black uppercase leading-[1.15] mb-6 sm:text-[34px] md:text-[38px] lg:text-[42px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
           >
             {firstTwo && <span style={{ color: '#1e3a8a' }}>{firstTwo}</span>}

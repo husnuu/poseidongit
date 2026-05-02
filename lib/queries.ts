@@ -175,6 +175,18 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
       minAge,
       maxAge,
       price
+    },
+    dateRangePrices[]{
+      label,
+      start,
+      end,
+      pricesByAge[]{
+        ageKey,
+        ageLabel,
+        minAge,
+        maxAge,
+        price
+      }
     }
   },
   bookingRules{ show, title, bullets },
@@ -426,6 +438,18 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
       minAge,
       maxAge,
       price
+    },
+    dateRangePrices[]{
+      label,
+      start,
+      end,
+      pricesByAge[]{
+        ageKey,
+        ageLabel,
+        minAge,
+        maxAge,
+        price
+      }
     }
   },
   bookingRules{ show, title, bullets },
@@ -994,6 +1018,18 @@ export const footerQuery = `*[_type == "homePage"][0] {
     phone,
     whatsappNumber,
     address
+  }
+}`
+
+/** Minimal contact fields for homepage help banner (matches footer CMS). */
+export const siteFooterContactQuery = `*[_type == "siteFooter"][0]{
+  contact {
+    email,
+    phone,
+    chatValue,
+    openingValue,
+    openingValueEn,
+    openingValueDe
   }
 }`
 

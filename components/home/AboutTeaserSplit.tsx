@@ -31,7 +31,7 @@ const bodyComponents = {
     normal: ({ children }: { children?: React.ReactNode }) => (
       <p
         className="text-[16px] md:text-[17px] leading-[1.65] max-w-[540px] mb-3 last:mb-0"
-        style={{ color: 'rgba(255,255,255,0.88)' }}
+        style={{ color: 'var(--text-color, #58595b)' }}
       >
         {children}
       </p>
@@ -70,7 +70,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
       {/* Text panel - mobile'da altta (order-2) */}
       <div
         className="flex items-center justify-center px-6 py-14 lg:px-28 lg:py-24 min-h-[380px] lg:min-h-[540px] order-2 lg:order-1"
-        style={{ background: 'var(--about-bg, #d8832a)' }}
+        style={{ background: 'var(--about-bg, var(--section-turquoise-bg, #dff4fc))' }}
       >
         <div
           ref={contentRef}
@@ -83,7 +83,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
           {heading && (
             <h2
               id="about-teaser-heading"
-              className="uppercase font-extrabold text-[28px] lg:text-[38px] leading-[1.1] text-white mb-4 -mt-6"
+              className="uppercase font-extrabold text-[24px] lg:text-[32px] leading-[1.1] mb-4 -mt-6 text-[#1e3a5f]"
               style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
             >
               {heading}
@@ -124,7 +124,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                   {secondaryPath ? (
                     <Link
                       href={secondaryPath}
-                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md bg-white text-[#111] font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#f2f2f2] text-[17px]"
+                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md border border-zinc-300 bg-white text-[#111] font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-zinc-50 text-[17px]"
                       style={{ fontFamily: 'var(--font-family)' }}
                     >
                       {secondaryCta.label}
@@ -134,7 +134,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                       href={secondaryCta.href || '#'}
                       target={secondaryCta.href?.startsWith('http') ? '_blank' : undefined}
                       rel={secondaryCta.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md bg-white text-[#111] font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#f2f2f2] text-[17px]"
+                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md border border-zinc-300 bg-white text-[#111] font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-zinc-50 text-[17px]"
                       style={{ fontFamily: 'var(--font-family)' }}
                     >
                       {secondaryCta.label}

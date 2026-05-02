@@ -66,6 +66,18 @@ export const tourForBookingProjection = `{
       minAge,
       maxAge,
       price
+    },
+    dateRangePrices[]{
+      label,
+      start,
+      end,
+      pricesByAge[]{
+        ageKey,
+        ageLabel,
+        minAge,
+        maxAge,
+        price
+      }
     }
   },
   seasonRules[]{

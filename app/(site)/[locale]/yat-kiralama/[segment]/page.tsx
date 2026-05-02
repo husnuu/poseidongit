@@ -6,8 +6,6 @@ import {
   yachtRentalBySlugQuery,
   yachtLocationBySlugQuery,
   yachtRentalsByLocationQuery,
-  yachtRentalSlugsQuery,
-  yachtLocationSlugsQuery,
 } from '@/lib/yachtQueries'
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
 import YachtDetailView from '@/components/yacht/YachtDetailView'
@@ -18,7 +16,8 @@ import listStyles from '../../turlar/page.module.css'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 
-export const revalidate = 3600
+/** Root layout `headers()` ile uyum (prod: DYNAMIC_SERVER_USAGE). */
+export const dynamic = 'force-dynamic'
 
 const getYachtBySlug = cache(async (slug: string) => {
   try {
@@ -62,29 +61,6 @@ const getYachtsByLocation = cache(async (locationSlug: string) => {
     return []
   }
 })
-
-export async function generateStaticParams() {
-  if (process.env.NODE_ENV === 'development') {
-    // Dev'de static-path worker kaynaklı chunk bozulmalarını önlemek için kapalı.
-    return []
-  }
-  try {
-    const [yachts, locs] = await Promise.all([
-      client.fetch<{ slug: string | null; locationSlug?: string | null }[]>(yachtRentalSlugsQuery),
-      client.fetch<{ slug: string | null }[]>(yachtLocationSlugsQuery),
-    ])
-    const segments = new Set<string>()
-    for (const y of yachts ?? []) {
-      if (y.slug) segments.add(y.slug)
-    }
-    for (const l of locs ?? []) {
-      if (l.slug) segments.add(l.slug)
-    }
-    return [...segments].map((segment) => ({ segment }))
-  } catch {
-    return []
-  }
-}
 
 export async function generateMetadata({
   params,

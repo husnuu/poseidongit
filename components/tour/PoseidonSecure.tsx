@@ -1,40 +1,29 @@
 import styles from './PoseidonSecure.module.css'
 import { ShieldCheck } from 'lucide-react'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getPoseidonSecureStrings } from '@/lib/i18n/strings/poseidonSecure'
 
-interface PoseidonSecureProps {
-  /** Wrap in a max-w-7xl container (for homepage use). Defaults to false. */
-  contained?: boolean
-}
+export default function PoseidonSecure({ locale = 'tr' }: { locale?: SiteLocale }) {
+  const t = getPoseidonSecureStrings(locale)
+  return (
+    <section className={styles.fullBleed} aria-label={t.ariaLabel}>
+      <div className={styles.maxWidth}>
+        <div className={styles.inner}>
+          <div className={styles.logoRow}>
+            <ShieldCheck size={32} strokeWidth={2} className={styles.shieldIcon} aria-hidden />
+            <span className={styles.logoText}>
+              <span className={styles.logoBold}>Poseidon</span>
+              <span className={styles.logoAccent}>Secure</span>
+            </span>
+          </div>
 
-export default function PoseidonSecure({ contained = false }: PoseidonSecureProps) {
-  const banner = (
-    <div className={styles.wrapper}>
-      <div className={styles.inner}>
-        <div className={styles.logoRow}>
-          <ShieldCheck size={32} strokeWidth={2} className={styles.shieldIcon} aria-hidden />
-          <span className={styles.logoText}>
-            <span className={styles.logoBold}>Poseidon</span>
-            <span className={styles.logoAccent}>Secure</span>
-          </span>
+          <p className={styles.description}>
+            {t.beforeStrong}
+            <strong>{t.strong}</strong>
+            {t.afterStrong}
+          </p>
         </div>
-
-        <p className={styles.description}>
-          Yeni nesil tam donanımlı teknelerimizde,{' '}
-          <strong>24 saate kadar şartsız iade ve hava durumu garantisiyle</strong> size kusursuz
-          bir deniz keyfi sunar. Siz sadece rotanın tadını çıkarın; güvenliğiniz ve tüm
-          haklarınız bizim güvencemizde.
-        </p>
       </div>
-    </div>
+    </section>
   )
-
-  if (contained) {
-    return (
-      <div className={styles.container}>
-        {banner}
-      </div>
-    )
-  }
-
-  return banner
 }

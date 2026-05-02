@@ -11,6 +11,14 @@ export interface PriceByAge {
   price: number
 }
 
+/** Bir bilet sınıfı için tarih aralığı başına özel yaş fiyatları (Sanity `dateRangePrices`). */
+export interface ClassDateRangePrice {
+  label?: string
+  start: string
+  end: string
+  pricesByAge?: PriceByAge[]
+}
+
 export interface TicketClassForBooking {
   key: string
   label: string
@@ -23,6 +31,8 @@ export interface TicketClassForBooking {
   }
   bullets?: string[]
   pricesByAge?: PriceByAge[]
+  /** Tarih aralığına göre sınıf fiyatı; çakışmada listenin ilk eşleşen aralığı geçerli. */
+  dateRangePrices?: ClassDateRangePrice[]
 }
 
 export interface SeasonRule {

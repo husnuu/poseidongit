@@ -128,7 +128,7 @@ export default function HeroBanner({
               </p>
             )}
             <h1
-              className="max-w-[98%] text-[42px] font-black uppercase leading-[1.25] text-white sm:text-[48px] md:text-[60px] lg:max-w-[96%] lg:text-[78px]"
+              className="max-w-[98%] text-[36px] font-black uppercase leading-[1.25] text-white sm:text-[42px] md:text-[52px] lg:max-w-[96%] lg:text-[64px]"
               style={{ fontFamily: 'var(--font-family)', fontWeight: 900, textShadow: '0 6px 12px rgba(0, 0, 0, .16)', marginBottom: '0.5em' }}
             >
               {line1}

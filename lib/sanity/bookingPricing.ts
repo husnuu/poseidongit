@@ -11,6 +11,52 @@ import type {
   PricingUnit,
 } from './bookingTypes'
 
+/** YYYY-MM-DD aralığında (uçlar dahil) mi — yerel öğlen ile DST kayması azaltılır. */
+function dateInRangeISO(dateStr: string, start: string, end: string): boolean {
+  const d = new Date(`${dateStr.slice(0, 10)}T12:00:00`).getTime()
+  const s = new Date(`${String(start).slice(0, 10)}T12:00:00`).getTime()
+  const e = new Date(`${String(end).slice(0, 10)}T12:00:00`).getTime()
+  if (Number.isNaN(d) || Number.isNaN(s) || Number.isNaN(e)) return false
+  return d >= s && d <= e
+}
+
+/**
+ * Sınıfın o gün için taban birim fiyatı (sezon çarpanı hariç).
+ * Önce `dateRangePrices` içinde ilk eşleşen aralık; yaş satırı yoksa aynı aralıkta varsayılan sınıf fiyatı.
+ */
+export function getClassBaseUnitForAge(
+  cls: TicketClassForBooking,
+  dateStr: string,
+  ageKey: string
+): { unit: number; ageLabel: string } | null {
+  const periods = cls.dateRangePrices ?? []
+  for (const p of periods) {
+    if (!p?.start || !p?.end) continue
+    if (!dateInRangeISO(dateStr, p.start, p.end)) continue
+    const fromPeriod = p.pricesByAge?.find((x) => x.ageKey === ageKey)
+    if (fromPeriod != null && Number.isFinite(Number(fromPeriod.price))) {
+      return {
+        unit: Number(fromPeriod.price),
+        ageLabel: fromPeriod.ageLabel?.trim() || ageKey,
+      }
+    }
+    const fromBase = cls.pricesByAge?.find((x) => x.ageKey === ageKey)
+    if (fromBase != null && Number.isFinite(Number(fromBase.price))) {
+      return {
+        unit: Number(fromBase.price),
+        ageLabel: fromBase.ageLabel?.trim() || ageKey,
+      }
+    }
+    return null
+  }
+  const fromBase = cls.pricesByAge?.find((x) => x.ageKey === ageKey)
+  if (fromBase == null || !Number.isFinite(Number(fromBase.price))) return null
+  return {
+    unit: Number(fromBase.price),
+    ageLabel: fromBase.ageLabel?.trim() || ageKey,
+  }
+}
+
 /** Seçilen sınıf First Class mı (loca seçimi gerekir). key === 'first' veya label'da "first" geçiyorsa. */
 export function isFirstClassKey(tour: TourForBooking, classKey: string | null): boolean {
   if (!classKey) return false
@@ -141,8 +187,9 @@ function effectiveUnitForAge(
     const fromDay = unitFromPriceOverrideObject(specific.priceOverrides, ageKey)
     if (fromDay != null) return fromDay
   }
-  const agePrice = cls.pricesByAge?.find((p) => p.ageKey === ageKey)
-  return agePrice ? Math.round(agePrice.price * mult) : 0
+  const resolved = getClassBaseUnitForAge(cls, dateStr, ageKey)
+  if (resolved == null) return 0
+  return Math.round(resolved.unit * mult)
 }
 
 /**
@@ -217,11 +264,11 @@ export function computePricingForSelection(
   ]
   for (const { key, count } of mapping) {
     if (count <= 0) continue
-    const agePrice = cls.pricesByAge.find((p) => p.ageKey === key)
+    const resolved = getClassBaseUnitForAge(cls, dateStr, key)
     const unitPrice = effectiveUnitForAge(tour, dateStr, classKey, key, cls, mult)
     unitPrices.push({
       ageKey: key,
-      ageLabel: agePrice?.ageLabel ?? key,
+      ageLabel: resolved?.ageLabel ?? cls.pricesByAge?.find((p) => p.ageKey === key)?.ageLabel ?? key,
       unitPrice,
       count,
       subtotal: unitPrice * count,

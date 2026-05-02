@@ -18,8 +18,9 @@ import {
 } from '@/lib/i18n/localizedLabels'
 import FooterLegal from '@/components/layout/FooterLegal'
 import type { FooterLegalData } from '@/components/layout/FooterLegal'
+import InstagramModern from '@/components/icons/InstagramModern'
+import GoogleModern from '@/components/icons/GoogleModern'
 import {
-  Instagram,
   Youtube,
   Facebook,
   Phone,
@@ -27,6 +28,7 @@ import {
   MapPin,
   Star,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 type SiteSettingsLogo = {
   siteName?: string | null
@@ -139,8 +141,8 @@ const AWARD_IMAGES_FALLBACK_PATHS = [
   '/awards/badge4.svg',
 ]
 
-const SOCIAL_ICONS: Record<string, typeof Instagram> = {
-  instagram: Instagram,
+const SOCIAL_ICONS: Record<string, LucideIcon | typeof InstagramModern> = {
+  instagram: InstagramModern,
   youtube: Youtube,
   facebook: Facebook,
   tiktok: Youtube,
@@ -351,45 +353,18 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                 </span>
                 {reviewCount > 0 && (
                   <span className="flex items-center gap-1.5 text-base text-white/80">
-                    <svg
+                    <GoogleModern
                       aria-label="Google"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 48 48"
-                      className="flex-shrink-0"
-                    >
-                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                    </svg>
+                      className="h-[18px] w-[18px] flex-shrink-0 text-white/90"
+                    />
                     {f.reviews(reviewCount.toLocaleString(numLoc))}
                   </span>
                 )}
                 <span className="flex items-center gap-1.5 text-base text-white/80">
-                  <svg
+                  <InstagramModern
                     aria-label="Instagram"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="flex-shrink-0"
-                  >
-                    <defs>
-                      <radialGradient id="ig-rg" cx="30%" cy="107%" r="130%" gradientUnits="userSpaceOnUse">
-                        <stop offset="0%"  stopColor="#FFD600"/>
-                        <stop offset="20%" stopColor="#FF7A00"/>
-                        <stop offset="45%" stopColor="#FF0069"/>
-                        <stop offset="70%" stopColor="#D300C5"/>
-                        <stop offset="100%" stopColor="#7638FA"/>
-                      </radialGradient>
-                    </defs>
-                    <rect width="24" height="24" rx="5.5" fill="url(#ig-rg)"/>
-                    <rect x="1.5" y="1.5" width="21" height="21" rx="4.5" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5"/>
-                    <rect x="6.5" y="6.5" width="11" height="11" rx="3" stroke="white" strokeWidth="1.5"/>
-                    <circle cx="12" cy="12" r="3" stroke="white" strokeWidth="1.5"/>
-                    <circle cx="16.2" cy="7.8" r="0.9" fill="white"/>
-                  </svg>
+                    className="h-[18px] w-[18px] flex-shrink-0 text-white/90"
+                  />
                   21k takipçi
                 </span>
               </div>
@@ -432,7 +407,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
               <div className="flex flex-wrap gap-3 pt-4">
                 {socialItems.map((item, index) => {
                   const platform = (item?.platform ?? '').toLowerCase()
-                  const Icon = SOCIAL_ICONS[platform] ?? Instagram
+                  const Icon = SOCIAL_ICONS[platform] ?? InstagramModern
                   const href = item?.href ?? '#'
                   return (
                     <a

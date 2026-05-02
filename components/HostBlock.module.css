@@ -1,7 +1,8 @@
 .card {
   position: relative;
-  background: #F6F7F8;
+  background: var(--section-turquoise-bg, #dff4fc);
   border-radius: 18px;
+  border: 1px solid rgba(30, 58, 95, 0.06);
   padding: 36px 40px;
   margin-top: 2.5rem;
   margin-bottom: 2.5rem;

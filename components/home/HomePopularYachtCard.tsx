@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -37,6 +36,22 @@ function detailHref(y: HomePopularYachtCardData, locale: SiteLocale = 'tr'): str
   return withLocalePath(locale, path)
 }
 
+/** Ana sayfa kartında gösterilmeyecek “dahil olanlar” maddeleri (normalize edilmiş küçük harf anahtar). */
+const HOME_CARD_EXCLUDED_INCLUDED_NORMALIZED = new Set([
+  'profesyonel kaptanlı özel mürettebat',
+  'yakıt (günlük standart kullanım dahilinde)',
+])
+
+function normalizeIncludedLine(s: string): string {
+  return s.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function includedLinesForHomeCard(lines: (string | null | undefined)[] | null | undefined): string[] {
+  return (lines ?? [])
+    .filter((line): line is string => Boolean(line?.trim()))
+    .filter((line) => !HOME_CARD_EXCLUDED_INCLUDED_NORMALIZED.has(normalizeIncludedLine(line)))
+}
+
 function specSummary(spec: YachtSpecifications | null | undefined): string | null {
   if (!spec) return null
   const parts: string[] = []
@@ -48,7 +63,7 @@ function specSummary(spec: YachtSpecifications | null | undefined): string | nul
 }
 
 const PILL =
-  'inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs font-semibold text-zinc-700'
+  'inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-700'
 
 const VIEW_YACHT_CTA: Record<SiteLocale, string> = {
   tr: 'Tekneyi incele',
@@ -67,9 +82,11 @@ export default function HomePopularYachtCard({
   const typeLabel = yachtTypeLabel(yacht.yachtType ?? undefined)
   const specLine = specSummary(yacht.specifications ?? undefined)
   const year = yacht.specifications?.buildYear
-  const subtitle = [yacht.name, year ? `(${year})` : null].filter(Boolean).join(' ')
-  const titleLine = yacht.locationTitle?.trim() || yacht.name
-  const included = (yacht.included ?? []).filter(Boolean).slice(0, 2)
+  /** Üst başlık: tekne adı + yıl (kalın) */
+  const boatTitle = [yacht.name, year ? `(${year})` : null].filter(Boolean).join(' ')
+  /** Alt satır: konum (CMS locationTitle) */
+  const locationLine = yacht.locationTitle?.trim() || ''
+  const included = includedLinesForHomeCard(yacht.included).slice(0, 2)
   const maxExtraPills = yacht.sailingLicenceRequired?.trim() ? 2 : 3
   const badgeStrings = (yacht.badges ?? []).filter(Boolean).slice(0, maxExtraPills)
 
@@ -77,33 +94,23 @@ export default function HomePopularYachtCard({
   const overnightOn = yacht.overnightRentalEnabled === true
   const cur = yacht.currency ?? 'TRY'
 
-  let priceColumn: ReactNode = null
-  if (dailyOn && yacht.priceFrom != null) {
-    priceColumn = (
-      <div className="flex flex-col items-end text-right">
-        <span className="text-[11px] font-medium text-zinc-500">Şu fiyattan</span>
-        <span className="text-lg font-black leading-tight text-black">
-          {formatYachtMobilePrice(yacht.priceFrom, cur)}
-        </span>
-      </div>
-    )
-  } else if (overnightOn) {
-    const line = formatYachtMobileOvernightTotal(
-      yacht.overnightTotalPrice ?? undefined,
-      yacht.overnightNightPricing,
-      cur
-    )
-    priceColumn = (
-      <div className="flex flex-col items-end text-right">
-        <span className="text-[11px] font-medium text-zinc-500">Konaklamalı</span>
-        <span className="text-lg font-black leading-tight text-black">{line}</span>
-      </div>
-    )
-  }
+  const priceLabelClass =
+    'text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500'
+  const priceValueClass =
+    'text-xl tabular-nums leading-none tracking-tight text-[#1e3a5f] sm:text-[22px] font-semibold'
+
+  const overnightLine =
+    overnightOn
+      ? formatYachtMobileOvernightTotal(
+          yacht.overnightTotalPrice ?? undefined,
+          yacht.overnightNightPricing,
+          cur,
+        )
+      : null
 
   const inner = (
-    <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-black/[0.06] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_16px_48px_rgba(0,0,0,0.11)]">
-      <div className="relative aspect-[5/4] w-full shrink-0 overflow-hidden bg-zinc-100 sm:aspect-[4/3]">
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_8px_28px_rgba(0,0,0,0.07)] transition-shadow duration-300 hover:shadow-[0_12px_36px_rgba(0,0,0,0.1)]">
+      <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-zinc-100">
         {yacht.coverImageUrl ? (
           <Image
             src={yacht.coverImageUrl}
@@ -126,16 +133,56 @@ export default function HomePopularYachtCard({
         ) : null}
       </div>
 
-      <div className="flex flex-1 flex-col border-b border-zinc-100 px-5 pb-4 pt-5">
-        <h3
-          className="text-xl font-black leading-snug text-black"
-          style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
-        >
-          {titleLine}
-        </h3>
-        <p className="mt-1 text-sm font-medium text-zinc-500">{subtitle}</p>
+      <div className="border-b border-zinc-100 px-4 pb-2.5 pt-3">
+        {/* İsim / model ile fiyat aynı iki satırlık ızgarada — alt boşluk kapanır */}
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-px">
+          {locationLine ? (
+            <>
+              <h3
+                className="col-start-1 row-start-1 min-w-0 text-lg font-black leading-tight text-black"
+                style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
+              >
+                {boatTitle}
+              </h3>
+              <p className="col-start-1 row-start-2 text-[13px] font-medium leading-snug text-zinc-500">
+                {locationLine}
+              </p>
+            </>
+          ) : (
+            <h3
+              className="col-start-1 row-span-2 row-start-1 min-w-0 self-start text-lg font-black leading-tight text-black"
+              style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
+            >
+              {boatTitle}
+            </h3>
+          )}
 
-        <div className="mt-3 flex flex-wrap gap-2">
+          {dailyOn && yacht.priceFrom != null ? (
+            <>
+              <span className={`col-start-2 row-start-1 justify-self-end ${priceLabelClass}`}>
+                Şu fiyattan
+              </span>
+              <span className={`col-start-2 row-start-2 justify-self-end ${priceValueClass}`}>
+                {formatYachtMobilePrice(yacht.priceFrom, cur)}
+              </span>
+            </>
+          ) : overnightOn ? (
+            <>
+              <span className={`col-start-2 row-start-1 justify-self-end ${priceLabelClass}`}>
+                Konaklamalı
+              </span>
+              <span className={`col-start-2 row-start-2 justify-self-end ${priceValueClass}`}>
+                {overnightLine?.trim() ? overnightLine : '—'}
+              </span>
+            </>
+          ) : (
+            <p className="col-start-2 row-span-2 row-start-1 max-w-[132px] justify-self-end self-center text-right text-[11px] font-medium leading-snug text-zinc-500">
+              Teklif için iletişime geçin
+            </p>
+          )}
+        </div>
+
+        <div className="mt-2 border-t border-zinc-100/90 pt-2.5 flex flex-wrap gap-1.5">
           <span className={PILL}>
             <YachtTypeGlyph yachtType={yacht.yachtType} className="size-3.5 shrink-0 text-zinc-600" />
             {typeLabel}
@@ -152,30 +199,23 @@ export default function HomePopularYachtCard({
           ))}
         </div>
 
-        {specLine ? <p className="mt-3 text-sm text-zinc-500">{specLine}</p> : null}
+        {specLine ? <p className="mt-2 text-[13px] leading-snug text-zinc-500">{specLine}</p> : null}
       </div>
 
-      <div className="flex flex-1 flex-col justify-end gap-4 rounded-b-3xl bg-white px-5 py-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-            {included.length ? (
-              included.map((line) => (
-                <li key={line} className="flex items-start gap-2 text-sm font-semibold text-[#2168b8]">
-                  <Check className="mt-0.5 size-4 shrink-0 stroke-[2.5]" aria-hidden />
-                  <span>{line}</span>
-                </li>
-              ))
-            ) : (
-              <li className="text-sm text-zinc-400">Dahil olanlar için yat kaydını düzenleyin.</li>
-            )}
+      <div className="mt-auto flex flex-col gap-2 rounded-b-2xl bg-white px-4 pb-3 pt-2">
+        {included.length > 0 ? (
+          <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+            {included.map((line) => (
+              <li key={line} className="flex items-start gap-1.5 text-[13px] font-semibold leading-snug text-[#2168b8]">
+                <Check className="mt-0.5 size-3.5 shrink-0 stroke-[2.5]" aria-hidden />
+                <span>{line}</span>
+              </li>
+            ))}
           </ul>
-          {priceColumn ?? (
-            <div className="text-right text-sm font-semibold text-zinc-500">Teklif için iletişime geçin</div>
-          )}
-        </div>
+        ) : null}
         <span
-          className="tour-card-cta hero-btn-shine relative mt-1 w-full rounded-xl py-2.5 md:py-3 font-black uppercase text-white text-center text-base md:text-[17px] flex items-center justify-center overflow-hidden"
-          style={{ background: '#1e3a8a', boxShadow: '0 3px 12px rgba(30, 58, 138, 0.35)' }}
+          className="tour-card-cta hero-btn-shine relative w-full rounded-lg py-2.5 font-black uppercase text-white text-center text-sm md:text-[15px] flex items-center justify-center overflow-hidden"
+          style={{ background: '#1e3a8a', boxShadow: '0 2px 10px rgba(30, 58, 138, 0.32)' }}
         >
           {VIEW_YACHT_CTA[locale] ?? VIEW_YACHT_CTA.tr}
         </span>
@@ -188,7 +228,7 @@ export default function HomePopularYachtCard({
   }
 
   return (
-    <Link href={href} className="block h-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#1e3a5f] rounded-3xl">
+    <Link href={href} className="block h-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#1e3a5f] rounded-2xl">
       {inner}
     </Link>
   )

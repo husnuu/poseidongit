@@ -751,18 +751,18 @@
 .dayCell {
   position: relative;
   aspect-ratio: 1;
-  min-height: 44px;
+  min-height: 46px;
   min-width: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   border: 1.5px solid transparent;
   background: transparent;
-  padding: 3px;
+  padding: 4px 3px;
   transition: background 0.12s ease, border-color 0.12s ease;
 }
 
@@ -806,8 +806,8 @@
 
 .dayCellStar {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: 3px;
+  right: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -815,8 +815,8 @@
 }
 
 .dayCellStarIcon {
-  width: 7px;
-  height: 7px;
+  width: 11px;
+  height: 11px;
 }
 
 .dayNum {
@@ -826,11 +826,12 @@
 }
 
 .dayPrice {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   color: #64748b;
-  margin-top: 1px;
-  line-height: 1;
+  margin-top: 2px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
 }
 
 @media (max-width: 480px) {
@@ -843,20 +844,20 @@
     padding: 1px 0;
   }
   .dayCell {
-    font-size: 12px;
+    font-size: 13px;
     border-width: 1px;
-    min-height: 44px;
+    min-height: 46px;
     border-radius: 8px;
   }
   .dayCellSelected {
     border-radius: 8px !important;
   }
   .dayPrice {
-    font-size: 9px;
+    font-size: 10px;
   }
   .dayCellStarIcon {
-    width: 6px;
-    height: 6px;
+    width: 9px;
+    height: 9px;
   }
 }
 

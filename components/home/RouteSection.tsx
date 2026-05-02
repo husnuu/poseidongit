@@ -63,7 +63,7 @@ export default function RouteSection({
           <div className="flex flex-col">
             <h2
               id="route-section-heading"
-              className="text-[34px] font-black uppercase leading-[1.15] sm:text-[38px] md:text-[42px] lg:text-[46px]"
+              className="text-[30px] font-black uppercase leading-[1.15] sm:text-[34px] md:text-[38px] lg:text-[42px]"
               style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
             >
               {firstTwo && <span style={{ color: '#1e3a8a' }}>{firstTwo}</span>}

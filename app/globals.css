@@ -333,7 +333,9 @@
     --font-family: var(--font-inter, "Inter"), ui-sans-serif, system-ui, sans-serif;
     --font-family-title: var(--font-inter, "Inter"), var(--font-family), sans-serif;
     --title-color: #1e3a5f;
-    /* Hakkımızda split section sol panel (WakeUp tarzı); lacivert için gradient kullanılabilir */
-    --about-bg: #fc6c4f;
+    /* Ana sayfa yardım şeridi + hakkımızda teaser + Poseidon Secure */
+    --section-turquoise-bg: #dff4fc;
+    --poseidon-secure-bg: #dff4fc;
+    --about-bg: #dff4fc;
   }
 }

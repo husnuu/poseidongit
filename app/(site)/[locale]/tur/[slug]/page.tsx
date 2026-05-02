@@ -447,7 +447,7 @@ export default async function TourPage({
 
         <ItineraryTimeline items={itineraryTimelineItems} sectionTitle={tourUi.itineraryTitle} />
 
-        <PoseidonSecure />
+        <PoseidonSecure locale={locale} />
 
         {reelsSlides.length > 0 ? (
           <TourReelsRail slides={reelsSlides} locale={locale} />

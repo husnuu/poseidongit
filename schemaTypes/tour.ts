@@ -1207,6 +1207,127 @@ export default defineType({
                 },
               ],
             }),
+            defineField({
+              name: 'dateRangePrices',
+              title: 'Tarih aralığına özel fiyatlar',
+              type: 'array',
+              description:
+                'Bu sınıf için belirli tarih aralıklarında fiyatı değiştirir. Aralık dışındaki günlerde yukarıdaki varsayılan fiyatlar + sezon çarpanı kullanılır. Aynı güne birden çok aralık denk gelirse listedeki ilk eşleşen geçerli. Takvimde “özel gün fiyatı” tanımlıysa o her zaman önceliklidir.',
+              of: [
+                {
+                  type: 'object',
+                  fields: [
+                    defineField({
+                      name: 'label',
+                      title: 'Not (iç kullanım)',
+                      type: 'string',
+                      description: 'Örn. Yaz sezonu, Bayram',
+                    }),
+                    defineField({
+                      name: 'start',
+                      title: 'Başlangıç',
+                      type: 'date',
+                      validation: (Rule) => Rule.required().error('Başlangıç tarihi zorunludur'),
+                    }),
+                    defineField({
+                      name: 'end',
+                      title: 'Bitiş',
+                      type: 'date',
+                      validation: (Rule) => Rule.required().error('Bitiş tarihi zorunludur'),
+                    }),
+                    defineField({
+                      name: 'pricesByAge',
+                      title: 'Bu aralıktaki fiyatlar',
+                      type: 'array',
+                      description:
+                        'Bu tarihler için geçerli yaş başına fiyatlar (₺). Boş bırakılan yaş için varsayılan sınıf fiyatı kullanılır.',
+                      of: [
+                        {
+                          type: 'object',
+                          fields: [
+                            defineField({
+                              name: 'ageKey',
+                              title: 'Yaş Anahtarı',
+                              type: 'string',
+                              options: {
+                                list: [
+                                  { title: 'Yetişkin', value: 'adult' },
+                                  { title: 'Çocuk', value: 'child' },
+                                  { title: 'Bebek', value: 'infant' },
+                                  { title: 'Yaşlı', value: 'senior' },
+                                ],
+                              },
+                              validation: (Rule) => Rule.required(),
+                            }),
+                            defineField({
+                              name: 'ageLabel',
+                              title: 'Yaş Etiketi',
+                              type: 'string',
+                              validation: (Rule) => Rule.required(),
+                            }),
+                            defineField({
+                              name: 'minAge',
+                              title: 'Minimum Yaş',
+                              type: 'number',
+                            }),
+                            defineField({
+                              name: 'maxAge',
+                              title: 'Maksimum Yaş',
+                              type: 'number',
+                            }),
+                            defineField({
+                              name: 'price',
+                              title: 'Fiyat (₺)',
+                              type: 'number',
+                              validation: (Rule) =>
+                                Rule.required()
+                                  .min(0)
+                                  .error('Fiyat zorunludur ve 0 veya daha büyük olmalıdır'),
+                            }),
+                          ],
+                          preview: {
+                            select: {
+                              ageLabel: 'ageLabel',
+                              price: 'price',
+                            },
+                            prepare({ ageLabel, price }) {
+                              return {
+                                title: ageLabel || 'Yaş grubu',
+                                subtitle: typeof price === 'number' ? `${price} ₺` : '',
+                              }
+                            },
+                          },
+                        },
+                      ],
+                    }),
+                  ],
+                  preview: {
+                    select: {
+                      label: 'label',
+                      start: 'start',
+                      end: 'end',
+                    },
+                    prepare({ label, start, end }) {
+                      const range =
+                        start && end ? `${start} → ${end}` : start || end || 'Tarih aralığı'
+                      return {
+                        title: label?.trim() || range,
+                        subtitle: label?.trim() ? range : undefined,
+                      }
+                    },
+                  },
+                  validation: (Rule) =>
+                    Rule.custom((fields: { start?: string; end?: string } | undefined) => {
+                      if (!fields?.start || !fields?.end) return true
+                      const a = new Date(fields.start).getTime()
+                      const b = new Date(fields.end).getTime()
+                      if (Number.isNaN(a) || Number.isNaN(b)) return true
+                      if (a > b) return 'Bitiş tarihi başlangıçtan önce olamaz'
+                      return true
+                    }),
+                },
+              ],
+            }),
           ],
           preview: {
             select: {
