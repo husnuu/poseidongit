@@ -108,6 +108,8 @@ export type SupabaseBookingRow = {
   refund_type?: string | null
   refund_reason?: string | null
   refunded_by?: string | null
+  /** Müşterinin "İade Talebi Gönder" akışında talep ettiği zaman damgası. */
+  refund_requested_at?: string | null
 }
 
 export function normalizeDateOnly(date: string): string {
@@ -196,5 +198,8 @@ export function mapBookingRowToApi(row: SupabaseBookingRow): Record<string, unkn
     ...(row.refund_type != null && String(row.refund_type).trim() && { refundType: String(row.refund_type).trim() }),
     ...(row.refund_reason != null && String(row.refund_reason).trim() && { refundReason: String(row.refund_reason).trim() }),
     ...(row.refunded_by != null && String(row.refunded_by).trim() && { refundedBy: String(row.refunded_by).trim() }),
+    ...(row.refund_requested_at != null && String(row.refund_requested_at).trim() && {
+      refundRequestedAt: String(row.refund_requested_at).trim(),
+    }),
   }
 }

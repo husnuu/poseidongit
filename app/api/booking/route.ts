@@ -147,8 +147,21 @@ export async function GET(request: NextRequest) {
       ...(additionalTravelers.length > 0 && { additionalTravelers }),
       canCancel,
       hoursUntilTour: hoursUntilTour != null ? Math.round(hoursUntilTour) : null,
-      /** Secure token for ticket/voucher links. */
       accessToken,
+      ...(row.payment_status != null && String(row.payment_status).trim() && {
+        paymentStatus: String(row.payment_status).trim(),
+      }),
+      ...(row.nestpay_trans_id != null && String(row.nestpay_trans_id).trim() && {
+        nestpayTransId: String(row.nestpay_trans_id).trim(),
+      }),
+      ...(row.paid_now != null && { paidNow: Number(row.paid_now) }),
+      ...(row.refund_status != null && String(row.refund_status).trim() && {
+        refundStatus: String(row.refund_status).trim(),
+      }),
+      ...(row.refund_amount != null && { refundAmount: Number(row.refund_amount) }),
+      ...(row.refund_requested_at != null && String(row.refund_requested_at).trim() && {
+        refundRequestedAt: String(row.refund_requested_at).trim(),
+      }),
     }
 
     return NextResponse.json({ booking })

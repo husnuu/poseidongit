@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import FirstClassSeatSelector from '@/components/booking/FirstClassSeatSelector'
 import type { CalendarDayAvailability } from '@/app/api/availability/calendar/route'
@@ -9,6 +9,11 @@ import { ticketPagePath } from '@/lib/siteUrls'
 import { withLocalePath } from '@/lib/i18n/paths'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
+import {
+  computeRefundEligibility,
+  refundEligibilityMessage,
+  REFUND_REQUEST_MIN_HOURS,
+} from '@/lib/bookings/refundEligibility'
 
 type Booking = {
   id: string
@@ -30,6 +35,12 @@ type Booking = {
   canCancel: boolean
   hoursUntilTour: number | null
   accessToken?: string
+  paymentStatus?: string
+  nestpayTransId?: string
+  paidNow?: number
+  refundStatus?: string | null
+  refundAmount?: number | null
+  refundRequestedAt?: string | null
 }
 
 function buildVoucherPdfUrl(bookingId: string, accessToken?: string): string {
@@ -61,7 +72,8 @@ export default function ManageBookingClient({
   const [error, setError] = useState<string | null>(null)
   const [booking, setBooking] = useState<Booking | null | 'cancelled'>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [showRefundModal, setShowRefundModal] = useState(false)
+  const [refundReason, setRefundReason] = useState('')
   const [newDate, setNewDate] = useState('')
   const [changeDateLoading, setChangeDateLoading] = useState(false)
   const [changeDateError, setChangeDateError] = useState<string | null>(null)
@@ -124,38 +136,73 @@ export default function ManageBookingClient({
     [initialBookingId, email]
   )
 
-  const handleCancelClick = useCallback(() => {
-    if (booking && booking !== 'cancelled' && (booking as Booking).canCancel) setShowCancelModal(true)
+  const refundEligibility = useMemo(() => {
+    if (!booking || booking === 'cancelled') return null
+    const b = booking as Booking
+    return computeRefundEligibility(b.date, b.time)
   }, [booking])
 
-  const handleCancelConfirm = useCallback(async () => {
-    if (!booking || booking === 'cancelled' || !(booking as Booking).canCancel) return
-    setShowCancelModal(false)
+  const isOnlinePaid = useMemo(() => {
+    if (!booking || booking === 'cancelled') return false
+    const b = booking as Booking
+    return b.paymentStatus === 'paid' && !!b.nestpayTransId?.trim()
+  }, [booking])
+
+  const refundAlreadyRequested = useMemo(() => {
+    if (!booking || booking === 'cancelled') return false
+    const status = (booking as Booking).refundStatus
+    return !!status && status !== 'request_rejected' && status !== 'refund_failed'
+  }, [booking])
+
+  const canRequestRefund =
+    isOnlinePaid && !refundAlreadyRequested && refundEligibility?.eligible === true
+
+  const handleRefundClick = useCallback(() => {
+    if (!canRequestRefund) return
+    setRefundReason('')
+    setShowRefundModal(true)
+  }, [canRequestRefund])
+
+  const handleRefundConfirm = useCallback(async () => {
+    if (!booking || booking === 'cancelled' || !canRequestRefund) return
+    setShowRefundModal(false)
     setLoading(true)
     setError(null)
     setSuccess(null)
     try {
-      const res = await fetch('/api/booking/cancel', {
+      const res = await fetch('/api/booking/refund-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bookingId: (booking as Booking).id,
           email: (booking as Booking).customer.email,
+          reason: refundReason.trim() || undefined,
         }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setError(data.error || 'İptal işlemi başarısız.')
+        setError(data.error || 'İade talebi gönderilemedi.')
         return
       }
-      setBooking('cancelled')
-      setSuccess(data.message || 'Rezervasyonunuz iptal edildi.')
+      setBooking((prev) => {
+        if (!prev || prev === 'cancelled') return prev
+        return {
+          ...prev,
+          refundStatus: 'requested',
+          refundAmount: typeof data.refundAmount === 'number' ? data.refundAmount : null,
+          refundRequestedAt: new Date().toISOString(),
+        }
+      })
+      setSuccess(
+        data.message ||
+          'İade talebiniz yöneticilerimize iletildi, 24 saat içinde sonuçlanacaktır.'
+      )
     } catch {
       setError('Bağlantı hatası.')
     } finally {
       setLoading(false)
     }
-  }, [booking])
+  }, [booking, canRequestRefund, refundReason])
 
   useEffect(() => {
     if (booking && booking !== 'cancelled' && isFirstClass && (booking as Booking).date) {
@@ -655,19 +702,35 @@ export default function ManageBookingClient({
             >
               Biletimi Görüntüle
             </a>
-            {booking.canCancel && (
-              <button
-                type="button"
-                onClick={handleCancelClick}
-                disabled={loading}
-                className="py-3.5 px-5 rounded-xl border-2 border-red-500 text-red-600 font-semibold hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Rezervasyonu İptal Et
-              </button>
-            )}
-            {!booking.canCancel && (
+            {isOnlinePaid && refundAlreadyRequested ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                <p className="font-semibold">İade talebi yöneticilerimize iletildi.</p>
+                <p className="mt-1 text-amber-800">
+                  Talebiniz 24 saat içinde sonuçlanacaktır. Onaylanma anında size e-posta gönderilecektir.
+                </p>
+              </div>
+            ) : isOnlinePaid ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleRefundClick}
+                  disabled={loading || !canRequestRefund}
+                  className="py-3.5 px-5 rounded-xl border-2 border-orange-500 text-orange-700 font-semibold hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  İade Talebi Gönder
+                </button>
+                {!canRequestRefund && (
+                  <p className="text-sm text-zinc-500">
+                    {refundEligibility && !refundEligibility.eligible
+                      ? refundEligibilityMessage(refundEligibility) ??
+                        `Tur kalkışına ${REFUND_REQUEST_MIN_HOURS} saatten az kaldı.`
+                      : 'Bu rezervasyon için iade talebi gönderilemez.'}
+                  </p>
+                )}
+              </>
+            ) : (
               <p className="text-sm text-zinc-500">
-                Tur gününden bir önceki gün saat 11:00&apos;den sonra iptal işlemi yapılamaz. Değişiklik için lütfen bizimle iletişime geçin.
+                Bu rezervasyon online ödenmediği için sadece iletişim kanalları üzerinden işlem yapılabilir.
               </p>
             )}
           </div>
@@ -680,35 +743,47 @@ export default function ManageBookingClient({
         </Link>
       </p>
 
-      {showCancelModal && (
+      {showRefundModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="cancel-modal-title"
+          aria-labelledby="refund-modal-title"
         >
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
-            <h2 id="cancel-modal-title" className="text-lg font-bold text-zinc-900 mb-2">
-              Rezervasyonu iptal et
+            <h2 id="refund-modal-title" className="text-lg font-bold text-zinc-900 mb-2">
+              İade Talebi Gönder
             </h2>
-            <p className="text-zinc-600 text-sm mb-6">
-              Rezervasyonunuzu iptal etmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+            <p className="text-zinc-600 text-sm mb-4">
+              Talebiniz yöneticilerimize iletilecek ve <strong>24 saat içinde</strong> sonuçlanacaktır.
+              Onaylanma anında ödemeniz kartınıza iade edilir.
             </p>
+            <label className="block text-xs font-semibold text-zinc-700 mb-1">
+              İade nedeni (opsiyonel)
+            </label>
+            <textarea
+              value={refundReason}
+              onChange={(e) => setRefundReason(e.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder="Örn. tarih değişikliği yapamadım, hava koşulları, vb."
+              className="w-full mb-5 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+            />
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setShowCancelModal(false)}
+                onClick={() => setShowRefundModal(false)}
                 className="flex-1 py-2.5 rounded-xl border-2 border-zinc-300 font-semibold text-zinc-700 hover:bg-zinc-50"
               >
                 Vazgeç
               </button>
               <button
                 type="button"
-                onClick={handleCancelConfirm}
+                onClick={handleRefundConfirm}
                 disabled={loading}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-orange-600 text-white font-semibold hover:bg-orange-700 disabled:opacity-50"
               >
-                {loading ? 'İşleniyor...' : 'İptal et'}
+                {loading ? 'Gönderiliyor...' : 'Talebi Gönder'}
               </button>
             </div>
           </div>

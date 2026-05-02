@@ -7,8 +7,11 @@ import { additionalTravelerLabels } from '@/lib/bookingAdditionalTravelers'
 import { extractMealPreferenceCountsFromBookingLike } from '@/lib/mealPreferenceCounts'
 
 const REFUND_STATUS_LABELS: Record<string, string> = {
+  requested: 'Talep alındı (admin onayı bekleniyor)',
+  request_rejected: 'Talep reddedildi',
   refunded: 'İade edildi',
   partial_refunded: 'Kısmi iade',
+  refund_pending: 'Gün sonu bekleniyor',
   refund_failed: 'İade başarısız',
 }
 

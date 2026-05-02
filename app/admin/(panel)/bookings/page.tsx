@@ -12,6 +12,7 @@ import OccupancyCalendar from '@/components/admin/bookings/OccupancyCalendar'
 import DayOccupancyDrawer from '@/components/admin/bookings/DayOccupancyDrawer'
 import BookingDetailModal from '@/components/admin/bookings/BookingDetailModal'
 import ManualBookingDrawer from '@/components/admin/bookings/ManualBookingDrawer'
+import PendingRefundRequestsCard from '@/components/admin/bookings/PendingRefundRequestsCard'
 import { useAdminAuth } from '@/components/admin/AdminAuthContext'
 import { adminFetchInit } from '@/lib/adminRequestInit'
 import { normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
@@ -444,6 +445,16 @@ export default function AdminBookingsPage() {
           paymentLastError: typeof b.paymentLastError === 'string' ? b.paymentLastError : undefined,
           paymentVerificationStatus:
             typeof b.paymentVerificationStatus === 'string' ? b.paymentVerificationStatus : undefined,
+          refundStatus: typeof b.refundStatus === 'string' ? b.refundStatus : null,
+          refundAmount: typeof b.refundAmount === 'number' ? b.refundAmount : null,
+          refundedAt: typeof b.refundedAt === 'string' ? b.refundedAt : null,
+          refundTransId: typeof b.refundTransId === 'string' ? b.refundTransId : null,
+          refundError: typeof b.refundError === 'string' ? b.refundError : null,
+          refundType: typeof b.refundType === 'string' ? b.refundType : null,
+          refundReason: typeof b.refundReason === 'string' ? b.refundReason : null,
+          refundedBy: typeof b.refundedBy === 'string' ? b.refundedBy : null,
+          refundRequestedAt:
+            typeof b.refundRequestedAt === 'string' ? b.refundRequestedAt : null,
         }
         })
         setBookings(startAfter ? (prev) => [...prev, ...list] : list)
@@ -694,6 +705,117 @@ export default function AdminBookingsPage() {
     }
   }
 
+  const handleApproveRefundRequest = useCallback(
+    async (booking: AdminBookingRow) => {
+      if (!isAdmin) return
+      setUpdatingId(booking.id)
+      setError(null)
+      try {
+        const amount =
+          booking.refundAmount != null && booking.refundAmount > 0
+            ? booking.refundAmount
+            : booking.totalPrice
+        const res = await fetch(
+          '/api/payment/refund',
+          adminFetchInit(
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                bookingId: booking.id,
+                amount,
+                reason: booking.refundReason ?? '',
+              }),
+            },
+            { adminEmail: adminEmailHeader || null }
+          )
+        )
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok || data.ok === false) {
+          setError(data.errMsg || data.error || 'İade onaylanamadı.')
+          if (data.refundStatus) {
+            setBookings((prev) =>
+              prev.map((b) =>
+                b.id === booking.id
+                  ? {
+                      ...b,
+                      refundStatus: data.refundStatus,
+                      refundError: data.errMsg ?? null,
+                    }
+                  : b
+              )
+            )
+          }
+          return
+        }
+        const newStatus: BookingStatus = data.bookingStatus === 'cancelled' ? 'cancelled' : booking.status
+        setBookings((prev) =>
+          prev.map((b) =>
+            b.id === booking.id
+              ? {
+                  ...b,
+                  status: newStatus,
+                  refundStatus: data.refundStatus ?? 'refunded',
+                  refundTransId: data.transId ?? null,
+                  refundType: data.refundType ?? null,
+                  refundError: null,
+                  refundedAt: new Date().toISOString(),
+                }
+              : b
+          )
+        )
+      } catch {
+        setError('Bağlantı hatası.')
+      } finally {
+        setUpdatingId(null)
+      }
+    },
+    [isAdmin, adminEmailHeader]
+  )
+
+  const handleRejectRefundRequest = useCallback(
+    async (booking: AdminBookingRow, reason: string) => {
+      if (!isAdmin) return
+      setUpdatingId(booking.id)
+      setError(null)
+      try {
+        const res = await fetch(
+          '/api/payment/refund-request/reject',
+          adminFetchInit(
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bookingId: booking.id, reason }),
+            },
+            { adminEmail: adminEmailHeader || null }
+          )
+        )
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          setError(data.error || 'Talep reddedilemedi.')
+          return
+        }
+        setBookings((prev) =>
+          prev.map((b) =>
+            b.id === booking.id
+              ? {
+                  ...b,
+                  refundStatus: 'request_rejected',
+                  refundError: reason || 'Talep reddedildi.',
+                  refundedAt: new Date().toISOString(),
+                }
+              : b
+          )
+        )
+      } catch {
+        setError('Bağlantı hatası.')
+      } finally {
+        setUpdatingId(null)
+      }
+    },
+    [isAdmin, adminEmailHeader]
+  )
+
   const handleAdminNoteSave = async (bookingId: string, adminNote: string) => {
     if (!isAdmin) return
     try {
@@ -783,6 +905,14 @@ export default function AdminBookingsPage() {
             <BookingsSummaryCards stats={stats} />
           </div>
         )}
+
+        <PendingRefundRequestsCard
+          bookings={bookings}
+          onApprove={handleApproveRefundRequest}
+          onReject={handleRejectRefundRequest}
+          onOpenDetail={setDetailBooking}
+          busyId={updatingId}
+        />
 
         <div className="mb-4 sm:mb-6">
           <BookingsFilterBar

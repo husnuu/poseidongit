@@ -53,6 +53,8 @@ export interface AdminBookingRow {
   refundType?: string | null
   refundReason?: string | null
   refundedBy?: string | null
+  /** Müşterinin iade talebi gönderdiği zaman damgası. */
+  refundRequestedAt?: string | null
 }
 
 export const MANUAL_SOURCE_LABELS: Record<string, string> = {

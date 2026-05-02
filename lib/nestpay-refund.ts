@@ -210,9 +210,28 @@ export async function refundPayment(opts: {
 }
 
 /**
- * Akıllı iade: önce Void dener; 1 yıldan eski veya Void başarısız olursa Credit.
+ * Akıllı iade — strict mantık:
+ *
+ *   paidAt **aynı gün** (Europe/Istanbul) ise   → SADECE Void (gün sonu öncesi).
+ *                                                 Banka aynı gün ama batch'e girmiş diye reddederse Credit'e fallback.
+ *   paidAt **başka gün** ise                    → SADECE Credit (gün sonu geçmiş, void mümkün değil).
+ *   paidAt bilinmiyorsa                          → Void deneyip hata türüne göre Credit'e fallback.
+ *
+ *   1 yıldan eski paidAt → otomatik iade yapılmaz, banka şubesine yönlendirilir.
  */
 export type SmartRefundResult = RefundResult & { refundType: 'void' | 'credit' }
+
+function toTrDateStr(d: Date): string {
+  return d.toLocaleDateString('tr-TR', { timeZone: 'Europe/Istanbul' })
+}
+
+/** paidAt'a göre uygulanacak iade tipi. UI ve admin önizlemesi için saf hesap. */
+export function determineRefundType(paidAt?: string | null): 'void' | 'credit' | 'unknown' {
+  if (!paidAt) return 'unknown'
+  const paid = new Date(paidAt)
+  if (Number.isNaN(paid.getTime())) return 'unknown'
+  return toTrDateStr(paid) === toTrDateStr(new Date()) ? 'void' : 'credit'
+}
 
 export async function smartRefund(opts: {
   orderId: string
@@ -221,7 +240,6 @@ export async function smartRefund(opts: {
 }): Promise<SmartRefundResult> {
   const { orderId, amount, paidAt } = opts
 
-  // 1 yıldan eski işlem kontrolü
   if (paidAt) {
     const paidDate = new Date(paidAt)
     const oneYearAgo = new Date()
@@ -236,77 +254,50 @@ export async function smartRefund(opts: {
     }
   }
 
-  // ─── Yöntem seçimi: Void mu Credit mi? ───────────────────────────────────────
-  //
-  //  Void  → aynı gün, gün sonu öncesi. Banka havuzundan siler, limit anında döner.
-  //  Credit → gün sonu geçmiş (muhasebeleşmiş). 3-10 iş günü sürer.
-  //
-  //  paidAt bilinmiyorsa Void'i dene — işlem günün içindeyse çalışır,
-  //  değilse banka zaten "uygun işlem yok" diyerek reddeder, o zaman Credit'e geçeriz.
+  const decision = determineRefundType(paidAt)
+  const nowTr = toTrDateStr(new Date())
+  const paidTr = paidAt ? toTrDateStr(new Date(paidAt)) : null
 
-  function toTrDateStr(d: Date): string {
-    return d.toLocaleDateString('tr-TR', { timeZone: 'Europe/Istanbul' })
+  if (decision === 'credit') {
+    console.info('[nestpay-refund] Strict: farklı gün → doğrudan Credit', { orderId, paidTr, nowTr, amount })
+    const creditResult = await refundPayment({ orderId, amount })
+    return { ...creditResult, refundType: 'credit' }
   }
 
-  const nowTr   = toTrDateStr(new Date())
-  const paidTr  = paidAt ? toTrDateStr(new Date(paidAt)) : null
-  // paidAt yoksa "bugün olabilir" diye Void dene (güvenli: banka reddederse Credit'e geçeriz)
-  const tryVoidFirst = paidTr === null || paidTr === nowTr
+  console.info('[nestpay-refund] Strict: Void deneniyor', { orderId, paidTr, nowTr, decision })
+  const voidResult = await voidPayment({ orderId })
 
-  if (tryVoidFirst) {
-    console.info('[nestpay-refund] Void deneniyor', { orderId, paidTr, nowTr })
-    const voidResult = await voidPayment({ orderId })
+  if (voidResult.ok) {
+    console.info('[nestpay-refund] ✅ Void başarılı')
+    return { ...voidResult, refundType: 'void' }
+  }
 
-    if (voidResult.ok) {
-      console.info('[nestpay-refund] ✅ Void başarılı')
-      return { ...voidResult, refundType: 'void' }
-    }
+  const voidErr = (voidResult.errMsg ?? '').toLowerCase()
+  console.warn('[nestpay-refund] Void başarısız', {
+    errMsg: voidResult.errMsg,
+    procReturnCode: voidResult.procReturnCode,
+  })
 
-    const voidErr = (voidResult.errMsg ?? '').toLowerCase()
-    console.warn('[nestpay-refund] Void başarısız', {
-      errMsg: voidResult.errMsg,
+  const isSettlementPending =
+    voidErr.includes('günson') ||
+    voidErr.includes('gün son') ||
+    voidErr.includes('gun son') ||
+    voidErr.includes('settle') ||
+    voidErr.includes('sipariş günsonuna') ||
+    voidErr.includes('günsonu') ||
+    voidResult.procReturnCode === '99'
+
+  if (isSettlementPending) {
+    console.info('[nestpay-refund] Gün sonu bekleniyor → pending kuyruğu')
+    return {
+      ok: false,
       procReturnCode: voidResult.procReturnCode,
-    })
-
-    // Gün sonu bekleniyorsa → Credit de çalışmaz, pending kuyruğuna al
-    const isSettlementPending =
-      voidErr.includes('günson') ||
-      voidErr.includes('gün son') ||
-      voidErr.includes('gun son') ||
-      voidErr.includes('settle') ||
-      voidErr.includes('sipariş günsonuna') ||
-      voidErr.includes('günsonu') ||
-      voidResult.procReturnCode === '99'
-
-    if (isSettlementPending) {
-      console.info('[nestpay-refund] Gün sonu bekleniyor → pending kuyruğu')
-      return {
-        ok: false,
-        procReturnCode: voidResult.procReturnCode,
-        errMsg: 'GUN_SONU_BEKLENIYOR',  // cancel route bunu pending olarak işaretler
-        refundType: 'void',
-      }
+      errMsg: 'GUN_SONU_BEKLENIYOR',
+      refundType: 'void',
     }
-
-    // Void "uygun işlem yok" dedi ama gün sonu değil → işlem muhasebeleşmiş, Credit dene
-    const isAlreadySettled =
-      voidErr.includes('no suitable') ||
-      voidErr.includes('iade edilmeye uygun') ||
-      voidErr.includes('suitable transaction') ||
-      voidErr.includes('bulunamad')
-
-    if (isAlreadySettled) {
-      console.info('[nestpay-refund] Void: işlem zaten muhasebeleşmiş → Credit deneniyor')
-      // Credit'e düş (aşağıda)
-    } else if (paidTr === nowTr) {
-      // Aynı gün ama Void başka sebeple başarısız → yine de Credit dene
-      console.info('[nestpay-refund] Aynı gün Void başarısız (diğer hata) → Credit deneniyor')
-    }
-    // paidAt bilinmiyordu ve Void başarısız → Credit dene
   }
 
-  // Credit: gün sonu geçmiş işlemler için
-  console.info('[nestpay-refund] Credit deneniyor', { orderId, amount })
+  console.info('[nestpay-refund] Void başarısız → Credit fallback deneniyor', { orderId, amount })
   const creditResult = await refundPayment({ orderId, amount })
   return { ...creditResult, refundType: 'credit' }
 }

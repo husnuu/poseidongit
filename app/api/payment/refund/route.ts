@@ -13,6 +13,7 @@ import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { smartRefund, parseProcReturnCodeMessage } from '@/lib/nestpay-refund'
 import { getAdminEmail } from '@/lib/adminAuth'
 import { extractAdminSessionTokenFromRequest, verifyAdminSessionToken } from '@/lib/adminSession'
+import { sendRefundApprovedEmails } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -104,19 +105,38 @@ export async function POST(request: NextRequest) {
       ? null
       : parseProcReturnCodeMessage(result.procReturnCode ?? '', result.errMsg)
 
-    await supabase
-      .from('bookings')
-      .update({
-        refund_status: refundStatus,
-        refund_amount: refundAmountRaw,
-        refunded_at: new Date().toISOString(),
-        refund_trans_id: result.transId ?? null,
-        refund_error: friendlyErr ?? null,
-        refund_type: result.refundType ?? null,
-        refund_reason: reason || null,
-        refunded_by: adminEmail,
+    const updates: Record<string, unknown> = {
+      refund_status: refundStatus,
+      refund_amount: refundAmountRaw,
+      refunded_at: new Date().toISOString(),
+      refund_trans_id: result.transId ?? null,
+      refund_error: friendlyErr ?? null,
+      refund_type: result.refundType ?? null,
+      refund_reason: reason || booking.refund_reason || null,
+      refunded_by: adminEmail,
+    }
+    if (result.ok) {
+      updates.status = 'cancelled'
+    }
+
+    await supabase.from('bookings').update(updates).eq('id', bookingId)
+
+    if (result.ok) {
+      void sendRefundApprovedEmails({
+        bookingId,
+        tourTitle: String(booking.tour_title ?? ''),
+        date: String(booking.date ?? ''),
+        time: booking.time ?? null,
+        customer: {
+          firstName: String(booking.customer_first_name ?? ''),
+          lastName: String(booking.customer_last_name ?? ''),
+          email: String(booking.customer_email ?? ''),
+        },
+        amount: refundAmountRaw,
+        currency: String(booking.currency ?? 'TRY'),
+        refundType: (result.refundType ?? null) as 'void' | 'credit' | null,
       })
-      .eq('id', bookingId)
+    }
 
     console.info('[payment/refund]', {
       bookingId,
@@ -125,6 +145,7 @@ export async function POST(request: NextRequest) {
       transId: result.transId,
       procReturnCode: result.procReturnCode,
       adminEmail,
+      statusUpdated: result.ok,
     })
 
     return NextResponse.json({
@@ -134,6 +155,7 @@ export async function POST(request: NextRequest) {
       transId: result.transId,
       procReturnCode: result.procReturnCode,
       errMsg: friendlyErr ?? null,
+      bookingStatus: result.ok ? 'cancelled' : booking.status ?? null,
     })
   } catch (e) {
     console.error('[payment/refund]', e)

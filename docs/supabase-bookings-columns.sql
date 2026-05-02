@@ -62,12 +62,14 @@ alter table public.bookings
   add column if not exists refund_error text,
   add column if not exists refund_type text,
   add column if not exists refund_reason text,
-  add column if not exists refunded_by text;
+  add column if not exists refunded_by text,
+  -- Müşteri "İade Talebi Gönder" akışı: talep zamanı (admin onayını bekler)
+  add column if not exists refund_requested_at timestamptz;
 
 comment on column public.bookings.ui_locale is 'Site language at booking (tr|en|de) — customer emails / PDF';
 comment on column public.bookings.payment_status is 'Ödeme durumu özeti: paid | failed (status ile uyumlu olmalı)';
 comment on column public.bookings.payment_verification_status is 'NestPay HASH: verified | hash_mismatch';
-comment on column public.bookings.refund_status is 'İade durumu: refunded | partial_refunded | refund_failed | null';
+comment on column public.bookings.refund_status is 'İade durumu: requested | request_rejected | refunded | partial_refunded | refund_pending | refund_failed | null';
 comment on column public.bookings.refund_type is 'İade yöntemi: void | credit';
 
 update public.bookings
