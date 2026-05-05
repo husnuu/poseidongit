@@ -97,6 +97,23 @@ export type ParsedResponse = {
 
 const xmlParser = new XMLParser({ ignoreAttributes: false, parseTagValue: true })
 
+/** Bankadan gelen ProcReturnCode bazen '0', bazen '00' — ikisi de başarı. */
+export function isNestpayProcReturnSuccess(procReturnCode?: string | null): boolean {
+  const c = String(procReturnCode ?? '').trim()
+  return c === '0' || c === '00'
+}
+
+/**
+ * CC5 yanıtında işlem başarılı kabul etme kuralları:
+ * - Response "Approved" ise başarılı,
+ * - veya ProcReturnCode '0' / '00' ise başarılı (bankanın döndüğü varyantlar).
+ */
+export function isNestpayXmlApproved(parsed: Pick<ParsedResponse, 'response' | 'procReturnCode'>): boolean {
+  const resp = (parsed.response ?? '').trim().toLowerCase()
+  if (resp === 'approved') return true
+  return isNestpayProcReturnSuccess(parsed.procReturnCode)
+}
+
 function parseResponseXml(xml: string): ParsedResponse {
   try {
     const doc = xmlParser.parse(xml) as { CC5Response?: Record<string, unknown> }
@@ -162,7 +179,7 @@ async function postToNestpay(
   }
 
   const parsed = parseResponseXml(raw)
-  const ok = parsed.response === 'Approved' && parsed.procReturnCode === '00'
+  const ok = isNestpayXmlApproved(parsed)
 
   return {
     ok,
@@ -212,10 +229,9 @@ export async function refundPayment(opts: {
 /**
  * Akıllı iade — strict mantık:
  *
- *   paidAt **aynı gün** (Europe/Istanbul) ise   → SADECE Void (gün sonu öncesi).
- *                                                 Banka aynı gün ama batch'e girmiş diye reddederse Credit'e fallback.
- *   paidAt **başka gün** ise                    → SADECE Credit (gün sonu geçmiş, void mümkün değil).
- *   paidAt bilinmiyorsa                          → Void deneyip hata türüne göre Credit'e fallback.
+ *   paidAt **aynı gün** (Europe/Istanbul) ise   → SADECE Void. Başarısızsa Credit'e düşme (aynı günde iade genelde yasak).
+ *   paidAt **başka gün** ise                    → SADECE Credit.
+ *   paidAt bilinmiyorsa                          → Void dene; uygun değilse Credit fallback (eski davranış).
  *
  *   1 yıldan eski paidAt → otomatik iade yapılmaz, banka şubesine yönlendirilir.
  */
@@ -257,6 +273,7 @@ export async function smartRefund(opts: {
   const decision = determineRefundType(paidAt)
   const nowTr = toTrDateStr(new Date())
   const paidTr = paidAt ? toTrDateStr(new Date(paidAt)) : null
+  const sameCalendarDayKnown = paidTr !== null && paidTr === nowTr
 
   if (decision === 'credit') {
     console.info('[nestpay-refund] Strict: farklı gün → doğrudan Credit', { orderId, paidTr, nowTr, amount })
@@ -297,6 +314,15 @@ export async function smartRefund(opts: {
     }
   }
 
+  if (sameCalendarDayKnown) {
+    console.warn('[nestpay-refund] Void başarısız (aynı gün) → Credit fallback yapılmıyor', {
+      orderId,
+      procReturnCode: voidResult.procReturnCode,
+      errMsg: voidResult.errMsg,
+    })
+    return { ...voidResult, refundType: 'void' }
+  }
+
   console.info('[nestpay-refund] Void başarısız → Credit fallback deneniyor', { orderId, amount })
   const creditResult = await refundPayment({ orderId, amount })
   return { ...creditResult, refundType: 'credit' }
@@ -306,6 +332,7 @@ export async function smartRefund(opts: {
 
 export function parseProcReturnCodeMessage(code: string, errMsg?: string): string {
   const messages: Record<string, string> = {
+    '0': 'İşlem başarılı',
     '00': 'İşlem başarılı',
     PL009: 'İade tutarı orijinal satış tutarını geçemez',
     PL408: 'İşlem 1 yıldan eski, otomatik iade yapılamıyor. Banka şubesiyle iletişime geçin.',
