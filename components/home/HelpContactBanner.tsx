@@ -52,14 +52,16 @@ export default function HelpContactBanner({
 
   if (!showPhoneCol && !showWaCol && !showEmailCol) return null
 
-  /** Mobil: telefon + WA yan yana iki sütun; masaüstü: yan yana üç blok */
-  const mobileTwoCol = showPhoneCol && showWaCol
+  /** Telefon + WhatsApp yan yana; e-posta (varsa) mobilde iki sütunun altında tam genişlik */
+  const phoneWaSameRow = showPhoneCol && showWaCol
 
   const contactColBase =
-    'flex flex-col gap-3 text-center lg:items-start lg:text-left lg:gap-2'
-  const labelClass = 'text-sm font-normal text-zinc-600'
-  const valueLinkClass =
-    'font-bold tabular-nums text-[#1e3a5f] underline-offset-2 hover:underline'
+    'flex min-w-0 flex-col gap-2 text-center sm:gap-2.5 lg:items-start lg:text-left lg:gap-2'
+  const labelClass = 'text-sm font-normal text-zinc-600 sm:text-[15px] md:text-base'
+  const phoneWaLinkClass =
+    'block w-full min-w-0 max-w-full text-center font-bold text-[#1e3a5f] underline-offset-2 hover:underline text-sm leading-snug tabular-nums tracking-tight sm:text-[15px] md:text-lg lg:text-xl'
+  const emailLinkClass =
+    'block w-full min-w-0 max-w-full break-all text-center font-bold text-[#1e3a5f] underline-offset-2 hover:underline text-sm leading-snug sm:text-[15px] md:text-lg lg:text-xl'
 
   return (
     <section
@@ -91,8 +93,8 @@ export default function HelpContactBanner({
 
           <div className="mx-auto w-full max-w-md lg:mx-0 lg:max-w-none">
             <div
-              className={`grid gap-x-8 gap-y-10 lg:flex lg:flex-nowrap lg:justify-end lg:gap-10 ${
-                mobileTwoCol ? 'grid-cols-2' : 'grid-cols-1'
+              className={`grid gap-x-3 gap-y-7 sm:gap-x-6 sm:gap-y-9 lg:flex lg:flex-nowrap lg:justify-end lg:gap-10 ${
+                phoneWaSameRow ? 'grid-cols-2' : 'grid-cols-1'
               }`}
             >
               {showPhoneCol && (
@@ -101,7 +103,7 @@ export default function HelpContactBanner({
                   <span className={labelClass}>{t.phoneRegionLabel}</span>
                   <a
                     href={telHref!}
-                    className={`text-lg ${valueLinkClass}`}
+                    className={phoneWaLinkClass}
                     style={{ fontFamily: 'var(--font-family)' }}
                   >
                     {phone}
@@ -111,13 +113,13 @@ export default function HelpContactBanner({
 
               {showWaCol && (
                 <div className={`${contactColBase} items-center lg:items-start`}>
-                  <ChatBubbleOutlineIcon className={`${iconClass} h-8 w-8`} />
+                  <ChatBubbleOutlineIcon className={iconClass} />
                   <span className={labelClass}>{t.whatsappLabel}</span>
                   <a
                     href={waUrl!}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`text-lg ${valueLinkClass}`}
+                    className={phoneWaLinkClass}
                     style={{ fontFamily: 'var(--font-family)' }}
                   >
                     {phone?.trim() ? phone : numberForDisplay}
@@ -127,13 +129,15 @@ export default function HelpContactBanner({
 
               {showEmailCol && (
                 <div
-                  className={`${contactColBase} items-center lg:items-start ${mobileTwoCol ? 'col-span-2' : ''}`}
+                  className={`${contactColBase} items-center lg:items-start ${
+                    phoneWaSameRow ? 'col-span-2' : ''
+                  }`}
                 >
                   <Mail className={iconClass} strokeWidth={1.5} aria-hidden />
                   <span className={labelClass}>{t.emailLabel}</span>
                   <a
                     href={`mailto:${email}`}
-                    className={`break-all text-base ${valueLinkClass} sm:text-lg`}
+                    className={emailLinkClass}
                     style={{ fontFamily: 'var(--font-family)' }}
                   >
                     {email}

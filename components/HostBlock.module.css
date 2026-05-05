@@ -1,24 +1,43 @@
-.card {
+/* Tam genişlik şerit (kart değil), tur sayfası kolonundan taşır */
+.band {
+  width: 100vw;
   position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
   background: var(--section-turquoise-bg, #dff4fc);
-  border-radius: 18px;
-  border: 1px solid rgba(30, 58, 95, 0.06);
-  padding: 36px 40px;
+  border-top: 1px solid rgba(30, 58, 95, 0.06);
+  border-bottom: 1px solid rgba(30, 58, 95, 0.06);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 2.75rem 0;
   margin-top: 2.5rem;
   margin-bottom: 2.5rem;
   overflow: visible;
+}
+
+.bandInner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  position: relative;
+}
+
+@media (min-width: 1280px) {
+  .bandInner {
+    padding: 0 1.25rem;
+  }
 }
 
 .layout {
   display: block;
 }
 
-/* İçerik: avatar sağ üstte olduğu için desktop’ta sağa padding */
 .content {
   padding-right: 0;
 }
 
-/* Host üst satırı (job): Inter-Regular, muted */
 .hostLine {
   margin: 0 0 16px 0;
   font-family: "Inter-Regular", Inter, var(--font-family), sans-serif;
@@ -27,14 +46,11 @@
   line-height: 160%;
   letter-spacing: -0.01em;
   color: #b4b7bd;
-  border-radius: 8px;
 }
 
-/* Ana başlık */
 .mainTitle {
   margin: 0 0 16px 0;
   font-family: "Inter-Bold", var(--font-family), sans-serif;
-  font-style: normal;
   font-weight: 700;
   font-size: 20px;
   line-height: 150%;
@@ -42,7 +58,6 @@
   color: #1e3a5f;
 }
 
-/* Açıklama paragrafları */
 .body {
   display: flex;
   flex-direction: column;
@@ -58,11 +73,10 @@
   color: #58595b;
 }
 
-/* Avatar: sağ üst köşede; dörtte biri kartta (sol alt çeyrek), kalanı taşar */
 .avatarWrap {
   position: absolute;
-  top: -70px;
-  right: -70px;
+  top: -56px;
+  right: 1rem;
   width: 140px;
   height: 140px;
   border-radius: 50%;
@@ -78,17 +92,21 @@
   object-fit: cover;
 }
 
-/* Desktop: foto kartta kalan çeyrek için metni biraz içeride tut */
 @media (min-width: 768px) {
   .content {
-    padding-right: 88px;
+    padding-right: 104px;
+  }
+
+  .band {
+    padding: 3rem 0;
   }
 }
 
 @media (max-width: 767px) {
-  .card {
-    padding: 32px 24px;
-    border-radius: 16px;
+  .band {
+    padding: 2rem 0;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
   }
 
   .layout {
@@ -105,12 +123,12 @@
     position: static;
     width: 120px;
     height: 120px;
-    margin: 0 auto 24px auto;
+    margin: 0 auto 1.25rem auto;
   }
 
   .hostLine {
     font-size: 13px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
   .mainTitle {

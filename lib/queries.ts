@@ -963,6 +963,15 @@ export const toursListQuery = `*[_type == "tour"] | order(title asc) {
   translations
 }`
 
+/** Anasayfadaki popüler turlar sırası (/CMS + locale); turlar sayfası listesi bu sırayı takip eder. */
+export const homePopularToursOrderQuery = `*[_type == "homePage"][0] {
+  popularToursSection{
+    enabled,
+    items
+  },
+  pageTranslations
+}`
+
 export const toursPageQuery = `*[_type == "toursPage"][0] {
   "slug": slug.current,
   titleTop,

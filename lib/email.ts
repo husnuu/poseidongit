@@ -35,6 +35,38 @@ const DEFAULT_FROM = (() => {
 /** E-postadaki buton linkleri için production-safe domain (cesmetekneturu.net). */
 const OFFICIAL_EMAIL_DOMAIN = 'https://cesmetekneturu.net'
 
+/** Transactional e-posta: site ile uyumlu lacivert + nötr yüzeyler. */
+const EMAIL_NAVY = '#0c1929'
+const EMAIL_BG_PAGE = '#f0f2f6'
+const EMAIL_TEXT_BODY = '#334155'
+const EMAIL_MUTED = '#64748b'
+const EMAIL_BORDER = '#e2e8f0'
+const EMAIL_SURFACE = '#ffffff'
+/** E-postada kullanılan minimal çizgi ikonları (siyah-gri). */
+const EMAIL_ICON_STROKE = '#111827'
+
+function emailIconSvg(
+  name: 'check' | 'clock' | 'x' | 'ticketLight' | 'phone' | 'mail'
+): string {
+  const s = EMAIL_ICON_STROKE
+  switch (name) {
+    case 'check':
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${s}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`
+    case 'clock':
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${s}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`
+    case 'x':
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${s}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>`
+    case 'ticketLight':
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg>`
+    case 'phone':
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${s}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`
+    case 'mail':
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${s}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>`
+    default:
+      return ''
+  }
+}
+
 /** @deprecated QR e-postadan kaldırıldı. */
 export type QrEmbedMethod = 'base64' | 'cid'
 
@@ -435,10 +467,10 @@ function buildAdminEmailHtml(p: BookingEmailPayload): string {
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Yeni Rezervasyon</title></head>
-<body style="font-family: system-ui, sans-serif; line-height: 1.5; color: #333; max-width: 560px; margin: 0 auto; padding: 24px;">
-  <h1 style="color: #0c4a6e;">Yeni Rezervasyon</h1>
-  <p>Yeni bir rezervasyon oluşturuldu.</p>
-  <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 20px 0;">
+<body style="font-family: 'Inter', system-ui, sans-serif; line-height: 1.5; color: ${EMAIL_TEXT_BODY}; max-width: 560px; margin: 0 auto; padding: 28px 20px; background: ${EMAIL_BG_PAGE};">
+  <h1 style="margin: 0 0 8px; color: ${EMAIL_NAVY}; font-size: 22px; font-weight: 700; letter-spacing: -0.02em;">Yeni Rezervasyon</h1>
+  <p style="margin: 0 0 20px; color: ${EMAIL_MUTED}; font-size: 14px;">Yeni bir rezervasyon oluşturuldu.</p>
+  <div style="background: ${EMAIL_SURFACE}; border-radius: 10px; padding: 18px 20px; margin: 0 0 16px; border: 1px solid ${EMAIL_BORDER};">
     <p style="margin: 0 0 8px;"><strong>Rezervasyon No:</strong> ${escapeHtml(p.bookingId)}</p>
     <p style="margin: 0 0 8px;"><strong>Tur:</strong> ${escapeHtml(p.tourTitle)}</p>
     <p style="margin: 0 0 8px;"><strong>Tarih:</strong> ${escapeHtml(dateFormatted)}</p>
@@ -446,7 +478,7 @@ function buildAdminEmailHtml(p: BookingEmailPayload): string {
     <p style="margin: 0 0 8px;"><strong>Sınıf:</strong> ${escapeHtml(classDisplay(p, 'tr'))}</p>
     <p style="margin: 0 0 8px;"><strong>Yetişkin:</strong> ${p.counts.adult} · <strong>Çocuk:</strong> ${p.counts.child} · <strong>Bebek:</strong> ${p.counts.infant}</p>
     <p style="margin: 0 0 8px;"><strong>Toplam:</strong> ${p.totalPrice} ${escapeHtml(p.currency)}</p>
-    <hr style="border: none; border-top: 1px solid #cbd5e1; margin: 12px 0;">
+    <hr style="border: none; border-top: 1px solid ${EMAIL_BORDER}; margin: 12px 0;">
     <p style="margin: 0 0 8px;"><strong>Müşteri:</strong> ${escapeHtml(p.customer.firstName)} ${escapeHtml(p.customer.lastName)}</p>
     <p style="margin: 0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(p.customer.email)}</p>
     <p style="margin: 0;"><strong>Telefon:</strong> ${escapeHtml(p.customer.phone || '—')}</p>
@@ -579,8 +611,7 @@ export async function sendBookingEmails(
 }
 
 /**
- * Premium rezervasyon onay e-postası (ödeme sonrası): Airbnb/GetYourGuide tarzı, Türkçe.
- * Kart tabanlı, marka renkleri (navy lacivert, beyaz yazı), anasayfa fontu (Inter), inline CSS.
+ * Premium rezervasyon onay e-postası (ödeme sonrası): sade kart düzeni, lacivert marka rengi (#0c1929), Inter, inline CSS.
  * isPaid: false = rezervasyon ilk oluşturulduğunda, true = ödeme onaylandığında.
  */
 function buildPremiumConfirmationEmailHtml(
@@ -597,24 +628,15 @@ function buildPremiumConfirmationEmailHtml(
   const participants = formatParticipantCountsLine(p.counts, loc)
   const tourImage = p.tourImageUrl?.trim() || ''
   const pickup = p.pickup?.trim() || 'Çeşme Sahil'
-  const primary = '#0c1929'
-  const headerFooterBg = '#0c1929'
-  const accent = '#c9a227'
-  const bgLight = '#f5f5f5'
-  const cardBg = '#ffffff'
-  const textDark = '#1a1a1a'
-  const textMuted = '#6b7280'
   const supportPhone = process.env.SUPPORT_PHONE?.trim() || '+90 533 417 36 56'
   const supportEmail = process.env.SUPPORT_EMAIL?.trim() || 'turkeycesme@hotmail.com'
-  const emailFont = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
 
   const manageUrl = manageBookingUrlForLocale(p.bookingId, loc)
   const viewTicketUrl = customerTicketViewUrl(p.bookingId, p.accessToken, loc)
   const heroImg = tourImage || ''
 
-  const coral = '#fc6c4f'
-  const navy  = '#0f172a'
-  const bg    = '#f8fafc'
+  const navy = EMAIL_NAVY
+  const bg = EMAIL_BG_PAGE
 
   function fmtPrice(amount: number, currency: string) {
     try {
@@ -627,8 +649,8 @@ function buildPremiumConfirmationEmailHtml(
 
   const detailRow = (label: string, value: string, bold = false) =>
     `<tr>
-      <td style="padding:11px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;width:44%;vertical-align:top;">${escapeHtml(label)}</td>
-      <td style="padding:11px 0;border-bottom:1px solid #f1f5f9;color:${bold ? navy : '#334155'};font-size:13px;font-weight:${bold ? '700' : '500'};text-align:right;vertical-align:top;">${escapeHtml(value)}</td>
+      <td style="padding:11px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;vertical-align:top;">${escapeHtml(label)}</td>
+      <td style="padding:11px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${bold ? navy : EMAIL_TEXT_BODY};font-size:13px;font-weight:${bold ? '700' : '500'};text-align:right;vertical-align:top;">${escapeHtml(value)}</td>
     </tr>`
 
   const extraList = (p.additionalTravelers ?? []).filter((x) => x.firstName?.trim() || x.lastName?.trim())
@@ -643,6 +665,8 @@ function buildPremiumConfirmationEmailHtml(
     : ''
   const mealCounts = mealCountsLine(p.mealPreference?.counts)
 
+  const statusIconWrap = `<table role="presentation" cellpadding="0" cellspacing="0" style="width:48px;height:48px;"><tr><td style="width:48px;height:48px;background:#f1f5f9;border-radius:10px;border:1px solid ${EMAIL_BORDER};text-align:center;vertical-align:middle;">${isPaid ? emailIconSvg('check') : emailIconSvg('clock')}</td></tr></table>`
+
   return `<!DOCTYPE html>
 <html lang="${htmlLang}">
 <head>
@@ -650,52 +674,44 @@ function buildPremiumConfirmationEmailHtml(
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>${escapeHtml(successTitle)}</title>
 </head>
-<body style="margin:0;padding:0;background:${bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<body style="margin:0;padding:0;background:${bg};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${bg};">
-<tr><td align="center" style="padding:32px 16px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
+<tr><td align="center" style="padding:36px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;border-collapse:separate;">
 
-  <!-- Top coral bar -->
-  <tr><td style="background:${coral};height:5px;border-radius:8px 8px 0 0;"></td></tr>
+  <tr><td style="background:${navy};height:4px;border-radius:10px 10px 0 0;line-height:4px;font-size:0;">&nbsp;</td></tr>
 
-  <!-- Header -->
-  <tr><td style="background:#ffffff;padding:28px 32px 20px;text-align:center;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <p style="margin:0;font-size:22px;font-weight:800;color:${navy};letter-spacing:-0.3px;">${escapeHtml(getSiteName() || 'Poseidon Booking')}</p>
-    <p style="margin:4px 0 0;font-size:13px;color:#64748b;">${escapeHtml(t.subheader)}</p>
+  <tr><td style="background:${EMAIL_SURFACE};padding:26px 28px 18px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0;font-size:21px;font-weight:700;color:${navy};letter-spacing:-0.02em;">${escapeHtml(getSiteName() || 'Poseidon Booking')}</p>
+    <p style="margin:6px 0 0;font-size:13px;color:${EMAIL_MUTED};line-height:1.45;">${escapeHtml(t.subheader)}</p>
   </td></tr>
 
-  <!-- Hero image -->
   ${heroImg
-    ? `<tr><td style="padding:0;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;"><img src="${escapeHtml(heroImg)}" alt="${escapeHtml(t.heroAlt)}" width="580" style="display:block;width:100%;max-height:220px;object-fit:cover;" /></td></tr>`
+    ? `<tr><td style="padding:0;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};"><img src="${escapeHtml(heroImg)}" alt="${escapeHtml(t.heroAlt)}" width="580" style="display:block;width:100%;max-height:200px;object-fit:cover;" /></td></tr>`
     : ''
   }
 
-  <!-- Success badge -->
-  <tr><td style="background:#ffffff;padding:28px 32px 0;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <table role="presentation" cellpadding="0" cellspacing="0">
+  <tr><td style="background:${EMAIL_SURFACE};padding:26px 28px 0;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
       <tr>
-        <td style="width:44px;vertical-align:top;padding-right:14px;">
-          <div style="width:40px;height:40px;border-radius:50%;background:${isPaid ? '#dcfce7' : '#fef9c3'};display:flex;align-items:center;justify-content:center;text-align:center;line-height:40px;font-size:20px;">${isPaid ? '✅' : '⏳'}</div>
-        </td>
-        <td>
-          <p style="margin:0;font-size:18px;font-weight:700;color:${navy};">${escapeHtml(successTitle)}</p>
-          <p style="margin:5px 0 0;font-size:14px;color:#64748b;line-height:1.5;">${escapeHtml(successSub)}</p>
+        <td style="width:56px;vertical-align:top;padding-right:14px;">${statusIconWrap}</td>
+        <td style="vertical-align:top;">
+          <p style="margin:0;font-size:17px;font-weight:700;color:${navy};letter-spacing:-0.02em;">${escapeHtml(successTitle)}</p>
+          <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.55;">${escapeHtml(successSub)}</p>
         </td>
       </tr>
     </table>
   </td></tr>
 
-  <!-- Reservation no -->
-  <tr><td style="background:#ffffff;padding:20px 32px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <div style="background:#f8fafc;border:1.5px solid ${coral};border-radius:10px;padding:16px 20px;">
-      <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;">${escapeHtml(t.reservationNo)}</p>
-      <p style="margin:6px 0 0;font-size:20px;font-weight:800;color:${navy};letter-spacing:1px;font-family:monospace;">${escapeHtml(p.bookingId)}</p>
+  <tr><td style="background:${EMAIL_SURFACE};padding:18px 28px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <div style="background:#f8fafc;border:1px solid ${EMAIL_BORDER};border-left:3px solid ${navy};border-radius:8px;padding:16px 18px;">
+      <p style="margin:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:${EMAIL_MUTED};">${escapeHtml(t.reservationNo)}</p>
+      <p style="margin:8px 0 0;font-size:18px;font-weight:700;color:${navy};letter-spacing:0.04em;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;">${escapeHtml(p.bookingId)}</p>
     </div>
   </td></tr>
 
-  <!-- Booking details -->
-  <tr><td style="background:#ffffff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <p style="margin:0 0 12px;font-size:14px;font-weight:700;color:${navy};text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(t.detailsTitle)}</p>
+  <tr><td style="background:${EMAIL_SURFACE};padding:4px 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:${navy};text-transform:uppercase;letter-spacing:0.08em;">${escapeHtml(t.detailsTitle)}</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       ${detailRow(t.tour, p.tourTitle)}
       ${detailRow(t.date, dateFormatted)}
@@ -708,51 +724,60 @@ function buildPremiumConfirmationEmailHtml(
       ${extraTravelersRowHtml}
       ${p.paidNow != null && p.paidNow > 0 ? detailRow(t.paidRow, fmtPrice(p.paidNow, p.currency)) : ''}
       <tr>
-        <td style="padding:14px 0 0;color:#64748b;font-size:13px;font-weight:700;">${escapeHtml(t.totalRow)}</td>
-        <td style="padding:14px 0 0;color:${coral};font-size:20px;font-weight:800;text-align:right;">${fmtPrice(p.totalPrice, p.currency)}</td>
+        <td style="padding:14px 0 0;color:${EMAIL_MUTED};font-size:13px;font-weight:700;">${escapeHtml(t.totalRow)}</td>
+        <td style="padding:14px 0 0;color:${navy};font-size:20px;font-weight:700;text-align:right;">${fmtPrice(p.totalPrice, p.currency)}</td>
       </tr>
     </table>
   </td></tr>
 
-  <!-- Buttons -->
-  <tr><td style="background:#ffffff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <a href="${escapeHtml(viewTicketUrl)}" target="_blank"
-       style="display:block;width:100%;background:${coral};color:#ffffff!important;font-size:15px;font-weight:700;text-decoration:none;text-align:center;padding:15px 24px;border-radius:10px;box-sizing:border-box;margin-bottom:10px;">
-      🎫 ${escapeHtml(t.viewTicketCta)}
+       style="display:block;width:100%;background:${navy};color:#ffffff!important;font-size:15px;font-weight:600;text-decoration:none;text-align:center;padding:0;border-radius:10px;box-sizing:border-box;margin-bottom:10px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-radius:10px;"><tr>
+        <td style="padding:14px 20px;text-align:center;">
+          <span style="display:inline-block;vertical-align:middle;margin-right:8px;line-height:0;">${emailIconSvg('ticketLight')}</span>
+          <span style="display:inline-block;vertical-align:middle;color:#ffffff!important;">${escapeHtml(t.viewTicketCta)}</span>
+        </td>
+      </tr></table>
     </a>
     <a href="${escapeHtml(manageUrl)}" target="_blank"
-       style="display:block;width:100%;background:#ffffff;color:${navy}!important;font-size:14px;font-weight:600;text-decoration:none;text-align:center;padding:13px 24px;border-radius:10px;border:1.5px solid #e2e8f0;box-sizing:border-box;">
+       style="display:block;width:100%;background:${EMAIL_SURFACE};color:${navy}!important;font-size:14px;font-weight:600;text-decoration:none;text-align:center;padding:13px 22px;border-radius:10px;border:1.5px solid ${navy};box-sizing:border-box;">
       ${escapeHtml(t.manageCta)}
     </a>
   </td></tr>
 
-  <!-- Important info -->
-  <tr><td style="background:#ffffff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:6px;padding:14px 16px;">
-      <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#92400e;">${escapeHtml(t.importantTitle)}</p>
-      <ul style="margin:0;padding:0 0 0 16px;color:#78350f;font-size:13px;line-height:1.6;">
-        <li style="margin-bottom:3px;">${escapeHtml(t.bullet30)}</li>
-        <li style="margin-bottom:3px;">${escapeHtml(t.bulletTicket)}</li>
-        <li>${escapeHtml(t.bulletContact)}</li>
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <div style="background:#f8fafc;border-left:3px solid ${navy};border-radius:6px;padding:14px 16px 14px 18px;">
+      <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:${navy};">${escapeHtml(t.importantTitle)}</p>
+      <ul style="margin:0;padding:0 0 0 18px;color:${EMAIL_TEXT_BODY};font-size:13px;line-height:1.65;">
+        <li style="margin-bottom:4px;">${escapeHtml(t.bullet30)}</li>
+        <li style="margin-bottom:4px;">${escapeHtml(t.bulletTicket)}</li>
+        <li style="margin-bottom:0;">${escapeHtml(t.bulletContact)}</li>
       </ul>
     </div>
   </td></tr>
 
-  <!-- Contact -->
-  <tr><td style="background:#ffffff;padding:0 32px 28px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <p style="margin:0 0 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;">${escapeHtml(t.contactTitle)}</p>
-    <p style="margin:0 0 3px;font-size:13px;color:#334155;">📞 ${escapeHtml(supportPhone)}</p>
-    <p style="margin:0;font-size:13px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:${coral};text-decoration:none;">✉️ ${escapeHtml(supportEmail)}</a></p>
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 26px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">${escapeHtml(t.contactTitle)}</p>
+    <table role="presentation" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding:0 10px 6px 0;vertical-align:middle;line-height:0;width:22px;">${emailIconSvg('phone')}</td>
+        <td style="padding:0 0 6px;vertical-align:middle;font-size:13px;color:${EMAIL_TEXT_BODY};">${escapeHtml(supportPhone)}</td>
+      </tr>
+      <tr>
+        <td style="padding:0 10px 0 0;vertical-align:middle;line-height:0;width:22px;">${emailIconSvg('mail')}</td>
+        <td style="padding:0;vertical-align:middle;font-size:13px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:${navy};text-decoration:none;font-weight:500;">${escapeHtml(supportEmail)}</a></td>
+      </tr>
+    </table>
   </td></tr>
 
-  <!-- Footer -->
-  <tr><td style="background:#f1f5f9;padding:20px 32px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:none;">
-    <p style="margin:0;font-size:12px;color:#64748b;text-align:center;">
+  <tr><td style="background:#eef1f5;padding:18px 28px;border-radius:0 0 10px 10px;border:1px solid ${EMAIL_BORDER};border-top:none;">
+    <p style="margin:0;font-size:12px;color:${EMAIL_MUTED};text-align:center;line-height:1.5;">
       &copy; ${new Date().getFullYear()} ${escapeHtml(getSiteName() || 'Poseidon')} &nbsp;·&nbsp;
-      <a href="https://cesmetekneturu.net/yasal/gizlilik-politikasi" style="color:#94a3b8;text-decoration:none;" target="_blank">Gizlilik</a> &nbsp;·&nbsp;
-      <a href="https://cesmetekneturu.net/yasal/iptal-ve-iade-politikasi" style="color:#94a3b8;text-decoration:none;" target="_blank">İptal-İade</a>
+      <a href="https://cesmetekneturu.net/yasal/gizlilik-politikasi" style="color:${EMAIL_MUTED};text-decoration:underline;" target="_blank">Gizlilik</a> &nbsp;·&nbsp;
+      <a href="https://cesmetekneturu.net/yasal/iptal-ve-iade-politikasi" style="color:${EMAIL_MUTED};text-decoration:underline;" target="_blank">İptal-İade</a>
     </p>
-    <p style="margin:6px 0 0;font-size:11px;color:#94a3b8;text-align:center;">${escapeHtml(t.footerAuto)}</p>
+    <p style="margin:8px 0 0;font-size:11px;color:${EMAIL_MUTED};text-align:center;line-height:1.45;">${escapeHtml(t.footerAuto)}</p>
   </td></tr>
 
 </table>
@@ -784,17 +809,17 @@ function buildAdminPaidEmailHtml(p: BookingEmailPayload): string {
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Rezervasyon Ödendi</title></head>
-<body style="font-family: system-ui, sans-serif; line-height: 1.5; color: #333; max-width: 560px; margin: 0 auto; padding: 24px;">
-  <h1 style="color: #047857;">Rezervasyon Ödendi</h1>
-  <p>Bir rezervasyon ödeme olarak işaretlendi.</p>
-  <div style="background: #ecfdf5; border-radius: 8px; padding: 16px; margin: 20px 0; border: 1px solid #a7f3d0;">
+<body style="font-family: 'Inter', system-ui, sans-serif; line-height: 1.5; color: ${EMAIL_TEXT_BODY}; max-width: 560px; margin: 0 auto; padding: 28px 20px; background: ${EMAIL_BG_PAGE};">
+  <h1 style="margin: 0 0 8px; color: ${EMAIL_NAVY}; font-size: 22px; font-weight: 700;">Rezervasyon Ödendi</h1>
+  <p style="margin: 0 0 20px; color: ${EMAIL_MUTED}; font-size: 14px;">Bir rezervasyon ödeme olarak işaretlendi.</p>
+  <div style="background: ${EMAIL_SURFACE}; border-radius: 10px; padding: 18px 20px; margin: 0 0 16px; border: 1px solid ${EMAIL_BORDER};">
     <p style="margin: 0 0 8px;"><strong>Rezervasyon No:</strong> ${escapeHtml(p.bookingId)}</p>
     <p style="margin: 0 0 8px;"><strong>Tur:</strong> ${escapeHtml(p.tourTitle)}</p>
     <p style="margin: 0 0 8px;"><strong>Tarih:</strong> ${escapeHtml(dateFormatted)}</p>
     ${timeLine}
     <p style="margin: 0 0 8px;"><strong>Sınıf:</strong> ${escapeHtml(classDisplay(p, 'tr'))}</p>
     <p style="margin: 0 0 8px;"><strong>Toplam:</strong> ${p.totalPrice} ${escapeHtml(p.currency)}</p>
-    <hr style="border: none; border-top: 1px solid #a7f3d0; margin: 12px 0;">
+    <hr style="border: none; border-top: 1px solid ${EMAIL_BORDER}; margin: 12px 0;">
     <p style="margin: 0 0 8px;"><strong>Müşteri:</strong> ${escapeHtml(p.customer.firstName)} ${escapeHtml(p.customer.lastName)}</p>
     <p style="margin: 0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(p.customer.email)}</p>
     <p style="margin: 0;"><strong>Telefon:</strong> ${escapeHtml(p.customer.phone || '—')}</p>
@@ -930,87 +955,93 @@ function buildCancellationCustomerHtml(o: CancellationEmailOpts): string {
 
   let refundLine = ''
   if (o.refundOk) {
-    refundLine = `<div style="margin:20px 0;padding:16px 20px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;">
-      <p style="margin:0;font-size:14px;font-weight:700;color:#065f46;">İade Bilgisi</p>
-      <p style="margin:8px 0 0;font-size:14px;color:#047857;">
+    refundLine = `<div style="margin:0;padding:16px 18px;background:#f8fafc;border:1px solid ${EMAIL_BORDER};border-left:3px solid ${EMAIL_NAVY};border-radius:8px;">
+      <p style="margin:0;font-size:13px;font-weight:700;color:${EMAIL_NAVY};text-transform:uppercase;letter-spacing:0.06em;">İade Bilgisi</p>
+      <p style="margin:8px 0 0;font-size:14px;color:${EMAIL_TEXT_BODY};line-height:1.55;">
         ${o.refundAmount != null ? `${o.refundAmount} ${o.currency} tutarındaki ödemeniz iade edilecektir.` : 'Ödemeniz iade edilecektir.'}
         İade süreciniz bankanıza göre 3–10 iş günü içinde tamamlanır.
       </p>
     </div>`
   } else if (o.refundStatus === 'refund_failed' && o.refundErrMsg) {
-    refundLine = `<div style="margin:20px 0;padding:16px 20px;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;">
-      <p style="margin:0;font-size:14px;font-weight:700;color:#991b1b;">İade Bilgisi</p>
-      <p style="margin:8px 0 0;font-size:14px;color:#7f1d1d;">${escapeHtml(o.refundErrMsg)}</p>
-      <p style="margin:8px 0 0;font-size:13px;color:#991b1b;">Daha fazla yardım için bize ulaşın.</p>
+    refundLine = `<div style="margin:0;padding:16px 18px;background:#fafafa;border:1px solid ${EMAIL_BORDER};border-left:3px solid #525252;border-radius:8px;">
+      <p style="margin:0;font-size:13px;font-weight:700;color:${EMAIL_NAVY};text-transform:uppercase;letter-spacing:0.06em;">İade Bilgisi</p>
+      <p style="margin:8px 0 0;font-size:14px;color:${EMAIL_TEXT_BODY};">${escapeHtml(o.refundErrMsg)}</p>
+      <p style="margin:8px 0 0;font-size:13px;color:${EMAIL_MUTED};">Daha fazla yardım için bize ulaşın.</p>
     </div>`
   }
 
-  const coral = '#fc6c4f'
-  const navy  = '#0f172a'
+  const navy = EMAIL_NAVY
+  const cancelIcon = `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:48px;height:48px;background:#f1f5f9;border-radius:10px;border:1px solid ${EMAIL_BORDER};text-align:center;vertical-align:middle;">${emailIconSvg('x')}</td></tr></table>`
 
   return `<!DOCTYPE html>
 <html lang="tr">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rezervasyon İptal</title></head>
-<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;">
-<tr><td align="center" style="padding:32px 16px;">
+<body style="margin:0;padding:0;background:${EMAIL_BG_PAGE};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_BG_PAGE};">
+<tr><td align="center" style="padding:36px 16px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
 
-  <tr><td style="background:${coral};height:5px;border-radius:8px 8px 0 0;"></td></tr>
+  <tr><td style="background:${navy};height:4px;border-radius:10px 10px 0 0;line-height:4px;font-size:0;">&nbsp;</td></tr>
 
-  <tr><td style="background:#fff;padding:24px 32px 16px;text-align:center;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <p style="margin:0;font-size:20px;font-weight:800;color:${navy};">${escapeHtml(siteName)}</p>
+  <tr><td style="background:${EMAIL_SURFACE};padding:22px 28px 14px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0;font-size:20px;font-weight:700;color:${navy};letter-spacing:-0.02em;">${escapeHtml(siteName)}</p>
   </td></tr>
 
-  <tr><td style="background:#fff;padding:20px 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <table role="presentation" cellpadding="0" cellspacing="0">
+  <tr><td style="background:${EMAIL_SURFACE};padding:18px 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
       <tr>
-        <td style="width:44px;padding-right:14px;vertical-align:top;">
-          <div style="width:40px;height:40px;border-radius:50%;background:#fee2e2;text-align:center;line-height:40px;font-size:20px;">❌</div>
-        </td>
-        <td>
+        <td style="width:56px;vertical-align:top;padding-right:14px;">${cancelIcon}</td>
+        <td style="vertical-align:top;">
           <p style="margin:0;font-size:17px;font-weight:700;color:${navy};">Rezervasyonunuz İptal Edildi</p>
-          <p style="margin:5px 0 0;font-size:14px;color:#64748b;">Sayın ${escapeHtml(customerName)}, rezervasyonunuz başarıyla iptal edilmiştir.</p>
+          <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.5;">Sayın ${escapeHtml(customerName)}, rezervasyonunuz başarıyla iptal edilmiştir.</p>
         </td>
       </tr>
     </table>
   </td></tr>
 
-  <tr><td style="background:#fff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;width:44%;">Rezervasyon No</td>
-        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:${navy};font-size:13px;font-weight:700;text-align:right;font-family:monospace;">${escapeHtml(o.bookingId)}</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;">Rezervasyon No</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${navy};font-size:13px;font-weight:700;text-align:right;font-family:ui-monospace,monospace;">${escapeHtml(o.bookingId)}</td>
       </tr>
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;">Tur</td>
-        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tur</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td>
       </tr>
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;">Tarih</td>
-        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tarih</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td>
       </tr>
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;">Misafirler</td>
-        <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13px;text-align:right;">${o.counts.adult} Yetişkin${o.counts.child ? `, ${o.counts.child} Çocuk` : ''}${o.counts.infant ? `, ${o.counts.infant} Bebek` : ''}</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Misafirler</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;text-align:right;">${o.counts.adult} Yetişkin${o.counts.child ? `, ${o.counts.child} Çocuk` : ''}${o.counts.infant ? `, ${o.counts.infant} Bebek` : ''}</td>
       </tr>
       <tr>
-        <td style="padding:13px 0 0;color:#64748b;font-size:13px;font-weight:700;">Toplam</td>
-        <td style="padding:13px 0 0;color:${coral};font-size:18px;font-weight:800;text-align:right;">${o.totalPrice.toLocaleString('tr-TR')} ${escapeHtml(o.currency)}</td>
+        <td style="padding:13px 0 0;color:${EMAIL_MUTED};font-size:13px;font-weight:700;">Toplam</td>
+        <td style="padding:13px 0 0;color:${navy};font-size:18px;font-weight:700;text-align:right;">${o.totalPrice.toLocaleString('tr-TR')} ${escapeHtml(o.currency)}</td>
       </tr>
     </table>
   </td></tr>
 
-  ${refundLine ? `<tr><td style="background:#fff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">${refundLine}</td></tr>` : ''}
+  ${refundLine ? `<tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">${refundLine}</td></tr>` : ''}
 
-  <tr><td style="background:#fff;padding:0 32px 28px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <p style="margin:0 0 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;">Yardım ve İletişim</p>
-    <p style="margin:0 0 3px;font-size:13px;color:#334155;">📞 ${escapeHtml(supportPhone)}</p>
-    <p style="margin:0;font-size:13px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:${coral};text-decoration:none;">✉️ ${escapeHtml(supportEmail)}</a></p>
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 26px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">Yardım ve İletişim</p>
+    <table role="presentation" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding:0 10px 6px 0;vertical-align:middle;width:22px;line-height:0;">${emailIconSvg('phone')}</td>
+        <td style="padding:0 0 6px;vertical-align:middle;font-size:13px;color:${EMAIL_TEXT_BODY};">${escapeHtml(supportPhone)}</td>
+      </tr>
+      <tr>
+        <td style="padding:0 10px 0 0;vertical-align:middle;width:22px;line-height:0;">${emailIconSvg('mail')}</td>
+        <td style="padding:0;vertical-align:middle;font-size:13px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:${navy};text-decoration:none;font-weight:500;">${escapeHtml(supportEmail)}</a></td>
+      </tr>
+    </table>
   </td></tr>
 
-  <tr><td style="background:#f1f5f9;padding:16px 32px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:none;text-align:center;">
-    <p style="margin:0;font-size:12px;color:#64748b;">&copy; ${new Date().getFullYear()} ${escapeHtml(siteName)}</p>
+  <tr><td style="background:#eef1f5;padding:18px 28px;border-radius:0 0 10px 10px;border:1px solid ${EMAIL_BORDER};border-top:none;text-align:center;">
+    <p style="margin:0;font-size:12px;color:${EMAIL_MUTED};">&copy; ${new Date().getFullYear()} ${escapeHtml(siteName)}</p>
   </td></tr>
 
 </table>
@@ -1033,31 +1064,34 @@ function buildCancellationAdminHtml(o: CancellationEmailOpts): string {
 
   let refundLine = ''
   if (o.refundOk) {
-    refundLine = `<p style="margin:0 0 8px;color:#047857;"><strong>İade:</strong> ✅ Başarılı${o.refundAmount != null ? ` — ${o.refundAmount} ${o.currency}` : ''}</p>`
+    refundLine = `<p style="margin:0 0 8px;color:${EMAIL_TEXT_BODY};"><strong style="color:${EMAIL_NAVY};">İade:</strong> Başarılı${o.refundAmount != null ? ` — ${o.refundAmount} ${o.currency}` : ''}</p>`
   } else if (o.refundStatus === 'refund_failed') {
-    refundLine = `<p style="margin:0 0 8px;color:#dc2626;"><strong>İade:</strong> ❌ Başarısız${o.refundErrMsg ? ` — ${escapeHtml(o.refundErrMsg)}` : ''}</p>`
+    refundLine = `<p style="margin:0 0 8px;color:${EMAIL_TEXT_BODY};"><strong style="color:${EMAIL_NAVY};">İade:</strong> Başarısız${o.refundErrMsg ? ` — ${escapeHtml(o.refundErrMsg)}` : ''}</p>`
   } else if (!o.refundStatus) {
-    refundLine = `<p style="margin:0 0 8px;color:#6b7280;"><strong>İade:</strong> Uygulanamaz (online ödeme yok)</p>`
+    refundLine = `<p style="margin:0 0 8px;color:${EMAIL_MUTED};"><strong style="color:${EMAIL_NAVY};">İade:</strong> Uygulanamaz (online ödeme yok)</p>`
   }
 
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Rezervasyon İptal Bildirimi</title></head>
-<body style="font-family:system-ui,sans-serif;line-height:1.5;color:#333;max-width:560px;margin:0 auto;padding:24px;">
-  <h1 style="color:#991b1b;">Rezervasyon İptal Edildi</h1>
-  <p style="color:#6b7280;">${escapeHtml(cancelledByLabel)}</p>
-  <div style="background:#fef2f2;border-radius:8px;padding:16px;margin:20px 0;border:1px solid #fecaca;">
-    <p style="margin:0 0 8px;"><strong>Rezervasyon No:</strong> ${escapeHtml(o.bookingId)}</p>
-    <p style="margin:0 0 8px;"><strong>Tur:</strong> ${escapeHtml(o.tourTitle)}</p>
-    <p style="margin:0 0 8px;"><strong>Tarih:</strong> ${escapeHtml(dateFormatted)}</p>
+<body style="font-family:'Inter',system-ui,sans-serif;line-height:1.55;color:${EMAIL_TEXT_BODY};max-width:560px;margin:0 auto;padding:32px 20px;background:${EMAIL_BG_PAGE};">
+  <div style="border-bottom:3px solid ${EMAIL_NAVY};padding-bottom:16px;margin-bottom:20px;">
+    <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:0.1em;color:${EMAIL_MUTED};text-transform:uppercase;">Admin bildirimi</p>
+    <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:${EMAIL_NAVY};letter-spacing:-0.02em;">Rezervasyon iptal edildi</h1>
+    <p style="margin:8px 0 0;font-size:14px;color:${EMAIL_MUTED};">${escapeHtml(cancelledByLabel)}</p>
+  </div>
+  <div style="background:${EMAIL_SURFACE};border-radius:10px;padding:20px 22px;border:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Rezervasyon No:</strong> ${escapeHtml(o.bookingId)}</p>
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Tur:</strong> ${escapeHtml(o.tourTitle)}</p>
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Tarih:</strong> ${escapeHtml(dateFormatted)}</p>
     ${timeLine}
-    <p style="margin:0 0 8px;"><strong>Misafirler:</strong> ${o.counts.adult} Yetişkin${o.counts.child ? `, ${o.counts.child} Çocuk` : ''}${o.counts.infant ? `, ${o.counts.infant} Bebek` : ''}</p>
-    <p style="margin:0 0 8px;"><strong>Toplam:</strong> ${o.totalPrice} ${escapeHtml(o.currency)}</p>
-    <hr style="border:none;border-top:1px solid #fecaca;margin:12px 0;">
-    <p style="margin:0 0 8px;"><strong>Müşteri:</strong> ${escapeHtml(o.customer.firstName)} ${escapeHtml(o.customer.lastName)}</p>
-    <p style="margin:0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(o.customer.email)}</p>
-    <p style="margin:0 0 8px;"><strong>Telefon:</strong> ${escapeHtml(o.customer.phone || '—')}</p>
-    <hr style="border:none;border-top:1px solid #fecaca;margin:12px 0;">
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Misafirler:</strong> ${o.counts.adult} Yetişkin${o.counts.child ? `, ${o.counts.child} Çocuk` : ''}${o.counts.infant ? `, ${o.counts.infant} Bebek` : ''}</p>
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Toplam:</strong> ${o.totalPrice} ${escapeHtml(o.currency)}</p>
+    <hr style="border:none;border-top:1px solid ${EMAIL_BORDER};margin:14px 0;">
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Müşteri:</strong> ${escapeHtml(o.customer.firstName)} ${escapeHtml(o.customer.lastName)}</p>
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">E-posta:</strong> ${escapeHtml(o.customer.email)}</p>
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Telefon:</strong> ${escapeHtml(o.customer.phone || '—')}</p>
+    <hr style="border:none;border-top:1px solid ${EMAIL_BORDER};margin:14px 0;">
     ${refundLine}
   </div>
 </body>
@@ -1118,15 +1152,15 @@ function buildContactFormEmailHtml(p: ContactFormPayload): string {
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>İletişim Formu</title></head>
-<body style="font-family: system-ui, sans-serif; line-height: 1.5; color: #333; max-width: 560px; margin: 0 auto; padding: 24px;">
-  <h1 style="color: #0c4a6e;">Yeni İletişim Formu Mesajı</h1>
-  <p>Web sitesinden bir mesaj gönderildi.</p>
-  <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 20px 0;">
+<body style="font-family: 'Inter', system-ui, sans-serif; line-height: 1.5; color: ${EMAIL_TEXT_BODY}; max-width: 560px; margin: 0 auto; padding: 28px 20px; background: ${EMAIL_BG_PAGE};">
+  <h1 style="margin: 0 0 10px; color: ${EMAIL_NAVY}; font-size: 22px; font-weight: 700;">Yeni İletişim Formu Mesajı</h1>
+  <p style="margin: 0 0 18px; color: ${EMAIL_MUTED}; font-size: 14px;">Web sitesinden bir mesaj gönderildi.</p>
+  <div style="background: ${EMAIL_SURFACE}; border-radius: 10px; padding: 18px 20px; margin: 0; border: 1px solid ${EMAIL_BORDER};">
     <p style="margin: 0 0 8px;"><strong>Ad Soyad:</strong> ${escapeHtml(p.name)}</p>
     <p style="margin: 0 0 8px;"><strong>Grup Büyüklüğü:</strong> ${p.groupSize}</p>
     <p style="margin: 0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(p.email)}</p>
     ${phoneLine}
-    <hr style="border: none; border-top: 1px solid #cbd5e1; margin: 12px 0;">
+    <hr style="border: none; border-top: 1px solid ${EMAIL_BORDER}; margin: 12px 0;">
     <p style="margin: 0 0 8px;"><strong>Mesaj:</strong></p>
     <p style="margin: 0; white-space: pre-wrap;">${escapeHtml(p.message)}</p>
   </div>
@@ -1178,9 +1212,9 @@ function buildYachtInquiryEmailHtml(p: YachtInquiryEmailPayload): string {
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Yat müsaitlik talebi</title></head>
-<body style="font-family: system-ui, sans-serif; line-height: 1.5; color: #333; max-width: 560px; margin: 0 auto; padding: 24px;">
-  <h1 style="color: #0c4a6e;">Yeni yat müsaitlik talebi</h1>
-  <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 20px 0;">
+<body style="font-family: 'Inter', system-ui, sans-serif; line-height: 1.5; color: ${EMAIL_TEXT_BODY}; max-width: 560px; margin: 0 auto; padding: 28px 20px; background: ${EMAIL_BG_PAGE};">
+  <h1 style="margin: 0 0 18px; color: ${EMAIL_NAVY}; font-size: 22px; font-weight: 700;">Yeni yat müsaitlik talebi</h1>
+  <div style="background: ${EMAIL_SURFACE}; border-radius: 10px; padding: 18px 20px; margin: 0; border: 1px solid ${EMAIL_BORDER};">
     <p style="margin: 0 0 8px;"><strong>Yat:</strong> ${escapeHtml(p.yachtName)}</p>
     <p style="margin: 0 0 8px;"><strong>Slug:</strong> ${escapeHtml(p.yachtSlug)}</p>
     ${loc}
@@ -1190,7 +1224,7 @@ function buildYachtInquiryEmailHtml(p: YachtInquiryEmailPayload): string {
     ${duration}
     <p style="margin: 0 0 8px;"><strong>Misafir:</strong> ${p.guestCount}</p>
     ${price}
-    <hr style="border: none; border-top: 1px solid #cbd5e1; margin: 12px 0;">
+    <hr style="border: none; border-top: 1px solid ${EMAIL_BORDER}; margin: 12px 0;">
     <p style="margin: 0 0 8px;"><strong>Ad:</strong> ${escapeHtml(p.firstName)} ${escapeHtml(p.lastName)}</p>
     <p style="margin: 0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(p.email)}</p>
     <p style="margin: 0 0 8px;"><strong>Telefon:</strong> ${escapeHtml(p.phone)}</p>
@@ -1272,39 +1306,49 @@ function refundRequestCustomerHtml(o: RefundRequestEmailOpts): string {
   const supportEmail = process.env.SUPPORT_EMAIL?.trim() || 'turkeycesme@hotmail.com'
   const customerName = `${o.customer.firstName} ${o.customer.lastName}`.trim() || '—'
   const dateFormatted = formatDate(o.date)
+  const pendingIcon = `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:48px;height:48px;background:#f1f5f9;border-radius:10px;border:1px solid ${EMAIL_BORDER};text-align:center;vertical-align:middle;">${emailIconSvg('clock')}</td></tr></table>`
   return `<!DOCTYPE html>
 <html lang="tr"><head><meta charset="utf-8"><title>İade Talebi Alındı</title></head>
-<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;"><tr><td align="center" style="padding:32px 16px;">
+<body style="margin:0;padding:0;background:${EMAIL_BG_PAGE};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_BG_PAGE};"><tr><td align="center" style="padding:36px 16px;">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
-  <tr><td style="background:#fc6c4f;height:5px;border-radius:8px 8px 0 0;"></td></tr>
-  <tr><td style="background:#fff;padding:24px 32px 8px;text-align:center;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <p style="margin:0;font-size:20px;font-weight:800;color:#0f172a;">${escapeHtml(siteName)}</p>
+  <tr><td style="background:${EMAIL_NAVY};height:4px;border-radius:10px 10px 0 0;line-height:4px;font-size:0;">&nbsp;</td></tr>
+  <tr><td style="background:${EMAIL_SURFACE};padding:22px 28px 16px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0;font-size:20px;font-weight:700;color:${EMAIL_NAVY};letter-spacing:-0.02em;">${escapeHtml(siteName)}</p>
   </td></tr>
-  <tr><td style="background:#fff;padding:8px 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <p style="margin:0;font-size:17px;font-weight:700;color:#0f172a;">İade Talebiniz Alındı</p>
-    <p style="margin:6px 0 0;font-size:14px;color:#64748b;">Sayın ${escapeHtml(customerName)}, iade talebiniz yöneticilerimize iletildi. <strong>24 saat içinde</strong> sonuçlanacaktır.</p>
+  <tr><td style="background:${EMAIL_SURFACE};padding:16px 28px 20px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td style="width:56px;vertical-align:top;padding-right:14px;">${pendingIcon}</td>
+      <td style="vertical-align:top;">
+        <p style="margin:0;font-size:17px;font-weight:700;color:${EMAIL_NAVY};">İade Talebiniz Alındı</p>
+        <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.5;">Sayın ${escapeHtml(customerName)}, iade talebiniz yöneticilerimize iletildi. <strong style="color:${EMAIL_TEXT_BODY};font-weight:600;">24 saat içinde</strong> sonuçlanacaktır.</p>
+      </td>
+    </tr></table>
   </td></tr>
-  <tr><td style="background:#fff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;width:44%;">Rezervasyon No</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#0f172a;font-size:13px;font-weight:700;text-align:right;font-family:monospace;">${escapeHtml(o.bookingId)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;">Tur</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;">Tarih</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td></tr>
-      <tr><td style="padding:13px 0 0;color:#64748b;font-size:13px;font-weight:700;">Talep edilen iade</td>
-          <td style="padding:13px 0 0;color:#fc6c4f;font-size:18px;font-weight:800;text-align:right;">${o.amount.toLocaleString('tr-TR')} ${escapeHtml(o.currency)}</td></tr>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;">Rezervasyon No</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_NAVY};font-size:13px;font-weight:700;text-align:right;font-family:ui-monospace,monospace;">${escapeHtml(o.bookingId)}</td></tr>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tur</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td></tr>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tarih</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td></tr>
+      <tr><td style="padding:13px 0 0;color:${EMAIL_MUTED};font-size:13px;font-weight:700;">Talep edilen iade</td>
+          <td style="padding:13px 0 0;color:${EMAIL_NAVY};font-size:18px;font-weight:700;text-align:right;">${o.amount.toLocaleString('tr-TR')} ${escapeHtml(o.currency)}</td></tr>
     </table>
-    ${o.reason?.trim() ? `<p style="margin:14px 0 0;font-size:13px;color:#475569;"><strong>Talep nedeni:</strong> ${escapeHtml(o.reason.trim())}</p>` : ''}
+    ${o.reason?.trim() ? `<p style="margin:14px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${EMAIL_NAVY};">Talep nedeni:</strong> ${escapeHtml(o.reason.trim())}</p>` : ''}
   </td></tr>
-  <tr><td style="background:#fff;padding:0 32px 28px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <p style="margin:0 0 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;">Yardım ve İletişim</p>
-    <p style="margin:0 0 3px;font-size:13px;color:#334155;">📞 ${escapeHtml(supportPhone)}</p>
-    <p style="margin:0;font-size:13px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:#fc6c4f;text-decoration:none;">✉️ ${escapeHtml(supportEmail)}</a></p>
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 26px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">Yardım ve İletişim</p>
+    <table role="presentation" cellpadding="0" cellspacing="0">
+      <tr><td style="padding:0 10px 6px 0;vertical-align:middle;width:22px;line-height:0;">${emailIconSvg('phone')}</td>
+          <td style="padding:0 0 6px;vertical-align:middle;font-size:13px;color:${EMAIL_TEXT_BODY};">${escapeHtml(supportPhone)}</td></tr>
+      <tr><td style="padding:0 10px 0 0;vertical-align:middle;width:22px;line-height:0;">${emailIconSvg('mail')}</td>
+          <td style="padding:0;vertical-align:middle;font-size:13px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:${EMAIL_NAVY};text-decoration:none;font-weight:500;">${escapeHtml(supportEmail)}</a></td></tr>
+    </table>
   </td></tr>
-  <tr><td style="background:#f1f5f9;padding:16px 32px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:none;text-align:center;">
-    <p style="margin:0;font-size:12px;color:#64748b;">&copy; ${new Date().getFullYear()} ${escapeHtml(siteName)}</p>
+  <tr><td style="background:#eef1f5;padding:18px 28px;border-radius:0 0 10px 10px;border:1px solid ${EMAIL_BORDER};border-top:none;text-align:center;">
+    <p style="margin:0;font-size:12px;color:${EMAIL_MUTED};">&copy; ${new Date().getFullYear()} ${escapeHtml(siteName)}</p>
   </td></tr>
 </table></td></tr></table></body></html>`
 }
@@ -1315,22 +1359,25 @@ function refundRequestAdminHtml(o: RefundRequestEmailOpts): string {
     ? `<p style="margin:0 0 8px;"><strong>Talep nedeni:</strong> ${escapeHtml(o.reason.trim())}</p>`
     : ''
   const manageLink = o.manageUrl?.trim()
-    ? `<p style="margin:14px 0 0;"><a href="${escapeHtml(o.manageUrl.trim())}" style="background:#0f172a;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;">Admin Panelinde Aç</a></p>`
+    ? `<p style="margin:18px 0 0;"><a href="${escapeHtml(o.manageUrl.trim())}" style="display:inline-block;background:${EMAIL_NAVY};color:#fff!important;padding:11px 20px;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px;">Admin panelinde aç</a></p>`
     : ''
   return `<!DOCTYPE html>
 <html lang="tr"><head><meta charset="utf-8"><title>Yeni İade Talebi</title></head>
-<body style="font-family:system-ui,sans-serif;line-height:1.5;color:#333;max-width:560px;margin:0 auto;padding:24px;">
-  <h1 style="color:#0c4a6e;">Yeni İade Talebi</h1>
-  <p style="color:#6b7280;">Müşteri online ödenen rezervasyon için iade talebi oluşturdu.</p>
-  <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin:20px 0;">
-    <p style="margin:0 0 8px;"><strong>Rezervasyon No:</strong> ${escapeHtml(o.bookingId)}</p>
-    <p style="margin:0 0 8px;"><strong>Tur:</strong> ${escapeHtml(o.tourTitle)}</p>
-    <p style="margin:0 0 8px;"><strong>Tarih:</strong> ${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</p>
-    <p style="margin:0 0 8px;"><strong>Talep edilen tutar:</strong> ${o.amount.toLocaleString('tr-TR')} ${escapeHtml(o.currency)}</p>
-    <hr style="border:none;border-top:1px solid #cbd5e1;margin:12px 0;">
-    <p style="margin:0 0 8px;"><strong>Müşteri:</strong> ${escapeHtml(o.customer.firstName)} ${escapeHtml(o.customer.lastName)}</p>
-    <p style="margin:0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(o.customer.email)}</p>
-    <p style="margin:0 0 8px;"><strong>Telefon:</strong> ${escapeHtml(o.customer.phone || '—')}</p>
+<body style="font-family:'Inter',system-ui,sans-serif;line-height:1.55;color:${EMAIL_TEXT_BODY};max-width:560px;margin:0 auto;padding:28px 20px;background:${EMAIL_BG_PAGE};">
+  <div style="border-bottom:3px solid ${EMAIL_NAVY};padding-bottom:14px;margin-bottom:18px;">
+    <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:0.1em;color:${EMAIL_MUTED};text-transform:uppercase;">Admin</p>
+    <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:${EMAIL_NAVY};">Yeni İade Talebi</h1>
+    <p style="margin:8px 0 0;font-size:14px;color:${EMAIL_MUTED};">Müşteri online ödenen rezervasyon için iade talebi oluşturdu.</p>
+  </div>
+  <div style="background:${EMAIL_SURFACE};border-radius:10px;padding:18px 20px;border:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Rezervasyon No:</strong> ${escapeHtml(o.bookingId)}</p>
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Tur:</strong> ${escapeHtml(o.tourTitle)}</p>
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Tarih:</strong> ${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</p>
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Talep edilen tutar:</strong> ${o.amount.toLocaleString('tr-TR')} ${escapeHtml(o.currency)}</p>
+    <hr style="border:none;border-top:1px solid ${EMAIL_BORDER};margin:12px 0;">
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Müşteri:</strong> ${escapeHtml(o.customer.firstName)} ${escapeHtml(o.customer.lastName)}</p>
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">E-posta:</strong> ${escapeHtml(o.customer.email)}</p>
+    <p style="margin:0 0 8px;"><strong style="color:${EMAIL_NAVY};">Telefon:</strong> ${escapeHtml(o.customer.phone || '—')}</p>
     ${reasonLine}
   </div>
   ${manageLink}
@@ -1391,33 +1438,39 @@ function refundApprovedCustomerHtml(o: RefundDecisionEmailOpts): string {
     o.refundType === 'void'
       ? 'İade bankaya bildirildi; tutar genellikle birkaç saat içinde kartınıza geri yansır.'
       : 'İade bankaya bildirildi; banka süreçlerine göre tutarın kartınıza yansıması 3–10 iş günü sürebilir.'
+  const okIcon = `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:48px;height:48px;background:#f1f5f9;border-radius:10px;border:1px solid ${EMAIL_BORDER};text-align:center;vertical-align:middle;">${emailIconSvg('check')}</td></tr></table>`
   return `<!DOCTYPE html>
 <html lang="tr"><head><meta charset="utf-8"><title>İade Talebiniz Onaylandı</title></head>
-<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;"><tr><td align="center" style="padding:32px 16px;">
+<body style="margin:0;padding:0;background:${EMAIL_BG_PAGE};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_BG_PAGE};"><tr><td align="center" style="padding:36px 16px;">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
-  <tr><td style="background:#10b981;height:5px;border-radius:8px 8px 0 0;"></td></tr>
-  <tr><td style="background:#fff;padding:24px 32px 8px;text-align:center;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <p style="margin:0;font-size:20px;font-weight:800;color:#0f172a;">${escapeHtml(siteName)}</p>
+  <tr><td style="background:${EMAIL_NAVY};height:4px;border-radius:10px 10px 0 0;line-height:4px;font-size:0;">&nbsp;</td></tr>
+  <tr><td style="background:${EMAIL_SURFACE};padding:22px 28px 14px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0;font-size:20px;font-weight:700;color:${EMAIL_NAVY};">${escapeHtml(siteName)}</p>
   </td></tr>
-  <tr><td style="background:#fff;padding:8px 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <p style="margin:0;font-size:17px;font-weight:700;color:#0f172a;">İade Talebiniz Onaylandı</p>
-    <p style="margin:6px 0 0;font-size:14px;color:#64748b;">Sayın ${escapeHtml(customerName)}, iade talebiniz onaylandı ve rezervasyonunuz iptal edildi. ${escapeHtml(speedNote)}</p>
+  <tr><td style="background:${EMAIL_SURFACE};padding:14px 28px 20px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <table role="presentation" width="100%"><tr>
+      <td style="width:56px;vertical-align:top;padding-right:14px;">${okIcon}</td>
+      <td style="vertical-align:top;">
+        <p style="margin:0;font-size:17px;font-weight:700;color:${EMAIL_NAVY};">İade Talebiniz Onaylandı</p>
+        <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.55;">Sayın ${escapeHtml(customerName)}, iade talebiniz onaylandı ve rezervasyonunuz iptal edildi. ${escapeHtml(speedNote)}</p>
+      </td>
+    </tr></table>
   </td></tr>
-  <tr><td style="background:#fff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;width:44%;">Rezervasyon No</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#0f172a;font-size:13px;font-weight:700;text-align:right;font-family:monospace;">${escapeHtml(o.bookingId)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;">Tur</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;">Tarih</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td></tr>
-      <tr><td style="padding:13px 0 0;color:#64748b;font-size:13px;font-weight:700;">İade tutarı</td>
-          <td style="padding:13px 0 0;color:#10b981;font-size:18px;font-weight:800;text-align:right;">${o.amount.toLocaleString('tr-TR')} ${escapeHtml(o.currency)}</td></tr>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;">Rezervasyon No</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_NAVY};font-size:13px;font-weight:700;text-align:right;font-family:ui-monospace,monospace;">${escapeHtml(o.bookingId)}</td></tr>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tur</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td></tr>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tarih</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td></tr>
+      <tr><td style="padding:13px 0 0;color:${EMAIL_MUTED};font-size:13px;font-weight:700;">İade tutarı</td>
+          <td style="padding:13px 0 0;color:${EMAIL_NAVY};font-size:18px;font-weight:700;text-align:right;">${o.amount.toLocaleString('tr-TR')} ${escapeHtml(o.currency)}</td></tr>
     </table>
   </td></tr>
-  <tr><td style="background:#f1f5f9;padding:16px 32px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:none;text-align:center;">
-    <p style="margin:0;font-size:12px;color:#64748b;">&copy; ${new Date().getFullYear()} ${escapeHtml(siteName)}</p>
+  <tr><td style="background:#eef1f5;padding:18px 28px;border-radius:0 0 10px 10px;border:1px solid ${EMAIL_BORDER};border-top:none;text-align:center;">
+    <p style="margin:0;font-size:12px;color:${EMAIL_MUTED};">&copy; ${new Date().getFullYear()} ${escapeHtml(siteName)}</p>
   </td></tr>
 </table></td></tr></table></body></html>`
 }
@@ -1428,35 +1481,41 @@ function refundRejectedCustomerHtml(o: RefundDecisionEmailOpts): string {
   const customerName = `${o.customer.firstName} ${o.customer.lastName}`.trim() || '—'
   const dateFormatted = formatDate(o.date)
   const reasonBlock = o.reason?.trim()
-    ? `<p style="margin:14px 0 0;font-size:13px;color:#475569;"><strong>Ret nedeni:</strong> ${escapeHtml(o.reason.trim())}</p>`
+    ? `<p style="margin:14px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${EMAIL_NAVY};">Ret nedeni:</strong> ${escapeHtml(o.reason.trim())}</p>`
     : ''
+  const xIcon = `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:48px;height:48px;background:#f1f5f9;border-radius:10px;border:1px solid ${EMAIL_BORDER};text-align:center;vertical-align:middle;">${emailIconSvg('x')}</td></tr></table>`
   return `<!DOCTYPE html>
 <html lang="tr"><head><meta charset="utf-8"><title>İade Talebiniz Reddedildi</title></head>
-<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;"><tr><td align="center" style="padding:32px 16px;">
+<body style="margin:0;padding:0;background:${EMAIL_BG_PAGE};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_BG_PAGE};"><tr><td align="center" style="padding:36px 16px;">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
-  <tr><td style="background:#ef4444;height:5px;border-radius:8px 8px 0 0;"></td></tr>
-  <tr><td style="background:#fff;padding:24px 32px 8px;text-align:center;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <p style="margin:0;font-size:20px;font-weight:800;color:#0f172a;">${escapeHtml(siteName)}</p>
+  <tr><td style="background:${EMAIL_NAVY};height:4px;border-radius:10px 10px 0 0;line-height:4px;font-size:0;">&nbsp;</td></tr>
+  <tr><td style="background:${EMAIL_SURFACE};padding:22px 28px 14px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0;font-size:20px;font-weight:700;color:${EMAIL_NAVY};">${escapeHtml(siteName)}</p>
   </td></tr>
-  <tr><td style="background:#fff;padding:8px 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
-    <p style="margin:0;font-size:17px;font-weight:700;color:#0f172a;">İade Talebiniz Reddedildi</p>
-    <p style="margin:6px 0 0;font-size:14px;color:#64748b;">Sayın ${escapeHtml(customerName)}, iade talebinizi inceledik ancak şu an için onaylayamadık.</p>
+  <tr><td style="background:${EMAIL_SURFACE};padding:14px 28px 20px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <table role="presentation" width="100%"><tr>
+      <td style="width:56px;vertical-align:top;padding-right:14px;">${xIcon}</td>
+      <td style="vertical-align:top;">
+        <p style="margin:0;font-size:17px;font-weight:700;color:${EMAIL_NAVY};">İade Talebiniz Reddedildi</p>
+        <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.55;">Sayın ${escapeHtml(customerName)}, iade talebinizi inceledik ancak şu an için onaylayamadık.</p>
+      </td>
+    </tr></table>
   </td></tr>
-  <tr><td style="background:#fff;padding:0 32px 24px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;width:44%;">Rezervasyon No</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#0f172a;font-size:13px;font-weight:700;text-align:right;font-family:monospace;">${escapeHtml(o.bookingId)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;">Tur</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:13px;">Tarih</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td></tr>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;">Rezervasyon No</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_NAVY};font-size:13px;font-weight:700;text-align:right;font-family:ui-monospace,monospace;">${escapeHtml(o.bookingId)}</td></tr>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tur</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td></tr>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tarih</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td></tr>
     </table>
     ${reasonBlock}
-    <p style="margin:14px 0 0;font-size:13px;color:#475569;">Ek bilgi için bizimle iletişime geçebilirsiniz: <a href="mailto:${escapeHtml(supportEmail)}" style="color:#ef4444;">${escapeHtml(supportEmail)}</a></p>
+    <p style="margin:14px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};">Ek bilgi için bizimle iletişime geçebilirsiniz: <a href="mailto:${escapeHtml(supportEmail)}" style="color:${EMAIL_NAVY};font-weight:600;text-decoration:underline;">${escapeHtml(supportEmail)}</a></p>
   </td></tr>
-  <tr><td style="background:#f1f5f9;padding:16px 32px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:none;text-align:center;">
-    <p style="margin:0;font-size:12px;color:#64748b;">&copy; ${new Date().getFullYear()} ${escapeHtml(siteName)}</p>
+  <tr><td style="background:#eef1f5;padding:18px 28px;border-radius:0 0 10px 10px;border:1px solid ${EMAIL_BORDER};border-top:none;text-align:center;">
+    <p style="margin:0;font-size:12px;color:${EMAIL_MUTED};">&copy; ${new Date().getFullYear()} ${escapeHtml(siteName)}</p>
   </td></tr>
 </table></td></tr></table></body></html>`
 }

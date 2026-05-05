@@ -1,28 +1,39 @@
-/* Başlık: blog sayfası ile aynı font ve kalınlık */
+/* Başlık renkleri: anasayfa Popüler Turlar (PopularToursSection) ile aynı */
 .heading {
-  font-family: var(--font-family), sans-serif;
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-weight: 900;
-  line-height: 1.2;
+  line-height: 1.15;
   text-transform: uppercase;
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.875rem;
   display: flex;
   flex-direction: column;
   gap: 0.1em;
-  -webkit-text-stroke: 0.05em currentColor;
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 640px) {
   .heading {
-    font-size: 3rem;
+    font-size: 2.125rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .heading {
+    font-size: 2.375rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .heading {
+    font-size: 2.625rem;
   }
 }
 
 .headingLine1 {
-  color: var(--primary);
+  color: #1e3a8a;
 }
 
 .headingLine2 {
-  color: var(--secondary);
+  color: #000;
 }

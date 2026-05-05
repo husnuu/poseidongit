@@ -37,7 +37,7 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
 
   return (
     <section
-      className="w-full py-14 md:py-20 bg-zinc-50"
+      className="w-full bg-zinc-50 pt-7 pb-14 md:pt-9 md:pb-20"
       aria-labelledby="instagram-section-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">

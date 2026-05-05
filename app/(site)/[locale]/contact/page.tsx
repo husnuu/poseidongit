@@ -17,6 +17,24 @@ import { getContactPageUiStrings, mergeContactUiFromSanity } from '@/lib/i18n/st
 
 export const dynamic = 'force-dynamic'
 
+const CONTACT_HEADING_CLASS =
+  'text-[30px] font-black uppercase leading-[1.15] mb-6 sm:text-[34px] md:text-[38px] lg:text-[42px]'
+
+function splitHeadingSpans(headingUpper: string) {
+  const words = headingUpper.trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return null
+  const firstTwo = words.slice(0, 2).join(' ')
+  const nextTwo = words.slice(2, 4).join(' ')
+  const rest = words.slice(4).join(' ')
+  return (
+    <>
+      {firstTwo ? <span style={{ color: '#1e3a8a' }}>{firstTwo}</span> : null}
+      {nextTwo ? <span style={{ color: '#000' }}>{(firstTwo ? ' ' : '') + nextTwo}</span> : null}
+      {rest ? <span style={{ color: '#000' }}>{' ' + rest}</span> : null}
+    </>
+  )
+}
+
 type ContactPageData = {
   title?: string | null
   metaTitle?: string | null
@@ -152,20 +170,10 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
       <div className="mx-auto max-w-[1400px] px-4 py-12 sm:py-16">
         <header className="mb-12">
           <h1
-            className="text-[32px] sm:text-[40px] font-black leading-[1.1] mb-5 sm:mb-6"
+            className={CONTACT_HEADING_CLASS}
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
           >
-            {toHeadingUpper(title || ui.defaultTitle)
-              .split(/\s+/)
-              .map((word, i) => (
-                <span
-                  key={i}
-                  style={{ color: i === 0 ? '#1e3a8a' : '#000' }}
-                >
-                  {i > 0 ? ' ' : ''}
-                  {word}
-                </span>
-              ))}
+            {splitHeadingSpans(toHeadingUpper(title || ui.defaultTitle))}
           </h1>
           {intro.length > 0 && (
             <div
@@ -218,37 +226,29 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         </div>
 
         {data?.mapEmbedUrl && (
-          <section className="mt-16" aria-label={data?.locationTitle ?? ui.mapIframeTitle}>
-            {data?.locationTitle && (
-              <h2
-                className="text-[32px] sm:text-[40px] font-black leading-[1.1] mb-5 sm:mb-6"
-                style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
-              >
-                {toHeadingUpper(data.locationTitle || (locale === 'tr' ? 'Konum' : locale === 'de' ? 'Standort' : 'Location'))
-                  .split(/\s+/)
-                  .map((word, i) => (
-                    <span
-                      key={i}
-                      style={{ color: i === 0 ? '#1e3a8a' : '#000' }}
-                    >
-                      {i > 0 ? ' ' : ''}
-                      {word}
-                    </span>
-                  ))}
-              </h2>
-            )}
-            {data.mapEmbedUrl && (
-              <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 shadow-sm">
-                <iframe
-                  src={data.mapEmbedUrl}
-                  title={data?.locationTitle ?? ui.mapIframeTitle}
-                  className="h-[420px] w-full min-h-[320px] sm:h-[480px]"
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              </div>
-            )}
+          <section className="mt-16" aria-labelledby="contact-location-heading">
+            <h2
+              id="contact-location-heading"
+              className={CONTACT_HEADING_CLASS}
+              style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+            >
+              {splitHeadingSpans(
+                toHeadingUpper(
+                  data.locationTitle?.trim() ||
+                    (locale === 'tr' ? 'Konum' : locale === 'de' ? 'Standort' : 'Location'),
+                ),
+              )}
+            </h2>
+            <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 shadow-sm">
+              <iframe
+                src={data.mapEmbedUrl}
+                title={data?.locationTitle ?? ui.mapIframeTitle}
+                className="h-[420px] w-full min-h-[320px] sm:h-[480px]"
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
           </section>
         )}
 

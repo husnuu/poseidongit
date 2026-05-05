@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { client, urlFor } from '@/lib/sanity'
-import { toursListQuery, toursPageQuery } from '@/lib/queries'
+import { homePopularToursOrderQuery, toursListQuery, toursPageQuery } from '@/lib/queries'
 import TourCard from '@/components/tours/TourCard'
 import type { TourListItem } from '@/components/tours/TourCard'
 import styles from './page.module.css'
@@ -11,6 +11,7 @@ import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { mergeTourForLocale } from '@/lib/i18n/mergeTourForLocale'
+import { mergeHomePageLocale } from '@/lib/i18n/mergeHomePageLocale'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,6 +49,43 @@ type ToursPageData = {
   titleBottom?: string | null
 }
 
+function popularTourIdsFromMergedHome(home: Record<string, unknown> | null): string[] {
+  if (!home) return []
+  const sec = home.popularToursSection as Record<string, unknown> | undefined
+  if (!sec || sec.enabled === false) return []
+  const items = sec.items
+  if (!Array.isArray(items)) return []
+  const ids: string[] = []
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue
+    const o = item as Record<string, unknown>
+    if (typeof o._ref === 'string') ids.push(o._ref)
+    else if (typeof o._id === 'string') ids.push(o._id)
+  }
+  return ids
+}
+
+function sortToursLikeHomepage(tours: TourListItem[], popularOrder: string[], locale: SiteLocale): TourListItem[] {
+  if (popularOrder.length === 0) {
+    return [...tours].sort((a, b) => (a.title ?? '').localeCompare(b.title ?? '', locale === 'tr' ? 'tr' : locale))
+  }
+  const map = new Map(tours.map((t) => [t._id, t]))
+  const seen = new Set<string>()
+  const ordered: TourListItem[] = []
+  for (const id of popularOrder) {
+    const t = map.get(id)
+    if (t) {
+      ordered.push(t)
+      seen.add(id)
+    }
+  }
+  const collator = locale === 'tr' ? 'tr' : locale
+  const rest = tours.filter((t) => !seen.has(t._id)).sort((a, b) =>
+    (a.title ?? '').localeCompare(b.title ?? '', collator),
+  )
+  return [...ordered, ...rest]
+}
+
 export default async function TurlarPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: loc } = await params
   if (!isSiteLocale(loc)) notFound()
@@ -57,13 +95,14 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
   let pageData: ToursPageData | null = null
 
   try {
-    const [toursData, page] = await Promise.all([
+    const [toursData, page, homeOrderRaw] = await Promise.all([
       client.fetch<TourListRaw[]>(toursListQuery, {}, { useCdn: false }),
       client.fetch<ToursPageData | null>(toursPageQuery, {}, { useCdn: false }),
+      client.fetch<Record<string, unknown> | null>(homePopularToursOrderQuery, {}, { useCdn: false }),
     ])
     pageData = page ?? null
     const raw = Array.isArray(toursData) ? toursData : []
-    tours = raw.map((t) => {
+    const mapped = raw.map((t) => {
       const merged = mergeTourForLocale(t as unknown as Record<string, unknown>, locale) as unknown as TourListRaw & {
         quickFacts?: { durationText?: string | null; meetingLocation?: string | null }
       }
@@ -86,6 +125,9 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
         coverImageAlt: merged.mainImage?.alt ?? null,
       }
     })
+    const homeMerged = mergeHomePageLocale(homeOrderRaw, locale)
+    const popularOrder = popularTourIdsFromMergedHome(homeMerged as Record<string, unknown> | null)
+    tours = sortToursLikeHomepage(mapped, popularOrder, locale)
   } catch {
     tours = []
   }

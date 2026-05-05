@@ -6,21 +6,21 @@
 
 /* Tur sayfası: diğer bölümlerle aynı hiyerarşi */
 .heading {
-  font-family: var(--font-family), sans-serif;
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-weight: 700;
-  font-size: 26px;
-  line-height: 1.35;
+  font-size: 22px;
+  line-height: 1.3;
   text-transform: uppercase;
   color: #1e3a5f;
-  margin: 0 0 14px 0;
+  margin: 0 0 10px 0;
 }
 
 .intro {
   font-family: var(--font-family), sans-serif;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   line-height: 1.55;
   color: rgba(15, 23, 42, 0.72);
-  margin: 0 0 1.125rem 0;
+  margin: 0 0 0.875rem 0;
   max-width: 42rem;
 }
 
@@ -35,8 +35,8 @@
 .row {
   display: flex;
   align-items: center;
-  gap: 1.125rem;
-  padding: 1rem 0;
+  gap: 0.875rem;
+  padding: 0.85rem 0;
   border-bottom: 1px solid #e9edf3;
   margin: 0;
 }
@@ -44,23 +44,23 @@
 .thumb {
   position: relative;
   flex-shrink: 0;
-  width: 80px;
-  height: 80px;
-  border-radius: 14px;
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
   overflow: hidden;
   background: #f4f4f5;
 }
 
 @media (min-width: 768px) {
   .thumb {
-    width: 96px;
-    height: 96px;
-    border-radius: 16px;
+    width: 84px;
+    height: 84px;
+    border-radius: 14px;
   }
 
   .row {
-    padding: 1.1rem 0;
-    gap: 1.25rem;
+    padding: 0.95rem 0;
+    gap: 1rem;
   }
 }
 
@@ -90,9 +90,9 @@
 
 .rowTitle {
   font-family: var(--font-family), sans-serif;
-  font-weight: 700;
-  font-size: 1.0625rem;
-  line-height: 1.35;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1.4;
   color: #18181b;
   margin: 0;
   flex: 1 1 auto;
@@ -101,19 +101,20 @@
 
 @media (min-width: 768px) {
   .rowTitle {
-    font-size: 1.1875rem;
-    line-height: 1.38;
+    font-size: 1rem;
+    line-height: 1.45;
   }
 
-  .detailLink {
-    font-size: 1rem;
+  .heading {
+    font-size: 24px;
+    margin-bottom: 12px;
   }
 }
 
 .detailLink {
   font-family: var(--font-family), sans-serif;
   font-weight: 600;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   line-height: 1.25;
   padding: 0;
   margin: 0;
@@ -140,43 +141,43 @@
 
 @media (max-width: 768px) {
   .heading {
-    font-size: 22px;
-    line-height: 1.35;
-    margin-bottom: 12px;
+    font-size: 20px;
+    line-height: 1.32;
+    margin-bottom: 10px;
   }
 
   .section {
     margin-top: 1rem;
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
   }
 
   .row {
-    gap: 1rem;
-    padding: 0.9rem 0;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
   }
 
   .rowTitle {
-    font-size: 1.0625rem;
+    font-size: 0.9375rem;
   }
 
   .detailLink {
-    font-size: 0.9375rem;
+    font-size: 0.8125rem;
     width: 100%;
     text-align: left;
-    margin-top: 0.15rem;
+    margin-top: 0.1rem;
   }
 
   .rowMain {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.25rem;
+    gap: 0.2rem;
   }
 }
 
 .dialogPrice {
   font-family: var(--font-family), sans-serif;
-  font-weight: 800;
-  font-size: 1.125rem;
+  font-weight: 700;
+  font-size: 1rem;
   color: #2168b8;
   margin: 0 0 0.75rem 0;
 }
@@ -213,9 +214,9 @@
   align-items: flex-start;
   gap: 0.5rem;
   margin: 0;
-  padding: 0.45rem 0;
+  padding: 0.38rem 0;
   font-family: var(--font-family), sans-serif;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   line-height: 1.45;
   color: #334155;
   text-align: left;
@@ -263,8 +264,8 @@
 
 .menuBlockHeading {
   font-family: var(--font-family), sans-serif;
-  font-weight: 800;
-  font-size: 0.8125rem;
+  font-weight: 700;
+  font-size: 0.75rem;
   line-height: 1.3;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -302,7 +303,7 @@
 }
 
 .menuDishNestedItem {
-  font-size: 0.9rem;
+  font-size: 0.8125rem;
   line-height: 1.45;
   text-align: left;
 }
@@ -361,8 +362,8 @@
 
 .dialogTitle {
   font-family: var(--font-family), sans-serif;
-  font-weight: 900;
-  font-size: 1.125rem;
+  font-weight: 800;
+  font-size: 1rem;
   line-height: 1.3;
   color: #1e3a5f;
   margin: 0;
@@ -397,8 +398,8 @@
   padding: 1rem 1rem 1.25rem;
   overflow-y: auto;
   font-family: var(--font-family), sans-serif;
-  font-size: 0.9375rem;
-  line-height: 1.6;
+  font-size: 0.875rem;
+  line-height: 1.58;
   color: #3f3f46;
   text-align: left;
   -webkit-overflow-scrolling: touch;

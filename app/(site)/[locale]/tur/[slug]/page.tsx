@@ -587,6 +587,7 @@ export default async function TourPage({
           <WhereSection
             data={tour.whereSection}
             headingFallback={tourUi.whereHeadingFallback}
+            locale={locale}
           />
         </div>
 

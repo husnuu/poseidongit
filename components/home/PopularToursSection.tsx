@@ -37,7 +37,9 @@ export default function PopularToursSection({ data, locale = 'tr' }: PopularTour
   if (!data?.enabled || !data?.items?.length) return null
 
   const { title, subtitle, items } = data
-  const words = (title || 'Popüler Turlar').toUpperCase().trim().split(/\s+/)
+  const localeUpper = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
+  const titleUpper = (title || 'Popüler Turlar').trim().toLocaleUpperCase(localeUpper)
+  const words = titleUpper.split(/\s+/).filter(Boolean)
   const firstTwo = words.slice(0, 2).join(' ')
   const nextTwo = words.slice(2, 4).join(' ')
   const rest = words.slice(4).join(' ')

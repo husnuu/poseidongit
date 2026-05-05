@@ -1,6 +1,6 @@
-import { client } from '@/lib/sanity'
+import { client, urlFor } from '@/lib/sanity'
 import { blogsListQuery, blogPageMetaQuery, blogPageQuery } from '@/lib/queries'
-import BlogCard from '@/components/BlogCard'
+import CompactBlogCard from '@/components/blog/CompactBlogCard'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
 import type { Metadata } from 'next'
 import styles from './blog.module.css'
@@ -11,8 +11,6 @@ import { withLocalePath } from '@/lib/i18n/paths'
 import { mergeBlogPageLocale, mergeBlogPageSeoForLocale } from '@/lib/i18n/mergeBlogPageLocale'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
 import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
-import { formatBlogReadTime } from '@/lib/i18n/formatBlogReadTime'
-import { dateLocaleForSite } from '@/lib/i18n/dateLocale'
 
 const siteName = getSiteName()
 
@@ -100,7 +98,6 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
   if (!isSiteLocale(loc)) notFound()
   const locale = loc as SiteLocale
   const ui = getBlogPageUiStrings(locale)
-  const dateLocale = dateLocaleForSite(locale)
 
   let pageContent: BlogPageContent | null = null
   let blogs: BlogItem[] = []
@@ -159,24 +156,23 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
                   blog as unknown as Record<string, unknown>,
                   locale,
                 ) as unknown as BlogItem
-                const slug = typeof merged.slug === 'string' ? merged.slug : ''
-                const href = slug ? withLocalePath(locale, `/blog/${slug}`) : '#'
-                const readTime = formatBlogReadTime(
-                  {
-                    readingTime: merged.readingTime,
-                    readTime: merged.readTime,
-                  },
-                  ui.readTimeSuffix,
-                )
-                const cardBlog = { ...merged, readTime }
+                const coverImageUrl =
+                  merged.coverImage?.asset != null
+                    ? urlFor(merged.coverImage.asset).width(800).height(600).url()
+                    : null
                 return (
-                  <BlogCard
+                  <CompactBlogCard
                     key={blog._id}
-                    blog={cardBlog}
-                    href={href}
-                    readPostCta={ui.readPostCta}
-                    noExcerptFallback={ui.noExcerptFallback}
-                    dateLocale={dateLocale}
+                    post={{
+                      _id: merged._id,
+                      title: merged.title,
+                      slug: merged.slug,
+                      coverImageUrl,
+                      coverImageAlt: merged.coverImage?.alt ?? null,
+                    }}
+                    locale={locale}
+                    noImageLabel={ui.noCoverImage}
+                    imageSizes="(max-width: 640px) min(100vw, 400px), (max-width: 1024px) 45vw, 300px"
                   />
                 )
               })}

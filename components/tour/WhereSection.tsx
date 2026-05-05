@@ -1,5 +1,7 @@
 'use client'
 
+import type { SiteLocale } from '@/lib/i18n/config'
+
 /** Toplanma noktası ikonu – düz, renksiz (currentColor) */
 function MeetingPointIcon({ className }: { className?: string }) {
   return (
@@ -35,14 +37,23 @@ type WhereSectionProps = {
   data: WhereSectionData | null | undefined
   /** CMS başlığı yokken (örn. locale). */
   headingFallback?: string
+  locale?: SiteLocale
+}
+
+function headingDisplayUpper(raw: string, locale: SiteLocale): string {
+  const tag = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
+  return raw.trim().toLocaleUpperCase(tag)
 }
 
 export default function WhereSection({
   data,
   headingFallback = 'Nerede',
+  locale = 'tr',
 }: WhereSectionProps) {
   if (!data?.enabled) return null
   if (!data.mapEmbedUrl && !(data.meetingPointLabel || data.meetingPointAddress)) return null
+
+  const headingText = headingDisplayUpper(data.heading?.trim() || headingFallback, locale)
 
   return (
     <section className="mb-8" aria-labelledby="where-section-heading">
@@ -51,7 +62,7 @@ export default function WhereSection({
         className="text-2xl font-bold mb-4"
         style={{ color: '#1e3a5f' }}
       >
-        {data.heading || headingFallback}
+        {headingText}
       </h2>
 
       {(data.meetingPointLabel || data.meetingPointAddress) && (

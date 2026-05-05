@@ -36,6 +36,8 @@ export type TourPageUi = {
   faqMissingQuestion: string
   faqWhatsappCta: string
   reviewsSectionTitle: string
+  /** Çok küçük kaynak satırı (Google). */
+  reviewsGoogleAttribution: string
   reviewsMoreDefault: string
   ratingAriaLabel: (value: number, max: number) => string
   reviewsCountSuffix: string
@@ -115,6 +117,7 @@ const UI: Record<SiteLocale, TourPageUi> = {
     faqMissingQuestion: 'Sorunuz yukarıda yok mu?',
     faqWhatsappCta: "WhatsApp'tan ulaşın",
     reviewsSectionTitle: 'Yorumlar',
+    reviewsGoogleAttribution: "Yorumlar Google'dan alınmıştır.",
     reviewsMoreDefault: 'Daha fazla yorumu okuyun',
     ratingAriaLabel: (v, max) => `Puan: ${v} / ${max}`,
     reviewsCountSuffix: 'yorum',
@@ -187,6 +190,7 @@ const UI: Record<SiteLocale, TourPageUi> = {
     faqMissingQuestion: "Don't see your question?",
     faqWhatsappCta: 'Contact us on WhatsApp',
     reviewsSectionTitle: 'Reviews',
+    reviewsGoogleAttribution: 'Reviews are from Google.',
     reviewsMoreDefault: 'Read more reviews',
     ratingAriaLabel: (v, max) => `Rating: ${v} out of ${max}`,
     reviewsCountSuffix: 'reviews',
@@ -259,6 +263,7 @@ const UI: Record<SiteLocale, TourPageUi> = {
     faqMissingQuestion: 'Ihre Frage ist nicht dabei?',
     faqWhatsappCta: 'Schreiben Sie uns auf WhatsApp',
     reviewsSectionTitle: 'Bewertungen',
+    reviewsGoogleAttribution: 'Bewertungen stammen von Google.',
     reviewsMoreDefault: 'Weitere Bewertungen lesen',
     ratingAriaLabel: (v, max) => `Bewertung: ${v} von ${max}`,
     reviewsCountSuffix: 'Bewertungen',
