@@ -1,0 +1,220 @@
+/* Wizard / modal ile uyum: beyaz kart, ince border, lacivert vurgu */
+.wrap {
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 16px;
+  border: 1px solid #e4e4e7;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.stage {
+  position: relative;
+  padding: 16px 14px 14px;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 55%);
+}
+
+@media (min-width: 480px) {
+  .stage {
+    padding: 18px 16px 16px;
+  }
+}
+
+.rowLabel {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+@media (min-width: 400px) {
+  .grid {
+    gap: 8px;
+  }
+}
+
+@media (min-width: 480px) {
+  .grid {
+    gap: 10px;
+  }
+}
+
+.row2 {
+  margin-top: 8px;
+}
+
+.footer {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e4e4e7;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.footer strong {
+  font-weight: 600;
+  color: #334155;
+}
+
+.footerComplete {
+  color: #0d9488;
+  font-weight: 600;
+}
+
+/* Loca düğmeleri */
+.locaBtn {
+  position: relative;
+  display: flex;
+  min-height: 92px;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  padding: 8px 4px;
+  text-align: center;
+  font: inherit;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.locaBtn:focus {
+  outline: none;
+}
+
+.locaBtn:focus-visible {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #94a3b8;
+}
+
+.locaBtnAvailable {
+  cursor: pointer;
+  border-color: #e4e4e7;
+  background: #fff;
+  color: #334155;
+}
+
+.locaBtnAvailable:hover {
+  border-color: #bfdbfe;
+  background: #f0f9ff;
+  box-shadow: 0 2px 8px rgba(30, 58, 95, 0.08);
+}
+
+.locaBtnSelected {
+  cursor: pointer;
+  border-color: #1e3a5f;
+  background: linear-gradient(180deg, #f0f7ff 0%, #e8f2fc 100%);
+  color: #1e3a5f;
+  box-shadow: 0 2px 10px rgba(30, 58, 95, 0.12);
+}
+
+.locaBtnMine {
+  cursor: pointer;
+  border-color: #fcd34d;
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  color: #78350f;
+}
+
+.locaBtnMine:hover {
+  border-color: #fbbf24;
+}
+
+.locaBtnReserved {
+  cursor: not-allowed;
+  border-color: #e4e4e7;
+  background: #f4f4f5;
+  color: #a1a1aa;
+  opacity: 0.75;
+  box-shadow: none;
+}
+
+.locaId {
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.locaSub {
+  font-size: 10px;
+  line-height: 1.25;
+  color: #64748b;
+}
+
+.locaBtnSelected .locaSub,
+.locaBtnMine .locaSub {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.locaBtnReserved .locaSub {
+  color: #71717a;
+}
+
+.badge {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 2px 6px;
+}
+
+.badgeOpen {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.badgeCurrent {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.checkWrap {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(30, 58, 95, 0.1);
+  padding: 3px;
+}
+
+.iconSm {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.iconMd {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+}
+
+.checkIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  color: #1e3a5f;
+}

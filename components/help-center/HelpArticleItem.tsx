@@ -12,7 +12,7 @@ export default function HelpArticleItem({ href, title, shortDescription }: Props
     <li>
       <Link
         href={href}
-        className="group flex w-full items-start gap-3 rounded-lg border border-transparent px-2 py-2.5 transition-colors hover:border-zinc-100 hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a8a] focus-visible:ring-offset-2 sm:px-3 sm:py-3"
+        className="group flex w-full items-start gap-3 rounded-xl border border-transparent px-2 py-2.5 transition-all duration-200 hover:border-zinc-100/80 hover:bg-slate-50/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a8a] focus-visible:ring-offset-2 sm:px-3 sm:py-3.5"
       >
         <span className="min-w-0 flex-1">
           <span
@@ -23,8 +23,7 @@ export default function HelpArticleItem({ href, title, shortDescription }: Props
           </span>
           {shortDescription ? (
             <span
-              className="mt-0.5 line-clamp-2 text-sm leading-snug"
-              style={{ color: 'var(--secondary, #131719)' }}
+              className="mt-1 line-clamp-2 text-[13px] leading-snug text-zinc-600 sm:text-sm"
             >
               {shortDescription}
             </span>

@@ -65,8 +65,8 @@ export default async function HelpCategoryListingPage({
   const helpHome = withLocalePath(locale, '/yardim-merkezi')
 
   return (
-    <div className="min-h-screen bg-zinc-50/80">
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-zinc-100/90 via-white to-zinc-50">
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         <Breadcrumb
           className="mb-8"
           items={[
@@ -76,25 +76,25 @@ export default async function HelpCategoryListingPage({
           ]}
         />
 
-        <header className="border-b border-zinc-200 pb-8">
+        <header className="rounded-2xl border border-zinc-100/90 bg-white/85 px-5 py-7 shadow-[0_4px_28px_-8px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:px-7 sm:py-8">
           <h1
-            className="text-balance text-3xl font-bold tracking-tight text-[#1e3a5f] sm:text-4xl"
+            className="text-balance text-[1.65rem] font-bold tracking-tight text-[#1e3a5f] sm:text-3xl md:text-[2rem]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
           >
             {cat.title}
           </h1>
           {cat.shortDescription ? (
             <p
-              className="mt-4 text-lg"
-              style={{ fontFamily: 'var(--font-family), sans-serif', color: 'var(--secondary, #131719)' }}
+              className="mt-4 text-[15px] leading-relaxed text-zinc-700 sm:text-lg"
+              style={{ fontFamily: 'var(--font-family), sans-serif' }}
             >
               {cat.shortDescription}
             </p>
           ) : null}
-          <p className="mt-4">
+          <p className="mt-5">
             <Link
               href={helpHome}
-              className="text-sm font-semibold text-[#1e3a8a] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a8a] focus-visible:ring-offset-2"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1e3a8a] underline-offset-[5px] transition-colors hover:text-[#172554] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a8a] focus-visible:ring-offset-2"
               style={{ fontFamily: 'var(--font-family), sans-serif' }}
             >
               {ui.allHelpTopicsLink}
@@ -110,7 +110,7 @@ export default async function HelpCategoryListingPage({
             {ui.noArticlesInCategory}
           </p>
         ) : (
-          <ul className="mt-8 divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-white px-2 py-1 sm:px-3">
+          <ul className="mt-10 divide-y divide-zinc-100/90 overflow-hidden rounded-2xl border border-zinc-100/90 bg-white px-1 py-1 shadow-[0_4px_24px_-10px_rgba(15,23,42,0.07)] sm:px-2">
             {articles.map((a) =>
               a.slug ? (
                 <HelpArticleItem
@@ -126,7 +126,7 @@ export default async function HelpCategoryListingPage({
 
         <HelpSupportCTA
           whatsappHref={whatsappHref}
-          className="mt-14"
+          className="mt-16 sm:mt-20"
           heading={ui.supportHeading}
           description={ui.supportBody}
           whatsappCta={ui.supportWhatsappCta}

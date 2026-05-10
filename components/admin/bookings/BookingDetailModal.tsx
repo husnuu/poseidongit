@@ -326,6 +326,22 @@ export default function BookingDetailModal({
                     <dt className="text-zinc-500">Durum</dt>
                     <dd className="font-medium">{REFUND_STATUS_LABELS[booking.refundStatus] ?? booking.refundStatus}</dd>
                   </div>
+                  {booking.refundRequestedAt && (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-zinc-500">Talep gönderildi</dt>
+                      <dd className="text-right tabular-nums">
+                        {new Date(booking.refundRequestedAt).toLocaleString('tr-TR', {
+                          timeZone: 'Europe/Istanbul',
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })}
+                      </dd>
+                    </div>
+                  )}
                   {booking.refundAmount != null && (
                     <div className="flex justify-between gap-2">
                       <dt className="text-zinc-500">Tutar</dt>

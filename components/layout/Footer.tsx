@@ -16,6 +16,7 @@ import {
   pickLocalizedString,
   pickOptionalLinkLabel,
 } from '@/lib/i18n/localizedLabels'
+import { exploreLinksWithHelpCenter } from '@/lib/i18n/headerNavWithHelpCenter'
 import FooterLegal from '@/components/layout/FooterLegal'
 import type { FooterLegalData } from '@/components/layout/FooterLegal'
 import InstagramModern from '@/components/icons/InstagramModern'
@@ -256,7 +257,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
   )
 
   const exploreFromCms = (data?.explore?.links ?? []).filter((l) => l?.label && l?.href)
-  const exploreLinks =
+  const exploreLinksRaw =
     exploreFromCms.length > 0
       ? exploreFromCms.map((l) => ({
           href: l.href as string,
@@ -264,6 +265,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
           openInNewTab: l.openInNewTab === true,
         }))
       : exploreLinksFallback(locale)
+  const exploreLinks = exploreLinksWithHelpCenter(locale, exploreLinksRaw)
 
   const socialItems =
     data?.social?.items?.filter((i) => i?.enabled !== false && i?.href) ?? []

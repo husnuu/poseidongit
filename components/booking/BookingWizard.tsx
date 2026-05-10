@@ -345,7 +345,6 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
             onUpdate={updateState}
             onPricingComputed={onPricingComputed}
             optimisticUsed={optimisticUsed}
-            onProceedToNextStep={goNext}
             availabilityInvalidateKey={String(step2InvalidateKey)}
             ui={ui}
           />

@@ -635,7 +635,6 @@ export default function ManageBookingClient({
                         )
                       }
                       locaUi={locaUi}
-                      aria-label="First Class loca seçimi"
                     />
                   </div>
                 )}

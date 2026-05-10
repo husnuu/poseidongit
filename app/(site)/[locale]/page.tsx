@@ -1,4 +1,4 @@
-import { client, urlFor } from '@/lib/sanity'
+import { client, safeSanityImageUrl, urlFor } from '@/lib/sanity'
 import {
   homePageHeroImageUrlsQuery,
   homePageHeroQuery,
@@ -59,6 +59,27 @@ const defaultHomeTitle = siteName
 const defaultHomeDescription =
   'Tekne turu rezervasyonu. Adalar ve koylar turu, BBQ turları, günlük turlar. Online rezervasyon.'
 
+const OG_LOCALE: Record<SiteLocale, string> = {
+  tr: 'tr_TR',
+  en: 'en_US',
+  de: 'de_DE',
+}
+
+function parseMetaKeywords(raw?: string | null): string[] | undefined {
+  if (!raw?.trim()) return undefined
+  const parts = raw.split(',').map((s) => s.trim()).filter(Boolean)
+  return parts.length ? parts : undefined
+}
+
+type HomePageSeoPayload = {
+  metaTitle?: string | null
+  metaDescription?: string | null
+  metaKeywords?: string | null
+  ogTitle?: string | null
+  ogDescription?: string | null
+  ogImage?: { asset?: unknown; alt?: string | null } | null
+}
+
 type SiteFooterContactPayload = {
   contact?: {
     email?: string | null
@@ -71,8 +92,22 @@ type SiteFooterContactPayload = {
 } | null
 
 const homePageMetaQuery = `*[_type == "homePage"][0]{
-  seo{ metaTitle, metaDescription },
-  pageTranslations
+  seo{
+    metaTitle,
+    metaDescription,
+    metaKeywords,
+    ogTitle,
+    ogDescription,
+    ogImage{
+      asset,
+      alt
+    }
+  },
+  pageTranslations,
+  "heroOgFallback": hero.heroImage{
+    asset,
+    alt
+  }
 }`
 
 export async function generateMetadata({
@@ -84,30 +119,75 @@ export async function generateMetadata({
   const locale = isSiteLocale(loc) ? (loc as SiteLocale) : 'tr'
   const homePath = withLocalePath(locale, '/')
   const canonicalBase = homePath === '/' ? getBaseUrl() : `${getBaseUrl()}${homePath}`
+  const ogPipe = (b: ReturnType<typeof urlFor>) => b.width(1200).height(630).fit('crop')
+
   try {
     const row = await client.fetch<{
-      seo?: { metaTitle?: string | null; metaDescription?: string | null } | null
+      seo?: HomePageSeoPayload | null
       pageTranslations?: { en?: Record<string, unknown>; de?: Record<string, unknown> }
-    } | null>(homePageMetaQuery)
+      heroOgFallback?: { asset?: unknown; alt?: string | null } | null
+    } | null>(homePageMetaQuery, {}, { useCdn: false })
+
     const seo = mergeHomePageSeoForLocale(
       row?.seo as Record<string, unknown> | undefined,
       row?.pageTranslations,
       locale
-    ) as { metaTitle?: string | null; metaDescription?: string | null } | null | undefined
-    const title = seo?.metaTitle?.trim() ?? defaultHomeTitle
-    const description =
-      seo?.metaDescription?.trim()?.slice(0, 160) ?? defaultHomeDescription
+    ) as HomePageSeoPayload | null | undefined
+
+    const rawMetaTitle = seo?.metaTitle?.trim() ?? defaultHomeTitle
+    const pageTitle =
+      rawMetaTitle.includes('|') ? rawMetaTitle : siteName ? `${rawMetaTitle} | ${siteName}` : rawMetaTitle
+
+    const rawDescription = seo?.metaDescription?.trim() ?? defaultHomeDescription
+    const description = rawDescription.slice(0, 165)
+
+    const ogTitle = (seo?.ogTitle?.trim() || pageTitle).slice(0, 90)
+    const ogDescription = (seo?.ogDescription?.trim() || rawDescription).slice(0, 200)
+
+    const ogFromSeo = safeSanityImageUrl(seo?.ogImage ?? undefined, ogPipe)
+    const ogFromHero = safeSanityImageUrl(row?.heroOgFallback ?? undefined, ogPipe)
+    const ogImageUrl = ogFromSeo ?? ogFromHero
+
+    const ogImageAlt =
+      seo?.ogImage?.alt?.trim() ||
+      row?.heroOgFallback?.alt?.trim() ||
+      (siteName ? `${siteName} — ana sayfa` : 'Ana sayfa')
+
+    const keywords = parseMetaKeywords(seo?.metaKeywords)
+
     return {
-      title: title.includes('|') ? title : siteName ? `${title} | ${siteName}` : title,
+      title: pageTitle,
       description,
+      ...(keywords?.length ? { keywords } : {}),
       alternates: {
         canonical: canonicalBase,
         languages: alternateLanguageAbsoluteUrls('/'),
       },
       openGraph: {
-        title: title.includes('|') ? title : siteName ? `${title} | ${siteName}` : title,
-        description,
+        type: 'website',
+        locale: OG_LOCALE[locale],
+        ...(siteName ? { siteName } : {}),
+        title: ogTitle,
+        description: ogDescription,
         url: canonicalBase,
+        ...(ogImageUrl
+          ? {
+              images: [
+                {
+                  url: ogImageUrl,
+                  width: 1200,
+                  height: 630,
+                  alt: ogImageAlt,
+                },
+              ],
+            }
+          : {}),
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: ogTitle,
+        description: ogDescription,
+        ...(ogImageUrl ? { images: [ogImageUrl] } : {}),
       },
     }
   } catch {
@@ -119,9 +199,17 @@ export async function generateMetadata({
         languages: alternateLanguageAbsoluteUrls('/'),
       },
       openGraph: {
+        type: 'website',
+        locale: OG_LOCALE[locale],
+        ...(siteName ? { siteName } : {}),
         title: siteName ? `Tekne Turu | ${siteName}` : 'Tekne Turu',
         description: 'Tekne turu ve koy turları. Rezervasyon.',
         url: canonicalBase,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: siteName ? `Tekne Turu | ${siteName}` : 'Tekne Turu',
+        description: 'Tekne turu ve koy turları. Rezervasyon.',
       },
     }
   }

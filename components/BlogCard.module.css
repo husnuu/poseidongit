@@ -1,0 +1,7 @@
+/**
+ * Eski import yolları / önbellek için yer tutucu.
+ * Blog kartı stilleri `@/components/blog/CompactBlogCard` içinde Tailwind ile tanımlıdır.
+ */
+.legacyPlaceholder {
+  display: contents;
+}

@@ -30,9 +30,9 @@ export default function HelpSearch({
       <label htmlFor={id} className="sr-only">
         {labelSrOnly}
       </label>
-      <div className="relative">
+      <div className="relative rounded-2xl bg-white/[0.97] p-1 shadow-[0_12px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-white/50 backdrop-blur-md">
         <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400"
+          className="pointer-events-none absolute left-5 top-1/2 z-[1] h-5 w-5 -translate-y-1/2 text-[#1e3a8a]/55"
           aria-hidden
           strokeWidth={2}
         />
@@ -44,13 +44,13 @@ export default function HelpSearch({
           placeholder={placeholder}
           autoComplete="off"
           spellCheck={false}
-          className="w-full rounded border border-white/25 bg-white py-3 pl-10 pr-3 text-base text-zinc-900 shadow-lg shadow-black/15 outline-none ring-0 placeholder:text-zinc-400 focus:border-white/50 focus:ring-2 focus:ring-white/50 sm:py-3.5 sm:pl-11 sm:text-[17px]"
+          className="w-full rounded-[14px] border-0 bg-transparent py-3.5 pl-12 pr-4 text-[15px] text-zinc-900 outline-none ring-0 placeholder:text-zinc-400 focus:ring-2 focus:ring-[#1e3a8a]/25 sm:py-4 sm:pl-[3.25rem] sm:text-[17px]"
           style={{ fontFamily: 'var(--font-family), sans-serif' }}
         />
       </div>
       {showCount && value.trim() && typeof resultCount === 'number' ? (
         <p
-          className="mt-2 text-sm text-white/80"
+          className="mt-3 text-[13px] font-medium text-white/85 sm:text-sm"
           style={{ fontFamily: 'var(--font-family), sans-serif' }}
           role="status"
           aria-live="polite"

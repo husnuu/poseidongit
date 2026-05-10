@@ -71,6 +71,14 @@ function getUniqueClassNames(bookings: AdminBookingRow[]): string[] {
   return Array.from(set).sort()
 }
 
+function sortBookingsAlphabeticallyByPassenger(bookings: AdminBookingRow[]): AdminBookingRow[] {
+  return [...bookings].sort((a, b) => {
+    const label = (row: AdminBookingRow) =>
+      `${row.customer.lastName} ${row.customer.firstName}`.trim().toLocaleLowerCase('tr-TR')
+    return label(a).localeCompare(label(b), 'tr-TR', { sensitivity: 'base' })
+  })
+}
+
 async function exportToPdf(
   bookings: AdminBookingRow[],
   dateLabel: string,
@@ -78,34 +86,47 @@ async function exportToPdf(
   tourLabel: string,
   adminEmail?: string
 ): Promise<void> {
+  const sortedBookings = sortBookingsAlphabeticallyByPassenger(bookings)
+
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   await loadTurkishFont(doc, adminEmail)
 
   const pageW = doc.internal.pageSize.getWidth()
-  const margin = 14
-  const headerH = 22
+  const margin = 12
+  const topBandH = 16
+  const metaBlockH = 11
+  const metaTop = topBandH + 6
 
-  // Üst başlık bandı
-  doc.setFillColor(30, 58, 138)
-  doc.rect(0, 0, pageW, headerH, 'F')
-  doc.setTextColor(255, 255, 255)
+  // Üst başlık — koyu şerit
+  doc.setFillColor(15, 23, 42)
+  doc.rect(0, 0, pageW, topBandH, 'F')
+  doc.setFillColor(37, 99, 235)
+  doc.rect(0, topBandH - 1.2, pageW, 1.2, 'F')
+
+  doc.setTextColor(248, 250, 252)
   doc.setFont(FONT_DISPLAY_NAME, 'normal')
-  doc.setFontSize(16)
-  doc.text('Rezervasyon Listesi', margin, 14)
-  doc.setFontSize(9)
+  doc.setFontSize(13)
+  doc.text('Rezervasyon listesi', margin + 2, topBandH - 6)
+  doc.setFontSize(8.5)
+  doc.setTextColor(148, 163, 184)
   const siteNamePdf = process.env.NEXT_PUBLIC_SITE_NAME || 'Site'
-  doc.text(siteNamePdf, pageW - margin - doc.getTextWidth(siteNamePdf), 14)
+  doc.text(siteNamePdf, pageW - margin - 2 - doc.getTextWidth(siteNamePdf), topBandH - 6)
 
-  // Filtre satırı
-  doc.setTextColor(100, 116, 139)
-  doc.setFontSize(9)
-  const filterText = `Tarih: ${dateLabel || 'Tümü'}  ·  Tur: ${tourLabel || 'Tümü'}  ·  Sınıf: ${classLabel || 'Tümü'}  ·  Toplam: ${bookings.length} kayıt`
-  doc.text(filterText, margin, headerH + 8)
+  // Filtre bilgisi — açık gri blok
+  doc.setFillColor(241, 245, 249)
+  doc.rect(margin, metaTop - 7, pageW - margin * 2, metaBlockH, 'F')
+  doc.setDrawColor(226, 232, 240)
+  doc.rect(margin, metaTop - 7, pageW - margin * 2, metaBlockH, 'S')
+
+  doc.setFontSize(8)
+  doc.setTextColor(71, 85, 105)
+  const filterText = `Yolculara göre A–Z sıralı · Tarih: ${dateLabel || 'Tümü'} · Tur: ${tourLabel || 'Tümü'} · Sınıf: ${classLabel || 'Tümü'} · Kayıt: ${sortedBookings.length}`
+  doc.text(filterText, margin + 3, metaTop)
 
   const head = [
     ['Tarih', 'Tur', 'Ad Soyad', 'E-posta', 'Telefon', 'Kişi', 'Sınıf', 'Toplam', 'Durum'],
   ]
-  const body = bookings.map((b) => [
+  const body = sortedBookings.map((b) => [
     b.date,
     b.tourTitle,
     `${b.customer.firstName} ${b.customer.lastName}`,
@@ -117,7 +138,7 @@ async function exportToPdf(
     STATUS_LABELS[b.status] ?? b.status,
   ])
 
-  const startY = headerH + 14
+  const startY = metaTop + metaBlockH + 4
   doc.setFont(FONT_DISPLAY_NAME, 'normal')
 
   autoTable(doc, {
@@ -126,39 +147,49 @@ async function exportToPdf(
     startY,
     theme: 'striped',
     styles: {
-      fontSize: 9,
+      fontSize: 8.5,
       font: FONT_DISPLAY_NAME,
       fontStyle: 'normal',
-      cellPadding: { top: 3, right: 4, bottom: 3, left: 4 },
+      cellPadding: { top: 3.5, right: 4, bottom: 3.5, left: 4 },
+      textColor: [51, 65, 85],
+      lineColor: [226, 232, 240],
+      lineWidth: { top: 0.08, bottom: 0.08, left: 0.08, right: 0.08 },
+      valign: 'middle',
     },
     headStyles: {
-      fillColor: [51, 65, 85],
-      textColor: [255, 255, 255],
+      fillColor: [248, 250, 252],
+      textColor: [15, 23, 42],
       font: FONT_DISPLAY_NAME,
       fontStyle: 'normal',
-      fontSize: 9,
+      fontSize: 8,
+      cellPadding: { top: 4, right: 4, bottom: 4, left: 4 },
+      lineColor: [226, 232, 240],
+      lineWidth: { top: 0.12, bottom: 0.15, left: 0.08, right: 0.08 },
     },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
+    alternateRowStyles: { fillColor: [252, 252, 253] },
     columnStyles: {
       0: { cellWidth: 22 },
-      1: { cellWidth: 38 },
-      2: { cellWidth: 32 },
-      3: { cellWidth: 42 },
+      1: { cellWidth: 36 },
+      2: { cellWidth: 34 },
+      3: { cellWidth: 41 },
       4: { cellWidth: 28 },
-      5: { cellWidth: 12 },
+      5: { cellWidth: 11, halign: 'center' },
       6: { cellWidth: 22 },
-      7: { cellWidth: 24 },
-      8: { cellWidth: 20 },
+      7: { cellWidth: 26, halign: 'right' },
+      8: { cellWidth: 21 },
     },
     margin: { left: margin, right: margin },
     didDrawPage: (data) => {
-      doc.setFontSize(8)
-      doc.setTextColor(148, 163, 184)
+      doc.setDrawColor(241, 245, 249)
       const pageH = doc.internal.pageSize.getHeight()
+      doc.line(margin, pageH - 13, pageW - margin, pageH - 13)
+
+      doc.setFontSize(7.5)
+      doc.setTextColor(148, 163, 184)
       doc.text(
-        `Dışa aktarma: ${new Date().toLocaleDateString('tr-TR')}  ·  Sayfa ${data.pageNumber}`,
-        margin,
-        pageH - 8
+        `Çıktı: ${new Date().toLocaleString('tr-TR')} · Sayfa ${data.pageNumber}`,
+        margin + 2,
+        pageH - 7
       )
     },
     willDrawCell: () => {
@@ -454,7 +485,11 @@ export default function AdminBookingsPage() {
           refundReason: typeof b.refundReason === 'string' ? b.refundReason : null,
           refundedBy: typeof b.refundedBy === 'string' ? b.refundedBy : null,
           refundRequestedAt:
-            typeof b.refundRequestedAt === 'string' ? b.refundRequestedAt : null,
+            typeof b.refundRequestedAt === 'string'
+              ? b.refundRequestedAt
+              : typeof b.refund_requested_at === 'string'
+                ? b.refund_requested_at
+                : null,
         }
         })
         setBookings(startAfter ? (prev) => [...prev, ...list] : list)

@@ -13,6 +13,19 @@ export default defineType({
       fields: [
         defineField({ name: 'metaTitle', title: 'Meta başlık', type: 'string' }),
         defineField({ name: 'metaDescription', title: 'Meta açıklama', type: 'text', rows: 3 }),
+        defineField({
+          name: 'metaKeywords',
+          title: 'Anahtar kelimeler (opsiyonel)',
+          type: 'text',
+          rows: 2,
+        }),
+        defineField({ name: 'ogTitle', title: 'OG / sosyal başlık (opsiyonel)', type: 'string' }),
+        defineField({
+          name: 'ogDescription',
+          title: 'OG / sosyal açıklama (opsiyonel)',
+          type: 'text',
+          rows: 2,
+        }),
       ],
     }),
     defineField({

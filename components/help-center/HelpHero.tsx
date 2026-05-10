@@ -16,9 +16,9 @@ export default function HelpHero({ title, description, eyebrow, heroImage, child
 
   return (
     <header
-      className="relative overflow-hidden text-white"
+      className="relative overflow-hidden text-white rounded-b-[2rem] sm:rounded-b-[2.25rem]"
       style={{
-        background: imgUrl ? undefined : 'linear-gradient(135deg, #131719 0%, #1e3a5f 45%, #131719 100%)',
+        background: imgUrl ? undefined : 'linear-gradient(145deg, #0f172a 0%, #1e3a5f 42%, #172554 100%)',
       }}
     >
       {imgUrl ? (
@@ -34,7 +34,7 @@ export default function HelpHero({ title, description, eyebrow, heroImage, child
             blurDataURL={lqip ?? undefined}
           />
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/40 to-black/25"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/30"
             aria-hidden
           />
         </>
@@ -51,26 +51,28 @@ export default function HelpHero({ title, description, eyebrow, heroImage, child
         aria-hidden
       />
 
-      <div className="relative mx-auto max-w-5xl px-4 pb-14 pt-16 sm:px-6 sm:pb-16 sm:pt-20 lg:px-8">
+      <div className="relative mx-auto max-w-5xl px-4 pb-14 pt-14 sm:px-6 sm:pb-16 sm:pt-16 lg:px-8 lg:pt-20">
         {eyebrow ? (
-          <p className="mb-2 text-xs font-medium uppercase tracking-widest text-white/80">{eyebrow}</p>
+          <p className="mb-3 inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90 backdrop-blur-sm">
+            {eyebrow}
+          </p>
         ) : null}
         <h1
-          className="max-w-4xl text-balance text-[32px] font-black uppercase leading-[1.2] sm:text-[40px] md:text-[48px] lg:text-[52px]"
+          className="max-w-4xl text-balance text-[30px] font-black uppercase leading-[1.15] tracking-tight sm:text-[40px] md:text-[46px] lg:text-[50px]"
           style={{
             fontFamily: 'var(--font-family-title, var(--font-family))',
             fontWeight: 900,
-            textShadow: '0 6px 12px rgba(0, 0, 0, 0.16)',
+            textShadow: '0 8px 24px rgba(0, 0, 0, 0.22)',
           }}
         >
           {title}
         </h1>
         {description ? (
-          <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-white/85 md:text-lg">
+          <p className="mt-5 max-w-2xl text-pretty text-[15px] leading-relaxed text-white/88 md:text-lg md:leading-relaxed">
             {description}
           </p>
         ) : null}
-        {children ? <div className="mt-8 sm:mt-10">{children}</div> : null}
+        {children ? <div className="mt-9 sm:mt-11">{children}</div> : null}
       </div>
     </header>
   )

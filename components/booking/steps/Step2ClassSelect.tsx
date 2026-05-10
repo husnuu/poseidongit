@@ -538,7 +538,6 @@ export default function Step2ClassSelect({
                     ],
                   })
                 }
-                onAfterSelect={advance}
                 locaUi={ui.firstClassLoca}
               />
             </div>

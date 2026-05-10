@@ -58,7 +58,7 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
   const eyebrow = page?.heroEyebrow?.trim() || null
 
   return (
-    <div className="min-h-screen bg-zinc-50/80">
+    <div className="min-h-screen bg-gradient-to-b from-zinc-100/90 via-white to-zinc-50">
       <HelpHero
         title={title}
         description={desc}
@@ -78,33 +78,35 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
         />
       </HelpHero>
 
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:max-w-6xl lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 pb-16 pt-12 sm:px-6 lg:max-w-6xl lg:px-8 lg:pb-20 lg:pt-14">
         <section aria-labelledby="help-categories-heading">
-          <header className="mb-8 md:mb-10">
+          <header className="mb-10 md:mb-12">
             <p
-              className="mb-1 text-sm uppercase tracking-[0.1em]"
-              style={{ color: 'var(--primary)' }}
+              className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1e3a8a]"
             >
               {ui.homeSectionEyebrow}
             </p>
-            <h2
-              id="help-categories-heading"
-              className="text-[28px] font-black uppercase leading-[1.15] sm:text-[32px] md:text-[36px]"
-              style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
-            >
-              <span style={{ color: '#1e3a8a' }}>{ui.homeTopicsHeadingPrimary}</span>
-              <span style={{ color: '#000' }}>{ui.homeTopicsHeadingSecondary}</span>
-            </h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+              <h2
+                id="help-categories-heading"
+                className="max-w-3xl text-[26px] font-black uppercase leading-[1.12] tracking-tight sm:text-[30px] md:text-[34px]"
+                style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+              >
+                <span style={{ color: '#1e3a8a' }}>{ui.homeTopicsHeadingPrimary}</span>
+                <span className="text-zinc-900">{ui.homeTopicsHeadingSecondary}</span>
+              </h2>
+              <div className="hidden h-px flex-1 bg-gradient-to-r from-[#1e3a8a]/25 to-transparent sm:block md:mb-2" aria-hidden />
+            </div>
           </header>
 
           {filtered.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-6 py-14 text-center">
-              <p className="text-base leading-6" style={{ color: 'var(--secondary, #131719)' }}>
+            <div className="rounded-2xl border border-dashed border-zinc-200/90 bg-white/90 px-6 py-16 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+              <p className="mx-auto max-w-md text-[15px] leading-relaxed text-zinc-600">
                 {search.trim() ? ui.homeEmptySearch : ui.homeEmptyNoArticles}
               </p>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-3 lg:gap-8">
               {filtered.map((c) =>
                 c.slug ? (
                   <HelpCategoryCard
@@ -127,7 +129,7 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
 
         <HelpSupportCTA
           whatsappHref={whatsappHref}
-          className="mt-14"
+          className="mt-16 lg:mt-20"
           heading={ui.supportHeading}
           description={ui.supportBody}
           whatsappCta={ui.supportWhatsappCta}

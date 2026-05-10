@@ -311,7 +311,7 @@ function buildGalleryHeroImages(tour: Tour, tourUi: ReturnType<typeof getTourPag
     (img): img is GalleryImage => Boolean(img?.asset)
   )
   return all.map((img, i) => ({
-    src: urlFor(img.asset!).width(1200).url(),
+    src: urlFor(img.asset!).width(1920).quality(85).auto('format').url(),
     blurDataURL: img.metadata?.lqip ?? null,
     alt: tourUi.galleryImageAlt(tour.title, i),
   }))
@@ -447,7 +447,7 @@ export default async function TourPage({
 
         <ItineraryTimeline items={itineraryTimelineItems} sectionTitle={tourUi.itineraryTitle} />
 
-        <PoseidonSecure locale={locale} />
+        <PoseidonSecure locale={locale} layout="contained" />
 
         {reelsSlides.length > 0 ? (
           <TourReelsRail slides={reelsSlides} locale={locale} />

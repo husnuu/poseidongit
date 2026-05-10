@@ -9,7 +9,7 @@ const ICON_WRAP = 'flex h-10 w-10 items-center justify-center rounded-lg'
 
 export default function BookingsSummaryCards({ stats }: { stats: BookingsStats }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <div className={CARD_CLASS}>
         <div className={`${ICON_WRAP} bg-teal-100 text-teal-600`}>
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -47,23 +47,6 @@ export default function BookingsSummaryCards({ stats }: { stats: BookingsStats }
           {stats.todayBookings.toLocaleString('tr-TR')}
         </p>
         <p className="text-sm text-slate-500">Bugünkü Rezervasyon</p>
-      </div>
-
-      <div className={CARD_CLASS}>
-        <div className={`${ICON_WRAP} bg-emerald-100 text-emerald-600`}>
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </div>
-        <p className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
-          {stats.totalRevenue.toLocaleString('tr-TR')} {stats.currency}
-        </p>
-        <p className="text-sm text-slate-500">Toplam Ciro</p>
       </div>
 
       <div className={CARD_CLASS}>

@@ -31,23 +31,23 @@ export default function HelpSupportCTA({
 }: Props) {
   return (
     <aside
-      className={`border-t border-zinc-200/80 pt-10 ${className}`}
+      className={`rounded-2xl border border-[#1e3a8a]/10 bg-gradient-to-br from-[#eff6ff]/90 via-white to-zinc-50/80 p-6 shadow-[0_8px_32px_-12px_rgba(30,58,138,0.12)] sm:p-8 ${className}`}
       aria-labelledby="help-support-cta-heading"
     >
       <h2
         id="help-support-cta-heading"
-        className="text-lg font-black uppercase leading-snug tracking-wide sm:text-xl"
-        style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: '#1e3a5f' }}
+        className="text-lg font-black uppercase leading-snug tracking-wide text-[#1e3a5f] sm:text-xl"
+        style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
       >
         {heading}
       </h2>
       <p
-        className="mt-2 max-w-xl text-base leading-6"
-        style={{ fontFamily: 'var(--font-family), sans-serif', color: 'var(--secondary, #131719)' }}
+        className="mt-3 max-w-xl text-[15px] leading-relaxed text-zinc-700 sm:text-base"
+        style={{ fontFamily: 'var(--font-family), sans-serif' }}
       >
         {description}
       </p>
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         {whatsappHref ? (
           <Link
             href={whatsappHref}

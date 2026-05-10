@@ -11,10 +11,18 @@ type Props = {
   busyId?: string | null
 }
 
-function formatDateTime(iso?: string | null): string {
+function formatRefundRequestSentAt(iso?: string | null): string {
   if (!iso) return '—'
   try {
-    return new Date(iso).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })
+    return new Date(iso).toLocaleString('tr-TR', {
+      timeZone: 'Europe/Istanbul',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
   } catch {
     return iso
   }
@@ -59,7 +67,7 @@ export default function PendingRefundRequestsCard({
               <th className="px-3 py-2">Tarih / Tur</th>
               <th className="px-3 py-2">Müşteri</th>
               <th className="px-3 py-2 text-right">Talep Tutarı</th>
-              <th className="px-3 py-2">Talep Zamanı</th>
+              <th className="px-3 py-2">Talep gönderildi (tarih / saat)</th>
               <th className="px-3 py-2">Sebep</th>
               <th className="px-3 py-2 text-right">İşlem</th>
             </tr>
@@ -92,8 +100,8 @@ export default function PendingRefundRequestsCard({
                   <td className="px-3 py-3 align-top text-right font-semibold text-orange-800">
                     {amount.toLocaleString('tr-TR')} {b.currency}
                   </td>
-                  <td className="px-3 py-3 align-top text-xs text-zinc-600">
-                    {formatDateTime(b.refundRequestedAt)}
+                  <td className="px-3 py-3 align-top text-sm tabular-nums text-zinc-700">
+                    {formatRefundRequestSentAt(b.refundRequestedAt)}
                   </td>
                   <td className="px-3 py-3 align-top text-xs text-zinc-600">
                     {b.refundReason?.trim() ? (

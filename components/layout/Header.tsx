@@ -2,6 +2,7 @@ import { client } from '@/lib/sanity'
 import { siteSettingsQuery } from '@/lib/queries'
 import { getSiteName } from '@/lib/seo'
 import type { SiteLocale } from '@/lib/i18n/config'
+import { headerNavWithHelpCenter } from '@/lib/i18n/headerNavWithHelpCenter'
 import type { AnnouncementBarData } from './announcementBarTypes'
 import HeaderClient from './HeaderClient'
 
@@ -48,7 +49,11 @@ export default async function Header({ locale }: { locale: SiteLocale }) {
       )
     }
     const bar = settings.announcementBar ?? null
-    return <HeaderClient locale={locale} settings={settings} announcementBar={bar} />
+    const settingsWithHelp = {
+      ...settings,
+      headerNav: headerNavWithHelpCenter(settings.headerNav),
+    }
+    return <HeaderClient locale={locale} settings={settingsWithHelp} announcementBar={bar} />
   } catch {
     const fallbackName = getSiteName() || 'Site'
     return (

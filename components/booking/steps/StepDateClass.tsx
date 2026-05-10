@@ -33,8 +33,6 @@ interface StepDateClassProps {
   onPricingComputed: (pricing: PricingSummary | null) => void
   /** Rezervasyon sonrası anlık kalan kontenjan için (Sanity kapasitesi - API used - bu). */
   optimisticUsed?: UsedByDateAndClass | null
-  /** First Class loca seçildikten sonra bir sonraki adıma geçmek için (opsiyonel). */
-  onProceedToNextStep?: () => void
   /** Step 2'ye her girildiğinde değişirse availability yeniden çekilir (dolu loca'lar güncel olsun). */
   availabilityInvalidateKey?: string
   ui: BookingWizardUi
@@ -46,7 +44,6 @@ export default function StepDateClass({
   onUpdate,
   onPricingComputed,
   optimisticUsed,
-  onProceedToNextStep,
   availabilityInvalidateKey,
   ui,
 }: StepDateClassProps) {
@@ -459,7 +456,6 @@ export default function StepDateClass({
               requiredCount={requiredLocas}
               onToggle={handleToggle}
               onReplace={(removeId, addId) => onUpdate({ firstClassLocas: [...(state.firstClassLocas ?? []).filter((x) => x !== removeId), addId.trim().toUpperCase()] })}
-              onAfterSelect={onProceedToNextStep}
               locaUi={ui.firstClassLoca}
             />
           </div>

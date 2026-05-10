@@ -1,15 +1,15 @@
-/* Tam genişlik şerit (kart değil), tur sayfası kolonundan taşır */
+/* Tur sayfası ana kolonu ile aynı genişlik — viewport’a taşmaz */
 .band {
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
   position: relative;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
+  left: auto;
+  right: auto;
+  margin-left: 0;
+  margin-right: 0;
   background: var(--section-turquoise-bg, #dff4fc);
-  border-top: 1px solid rgba(30, 58, 95, 0.06);
-  border-bottom: 1px solid rgba(30, 58, 95, 0.06);
-  border-radius: 0;
+  border: 1px solid rgba(30, 58, 95, 0.06);
+  border-radius: 12px;
   box-shadow: none;
   padding: 2.75rem 0;
   margin-top: 2.5rem;
@@ -18,15 +18,23 @@
 }
 
 .bandInner {
-  max-width: 1360px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   padding: 0 1rem;
   position: relative;
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 640px) {
   .bandInner {
-    padding: 0 1.25rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bandInner {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 }
 

@@ -1,6 +1,7 @@
 .wrapper {
   margin: 48px 0;
-  max-width: 977px;
+  width: 100%;
+  max-width: none;
 }
 
 .heading {

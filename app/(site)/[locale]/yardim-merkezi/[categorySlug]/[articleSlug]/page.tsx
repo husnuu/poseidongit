@@ -130,11 +130,11 @@ export default async function HelpArticlePage({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50/80">
+    <div className="min-h-screen bg-gradient-to-b from-zinc-100/90 via-white to-zinc-50">
       <JsonLd data={buildBreadcrumbSchema(breadcrumbItems)} />
       <JsonLd data={articleLd} />
 
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         <Breadcrumb
           className="mb-8"
           items={[
@@ -148,27 +148,27 @@ export default async function HelpArticlePage({
           ]}
         />
 
-        <article>
-          <header className="border-b border-zinc-200 pb-8">
-            <p className="text-sm font-semibold uppercase tracking-wide">
+        <article className="overflow-hidden rounded-2xl border border-zinc-100/90 bg-white/90 shadow-[0_4px_32px_-10px_rgba(15,23,42,0.09)] backdrop-blur-sm">
+          <header className="border-b border-zinc-100/90 bg-gradient-to-br from-white to-slate-50/80 px-5 pb-8 pt-7 sm:px-8 sm:pb-10 sm:pt-9">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1e3a8a]">
               <Link
                 href={categoryPath}
-                className="rounded-sm hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a8a] focus-visible:ring-offset-2"
-                style={{ fontFamily: 'var(--font-family), sans-serif', color: 'var(--primary)' }}
+                className="rounded-sm transition-colors hover:text-[#172554] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a8a] focus-visible:ring-offset-2"
+                style={{ fontFamily: 'var(--font-family), sans-serif' }}
               >
                 {article.category?.title ?? ui.breadcrumbCategoryFallback}
               </Link>
             </p>
             <h1
-              className="mt-2 text-balance text-3xl font-bold tracking-tight text-[#1e3a5f] sm:text-4xl"
+              className="mt-3 text-balance text-[1.65rem] font-bold tracking-tight text-[#1e3a5f] sm:text-3xl md:text-[2rem]"
               style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
             >
               {article.title}
             </h1>
             {article.shortDescription ? (
               <p
-                className="mt-4 text-lg leading-relaxed"
-                style={{ fontFamily: 'var(--font-family), sans-serif', color: 'var(--secondary, #131719)' }}
+                className="mt-4 text-[15px] leading-relaxed text-zinc-700 sm:text-lg"
+                style={{ fontFamily: 'var(--font-family), sans-serif' }}
               >
                 {article.shortDescription}
               </p>
@@ -176,13 +176,13 @@ export default async function HelpArticlePage({
           </header>
 
           {body.length > 0 ? (
-            <div className="prose-help max-w-none pt-8">
+            <div className="prose-help max-w-none px-5 pb-10 pt-8 sm:px-8 sm:pb-12">
               <PortableText value={body} components={helpArticlePortableComponents} />
             </div>
           ) : (
             <p
-              className="pt-8"
-              style={{ fontFamily: 'var(--font-family), sans-serif', color: 'var(--muted, #81848b)' }}
+              className="px-5 pb-10 pt-8 text-zinc-500 sm:px-8"
+              style={{ fontFamily: 'var(--font-family), sans-serif' }}
             >
               {ui.articleBodyEmpty}
             </p>
@@ -190,24 +190,24 @@ export default async function HelpArticlePage({
         </article>
 
         {related.length > 0 ? (
-          <section className="mt-14 border-t border-zinc-200 pt-10" aria-labelledby="related-help">
+          <section className="mt-12 rounded-2xl border border-zinc-100/90 bg-white/85 px-5 py-8 shadow-[0_4px_24px_-10px_rgba(15,23,42,0.07)] sm:mt-14 sm:px-7 sm:py-9" aria-labelledby="related-help">
             <h2
               id="related-help"
-              className="text-lg font-black uppercase tracking-wide text-[#1e3a5f] sm:text-xl"
+              className="text-base font-black uppercase tracking-wide text-[#1e3a5f] sm:text-lg"
               style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
             >
               {ui.relatedArticlesHeading}
             </h2>
-            <ul className="mt-4 divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-white">
+            <ul className="mt-5 divide-y divide-zinc-100/90 overflow-hidden rounded-xl border border-zinc-100/80 bg-white">
               {related.map((r) =>
                 r.slug && r.categorySlug ? (
                   <li key={r._id}>
                     <Link
                       href={withLocalePath(locale, `/yardim-merkezi/${r.categorySlug}/${r.slug}`)}
-                      className="block rounded-xl px-4 py-3 text-zinc-900 transition-colors hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1e3a8a]"
+                      className="block px-4 py-3.5 text-[15px] text-zinc-900 transition-colors hover:bg-slate-50/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1e3a8a] sm:px-5"
                       style={{ fontFamily: 'var(--font-family), sans-serif' }}
                     >
-                      <span className="font-medium hover:text-[#1e3a8a]">{r.title}</span>
+                      <span className="font-medium transition-colors hover:text-[#1e3a8a]">{r.title}</span>
                     </Link>
                   </li>
                 ) : null,
@@ -218,7 +218,7 @@ export default async function HelpArticlePage({
 
         <HelpSupportCTA
           whatsappHref={whatsappHref}
-          className="mt-14"
+          className="mt-12 sm:mt-16"
           heading={ui.supportHeading}
           description={ui.supportBody}
           whatsappCta={ui.supportWhatsappCta}

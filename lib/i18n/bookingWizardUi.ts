@@ -13,8 +13,6 @@ export type FirstClassLocaUi = {
   twoPerson: string
   bowRowLabel: string
   selectedOfRequired: (selected: number, required: number) => string
-  confirmContinueAria: string
-  continue: string
 }
 
 export type BookingWizardUi = {
@@ -175,8 +173,6 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       twoPerson: '2 Kişilik',
       bowRowLabel: 'Teknenin önü · 1. Sıra',
       selectedOfRequired: (s, r) => `${s} / ${r} loca seçildi`,
-      confirmContinueAria: 'Seçimi onayla ve devam et',
-      continue: 'Devam',
     },
     rulesTitleFallback: 'Rezervasyon Bilgileri',
     guestCountTitle: 'Kişi Sayısı',
@@ -334,8 +330,6 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       twoPerson: '2 guests',
       bowRowLabel: 'Bow · Row 1',
       selectedOfRequired: (s, r) => `${s} / ${r} booths selected`,
-      confirmContinueAria: 'Confirm selection and continue',
-      continue: 'Continue',
     },
     rulesTitleFallback: 'Booking information',
     guestCountTitle: 'Number of guests',
@@ -492,8 +486,6 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       twoPerson: '2 Personen',
       bowRowLabel: 'Bug · Reihe 1',
       selectedOfRequired: (s, r) => `${s} / ${r} Logen gewählt`,
-      confirmContinueAria: 'Auswahl bestätigen und fortfahren',
-      continue: 'Weiter',
     },
     rulesTitleFallback: 'Buchungsinformationen',
     guestCountTitle: 'Personenanzahl',

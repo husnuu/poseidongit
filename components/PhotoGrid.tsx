@@ -208,7 +208,8 @@ export default function PhotoGrid({ images, tourTitle, heroBadges, locale }: Pho
               alt={images[lightboxIndex].alt}
               fill
               className={styles.lightboxImage}
-              sizes="90vw"
+              sizes="(max-width: 768px) 100vw, min(1920px, 96vw)"
+              priority
             />
           </div>
 

@@ -35,13 +35,15 @@ export const helpArticlePortableComponents: PortableTextComponents = {
       </p>
     ),
     blockquote: ({ children }) => (
-      <blockquote className="mb-4 border-l-4 border-[#2168b8]/40 pl-4 text-zinc-600">{children}</blockquote>
+      <blockquote className="mb-5 rounded-r-lg border-l-[3px] border-[#1e3a8a]/35 bg-slate-50/90 py-3 pl-4 pr-3 text-[15px] leading-relaxed text-zinc-700">
+        {children}
+      </blockquote>
     ),
   },
   list: {
     bullet: ({ children }) => (
       <ul
-        className="mb-4 ml-5 list-disc space-y-1"
+        className="mb-5 ml-1 list-disc space-y-2.5 pl-5 marker:text-[#1e3a8a]/70"
         style={{ fontFamily: 'var(--font-family), sans-serif', color: 'var(--secondary, #131719)' }}
       >
         {children}
@@ -49,7 +51,7 @@ export const helpArticlePortableComponents: PortableTextComponents = {
     ),
     number: ({ children }) => (
       <ol
-        className="mb-4 ml-5 list-decimal space-y-1"
+        className="mb-5 ml-1 list-decimal space-y-2.5 pl-5 marker:font-semibold marker:text-[#1e3a8a]"
         style={{ fontFamily: 'var(--font-family), sans-serif', color: 'var(--secondary, #131719)' }}
       >
         {children}
