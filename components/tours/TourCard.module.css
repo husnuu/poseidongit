@@ -6,7 +6,7 @@
   text-transform: uppercase;
   letter-spacing: 0.02em;
   -webkit-text-stroke: 0.02em currentColor;
-  color: var(--title-color, #1e3a5f);
+  color: var(--title-color, #1e3a8a);
   margin: 0;
   font-size: 1.125rem;
 }

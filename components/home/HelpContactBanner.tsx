@@ -42,6 +42,12 @@ export default function HelpContactBanner({
   openingHoursLine,
 }: HelpContactBannerProps) {
   const t = getHelpBannerStrings(locale)
+  const localeUpper = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
+  const titleUpper = t.heading.trim().toLocaleUpperCase(localeUpper)
+  const words = titleUpper.split(/\s+/).filter(Boolean)
+  const firstTwo = words.slice(0, 2).join(' ')
+  const nextTwo = words.slice(2, 4).join(' ')
+  const rest = words.slice(4).join(' ')
   const waUrl = buildWhatsAppLink(chatValue, phone)
   const telHref = phone ? `tel:${phone.replace(/\s/g, '')}` : null
   const numberForDisplay = phone?.trim() || chatValue?.trim() || ''
@@ -74,10 +80,17 @@ export default function HelpContactBanner({
           <div className="min-w-0 text-center lg:text-left">
             <h2
               id="help-banner-heading"
-              className="mx-auto max-w-xl text-xl font-black uppercase leading-tight tracking-tight text-[#1e3a5f] sm:text-2xl md:text-[30px] lg:mx-0 lg:max-w-none"
-              style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
+              className="mx-auto max-w-xl text-[26px] font-black uppercase leading-[1.15] tracking-tight sm:text-[30px] md:text-[34px] lg:text-[38px] lg:mx-0 lg:max-w-none"
+              style={{
+                fontFamily: 'var(--font-family-title, var(--font-family))',
+                fontWeight: 900,
+              }}
             >
-              {t.heading}
+              {firstTwo ? <span style={{ color: '#1e3a8a' }}>{firstTwo}</span> : null}
+              {nextTwo ? (
+                <span style={{ color: '#000' }}>{(firstTwo ? ' ' : '') + nextTwo}</span>
+              ) : null}
+              {rest ? <span style={{ color: '#000' }}>{' ' + rest}</span> : null}
             </h2>
             <p
               className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-zinc-800 md:text-[17px] lg:mx-0 lg:max-w-xl"

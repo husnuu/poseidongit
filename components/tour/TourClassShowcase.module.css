@@ -239,7 +239,7 @@
 .caption {
   margin-top: 0.5rem;
   font-size: 0.85rem;
-  color: #64748b;
+  color: #000;
   text-align: center;
 }
 
@@ -265,7 +265,7 @@
   line-height: 1.1;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: var(--title-color, #1e3a5f);
+  color: #000;
   margin: 0;
 }
 

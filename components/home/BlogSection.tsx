@@ -85,7 +85,7 @@ export default function BlogSection({
         <header className="mb-8 md:mb-10">
           <h2
             id="blog-section-heading"
-            className="mb-4 text-[30px] font-black uppercase leading-[1.15] sm:text-[34px] md:mb-3 md:text-[38px] lg:text-[42px]"
+            className="mb-4 text-[26px] font-black uppercase leading-[1.15] sm:text-[30px] md:mb-3 md:text-[34px] lg:text-[38px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
           >
             {firstTwo && <span style={{ color: '#1e3a8a' }}>{firstTwo}</span>}
