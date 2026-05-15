@@ -9,6 +9,8 @@ import HeroBanner from '@/components/home/HeroBanner'
 import FeatureBar from '@/components/home/FeatureBar'
 import PopularToursSection from '@/components/home/PopularToursSection'
 import PopularYachtsSection from '@/components/home/PopularYachtsSection'
+import HomeClassesSection, { type HomeClassesSectionData } from '@/components/home/HomeClassesSection'
+import type { TourClassItem } from '@/components/tour/TourClassShowcase'
 import type { HomePopularYachtCardData } from '@/components/home/HomePopularYachtCard'
 import AboutTeaserSplit from '@/components/home/AboutTeaserSplit'
 import type { HeroData } from '@/components/home/HeroBanner'
@@ -303,6 +305,8 @@ type HomePageHeroResult = {
   hero: HeroData | null
   featureBar?: FeatureBarItem[] | null
   popularToursSection?: PopularToursSectionRaw | null
+  classesSection?: HomeClassesSectionData | null
+  classesAutoFromTour?: { ticketClasses?: Array<Record<string, unknown>> | null } | null
   popularYachtsSection?: PopularYachtsSectionRaw | null
   aboutTeaser?: AboutTeaserData | null
   blogSection?: BlogSectionRaw | null
@@ -454,6 +458,67 @@ function mapBlogSection(raw: BlogSectionRaw | null, locale: SiteLocale): BlogSec
   return { ...raw, posts }
 }
 
+/** Bilet sınıfları bölümü: manuel girilmemişse otomatik turdan üretir. */
+function resolveHomeClassesSection(
+  manual: HomeClassesSectionData | null | undefined,
+  auto: { ticketClasses?: Array<Record<string, unknown>> | null } | null | undefined,
+): HomeClassesSectionData | null {
+  const manualEnabled = manual?.enabled !== false
+  if (!manualEnabled) return null
+
+  const orderKey = (k: string | null | undefined): number => {
+    const v = (k || '').trim().toLowerCase()
+    if (v === 'eco' || v.startsWith('eco')) return 0
+    if (v === 'premium' || v.startsWith('prem')) return 1
+    if (v === 'first' || v.startsWith('first')) return 2
+    return 9
+  }
+
+  const defaultLabelFor = (k: string | null | undefined): string => {
+    const v = (k || '').trim().toLowerCase()
+    if (v === 'eco') return 'Eco'
+    if (v === 'premium') return 'Premium'
+    if (v === 'first') return 'First'
+    return k || ''
+  }
+
+  const manualItems = (manual?.items ?? []).filter((i) => i && i.key)
+  if (manualItems.length > 0) {
+    const items = [...manualItems]
+      .sort((a, b) => orderKey(a.key) - orderKey(b.key))
+      .map((i) => ({ ...i, label: (i.label ?? '').trim() || defaultLabelFor(i.key) }))
+    return { ...manual, enabled: true, items }
+  }
+
+  const autoItems = Array.isArray(auto?.ticketClasses) ? auto!.ticketClasses! : []
+  if (autoItems.length === 0) return null
+  const items = autoItems
+    .map((row) => {
+      const r = row as Record<string, unknown>
+      const key = typeof r.key === 'string' ? r.key.trim() : ''
+      if (!key) return null
+      const label =
+        (typeof r.label === 'string' ? r.label.trim() : '') || defaultLabelFor(key)
+      const description = typeof r.description === 'string' ? r.description : null
+      const bullets = Array.isArray(r.bullets)
+        ? (r.bullets.filter((b) => typeof b === 'string') as string[])
+        : null
+      const classImage = r.classImage ?? null
+      const classImages = Array.isArray(r.classImages) ? r.classImages : null
+      return { key, label, description, bullets, classImage, classImages } as TourClassItem
+    })
+    .filter((i): i is TourClassItem => !!i)
+    .filter((i) => orderKey(i.key) < 9)
+    .sort((a, b) => orderKey(a.key) - orderKey(b.key))
+  if (items.length === 0) return null
+  return {
+    enabled: true,
+    heading: manual?.heading ?? null,
+    subtitle: manual?.subtitle ?? null,
+    items,
+  }
+}
+
 function mapRouteSection(raw: RouteSectionRaw | null): {
   heading: string
   description: string
@@ -485,6 +550,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   let hero: HeroData | null = null
   let featureBar: FeatureBarItem[] | null = null
   let popularToursSection: PopularToursSectionData | null = null
+  let classesSection: HomeClassesSectionData | null = null
   let popularYachtsSection: PopularYachtsSectionData | null = null
   let aboutTeaser: AboutTeaserData | null = null
   let blogSection: BlogSectionData | null = null
@@ -509,6 +575,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     hero = localizeHero(data?.hero ?? null, locale)
     featureBar = data?.featureBar ?? null
     popularToursSection = mapPopularToursToCardItems(data?.popularToursSection ?? null, locale)
+    classesSection = resolveHomeClassesSection(data?.classesSection ?? null, data?.classesAutoFromTour ?? null)
     popularYachtsSection = mapPopularYachtsSection(data?.popularYachtsSection ?? null, locale)
     aboutTeaser = localizeAboutTeaser(data?.aboutTeaser ?? null, locale)
     const blogMapped = mapBlogSection(data?.blogSection ?? null, locale)
@@ -532,6 +599,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     hero = null
     featureBar = null
     popularToursSection = null
+    classesSection = null
     popularYachtsSection = null
     aboutTeaser = null
     blogSection = null
@@ -578,6 +646,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <HeroBanner hero={hero} locale={locale} />
       {featureBar && featureBar.length > 0 && <FeatureBar items={featureBar} />}
       <PopularToursSection data={popularToursSection} locale={locale} />
+      <HomeClassesSection data={classesSection} locale={locale} />
       <PoseidonSecure locale={locale} />
       {routeSection && (
         <RouteSection

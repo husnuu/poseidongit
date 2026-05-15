@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     return ok()
   }
 
-  const terminalStates = new Set(['paid', 'confirmed', 'refunded'])
+  const terminalStates = new Set(['paid', 'confirmed', 'refunded', 'cancelled', 'failed', 'overbooked'])
   if (terminalStates.has(currentStatus) && isPaymentApproved(params)) {
     console.info('[payment/callback] Rezervasyon zaten terminal durumda — işlem yok', { oid, currentStatus })
     return ok()

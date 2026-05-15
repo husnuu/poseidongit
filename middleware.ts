@@ -57,6 +57,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/rezervasyon/basarisiz') ||
     pathname.startsWith('/rezervasyon/onaylandi') ||
     pathname.startsWith('/admin') ||
+    pathname.startsWith('/biletci') ||
     pathname.startsWith('/studio') ||
     pathname === '/login' ||
     pathname.startsWith('/login/') ||
@@ -109,6 +110,13 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       return NextResponse.redirect(url)
+    }
+
+    /** Biletçi artık `/biletci`; admin oturumu olmadan da eski URL çalışsın. */
+    if (pathname === '/admin/biletci') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/biletci'
+      return NextResponse.redirect(url, 308)
     }
 
     const secret = process.env.ADMIN_JWT_SECRET?.trim()

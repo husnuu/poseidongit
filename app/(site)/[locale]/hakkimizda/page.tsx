@@ -29,6 +29,7 @@ type AboutPageData = {
   pageTranslations?: { en?: Record<string, unknown>; de?: Record<string, unknown> }
   titleTop?: string | null
   titleBottom?: string | null
+  heroLogo?: { asset?: { _ref: string }; alt?: string | null } | null
   intro?: PortableTextBlock[] | null
   sectionTitle?: string | null
   sectionSubtitle?: string | null
@@ -127,6 +128,10 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
       imageAlt: b.image?.alt ?? b.name ?? ui.defaultBoatImageAlt,
     }))
 
+  const hasHeroLogo = Boolean(data.heroLogo?.asset)
+  const heroLogoUrl = hasHeroLogo && data.heroLogo?.asset ? urlFor(data.heroLogo.asset).width(900).quality(90).url() : null
+  const heroLogoAlt = (data.heroLogo?.alt?.trim() || ui.metaTitleFallback).slice(0, 200)
+
   const localeTag = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
   const toHeadingUpper = (s: string) => s.trim().toLocaleUpperCase(localeTag)
 
@@ -140,42 +145,58 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      <section className="relative w-full pt-10 pb-8 md:pt-14 md:pb-11">
+      <section className="relative w-full pt-8 pb-6 md:pt-12 md:pb-10">
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[min(55vh,420px)] bg-gradient-to-b from-white via-zinc-50 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[min(42vh,340px)] bg-gradient-to-b from-white via-zinc-50/90 to-transparent"
           aria-hidden
         />
         <div className="relative mx-auto max-w-[1200px] px-4">
-          <div className="relative overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-[0_8px_40px_-12px_rgba(15,23,42,0.12)]">
-            <div
-              className="pointer-events-none absolute inset-y-3 left-0 w-1 rounded-full bg-gradient-to-b from-[#1e3a8a] via-[#2563eb] to-[#2168b8]"
-              aria-hidden
-            />
-            <div className="relative px-6 py-9 sm:px-9 sm:py-10 md:px-11 md:py-12 lg:pl-12 lg:pr-14">
-              <h1
-                className="text-[28px] sm:text-[32px] md:text-[38px] font-black uppercase leading-[1.08] tracking-tight"
-                style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
-              >
-                {firstTwoTop && <span style={{ color: '#1e3a8a' }}>{firstTwoTop}</span>}
-                {restTop && <span style={{ color: '#000' }}>{' ' + restTop}</span>}
-              </h1>
-              {data.titleBottom && (
-                <p
-                  className="mt-4 text-lg font-bold uppercase tracking-wide text-[#2168b8] sm:text-xl md:text-2xl"
-                  style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
-                >
-                  {data.titleBottom}
-                </p>
-              )}
-              {data.intro && data.intro.length > 0 && (
-                <div className="mt-8 border-t border-zinc-100 pt-8 md:mt-10 md:pt-10">
-                  <div className="max-w-3xl">
-                    <PortableText value={data.intro} components={defaultBlockComponents} />
-                  </div>
+          {hasHeroLogo && heroLogoUrl ? (
+            <>
+              <h1 className="sr-only">{ui.metaTitleFallback}</h1>
+              <div className="flex justify-center px-2 py-2 md:py-4">
+                <div className="relative h-[72px] w-[min(100%,420px)] sm:h-[88px] md:h-[104px] md:w-[min(100%,520px)]">
+                  <Image
+                    src={heroLogoUrl}
+                    alt={heroLogoAlt}
+                    fill
+                    className="object-contain object-center"
+                    sizes="(max-width: 768px) 100vw, 520px"
+                    priority
+                  />
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {(data.titleTop?.trim() || data.titleBottom?.trim()) && (
+                <div className="max-w-4xl">
+                  {data.titleTop?.trim() && (
+                    <h1
+                      className="text-[28px] sm:text-[32px] md:text-[38px] font-black uppercase leading-[1.08] tracking-tight"
+                      style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+                    >
+                      {firstTwoTop && <span style={{ color: '#1e3a8a' }}>{firstTwoTop}</span>}
+                      {restTop && <span style={{ color: '#000' }}>{' ' + restTop}</span>}
+                    </h1>
+                  )}
+                  {data.titleBottom?.trim() && (
+                    <p
+                      className="mt-4 text-lg font-bold uppercase tracking-wide text-[#2168b8] sm:text-xl md:text-2xl"
+                      style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
+                    >
+                      {data.titleBottom}
+                    </p>
+                  )}
                 </div>
               )}
+            </>
+          )}
+          {data.intro && data.intro.length > 0 && (
+            <div className="mt-8 max-w-3xl border-t border-zinc-200/90 pt-8 md:mt-10 md:pt-10">
+              <PortableText value={data.intro} components={defaultBlockComponents} />
             </div>
-          </div>
+          )}
         </div>
       </section>
 

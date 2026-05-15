@@ -22,7 +22,7 @@ function compactCallbackPayloadForStorage(record: Record<string, string>): Recor
   }
 }
 
-export type BookingStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'overbooked'
+export type BookingStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'overbooked' | 'cancelled' | 'confirmed'
 
 /** Nestpay formu ve doğrulama için: ödeme öncesi zaten oluşturulmuş web rezervasyonu. */
 export type PendingBookingPaymentSnapshot = {
@@ -197,18 +197,29 @@ export async function markBookingPaid(
     updates.payment_last_error = null
   }
 
+  /** Yalnızca `pending` iken ödeme onaylanır; iptal/iade sonrası veya tekrar callback'lerde satır güncellenmez, onay maili gitmez. */
   const { data, error } = await supabase
     .from('bookings')
     .update(updates)
     .eq('id', bookingId)
+    .eq('status', 'pending')
     .select('id, status')
-    .single()
+    .maybeSingle()
 
   if (error) {
     throw new Error(`Failed to mark booking paid: ${error.message}`)
   }
+
   if (!data?.id) {
-    throw new Error(`Failed to mark booking paid: booking ${bookingId} not found`)
+    const cur = await getBookingStatusById(bookingId)
+    console.info('[payment] markBookingPaid skipped — booking not pending (no duplicate paid email)', {
+      bookingId,
+      currentStatus: cur,
+    })
+    return {
+      id: bookingId,
+      status: (cur as BookingStatus | null) ?? 'pending',
+    }
   }
 
   if (meta) {

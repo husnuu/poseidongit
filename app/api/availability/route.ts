@@ -5,13 +5,15 @@ import { tourForAvailabilityQuery } from '@/lib/queries'
 import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
 import type { Availability } from '@/types/availability'
 import { supabase } from '@/lib/supabase'
-import { firstClassLocasFromRow, paxCountFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import {
+  BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY,
+  firstClassLocasFromRow,
+  paxCountFromRow,
+  type SupabaseBookingRow,
+} from '@/lib/bookingsSupabase'
 
 const TOTAL_FIRST_CLASS_LOCAS = 10
 const FIRST_CLASS_CAPACITY_TOTAL = TOTAL_FIRST_CLASS_LOCAS * 2
-
-/** Statuses that count as "booked" — sadece ödeme tamamlananlar kapasiteden düşülür. */
-const ACTIVE_STATUSES = ['paid', 'confirmed']
 
 function normalizeClassKey(classId: string): string {
   const k = classId.toLowerCase().trim()
@@ -128,7 +130,7 @@ async function handleSingleDate(
       .select('id,tour_id,date,status,class_id,adult_count,child_count,infant_count')
       .in('tour_id', acceptedTourIds)
       .eq('date', dateParam)
-      .in('status', ACTIVE_STATUSES)
+      .in('status', BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY)
     if (snapshotError) {
       throw new Error(`Supabase availability single-date query failed: ${snapshotError.message}`)
     }
@@ -138,7 +140,7 @@ async function handleSingleDate(
       .select('id,date,status,class_id,first_class_locas,first_class_loca')
       .eq('date', dateParam)
       .eq('class_id', 'first')
-      .in('status', ACTIVE_STATUSES)
+      .in('status', BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY)
     if (firstClassGlobalError) {
       throw new Error(`Supabase availability first-class query failed: ${firstClassGlobalError.message}`)
     }
@@ -231,7 +233,7 @@ async function handleMultipleDates(
     .select('id,tour_id,date,status,class_id,adult_count,child_count,infant_count')
     .in('tour_id', idsToQuery)
     .in('date', datesArr)
-    .in('status', ACTIVE_STATUSES)
+    .in('status', BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY)
   if (rowsError) {
     throw new Error(`Supabase availability multiple-dates query failed: ${rowsError.message}`)
   }
@@ -256,7 +258,7 @@ async function handleMultipleDates(
     .select('id,date,status,class_id,first_class_locas,first_class_loca')
     .eq('class_id', 'first')
     .in('date', datesArr)
-    .in('status', ACTIVE_STATUSES)
+    .in('status', BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY)
   if (firstRowsError) {
     throw new Error(`Supabase availability multiple-dates first-class query failed: ${firstRowsError.message}`)
   }

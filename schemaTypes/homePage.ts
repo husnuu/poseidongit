@@ -288,6 +288,108 @@ export default defineType({
       ],
     }),
     defineField({
+      name: 'classesSection',
+      title: 'Bilet Sınıfları Bölümü (Eco / Premium / First)',
+      type: 'object',
+      description:
+        'Ana sayfada üçlü toggle ile sınıf önizlemesi. Her sınıfa açıklama, özellikler ve birden çok görsel ekleyebilirsiniz.',
+      fields: [
+        defineField({
+          name: 'enabled',
+          title: 'Aktif',
+          type: 'boolean',
+          initialValue: true,
+        }),
+        defineField({
+          name: 'heading',
+          title: 'Başlık',
+          type: 'string',
+          initialValue: 'BİLET SINIFLARI',
+        }),
+        defineField({
+          name: 'subtitle',
+          title: 'Alt başlık',
+          type: 'string',
+          initialValue: 'Size en uygun deneyimi seçin',
+        }),
+        defineField({
+          name: 'items',
+          title: 'Sınıflar',
+          type: 'array',
+          description: 'Eco, Premium ve First için içerikleri girin. Sıra göründüğü gibi kullanılır.',
+          validation: (Rule) => Rule.max(3).error('En fazla 3 sınıf eklenebilir'),
+          of: [
+            {
+              type: 'object',
+              fields: [
+                defineField({
+                  name: 'key',
+                  title: 'Sınıf',
+                  type: 'string',
+                  options: {
+                    list: [
+                      { title: 'Eco', value: 'eco' },
+                      { title: 'Premium', value: 'premium' },
+                      { title: 'First', value: 'first' },
+                    ],
+                    layout: 'radio',
+                    direction: 'horizontal',
+                  },
+                  validation: (Rule) => Rule.required().error('Sınıf seçimi zorunludur'),
+                }),
+                defineField({
+                  name: 'label',
+                  title: 'Etiket (toggle’da görünür)',
+                  type: 'string',
+                  description: 'Örn: Eco / Premium / First',
+                  validation: (Rule) => Rule.required().error('Etiket zorunludur'),
+                }),
+                defineField({
+                  name: 'description',
+                  title: 'Açıklama',
+                  type: 'text',
+                  rows: 4,
+                  description: 'Sınıfı anlatan kısa metin',
+                }),
+                defineField({
+                  name: 'bullets',
+                  title: 'Sunulanlar (özellikler)',
+                  type: 'array',
+                  of: [{ type: 'string' }],
+                }),
+                defineField({
+                  name: 'classImages',
+                  title: 'Görseller (galeri)',
+                  type: 'array',
+                  description: 'Birden çok foto ekleyin; kullanıcı sol/sağ oklarla gezer.',
+                  of: [
+                    {
+                      type: 'image',
+                      options: { hotspot: true },
+                      fields: [
+                        { name: 'alt', type: 'string', title: 'Alternatif metin' },
+                        { name: 'caption', type: 'string', title: 'Görsel altı küçük etiket (opsiyonel)' },
+                      ],
+                    },
+                  ],
+                }),
+              ],
+              preview: {
+                select: { title: 'label', subtitle: 'key', media: 'classImages.0' },
+                prepare({ title, subtitle, media }) {
+                  return {
+                    title: title || 'Sınıf',
+                    subtitle: subtitle ? subtitle.toUpperCase() : '',
+                    media,
+                  }
+                },
+              },
+            },
+          ],
+        }),
+      ],
+    }),
+    defineField({
       name: 'popularYachtsSection',
       title: 'En popüler tekneler (yat kiralama)',
       type: 'object',

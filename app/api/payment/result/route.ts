@@ -103,7 +103,15 @@ export async function POST(request: NextRequest) {
   if (approved) {
     try {
       const currentStatus = await getBookingStatusById(oid)
-      if (currentStatus !== 'paid' && currentStatus !== 'confirmed') {
+      const blockPaidTransition = new Set([
+        'paid',
+        'confirmed',
+        'cancelled',
+        'failed',
+        'refunded',
+        'overbooked',
+      ])
+      if (currentStatus && !blockPaidTransition.has(currentStatus)) {
         await markBookingPaid(oid, {
           authCode: params['AuthCode'] ?? '',
           hostRefNum: params['HostRefNum'] ?? '',
@@ -113,7 +121,10 @@ export async function POST(request: NextRequest) {
         })
         console.info('[payment/result] Rezervasyon ödendi olarak işaretlendi', { oid })
       } else {
-        console.info('[payment/result] Rezervasyon zaten ödenmiş', { oid, currentStatus })
+        console.info('[payment/result] Ödeme onayı yok sayıldı (rezervasyon artık pending değil)', {
+          oid,
+          currentStatus,
+        })
       }
     } catch (dbErr) {
       console.error('[payment/result] DB güncelleme hatası (paid)', { oid, dbErr })

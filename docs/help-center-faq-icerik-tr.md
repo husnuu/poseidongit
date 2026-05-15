@@ -184,9 +184,9 @@
 
 **Soru:** Tur fiyatına neler dahil?
 
-**Cevap:** Dahil olanlar tur tipine göre değişir; genellik liste **yüzme molaları, rehberlik/kaptanlık ve güvenlik ekipmanları** gibi çekirdek kalemleri kapsar. Menü, içecek veya özel alan (ör. üst sınıf oturum) gibi kalemler pakete göre eklenir veya ayrı satılır; net liste ilgili **çeşme tekne turu sayfasında** bulunur. Ödeme yapmadan önce “dahil olanlar” bölümünü okumanız sürprizi önler. Poseidon şeffaf paketleme ile güven verir.
+**Cevap:** Tam liste **ilgilendiğiniz turun sayfasında** yazar: aşağı kaydırıp **«Dahil olanlar»** ve hemen yanında **«Dahil olmayanlar»** bloklarını okuyun; bu maddeler her tur için güncellenir (örneğin tam gün turda öğle yemeği, yolcu sigortası, Wi‑Fi, Eco / Premium / First alanları gibi kalemler tur metninde açıkça listelenir). Rezervasyon sihirbazında da ödeme öncesi aynı ayrımı kontrol edebilirsiniz. Özet: **fiyat = tur sayfasındaki dahil listesi + seçtiğiniz bilet sınıfı**; şüphede önce tur sayfasını esas alın.
 
-**SEO Notu:** çeşme tekne turu fiyatı, dahil hizmetler, online bilet
+**SEO Notu:** çeşme tekne turu fiyatı, dahil hizmetler, tur sayfası
 
 ---
 
@@ -194,7 +194,7 @@
 
 **Soru:** Çocuk indirimi var mı? Yaş sınırı nedir?
 
-**Cevap:** Yaş bazlı fiyatlandırma ve indirimler **tur sayfasındaki bilet sınıfları ve yaş aralıklarına** göre otomatik hesaplanır; çocuk için indirim varsa seçim ekranında net görünür. Yaş sınırı veya ücretsiz bebek politikası tur bazında farklılık gösterebilir—rezervasyon sırasında doğum tarihi veya yaş grubunu doğru seçmek önemlidir. Çeşme tekne turu aileler için popülerdir; yanlış yaş grubu seçimi girişte düzeltme gerektirebilir. Şüphede sayfadaki açıklamayı okuyun veya yazın.
+**Cevap:** Poseidon günlük turlarımızda **Eco ve Premium** biletlerde yaş tarifemiz şöyledir: **6 yaşından küçük çocuklar ücretsiz**, **6–10 yaş arası çocuklar yarım ücret** (yetişkin biletinin yarısı). **Bebekler ücretsizdir.** Rezervasyonda doğum tarihlerini doğru seçin; tutar ekranda otomatik hesaplanır. **Premium** sınıfta güverte **şezlongu kişi başına** ücretlendirilir; **şezlong kullanan herkes tam ücretlidir** — yani şezlongda oturacak her misafir, yaş indirimi veya yarım ücret kuralından bağımsız olarak **tam (yetişkin) bilet fiyatı** üzerinden hesaplanır. **Şezlong kullanmayan** çocuk ve bebekler için ise yukarıdaki **ücretsiz / yarım ücret** yaş kuralları geçerlidir. **First Class** yalnızca yetişkin misafirler içindir; yukarıdaki yaş tarifesi Eco ve Premium için geçerlidir (şezlong kuralı yalnızca Premium içindir). Tur sayfası ve ödeme özetiyle tutarınızı mutlaka teyit edin.
 
 **SEO Notu:** çocuk indirimi tekne turu, çeşme tekne turu, yaş fiyatları
 
@@ -204,9 +204,9 @@
 
 **Soru:** Bebekler için fiyat var mı?
 
-**Cevap:** Bebek ücreti ve kontenjana dahil olup olmadığı **seçilen turun yaş kurallarına** bağlıdır; rezervasyon formunda bebek sayısı genellikle ayrı girilir ve varsa ücret satırı görünür. Güvenlik ve can yeleği kullanımı bebeklerde kritiktir; kısıt varsa tur metninde belirtilir. Çeşme tekne turu için erken rezervasyon, bebekli ailelerde yan yana oturum taleplerini kolaylaştırır. Politika net değilse iletişime tek satır yazmanız yeterli.
+**Cevap:** **Eco** ve yaş tarifesi açısından **bebekler ücretsiz** sayılır; rezervasyonda bebek girildiğinde ilgili satır **0 TL** olur. **Premium** sınıfta ise güverte **şezlongu kişi başına** ücretlendirildiği için **şezlong kullanan herkes — bebek veya çocuk dahil — tam ücretlidir**; yani şezlongda oturacak bebek için de **tam bilet fiyatı** uygulanır. **6 yaşından küçük ücretsiz** ve **6–10 yaş yarım ücret** kuralları **şezlong kullanmayan** misafirler için geçerlidir. First Class’ta bebek ve çocuk satışı yoktur. Güvenlik ve can yeleği için ekibin uyarılarına uyun.
 
-**SEO Notu:** bebek ile tekne turu, çeşme tekne turu, rezervasyon
+**SEO Notu:** bebek ile tekne turu, çeşme tekne turu, ücretsiz bebek
 
 ---
 
@@ -316,16 +316,6 @@
 
 ### 5.4
 
-**Soru:** Hamileler katılabilir mi?
-
-**Cevap:** Hamilelikte her vücut farklı hisseder; tekne hafif hareket edebilir, güneş de yorabilir. Mutlaka **doktorunuza danışın**; size uygunsa gelin, rahatsızlık hissederseniz gölgeli tarafa geçin. Bize hamile olduğunuzu önceden yazarsanız oturacağınız yeri daha konforlu ayarlamaya çalışırız.
-
-**SEO Notu:** hamile tekne turu, çeşme tekne turu, güvenlik
-
----
-
-### 5.5
-
 **Soru:** Engelliler için uygun mu?
 
 **Cevap:** Tekne ve iskele herkes için aynı kolaylıkta olmayabiliyor; **tekerlekli sandalye veya merdiven çıkma** gibi bir ihtiyacınız varsa tur öncesi bize yazın, ortamı birlikte netleştirelim. Yanıtımız bazen “bu tarihte daha uygun olur” şeklinde olabilir; dürüst konuşmak herkesin çıkarına.
@@ -334,7 +324,7 @@
 
 ---
 
-### 5.6
+### 5.5
 
 **Soru:** Evcil hayvan getirebilir miyim?
 
@@ -344,7 +334,7 @@
 
 ---
 
-### 5.7
+### 5.6
 
 **Soru:** Deniz tutar mı? Ne yapmalıyım?
 

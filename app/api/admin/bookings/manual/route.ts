@@ -10,7 +10,7 @@ import { getAuthToken, getAdminEmail } from '@/lib/adminAuth'
 import { authorizeAdminOrAgent } from '@/lib/adminAuthServer'
 import { resolveMealPreferenceCountsForBooking, resolveMealPreferenceForBooking } from '@/lib/bookingMealPreference'
 import { supabase } from '@/lib/supabase'
-import { paxCountFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { paxCountFromRow, BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import {
   sanitizeAdminNote,
   sanitizePersonName,
@@ -18,9 +18,6 @@ import {
   sanitizeTourSlugOrId,
   sanitizeTourTitleText,
 } from '@/lib/inputSanitize'
-
-const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
-
 
 function normalizeClassKey(classId: string): string {
   const k = (classId ?? '').toLowerCase().trim()
@@ -249,7 +246,7 @@ export async function POST(request: NextRequest) {
     .select('id, class_id, adult_count, child_count, infant_count')
     .eq('tour_id', firestoreTourId)
     .eq('date', date)
-    .in('status', ACTIVE_STATUSES)
+    .in('status', BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY)
   if (snapshotError) {
     throw new Error(`Supabase manual capacity query failed: ${snapshotError.message}`)
   }

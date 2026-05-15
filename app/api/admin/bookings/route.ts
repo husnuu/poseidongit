@@ -239,7 +239,10 @@ export async function PATCH(request: NextRequest) {
     const { error: updateError } = await supabase.from('bookings').update(updates).eq('id', bookingId)
     if (updateError) throw new Error(`Supabase booking update failed: ${updateError.message}`)
 
-    if (status === 'paid') {
+    if (
+      status === 'paid' &&
+      (data.status === 'pending' || data.status === 'failed')
+    ) {
       await runBookingPaidEmailSideEffects(bookingId, data)
     }
 

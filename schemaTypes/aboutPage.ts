@@ -23,15 +23,31 @@ export default defineType({
       name: 'titleTop',
       title: 'Üst Başlık',
       type: 'string',
-      description: 'Hero bölümü üst başlık (örn: "BİZ KİMİZ?")',
-      validation: (Rule) => Rule.required().error('Üst başlık zorunludur'),
+      description:
+        'Hero üst satır (örn. "BİZ KİMİZ?"). **Hero logosu** yüklediğinizde sayfada metin yerine logo gösterilir; bu alanlar yedek veya erişilebilirlik için doldurulabilir.',
     }),
     defineField({
       name: 'titleBottom',
       title: 'Alt Başlık (Accent Renk)',
       type: 'string',
-      description: 'Hero bölümü alt başlık (örn: "ÇEŞME POSEIDON") - Accent renkte gösterilir',
-      validation: (Rule) => Rule.required().error('Alt başlık zorunludur'),
+      description:
+        'Hero alt satır (örn. "ÇEŞME POSEIDON"). Logo kullanılıyorsa görünmez; logo yoksa accent renkte gösterilir.',
+    }),
+    defineField({
+      name: 'heroLogo',
+      title: 'Hero logosu',
+      type: 'image',
+      description:
+        'Doldurulduğunda hero bölümünde üst/alt başlık yerine bu logo gösterilir (kart çerçevesi olmadan). Şeffaf PNG/SVG önerilir.',
+      options: { hotspot: true },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alternatif metin',
+          type: 'string',
+          description: 'Ekran okuyucular ve SEO için (örn. Poseidon Çeşme logosu)',
+        }),
+      ],
     }),
     defineField({
       name: 'intro',
@@ -337,13 +353,14 @@ export default defineType({
       title: 'titleTop',
       subtitle: 'titleBottom',
       slug: 'slug.current',
-      media: 'heroImage',
+      media: 'heroLogo',
+      heroImg: 'heroImage',
     },
-    prepare({title, subtitle, slug, media}) {
+    prepare({title, subtitle, slug, media, heroImg}) {
       return {
         title: title || subtitle || 'Hakkımızda Sayfası',
         subtitle: slug ? `/${slug}` : 'URL yok',
-        media: media,
+        media: media || heroImg,
       }
     },
   },

@@ -14,6 +14,21 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
   title,
   "slug": slug.current,
   shortDescription,
+  seo{
+    metaTitle,
+    metaDescription,
+    keywords,
+    noIndex,
+    ogImage{
+      asset,
+      alt,
+      "url": asset->url,
+      "metadata": asset->metadata {
+        lqip,
+        dimensions
+      }
+    }
+  },
   description,
   mainImage{
     asset,
@@ -166,6 +181,14 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
     bullets,
     classImage{
       asset,
+      alt,
+      "url": asset->url,
+      "metadata": asset->metadata { lqip, dimensions }
+    },
+    classImages[]{
+      asset,
+      alt,
+      caption,
       "url": asset->url,
       "metadata": asset->metadata { lqip, dimensions }
     },
@@ -277,6 +300,21 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
   title,
   "slug": slug.current,
   shortDescription,
+  seo{
+    metaTitle,
+    metaDescription,
+    keywords,
+    noIndex,
+    ogImage{
+      asset,
+      alt,
+      "url": asset->url,
+      "metadata": asset->metadata {
+        lqip,
+        dimensions
+      }
+    }
+  },
   description,
   mainImage{
     asset,
@@ -429,6 +467,14 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
     bullets,
     classImage{
       asset,
+      alt,
+      "url": asset->url,
+      "metadata": asset->metadata { lqip, dimensions }
+    },
+    classImages[]{
+      asset,
+      alt,
+      caption,
       "url": asset->url,
       "metadata": asset->metadata { lqip, dimensions }
     },
@@ -803,6 +849,46 @@ export const homePageHeroQuery = `*[_type == "homePage"][0] {
       translations
     }
   },
+  classesSection{
+    enabled,
+    heading,
+    subtitle,
+    items[]{
+      key,
+      label,
+      description,
+      bullets,
+      classImages[]{
+        asset,
+        alt,
+        caption,
+        "url": asset->url,
+        "metadata": asset->metadata { lqip, dimensions }
+      }
+    }
+  },
+  "classesAutoFromTour": *[_type == "tour" && count(ticketClasses[defined(classImages) || defined(classImage)]) > 0]
+    | order(coalesce(isPopular, false) desc, _updatedAt desc)[0]{
+    ticketClasses[]{
+      key,
+      label,
+      description,
+      bullets,
+      classImage{
+        asset,
+        alt,
+        "url": asset->url,
+        "metadata": asset->metadata { lqip, dimensions }
+      },
+      classImages[]{
+        asset,
+        alt,
+        caption,
+        "url": asset->url,
+        "metadata": asset->metadata { lqip, dimensions }
+      }
+    }
+  },
   popularYachtsSection{
     enabled,
     title,
@@ -1158,6 +1244,7 @@ export const aboutPageQuery = `*[_type == "aboutPage"][0] {
   pageTranslations,
   titleTop,
   titleBottom,
+  heroLogo { asset, alt },
   intro,
   sectionTitle,
   sectionSubtitle,

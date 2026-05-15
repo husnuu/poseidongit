@@ -9,11 +9,10 @@ import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
 import type { TourCapacitySource } from '@/lib/availabilityCapacity'
 import { supabase } from '@/lib/supabase'
-import { firstClassLocasFromRow, paxCountFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { firstClassLocasFromRow, paxCountFromRow, BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
-const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
 const LOCA_REGEX = /^L(10|[1-9])$/
-/** First Class: tüm turlar ortak L1–L10 havuzu (availability API ile aynı mantık). */
+/** First Class: tüm turlar ortak L1–L10 havuzu (`BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY` ile uyumlu). */
 const TOTAL_FIRST_CLASS_LOCAS = 10
 const FIRST_CLASS_CAPACITY_TOTAL = TOTAL_FIRST_CLASS_LOCAS * 2
 
@@ -77,7 +76,7 @@ export async function GET(request: NextRequest) {
       .eq('class_id', 'first')
       .gte('date', startDate)
       .lte('date', endDate)
-      .in('status', ACTIVE_STATUSES)
+      .in('status', BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY)
     if (globalFirstError) {
       throw new Error(`Supabase availability calendar query failed: ${globalFirstError.message}`)
     }

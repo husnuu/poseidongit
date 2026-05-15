@@ -4,9 +4,7 @@ import { tourForAvailabilityQuery } from '@/lib/queries'
 import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
 import { authorizeAdmin } from '@/lib/adminAuthServer'
 import { supabase } from '@/lib/supabase'
-import { firstClassLocasFromRow, paxCountFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
-
-const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
+import { firstClassLocasFromRow, paxCountFromRow, BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
 function normalizeClassKey(classId: string): string {
   const k = (classId ?? '').toLowerCase().trim()
@@ -93,7 +91,7 @@ export async function GET(request: NextRequest) {
       .select('id,tour_id,date,status,class_id,adult_count,child_count,infant_count,first_class_locas,first_class_loca')
       .gte('date', startDate)
       .lte('date', endDate)
-      .in('status', ACTIVE_STATUSES)
+      .in('status', BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY)
     if (monthRowsError) {
       throw new Error(`Supabase occupancy list failed: ${monthRowsError.message}`)
     }

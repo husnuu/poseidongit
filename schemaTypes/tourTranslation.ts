@@ -25,6 +25,35 @@ export default defineType({
       rows: 3,
     }),
     defineField({
+      name: 'seo',
+      title: 'SEO',
+      type: 'object',
+      description: 'Bu dildeki tur sayfası için meta başlık ve açıklama (boşsa Türkçe SEO + çeviri metinleri kullanılır)',
+      fields: [
+        defineField({ name: 'metaTitle', title: 'Meta başlık', type: 'string' }),
+        defineField({
+          name: 'metaDescription',
+          title: 'Meta açıklama',
+          type: 'text',
+          rows: 3,
+        }),
+        defineField({
+          name: 'keywords',
+          title: 'Anahtar kelimeler',
+          type: 'string',
+          description: 'Virgülle ayırın (opsiyonel)',
+        }),
+        defineField({
+          name: 'ogImage',
+          title: 'OG / paylaşım görseli',
+          type: 'image',
+          description: 'Boşsa Türkçe kayıttaki OG görseli veya ana görsel kullanılır',
+          options: { hotspot: true },
+          fields: [{ name: 'alt', type: 'string', title: 'Alternatif metin' }],
+        }),
+      ],
+    }),
+    defineField({
       name: 'description',
       title: 'Detaylı açıklama',
       type: 'array',

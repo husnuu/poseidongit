@@ -41,6 +41,51 @@ export default defineType({
       rows: 3,
     }),
     defineField({
+      name: 'seo',
+      title: 'SEO',
+      type: 'object',
+      description:
+        'Tur detay sayfası (/tur/…) için meta başlık, açıklama ve paylaşım görseli. Boş bırakılırsa başlık ve kısa açıklama kullanılır. EN/DE için Çeviriler bölümündeki SEO alanlarını kullanın.',
+      fields: [
+        defineField({
+          name: 'metaTitle',
+          title: 'Meta başlık',
+          type: 'string',
+          description: 'Tarayıcı sekmesi ve arama sonuçları başlığı (site şablonu ile birleşir)',
+        }),
+        defineField({
+          name: 'metaDescription',
+          title: 'Meta açıklama',
+          type: 'text',
+          description: 'Arama sonuçları snippet’i için; yaklaşık 150–160 karakter önerilir',
+          rows: 3,
+        }),
+        defineField({
+          name: 'keywords',
+          title: 'Anahtar kelimeler',
+          type: 'string',
+          description: 'Virgülle ayırın (opsiyonel). Bazı arama motorları dikkate almayabilir.',
+        }),
+        defineField({
+          name: 'noIndex',
+          title: 'Arama motorlarında indeksleme',
+          type: 'boolean',
+          description: 'Açıksa sayfa noindex olur (genelde kapalı tutun)',
+          initialValue: false,
+        }),
+        defineField({
+          name: 'ogImage',
+          title: 'OG / paylaşım görseli',
+          type: 'image',
+          description: 'Sosyal medya önizlemesi; boşsa tur ana görseli kullanılır',
+          options: { hotspot: true },
+          fields: [
+            { name: 'alt', type: 'string', title: 'Alternatif metin' },
+          ],
+        }),
+      ],
+    }),
+    defineField({
       name: 'description',
       title: 'Detaylı Açıklama',
       type: 'array',
@@ -1103,9 +1148,9 @@ export default defineType({
             }),
             defineField({
               name: 'classImage',
-              title: 'Sınıf Görseli',
+              title: 'Sınıf Kapak Görseli',
               type: 'image',
-              description: 'Sınıf için görsel (rezervasyon ekranında gösterilir)',
+              description: 'Rezervasyon ekranındaki küçük önizleme. Detay sayfasında çoklu görsel için aşağıdaki “Sınıf Görselleri” alanını kullanın.',
               options: {
                 hotspot: true,
               },
@@ -1115,6 +1160,32 @@ export default defineType({
                   type: 'string',
                   title: 'Alternatif Metin',
                   description: 'Görsel için alternatif metin (erişilebilirlik)',
+                },
+              ],
+            }),
+            defineField({
+              name: 'classImages',
+              title: 'Sınıf Görselleri (galeri)',
+              type: 'array',
+              description:
+                'Tur sayfasındaki sınıf showcase galerisi. Soldan-sağa oklarla gezilir; boşsa “Sınıf Kapak Görseli” tek görsel olarak gösterilir.',
+              of: [
+                {
+                  type: 'image',
+                  options: { hotspot: true },
+                  fields: [
+                    {
+                      name: 'alt',
+                      type: 'string',
+                      title: 'Alternatif Metin',
+                    },
+                    {
+                      name: 'caption',
+                      type: 'string',
+                      title: 'Kısa açıklama (opsiyonel)',
+                      description: 'Görselin altında küçük etiket olarak görünür.',
+                    },
+                  ],
                 },
               ],
             }),

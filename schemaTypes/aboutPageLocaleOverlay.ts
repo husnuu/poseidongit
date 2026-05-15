@@ -39,6 +39,14 @@ export default defineType({
     defineField({ name: 'titleTop', title: 'Üst başlık (hero)', type: 'string' }),
     defineField({ name: 'titleBottom', title: 'Alt başlık (accent)', type: 'string' }),
     defineField({
+      name: 'heroLogo',
+      title: 'Hero logosu (bu dil)',
+      type: 'image',
+      description: 'Doldurulursa TR logosunun yerine bu dilde logo gösterilir.',
+      options: { hotspot: true },
+      fields: [defineField({ name: 'alt', title: 'Alt metin', type: 'string' })],
+    }),
+    defineField({
       name: 'intro',
       title: 'Giriş metni',
       type: 'array',

@@ -4,9 +4,8 @@ import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
 import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
 import { supabase } from '@/lib/supabase'
-import { firstClassLocasFromRow, paxCountFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { firstClassLocasFromRow, paxCountFromRow, BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
-const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
 const LOCA_REGEX = /^L(10|[1-9])$/
 /** First Class: tüm turlar ortak havuz (availability / calendar ile uyumlu). */
@@ -69,6 +68,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const refundStatus = String(data.refund_status ?? '').trim()
+    if (
+      refundStatus &&
+      refundStatus !== 'request_rejected' &&
+      refundStatus !== 'refund_failed'
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'İade talebiniz veya iade süreciniz devam ettiği için tarih değiştirilemez.',
+        },
+        { status: 400 }
+      )
+    }
+
     const bookingEmail = String(data.customer_email ?? '').trim().toLowerCase()
     if (bookingEmail !== email) {
       return NextResponse.json(
@@ -111,7 +125,7 @@ export async function POST(request: NextRequest) {
         .select('id, status, adult_count, child_count, infant_count, first_class_locas, first_class_loca')
         .eq('date', newDate)
         .eq('class_id', 'first')
-        .in('status', ACTIVE_STATUSES)
+        .in('status', BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY)
       if (globalFirstError) {
         throw new Error(`Supabase first class query failed: ${globalFirstError.message}`)
       }
@@ -161,7 +175,7 @@ export async function POST(request: NextRequest) {
         .select('id, class_id, adult_count, child_count, infant_count')
         .eq('tour_id', sanityTour._id ?? tourId)
         .eq('date', newDate)
-        .in('status', ACTIVE_STATUSES)
+        .in('status', BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY)
       if (sameDayError) {
         throw new Error(`Supabase same day booking query failed: ${sameDayError.message}`)
       }

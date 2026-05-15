@@ -1,7 +1,8 @@
 /**
  * Admin auth: Bearer token + isteğe bağlı e-posta allowlist.
  * ADMIN_TOKEN: tam erişim. ALLOWED_ADMIN_EMAILS tanımlıysa girişte e-posta da kontrol edilir.
- * AGENT_TOKEN: biletçi. ALLOWED_AGENT_EMAILS tanımlıysa e-posta kontrol edilir.
+ * Biletçi: POST /api/admin/agent/login ile AGENT_LOGIN_EMAIL + şifre → JWT (AGENT_JWT_SECRET).
+ *         Eski uyumluluk: Authorization: Bearer AGENT_TOKEN + X-Admin-Email (ALLOWED_AGENT_EMAILS).
  *
  * Supabase ile giriş: API rotaları `authorizeAdmin` / `authorizeAdminOrAgent` kullanır (adminAuthServer).
  */
@@ -50,6 +51,15 @@ export function requireAdmin(token: string | null, email: string | null = null):
   return !!email && allowed.includes(email)
 }
 
+/** Biletçi JWT veya statik AGENT_TOKEN sonrası e-posta allowlist (boş = her e-posta kabul). */
+export function isAgentEmailAllowed(email: string | null | undefined): boolean {
+  const e = typeof email === 'string' ? email.trim().toLowerCase() : ''
+  if (!e) return false
+  const allowed = allowedAgentEmails()
+  if (allowed.length === 0) return true
+  return allowed.includes(e)
+}
+
 export function requireAdminOrAgent(token: string | null, email: string | null = null): boolean {
   if (isAdminToken(token)) {
     const allowed = allowedAdminEmails()
@@ -57,7 +67,5 @@ export function requireAdminOrAgent(token: string | null, email: string | null =
     return !!email && allowed.includes(email)
   }
   if (!isAgentToken(token)) return false
-  const allowed = allowedAgentEmails()
-  if (allowed.length === 0) return true
-  return !!email && allowed.includes(email)
+  return isAgentEmailAllowed(email)
 }

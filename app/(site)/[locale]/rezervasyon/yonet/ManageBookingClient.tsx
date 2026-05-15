@@ -248,8 +248,15 @@ export default function ManageBookingClient({
   }, [selectedNewDate, booking, isFirstClass])
 
   const handleChangeDate = useCallback(async () => {
+    if (!booking || booking === 'cancelled') return
+    const b = booking as Booking
+    const rs = (b.refundStatus ?? '').trim()
+    if (rs && rs !== 'request_rejected' && rs !== 'refund_failed') {
+      setChangeDateError('İade talebiniz veya iade süreciniz devam ettiği için tarih değiştirilemez.')
+      return
+    }
     const dateToUse = isFirstClass && selectedNewDate ? selectedNewDate : newDate.trim().slice(0, 10)
-    if (!booking || booking === 'cancelled' || !dateToUse) return
+    if (!dateToUse) return
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateToUse)) {
       setChangeDateError('Geçerli bir tarih seçin (YYYY-AA-GG).')
       return
@@ -518,6 +525,12 @@ export default function ManageBookingClient({
 
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
             <h3 className="text-sm font-semibold text-amber-900 mb-2">Tarih değiştir</h3>
+            {refundAlreadyRequested && (
+              <p className="text-xs text-amber-900 mb-3 rounded-lg border border-amber-300/80 bg-amber-100/60 px-3 py-2">
+                İade talebiniz veya iade süreciniz devam ettiği için bilet tarihini buradan
+                güncelleyemezsiniz.
+              </p>
+            )}
             {isFirstClass ? (
               <>
                 <p className="text-xs text-amber-800 mb-3">
@@ -533,7 +546,8 @@ export default function ManageBookingClient({
                         const d = new Date(y, m - 2, 1)
                         setCalendarMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
                       }}
-                      className="min-h-[36px] min-w-[36px] rounded-lg border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+                      disabled={refundAlreadyRequested}
+                      className="min-h-[36px] min-w-[36px] rounded-lg border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       ‹
                     </button>
@@ -547,7 +561,8 @@ export default function ManageBookingClient({
                         const d = new Date(y, m, 1)
                         setCalendarMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
                       }}
-                      className="min-h-[36px] min-w-[36px] rounded-lg border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+                      disabled={refundAlreadyRequested}
+                      className="min-h-[36px] min-w-[36px] rounded-lg border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       ›
                     </button>
@@ -589,9 +604,9 @@ export default function ManageBookingClient({
                               <button
                                 key={dateStr}
                                 type="button"
-                                className={`${styles.dayCell} ${selected ? styles.dayCellSelected : ''} ${!available ? styles.dayCellDisabled : ''}`}
-                                onClick={() => available && setSelectedNewDate(dateStr)}
-                                disabled={!available}
+                                className={`${styles.dayCell} ${selected ? styles.dayCellSelected : ''} ${!available || refundAlreadyRequested ? styles.dayCellDisabled : ''}`}
+                                onClick={() => available && !refundAlreadyRequested && setSelectedNewDate(dateStr)}
+                                disabled={!available || refundAlreadyRequested}
                               >
                                 <span className={styles.dayNum}>{day}</span>
                                 {info && !isPast && (
@@ -609,7 +624,9 @@ export default function ManageBookingClient({
                   )}
                 </div>
                 {selectedNewDate && (
-                  <div className="mt-4">
+                  <div
+                    className={`mt-4 ${refundAlreadyRequested ? 'pointer-events-none opacity-55' : ''}`}
+                  >
                     <p className="text-sm font-medium text-amber-900 mb-2">
                       {selectedNewDate} için loca seçin ({requiredLocas} loca gerekli)
                     </p>
@@ -643,6 +660,7 @@ export default function ManageBookingClient({
                     type="button"
                     onClick={handleChangeDate}
                     disabled={
+                      refundAlreadyRequested ||
                       changeDateLoading ||
                       !selectedNewDate ||
                       (requiredLocas > 0 && selectedFirstClassLocas.length !== requiredLocas)
@@ -658,7 +676,8 @@ export default function ManageBookingClient({
                         setSelectedNewDate(null)
                         setSelectedFirstClassLocas([])
                       }}
-                      className="px-4 py-2 rounded-lg border border-amber-300 text-amber-800 text-sm hover:bg-amber-100"
+                      disabled={refundAlreadyRequested}
+                      className="px-4 py-2 rounded-lg border border-amber-300 text-amber-800 text-sm hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Seçimi temizle
                     </button>
@@ -674,13 +693,14 @@ export default function ManageBookingClient({
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
                     min={new Date().toISOString().slice(0, 10)}
-                    className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm"
+                    disabled={refundAlreadyRequested}
+                    className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleChangeDate}
-                  disabled={changeDateLoading || !newDate.trim()}
+                  disabled={refundAlreadyRequested || changeDateLoading || !newDate.trim()}
                   className="px-4 py-2 rounded-lg bg-amber-600 text-white font-semibold text-sm hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {changeDateLoading ? 'Güncelleniyor...' : 'Tarihi Güncelle'}

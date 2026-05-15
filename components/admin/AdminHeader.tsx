@@ -15,7 +15,6 @@ export default function AdminHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const bookingsActive = pathname === '/admin/bookings'
-  const biletciActive = pathname === '/admin/biletci'
   const yachtInquiriesActive = pathname === '/admin/yacht-inquiries'
 
   useEffect(() => {
@@ -41,11 +40,7 @@ export default function AdminHeader() {
       window.sessionStorage.removeItem(AGENT_TOKEN_KEY)
       window.sessionStorage.removeItem(AGENT_EMAIL_KEY)
     }
-    if (pathname?.includes('/biletci')) {
-      window.location.href = '/admin/biletci'
-    } else {
-      router.replace('/login')
-    }
+    router.replace('/login')
   }
 
   const navLinks = (
@@ -73,12 +68,8 @@ export default function AdminHeader() {
         Motoryat Mesajları
       </Link>
       <Link
-        href="/admin/biletci"
-        className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-          biletciActive
-            ? 'bg-slate-200 text-slate-900'
-            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-        }`}
+        href="/biletci"
+        className="block rounded-lg px-4 py-3 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
         onClick={() => setMenuOpen(false)}
       >
         Biletçi

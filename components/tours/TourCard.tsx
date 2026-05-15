@@ -6,6 +6,7 @@ import Link from 'next/link'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
+import styles from './TourCard.module.css'
 
 const ICON_BLUE = '#1e3a8a'
 
@@ -188,7 +189,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
   const metaRows = (tour.departureLabel || tour.durationLabel) && (
     <div className="mt-4 space-y-2.5">
       {tour.departureLabel && (
-        <div className="flex items-start gap-3 text-sm font-semibold leading-snug text-zinc-800 sm:text-[15px]">
+        <div className={`${styles.metaRow} flex items-start gap-3 text-sm font-semibold leading-snug text-zinc-800 sm:text-[15px]`}>
           <span className="mt-0.5 shrink-0" style={{ color: ICON_BLUE }}>
             <PinIcon className="size-5" />
           </span>
@@ -199,7 +200,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
         </div>
       )}
       {tour.durationLabel && (
-        <div className="flex items-start gap-3 text-sm font-semibold leading-snug text-zinc-800 sm:text-[15px]">
+        <div className={`${styles.metaRow} flex items-start gap-3 text-sm font-semibold leading-snug text-zinc-800 sm:text-[15px]`}>
           <span className="mt-0.5 shrink-0" style={{ color: ICON_BLUE }}>
             <ClockIcon className="size-5" />
           </span>
@@ -239,9 +240,6 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
       </p>
     ) : null
 
-  const titleClassName =
-    'line-clamp-2 text-lg font-black uppercase leading-snug tracking-tight text-zinc-900 sm:text-xl'
-
   return (
     <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-[0_25px_50px_-12px_rgba(15,23,42,0.09),0_12px_28px_-10px_rgba(15,23,42,0.06)] transition-shadow duration-300 hover:shadow-[0_32px_64px_-14px_rgba(15,23,42,0.11),0_16px_32px_-10px_rgba(15,23,42,0.07)]">
       {href ? (
@@ -253,11 +251,9 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
           >
             {imageSection}
             <div className="px-5 pt-5 sm:px-6">
-              <h3 className={titleClassName} style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}>
-                {tour.title}
-              </h3>
+              <h3 className={`${styles.title} line-clamp-2`}>{tour.title}</h3>
               {tour.shortDescription && (
-                <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-zinc-600 sm:text-[15px]">
+                <p className={`${styles.description} mt-1.5 line-clamp-3 text-sm leading-relaxed text-zinc-600 sm:text-[15px]`}>
                   {tour.shortDescription}
                 </p>
               )}
@@ -282,11 +278,9 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
           <div className="shrink-0">
             {imageSection}
             <div className="px-5 pt-5 sm:px-6">
-              <h3 className={titleClassName} style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}>
-                {tour.title}
-              </h3>
+              <h3 className={`${styles.title} line-clamp-2`}>{tour.title}</h3>
               {tour.shortDescription && (
-                <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-zinc-600 sm:text-[15px]">
+                <p className={`${styles.description} mt-1.5 line-clamp-3 text-sm leading-relaxed text-zinc-600 sm:text-[15px]`}>
                   {tour.shortDescription}
                 </p>
               )}

@@ -53,6 +53,11 @@ export function mergeAboutPageLocale<T extends Record<string, unknown>>(data: T 
   if (Array.isArray(patch.intro) && patch.intro.length > 0) out.intro = patch.intro
   if (Array.isArray(patch.sectionBody) && patch.sectionBody.length > 0) out.sectionBody = patch.sectionBody
 
+  const patchLogo = patch.heroLogo as Record<string, unknown> | undefined
+  if (patchLogo && isPlainObject(patchLogo) && patchLogo.asset) {
+    out.heroLogo = patchLogo
+  }
+
   if (patch.boats) {
     out.boats = mergeBoatsOverlay(out.boats, patch.boats)
   }

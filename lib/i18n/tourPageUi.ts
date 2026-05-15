@@ -79,6 +79,15 @@ export type TourPageUi = {
   reelsVideoAria: (indexOneBased: number, total: number) => string
   reelsMuteAria: string
   reelsUnmuteAria: string
+  /** Bilet sınıfı showcase başlığı (tur sayfası). */
+  classesShowcaseTitle: string
+  classesShowcaseSubtitle: string
+  classesShowcaseSelectAria: string
+  classesShowcaseImagePrev: string
+  classesShowcaseImageNext: string
+  classesShowcaseImageCounter: (current: number, total: number) => string
+  classesShowcaseNoImage: string
+  classesShowcaseHighlightsTitle: string
 }
 
 const UI: Record<SiteLocale, TourPageUi> = {
@@ -154,6 +163,14 @@ const UI: Record<SiteLocale, TourPageUi> = {
     reelsVideoAria: (n, t) => `Video ${n} / ${t}`,
     reelsMuteAria: 'Sesi aç',
     reelsUnmuteAria: 'Sessize al',
+    classesShowcaseTitle: 'BİLET SINIFLARI',
+    classesShowcaseSubtitle: 'Size en uygun deneyimi seçin',
+    classesShowcaseSelectAria: 'Bilet sınıfı seçin',
+    classesShowcaseImagePrev: 'Önceki görsel',
+    classesShowcaseImageNext: 'Sonraki görsel',
+    classesShowcaseImageCounter: (c, t) => `${c} / ${t}`,
+    classesShowcaseNoImage: 'Görsel yok',
+    classesShowcaseHighlightsTitle: 'Sunulanlar',
   },
   en: {
     locale: 'en',
@@ -227,6 +244,14 @@ const UI: Record<SiteLocale, TourPageUi> = {
     reelsVideoAria: (n, t) => `Video ${n} of ${t}`,
     reelsMuteAria: 'Unmute sound',
     reelsUnmuteAria: 'Mute sound',
+    classesShowcaseTitle: 'TICKET CLASSES',
+    classesShowcaseSubtitle: 'Choose the experience that suits you',
+    classesShowcaseSelectAria: 'Select a ticket class',
+    classesShowcaseImagePrev: 'Previous photo',
+    classesShowcaseImageNext: 'Next photo',
+    classesShowcaseImageCounter: (c, t) => `${c} / ${t}`,
+    classesShowcaseNoImage: 'No image',
+    classesShowcaseHighlightsTitle: 'What you get',
   },
   de: {
     locale: 'de',
@@ -300,6 +325,14 @@ const UI: Record<SiteLocale, TourPageUi> = {
     reelsVideoAria: (n, t) => `Video ${n} von ${t}`,
     reelsMuteAria: 'Ton einschalten',
     reelsUnmuteAria: 'Stummschalten',
+    classesShowcaseTitle: 'TICKETKLASSEN',
+    classesShowcaseSubtitle: 'Wählen Sie das passende Erlebnis',
+    classesShowcaseSelectAria: 'Ticketklasse wählen',
+    classesShowcaseImagePrev: 'Vorheriges Foto',
+    classesShowcaseImageNext: 'Nächstes Foto',
+    classesShowcaseImageCounter: (c, t) => `${c} / ${t}`,
+    classesShowcaseNoImage: 'Kein Bild',
+    classesShowcaseHighlightsTitle: 'Inklusive',
   },
 }
 

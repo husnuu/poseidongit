@@ -113,11 +113,22 @@ interface PriceByAge {
   price: number
 }
 
+interface TicketClassImage {
+  asset?: { _ref?: string; _type?: string }
+  url?: string
+  alt?: string
+  caption?: string
+  metadata?: { lqip?: string; dimensions?: { width: number; height: number } }
+}
+
 interface TicketClass {
   key: string
   label: string
   description?: string
   badge?: string
+  bullets?: string[]
+  classImage?: TicketClassImage
+  classImages?: TicketClassImage[]
   pricesByAge?: PriceByAge[]
 }
 
@@ -201,11 +212,20 @@ interface TourReelsSectionData {
   items?: TourReelsItem[] | null
 }
 
+interface TourSeo {
+  metaTitle?: string | null
+  metaDescription?: string | null
+  keywords?: string | null
+  noIndex?: boolean | null
+  ogImage?: (GalleryImage & { alt?: string | null }) | null
+}
+
 interface Tour {
   _id?: string
   title: string
   slug: string
   shortDescription?: string
+  seo?: TourSeo | null
   description?: PortableTextBlock[] | null
   mainImage?: GalleryImage
   gallery?: GalleryImage[]
@@ -249,6 +269,12 @@ const getTour = cache(async function getTour(
   return mergeTourForLocale(raw as unknown as Record<string, unknown>, locale) as unknown as Tour
 })
 
+function parseMetaKeywords(raw: string | null | undefined): string[] | undefined {
+  if (!raw?.trim()) return undefined
+  const list = raw.split(',').map((s) => s.trim()).filter(Boolean)
+  return list.length ? list : undefined
+}
+
 export const revalidate = 3600 // ISR: tur sayfaları en fazla 1 saat sonra güncellenir
 
 /** Yayımlanmış turların slug'ları — 404 önlemek için sayfaların build/ISR'da bilinmesi gerekir */
@@ -281,25 +307,44 @@ export async function generateMetadata({
   const tourUi = getTourPageUi(locale)
   const tour = await getTour(slug, locale)
   if (!tour) return { title: tourUi.metaTourNotFoundTitle }
-  const title = `${tour.title}${tourUi.metaTitleSuffix}`
+
+  const metaTitleSource = tour.seo?.metaTitle?.trim() || tour.title
+  const title = `${metaTitleSource}${tourUi.metaTitleSuffix}`
+
+  const descSource =
+    tour.seo?.metaDescription?.trim() ||
+    tour.shortDescription?.trim() ||
+    tour.title
   const description =
-    (tour.shortDescription ?? tour.title).replace(/\s+/g, ' ').slice(0, 160) ||
-    tourUi.metaDescriptionFallback(tour.title)
+    descSource.replace(/\s+/g, ' ').slice(0, 160) || tourUi.metaDescriptionFallback(tour.title)
+
   const url = absoluteUrl(withLocalePath(locale, `/tur/${slug}`))
+
+  const ogImageAsset = tour.seo?.ogImage?.asset ?? tour.mainImage?.asset
   const image =
-    tour.mainImage?.asset != null
-      ? urlFor(tour.mainImage.asset).width(1200).height(630).url()
-      : undefined
+    ogImageAsset != null ? urlFor(ogImageAsset).width(1200).height(630).url() : undefined
+  const ogImageAlt = tour.seo?.ogImage?.alt?.trim() || tour.title
+
+  const keywords = parseMetaKeywords(tour.seo?.keywords)
+
   return {
     title,
     description,
+    ...(keywords?.length ? { keywords } : {}),
+    ...(tour.seo?.noIndex ? { robots: { index: false, follow: true as const } } : {}),
     alternates: { canonical: url },
     openGraph: {
       title,
       description,
       url,
       type: 'website',
-      images: image ? [{ url: image, width: 1200, height: 630, alt: tour.title }] : undefined,
+      images: image ? [{ url: image, width: 1200, height: 630, alt: ogImageAlt }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      ...(image ? { images: [image] } : {}),
     },
   }
 }
@@ -383,10 +428,13 @@ export default async function TourPage({
   const tourPath = withLocalePath(locale, `/tur/${slug}`)
   const tourUrl = absoluteUrl(tourPath)
   const rezervasyonHref = withLocalePath(locale, `/rezervasyon/${tour.slug}`)
+  const jsonLdImageAsset = tour.seo?.ogImage?.asset ?? tour.mainImage?.asset
   const tourImage =
-    tour.mainImage?.asset != null
-      ? urlFor(tour.mainImage.asset).width(1200).height(630).url()
+    jsonLdImageAsset != null
+      ? urlFor(jsonLdImageAsset).width(1200).height(630).url()
       : undefined
+  const productSchemaDescription =
+    tour.seo?.metaDescription?.trim() || tour.shortDescription?.trim() || undefined
   const breadcrumbSchema = buildBreadcrumbSchema([
     { name: tourUi.breadcrumbHome, url: withLocalePath(locale, '/') },
     { name: tourUi.breadcrumbTours, url: withLocalePath(locale, '/turlar') },
@@ -403,7 +451,7 @@ export default async function TourPage({
       .sort((a, b) => a - b)[0] ?? undefined
   const productSchema = buildTourSchema({
     name: tour.title,
-    description: tour.shortDescription ?? undefined,
+    description: productSchemaDescription,
     url: tourUrl,
     image: tourImage,
     price: lowestPrice,

@@ -1,5 +1,11 @@
 import { normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
 
+/**
+ * Kapasite, doluluk ve First Class loca çakışması hesaplarında sayılacak rezervasyon statüleri.
+ * `pending` (ödeme tamamlanmamış) kayıtlar kontenjan tutmaz.
+ */
+export const BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY: readonly string[] = ['paid', 'confirmed']
+
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
 
 /** Admin / public API: jsonb bazen string; sadece counts dolu olabilir — key/label türet. */

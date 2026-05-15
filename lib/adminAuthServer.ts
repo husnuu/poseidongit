@@ -8,7 +8,9 @@ import {
   getAdminEmail,
   requireAdmin,
   requireAdminOrAgent,
+  isAgentEmailAllowed,
 } from '@/lib/adminAuth'
+import { verifyAgentSessionToken } from '@/lib/agentSession'
 
 async function isValidAdminJwtRequest(request: Request): Promise<boolean> {
   const raw = extractAdminSessionTokenFromRequest(request)
@@ -28,7 +30,14 @@ export async function authorizeAdmin(request: Request): Promise<boolean> {
 export async function authorizeAdminOrAgent(request: Request): Promise<boolean> {
   if (await isValidAdminJwtRequest(request)) return true
   const token = getAuthToken(request)
-  const email = getAdminEmail(request)
+  const emailHeader = getAdminEmail(request)
+  if (token) {
+    const agentSession = await verifyAgentSessionToken(token)
+    if (agentSession) {
+      if (!isAgentEmailAllowed(agentSession.email)) return false
+      return true
+    }
+  }
   if (!token) return false
-  return requireAdminOrAgent(token, email)
+  return requireAdminOrAgent(token, emailHeader)
 }

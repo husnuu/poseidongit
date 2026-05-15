@@ -40,6 +40,25 @@ interface CapacityInfo {
 }
 
 import { adminFetchInit } from '@/lib/adminRequestInit'
+import AdminBookingMonthCalendar from '@/components/admin/bookings/AdminBookingMonthCalendar'
+
+function AgentFormSection({
+  standalone,
+  title,
+  children,
+}: {
+  standalone: boolean
+  title: string
+  children: React.ReactNode
+}) {
+  if (!standalone) return <>{children}</>
+  return (
+    <section className="rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 p-4 shadow-sm ring-1 ring-slate-900/[0.03] sm:p-5">
+      <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">{title}</h2>
+      <div className="space-y-4">{children}</div>
+    </section>
+  )
+}
 
 interface ManualBookingDrawerProps {
   open: boolean
@@ -380,27 +399,50 @@ export default function ManualBookingDrawer({
 
   if (!open && !standalone) return null
 
+  const inp = standalone
+    ? 'min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-base text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/15 disabled:bg-slate-50'
+    : 'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900'
+  const lbl = standalone
+    ? 'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500'
+    : 'mb-1 block text-sm font-medium text-zinc-700'
+  const ta = standalone
+    ? `${inp} min-h-[92px] resize-y py-3`
+    : 'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900'
+
   const wrapperClass = standalone
-    ? 'flex flex-col bg-white'
+    ? 'flex max-h-[min(100dvh-3.5rem,calc(100vh-3.5rem))] min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-xl shadow-slate-900/[0.07]'
     : 'fixed right-0 top-0 z-50 flex h-full w-full max-w-xl flex-col border-l border-slate-200 bg-white shadow-xl'
   const headerContent = (
-    <div className={`flex items-center justify-between border-b border-slate-200/80 px-5 py-4 ${standalone ? 'bg-slate-50/80' : ''}`}>
-      <div className="flex items-center gap-2">
-        <h3 className="text-lg font-semibold text-slate-800">
-          {standalone ? 'Manuel rezervasyon' : '+ Manuel Rezervasyon Ekle'}
-        </h3>
-        {standalone && (
-          <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
-            Biletçi
-          </span>
-        )}
+    <div
+      className={
+        standalone
+          ? 'flex shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 bg-gradient-to-r from-slate-900 via-slate-800 to-teal-950 px-4 py-4 text-white sm:px-5 sm:py-4'
+          : 'flex items-center justify-between border-b border-slate-200/80 px-5 py-4'
+      }
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className={standalone ? 'truncate text-lg font-bold tracking-tight sm:text-xl' : 'text-lg font-semibold text-slate-800'}>
+            {standalone ? 'Yeni rezervasyon' : '+ Manuel Rezervasyon Ekle'}
+          </h3>
+          {standalone && (
+            <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/90 ring-1 ring-white/25">
+              Biletçi
+            </span>
+          )}
+        </div>
+        {standalone && <p className="mt-1 text-xs text-white/70 sm:text-sm">Tur, misafir ve ödeme bilgilerini girin</p>}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         {onLogout && (
           <button
             type="button"
             onClick={onLogout}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+            className={
+              standalone
+                ? 'rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/20 active:scale-[0.98] sm:px-4'
+                : 'rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-800'
+            }
           >
             Çıkış
           </button>
@@ -421,6 +463,14 @@ export default function ManualBookingDrawer({
     </div>
   )
 
+  const formOuterClass = standalone ? 'space-y-5' : 'space-y-4'
+  const chkRow = standalone
+    ? 'flex min-h-[48px] cursor-pointer items-start gap-3 rounded-xl border border-slate-200/90 bg-white px-3 py-2.5 shadow-sm transition hover:border-teal-300/50 active:bg-slate-50/80'
+    : 'flex items-center gap-2'
+  const mealBox = standalone
+    ? 'rounded-xl border border-slate-200/90 bg-white p-3 shadow-sm'
+    : 'rounded-lg border border-zinc-200 bg-white px-3 py-2'
+
   return (
     <>
       {!standalone && <div className="fixed inset-0 z-40 bg-zinc-900/30" aria-hidden onClick={onClose} />}
@@ -431,20 +481,43 @@ export default function ManualBookingDrawer({
         aria-label="Manuel rezervasyon ekle"
       >
         {headerContent}
-        <div className={`flex-1 overflow-y-auto ${standalone ? 'p-6' : 'p-4'}`}>
+        <div
+          className={
+            standalone
+              ? 'flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain px-4 pb-6 pt-3 sm:px-6 sm:pb-8 sm:pt-4'
+              : 'flex-1 overflow-y-auto p-4'
+          }
+        >
           {successMessage && (
-            <div className="mb-4 rounded-lg bg-emerald-50 px-4 py-3 text-emerald-800">
+            <div
+              className={
+                standalone
+                  ? 'mb-4 flex items-center gap-2 rounded-2xl border border-emerald-200/90 bg-emerald-50/90 px-4 py-3.5 text-sm font-medium text-emerald-900 shadow-sm'
+                  : 'mb-4 rounded-lg bg-emerald-50 px-4 py-3 text-emerald-800'
+              }
+              role="status"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700" aria-hidden>
+                ✓
+              </span>
               {successMessage}
             </div>
           )}
           {submitError && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+            <div
+              className={
+                standalone
+                  ? 'mb-4 rounded-2xl border border-red-200/90 bg-red-50/95 px-4 py-3.5 text-sm text-red-900 shadow-sm'
+                  : 'mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800'
+              }
+              role="alert"
+            >
               {submitError}
               {capacityExceeded && (
                 <button
                   type="button"
                   onClick={() => setForceCreate(true)}
-                  className="ml-2 font-medium underline"
+                  className="ml-2 font-semibold text-red-800 underline decoration-red-400 underline-offset-2 hover:text-red-950"
                 >
                   Yine de kaydet
                 </button>
@@ -452,328 +525,406 @@ export default function ManualBookingDrawer({
             </div>
           )}
 
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">Tur *</label>
-              <select
-                value={tourId}
-                onChange={(e) => setTourId(e.target.value)}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                required
-              >
-                <option value="">Seçin</option>
-                {tours.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">Tarih *</label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                required
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">Sınıf *</label>
-              <select
-                value={classId}
-                onChange={(e) => {
-                  const c = tourClasses.find((x) => x.id === e.target.value)
-                  setClassId(e.target.value)
-                  setClassName(c?.label ?? e.target.value)
-                }}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                disabled={classesLoading}
-              >
-                <option value="">Seçin</option>
-                {tourClasses.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className={formOuterClass}>
+            <AgentFormSection standalone={standalone} title="Tur ve sınıf">
+              <div>
+                <label className={lbl}>Tur *</label>
+                <select value={tourId} onChange={(e) => setTourId(e.target.value)} className={inp} required>
+                  <option value="">Seçin</option>
+                  {tours.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className={standalone ? 'sm:col-span-2' : ''}>
+                  <label className={lbl}>Tarih *</label>
+                  {standalone ? (
+                    <div className="mt-1.5">
+                      <AdminBookingMonthCalendar
+                        value={date}
+                        onChange={setDate}
+                        disabled={!tourId}
+                        variant="biletci"
+                      />
+                    </div>
+                  ) : (
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className={inp}
+                      required
+                    />
+                  )}
+                </div>
+                <div>
+                  <label className={lbl}>Sınıf *</label>
+                  <select
+                    value={classId}
+                    onChange={(e) => {
+                      const c = tourClasses.find((x) => x.id === e.target.value)
+                      setClassId(e.target.value)
+                      setClassName(c?.label ?? e.target.value)
+                    }}
+                    className={inp}
+                    disabled={classesLoading}
+                  >
+                    <option value="">Seçin</option>
+                    {tourClasses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </AgentFormSection>
 
             {mealMenu?.enabled && mealMenu.options.length > 0 && (
-              <div>
-                <p className={bookingFieldStyles.formLabel}>
-                  {mealMenu.sectionTitle?.trim() || 'Yemek tercihi'} *
-                </p>
-                {mealMenu.description?.trim() ? (
-                  <p className={bookingFieldStyles.mealOptionDescription}>{mealMenu.description.trim()}</p>
-                ) : null}
-                <MealOptionSelect
-                  options={mealMenu.options}
-                  value={mealPreferenceKey}
-                  onChange={setMealPreferenceKey}
-                  ariaLabel={mealMenu.sectionTitle?.trim() || 'Yemek tercihi'}
-                  namePrefix="manual-booking-meal"
-                  showError={false}
-                />
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {mealMenu.options.map((opt) => (
-                    <label key={opt.key} className="rounded-lg border border-zinc-200 bg-white px-3 py-2">
-                      <span className="block text-xs font-medium text-zinc-700">{opt.label}</span>
-                      <input
-                        type="number"
-                        min={0}
-                        value={mealCountsByKey[opt.key] ?? 0}
-                        onChange={(e) => {
-                          const n = Math.max(0, parseInt(e.target.value, 10) || 0)
-                          setMealCountsByKey((prev) => ({ ...prev, [opt.key]: n }))
-                        }}
-                        className="mt-1 w-full rounded border border-zinc-300 px-2 py-1 text-sm"
-                      />
-                    </label>
-                  ))}
+              <AgentFormSection standalone={standalone} title="Yemek tercihi">
+                <div>
+                  <p className={standalone ? 'mb-2 text-sm font-medium text-slate-700' : bookingFieldStyles.formLabel}>
+                    {mealMenu.sectionTitle?.trim() || 'Yemek tercihi'} *
+                  </p>
+                  {mealMenu.description?.trim() ? (
+                    <p className={bookingFieldStyles.mealOptionDescription}>{mealMenu.description.trim()}</p>
+                  ) : null}
+                  <MealOptionSelect
+                    options={mealMenu.options}
+                    value={mealPreferenceKey}
+                    onChange={setMealPreferenceKey}
+                    ariaLabel={mealMenu.sectionTitle?.trim() || 'Yemek tercihi'}
+                    namePrefix="manual-booking-meal"
+                    showError={false}
+                  />
+                  <div className={standalone ? 'mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2' : 'mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2'}>
+                    {mealMenu.options.map((opt) => (
+                      <label key={opt.key} className={mealBox}>
+                        <span className="block text-xs font-semibold text-slate-600">{opt.label}</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={mealCountsByKey[opt.key] ?? 0}
+                          onChange={(e) => {
+                            const n = Math.max(0, parseInt(e.target.value, 10) || 0)
+                            setMealCountsByKey((prev) => ({ ...prev, [opt.key]: n }))
+                          }}
+                          className={standalone ? `${inp} mt-2 min-h-[44px]` : 'mt-1 w-full rounded border border-zinc-300 px-2 py-1 text-sm'}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Toplam seçilen:{' '}
+                    {mealMenu.options.reduce(
+                      (sum, opt) => sum + Math.max(0, Number(mealCountsByKey[opt.key] ?? 0) || 0),
+                      0
+                    )}{' '}
+                    / {totalPax}
+                  </p>
                 </div>
-                <p className="mt-2 text-xs text-zinc-500">
-                  Toplam seçilen:{' '}
-                  {mealMenu.options.reduce(
-                    (sum, opt) => sum + Math.max(0, Number(mealCountsByKey[opt.key] ?? 0) || 0),
-                    0
-                  )}{' '}
-                  / {totalPax}
-                </p>
-              </div>
+              </AgentFormSection>
             )}
 
             {isFirstClass && date && (
-              <div className="rounded-xl border border-stone-200/80 bg-gradient-to-b from-white to-stone-50/30 p-4 shadow-sm">
-                <h4 className="mb-3 text-sm font-semibold text-zinc-800">Loca Seçimi (First Class)</h4>
-                <FirstClassSeatSelector
-                  selectedLocaIds={firstClassLocas}
-                  reservedLocaIds={reservedLocaIds}
-                  requiredCount={requiredLocas}
-                  onToggle={(locaId) => {
-                    const id = locaId.trim().toUpperCase()
-                    if (firstClassLocas.includes(id)) {
-                      setFirstClassLocas(firstClassLocas.filter((x) => x !== id))
-                    } else if (firstClassLocas.length < requiredLocas) {
-                      setFirstClassLocas([...firstClassLocas, id])
-                    }
-                  }}
-                  onReplace={(removeId, addId) => {
-                    setFirstClassLocas([...firstClassLocas.filter((x) => x !== removeId.trim().toUpperCase()), addId.trim().toUpperCase()])
-                  }}
-                  aria-label="First Class loca seçimi"
-                />
-              </div>
+              <AgentFormSection standalone={standalone} title="First Class loca">
+                <div
+                  className={
+                    standalone
+                      ? 'rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50/90 to-white p-1 sm:p-2'
+                      : 'rounded-xl border border-stone-200/80 bg-gradient-to-b from-white to-stone-50/30 p-4 shadow-sm'
+                  }
+                >
+                  {!standalone && <h4 className="mb-3 text-sm font-semibold text-zinc-800">Loca Seçimi (First Class)</h4>}
+                  <FirstClassSeatSelector
+                    selectedLocaIds={firstClassLocas}
+                    reservedLocaIds={reservedLocaIds}
+                    requiredCount={requiredLocas}
+                    onToggle={(locaId) => {
+                      const id = locaId.trim().toUpperCase()
+                      if (firstClassLocas.includes(id)) {
+                        setFirstClassLocas(firstClassLocas.filter((x) => x !== id))
+                      } else if (firstClassLocas.length < requiredLocas) {
+                        setFirstClassLocas([...firstClassLocas, id])
+                      }
+                    }}
+                    onReplace={(removeId, addId) => {
+                      setFirstClassLocas([
+                        ...firstClassLocas.filter((x) => x !== removeId.trim().toUpperCase()),
+                        addId.trim().toUpperCase(),
+                      ])
+                    }}
+                    aria-label="First Class loca seçimi"
+                  />
+                </div>
+              </AgentFormSection>
             )}
 
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700">Yetişkin *</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={adult}
-                  onChange={(e) => setAdult(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                />
+            <AgentFormSection standalone={standalone} title="Misafirler ve kontenjan">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div>
+                  <label className={lbl}>Yetişkin *</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={adult}
+                    onChange={(e) => setAdult(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    className={inp}
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Çocuk</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={child}
+                    onChange={(e) => setChild(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    className={inp}
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Bebek</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={infant}
+                    onChange={(e) => setInfant(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    className={inp}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700">Çocuk</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={child}
-                  onChange={(e) => setChild(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700">Bebek</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={infant}
-                  onChange={(e) => setInfant(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                />
-              </div>
-            </div>
-            <p className="text-sm text-zinc-500">Toplam: {totalPax} kişi</p>
+              <p className={standalone ? 'text-sm font-medium text-slate-600' : 'text-sm text-zinc-500'}>
+                Toplam: <span className="text-slate-900">{totalPax}</span> kişi
+              </p>
 
-            {capacityInfo && (
-              <div className={`rounded-lg border p-3 text-sm ${exceedsCapacity && !forceCreate ? 'border-red-300 bg-red-50' : 'border-zinc-200 bg-zinc-50'}`}>
-                <p className="font-medium text-zinc-700">Kapasite</p>
-                <p>Toplam: {capacityInfo.capacity} · Satılan: {capacityInfo.booked} · Kalan: {capacityInfo.remaining}</p>
-                {exceedsCapacity && !forceCreate && (
-                  <p className="mt-1 font-medium text-red-600">Bu rezervasyon kalan kapasiteyi aşıyor.</p>
-                )}
-              </div>
-            )}
-            {capacityLoading && tourId && date && <p className="text-sm text-zinc-500">Kapasite yükleniyor…</p>}
+              {capacityInfo && (
+                <div
+                  className={
+                    standalone
+                      ? `flex flex-col gap-2 rounded-2xl border p-4 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between ${
+                          exceedsCapacity && !forceCreate
+                            ? 'border-red-300/90 bg-red-50/90'
+                            : 'border-slate-200/90 bg-slate-100/60'
+                        }`
+                      : `rounded-lg border p-3 text-sm ${
+                          exceedsCapacity && !forceCreate ? 'border-red-300 bg-red-50' : 'border-zinc-200 bg-zinc-50'
+                        }`
+                  }
+                >
+                  <div>
+                    <p className="font-semibold text-slate-800">Kontenjan</p>
+                    <p className="mt-1 text-slate-600">
+                      Kapasite <strong>{capacityInfo.capacity}</strong> · Dolu{' '}
+                      <strong>{capacityInfo.booked}</strong> · Kalan <strong>{capacityInfo.remaining}</strong>
+                    </p>
+                  </div>
+                  {standalone && (
+                    <span
+                      className={`inline-flex w-fit shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold ${
+                        exceedsCapacity && !forceCreate ? 'bg-red-600 text-white' : 'bg-teal-600 text-white'
+                      }`}
+                    >
+                      {capacityInfo.remaining} yer
+                    </span>
+                  )}
+                  {exceedsCapacity && !forceCreate && (
+                    <p className="w-full text-sm font-semibold text-red-700 sm:mt-0">Bu kayıt kalan kapasiteyi aşıyor.</p>
+                  )}
+                </div>
+              )}
+              {capacityLoading && tourId && date && (
+                <p className="text-sm text-slate-500">Kontenjan yükleniyor…</p>
+              )}
+            </AgentFormSection>
 
-            <div className="grid grid-cols-2 gap-3">
+            <AgentFormSection standalone={standalone} title="Müşteri">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={lbl}>Ad *</label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className={inp}
+                    placeholder="Ad"
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Soyad *</label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className={inp}
+                    placeholder="Soyad"
+                    autoComplete="family-name"
+                  />
+                </div>
+              </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700">Ad *</label>
+                <label className={lbl}>Telefon *</label>
                 <input
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                  placeholder="Müşteri adı"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className={inp}
+                  placeholder="+90 …"
+                  autoComplete="tel"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700">Soyad *</label>
+                <label className={lbl}>E-posta (opsiyonel)</label>
                 <input
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                  placeholder="Müşteri soyadı"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={inp}
+                  placeholder="musteri@ornek.com"
+                  autoComplete="email"
                 />
               </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">Telefon *</label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                placeholder="Telefon"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">E-posta (opsiyonel)</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                placeholder="E-posta"
-              />
-            </div>
+            </AgentFormSection>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700">Birim fiyat (opsiyonel)</label>
-                <input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={unitPrice || ''}
-                  onChange={(e) => setUnitPrice(parseFloat(e.target.value) || 0)}
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                  placeholder="Boş bırakılırsa: Fiyat belirtilmedi"
-                />
+            <AgentFormSection standalone={standalone} title="Fiyat">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={lbl}>Birim fiyat (opsiyonel)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={unitPrice || ''}
+                    onChange={(e) => setUnitPrice(parseFloat(e.target.value) || 0)}
+                    className={inp}
+                    placeholder="Boş bırakılabilir"
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Toplam (opsiyonel)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={totalPriceOverride !== null ? totalPriceOverride : unitPrice ? computedTotal : ''}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      if (v === '') setTotalPriceOverride(null)
+                      else setTotalPriceOverride(parseFloat(v) || 0)
+                    }}
+                    className={inp}
+                    placeholder="Otomatik: birim × kişi"
+                  />
+                  <p className="mt-1.5 text-xs text-slate-500">Boş bırakılırsa toplam hesaplanmaz · Birim × {totalPax}</p>
+                </div>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700">Toplam tutar (opsiyonel)</label>
-                <input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={totalPriceOverride !== null ? totalPriceOverride : (unitPrice ? computedTotal : '')}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    if (v === '') setTotalPriceOverride(null)
-                    else setTotalPriceOverride(parseFloat(v) || 0)
-                  }}
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                  placeholder="Fiyat belirtilmedi"
-                />
-                <p className="mt-0.5 text-xs text-zinc-500">Boş = Fiyat belirtilmedi · Otomatik: birim × {totalPax} kişi</p>
+                <label className={lbl}>Para birimi</label>
+                <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inp}>
+                  <option value="TRY">TRY</option>
+                </select>
               </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">Para birimi</label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-              >
-                <option value="TRY">TRY</option>
-              </select>
-            </div>
+            </AgentFormSection>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">Ödeme durumu *</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as 'pending' | 'paid' | 'cancelled')}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-              >
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">Rezervasyon kaynağı *</label>
-              <select
-                value={manualSource}
-                onChange={(e) => setManualSource(e.target.value)}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-              >
-                {MANUAL_SOURCE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">Admin notu</label>
-              <textarea
-                value={adminNote}
-                onChange={(e) => setAdminNote(e.target.value)}
-                rows={2}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
-                placeholder="İç not"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={sendVoucher}
-                  onChange={(e) => setSendVoucher(e.target.checked)}
-                  className="rounded border-zinc-300"
+            <AgentFormSection standalone={standalone} title="Ödeme ve kaynak">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={lbl}>Ödeme durumu *</label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as 'pending' | 'paid' | 'cancelled')}
+                    className={inp}
+                  >
+                    {STATUS_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={lbl}>Kaynak *</label>
+                  <select value={manualSource} onChange={(e) => setManualSource(e.target.value)} className={inp}>
+                    {MANUAL_SOURCE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className={lbl}>Admin notu</label>
+                <textarea
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                  rows={2}
+                  className={ta}
+                  placeholder="İç not (isteğe bağlı)"
                 />
-                <span className="text-sm text-zinc-700">Voucher gönderme (isteğe bağlı)</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={sendEmail}
-                  onChange={(e) => setSendEmail(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span className="text-sm text-zinc-700">Müşteriye e-posta gönder (isteğe bağlı, ödendi ise)</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={sendEmailToAdmin}
-                  onChange={(e) => setSendEmailToAdmin(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span className="text-sm text-zinc-700">Admin'e de e-posta gönder (isteğe bağlı)</span>
-              </label>
-            </div>
+              </div>
+            </AgentFormSection>
+
+            <AgentFormSection standalone={standalone} title="Bildirimler">
+              <div className="space-y-2">
+                <label className={chkRow}>
+                  <input
+                    type="checkbox"
+                    checked={sendVoucher}
+                    onChange={(e) => setSendVoucher(e.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                  />
+                  <span className={standalone ? 'text-sm font-medium text-slate-700' : 'text-sm text-zinc-700'}>
+                    Voucher gönder (isteğe bağlı)
+                  </span>
+                </label>
+                <label className={chkRow}>
+                  <input
+                    type="checkbox"
+                    checked={sendEmail}
+                    onChange={(e) => setSendEmail(e.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                  />
+                  <span className={standalone ? 'text-sm font-medium text-slate-700' : 'text-sm text-zinc-700'}>
+                    Müşteriye e-posta (ödendi ise)
+                  </span>
+                </label>
+                <label className={chkRow}>
+                  <input
+                    type="checkbox"
+                    checked={sendEmailToAdmin}
+                    onChange={(e) => setSendEmailToAdmin(e.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                  />
+                  <span className={standalone ? 'text-sm font-medium text-slate-700' : 'text-sm text-zinc-700'}>
+                    Yöneticiye bilgi e-postası
+                  </span>
+                </label>
+              </div>
+            </AgentFormSection>
           </div>
         </div>
-        <div className={`flex gap-2 border-t border-zinc-200 p-4 ${standalone ? 'justify-center' : ''}`}>
+        <div
+          className={
+            standalone
+              ? 'sticky bottom-0 z-20 flex shrink-0 flex-col gap-2 border-t border-slate-200/90 bg-white/95 p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_-12px_rgba(15,23,42,0.12)] backdrop-blur-md supports-[backdrop-filter]:bg-white/90 sm:flex-row sm:items-stretch sm:justify-center sm:gap-3 sm:p-4'
+              : 'flex gap-2 border-t border-zinc-200 p-4'
+          }
+        >
           <button
             type="button"
             onClick={() => handleSubmit(true)}
             disabled={saving}
-            className="flex-1 rounded-lg bg-indigo-600 py-2.5 font-medium text-white hover:bg-indigo-700 disabled:opacity-50 min-w-[200px]"
+            className={
+              standalone
+                ? 'min-h-[48px] w-full rounded-2xl bg-teal-600 py-3.5 text-base font-semibold text-white shadow-lg shadow-teal-600/20 transition hover:bg-teal-700 disabled:opacity-50 sm:max-w-md sm:flex-1'
+                : 'min-w-[200px] flex-1 rounded-lg bg-indigo-600 py-2.5 font-medium text-white hover:bg-indigo-700 disabled:opacity-50'
+            }
           >
-            {saving ? 'Kaydediliyor…' : 'Kaydet ve yeni kayıda geç'}
+            {saving ? 'Kaydediliyor…' : standalone ? 'Kaydet ve yeni kayıt' : 'Kaydet ve yeni kayıda geç'}
           </button>
           {!standalone && (
             <button

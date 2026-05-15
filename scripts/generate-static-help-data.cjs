@@ -27,7 +27,8 @@ const META = {
   },
   3: {
     slug: 'fiyatlandirma',
-    shortDescription: 'Dahil olanlar, çocuk ve bebek fiyatları, VIP seçenekleri.',
+    shortDescription:
+      'Premium şezlong: oturan herkes tam ücret. Bebek ve 6 yaş altı ücretsiz; 6–10 yaş yarım (Eco/Premium genel). Tur sayfası; Yat kiralama.',
     iconName: 'credit-card',
     order: 30,
     isFeatured: true,
@@ -151,8 +152,8 @@ for (const c of outCategories) {
 }
 
 const totalArticles = outCategories.reduce((n, c) => n + c.articles.length, 0)
-if (totalArticles !== 38) {
-  console.warn(`Beklenen 38 makale, bulunan: ${totalArticles}`)
+if (totalArticles !== 37) {
+  console.warn(`Beklenen 37 makale, bulunan: ${totalArticles}`)
 }
 
 const STATIC_PAGE = `export const STATIC_HELP_PAGE = {

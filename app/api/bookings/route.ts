@@ -16,13 +16,13 @@ import {
 } from '@/lib/bookingMealPreference'
 import { supabase } from '@/lib/supabase'
 import {
+  BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY,
   firstClassLocasFromRow,
   normalizeDateOnly,
   type SupabaseBookingRow,
 } from '@/lib/bookingsSupabase'
 
 const CURRENCY = 'TRY'
-const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
 const TOTAL_FIRST_CLASS_LOCAS = 10
 const LOCA_REGEX = /^L(10|[1-9])$/
 
@@ -174,7 +174,7 @@ export async function POST(request: Request) {
         .select('id, first_class_locas, first_class_loca')
         .eq('date', dateNorm)
         .eq('class_id', 'first')
-        .in('status', ACTIVE_STATUSES)
+        .in('status', BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY)
       if (firstClassError) {
         throw new Error(`Supabase first class availability query failed: ${firstClassError.message}`)
       }

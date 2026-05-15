@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { paxCountFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
-
-const ACTIVE_STATUSES = ['pending', 'paid', 'confirmed']
+import { paxCountFromRow, BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
 import { authorizeAdmin } from '@/lib/adminAuthServer'
 
@@ -18,12 +16,12 @@ export async function GET(request: Request) {
       supabase.from('bookings').select('id', { count: 'exact', head: true }),
       supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('date', today),
       supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('source', 'manual'),
-      supabase.from('bookings').select('status, total_price').in('status', ['pending', 'paid']),
+      supabase.from('bookings').select('status, total_price').in('status', BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY),
       supabase
         .from('bookings')
         .select('status, adult_count, child_count, infant_count')
         .eq('date', today)
-        .in('status', ACTIVE_STATUSES),
+        .in('status', BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY),
     ])
     if (totalCountResult.error) throw new Error(`Supabase total count failed: ${totalCountResult.error.message}`)
     if (todayCountResult.error) throw new Error(`Supabase today count failed: ${todayCountResult.error.message}`)
