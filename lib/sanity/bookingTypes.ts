@@ -35,11 +35,21 @@ export interface TicketClassForBooking {
   dateRangePrices?: ClassDateRangePrice[]
 }
 
+/** Sezon kuralında bir sınıf için yaş bazlı ₺ farkı (taban fiyata eklenir). */
+export interface SeasonClassAdjustment {
+  classKey: string
+  adultAdjustment?: number | null
+  childAdjustment?: number | null
+  infantAdjustment?: number | null
+}
+
 export interface SeasonRule {
   name: string
   start: string // YYYY-MM-DD
   end: string
-  multiplier: number
+  /** @deprecated Sınıf satırı yoksa geriye dönük çarpan; yeni kayıtlarda classAdjustments kullanın. */
+  multiplier?: number | null
+  classAdjustments?: SeasonClassAdjustment[] | null
 }
 
 export interface DepositConfig {

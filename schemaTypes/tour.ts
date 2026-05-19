@@ -1421,7 +1421,8 @@ export default defineType({
       name: 'seasonRules',
       title: 'Sezon Kuralları',
       type: 'array',
-      description: 'Sezon bazlı fiyat çarpanları',
+      description:
+        'Belirli tarih aralıklarında her bilet sınıfına taban fiyata eklenecek veya çıkarılacak tutar (₺). Örn: Eco yetişkin 1500 ₺ iken yaz sezonu +300 → 1800 ₺. Eski çarpan alanı yalnızca sınıf satırı yoksa kullanılır.',
       of: [
         {
           type: 'object',
@@ -1446,14 +1447,77 @@ export default defineType({
               validation: (Rule) => Rule.required().error('Bitiş tarihi zorunludur'),
             }),
             defineField({
+              name: 'classAdjustments',
+              title: 'Sınıf Bazlı Fiyat Farkı (₺)',
+              type: 'array',
+              description:
+                'Taban fiyata eklenecek (+) veya düşülecek (−) tutar. Boş yaş alanı = o yaş grubuna fark uygulanmaz.',
+              of: [
+                {
+                  type: 'object',
+                  fields: [
+                    defineField({
+                      name: 'classKey',
+                      title: 'Bilet Sınıfı',
+                      type: 'string',
+                      options: {
+                        list: [
+                          { title: 'Eco', value: 'eco' },
+                          { title: 'Premium', value: 'premium' },
+                          { title: 'First', value: 'first' },
+                        ],
+                        layout: 'radio',
+                      },
+                      validation: (Rule) => Rule.required(),
+                    }),
+                    defineField({
+                      name: 'adultAdjustment',
+                      title: 'Yetişkin farkı (₺)',
+                      type: 'number',
+                      description: 'Örn: +300 veya −100',
+                    }),
+                    defineField({
+                      name: 'childAdjustment',
+                      title: 'Çocuk farkı (₺)',
+                      type: 'number',
+                      description: 'Boş bırakılırsa çocuk fiyatına fark uygulanmaz',
+                    }),
+                    defineField({
+                      name: 'infantAdjustment',
+                      title: 'Bebek farkı (₺)',
+                      type: 'number',
+                      description: 'Boş bırakılırsa bebek fiyatına fark uygulanmaz',
+                    }),
+                  ],
+                  preview: {
+                    select: {
+                      classKey: 'classKey',
+                      adult: 'adultAdjustment',
+                      child: 'childAdjustment',
+                      infant: 'infantAdjustment',
+                    },
+                    prepare({ classKey, adult, child, infant }) {
+                      const fmt = (n: number | undefined) =>
+                        n == null || Number.isNaN(Number(n))
+                          ? '—'
+                          : `${Number(n) >= 0 ? '+' : ''}${n} ₺`
+                      return {
+                        title: String(classKey || 'Sınıf').toUpperCase(),
+                        subtitle: `Yetişkin ${fmt(adult)} · Çocuk ${fmt(child)} · Bebek ${fmt(infant)}`,
+                      }
+                    },
+                  },
+                },
+              ],
+            }),
+            defineField({
               name: 'multiplier',
-              title: 'Çarpan',
+              title: 'Çarpan (eski sistem)',
               type: 'number',
-              description: 'Fiyat çarpanı (örn: 1.2 = %20 artış)',
-              validation: (Rule) =>
-                Rule.required()
-                  .min(0.1)
-                  .error('Çarpan zorunludur ve 0.1 veya daha büyük olmalıdır'),
+              description:
+                'Yalnızca üstteki sınıf satırları boşsa kullanılır. Yeni kayıtlarda boş bırakın.',
+              hidden: ({ parent }) =>
+                Array.isArray(parent?.classAdjustments) && parent.classAdjustments.length > 0,
             }),
           ],
           preview: {
@@ -1462,11 +1526,26 @@ export default defineType({
               start: 'start',
               end: 'end',
               multiplier: 'multiplier',
+              classAdjustments: 'classAdjustments',
             },
-            prepare({ name, start, end, multiplier }) {
+            prepare({ name, start, end, multiplier, classAdjustments }) {
+              const rows = Array.isArray(classAdjustments) ? classAdjustments : []
+              const adjSummary =
+                rows.length > 0
+                  ? rows
+                      .map((r: { classKey?: string; adultAdjustment?: number }) => {
+                        const k = r?.classKey ?? '?'
+                        const a = r?.adultAdjustment
+                        if (a == null || Number.isNaN(Number(a))) return k
+                        return `${k} ${Number(a) >= 0 ? '+' : ''}${a}₺`
+                      })
+                      .join(', ')
+                  : multiplier != null
+                    ? `x${multiplier}`
+                    : 'fark yok'
               return {
                 title: name,
-                subtitle: `${start} - ${end} (x${multiplier})`,
+                subtitle: `${start} - ${end} · ${adjSummary}`,
               }
             },
           },

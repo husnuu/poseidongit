@@ -239,7 +239,13 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
     name,
     start,
     end,
-    multiplier
+    multiplier,
+    classAdjustments[]{
+      classKey,
+      adultAdjustment,
+      childAdjustment,
+      infantAdjustment
+    }
   },
   deposit{
     enabled,
@@ -525,7 +531,13 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
     name,
     start,
     end,
-    multiplier
+    multiplier,
+    classAdjustments[]{
+      classKey,
+      adultAdjustment,
+      childAdjustment,
+      infantAdjustment
+    }
   },
   deposit{
     enabled,

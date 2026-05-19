@@ -136,7 +136,13 @@ interface SeasonRule {
   name: string
   start: string
   end: string
-  multiplier: number
+  multiplier?: number | null
+  classAdjustments?: Array<{
+    classKey: string
+    adultAdjustment?: number | null
+    childAdjustment?: number | null
+    infantAdjustment?: number | null
+  }> | null
 }
 
 interface Deposit {

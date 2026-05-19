@@ -9,6 +9,8 @@ import type {
   CalendarDay,
   PricingSummary,
   PricingUnit,
+  SeasonRule,
+  SeasonClassAdjustment,
 } from './bookingTypes'
 
 /** YYYY-MM-DD aralığında (uçlar dahil) mi — yerel öğlen ile DST kayması azaltılır. */
@@ -125,15 +127,76 @@ export function getCapForTicketClass(
   return 0
 }
 
-export function getSeasonMultiplier(tour: TourForBooking, dateStr: string): number {
+/** Tarihe uyan ilk sezon kuralı (liste sırası önceliklidir). */
+export function getActiveSeasonRule(tour: TourForBooking, dateStr: string): SeasonRule | null {
   const rules = tour.seasonRules ?? []
-  const d = new Date(dateStr)
   for (const r of rules) {
-    const start = new Date(r.start)
-    const end = new Date(r.end)
-    if (d >= start && d <= end) return r.multiplier
+    if (!r?.start || !r?.end) continue
+    if (dateInRangeISO(dateStr, r.start, r.end)) return r
   }
-  return 1
+  return null
+}
+
+/** @deprecated Yeni kayıtlarda classAdjustments kullanın; geriye dönük çarpan. */
+export function getSeasonMultiplier(tour: TourForBooking, dateStr: string): number {
+  const rule = getActiveSeasonRule(tour, dateStr)
+  if (!rule) return 1
+  const rows = rule.classAdjustments ?? []
+  if (rows.length > 0) return 1
+  const m = Number(rule.multiplier)
+  return Number.isFinite(m) && m > 0 ? m : 1
+}
+
+function seasonAdjustmentForAge(
+  row: SeasonClassAdjustment | undefined,
+  ageKey: 'adult' | 'child' | 'infant'
+): number {
+  if (!row) return 0
+  const raw =
+    ageKey === 'adult'
+      ? row.adultAdjustment
+      : ageKey === 'child'
+        ? row.childAdjustment
+        : row.infantAdjustment
+  if (raw == null || !Number.isFinite(Number(raw))) return 0
+  return Number(raw)
+}
+
+/** Sezon kuralında bu sınıf + yaş için ₺ farkı (yoksa 0). */
+export function getSeasonPriceAdjustment(
+  rule: SeasonRule | null,
+  ticketClassKey: string,
+  ageKey: 'adult' | 'child' | 'infant'
+): number {
+  if (!rule?.classAdjustments?.length) return 0
+  const norm = normalizeTicketClassKey(ticketClassKey)
+  const row = rule.classAdjustments.find(
+    (x) => x?.classKey && normalizeTicketClassKey(x.classKey) === norm
+  )
+  return seasonAdjustmentForAge(row, ageKey)
+}
+
+function applySeasonToBaseUnit(
+  tour: TourForBooking,
+  dateStr: string,
+  ticketClassKey: string,
+  ageKey: 'adult' | 'child' | 'infant',
+  baseUnit: number
+): number {
+  const rule = getActiveSeasonRule(tour, dateStr)
+  if (!rule) return baseUnit
+
+  const rows = rule.classAdjustments ?? []
+  if (rows.length > 0) {
+    const adj = getSeasonPriceAdjustment(rule, ticketClassKey, ageKey)
+    return Math.max(0, Math.round(baseUnit + adj))
+  }
+
+  const mult = Number(rule.multiplier)
+  if (Number.isFinite(mult) && mult > 0 && mult !== 1) {
+    return Math.round(baseUnit * mult)
+  }
+  return baseUnit
 }
 
 function normalizeTicketClassKey(classKey: string): string {
@@ -166,15 +229,14 @@ function unitFromPriceOverrideObject(
 }
 
 /**
- * Öncelik: sınıfa özel özel gün fiyatı → günlük genel özel gün fiyatı → tur sınıfı × sezon.
+ * Öncelik: sınıfa özel özel gün fiyatı → günlük genel özel gün fiyatı → taban fiyat + sezon farkı (veya eski çarpan).
  */
 function effectiveUnitForAge(
   tour: TourForBooking,
   dateStr: string,
   ticketClassKey: string,
   ageKey: 'adult' | 'child' | 'infant',
-  cls: TicketClassForBooking,
-  mult: number
+  cls: TicketClassForBooking
 ): number {
   const specific = getActiveSpecificDate(tour, dateStr)
   if (specific) {
@@ -189,7 +251,7 @@ function effectiveUnitForAge(
   }
   const resolved = getClassBaseUnitForAge(cls, dateStr, ageKey)
   if (resolved == null) return 0
-  return Math.round(resolved.unit * mult)
+  return applySeasonToBaseUnit(tour, dateStr, ticketClassKey, ageKey, resolved.unit)
 }
 
 /**
@@ -200,18 +262,16 @@ export function getDisplayedAdultUnitPriceForClass(
   dateStr: string,
   cls: TicketClassForBooking
 ): number | undefined {
-  const mult = getSeasonMultiplier(tour, dateStr)
-  const unit = effectiveUnitForAge(tour, dateStr, cls.key, 'adult', cls, mult)
+  const unit = effectiveUnitForAge(tour, dateStr, cls.key, 'adult', cls)
   if (!Number.isFinite(unit) || unit <= 0) return undefined
   return unit
 }
 
 function getMinPriceForDate(tour: TourForBooking, dateStr: string): number | null {
   const classes = tour.ticketClasses ?? []
-  const mult = getSeasonMultiplier(tour, dateStr)
   let min: number | null = null
   for (const c of classes) {
-    const p = effectiveUnitForAge(tour, dateStr, c.key, 'adult', c, mult)
+    const p = effectiveUnitForAge(tour, dateStr, c.key, 'adult', c)
     if (p > 0 && (min === null || p < min)) min = p
   }
   return min
@@ -255,7 +315,6 @@ export function computePricingForSelection(
   const cls = tour.ticketClasses?.find((c) => c.key === classKey)
   if (!cls?.pricesByAge?.length) return null
 
-  const mult = getSeasonMultiplier(tour, dateStr)
   const unitPrices: PricingUnit[] = []
   const mapping = [
     { key: 'adult' as const, count: counts.adult },
@@ -265,7 +324,7 @@ export function computePricingForSelection(
   for (const { key, count } of mapping) {
     if (count <= 0) continue
     const resolved = getClassBaseUnitForAge(cls, dateStr, key)
-    const unitPrice = effectiveUnitForAge(tour, dateStr, classKey, key, cls, mult)
+    const unitPrice = effectiveUnitForAge(tour, dateStr, classKey, key, cls)
     unitPrices.push({
       ageKey: key,
       ageLabel: resolved?.ageLabel ?? cls.pricesByAge?.find((p) => p.ageKey === key)?.ageLabel ?? key,

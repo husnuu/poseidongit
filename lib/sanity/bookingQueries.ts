@@ -84,7 +84,13 @@ export const tourForBookingProjection = `{
     name,
     start,
     end,
-    multiplier
+    multiplier,
+    classAdjustments[]{
+      classKey,
+      adultAdjustment,
+      childAdjustment,
+      infantAdjustment
+    }
   },
   deposit{
     enabled,
