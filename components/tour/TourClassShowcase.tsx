@@ -39,10 +39,20 @@ type Props = {
   hideHeading?: boolean
 }
 
+function imageDedupeKey(img: TicketClassImageLike): string | null {
+  const ref =
+    img.asset && typeof img.asset === 'object' && '_ref' in img.asset
+      ? String((img.asset as { _ref?: string })._ref ?? '').trim()
+      : ''
+  if (ref) return ref
+  const u = img.url?.trim()
+  return u || null
+}
+
 function getImageSrc(img: TicketClassImageLike, width = 1600): string | null {
   try {
     if (img?.asset) {
-      return urlFor(img.asset).width(width).quality(85).auto('format').url()
+      return urlFor(img.asset).width(width).quality(88).auto('format').url()
     }
   } catch {
     /* fallthrough to url */
@@ -50,16 +60,23 @@ function getImageSrc(img: TicketClassImageLike, width = 1600): string | null {
   return img?.url?.trim() || null
 }
 
+/** Galeri + kapak görseli; yinelenen asset/url atlanır. */
 function collectImages(cls: TourClassItem): TicketClassImageLike[] {
   const list: TicketClassImageLike[] = []
+  const seen = new Set<string>()
+
+  const push = (im: TicketClassImageLike | null | undefined) => {
+    if (!im || (!im.asset && !im.url)) return
+    const key = imageDedupeKey(im)
+    if (!key || seen.has(key)) return
+    seen.add(key)
+    list.push(im)
+  }
+
   if (Array.isArray(cls.classImages)) {
-    for (const im of cls.classImages) {
-      if (im && (im.asset || im.url)) list.push(im)
-    }
+    for (const im of cls.classImages) push(im)
   }
-  if (list.length === 0 && cls.classImage && (cls.classImage.asset || cls.classImage.url)) {
-    list.push(cls.classImage)
-  }
+  push(cls.classImage ?? undefined)
   return list
 }
 
@@ -83,22 +100,37 @@ export default function TourClassShowcase({ classes, locale, defaultKey, heading
     () => safeClasses.find((c) => c.key === activeKey) ?? null,
     [safeClasses, activeKey]
   )
-  const images = useMemo(() => (activeClass ? collectImages(activeClass) : []), [activeClass])
-  const currentImage = images[imageIndex] ?? null
+  const images = useMemo(() => {
+    const raw = activeClass ? collectImages(activeClass) : []
+    return raw.filter((im) => getImageSrc(im) != null)
+  }, [activeClass])
+  const slideCount = images.length
+  const safeIndex = slideCount > 0 ? Math.min(imageIndex, slideCount - 1) : 0
+  const currentImage = images[safeIndex] ?? null
 
   useEffect(() => {
     setImageIndex(0)
   }, [activeKey])
 
+  useEffect(() => {
+    if (slideCount > 0 && imageIndex >= slideCount) {
+      setImageIndex(0)
+    }
+  }, [slideCount, imageIndex])
+
   const goPrev = useCallback(() => {
-    if (images.length < 2) return
-    setImageIndex((i) => (i - 1 + images.length) % images.length)
-  }, [images.length])
+    setImageIndex((i) => {
+      if (slideCount < 2) return i
+      return (i - 1 + slideCount) % slideCount
+    })
+  }, [slideCount])
 
   const goNext = useCallback(() => {
-    if (images.length < 2) return
-    setImageIndex((i) => (i + 1) % images.length)
-  }, [images.length])
+    setImageIndex((i) => {
+      if (slideCount < 2) return i
+      return (i + 1) % slideCount
+    })
+  }, [slideCount])
 
   if (safeClasses.length === 0) return null
 
@@ -146,25 +178,55 @@ export default function TourClassShowcase({ classes, locale, defaultKey, heading
           className={styles.panel}
         >
           <div className={styles.gallery}>
-            {currentImage ? (
+            {slideCount > 0 ? (
               <>
-                <div className={styles.imageWrap}>
-                  <Image
-                    key={`${activeClass.key}-${imageIndex}`}
-                    src={getImageSrc(currentImage) ?? ''}
-                    alt={currentImage.alt?.trim() || `${activeClass.label} — ${imageIndex + 1}`}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 60vw, 720px"
-                    placeholder={currentImage.metadata?.lqip ? 'blur' : 'empty'}
-                    blurDataURL={currentImage.metadata?.lqip ?? undefined}
-                    className={styles.image}
-                    priority={false}
-                  />
-                  {images.length > 1 && (
+                <div
+                  className={styles.imageWrap}
+                  onKeyDown={(e) => {
+                    if (slideCount < 2) return
+                    if (e.key === 'ArrowLeft') {
+                      e.preventDefault()
+                      goPrev()
+                    }
+                    if (e.key === 'ArrowRight') {
+                      e.preventDefault()
+                      goNext()
+                    }
+                  }}
+                >
+                  <div
+                    className={styles.track}
+                    style={{ transform: `translate3d(-${safeIndex * 100}%, 0, 0)` }}
+                    aria-live="polite"
+                  >
+                    {images.map((img, i) => {
+                      const src = getImageSrc(img)
+                      if (!src) return null
+                      const dedupe = imageDedupeKey(img) ?? String(i)
+                      return (
+                        <div key={`${activeClass.key}-${dedupe}`} className={styles.slide}>
+                          <Image
+                            src={src}
+                            alt={img.alt?.trim() || `${activeClass.label} — ${i + 1}`}
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 60vw, 720px"
+                            placeholder={img.metadata?.lqip ? 'blur' : 'empty'}
+                            blurDataURL={img.metadata?.lqip ?? undefined}
+                            className={styles.image}
+                            priority={i === 0}
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {slideCount > 1 && (
                     <>
                       <button
                         type="button"
-                        onClick={goPrev}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          goPrev()
+                        }}
                         className={`${styles.navBtn} ${styles.navPrev}`}
                         aria-label={ui.classesShowcaseImagePrev}
                       >
@@ -174,7 +236,10 @@ export default function TourClassShowcase({ classes, locale, defaultKey, heading
                       </button>
                       <button
                         type="button"
-                        onClick={goNext}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          goNext()
+                        }}
                         className={`${styles.navBtn} ${styles.navNext}`}
                         aria-label={ui.classesShowcaseImageNext}
                       >
@@ -183,28 +248,32 @@ export default function TourClassShowcase({ classes, locale, defaultKey, heading
                         </svg>
                       </button>
                       <span className={styles.counter} aria-live="polite">
-                        {ui.classesShowcaseImageCounter(imageIndex + 1, images.length)}
+                        {ui.classesShowcaseImageCounter(safeIndex + 1, slideCount)}
                       </span>
                     </>
                   )}
                 </div>
 
-                {images.length > 1 && (
-                  <div className={styles.dots} aria-hidden>
-                    {images.map((_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setImageIndex(i)}
-                        className={`${styles.dot} ${i === imageIndex ? styles.dotActive : ''}`}
-                        aria-label={`${i + 1}`}
-                        tabIndex={-1}
-                      />
-                    ))}
+                {slideCount > 1 && (
+                  <div className={styles.dots} role="tablist" aria-label={ui.classesShowcaseSelectAria}>
+                    {images.map((img, i) => {
+                      const dedupe = imageDedupeKey(img) ?? String(i)
+                      return (
+                        <button
+                          key={dedupe}
+                          type="button"
+                          role="tab"
+                          aria-selected={i === safeIndex}
+                          onClick={() => setImageIndex(i)}
+                          className={`${styles.dot} ${i === safeIndex ? styles.dotActive : ''}`}
+                          aria-label={ui.classesShowcaseImageCounter(i + 1, slideCount)}
+                        />
+                      )
+                    })}
                   </div>
                 )}
 
-                {currentImage.caption && (
+                {currentImage?.caption && (
                   <p className={styles.caption}>{currentImage.caption}</p>
                 )}
               </>

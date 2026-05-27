@@ -10,6 +10,7 @@ import type {
   PricingSummary,
 } from '@/lib/sanity/bookingTypes'
 import { getTourIdForBooking } from '@/lib/sanity/bookingTypes'
+import { getEarliestBookableDateStr } from '@/lib/booking/bookingWindow'
 import { computePricingForSelection, buildCalendarDaysForMonth, getFirstAvailableYearMonth, getDisplayedAdultUnitPriceForClass, getClassStatusForDate, getRemainingCapacityForDate, getCapForTicketClass, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
@@ -120,10 +121,7 @@ export default function StepDateClass({
     onPricingComputed,
   ])
 
-  const todayStr = useMemo(() => {
-    const t = new Date()
-    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`
-  }, [])
+  const minBookableStr = useMemo(() => getEarliestBookableDateStr(), [])
 
   const monthLabel = useMemo(() => {
     const d = new Date(viewYear, viewMonth - 1, 1)
@@ -136,10 +134,10 @@ export default function StepDateClass({
 
   const minPriceInMonth = useMemo(() => {
     const prices = calendar
-      .filter((d) => d.isAvailable && d.date >= todayStr && d.minPrice != null)
+      .filter((d) => d.isAvailable && d.date >= minBookableStr && d.minPrice != null)
       .map((d) => d.minPrice!)
     return prices.length === 0 ? null : Math.min(...prices)
-  }, [calendar, todayStr])
+  }, [calendar, minBookableStr])
 
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
   const capacityForDate = state.selectedDate
@@ -203,7 +201,7 @@ export default function StepDateClass({
             {calendar.map((day) => {
               const dayNum = parseInt(day.date.slice(8), 10)
               const selected = state.selectedDate === day.date
-              const available = day.isAvailable && day.date >= todayStr
+              const available = day.isAvailable && day.date >= minBookableStr
               const showPrice = available && day.minPrice != null
               const showStar = available && minPriceInMonth != null && day.minPrice === minPriceInMonth
               return (

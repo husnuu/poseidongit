@@ -6,6 +6,7 @@ import YachtHeroBadgeOverlay from '@/components/yacht/YachtHeroBadgeOverlay'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './PhotoGrid.module.css'
+import { SANITY_DISPLAY_IMAGE_PROPS } from '@/lib/sanityImage'
 
 export interface PhotoGridImage {
   src: string
@@ -84,6 +85,7 @@ export default function PhotoGrid({ images, tourTitle, heroBadges, locale }: Pho
               placeholder={mainImage.blurDataURL ? 'blur' : 'empty'}
               blurDataURL={mainImage.blurDataURL ?? undefined}
               sizes="(max-width: 768px) 100vw, 50vw"
+              {...SANITY_DISPLAY_IMAGE_PROPS}
             />
             {heroBadges && heroBadges.length > 0 ? (
               <div className={styles.mainBadgeLayer}>
@@ -110,6 +112,7 @@ export default function PhotoGrid({ images, tourTitle, heroBadges, locale }: Pho
                 placeholder={secondImage.blurDataURL ? 'blur' : 'empty'}
                 blurDataURL={secondImage.blurDataURL ?? undefined}
                 sizes="(max-width: 768px) 100vw, 25vw"
+                {...SANITY_DISPLAY_IMAGE_PROPS}
               />
               {images.length > 2 && (
                 <button
@@ -151,6 +154,7 @@ export default function PhotoGrid({ images, tourTitle, heroBadges, locale }: Pho
                   placeholder={image.blurDataURL ? 'blur' : 'empty'}
                   blurDataURL={image.blurDataURL ?? undefined}
                   sizes="25vw"
+                  {...SANITY_DISPLAY_IMAGE_PROPS}
                 />
                 {isBottomRight && (
                   <button
@@ -208,8 +212,9 @@ export default function PhotoGrid({ images, tourTitle, heroBadges, locale }: Pho
               alt={images[lightboxIndex].alt}
               fill
               className={styles.lightboxImage}
-              sizes="(max-width: 768px) 100vw, min(1920px, 96vw)"
+              sizes="(max-width: 768px) 100vw, min(2560px, 96vw)"
               priority
+              {...SANITY_DISPLAY_IMAGE_PROPS}
             />
           </div>
 

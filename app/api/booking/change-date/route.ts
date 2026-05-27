@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isDateBeforeEarliestBookable } from '@/lib/booking/bookingWindow'
 import { rateLimitResponse } from '@/lib/rateLimit'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
@@ -47,6 +48,12 @@ export async function POST(request: NextRequest) {
     if (!bookingId || !email || !newDate || !DATE_REGEX.test(newDate)) {
       return NextResponse.json(
         { error: 'bookingId, email ve geçerli newDate (YYYY-MM-DD) gerekli' },
+        { status: 400 }
+      )
+    }
+    if (isDateBeforeEarliestBookable(newDate)) {
+      return NextResponse.json(
+        { error: 'Seçilen tarih için henüz rezervasyon alınmıyor.' },
         { status: 400 }
       )
     }

@@ -1,4 +1,5 @@
 import { client, safeSanityImageUrl, urlFor } from '@/lib/sanity'
+import { tourCoverImageUrl } from '@/lib/sanityImage'
 import {
   homePageHeroImageUrlsQuery,
   homePageHeroQuery,
@@ -434,7 +435,7 @@ function mapPopularToursToCardItems(
       reviewCount: merged.reviewCount,
       reviewsUrl: merged.reviewsUrl ?? null,
       isPopular: merged.isPopular ?? false,
-      coverImageUrl: merged.mainImage?.asset ? urlFor(merged.mainImage.asset).width(800).height(600).url() : null,
+      coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
       coverImageAlt: merged.mainImage?.alt ?? null,
     }
   })

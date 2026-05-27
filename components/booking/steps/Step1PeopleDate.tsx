@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Star, Users, CalendarDays, ChevronDown, Info } from 'lucide-react'
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
+import { getEarliestBookableDateStr, todayStrLocal } from '@/lib/booking/bookingWindow'
 import { buildCalendarDaysForMonth, getFirstAvailableYearMonth } from '@/lib/sanity/bookingPricing'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import styles from '../booking.module.css'
@@ -50,10 +51,8 @@ export default function Step1PeopleDate({
   const [viewMonth, setViewMonth] = useState(() => firstAvailable.month)
   const isViewingFirstAvailableMonth =
     viewYear === firstAvailable.year && viewMonth === firstAvailable.month
-  const todayStr = useMemo(() => {
-    const t = new Date()
-    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`
-  }, [])
+  const todayStr = useMemo(() => todayStrLocal(), [])
+  const minBookableStr = useMemo(() => getEarliestBookableDateStr(), [])
 
   const calendar = useMemo(
     () => buildCalendarDaysForMonth(tour, viewYear, viewMonth),
@@ -76,10 +75,10 @@ export default function Step1PeopleDate({
 
   const minPriceInMonth = useMemo(() => {
     const prices = calendar
-      .filter((d) => d.isAvailable && d.date >= todayStr && d.minPrice != null)
+      .filter((d) => d.isAvailable && d.date >= minBookableStr && d.minPrice != null)
       .map((d) => d.minPrice!)
     return prices.length === 0 ? null : Math.min(...prices)
-  }, [calendar, todayStr])
+  }, [calendar, minBookableStr])
 
   return (
     <div className={styles.stepContent}>
@@ -265,7 +264,7 @@ export default function Step1PeopleDate({
             {calendar.map((day) => {
               const dayNum = parseInt(day.date.slice(8), 10)
               const selected = state.selectedDate === day.date
-              const available = day.isAvailable && day.date >= todayStr
+              const available = day.isAvailable && day.date >= minBookableStr
               const isToday = day.date === todayStr
               const showPrice = available && day.minPrice != null
               const showStar = available && minPriceInMonth != null && day.minPrice === minPriceInMonth

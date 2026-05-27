@@ -4,6 +4,7 @@ import Image from 'next/image'
 import type { PortableTextBlock } from '@portabletext/react'
 import type { Metadata } from 'next'
 import { client, urlFor } from '@/lib/sanity'
+import { tourGalleryHeroImageUrl } from '@/lib/sanityImage'
 import { tourByLocaleSlugQuery, tourSlugRowsForLocalesQuery } from '@/lib/queries'
 import { mergeTourForLocale } from '@/lib/i18n/mergeTourForLocale'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -362,10 +363,10 @@ function buildGalleryHeroImages(tour: Tour, tourUi: ReturnType<typeof getTourPag
     (img): img is GalleryImage => Boolean(img?.asset)
   )
   return all.map((img, i) => ({
-    src: urlFor(img.asset!).width(1920).quality(85).auto('format').url(),
+    src: tourGalleryHeroImageUrl(img.asset) ?? '',
     blurDataURL: img.metadata?.lqip ?? null,
     alt: tourUi.galleryImageAlt(tour.title, i),
-  }))
+  })).filter((row) => row.src.length > 0)
 }
 
 function buildItineraryTimelineItems(tour: Tour): ItineraryTimelineItem[] {

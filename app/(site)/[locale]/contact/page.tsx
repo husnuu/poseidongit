@@ -1,4 +1,5 @@
-import { client, urlFor } from '@/lib/sanity'
+import { client } from '@/lib/sanity'
+import { tourCoverImageUrl } from '@/lib/sanityImage'
 import { contactPageQuery } from '@/lib/queries'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
@@ -153,7 +154,8 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         reviewCount: merged.reviewCount ?? null,
         reviewsUrl: merged.reviewsUrl ?? null,
         isPopular: merged.isPopular ?? false,
-        coverImageUrl: merged.mainImage?.asset ? urlFor(merged.mainImage.asset).width(800).height(600).url() : merged.mainImage?.url ?? null,
+        coverImageUrl:
+          tourCoverImageUrl(merged.mainImage?.asset ?? null) ?? merged.mainImage?.url ?? null,
         coverImageAlt: merged.mainImage?.alt ?? null,
       }
     }),

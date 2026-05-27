@@ -14,6 +14,7 @@ import {
   refundEligibilityMessage,
   REFUND_REQUEST_MIN_HOURS,
 } from '@/lib/bookings/refundEligibility'
+import { getEarliestBookableDateStr } from '@/lib/booking/bookingWindow'
 
 type Booking = {
   id: string
@@ -67,6 +68,7 @@ export default function ManageBookingClient({
   locale?: SiteLocale
 }) {
   const locaUi = getBookingWizardUi(locale).firstClassLoca
+  const minBookableStr = useMemo(() => getEarliestBookableDateStr(), [])
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -581,13 +583,12 @@ export default function ManageBookingClient({
                           const lastDay = new Date(y, m, 0)
                           const gridStart = (firstDay.getDay() + 6) % 7
                           const dayMap = Object.fromEntries(calendarDays.map((d) => [d.date, d]))
-                          const todayStr = new Date().toISOString().slice(0, 10)
                           const pads = Array.from({ length: gridStart }, (_, i) => <div key={`pad-${i}`} />)
                           const dayCells = []
                           for (let day = 1; day <= lastDay.getDate(); day++) {
                             const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`
                             const info = dayMap[dateStr]
-                            const isPast = dateStr < todayStr
+                            const isPast = dateStr < minBookableStr
                             const locasFree =
                               info && typeof info.firstRemainingLocas === 'number'
                                 ? info.firstRemainingLocas
@@ -692,7 +693,7 @@ export default function ManageBookingClient({
                     type="date"
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
-                    min={new Date().toISOString().slice(0, 10)}
+                    min={minBookableStr}
                     disabled={refundAlreadyRequested}
                     className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   />

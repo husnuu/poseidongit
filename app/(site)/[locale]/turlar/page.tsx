@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
-import { client, urlFor } from '@/lib/sanity'
+import { client } from '@/lib/sanity'
+import { tourCoverImageUrl } from '@/lib/sanityImage'
 import { homePopularToursOrderQuery, toursListQuery, toursPageQuery } from '@/lib/queries'
 import TourCard from '@/components/tours/TourCard'
 import type { TourListItem } from '@/components/tours/TourCard'
@@ -119,9 +120,7 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
         departureLabel: qf?.meetingLocation?.trim() || merged.departureLabel,
         durationLabel: qf?.durationText?.trim() || merged.durationLabel,
         priceFrom: merged.priceFrom,
-        coverImageUrl: merged.mainImage?.asset
-          ? urlFor(merged.mainImage.asset).width(800).height(600).url()
-          : null,
+        coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
         coverImageAlt: merged.mainImage?.alt ?? null,
       }
     })

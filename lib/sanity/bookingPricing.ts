@@ -2,6 +2,7 @@
  * Pure booking/pricing helpers – no Sanity client.
  * Safe to import from client components.
  */
+import { getEarliestBookableDateStr } from '@/lib/booking/bookingWindow'
 import type {
   TourForBooking,
   TicketClassForBooking,
@@ -380,17 +381,16 @@ export function buildCalendarDaysForMonth(
   return result
 }
 
-const TODAY = new Date()
-const TODAY_STR = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, '0')}-${String(TODAY.getDate()).padStart(2, '0')}`
-
-/** İlk satışa açık tarihin yıl ve ayı (bugünden itibaren, en fazla 24 ay taranır). */
+/** İlk satışa açık tarihin yıl ve ayı (en erken rezervasyon gününden itibaren, en fazla 24 ay taranır). */
 export function getFirstAvailableYearMonth(tour: TourForBooking): { year: number; month: number } {
-  let y = TODAY.getFullYear()
-  let m = TODAY.getMonth() + 1
+  const minBookable = getEarliestBookableDateStr()
+  const [minY, minM] = minBookable.split('-').map(Number)
+  let y = minY
+  let m = minM
   for (let i = 0; i < 24; i++) {
     const days = buildCalendarDaysForMonth(tour, y, m)
     const hasAvailable = days.some(
-      (d) => d.isAvailable && d.date >= TODAY_STR
+      (d) => d.isAvailable && d.date >= minBookable
     )
     if (hasAvailable) return { year: y, month: m }
     if (m === 12) {
@@ -400,5 +400,5 @@ export function getFirstAvailableYearMonth(tour: TourForBooking): { year: number
       m += 1
     }
   }
-  return { year: TODAY.getFullYear(), month: TODAY.getMonth() + 1 }
+  return { year: minY, month: minM }
 }

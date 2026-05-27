@@ -3,6 +3,7 @@
  */
 import { NextResponse } from 'next/server'
 import { rateLimitResponse } from '@/lib/rateLimit'
+import { isDateBeforeEarliestBookable } from '@/lib/booking/bookingWindow'
 import { parseBookingWebPayload } from '@/lib/bookingWebPayload'
 import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { client } from '@/lib/sanity'
@@ -144,6 +145,12 @@ export async function POST(request: Request) {
       timeToSave = tourMeta?.startTime?.trim() || undefined
     }
     const dateNorm = normalizeDateOnly(payload.date)
+    if (isDateBeforeEarliestBookable(dateNorm)) {
+      return NextResponse.json(
+        { error: 'Seçilen tarih için henüz rezervasyon alınmıyor.' },
+        { status: 400 }
+      )
+    }
     const totalPax = payload.counts.adult + payload.counts.child + payload.counts.infant
     if (totalPax <= 0) {
       return NextResponse.json({ error: 'Kişi sayısı en az 1 olmalıdır.' }, { status: 400 })

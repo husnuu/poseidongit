@@ -7,6 +7,7 @@ import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './TourCard.module.css'
+import { SANITY_DISPLAY_IMAGE_PROPS } from '@/lib/sanityImage'
 
 const ICON_BLUE = '#1e3a8a'
 
@@ -165,6 +166,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
           fill
           className="object-cover"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          {...SANITY_DISPLAY_IMAGE_PROPS}
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-sm text-zinc-400">
