@@ -70,7 +70,7 @@ export default function HomeClassesSection({ data, locale }: Props) {
           )}
           <h2
             id="home-classes-heading"
-            className="text-[26px] font-black uppercase leading-[1.15] mb-6 sm:text-[30px] md:text-[34px] lg:text-[38px]"
+            className="text-[22px] font-black uppercase leading-[1.15] mb-5 sm:text-[24px] md:text-[26px] lg:text-[28px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
           >
             {firstTwo && <span style={{ color: '#1e3a8a' }}>{firstTwo}</span>}

@@ -8,8 +8,7 @@
   font-weight: 900;
   line-height: 1.18;
   text-transform: uppercase;
-  /* Mobil: önceki 2.25rem — okunabilir ama bir tık daha dengeli */
-  font-size: 2rem;
+  font-size: 1.625rem;
   margin: 0 0 18px 0;
   letter-spacing: 0.02em;
   -webkit-text-stroke: 0.03em currentColor;
@@ -20,10 +19,10 @@
   display: block;
 }
 
-@media (min-width: 640px)  { .title { font-size: 2.5rem;  margin-bottom: 22px; } }
-@media (min-width: 768px)  { .title { font-size: 2.75rem; } }
-@media (min-width: 1024px) { .title { font-size: 3rem; margin-bottom: 24px; -webkit-text-stroke: 0.04em currentColor; } }
-@media (min-width: 1300px) { .title { font-size: 3.5rem; } }
+@media (min-width: 640px)  { .title { font-size: 1.875rem; margin-bottom: 22px; } }
+@media (min-width: 768px)  { .title { font-size: 2rem; } }
+@media (min-width: 1024px) { .title { font-size: 2.25rem; margin-bottom: 24px; -webkit-text-stroke: 0.04em currentColor; } }
+@media (min-width: 1300px) { .title { font-size: 2.5rem; } }
 
 /* ── Meta blok ── */
 .metaBlock {

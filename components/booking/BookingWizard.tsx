@@ -378,7 +378,7 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
       <div className={styles.ctaWrap}>
         {state.step === 2 && !hasEnoughCapacityForClass && state.selectedClassKey && (
           <p className={styles.errorText} style={{ marginBottom: 12 }}>
-            {ui.capacityClassShortage(totalPax)}
+            {ui.capacityClassShortage()}
           </p>
         )}
         {state.step > 1 && (

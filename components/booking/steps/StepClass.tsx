@@ -162,9 +162,9 @@ export default function StepClass({
           {insufficientCapacityList.length > 0 ? (
             <>
               <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {insufficientCapacityList.map(({ label, cap }) => (
+                {insufficientCapacityList.map(({ label }) => (
                   <li key={label} style={{ marginBottom: 4 }}>
-                    <strong>{label}</strong>: Mevcut rezervasyonlardan sonra kalan <strong>{cap} kişi</strong>. Siz {totalPax} kişi seçtiniz; yeterli yer yok.
+                    <strong>{label}</strong>: Seçtiğiniz kişi sayısı için yeterli yer yok.
                   </li>
                 ))}
               </ul>
@@ -174,7 +174,7 @@ export default function StepClass({
             </>
           ) : (
             <p style={{ margin: 0, fontSize: 13 }}>
-              Bu tarih için bazı sınıflarda mevcut rezervasyonlardan sonra {totalPax} kişilik yeterli yer kalmamış. Kişi sayısını azaltın veya başka bir sınıf / tarih seçin.
+              Bazı sınıflarda seçtiğiniz kişi sayısı için yeterli yer kalmamış. Kişi sayısını azaltın veya başka bir sınıf / tarih seçin.
             </p>
           )}
         </div>
@@ -280,9 +280,9 @@ export default function StepClass({
                     >
                       {classBlocked ? (classStatus === 'full' ? 'DOLU' : 'KAPALI') : cap === 0 ? 'DOLU' : 'KAPASİTE YETERSİZ'}
                     </span>
-                    {insufficientCap && cap > 0 && (
+                    {insufficientCap && (
                       <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>
-                        Mevcut rezervasyonlardan sonra kalan: {cap} kişi
+                        Seçtiğiniz kişi sayısı için yeterli yer kalmamış.
                       </span>
                     )}
                     {cap === 0 && !classBlocked && (
@@ -322,9 +322,9 @@ export default function StepClass({
                   Yetişkin ({dateFormatted}): {price.toLocaleString('tr-TR')} ₺
                 </p>
               )}
-              {insufficientCap && cap > 0 && (
+              {insufficientCap && (
                 <p style={{ margin: '8px 0 0', fontSize: 13, color: '#b91c1c', fontWeight: 600 }} role="alert">
-                  Mevcut rezervasyonlardan sonra kalan kontenjan: {cap} kişi. {totalPax} kişilik rezervasyon için yeterli yer yok.
+                  Seçtiğiniz kişi sayısı için yeterli yer kalmamış. Başka sınıf seçin veya kişi sayısını azaltın.
                 </p>
               )}
               <div className={styles.classCardFooter}>
@@ -370,7 +370,7 @@ export default function StepClass({
       })}
       {state.selectedClassKey && capacityForDate && getCapForTicketClass(capacityForDate, state.selectedClassKey) < totalPax && (
         <p className={styles.errorText}>
-          Bu tarih ve sınıf için yeterli kapasite yok ({totalPax} kişi).
+          Bu tarih ve sınıf için yeterli kapasite yok. Başka sınıf seçin veya kişi sayısını azaltın.
         </p>
       )}
       </div>

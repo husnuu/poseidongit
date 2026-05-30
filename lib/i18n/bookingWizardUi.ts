@@ -49,9 +49,9 @@ export type BookingWizardUi = {
   selectedBadge: string
   adultPriceLine: (dateFormatted: string, priceFormatted: string) => string
   remainingSpots: (cap: number) => string
-  insufficientCapLine: (cap: number, totalPax: number) => string
+  insufficientCapLine: () => string
   firstClassAdultsOnly: string
-  classCapacityShortage: (totalPax: number) => string
+  classCapacityShortage: () => string
   locaSelectTitle: string
   locaSelectAria: string
   summaryTitle: string
@@ -107,7 +107,7 @@ export type BookingWizardUi = {
   processing: string
   pay: string
   payAria: string
-  capacityClassShortage: (totalPax: number) => string
+  capacityClassShortage: () => string
   serverError: (status: number) => string
   bookingSaveFailed: (status: number) => string
   invalidServerResponse: string
@@ -205,11 +205,11 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     selectedBadge: 'SEÇİLDİ',
     adultPriceLine: (d, p) => `Yetişkin (${d}): ${p} ₺`,
     remainingSpots: (cap) => `Kalan: ${cap} kişi`,
-    insufficientCapLine: (cap, totalPax) =>
-      `Mevcut rezervasyonlardan sonra kalan kontenjan: ${cap} kişi. ${totalPax} kişilik rezervasyon için yeterli yer yok.`,
+    insufficientCapLine: () =>
+      'Seçtiğiniz kişi sayısı için yeterli yer kalmamış. Başka sınıf seçin veya kişi sayısını azaltın.',
     firstClassAdultsOnly: 'First class için sadece 16 yaş üstü misafirler kabul edilmektedir.',
-    classCapacityShortage: (totalPax) =>
-      `Bu sınıf için yeterli kapasite yok (${totalPax} kişi). Başka sınıf seçin veya kişi sayısını azaltın.`,
+    classCapacityShortage: () =>
+      'Bu sınıf için yeterli kapasite yok. Başka sınıf seçin veya kişi sayısını azaltın.',
     locaSelectTitle: 'Loca Seçimi',
     locaSelectAria: 'First Class loca seçimi',
     summaryTitle: 'Özet',
@@ -263,8 +263,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     processing: 'İşleniyor…',
     pay: 'ÖDE',
     payAria: 'Öde',
-    capacityClassShortage: (totalPax) =>
-      `Bu sınıf için yeterli kapasite yok (${totalPax} kişi). Başka sınıf seçin veya kişi sayısını azaltın.`,
+    capacityClassShortage: () =>
+      'Bu sınıf için yeterli kapasite yok. Başka sınıf seçin veya kişi sayısını azaltın.',
     serverError: (status) =>
       `Sunucu hata döndü (${status}). Lütfen tekrar deneyin veya destek ile iletişime geçin.`,
     bookingSaveFailed: (status) => `Rezervasyon kaydedilemedi (${status}).`,
@@ -362,11 +362,11 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     selectedBadge: 'SELECTED',
     adultPriceLine: (d, p) => `Adult (${d}): ${p} ₺`,
     remainingSpots: (cap) => `${cap} spots left`,
-    insufficientCapLine: (cap, totalPax) =>
-      `Only ${cap} spots remain after current bookings. Not enough space for ${totalPax} guests.`,
+    insufficientCapLine: () =>
+      'Not enough space for your party size. Choose another class or reduce the number of guests.',
     firstClassAdultsOnly: 'First class is for guests aged 16 and over only.',
-    classCapacityShortage: (totalPax) =>
-      `Not enough capacity in this class for ${totalPax} guests. Choose another class or reduce the number of guests.`,
+    classCapacityShortage: () =>
+      'Not enough capacity in this class. Choose another class or reduce the number of guests.',
     locaSelectTitle: 'Booth selection',
     locaSelectAria: 'First Class booth selection',
     summaryTitle: 'Summary',
@@ -420,8 +420,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     processing: 'Processing…',
     pay: 'PAY',
     payAria: 'Pay',
-    capacityClassShortage: (totalPax) =>
-      `Not enough capacity in this class for ${totalPax} guests. Choose another class or reduce the number of guests.`,
+    capacityClassShortage: () =>
+      'Not enough capacity in this class. Choose another class or reduce the number of guests.',
     serverError: (status) =>
       `The server returned an error (${status}). Please try again or contact support.`,
     bookingSaveFailed: (status) => `Could not save your booking (${status}).`,
@@ -518,11 +518,11 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     selectedBadge: 'GEWÄHLT',
     adultPriceLine: (d, p) => `Erwachsene (${d}): ${p} ₺`,
     remainingSpots: (cap) => `Noch ${cap} Plätze`,
-    insufficientCapLine: (cap, totalPax) =>
-      `Nach aktuellen Buchungen nur noch ${cap} Plätze. Nicht genug Platz für ${totalPax} Personen.`,
+    insufficientCapLine: () =>
+      'Für Ihre Personenzahl ist nicht genug Platz. Wählen Sie eine andere Klasse oder reduzieren Sie die Gästezahl.',
     firstClassAdultsOnly: 'First Class ist nur für Gäste ab 16 Jahren.',
-    classCapacityShortage: (totalPax) =>
-      `In dieser Klasse reicht die Kapazität für ${totalPax} Personen nicht. Wählen Sie eine andere Klasse oder reduzieren Sie die Personenzahl.`,
+    classCapacityShortage: () =>
+      'In dieser Klasse reicht die Kapazität nicht. Wählen Sie eine andere Klasse oder reduzieren Sie die Personenzahl.',
     locaSelectTitle: 'Logenwahl',
     locaSelectAria: 'First-Class-Logenwahl',
     summaryTitle: 'Übersicht',
@@ -576,8 +576,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     processing: 'Wird verarbeitet…',
     pay: 'ZAHLEN',
     payAria: 'Zahlen',
-    capacityClassShortage: (totalPax) =>
-      `In dieser Klasse reicht die Kapazität für ${totalPax} Personen nicht. Wählen Sie eine andere Klasse oder reduzieren Sie die Personenzahl.`,
+    capacityClassShortage: () =>
+      'In dieser Klasse reicht die Kapazität nicht. Wählen Sie eine andere Klasse oder reduzieren Sie die Personenzahl.',
     serverError: (status) =>
       `Der Server hat einen Fehler zurückgegeben (${status}). Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.`,
     bookingSaveFailed: (status) => `Buchung konnte nicht gespeichert werden (${status}).`,

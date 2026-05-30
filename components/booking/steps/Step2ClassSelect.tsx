@@ -56,7 +56,6 @@ export default function Step2ClassSelect({
 }: Step2ClassSelectProps) {
   const locaSectionRef = useRef<HTMLDivElement>(null)
   const advance = onStepNext ?? onNext
-  const LOW_STOCK_THRESHOLD = 5
 
   const datesToFetch = useMemo(
     () => (state.selectedDate ? [state.selectedDate] : []),
@@ -208,7 +207,6 @@ export default function Step2ClassSelect({
               ? getDisplayedAdultUnitPriceForClass(tour, state.selectedDate, cls)
               : undefined
             const badgePopular = isBadgePopular(cls.badge)
-            const isLowStock = !isFull && !insufficientCap && cap > 0 && cap <= LOW_STOCK_THRESHOLD
 
             return (
               <div
@@ -335,9 +333,9 @@ export default function Step2ClassSelect({
                               ? ui.statusFull
                               : ui.statusInsufficientCap}
                         </span>
-                        {insufficientCap && cap > 0 && (
+                        {insufficientCap && (
                           <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13 }}>
-                            {ui.remainingAfterBookings(cap)}
+                            {ui.insufficientCapLine()}
                           </span>
                         )}
                       </div>
@@ -357,14 +355,6 @@ export default function Step2ClassSelect({
                           className={`${styles.classBadge} ${badgePopular ? styles.classBadgePopular : ''}`}
                         >
                           {cls.badge}
-                        </span>
-                      )}
-                      {isLowStock && (
-                        <span
-                          className={styles.classBadge}
-                          style={{ background: '#b45309' }}
-                        >
-                          {ui.lastNSpots(cap)}
                         </span>
                       )}
                     </div>
@@ -394,13 +384,13 @@ export default function Step2ClassSelect({
                       </ul>
                     )}
 
-                    {cap > 0 && cap < totalPax && (
+                    {insufficientCap && (
                       <p
                         className={styles.classCardPremiumCapacity}
                         style={{ color: '#dc2626', fontWeight: 600 }}
                         role="alert"
                       >
-                        {ui.insufficientCapLine(cap, totalPax)}
+                        {ui.insufficientCapLine()}
                       </p>
                     )}
 
@@ -413,13 +403,6 @@ export default function Step2ClassSelect({
                               {price.toLocaleString(ui.numberLocale)} ₺
                               <span className={styles.classCardPremiumPriceSub}>/kişi</span>
                             </p>
-                            {cap >= totalPax && (
-                              <p className={styles.classCardPremiumCapacity}>
-                                {cap <= LOW_STOCK_THRESHOLD && cap > 0
-                                  ? ui.lastNSpots(cap)
-                                  : ui.remainingSpots(cap)}
-                              </p>
-                            )}
                           </>
                         ) : (
                           <p className={styles.classCardPremiumCapacity}>&nbsp;</p>
@@ -497,7 +480,7 @@ export default function Step2ClassSelect({
 
         {state.selectedClassKey && capForClass(state.selectedClassKey) < totalPax && (
           <p className={styles.errorText} style={{ marginTop: 12 }} role="alert">
-            {ui.classCapacityShortage(totalPax)}
+            {ui.classCapacityShortage()}
           </p>
         )}
       </div>

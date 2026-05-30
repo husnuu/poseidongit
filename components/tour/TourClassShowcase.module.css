@@ -66,7 +66,7 @@
   color: #475569;
   font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.8125rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -279,8 +279,8 @@
 .classLabel {
   font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-weight: 900;
-  font-size: 1.5rem;
-  line-height: 1.1;
+  font-size: 1.125rem;
+  line-height: 1.15;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: #000;

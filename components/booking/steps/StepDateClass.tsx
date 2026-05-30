@@ -71,7 +71,6 @@ export default function StepDateClass({
     optimisticUsed,
     invalidateKey: availabilityInvalidateKey ?? '',
   })
-  const LOW_STOCK_THRESHOLD = 5
 
   useEffect(() => {
     const total = state.counts.adult + state.counts.child + state.counts.baby
@@ -335,9 +334,9 @@ export default function StepDateClass({
                         >
                           {classBlocked ? (classStatus === 'full' ? 'DOLU' : 'KAPALI') : cap === 0 ? 'DOLU' : 'KAPASİTE YETERSİZ'}
                         </span>
-                        {insufficientCap && cap > 0 && (
+                        {insufficientCap && (
                           <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>
-                            {ui.remainingAfterBookings(cap)}
+                            {ui.insufficientCapLine()}
                           </span>
                         )}
                         {cap === 0 && !classBlocked && (
@@ -358,11 +357,6 @@ export default function StepDateClass({
                         }`}
                       >
                         {cls.badge}
-                      </span>
-                    )}
-                    {!isFull && !insufficientCap && cap > 0 && cap <= LOW_STOCK_THRESHOLD && (
-                      <span className={styles.classBadge} style={{ background: '#b45309', color: '#fff' }}>
-                        {ui.lastNSpots(cap)}
                       </span>
                     )}
                     {selected && (
@@ -389,14 +383,9 @@ export default function StepDateClass({
                       {ui.adultPriceLine(dateFormatted, price.toLocaleString(ui.numberLocale))}
                     </p>
                   )}
-                  {cap >= totalPax && cap > 0 && (
-                    <p style={{ margin: '8px 0 0', fontSize: 13, color: '#166534', fontWeight: 500 }}>
-                      {cap <= LOW_STOCK_THRESHOLD ? ui.lastNSpots(cap) : ui.remainingSpots(cap)}
-                    </p>
-                  )}
-                  {insufficientCap && cap > 0 && (
+                  {insufficientCap && (
                     <p style={{ margin: '8px 0 0', fontSize: 13, color: '#b91c1c', fontWeight: 600 }} role="alert">
-                      {ui.insufficientCapLine(cap, totalPax)}
+                      {ui.insufficientCapLine()}
                     </p>
                   )}
                 </div>
@@ -426,7 +415,7 @@ export default function StepDateClass({
           })}
           {!hasCapacity && state.selectedDate && state.selectedClassKey && (
             <p className={styles.errorText} role="alert">
-              {ui.classCapacityShortage(totalPax)}
+              {ui.classCapacityShortage()}
             </p>
           )}
         </div>
