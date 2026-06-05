@@ -56,6 +56,7 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
 
   const active = focused || effectiveHasValue
   const isOutlined = variant === 'outlined'
+  const outlinedActive = isOutlined && active
 
   return (
     <div className={`relative ${wrapperClassName}`}>
@@ -104,18 +105,21 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
           htmlFor={id}
           className="absolute left-4 pointer-events-none transition-all duration-200 origin-left"
           style={
-            isOutlined
+            outlinedActive
               ? {
-                  top: -10,
+                  top: -9,
                   left: 12,
-                  background: '#fff',
-                  padding: '0 6px',
+                  zIndex: 2,
+                  background: 'var(--floating-label-bg, #fff)',
+                  padding: '0 5px',
                   fontSize: 11,
                   fontWeight: 500,
-                  color: focused || effectiveHasValue ? LABEL_COLOR_FOCUS : LABEL_COLOR,
+                  lineHeight: 1.2,
+                  color: focused ? LABEL_COLOR_FOCUS : LABEL_COLOR,
                 }
               : {
                   color: LABEL_COLOR,
+                  zIndex: 1,
                   ...(active
                     ? {
                         top: 10,

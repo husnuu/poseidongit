@@ -212,9 +212,18 @@ export interface BookingWizardState {
     phoneCountryCode: string
     phone: string
     note?: string
+    /** Ana yolcu cinsiyeti (bay/bayan). */
+    gender?: 'male' | 'female' | ''
   }
   /** Ana rezervasyon sahibi dışındaki yolcular (sıra: kalan yetişkinler, çocuklar; bebekler counts.baby ile). */
-  additionalTravelers: { firstName: string; lastName: string; mealPreferenceKey?: string }[]
+  additionalTravelers: {
+    firstName: string
+    lastName: string
+    mealPreferenceKey?: string
+    gender?: 'male' | 'female' | ''
+  }[]
+  /** Bebekler için cinsiyet (counts.baby uzunluğunda). */
+  infantGenders?: ('male' | 'female' | '')[]
   pricingSummary: PricingSummary | null
   step: 1 | 2 | 3 | 4
 }
@@ -224,8 +233,9 @@ export const DEFAULT_BOOKING_STATE: Omit<BookingWizardState, 'tourSlug'> = {
   selectedDate: null,
   selectedClassKey: null,
   firstClassLocas: [],
-  customer: { firstName: '', lastName: '', email: '', phoneCountryCode: '90', phone: '', note: '' },
+  customer: { firstName: '', lastName: '', email: '', phoneCountryCode: '90', phone: '', note: '', gender: '' },
   additionalTravelers: [],
+  infantGenders: [],
   pricingSummary: null,
   step: 1,
 }

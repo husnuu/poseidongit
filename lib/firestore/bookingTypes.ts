@@ -14,6 +14,7 @@ export interface BookingCustomer {
   email: string
   phone: string
   note?: string
+  gender?: 'male' | 'female'
 }
 
 /** API response'da createdAt ISO string veya Date olabilir */
@@ -37,7 +38,12 @@ export interface Booking {
   currency: string
   customer: BookingCustomer
   /** Ana iletişim kişisi dışındaki yetişkin/çocuk ad-soyadı; bebekler counts.infant ile (web rezervasyonu). */
-  additionalTravelers?: { firstName: string; lastName: string; mealPreference?: { key: string; label: string } }[]
+  additionalTravelers?: {
+    firstName: string
+    lastName: string
+    mealPreference?: { key: string; label: string }
+    gender?: 'male' | 'female'
+  }[]
   /** Tur mealMenu aktifken seçilen menü (Sunucu Sanity ile doğrular). */
   mealPreference?: { key: string; label: string }
   source: string
@@ -75,12 +81,15 @@ export interface BookingCreatePayload {
     email: string
     phone: string
     note?: string
+    gender?: 'male' | 'female'
   }
   additionalTravelers?: Array<{
     firstName: string
     lastName: string
     mealPreferenceKey?: string
     mealPreference?: { key: string; label: string }
+    gender?: 'male' | 'female'
   }>
+  infantGenders?: Array<'male' | 'female'>
   mealPreference?: { key: string; label: string }
 }

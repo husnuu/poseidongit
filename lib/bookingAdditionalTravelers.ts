@@ -8,6 +8,7 @@ export interface AdditionalTravelerName {
   firstName: string
   lastName: string
   mealPreferenceKey?: string
+  gender?: 'male' | 'female' | ''
 }
 
 export function totalPaxFromCounts(counts: { adult: number; child: number; baby?: number; infant?: number }): number {
@@ -48,6 +49,7 @@ export function resizeAdditionalTravelers(
     firstName: old[i]?.firstName ?? '',
     lastName: old[i]?.lastName ?? '',
     mealPreferenceKey: old[i]?.mealPreferenceKey ?? '',
+    gender: old[i]?.gender ?? '',
   }))
 }
 
@@ -58,7 +60,7 @@ export function validateAdditionalTravelers(
   counts: { adult: number; child: number; baby?: number; infant?: number },
   options?: {
     requireMealPreference?: boolean
-    messages?: { firstName: string; lastName: string; meal: string }
+    messages?: { firstName: string; lastName: string; meal?: string }
   }
 ): Record<string, string> {
   const n = additionalTravelerSlotCount(counts)
@@ -91,7 +93,14 @@ export function parseAdditionalTravelersFromBody(raw: unknown): AdditionalTravel
       typeof o.mealPreferenceKey === 'string'
         ? sanitizeSingleLineText(o.mealPreferenceKey, 80)
         : ''
-    out.push({ firstName, lastName, ...(mealPreferenceKey ? { mealPreferenceKey } : {}) })
+    const genderRaw = typeof o.gender === 'string' ? sanitizeSingleLineText(o.gender, 16) : ''
+    const gender = genderRaw === 'male' || genderRaw === 'female' ? genderRaw : undefined
+    out.push({
+      firstName,
+      lastName,
+      ...(mealPreferenceKey ? { mealPreferenceKey } : {}),
+      ...(gender ? { gender } : {}),
+    })
   }
   return out
 }
@@ -101,6 +110,7 @@ export type AdditionalTravelerStored = {
   firstName: string
   lastName: string
   mealPreference?: { key: string; label: string }
+  gender?: 'male' | 'female'
 }
 
 function mealPairFromObject(m: Record<string, unknown>): { key: string; label: string } | undefined {
@@ -144,8 +154,15 @@ export function normalizeAdditionalTravelersFromStorage(raw: unknown): Additiona
     if (mpRaw && typeof mpRaw === 'object' && !Array.isArray(mpRaw)) {
       mealPreference = mealPairFromObject(mpRaw as Record<string, unknown>)
     }
+    const genderRaw = typeof o.gender === 'string' ? o.gender.trim() : ''
+    const gender = genderRaw === 'male' || genderRaw === 'female' ? genderRaw : undefined
     if (!fn && !ln) continue
-    out.push({ firstName: fn, lastName: ln, ...(mealPreference ? { mealPreference } : {}) })
+    out.push({
+      firstName: fn,
+      lastName: ln,
+      ...(mealPreference ? { mealPreference } : {}),
+      ...(gender ? { gender } : {}),
+    })
   }
   return out
 }

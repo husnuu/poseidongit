@@ -36,7 +36,9 @@ const FALLBACK_DESCRIPTION = 'Tekne turu ve koy turları. Rezervasyon ve özel t
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 5,
   viewportFit: 'cover',
+  interactiveWidget: 'resizes-content',
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -99,7 +101,7 @@ export default async function RootLayout({
   return (
     <html lang={htmlLang} className={inter.variable}>
       <body
-        className={`${inter.className} min-h-screen overflow-x-hidden bg-zinc-50 text-zinc-900 antialiased`}
+        className={`${inter.className} min-h-screen min-h-[100dvh] overflow-x-hidden bg-zinc-50 text-zinc-900 antialiased`}
         suppressHydrationWarning
       >
         <Suspense fallback={null}>{children}</Suspense>

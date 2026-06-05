@@ -6,8 +6,8 @@ import { submitNestpayForm } from '@/lib/nestpay/submitPaymentForm'
 import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForBooking } from '@/lib/sanity/bookingTypes'
-import { isTourMealMenuActive } from '@/components/booking/steps/MealPreferenceFields'
 import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
+import { allPassengersAreMale, resizeInfantGenders } from '@/lib/bookingPassengerGender'
 import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -55,6 +55,7 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
       const next = { ...prev, ...patch }
       if (patch.counts !== undefined) {
         next.additionalTravelers = resizeAdditionalTravelers(prev.additionalTravelers, patch.counts)
+        next.infantGenders = resizeInfantGenders(prev.infantGenders, patch.counts.baby)
       }
       return next
     })
@@ -130,13 +131,16 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
       hasEnoughCapacityForClass &&
       (!requiresFirstClassLoca || hasRequiredLocas)
   )
-  const [step3Valid, setStep3Valid] = useState(false)
-  const canProceedStep3 = step3Valid
+  const step3AttemptSubmitRef = useRef<(() => boolean) | null>(null)
 
   const handleCta = useCallback(async () => {
     if (state.step === 1 && canProceedStep1) goNext()
     else if (state.step === 2 && canProceedStep2) goNext()
-    else if (state.step === 3 && canProceedStep3) goNext()
+    else if (state.step === 3) {
+      const ok = step3AttemptSubmitRef.current?.() ?? false
+      if (ok && !allPassengersAreMale(state)) goNext()
+      return
+    }
     else if (state.step === 4) {
       setSubmitError(null)
       setSubmitting(true)
@@ -171,18 +175,20 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
               email: state.customer.email?.trim() ?? '',
               phone: phoneDisplay ?? '',
               note: state.customer.note?.trim() || undefined,
+              ...(state.customer.gender === 'male' || state.customer.gender === 'female'
+                ? { gender: state.customer.gender }
+                : {}),
             },
             ...(additionalTravelerSlotCount(state.counts) > 0 && {
               additionalTravelers: (state.additionalTravelers ?? []).map((t) => ({
                 firstName: t.firstName?.trim() ?? '',
                 lastName: t.lastName?.trim() ?? '',
-                ...(t.mealPreferenceKey?.trim() && { mealPreferenceKey: t.mealPreferenceKey.trim() }),
+                ...(t.gender === 'male' || t.gender === 'female' ? { gender: t.gender } : {}),
               })),
             }),
-            ...(isTourMealMenuActive(tour) &&
-              state.mealPreferenceKey?.trim() && {
-                mealPreference: { key: state.mealPreferenceKey.trim() },
-              }),
+            ...(state.counts.baby > 0 && {
+              infantGenders: (state.infantGenders ?? []).filter((g) => g === 'male' || g === 'female'),
+            }),
           }),
         })
         const text = await res.text()
@@ -237,7 +243,7 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
         setSubmitting(false)
       }
     }
-  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext, ui, locale])
+  }, [state, tour, canProceedStep1, canProceedStep2, goNext, ui, locale])
 
   const ctaLabel = useMemo(() => {
     if (state.step === 1) return ui.continue
@@ -250,10 +256,10 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
   const ctaDisabled = useMemo(() => {
     if (state.step === 1) return !canProceedStep1
     if (state.step === 2) return !canProceedStep2
-    if (state.step === 3) return !canProceedStep3
+    if (state.step === 3) return allPassengersAreMale(state)
     if (state.step === 4) return submitting || !step4TermsAccepted
     return false
-  }, [state.step, canProceedStep1, canProceedStep2, canProceedStep3, submitting, step4TermsAccepted])
+  }, [state.step, state, canProceedStep1, canProceedStep2, submitting, step4TermsAccepted])
 
   const goBackToTour = useCallback(() => {
     setSubmitted(false)
@@ -354,7 +360,10 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
             tour={tour}
             state={state}
             onUpdate={updateState}
-            onValidationChange={setStep3Valid}
+            onValidationChange={() => {}}
+            onRegisterAttemptSubmit={(fn) => {
+              step3AttemptSubmitRef.current = fn
+            }}
             ui={ui}
           />
         )}

@@ -4,6 +4,7 @@ import {
   additionalTravelerSlotCount,
   parseAdditionalTravelersFromBody,
 } from '@/lib/bookingAdditionalTravelers'
+import { parseInfantGendersFromBody, parsePassengerGender } from '@/lib/bookingPassengerGender'
 import { DEFAULT_LOCALE, isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import {
   sanitizeCustomerNote,
@@ -49,6 +50,7 @@ const customerSchema = z.object({
   note: z
     .union([z.string(), z.undefined(), z.null()])
     .transform((v) => (typeof v === 'string' ? sanitizeCustomerNote(v, 2000) : undefined)),
+  gender: z.union([z.string(), z.undefined(), z.null()]).optional(),
 })
 
 const bookingWebJsonSchema = z.object({
@@ -73,6 +75,7 @@ const bookingWebJsonSchema = z.object({
   firstClassLoca: z.union([z.string(), z.undefined(), z.null()]).optional(),
   customer: customerSchema,
   additionalTravelers: z.unknown().optional(),
+  infantGenders: z.unknown().optional(),
 })
 
 function formatZodIssues(err: z.ZodError): string {
@@ -134,6 +137,30 @@ export function parseBookingWebPayload(body: unknown): ParseWebBookingResult {
     return { ok: false, error: 'Eksik veya geçersiz alan: tüm yolcuların ad-soyadı.' }
   }
 
+  const customerGender = parsePassengerGender(v.customer.gender)
+  if (!customerGender) {
+    return { ok: false, error: 'Eksik veya geçersiz alan: ana yolcu cinsiyeti.' }
+  }
+  if (extraN > 0 && parsedExtras.some((t) => !t.gender)) {
+    return { ok: false, error: 'Eksik veya geçersiz alan: tüm yolcuların cinsiyeti.' }
+  }
+
+  const parsedInfantGenders = parseInfantGendersFromBody(v.infantGenders)
+  if (parsedInfantGenders === null) {
+    return { ok: false, error: 'Eksik veya geçersiz alan: bebek cinsiyet bilgisi.' }
+  }
+  if (v.counts.infant > 0 && parsedInfantGenders.length !== v.counts.infant) {
+    return { ok: false, error: 'Eksik veya geçersiz alan: tüm bebeklerin cinsiyeti.' }
+  }
+
+  const extraGenders = parsedExtras
+    .map((t) => t.gender)
+    .filter((g): g is 'male' | 'female' => g === 'male' || g === 'female')
+  const allGenders: Array<'male' | 'female'> = [customerGender, ...extraGenders, ...parsedInfantGenders]
+  if (allGenders.length > 0 && allGenders.every((g) => g === 'male')) {
+    return { ok: false, error: 'Rezervasyonu tamamlayabilmek için yolcular arasında en az bir bayan bulunmalıdır.' }
+  }
+
   const timeRaw = typeof v.time === 'string' ? v.time.trim().slice(0, 32) : ''
   const time = timeRaw.length > 0 ? timeRaw : undefined
   const mpRaw = typeof v.meetingPoint === 'string' ? v.meetingPoint : ''
@@ -164,9 +191,19 @@ export function parseBookingWebPayload(body: unknown): ParseWebBookingResult {
       lastName: v.customer.lastName,
       email: v.customer.email,
       phone: v.customer.phone,
+      gender: customerGender,
       ...(v.customer.note !== undefined && v.customer.note !== '' && { note: v.customer.note }),
     },
-    ...(extraN > 0 ? { additionalTravelers: parsedExtras } : {}),
+    ...(extraN > 0
+      ? {
+          additionalTravelers: parsedExtras.map((t) => ({
+            firstName: t.firstName,
+            lastName: t.lastName,
+            ...(t.gender === 'male' || t.gender === 'female' ? { gender: t.gender } : {}),
+          })),
+        }
+      : {}),
+    ...(parsedInfantGenders.length > 0 ? { infantGenders: [...parsedInfantGenders] } : {}),
   }
 
   return { ok: true, payload }

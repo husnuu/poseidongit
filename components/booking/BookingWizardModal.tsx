@@ -9,8 +9,8 @@ import { createPortal } from 'react-dom'
 import { X, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/sanity/bookingTypes'
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForBooking } from '@/lib/sanity/bookingTypes'
-import { isTourMealMenuActive } from '@/components/booking/steps/MealPreferenceFields'
 import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
+import { allPassengersAreMale, resizeInfantGenders } from '@/lib/bookingPassengerGender'
 import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import {
@@ -89,6 +89,7 @@ export default function BookingWizardModal({
       const next = { ...prev, ...patch }
       if (patch.counts !== undefined) {
         next.additionalTravelers = resizeAdditionalTravelers(prev.additionalTravelers, patch.counts)
+        next.infantGenders = resizeInfantGenders(prev.infantGenders, patch.counts.baby)
       }
       return next
     })
@@ -215,7 +216,7 @@ export default function BookingWizardModal({
       hasEnoughCapacityStep2 &&
       (!requiresFirstClassLoca || hasRequiredLocas)
   )
-  const canProceedStep3 = step3Valid && step3TermsAccepted
+  const canProceedStep3 = step3Valid && step3TermsAccepted && !allPassengersAreMale(state)
 
   const handleCta = useCallback(async () => {
     if (state.step === 1 && canProceedStep1) goNext()
@@ -251,18 +252,20 @@ export default function BookingWizardModal({
               email: state.customer.email?.trim() ?? '',
               phone: phoneDisplay ?? '',
               note: state.customer.note?.trim() || undefined,
+              ...(state.customer.gender === 'male' || state.customer.gender === 'female'
+                ? { gender: state.customer.gender }
+                : {}),
             },
             ...(additionalTravelerSlotCount(state.counts) > 0 && {
               additionalTravelers: (state.additionalTravelers ?? []).map((t) => ({
                 firstName: t.firstName?.trim() ?? '',
                 lastName: t.lastName?.trim() ?? '',
-                ...(t.mealPreferenceKey?.trim() && { mealPreferenceKey: t.mealPreferenceKey.trim() }),
+                ...(t.gender === 'male' || t.gender === 'female' ? { gender: t.gender } : {}),
               })),
             }),
-            ...(isTourMealMenuActive(tour) &&
-              state.mealPreferenceKey?.trim() && {
-                mealPreference: { key: state.mealPreferenceKey.trim() },
-              }),
+            ...(state.counts.baby > 0 && {
+              infantGenders: (state.infantGenders ?? []).filter((g) => g === 'male' || g === 'female'),
+            }),
           }),
         })
         const text = await res.text()
@@ -333,11 +336,11 @@ export default function BookingWizardModal({
     let disabled: boolean
     if (state.step === 1) disabled = !canProceedStep1
     else if (state.step === 2) disabled = !canProceedStep2
-    else if (state.step === 3) disabled = !canProceedStep3 || submitting
+    else if (state.step === 3) disabled = submitting || allPassengersAreMale(state)
     else disabled = false
 
     return { ctaLabel: label, ctaDisabled: disabled }
-  }, [state.step, submitting, canProceedStep1, canProceedStep2, canProceedStep3, ui])
+  }, [state.step, submitting, canProceedStep1, canProceedStep2, state, ui])
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) handleClose()
@@ -376,33 +379,58 @@ export default function BookingWizardModal({
           </button>
         </header>
 
-        <div
-          className={styles.wizardModalStepStrip}
-          role="progressbar"
-          aria-valuenow={state.step}
-          aria-valuemin={1}
-          aria-valuemax={3}
-          aria-label={ui.stepProgressAria(state.step, 3)}
-          id="booking-wizard-desc"
-        >
-          {[1, 2, 3].map((s) => (
-            <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div
-                className={`${styles.stepCircle} ${
-                  state.step > s ? styles.stepCircleDone : state.step === s ? styles.stepCircleActive : ''
-                }`}
-                aria-current={state.step === s ? 'step' : undefined}
-              >
-                {state.step > s ? <Check className="w-3.5 h-3.5" aria-hidden /> : s}
+        <div className={styles.wizardModalStepArea} id="booking-wizard-desc">
+          <p className={styles.wizardStepProgressMeta} aria-live="polite">
+            {ui.stepProgressAria(state.step, 3)}
+          </p>
+          <div
+            className={styles.wizardStepper}
+            role="progressbar"
+            aria-valuenow={state.step}
+            aria-valuemin={1}
+            aria-valuemax={3}
+            aria-label={ui.stepProgressAria(state.step, 3)}
+          >
+            {(
+              [
+                { step: 1, label: ui.guestCountTitle },
+                { step: 2, label: ui.classSelectTitle },
+                { step: 3, label: ui.yourDetailsTitle },
+              ] as const
+            ).map(({ step: s, label }, index) => (
+              <div key={s} className={styles.wizardStepperSegment}>
+                <div className={styles.wizardStepColumn}>
+                  <div
+                    className={`${styles.stepCircle} ${
+                      state.step > s
+                        ? styles.stepCircleDone
+                        : state.step === s
+                          ? styles.stepCircleActive
+                          : ''
+                    }`}
+                    aria-current={state.step === s ? 'step' : undefined}
+                  >
+                    {state.step > s ? <Check className="w-3.5 h-3.5" aria-hidden /> : s}
+                  </div>
+                  <span
+                    className={
+                      state.step === s ? styles.wizardStepLabelActive : styles.wizardStepLabel
+                    }
+                  >
+                    {label}
+                  </span>
+                </div>
+                {index < 2 && (
+                  <div
+                    className={`${styles.wizardStepConnector} ${
+                      state.step > s ? styles.wizardStepConnectorDone : ''
+                    }`}
+                    aria-hidden
+                  />
+                )}
               </div>
-              {s < 3 && (
-                <div
-                  className={`${styles.connector} ${state.step > s ? styles.connectorDone : ''}`}
-                  aria-hidden
-                />
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         <main className={styles.wizardModalContent} key={submitted ? 'done' : state.step}>

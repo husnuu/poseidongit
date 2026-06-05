@@ -1,17 +1,20 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect } from 'react'
 import Image from 'next/image'
 import { Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
 import { urlFor } from '@/lib/sanity'
-import { validateAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
 import FloatingInput from '@/components/ui/FloatingInput'
 import AdditionalTravelersFields from './AdditionalTravelersFields'
-import MealPreferenceFields, { isTourMealMenuActive, tourMealOptions } from './MealPreferenceFields'
+import PassengerGenderFields from './PassengerGenderFields'
+import AllMaleGenderNotice from './AllMaleGenderNotice'
+import { TravelerCardTitle, TravelerGenderRow } from './TravelerGenderRow'
+import type { PassengerGender } from '@/lib/bookingPassengerGender'
 import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
+import { useBookingPassengerValidation } from '../hooks/useBookingPassengerValidation'
 import styles from '../booking.module.css'
 
 interface StepCustomerProps {
@@ -19,51 +22,27 @@ interface StepCustomerProps {
   state: BookingWizardState
   onUpdate: (patch: Partial<BookingWizardState>) => void
   onValidationChange: (valid: boolean) => void
+  onRegisterAttemptSubmit?: (fn: () => boolean) => void
   ui: BookingWizardUi
 }
-
-const PHONE_MIN_DIGITS = 10
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function StepCustomer({
   tour,
   state,
   onUpdate,
   onValidationChange,
+  onRegisterAttemptSubmit,
   ui,
 }: StepCustomerProps) {
-  const [errors, setErrors] = useState<Record<string, string>>({})
-
-  const validate = useCallback(() => {
-    const next: Record<string, string> = {}
-    const c = state.customer
-    const v = ui.validation
-    if (!c.firstName?.trim()) next.firstName = v.firstName
-    if (!c.lastName?.trim()) next.lastName = v.lastName
-    if (!c.email?.trim()) next.email = v.emailRequired
-    else if (!EMAIL_REGEX.test(c.email)) next.email = v.emailInvalid
-    const phoneDigits = (c.phone ?? '').replace(/\D/g, '')
-    if (!phoneDigits.length) next.phone = v.phoneRequired
-    else if (phoneDigits.length < PHONE_MIN_DIGITS) next.phone = v.phoneInvalid
-    Object.assign(
-      next,
-      validateAdditionalTravelers(state.additionalTravelers, state.counts, {
-        requireMealPreference: isTourMealMenuActive(tour),
-        messages: {
-          firstName: v.travelerFirst,
-          lastName: v.travelerLast,
-          meal: v.mealPreference,
-        },
-      })
-    )
-    setErrors(next)
-    const valid = Object.keys(next).length === 0
-    onValidationChange(valid)
-  }, [state.customer, state.additionalTravelers, state.counts, onValidationChange, tour, ui.validation])
+  const { visibleErrors, touch, attemptSubmit } = useBookingPassengerValidation(
+    state,
+    ui,
+    onValidationChange
+  )
 
   useEffect(() => {
-    validate()
-  }, [validate])
+    onRegisterAttemptSubmit?.(attemptSubmit)
+  }, [attemptSubmit, onRegisterAttemptSubmit])
 
   const handleField = (field: keyof BookingWizardState['customer'], value: string) => {
     onUpdate({
@@ -94,6 +73,10 @@ export default function StepCustomer({
     '—'
   const selectedClassLabel =
     tour.ticketClasses?.find((c) => c.key === state.selectedClassKey)?.label ?? '—'
+
+  const adultOneLabel = `${ui.adult} 1`.toLocaleUpperCase(
+    ui.locale === 'tr' ? 'tr-TR' : ui.locale === 'de' ? 'de-DE' : 'en-US'
+  )
 
   return (
     <>
@@ -217,77 +200,100 @@ export default function StepCustomer({
             noValidate
             onSubmit={(e) => e.preventDefault()}
           >
-            {/* Row1: Ad | Soyad – contact’taki Full Name | Group Size ile aynı yapı */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FloatingInput
-                id="booking-firstName"
-                label={ui.labelFirstName}
-                autoComplete="given-name"
-                value={state.customer.firstName}
-                onChange={(e) => handleField('firstName', e.target.value)}
-                error={errors.firstName}
-                compact
-              />
-              <FloatingInput
-                id="booking-lastName"
-                label={ui.labelLastName}
-                autoComplete="family-name"
-                value={state.customer.lastName}
-                onChange={(e) => handleField('lastName', e.target.value)}
-                error={errors.lastName}
-                compact
-              />
+            <div className={styles.travelerCardsStack}>
+              <article className={styles.travelerCard}>
+                <TravelerCardTitle label={adultOneLabel} />
+                <div className={styles.formGrid2}>
+                  <FloatingInput
+                    id="booking-firstName"
+                    label={ui.labelFirstName}
+                    autoComplete="given-name"
+                    value={state.customer.firstName}
+                    onChange={(e) => handleField('firstName', e.target.value)}
+                    onBlur={() => touch('firstName')}
+                    error={visibleErrors.firstName}
+                    compact
+                    variant="outlined"
+                  />
+                  <FloatingInput
+                    id="booking-lastName"
+                    label={ui.labelLastName}
+                    autoComplete="family-name"
+                    value={state.customer.lastName}
+                    onChange={(e) => handleField('lastName', e.target.value)}
+                    onBlur={() => touch('lastName')}
+                    error={visibleErrors.lastName}
+                    compact
+                    variant="outlined"
+                  />
+                </div>
+                <TravelerGenderRow
+                  value={state.customer.gender}
+                  onChange={(g: PassengerGender) =>
+                    onUpdate({ customer: { ...state.customer, gender: g } })
+                  }
+                  onBlur={() => touch('customerGender')}
+                  error={visibleErrors.customerGender}
+                  ui={ui}
+                  ariaLabel={`${ui.adult} 1 ${ui.genderAriaSuffix}`}
+                />
+                <div className={styles.formGrid2} style={{ marginTop: 12 }}>
+                  <FloatingInput
+                    id="booking-email"
+                    label={ui.labelEmail}
+                    type="email"
+                    autoComplete="email"
+                    value={state.customer.email}
+                    onChange={(e) => handleField('email', e.target.value)}
+                    onBlur={() => touch('email')}
+                    error={visibleErrors.email}
+                    compact
+                    variant="outlined"
+                  />
+                  <PhoneField
+                    label={ui.labelPhone}
+                    name="phone"
+                    value={state.customer.phone ?? ''}
+                    onChange={(v) => handleField('phone', v ?? '')}
+                    onBlur={() => touch('phone')}
+                    error={visibleErrors.phone}
+                    defaultCountry="TR"
+                    compact
+                    variant="outlined"
+                  />
+                </div>
+              </article>
             </div>
-
-            {/* Row2: E-posta | Telefon – contact’taki Email | Phone Number ile aynı */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FloatingInput
-                id="booking-email"
-                label={ui.labelEmail}
-                type="email"
-                autoComplete="email"
-                value={state.customer.email}
-                onChange={(e) => handleField('email', e.target.value)}
-                error={errors.email}
-                compact
-              />
-              <PhoneField
-                label={ui.labelPhone}
-                name="phone"
-                value={state.customer.phone ?? ''}
-                onChange={(v) => handleField('phone', v ?? '')}
-                onBlur={() => {}}
-                error={errors.phone}
-                defaultCountry="TR"
-                compact
-              />
-            </div>
-
-            <MealPreferenceFields
-              tour={tour}
-              state={state}
-              onUpdate={onUpdate}
-              error={errors.mealPreference}
-              mealFallbackTitle={ui.mealFallbackTitle}
-            />
-
-            {/* Row3: Özel istek – contact’taki Message * ile aynı tam genişlik, rows=5 */}
-            <FloatingTextarea
-              id="booking-note"
-              label={ui.labelNote}
-              rows={3}
-              value={state.customer.note ?? ''}
-              onChange={(e) => handleField('note', e.target.value)}
-            />
 
             <AdditionalTravelersFields
               state={state}
               onUpdate={onUpdate}
-              errors={errors}
-              mealOptions={isTourMealMenuActive(tour) ? tourMealOptions(tour) : undefined}
+              errors={visibleErrors}
+              onTouch={touch}
               compact
+              variant="outlined"
               ui={ui}
             />
+
+            <div className={styles.optionalFieldWrap}>
+              <FloatingTextarea
+                id="booking-note"
+                label={ui.labelNote}
+                rows={3}
+                value={state.customer.note ?? ''}
+                onChange={(e) => handleField('note', e.target.value)}
+                variant="outlined"
+              />
+            </div>
+
+            <PassengerGenderFields
+              state={state}
+              onUpdate={onUpdate}
+              errors={visibleErrors}
+              onTouch={touch}
+              ui={ui}
+            />
+            <AllMaleGenderNotice state={state} ui={ui} />
 
               <div className={styles.cardNoticeSuccess}>
                 <Check className={styles.cardNoticeSuccessIcon} aria-hidden />

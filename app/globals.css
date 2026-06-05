@@ -322,6 +322,31 @@
 }
 
 @layer base {
+  html {
+    /* Cihaz genişliğine göre akışkan kök ölçek (14–16px) */
+    font-size: clamp(14px, 0.35vw + 13px, 16px);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+
   :root {
     --primary: #2168b8;
     --primary-rgb: 33, 104, 184;

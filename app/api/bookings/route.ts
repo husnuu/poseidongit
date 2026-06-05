@@ -11,10 +11,7 @@ import { tourForAvailabilityQuery } from '@/lib/queries'
 import { tourForBookingBySanityIdQuery } from '@/lib/sanity/bookingQueries'
 import { computePricingForSelection } from '@/lib/sanity/bookingPricing'
 import type { TourForBooking } from '@/lib/sanity/bookingTypes'
-import {
-  resolveMealPreferenceForBooking,
-  resolveAdditionalTravelerMealPreferencesForBooking,
-} from '@/lib/bookingMealPreference'
+import { genderLabel } from '@/lib/bookingPassengerGender'
 import { supabase } from '@/lib/supabase'
 import {
   BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY,
@@ -32,14 +29,6 @@ async function resolveTourIdToSanityId(tourId: string): Promise<string> {
   const tour = await client.fetch<{ _id?: string } | null>(tourForAvailabilityQuery, { tourId })
   const raw = (tour?._id && String(tour._id).trim()) ? String(tour._id).trim() : tourId
   return raw.replace(/^drafts\./, '')
-}
-
-function parseMealPreferenceKey(body: unknown): string | undefined {
-  if (!body || typeof body !== 'object') return undefined
-  const mp = (body as Record<string, unknown>).mealPreference
-  if (!mp || typeof mp !== 'object') return undefined
-  const k = (mp as Record<string, unknown>).key
-  return typeof k === 'string' ? k.trim() || undefined : undefined
 }
 
 function normalizeClassKey(classId: string): string {
@@ -109,25 +98,10 @@ export async function POST(request: Request) {
     }
     const payload = parsedBody.payload
     const firestoreTourId = await resolveTourIdToSanityId(payload.tourId)
-    const mealResolve = await resolveMealPreferenceForBooking(
-      firestoreTourId,
-      parseMealPreferenceKey(body)
-    )
-    if (!mealResolve.ok) {
-      return NextResponse.json({ error: mealResolve.message }, { status: 400 })
-    }
-    const mealPreference = mealResolve.stored
-    const extrasMealResolve = await resolveAdditionalTravelerMealPreferencesForBooking(
-      firestoreTourId,
-      payload.additionalTravelers ?? []
-    )
-    if (!extrasMealResolve.ok) {
-      return NextResponse.json({ error: extrasMealResolve.message }, { status: 400 })
-    }
-    const additionalTravelersWithMeal = (payload.additionalTravelers ?? []).map((t, i) => ({
+    const additionalTravelersStored = (payload.additionalTravelers ?? []).map((t) => ({
       firstName: t.firstName,
       lastName: t.lastName,
-      ...(extrasMealResolve.stored[i] && { mealPreference: extrasMealResolve.stored[i] }),
+      ...(t.gender && { gender: t.gender }),
     }))
     const { unitPrice, totalPrice, depositAmount } = await computePrices(
       firestoreTourId,
@@ -233,10 +207,19 @@ export async function POST(request: Request) {
       adult_count: payload.counts.adult,
       child_count: payload.counts.child,
       infant_count: payload.counts.infant,
-      ...(additionalTravelersWithMeal.length > 0 && {
-        additional_travelers: additionalTravelersWithMeal,
+      ...(additionalTravelersStored.length > 0 && {
+        additional_travelers: additionalTravelersStored,
       }),
-      ...(mealPreference && { meal_preference: mealPreference }),
+      ...(payload.customer.gender && { customer_gender: payload.customer.gender }),
+      ...(payload.infantGenders && payload.infantGenders.length > 0 && {
+        infant_genders: payload.infantGenders,
+      }),
+      passenger_genders: {
+        customer: payload.customer.gender,
+        customerLabel: payload.customer.gender ? genderLabel(payload.customer.gender, payload.uiLocale ?? 'tr') : undefined,
+        additional: additionalTravelersStored.map((t) => t.gender).filter(Boolean),
+        infants: payload.infantGenders ?? [],
+      },
       source: 'web',
       access_token: accessToken,
       ui_locale: payload.uiLocale ?? 'tr',

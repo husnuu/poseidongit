@@ -78,6 +78,13 @@ export type BookingWizardUi = {
   labelMealPreference: string
   mealPreferenceAriaSuffix: string
   mealFallbackTitle: string
+  labelGenderPrimary: string
+  labelGender: string
+  genderMale: string
+  genderFemale: string
+  genderAriaSuffix: string
+  infantGenderLabel: (index: number) => string
+  allMaleBlocked: string
   paymentInfoTitle: string
   payNowSummary: (amount: string, percent: number) => string
   remainingPayTourDay: (amount: string) => string
@@ -154,6 +161,7 @@ export type BookingWizardUi = {
     travelerFirst: string
     travelerLast: string
     mealPreference: string
+    gender: string
   }
 }
 
@@ -236,6 +244,13 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     labelMealPreference: 'Yemek tercihi *',
     mealPreferenceAriaSuffix: 'yemek tercihi',
     mealFallbackTitle: 'Yemek tercihi',
+    labelGenderPrimary: 'Cinsiyet',
+    labelGender: 'Cinsiyet',
+    genderMale: 'Bay',
+    genderFemale: 'Bayan',
+    genderAriaSuffix: 'cinsiyet',
+    infantGenderLabel: (index) => `Bebek ${index}`,
+    allMaleBlocked: 'Rezervasyonu tamamlayabilmek için yolcular arasında en az bir bayan bulunmalıdır.',
     paymentInfoTitle: 'Ödeme Bilgileri',
     payNowSummary: (amount, percent) => `Şimdi öde: ${amount} ₺ (%${percent})`,
     remainingPayTourDay: (amount) => `Kalan: ${amount} ₺ (tur günü öde)`,
@@ -313,6 +328,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       travelerFirst: 'Ad zorunludur.',
       travelerLast: 'Soyad zorunludur.',
       mealPreference: 'Yemek tercihi zorunludur.',
+      gender: 'Cinsiyet seçimi zorunludur.',
     },
   },
   en: {
@@ -393,6 +409,13 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     labelMealPreference: 'Meal preference *',
     mealPreferenceAriaSuffix: 'meal preference',
     mealFallbackTitle: 'Meal preference',
+    labelGenderPrimary: 'Gender',
+    labelGender: 'Gender',
+    genderMale: 'Male',
+    genderFemale: 'Female',
+    genderAriaSuffix: 'gender',
+    infantGenderLabel: (index) => `Infant ${index}`,
+    allMaleBlocked: 'To complete your booking, at least one guest must be marked as female.',
     paymentInfoTitle: 'Payment details',
     payNowSummary: (amount, percent) => `Pay now: ${amount} ₺ (${percent}%)`,
     remainingPayTourDay: (amount) => `Remaining: ${amount} ₺ (pay on tour day)`,
@@ -469,6 +492,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       travelerFirst: 'First name is required.',
       travelerLast: 'Last name is required.',
       mealPreference: 'Meal preference is required.',
+      gender: 'Gender selection is required.',
     },
   },
   de: {
@@ -549,6 +573,13 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     labelMealPreference: 'Menüwunsch *',
     mealPreferenceAriaSuffix: 'Menüwunsch',
     mealFallbackTitle: 'Menüwunsch',
+    labelGenderPrimary: 'Geschlecht',
+    labelGender: 'Geschlecht',
+    genderMale: 'Herr',
+    genderFemale: 'Frau',
+    genderAriaSuffix: 'Geschlecht',
+    infantGenderLabel: (index) => `Baby ${index}`,
+    allMaleBlocked: 'Zur Buchungsabschluss muss mindestens eine Person als weiblich angegeben werden.',
     paymentInfoTitle: 'Zahlungsdaten',
     payNowSummary: (amount, percent) => `Jetzt zahlen: ${amount} ₺ (${percent}%)`,
     remainingPayTourDay: (amount) => `Rest: ${amount} ₺ (zahlbar am Tourtag)`,
@@ -625,6 +656,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       travelerFirst: 'Vorname ist erforderlich.',
       travelerLast: 'Nachname ist erforderlich.',
       mealPreference: 'Menüwunsch ist erforderlich.',
+      gender: 'Geschlechtsauswahl ist erforderlich.',
     },
   },
 }

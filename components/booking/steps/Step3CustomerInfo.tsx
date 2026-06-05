@@ -1,21 +1,21 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { urlFor } from '@/lib/sanity'
 import { CalendarDays, Ticket, Users, ChevronLeft, User } from 'lucide-react'
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
-import { validateAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
 import FloatingInput from '@/components/ui/FloatingInput'
 import AdditionalTravelersFields from './AdditionalTravelersFields'
-import MealPreferenceFields, { isTourMealMenuActive, tourMealOptions } from './MealPreferenceFields'
+import PassengerGenderFields from './PassengerGenderFields'
+import AllMaleGenderNotice from './AllMaleGenderNotice'
+import { TravelerCardTitle, TravelerGenderRow } from './TravelerGenderRow'
+import type { PassengerGender } from '@/lib/bookingPassengerGender'
 import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
+import { useBookingPassengerValidation } from '../hooks/useBookingPassengerValidation'
 import styles from '../booking.module.css'
-
-const PHONE_MIN_LENGTH = 10
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 interface Step3CustomerInfoProps {
   tour: TourForBooking
@@ -45,47 +45,23 @@ export default function Step3CustomerInfo({
   ui,
   termsHref = '/terms',
 }: Step3CustomerInfoProps) {
-  const [errors, setErrors] = useState<Record<string, string>>({})
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const { visibleErrors, touch, attemptSubmit } = useBookingPassengerValidation(
+    state,
+    ui,
+    onValidationChange
+  )
 
   useEffect(() => {
     onTermsAcceptanceChange?.(termsAccepted)
   }, [termsAccepted, onTermsAcceptanceChange])
 
-  const validate = useCallback(() => {
-    const next: Record<string, string> = {}
-    const c = state.customer
-    const v = ui.validation
-    if (!c.firstName?.trim()) next.firstName = v.firstName
-    if (!c.lastName?.trim()) next.lastName = v.lastName
-    if (!c.email?.trim()) next.email = v.emailRequired
-    else if (!EMAIL_REGEX.test(c.email)) next.email = v.emailInvalid
-    const phoneDigits = (c.phone ?? '').replace(/\D/g, '')
-    if (!phoneDigits.length) next.phone = v.phoneRequired
-    else if (phoneDigits.length < PHONE_MIN_LENGTH) next.phone = v.phoneInvalid
-    if (isTourMealMenuActive(tour) && !state.mealPreferenceKey?.trim()) {
-      next.mealPreference = v.mealPreference ?? 'Lütfen yemek tercihinizi seçin.'
-    }
-    Object.assign(
-      next,
-      validateAdditionalTravelers(state.additionalTravelers, state.counts, {
-        requireMealPreference: isTourMealMenuActive(tour),
-        messages: {
-          firstName: v.travelerFirst,
-          lastName: v.travelerLast,
-          meal: v.mealPreference,
-        },
-      })
-    )
-    setErrors(next)
-    onValidationChange(Object.keys(next).length === 0)
-  }, [state.customer, state.additionalTravelers, state.counts, state.mealPreferenceKey, onValidationChange, tour, ui.validation])
-
-  useEffect(() => { validate() }, [validate])
-
   const handleField = (field: keyof BookingWizardState['customer'], value: string) => {
     onUpdate({ customer: { ...state.customer, [field]: value } })
   }
+
+  const localeTag = ui.locale === 'tr' ? 'tr-TR' : ui.locale === 'de' ? 'de-DE' : 'en-US'
+  const adultOneLabel = `${ui.adult} 1`.toLocaleUpperCase(localeTag)
 
   const pickupPoints = tour.pickupPoints?.filter((p) => p.name?.trim()) ?? []
   const hasPickupPoints = pickupPoints.length > 0
@@ -104,7 +80,9 @@ export default function Step3CustomerInfo({
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
   const dateStr = state.selectedDate
     ? new Date(state.selectedDate + 'T00:00:00').toLocaleDateString(ui.numberLocale, {
-        day: 'numeric', month: 'long', year: 'numeric',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
       })
     : '—'
   const totalPrice = state.pricingSummary?.total ?? 0
@@ -123,10 +101,17 @@ export default function Step3CustomerInfo({
     defaultPickupForAddress?.name?.trim() ||
     null
 
+  const handlePayClick = () => {
+    if (!attemptSubmit()) return
+    if (!termsAccepted) return
+    onNext()
+  }
+
+  const payDisabled = ctaDisabled || !termsAccepted
+
   return (
     <div className={styles.stepContent} style={{ fontFamily: 'var(--font-family)' }}>
 
-      {/* ── Rezervasyon özeti ── */}
       <div className={styles.sectionFlat}>
         <div className={styles.sectionHeader}>
           <div className={styles.sectionHeaderLeft}>
@@ -135,7 +120,6 @@ export default function Step3CustomerInfo({
           </div>
         </div>
 
-        {/* Tur görseli */}
         {tourImageUrl && (
           <Image
             src={tourImageUrl}
@@ -149,7 +133,6 @@ export default function Step3CustomerInfo({
         <p className={styles.summaryTourName}>{tour.title}</p>
         {tourAddress && <p className={styles.summaryTourAddr}>{tourAddress}</p>}
 
-        {/* Meta chip'ler */}
         <div className={styles.summaryMetaRow}>
           <span className={styles.summaryMetaChip}>
             <CalendarDays width={12} height={12} aria-hidden />
@@ -165,16 +148,11 @@ export default function Step3CustomerInfo({
           </span>
         </div>
 
-        {/* Fiyat özeti */}
         <div className={styles.summaryPriceBlock}>
-          {/* Kişi başı fiyat satırları */}
           {(state.pricingSummary?.unitPrices ?? []).map((u) => {
             if (u.count === 0) return null
-            const label = u.ageKey === 'adult'
-              ? ui.adult
-              : u.ageKey === 'child'
-                ? ui.child
-                : ui.baby
+            const label =
+              u.ageKey === 'adult' ? ui.adult : u.ageKey === 'child' ? ui.child : ui.baby
             return (
               <div key={u.ageKey} className={styles.summaryPriceRow}>
                 <span className={styles.summaryPriceLbl}>
@@ -186,16 +164,12 @@ export default function Step3CustomerInfo({
               </div>
             )
           })}
-
-          {/* Toplam */}
           <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowTotal}`}>
             <span className={styles.summaryPriceLbl}>{ui.totalLabel}</span>
             <span className={styles.summaryPriceVal}>
               {totalPrice.toLocaleString(ui.numberLocale)} ₺
             </span>
           </div>
-
-          {/* Bugün ödenecek */}
           {state.pricingSummary && (
             <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowDeposit}`}>
               <span className={styles.summaryPriceLbl}>{ui.dueNowLabel}</span>
@@ -210,7 +184,6 @@ export default function Step3CustomerInfo({
         </div>
       </div>
 
-      {/* ── Bilgileriniz ── */}
       <div className={styles.sectionFlat}>
         <div className={styles.sectionHeader}>
           <div className={styles.sectionHeaderLeft}>
@@ -219,59 +192,83 @@ export default function Step3CustomerInfo({
           </div>
         </div>
 
-        {/* Ad — Soyad */}
-        <div className={styles.formGrid2}>
-          <FloatingInput
-            id="booking-firstName"
-            label={ui.labelFirstName}
-            autoComplete="given-name"
-            value={state.customer.firstName}
-            onChange={(e) => handleField('firstName', e.target.value)}
-            error={errors.firstName}
-            compact
-            variant="outlined"
-          />
-          <FloatingInput
-            id="booking-lastName"
-            label={ui.labelLastName}
-            autoComplete="family-name"
-            value={state.customer.lastName}
-            onChange={(e) => handleField('lastName', e.target.value)}
-            error={errors.lastName}
-            compact
-            variant="outlined"
-          />
+        <div className={styles.travelerCardsStack}>
+          <article className={styles.travelerCard}>
+            <TravelerCardTitle label={adultOneLabel} />
+            <div className={styles.formGrid2}>
+              <FloatingInput
+                id="booking-firstName"
+                label={ui.labelFirstName}
+                autoComplete="given-name"
+                value={state.customer.firstName}
+                onChange={(e) => handleField('firstName', e.target.value)}
+                onBlur={() => touch('firstName')}
+                error={visibleErrors.firstName}
+                compact
+                variant="outlined"
+              />
+              <FloatingInput
+                id="booking-lastName"
+                label={ui.labelLastName}
+                autoComplete="family-name"
+                value={state.customer.lastName}
+                onChange={(e) => handleField('lastName', e.target.value)}
+                onBlur={() => touch('lastName')}
+                error={visibleErrors.lastName}
+                compact
+                variant="outlined"
+              />
+            </div>
+            <TravelerGenderRow
+              value={state.customer.gender}
+              onChange={(g: PassengerGender) =>
+                onUpdate({ customer: { ...state.customer, gender: g } })
+              }
+              onBlur={() => touch('customerGender')}
+              error={visibleErrors.customerGender}
+              ui={ui}
+              ariaLabel={`${ui.adult} 1 ${ui.genderAriaSuffix}`}
+            />
+            <div className={styles.formGrid2} style={{ marginTop: 12 }}>
+              <FloatingInput
+                id="booking-email"
+                label={ui.labelEmail}
+                type="email"
+                autoComplete="email"
+                value={state.customer.email}
+                onChange={(e) => handleField('email', e.target.value)}
+                onBlur={() => touch('email')}
+                error={visibleErrors.email}
+                compact
+                variant="outlined"
+              />
+              <PhoneField
+                label={ui.labelPhone}
+                name="phone"
+                value={state.customer.phone ?? ''}
+                onChange={(v) => handleField('phone', v ?? '')}
+                onBlur={() => touch('phone')}
+                error={visibleErrors.phone}
+                defaultCountry="TR"
+                compact
+                variant="outlined"
+              />
+            </div>
+          </article>
         </div>
 
-        {/* E-posta — Telefon */}
-        <div className={styles.formGrid2}>
-          <FloatingInput
-            id="booking-email"
-            label={ui.labelEmail}
-            type="email"
-            autoComplete="email"
-            value={state.customer.email}
-            onChange={(e) => handleField('email', e.target.value)}
-            error={errors.email}
-            compact
-            variant="outlined"
-          />
-          <PhoneField
-            label={ui.labelPhone}
-            name="phone"
-            value={state.customer.phone ?? ''}
-            onChange={(v) => handleField('phone', v ?? '')}
-            onBlur={() => {}}
-            error={errors.phone}
-            defaultCountry="TR"
-            compact
-            variant="outlined"
-          />
-        </div>
+        <AdditionalTravelersFields
+          state={state}
+          onUpdate={onUpdate}
+          errors={visibleErrors}
+          onTouch={touch}
+          compact
+          variant="outlined"
+          ui={ui}
+        />
 
-        {/* Toplanma noktası */}
         {hasPickupPoints && (
-          <div className={styles.formField}>
+          <div className={styles.formField} style={{ marginTop: 8 }}>
             <label htmlFor="booking-pickup" className={styles.formLabel}>
               {ui.pickupLabel}
             </label>
@@ -288,24 +285,16 @@ export default function Step3CustomerInfo({
                   ? `${p.name?.trim() ?? ''} – ${p.address.trim()}`.trim()
                   : (p.name?.trim() ?? '')
                 return (
-                  <option key={label} value={label}>{label}</option>
+                  <option key={label} value={label}>
+                    {label}
+                  </option>
                 )
               })}
             </select>
           </div>
         )}
 
-        {/* Yemek tercihi */}
-        <MealPreferenceFields
-          tour={tour}
-          state={state}
-          onUpdate={onUpdate}
-          error={errors.mealPreference}
-          mealFallbackTitle={ui.mealFallbackTitle}
-        />
-
-        {/* Not */}
-        <div className={styles.formField}>
+        <div className={`${styles.formField} ${styles.optionalFieldWrap}`}>
           <FloatingTextarea
             id="booking-note"
             label={ui.labelNote}
@@ -316,42 +305,40 @@ export default function Step3CustomerInfo({
           />
         </div>
 
-        {/* Ek yolcular */}
-        <AdditionalTravelersFields
+        <PassengerGenderFields
           state={state}
           onUpdate={onUpdate}
-          errors={errors}
-          mealOptions={isTourMealMenuActive(tour) ? tourMealOptions(tour) : undefined}
-          compact
-          variant="outlined"
+          errors={visibleErrors}
+          onTouch={touch}
           ui={ui}
         />
+        <AllMaleGenderNotice state={state} ui={ui} />
       </div>
 
-      {/* ── Sözleşme ── */}
-      <label className={styles.termsRow}>
-        <input
-          type="checkbox"
-          className={styles.termsCheckbox}
-          checked={termsAccepted}
-          onChange={(e) => setTermsAccepted(e.target.checked)}
-          aria-describedby="terms-desc-step3"
-        />
-        <span id="terms-desc-step3">
-          <a
-            href={termsHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.termsLink}
-            onClick={(e) => e.stopPropagation()}
-          >
-            Mesafeli Satış Sözleşmesi
-          </a>
-          {`'ni okudum ve kabul ediyorum.`}
-        </span>
-      </label>
+      <div className={styles.termsCard}>
+        <label className={styles.termsRow}>
+          <input
+            type="checkbox"
+            className={styles.termsCheckbox}
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            aria-describedby="terms-desc-step3"
+          />
+          <span id="terms-desc-step3" className={styles.termsText}>
+            <a
+              href={termsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.termsLink}
+              onClick={(e) => e.stopPropagation()}
+            >
+              Mesafeli Satış Sözleşmesi
+            </a>
+            {`'ni okudum ve kabul ediyorum.`}
+          </span>
+        </label>
+      </div>
 
-      {/* ── CTA ── */}
       <div className={styles.ctaSection}>
         <div className={styles.stepActionsRow}>
           <button
@@ -366,15 +353,14 @@ export default function Step3CustomerInfo({
           <button
             type="button"
             className={styles.stepBtnPrimary}
-            onClick={onNext}
-            disabled={ctaDisabled}
+            onClick={handlePayClick}
+            disabled={payDisabled}
             aria-label={ctaLabel}
           >
             {ctaLabel}
           </button>
         </div>
       </div>
-
     </div>
   )
 }

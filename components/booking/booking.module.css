@@ -9,6 +9,8 @@
   justify-content: flex-start;
   background: rgba(0, 0, 0, 0.5);
   overflow: auto;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px)
+    env(safe-area-inset-left, 0px);
   animation: bookingFadeIn 0.2s ease-out;
 }
 
@@ -60,9 +62,11 @@
 
 /* Booking wizard – matches Poseidon design (primary blue, radius 12–16px) */
 .wizard {
-  max-width: 520px;
+  width: 100%;
+  max-width: min(520px, 100vw);
   margin: 0 auto;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--bg, #fafafa);
@@ -244,6 +248,168 @@
   flex-shrink: 0;
 }
 
+.travelerCardsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.travelerCard {
+  --floating-label-bg: #f8fafc;
+  background: #f8fafc;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.travelerCard .formGrid2 {
+  margin-top: 2px;
+}
+
+.travelerCardTitle {
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1e3a8a;
+  margin: 0 0 12px;
+}
+
+.travelerGenderRow {
+  margin-top: 12px;
+}
+
+.travelerGenderLabel {
+  font-family: var(--font-family);
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0 0 8px;
+  letter-spacing: 0.02em;
+}
+
+.genderSegment {
+  display: flex;
+  width: 100%;
+  max-width: 280px;
+  padding: 3px;
+  background: #eef2f6;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  gap: 2px;
+}
+
+.genderSegmentError {
+  border-color: #fca5a5;
+  box-shadow: 0 0 0 2px rgba(252, 165, 165, 0.25);
+}
+
+.genderSegmentBtn {
+  flex: 1;
+  padding: 8px 10px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  line-height: 1.25;
+  min-height: 36px;
+}
+
+.genderSegmentBtn:hover {
+  color: #334155;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.genderSegmentBtn:focus-visible {
+  outline: 2px solid #1e3a8a;
+  outline-offset: 1px;
+}
+
+.genderSegmentBtnActive {
+  background: #fff;
+  color: #1e3a8a;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+}
+
+.formFieldError {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 6px 0 0;
+  font-family: var(--font-family);
+  font-size: 11px;
+  line-height: 1.4;
+  color: #b91c1c;
+}
+
+.formFieldErrorIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.optionalFieldWrap {
+  margin-top: 8px;
+  opacity: 0.92;
+}
+
+.optionalFieldWrap label,
+.optionalFieldWrap [class*='Floating'] {
+  color: #94a3b8;
+}
+
+.genderPolicyNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.genderPolicyNoticeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #fb923c;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.genderPolicyNoticeText {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #9a3412;
+}
+
 .ctaWrap {
   position: fixed;
   bottom: 0;
@@ -277,7 +443,9 @@
 }
 
 .ctaButton:disabled {
-  opacity: 0.5;
+  background: #cbd5e1;
+  color: #f8fafc;
+  opacity: 1;
   cursor: not-allowed;
 }
 
@@ -439,6 +607,52 @@
   margin-top: 2px;
   margin-bottom: 6px;
   line-height: 1.45;
+}
+
+.genderChipGroup {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.genderChipGroupError {
+  padding: 4px;
+  margin: -4px;
+  border-radius: 8px;
+  outline: 1px solid #fca5a5;
+}
+
+.genderChipBtn {
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  line-height: 1.25;
+  min-height: 0;
+}
+
+.genderChipBtn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.genderChipBtn:focus-visible {
+  outline: none;
+  border-color: #fc6c4f;
+  box-shadow: 0 0 0 2px rgba(252, 108, 79, 0.2);
+}
+
+.genderChipBtnActive {
+  border-color: #1e3a8a;
+  background: #eff6ff;
+  color: #1e3a8a;
 }
 
 .mealOptionGroup {
@@ -1750,33 +1964,46 @@
   margin-bottom: 12px;
 }
 
+.termsCard {
+  margin: 8px 16px 0;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
 /* Sözleşme checkbox satırı */
 .termsRow {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 12px 16px 14px;
+  gap: 10px;
+  padding: 0;
   cursor: pointer;
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.5;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.55;
   font-family: var(--font-family);
 }
 
+.termsText {
+  flex: 1;
+}
+
 .termsCheckbox {
-  margin-top: 2px;
+  margin-top: 3px;
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  accent-color: #fc6c4f;
+  width: 18px;
+  height: 18px;
+  accent-color: #1e3a8a;
   cursor: pointer;
 }
 
 .termsLink {
-  color: #fc6c4f;
+  color: #1e3a8a;
   text-decoration: underline;
   text-underline-offset: 3px;
-  font-weight: 500;
+  font-weight: 600;
   transition: color 0.15s;
 }
 
@@ -1789,9 +2016,9 @@
   background: transparent;
   border: none;
   border-radius: 0;
-  padding: 20px 16px;
+  padding: 24px 16px;
   margin-bottom: 0;
-  border-bottom: 1px solid #F1F5F9;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .sectionFlat:last-of-type {
@@ -1981,10 +2208,12 @@
 }
 
 .stepBtnPrimary:disabled {
-  opacity: 0.4;
+  background: #cbd5e1;
+  color: #f8fafc;
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
+  opacity: 1;
 }
 
 @media (min-width: 640px) {
@@ -2334,6 +2563,88 @@
   color: #fff;
 }
 
+.wizardModalStepArea {
+  padding: 14px 16px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e8edf3;
+}
+
+.wizardStepProgressMeta {
+  margin: 0 0 12px;
+  text-align: center;
+  font-family: var(--font-family);
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.wizardStepper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  gap: 0;
+}
+
+.wizardStepperSegment {
+  display: contents;
+}
+
+.wizardStepColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 4px;
+}
+
+.wizardStepColumn .stepCircle {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+
+.wizardStepLabel {
+  font-family: var(--font-family);
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  text-align: center;
+  line-height: 1.35;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.wizardStepLabelActive {
+  font-family: var(--font-family);
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e3a8a;
+  text-align: center;
+  line-height: 1.35;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.wizardStepConnector {
+  flex: 0 0 clamp(20px, 8vw, 40px);
+  height: 2px;
+  margin-top: 15px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  transition: background 0.25s;
+}
+
+.wizardStepConnectorDone {
+  background: #fc6c4f;
+}
+
 .wizardModalStepStrip {
   display: flex;
   align-items: center;
@@ -2341,7 +2652,22 @@
   gap: 8px;
   padding: 14px 16px;
   background: #fff;
-  border-bottom: 1px solid #E8EDF3;
+  border-bottom: 1px solid #e8edf3;
+}
+
+@media (max-width: 380px) {
+  .wizardStepLabel,
+  .wizardStepLabelActive {
+    font-size: 10px;
+  }
+
+  .wizardStepColumn {
+    padding: 0 2px;
+  }
+
+  .wizardStepConnector {
+    flex-basis: 16px;
+  }
 }
 
 .wizardModalContent {
@@ -2353,9 +2679,10 @@
 
 .wizardModalPane {
   width: 100%;
-  max-width: 820px;
+  max-width: min(820px, 100vw);
   min-height: 100%;
   max-height: 100vh;
+  max-height: 100dvh;
   background: var(--bg, #fff);
   display: flex;
   flex-direction: column;

@@ -104,18 +104,15 @@
   font-size: 11px;
 }
 
-/* Label border üstünde (Material outlined) */
+/* Label border üstünde — yalnızca dolu veya odaklı */
 .labelOutlined {
   top: -9px !important;
   left: 11px !important;
-  background: #fff;
+  z-index: 2;
+  background: var(--floating-label-bg, #fff);
   padding: 0 5px;
   font-size: 11px;
   font-weight: 500;
+  line-height: 1.2;
   transform: none !important;
-}
-
-.labelOutlined.labelActive {
-  top: -10px !important;
-  font-size: 12px;
 }

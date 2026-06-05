@@ -73,10 +73,12 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
   const labelFontSizeActive = 11
   const labelFontSizeInactive = compact ? 13 : 13
 
+  const outlinedActive = isOutlined && active
+
   return (
     <div className={`relative ${wrapperClassName}`}>
       <div
-        className="relative w-full transition-[border-color,box-shadow] duration-150 overflow-visible"
+        className={`relative w-full transition-[border-color,box-shadow] duration-150 ${isOutlined ? 'overflow-visible' : 'overflow-hidden'}`}
         style={{
           ...WRAPPER_STYLE,
           ...(focused ? FOCUS_STYLE : {}),
@@ -88,7 +90,7 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
           id={id}
           value={value}
           defaultValue={defaultValue}
-          className={`w-full bg-transparent text-[#475569] outline-none rounded-[5px] ${className}`}
+          className={`w-full bg-transparent text-[#475569] outline-none ${className}`}
           style={{
             height,
             paddingLeft: paddingX,
@@ -118,18 +120,21 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
           htmlFor={id}
           className="absolute pointer-events-none transition-all duration-200 origin-left"
           style={
-            isOutlined
+            outlinedActive
               ? {
-                  top: -10,
-                  left: labelInsetLeft,
-                  background: '#fff',
-                  padding: '0 6px',
-                  fontSize: compact ? 11 : 12,
+                  top: -9,
+                  left: Math.max(labelInsetLeft - 2, 8),
+                  zIndex: 2,
+                  background: 'var(--floating-label-bg, #fff)',
+                  padding: '0 5px',
+                  fontSize: 11,
                   fontWeight: 500,
-                  color: focused || effectiveHasValue ? LABEL_COLOR_FOCUS : LABEL_COLOR,
+                  lineHeight: 1.2,
+                  color: focused ? LABEL_COLOR_FOCUS : LABEL_COLOR,
                 }
               : {
                   left: labelInsetLeft,
+                  zIndex: 1,
                   color: LABEL_COLOR,
                   ...(active
                     ? {
@@ -149,7 +154,7 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
         </label>
       </div>
       {error && (
-        <p id={`${id}-error`} className="mt-1 text-xs text-red-600 font-medium" role="alert">
+        <p id={`${id}-error`} className="mt-1.5 text-[11px] leading-snug text-red-700" role="alert">
           {error}
         </p>
       )}

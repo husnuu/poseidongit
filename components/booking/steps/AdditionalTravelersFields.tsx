@@ -3,25 +3,32 @@
 import type { BookingWizardState } from '@/lib/sanity/bookingTypes'
 import { additionalTravelerLabels } from '@/lib/bookingAdditionalTravelers'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
+import type { SiteLocale } from '@/lib/i18n/config'
 import FloatingInput from '@/components/ui/FloatingInput'
 import styles from '../booking.module.css'
-import MealOptionSelect from './MealOptionSelect'
+import { TravelerCardTitle, TravelerGenderRow } from './TravelerGenderRow'
+import type { PassengerGender } from '@/lib/bookingPassengerGender'
 
 interface AdditionalTravelersFieldsProps {
   state: BookingWizardState
   onUpdate: (patch: Partial<BookingWizardState>) => void
   errors: Record<string, string>
-  mealOptions?: Array<{ key: string; label: string }>
+  onTouch?: (key: string) => void
   compact?: boolean
   variant?: 'default' | 'outlined'
   ui: BookingWizardUi
+}
+
+function travelerLabelUpper(label: string, locale: SiteLocale): string {
+  const tag = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
+  return label.trim().toLocaleUpperCase(tag)
 }
 
 export default function AdditionalTravelersFields({
   state,
   onUpdate,
   errors,
-  mealOptions,
+  onTouch,
   compact = true,
   variant = 'default',
   ui,
@@ -33,62 +40,21 @@ export default function AdditionalTravelersFields({
 
   const setTraveler = (
     index: number,
-    field: 'firstName' | 'lastName' | 'mealPreferenceKey',
+    field: 'firstName' | 'lastName' | 'gender',
     value: string
   ) => {
     const next = [...list]
-    while (next.length <= index) next.push({ firstName: '', lastName: '', mealPreferenceKey: '' })
+    while (next.length <= index) next.push({ firstName: '', lastName: '', gender: '' })
     next[index] = { ...next[index], [field]: value }
     onUpdate({ additionalTravelers: next })
   }
 
   return (
-    <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: 20, marginTop: 8 }}>
-      {/* Başlık */}
-      <div style={{ marginBottom: 16 }}>
-        <p style={{
-          fontSize: 14,
-          fontWeight: 600,
-          color: '#1e3a5f',
-          margin: '0 0 3px',
-          fontFamily: 'var(--font-family)',
-        }}>
-          {ui.otherGuestsTitle}
-        </p>
-        <p style={{
-          fontSize: 12,
-          color: '#94A3B8',
-          margin: 0,
-          fontFamily: 'var(--font-family)',
-        }}>
-          {ui.otherGuestsHint}
-        </p>
-      </div>
-
-      {/* Her yolcu */}
+    <div className={styles.travelerCardsStack}>
       {labels.map((label, i) => (
-        <div
-          key={`${label}-${i}`}
-          style={{
-            marginBottom: i < labels.length - 1 ? 20 : 0,
-            paddingBottom: i < labels.length - 1 ? 20 : 0,
-            borderBottom: i < labels.length - 1 ? '1px dashed #F1F5F9' : 'none',
-          }}
-        >
-          {/* Yolcu numarası etiketi */}
-          <p style={{
-            fontSize: 11,
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            color: '#94A3B8',
-            margin: '0 0 10px',
-            fontFamily: 'var(--font-family)',
-          }}>
-            {label}
-          </p>
+        <article key={`${label}-${i}`} className={styles.travelerCard}>
+          <TravelerCardTitle label={travelerLabelUpper(label, ui.locale)} />
 
-          {/* Ad — Soyad */}
           <div className={styles.formGrid2}>
             <FloatingInput
               id={`booking-traveler-${i}-firstName`}
@@ -96,6 +62,7 @@ export default function AdditionalTravelersFields({
               autoComplete="off"
               value={list[i]?.firstName ?? ''}
               onChange={(e) => setTraveler(i, 'firstName', e.target.value)}
+              onBlur={() => onTouch?.(`traveler${i}First`)}
               error={errors[`traveler${i}First`]}
               compact={compact}
               variant={variant}
@@ -106,30 +73,22 @@ export default function AdditionalTravelersFields({
               autoComplete="off"
               value={list[i]?.lastName ?? ''}
               onChange={(e) => setTraveler(i, 'lastName', e.target.value)}
+              onBlur={() => onTouch?.(`traveler${i}Last`)}
               error={errors[`traveler${i}Last`]}
               compact={compact}
               variant={variant}
             />
           </div>
 
-          {/* Yemek tercihi */}
-          {mealOptions && mealOptions.length > 0 && (
-            <div style={{ marginTop: 10 }}>
-              <MealOptionSelect
-                options={mealOptions}
-                value={list[i]?.mealPreferenceKey ?? ''}
-                onChange={(key) => setTraveler(i, 'mealPreferenceKey', key)}
-                ariaLabel={`${label} ${ui.mealPreferenceAriaSuffix}`}
-                label={ui.labelMealPreference}
-                namePrefix={`booking-traveler-${i}-meal`}
-                showError={Boolean(errors[`traveler${i}Meal`])}
-              />
-              {errors[`traveler${i}Meal`] && (
-                <p className={styles.errorText}>{errors[`traveler${i}Meal`]}</p>
-              )}
-            </div>
-          )}
-        </div>
+          <TravelerGenderRow
+            value={list[i]?.gender}
+            onChange={(g: PassengerGender) => setTraveler(i, 'gender', g)}
+            onBlur={() => onTouch?.(`traveler${i}Gender`)}
+            error={errors[`traveler${i}Gender`]}
+            ui={ui}
+            ariaLabel={`${label} ${ui.genderAriaSuffix}`}
+          />
+        </article>
       ))}
     </div>
   )

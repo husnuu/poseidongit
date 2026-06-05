@@ -91,7 +91,7 @@ export default function PhoneField({
         />
         <label
           htmlFor={id}
-          className={`${styles.label} ${active ? styles.labelActive : styles.labelInactive} ${compact ? styles.labelCompact : ''} ${isOutlined ? styles.labelOutlined : ''}`}
+          className={`${styles.label} ${active ? styles.labelActive : styles.labelInactive} ${compact ? styles.labelCompact : ''} ${isOutlined && active ? styles.labelOutlined : ''}`}
           style={{
             color: active && isOutlined ? '#fc6c4f' : LABEL_COLOR,
           }}
@@ -100,7 +100,7 @@ export default function PhoneField({
         </label>
       </div>
       {error && (
-        <p id={`${id}-error`} className="mt-1 text-xs text-red-600 font-medium" role="alert">
+        <p id={`${id}-error`} className="mt-1.5 text-[11px] leading-snug text-red-700" role="alert">
           {error}
         </p>
       )}
