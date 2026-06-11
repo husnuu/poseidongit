@@ -1,6 +1,8 @@
 'use client'
 
 import Image from 'next/image'
+import { translateItineraryTag } from '@/lib/i18n/itineraryTags'
+import type { SiteLocale } from '@/lib/i18n/config'
 import { useEffect, useRef, useState } from 'react'
 import styles from './ItineraryTimeline.module.css'
 
@@ -16,23 +18,36 @@ export interface ItineraryTimelineItem {
 interface ItineraryTimelineProps {
   items?: ItineraryTimelineItem[] | null
   sectionTitle?: string
+  locale?: SiteLocale
 }
 
-export default function ItineraryTimeline({ items, sectionTitle = 'Neler yapacaksınız?' }: ItineraryTimelineProps) {
+export default function ItineraryTimeline({
+  items,
+  sectionTitle = 'Neler yapacaksınız?',
+  locale = 'tr',
+}: ItineraryTimelineProps) {
   if (!items || items.length === 0) return null
 
   const validItems = items.filter((item) => item.imageUrl && item.title)
   if (validItems.length === 0) return null
 
-  return <ItineraryTimelineClient validItems={validItems} sectionTitle={sectionTitle} />
+  return (
+    <ItineraryTimelineClient
+      validItems={validItems}
+      sectionTitle={sectionTitle}
+      locale={locale}
+    />
+  )
 }
 
 function ItineraryTimelineClient({
   validItems,
   sectionTitle,
+  locale,
 }: {
   validItems: ItineraryTimelineItem[]
   sectionTitle: string
+  locale: SiteLocale
 }) {
   const [visible, setVisible] = useState<boolean[]>(() => validItems.map(() => false))
   const itemRefs = useRef<(HTMLLIElement | null)[]>([])
@@ -83,7 +98,11 @@ function ItineraryTimelineClient({
                     blurDataURL={item.imageBlurDataURL ?? undefined}
                   />
                   {item.time && <span className={styles.badgeTime}>{item.time}</span>}
-                  {item.tag && <span className={styles.badgeTag}>{item.tag}</span>}
+                  {item.tag && (
+                    <span className={styles.badgeTag}>
+                      {translateItineraryTag(item.tag, locale)}
+                    </span>
+                  )}
                 </div>
 
               </div>

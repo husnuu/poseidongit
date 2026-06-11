@@ -167,12 +167,23 @@ export default function StepCustomer({
             <p className={styles.summaryTotalValue}>{totalPrice.toLocaleString(ui.numberLocale)} ₺</p>
           </div>
           {state.pricingSummary && (
-            <div className={styles.summaryDueBox}>
-              <p className={styles.summaryDueLabel}>{ui.dueNowLabel}</p>
-              <p className={styles.summaryDueValue}>
-                {state.pricingSummary.depositAmount.toLocaleString(ui.numberLocale)} ₺
-                <span className={styles.summaryDueBadge}>%{state.pricingSummary.depositPercent}</span>
-              </p>
+            <div className={styles.summaryPaymentSplit}>
+              <div className={styles.summaryDueBox}>
+                <p className={styles.summaryDueLabel}>
+                  {ui.payDepositNowLabel(state.pricingSummary.depositPercent)}
+                </p>
+                <p className={styles.summaryDueValue}>
+                  {state.pricingSummary.depositAmount.toLocaleString(ui.numberLocale)} ₺
+                </p>
+              </div>
+              {state.pricingSummary.remainingAmount > 0 && (
+                <div className={styles.summaryRemainingBox}>
+                  <p className={styles.summaryRemainingLabel}>{ui.payRemainingAtDoorLabel}</p>
+                  <p className={styles.summaryRemainingValue}>
+                    {state.pricingSummary.remainingAmount.toLocaleString(ui.numberLocale)} ₺
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>

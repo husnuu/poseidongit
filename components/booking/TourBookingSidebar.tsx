@@ -43,6 +43,7 @@ export default function TourBookingSidebar({
           bookingCard={bookingCard}
           deposit={tour.deposit}
           onRezervasyonClick={() => setIsBookingOpen(true)}
+          locale={locale}
         />
       </aside>
       <MobileStickyBookingBar
@@ -51,6 +52,7 @@ export default function TourBookingSidebar({
         deposit={tour.deposit}
         onReserve={() => setIsBookingOpen(true)}
         isModalOpen={isBookingOpen}
+        locale={locale}
       />
       <BookingWizardModal
         open={isBookingOpen}

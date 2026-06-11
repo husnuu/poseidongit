@@ -88,6 +88,19 @@ export type TourPageUi = {
   classesShowcaseImageCounter: (current: number, total: number) => string
   classesShowcaseNoImage: string
   classesShowcaseHighlightsTitle: string
+  /** Mobil/desktop rezervasyon kartı */
+  stickyBookTitle: string
+  stickyBookCtaMobile: string
+  stickyBookCtaDesktop: string
+  stickyBookContinueForPrice: string
+  stickyDepositPercentage: (percent: number) => string
+  stickyDepositFixed: string
+  stickyTrustBadges: [string, string, string]
+  stickyDemandTitle: string
+  stickyDemandSubtitle: string
+  stickyDemandAria: string
+  headerMobileTicket: string
+  headerInstantConfirmation: string
 }
 
 const UI: Record<SiteLocale, TourPageUi> = {
@@ -171,6 +184,18 @@ const UI: Record<SiteLocale, TourPageUi> = {
     classesShowcaseImageCounter: (c, t) => `${c} / ${t}`,
     classesShowcaseNoImage: 'Görsel yok',
     classesShowcaseHighlightsTitle: 'Sunulanlar',
+    stickyBookTitle: 'REZERVE ET',
+    stickyBookCtaMobile: 'REZERVE ET',
+    stickyBookCtaDesktop: 'REZERVASYON YAP',
+    stickyBookContinueForPrice: 'Fiyat için devam edin',
+    stickyDepositPercentage: (p) => `%${p} kapora ile ödeyin`,
+    stickyDepositFixed: 'Kapora ile ödeyin',
+    stickyTrustBadges: ['En İyi Fiyat Garantisi', 'Küçük Grup Deneyimi', 'Esnek İptal'],
+    stickyDemandTitle: 'Bu tur için talepler yoğun',
+    stickyDemandSubtitle: 'Erken rezervasyon önerilir',
+    stickyDemandAria: 'Talep uyarısı',
+    headerMobileTicket: 'Mobil bilet',
+    headerInstantConfirmation: 'Anında onay',
   },
   en: {
     locale: 'en',
@@ -252,6 +277,18 @@ const UI: Record<SiteLocale, TourPageUi> = {
     classesShowcaseImageCounter: (c, t) => `${c} / ${t}`,
     classesShowcaseNoImage: 'No image',
     classesShowcaseHighlightsTitle: 'What you get',
+    stickyBookTitle: 'BOOK NOW',
+    stickyBookCtaMobile: 'BOOK NOW',
+    stickyBookCtaDesktop: 'BOOK NOW',
+    stickyBookContinueForPrice: 'Continue to see price',
+    stickyDepositPercentage: (p) => `Pay with ${p}% deposit`,
+    stickyDepositFixed: 'Pay with deposit',
+    stickyTrustBadges: ['Best price guarantee', 'Small group experience', 'Flexible cancellation'],
+    stickyDemandTitle: 'High demand for this tour',
+    stickyDemandSubtitle: 'We recommend booking early',
+    stickyDemandAria: 'Demand notice',
+    headerMobileTicket: 'Mobile ticket',
+    headerInstantConfirmation: 'Instant confirmation',
   },
   de: {
     locale: 'de',
@@ -333,6 +370,18 @@ const UI: Record<SiteLocale, TourPageUi> = {
     classesShowcaseImageCounter: (c, t) => `${c} / ${t}`,
     classesShowcaseNoImage: 'Kein Bild',
     classesShowcaseHighlightsTitle: 'Inklusive',
+    stickyBookTitle: 'JETZT BUCHEN',
+    stickyBookCtaMobile: 'JETZT BUCHEN',
+    stickyBookCtaDesktop: 'JETZT BUCHEN',
+    stickyBookContinueForPrice: 'Weiter für den Preis',
+    stickyDepositPercentage: (p) => `Mit ${p}% Anzahlung bezahlen`,
+    stickyDepositFixed: 'Mit Anzahlung bezahlen',
+    stickyTrustBadges: ['Bestpreis-Garantie', 'Kleine Gruppe', 'Flexible Stornierung'],
+    stickyDemandTitle: 'Hohe Nachfrage für diese Tour',
+    stickyDemandSubtitle: 'Frühzeitige Buchung empfohlen',
+    stickyDemandAria: 'Nachfragehinweis',
+    headerMobileTicket: 'Mobiles Ticket',
+    headerInstantConfirmation: 'Sofortige Bestätigung',
   },
 }
 

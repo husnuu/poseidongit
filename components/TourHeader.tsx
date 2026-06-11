@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import type { SiteLocale } from '@/lib/i18n/config'
+import { resolveTourRatingLabel } from '@/lib/i18n/ratingLabels'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './TourHeader.module.css'
 
@@ -98,6 +99,11 @@ export function TourHeader({
   locale,
 }: TourHeaderProps) {
   const tourUi = useMemo(() => getTourPageUi(locale), [locale])
+  const displayRatingLabel = resolveTourRatingLabel(
+    ratingLabel,
+    locale,
+    tourUi.defaultRatingLabel
+  )
 
   const reviewHref   = reviewsUrl?.startsWith('http') ? reviewsUrl : '#reviews'
   const reviewTarget = reviewsUrl?.startsWith('http') ? '_blank' : undefined
@@ -116,7 +122,7 @@ export function TourHeader({
           <div className={styles.metaItem}>
             <span className={styles.metaIcon}><ThumbIcon /></span>
             <span className={styles.metaText}>
-              {ratingLabel ?? tourUi.defaultRatingLabel}
+              {displayRatingLabel}
             </span>
             <RatingDots score={score} />
             {reviewCount != null && (
@@ -159,11 +165,11 @@ export function TourHeader({
         <div className={styles.featuresRow}>
           <div className={styles.pill}>
             <span className={styles.pillIcon}><VoucherIcon /></span>
-            <span className={styles.pillLabel}>Mobil bilet</span>
+            <span className={styles.pillLabel}>{tourUi.headerMobileTicket}</span>
           </div>
           <div className={styles.pill}>
             <span className={styles.pillIcon}><ShieldCheckIcon /></span>
-            <span className={styles.pillLabel}>Anında onay</span>
+            <span className={styles.pillLabel}>{tourUi.headerInstantConfirmation}</span>
             <span className={styles.pillArrow}><ChevronRightIcon /></span>
           </div>
         </div>

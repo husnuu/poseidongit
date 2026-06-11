@@ -171,15 +171,24 @@ export default function Step3CustomerInfo({
             </span>
           </div>
           {state.pricingSummary && (
-            <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowDeposit}`}>
-              <span className={styles.summaryPriceLbl}>{ui.dueNowLabel}</span>
-              <span className={styles.summaryPriceVal}>
-                {state.pricingSummary.depositAmount.toLocaleString(ui.numberLocale)} ₺
-                <span className={styles.summaryDepositBadge}>
-                  %{state.pricingSummary.depositPercent}
+            <>
+              <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowDeposit}`}>
+                <span className={styles.summaryPriceLbl}>
+                  {ui.payDepositNowLabel(state.pricingSummary.depositPercent)}
                 </span>
-              </span>
-            </div>
+                <span className={styles.summaryPriceVal}>
+                  {state.pricingSummary.depositAmount.toLocaleString(ui.numberLocale)} ₺
+                </span>
+              </div>
+              {state.pricingSummary.remainingAmount > 0 && (
+                <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowRemaining}`}>
+                  <span className={styles.summaryPriceLbl}>{ui.payRemainingAtDoorLabel}</span>
+                  <span className={styles.summaryPriceVal}>
+                    {state.pricingSummary.remainingAmount.toLocaleString(ui.numberLocale)} ₺
+                  </span>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

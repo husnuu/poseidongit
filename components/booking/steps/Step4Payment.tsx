@@ -86,10 +86,11 @@ export default function Step4Payment({
             <span className={styles.paymentSummaryAmount}>{p.total.toLocaleString(ui.numberLocale)} ₺</span>
           </div>
           <div className={styles.paymentSummaryDue}>
-            <span className={styles.paymentSummaryDueLabel}>{ui.paymentDueNow}</span>
+            <span className={styles.paymentSummaryDueLabel}>
+              {ui.payDepositNowLabel(p.depositPercent)}
+            </span>
             <span className={styles.paymentSummaryDueAmount}>
               {p.depositAmount.toLocaleString(ui.numberLocale)} ₺
-              <span className={styles.paymentSummaryDueBadge}>{ui.depositBadge(p.depositPercent)}</span>
             </span>
           </div>
           <div className={styles.paymentSummaryRow}>

@@ -1,7 +1,10 @@
 'use client'
 
+import { useMemo } from 'react'
 import { openBookingModal } from '@/components/booking/bookingEvents'
 import { MOBILE_BOTTOM_CTA_BAR_ID } from '@/lib/mobileBottomCtaBarId'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import type { DepositConfig, TourForBooking } from '@/lib/sanity/bookingTypes'
 import styles from './MobileStickyBookingBar.module.css'
 
@@ -11,13 +14,17 @@ interface MobileStickyBookingBarProps {
   deposit?: DepositConfig | null
   onReserve: () => void
   isModalOpen: boolean
+  locale?: SiteLocale
 }
 
-function getDepositLabel(deposit: DepositConfig): string | null {
+function getDepositLabel(
+  deposit: DepositConfig,
+  ui: ReturnType<typeof getTourPageUi>
+): string | null {
   if (!deposit?.enabled || deposit.value == null) return null
-  if (deposit.type === 'percentage') return `%${deposit.value} kapora ile ödeyin`
-  if (deposit.type === 'fixed') return 'Kapora ile ödeyin'
-  return `%${deposit.value} kapora ile ödeyin`
+  if (deposit.type === 'percentage') return ui.stickyDepositPercentage(deposit.value)
+  if (deposit.type === 'fixed') return ui.stickyDepositFixed
+  return ui.stickyDepositPercentage(deposit.value)
 }
 
 function getAdultPrice(ticketClasses?: TourForBooking['ticketClasses']): number | null {
@@ -35,10 +42,12 @@ export default function MobileStickyBookingBar({
   deposit,
   onReserve,
   isModalOpen,
+  locale = 'tr',
 }: MobileStickyBookingBarProps) {
+  const ui = useMemo(() => getTourPageUi(locale), [locale])
   const adultPrice = getAdultPrice(ticketClasses)
-  const ctaText = bookingCard?.ctaText || 'REZERVE ET'
-  const depositLabel = deposit ? getDepositLabel(deposit) : null
+  const ctaText = bookingCard?.ctaText || ui.stickyBookCtaMobile
+  const depositLabel = deposit ? getDepositLabel(deposit, ui) : null
 
   if (isModalOpen) return null
 
@@ -46,13 +55,13 @@ export default function MobileStickyBookingBar({
     <div id={MOBILE_BOTTOM_CTA_BAR_ID} className={styles.bookingBar}>
       <div className={styles.bookingBarInner}>
         <div className={styles.priceBlock}>
-          <span className={styles.priceFrom}>Kişi başı</span>
+          <span className={styles.priceFrom}>{ui.pricePerPerson}</span>
           {adultPrice ? (
             <span className={styles.priceValue}>
-              {adultPrice.toLocaleString('tr-TR')} ₺
+              {adultPrice.toLocaleString(ui.numberLocale)} ₺
             </span>
           ) : (
-            <span className={styles.priceValueSmall}>Fiyat için devam edin</span>
+            <span className={styles.priceValueSmall}>{ui.stickyBookContinueForPrice}</span>
           )}
           {depositLabel && (
             <div className={styles.depositLine}>{depositLabel}</div>

@@ -63,6 +63,10 @@ export type BookingWizardUi = {
   peopleCount: (n: number) => string
   totalLabel: string
   dueNowLabel: string
+  /** Adım 3 özet: kapora satırı */
+  payDepositNowLabel: (percent: number) => string
+  /** Adım 3 özet: kalan tutar satırı */
+  payRemainingAtDoorLabel: string
   formHeadingSr: string
   yourDetailsTitle: string
   labelFirstName: string
@@ -229,6 +233,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     peopleCount: (n) => `${n} kişi`,
     totalLabel: 'Toplam',
     dueNowLabel: 'Şimdi ödenecek tutar',
+    payDepositNowLabel: (percent) => `%${percent} kapora — şimdi ödeyin`,
+    payRemainingAtDoorLabel: 'Kalan — kapıda ödeyin',
     formHeadingSr: 'Bilgileriniz',
     yourDetailsTitle: 'Bilgileriniz',
     labelFirstName: 'Ad *',
@@ -309,7 +315,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     paymentTotalPrice: 'Toplam fiyat',
     paymentDueNow: 'Şimdi ödenecek tutar',
     depositBadge: (percent) => `%${percent} kapora`,
-    paymentRemainingTourDay: 'Kalan (tur günü öde)',
+    paymentRemainingTourDay: 'Kalan — kapıda ödeyin',
     selectClassButton: 'Seçiniz',
     selectClassAriaPickLoca: (classLabel) => `${classLabel} seç, loca seçin`,
     selectClassAriaContinue: (classLabel) => `${classLabel} seç ve devam et`,
@@ -394,6 +400,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     peopleCount: (n) => (n === 1 ? '1 guest' : `${n} guests`),
     totalLabel: 'Total',
     dueNowLabel: 'Pay now',
+    payDepositNowLabel: (percent) => `Pay ${percent}% deposit now`,
+    payRemainingAtDoorLabel: 'Remaining — pay at boarding',
     formHeadingSr: 'Your details',
     yourDetailsTitle: 'Your details',
     labelFirstName: 'First name *',
@@ -473,7 +481,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     paymentTotalPrice: 'Total price',
     paymentDueNow: 'Amount due now',
     depositBadge: (percent) => `${percent}% deposit`,
-    paymentRemainingTourDay: 'Remaining (pay on tour day)',
+    paymentRemainingTourDay: 'Remaining — pay at boarding',
     selectClassButton: 'Select',
     selectClassAriaPickLoca: (classLabel) => `Select ${classLabel}, choose booths`,
     selectClassAriaContinue: (classLabel) => `Select ${classLabel} and continue`,
@@ -558,6 +566,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     peopleCount: (n) => (n === 1 ? '1 Person' : `${n} Personen`),
     totalLabel: 'Gesamt',
     dueNowLabel: 'Jetzt zu zahlen',
+    payDepositNowLabel: (percent) => `${percent}% Anzahlung — jetzt zahlen`,
+    payRemainingAtDoorLabel: 'Rest — vor Ort zahlen',
     formHeadingSr: 'Ihre Angaben',
     yourDetailsTitle: 'Ihre Angaben',
     labelFirstName: 'Vorname *',
@@ -637,7 +647,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     paymentTotalPrice: 'Gesamtpreis',
     paymentDueNow: 'Jetzt fälliger Betrag',
     depositBadge: (percent) => `${percent}% Anzahlung`,
-    paymentRemainingTourDay: 'Rest (zahlbar am Tourtag)',
+    paymentRemainingTourDay: 'Rest — vor Ort zahlen',
     selectClassButton: 'Wählen',
     selectClassAriaPickLoca: (classLabel) => `${classLabel} wählen, Logen wählen`,
     selectClassAriaContinue: (classLabel) => `${classLabel} wählen und fortfahren`,

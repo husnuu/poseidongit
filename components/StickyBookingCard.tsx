@@ -1,7 +1,10 @@
 'use client'
 
 import Link from 'next/link'
+import { useMemo } from 'react'
 import { openBookingModal } from '@/components/booking/bookingEvents'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './StickyBookingCard.module.css'
 
 interface PriceByAge {
@@ -42,13 +45,17 @@ interface StickyBookingCardProps {
   deposit?: DepositConfig | null
   /** When set, opens modal instead of navigating to /rezervasyon/[slug] */
   onRezervasyonClick?: () => void
+  locale?: SiteLocale
 }
 
-function getDepositLabel(deposit: DepositConfig): string | null {
+function getDepositLabel(
+  deposit: DepositConfig,
+  ui: ReturnType<typeof getTourPageUi>
+): string | null {
   if (!deposit?.enabled || deposit.value == null) return null
-  if (deposit.type === 'percentage') return `%${deposit.value} kapora ile ödeyin`
-  if (deposit.type === 'fixed') return 'Kapora ile ödeyin'
-  return `%${deposit.value} kapora ile ödeyin`
+  if (deposit.type === 'percentage') return ui.stickyDepositPercentage(deposit.value)
+  if (deposit.type === 'fixed') return ui.stickyDepositFixed
+  return ui.stickyDepositPercentage(deposit.value)
 }
 
 function DemandIcon() {
@@ -106,7 +113,9 @@ export default function StickyBookingCard({
   bookingCard,
   deposit,
   onRezervasyonClick,
+  locale = 'tr',
 }: StickyBookingCardProps) {
+  const ui = useMemo(() => getTourPageUi(locale), [locale])
   const reservePath = rezervasyonHref?.trim() || `/rezervasyon/${tourSlug}`
   const getAdultPrice = (): number | null => {
     if (!ticketClasses?.length) return null
@@ -120,27 +129,24 @@ export default function StickyBookingCard({
   }
 
   const adultPrice = getAdultPrice()
-  const depositLabel = deposit ? getDepositLabel(deposit) : null
+  const depositLabel = deposit ? getDepositLabel(deposit, ui) : null
   const trustBadges =
-    bookingCard?.trustBadges?.length
-      ? bookingCard.trustBadges
-      : ['En İyi Fiyat Garantisi', 'Küçük Grup Deneyimi', 'Esnek İptal']
-  const ctaText = bookingCard?.ctaText || 'REZERVASYON YAP'
+    bookingCard?.trustBadges?.length ? bookingCard.trustBadges : ui.stickyTrustBadges
+  const ctaText = bookingCard?.ctaText || ui.stickyBookCtaDesktop
 
   return (
     <div className={styles.sidebar}>
       <div className={styles.content}>
-        <h2 className={styles.title}>REZERVE ET</h2>
+        <h2 className={styles.title}>{ui.stickyBookTitle}</h2>
 
-        {/* Price block — mobil sticky bar ile aynı dil */}
         <div className={styles.priceBlock}>
-          <span className={styles.priceFrom}>Kişi başı</span>
+          <span className={styles.priceFrom}>{ui.pricePerPerson}</span>
           {adultPrice ? (
             <span className={styles.priceValue}>
-              {adultPrice.toLocaleString('tr-TR')} ₺
+              {adultPrice.toLocaleString(ui.numberLocale)} ₺
             </span>
           ) : (
-            <span className={styles.priceValueSmall}>Fiyat için devam edin</span>
+            <span className={styles.priceValueSmall}>{ui.stickyBookContinueForPrice}</span>
           )}
           {depositLabel && (
             <span className={styles.depositLine}>{depositLabel}</span>
@@ -173,11 +179,11 @@ export default function StickyBookingCard({
           </Link>
         )}
 
-        <div className={styles.demand} role="note" aria-label="Talep uyarısı">
+        <div className={styles.demand} role="note" aria-label={ui.stickyDemandAria}>
           <DemandIcon />
           <div className={styles.demandText}>
-            <p className={styles.demandTitle}>Bu tur için talepler yoğun</p>
-            <p className={styles.demandSubtitle}>Erken rezervasyon önerilir</p>
+            <p className={styles.demandTitle}>{ui.stickyDemandTitle}</p>
+            <p className={styles.demandSubtitle}>{ui.stickyDemandSubtitle}</p>
           </div>
         </div>
       </div>

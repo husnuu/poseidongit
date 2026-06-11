@@ -1928,6 +1928,56 @@
   margin-left: 6px;
 }
 
+.summaryPriceRowRemaining {
+  background: #f8fafc;
+  padding: 12px 14px;
+  border-top: 1px solid #e8edf3;
+}
+
+.summaryPriceRowRemaining .summaryPriceLbl {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.summaryPriceRowRemaining .summaryPriceVal {
+  font-size: 16px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.summaryPaymentSplit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.summaryRemainingBox {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 12px 14px;
+  border-radius: 10px;
+}
+
+.summaryRemainingLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  margin: 0 0 4px;
+  font-family: var(--font-family);
+  line-height: 1.35;
+}
+
+.summaryRemainingValue {
+  font-size: 16px;
+  font-weight: 600;
+  color: #475569;
+  margin: 0;
+  font-family: var(--font-family);
+}
+
 /* Tur adı ve adresi */
 .summaryTourName {
   font-size: 17px;

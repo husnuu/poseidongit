@@ -500,7 +500,7 @@ export default async function TourPage({
           tourUi={tourUi}
         />
 
-        <ItineraryTimeline items={itineraryTimelineItems} sectionTitle={tourUi.itineraryTitle} />
+        <ItineraryTimeline items={itineraryTimelineItems} sectionTitle={tourUi.itineraryTitle} locale={locale} />
 
         <PoseidonSecure locale={locale} layout="contained" />
 
