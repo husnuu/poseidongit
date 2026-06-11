@@ -128,33 +128,6 @@
   background: #e84d2d;
 }
 
-/* ── Yat kiralama — müsaitlik CTA (aynı renk) ── */
-.yachtInquiryCta {
-  display: block;
-  width: 100%;
-  text-align: center;
-  background: #fc6c4f;
-  color: #fff;
-  font-family: var(--font-family), sans-serif;
-  font-weight: 700;
-  font-size: 15px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 15px 24px;
-  border-radius: 12px;
-  border: none;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.15s ease;
-  box-shadow: 0 4px 16px rgba(252, 108, 79, 0.35);
-}
-
-.yachtInquiryCta:hover {
-  background: #f85a3a;
-  color: #fff;
-  transform: translateY(-1px);
-}
-
 /* ── Demand notice ── */
 .demand {
   display: flex;

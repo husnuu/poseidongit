@@ -253,17 +253,14 @@ export default function YachtInquiryModal({
                       : 'Konaklama fiyatı için gece takviminde tüm geceler tanımlı olmalı veya konaklamalı toplam fiyat (referans) girilmeli.'}
                 </p>
               ) : null}
-              <span className="hero-primary-btn-wrap mt-0 mb-0 w-full rounded-xl p-[2px] block yacht-inquiry-cta-wrap">
-                <button
-                  type="button"
-                  className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${stickyCardStyles.yachtInquiryCta} disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:transform-none`}
-                  style={{ fontFamily: 'var(--font-family)', borderRadius: 10 }}
-                  disabled={!step1Ready}
-                  onClick={() => setStep(2)}
-                >
-                  Devam et
-                </button>
-              </span>
+              <button
+                type="button"
+                className={`${stickyCardStyles.ctaButton} disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:transform-none`}
+                disabled={!step1Ready}
+                onClick={() => setStep(2)}
+              >
+                Devam et
+              </button>
             </div>
           </div>
         ) : (

@@ -21,7 +21,14 @@ import {
   yachtOvernightCellDisplayPrice,
   yachtOvernightStayTotal,
 } from '@/lib/yachtCalendarPricing'
-import { formatYachtOvernightStickyPriceLine, formatYachtStickyPriceLine } from '@/lib/yachtFormat'
+import {
+  formatYachtOvernightStickyPriceLine,
+  formatYachtSelectedDayStickyPrice,
+  formatYachtOvernightTotalStickyPrice,
+  formatYachtStickyPriceLine,
+  splitYachtOvernightStickyLine,
+  type YachtStickyPriceDisplay,
+} from '@/lib/yachtFormat'
 
 interface YachtInquiryExperienceProps {
   yacht: YachtRentalDocument
@@ -79,14 +86,14 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
     yacht,
   ])
 
-  const priceHeadline = useMemo(() => {
+  const stickyPrice = useMemo((): YachtStickyPriceDisplay => {
     const cur = yacht.currency ?? 'TRY'
     if (rentalMode === 'daily') {
       if (selectedDate) {
         const p = yachtDailyUnitPrice(yacht, selectedDate)
-        if (p != null) return `Seçilen gün: ${p.toLocaleString('tr-TR')} ₺`
+        if (p != null) return formatYachtSelectedDayStickyPrice(p)
       }
-      return formatYachtStickyPriceLine(yacht.priceFrom, cur)
+      return { value: formatYachtStickyPriceLine(yacht.priceFrom, cur) }
     }
     if (
       overnightRange.checkIn &&
@@ -97,9 +104,11 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
       })
     ) {
       const t = yachtOvernightStayTotal(yacht, overnightRange.checkIn, overnightRange.checkOut)
-      if (t != null) return `Konaklamalı toplam ${t.toLocaleString('tr-TR')} ₺`
+      if (t != null) return formatYachtOvernightTotalStickyPrice(t)
     }
-    return formatYachtOvernightStickyPriceLine(effectiveOvernightAdvertisedPrice(yacht), cur)
+    return splitYachtOvernightStickyLine(
+      formatYachtOvernightStickyPriceLine(effectiveOvernightAdvertisedPrice(yacht), cur)
+    )
   }, [yacht, rentalMode, selectedDate, overnightRange.checkIn, overnightRange.checkOut])
 
   const mobileDateSubtitle = useMemo(() => {
@@ -164,7 +173,8 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
     <>
       <aside className="hidden lg:block lg:flex-shrink-0 lg:w-[360px]">
         <StickyInquiryCard
-          priceHeadline={priceHeadline}
+          priceLabel={stickyPrice.label}
+          priceValue={stickyPrice.value}
           resolveDayPrice={resolveDayPrice}
           inquiryCard={yacht.inquiryCard}
           blockedDates={blockedForMode}
@@ -184,7 +194,8 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
       </aside>
 
       <MobileYachtInquiryBar
-        priceHeadline={priceHeadline}
+        priceLabel={stickyPrice.label}
+        priceValue={stickyPrice.value}
         dateSubtitle={mobileDateSubtitle}
         onOpenInquiry={openModalFromMobile}
         ctaText={ctaText}

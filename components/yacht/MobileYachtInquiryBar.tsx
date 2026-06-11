@@ -2,10 +2,11 @@
 
 import { DEFAULT_YACHT_INQUIRY_CTA } from '@/lib/yachtConversionCopy'
 import { MOBILE_BOTTOM_CTA_BAR_ID } from '@/lib/mobileBottomCtaBarId'
-import styles from './MobileYachtInquiryBar.module.css'
+import styles from '@/components/MobileStickyBookingBar.module.css'
 
 interface MobileYachtInquiryBarProps {
-  priceHeadline: string
+  priceLabel?: string
+  priceValue: string
   dateSubtitle: string | null
   onOpenInquiry: () => void
   ctaText?: string
@@ -13,7 +14,8 @@ interface MobileYachtInquiryBarProps {
 }
 
 export default function MobileYachtInquiryBar({
-  priceHeadline,
+  priceLabel,
+  priceValue,
   dateSubtitle,
   onOpenInquiry,
   ctaText = DEFAULT_YACHT_INQUIRY_CTA,
@@ -25,25 +27,23 @@ export default function MobileYachtInquiryBar({
     <div id={MOBILE_BOTTOM_CTA_BAR_ID} className={styles.bookingBar}>
       <div className={styles.bookingBarInner}>
         <div className={styles.priceBlock}>
-          <div className={styles.priceValue}>{priceHeadline}</div>
+          {priceLabel ? <span className={styles.priceFrom}>{priceLabel}</span> : null}
+          <span className={styles.priceValue}>{priceValue}</span>
           {dateSubtitle ? (
-            <div className={styles.dateLine}>{dateSubtitle}</div>
+            <div className={styles.depositLine}>{dateSubtitle}</div>
           ) : (
-            <div className={styles.dateLineMuted}>Takvimden seçim yapın</div>
+            <div className={styles.depositLine}>Takvimden seçim yapın</div>
           )}
         </div>
         <div className={styles.rightBlock}>
-          <span className="hero-primary-btn-wrap inline-flex rounded-xl p-[2px]">
-            <button
-              type="button"
-              className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${styles.ctaButton}`}
-              style={{ borderRadius: 10 }}
-              onClick={onOpenInquiry}
-              aria-label={ctaText}
-            >
-              {ctaText}
-            </button>
-          </span>
+          <button
+            type="button"
+            className={styles.ctaButton}
+            onClick={onOpenInquiry}
+            aria-label={ctaText}
+          >
+            {ctaText}
+          </button>
         </div>
       </div>
     </div>

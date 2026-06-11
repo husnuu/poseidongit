@@ -1,6 +1,5 @@
 'use client'
 
-import { CheckCircle2 } from 'lucide-react'
 import YachtCalendar, { type YachtCalendarRange } from '@/components/yacht/YachtCalendar'
 import YachtRentalModeTabs from '@/components/yacht/YachtRentalModeTabs'
 import type { YachtInquiryCard as InquiryCardConfig } from '@/lib/yachtTypes'
@@ -37,7 +36,8 @@ function CheckIcon() {
 }
 
 interface StickyInquiryCardProps {
-  priceHeadline: string
+  priceLabel?: string
+  priceValue: string
   resolveDayPrice?: (iso: string) => number | undefined
   inquiryCard?: InquiryCardConfig | null
   blockedDates?: string[]
@@ -56,7 +56,8 @@ interface StickyInquiryCardProps {
 }
 
 export default function StickyInquiryCard({
-  priceHeadline,
+  priceLabel,
+  priceValue,
   resolveDayPrice,
   inquiryCard,
   blockedDates,
@@ -86,7 +87,11 @@ export default function StickyInquiryCard({
     <div className={styles.sidebar}>
       <div className={styles.content}>
         <h2 className={styles.title}>{title}</h2>
-        <p className={styles.price}>{priceHeadline}</p>
+
+        <div className={styles.priceBlock}>
+          {priceLabel ? <span className={styles.priceFrom}>{priceLabel}</span> : null}
+          <span className={styles.priceValue}>{priceValue}</span>
+        </div>
 
         <ul className={styles.list}>
           {trustBadges.map((badge, index) => (
@@ -144,39 +149,36 @@ export default function StickyInquiryCard({
           </div>
         </div>
 
-        <span className="hero-primary-btn-wrap mt-0 w-full rounded-xl p-[2px] block yacht-inquiry-cta-wrap">
-          <button
-            type="button"
-            className={`hero-primary-inner hero-btn-shine w-full rounded-[10px] ${styles.yachtInquiryCta}`}
-            style={{ borderRadius: 10 }}
-            onClick={onOpenInquiry}
-          >
-            {ctaText}
-          </button>
-        </span>
+        <button type="button" className={styles.ctaButton} onClick={onOpenInquiry}>
+          {ctaText}
+        </button>
 
-        <div
-          className="mt-5 flex gap-3 rounded-xl border border-emerald-100/90 bg-gradient-to-br from-emerald-50/90 to-teal-50/40 px-4 py-3.5"
-          role="note"
-        >
-          <CheckCircle2
-            className="h-5 w-5 shrink-0 text-emerald-600"
-            strokeWidth={2.25}
+        <div className={styles.demand} role="note">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
             aria-hidden
-          />
-          <div className="min-w-0">
-            <p
-              className="text-sm font-bold text-emerald-950 m-0"
-              style={{ fontFamily: 'var(--font-family)' }}
-            >
-              {noteTitle}
-            </p>
-            <p
-              className="text-xs font-medium text-emerald-900/85 mt-1 m-0 leading-snug"
-              style={{ fontFamily: 'var(--font-family)' }}
-            >
-              {noteSubtitle}
-            </p>
+            className={styles.demandIcon}
+          >
+            <path
+              d="M12 22C6.477 22 2 17.523 2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22Z"
+              stroke="#fc6c4f"
+              strokeWidth="2"
+            />
+            <path
+              d="M12 7V12L15 14"
+              stroke="#fc6c4f"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <div className={styles.demandText}>
+            <p className={styles.demandTitle}>{noteTitle}</p>
+            <p className={styles.demandSubtitle}>{noteSubtitle}</p>
           </div>
         </div>
       </div>

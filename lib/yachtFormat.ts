@@ -1,3 +1,30 @@
+export type YachtStickyPriceDisplay = {
+  label?: string
+  value: string
+}
+
+export function formatYachtSelectedDayStickyPrice(price: number): YachtStickyPriceDisplay {
+  return {
+    label: 'Seçilen gün',
+    value: `${price.toLocaleString('tr-TR')} ₺`,
+  }
+}
+
+export function formatYachtOvernightTotalStickyPrice(total: number): YachtStickyPriceDisplay {
+  return {
+    label: 'Konaklamalı toplam',
+    value: `${total.toLocaleString('tr-TR')} ₺`,
+  }
+}
+
+export function splitYachtOvernightStickyLine(line: string): YachtStickyPriceDisplay {
+  const prefix = 'Konaklamalı toplam '
+  if (line.startsWith(prefix)) {
+    return { label: 'Konaklamalı toplam', value: line.slice(prefix.length) }
+  }
+  return { value: line }
+}
+
 export function formatYachtStickyPriceLine(price?: number, currency = 'TRY'): string {
   if (price == null) return 'Fiyat bilgisi için müsaitlik sorun'
   return formatYachtMobilePrice(price, currency)
