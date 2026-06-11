@@ -1,9 +1,6 @@
 'use client'
 
-import YachtCalendar, { type YachtCalendarRange } from '@/components/yacht/YachtCalendar'
-import YachtRentalModeTabs from '@/components/yacht/YachtRentalModeTabs'
 import type { YachtInquiryCard as InquiryCardConfig } from '@/lib/yachtTypes'
-import type { YachtRentalMode } from '@/lib/yachtRentalModes'
 import {
   DEFAULT_NOTE_SUBTITLE,
   DEFAULT_NOTE_TITLE,
@@ -12,7 +9,6 @@ import {
   DEFAULT_YACHT_INQUIRY_TITLE,
 } from '@/lib/yachtConversionCopy'
 import styles from '@/components/StickyBookingCard.module.css'
-import bookingStyles from '@/components/booking/booking.module.css'
 
 function CheckIcon() {
   return (
@@ -35,51 +31,55 @@ function CheckIcon() {
   )
 }
 
+function DemandIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+      className={styles.demandIcon}
+    >
+      <path
+        d="M12 22C6.477 22 2 17.523 2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22Z"
+        stroke="#fc6c4f"
+        strokeWidth="2"
+      />
+      <path
+        d="M12 7V12L15 14"
+        stroke="#fc6c4f"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 interface StickyInquiryCardProps {
   priceLabel?: string
   priceValue: string
-  resolveDayPrice?: (iso: string) => number | undefined
+  priceMeta?: string | null
   inquiryCard?: InquiryCardConfig | null
-  blockedDates?: string[]
-  rentalMode: YachtRentalMode
-  onRentalModeChange: (m: YachtRentalMode) => void
-  showRentalModeTabs: boolean
-  selectionMode: 'single' | 'range'
-  selectedDate: string | null
-  onSelectDate: (d: string) => void
-  overnightRange: YachtCalendarRange
-  onOvernightRangeChange: (v: YachtCalendarRange) => void
-  guestCount: number
-  onGuestCountChange: (n: number) => void
-  maxGuests?: number
   onOpenInquiry: () => void
 }
 
+/** Masaüstü yat sidebar — tur StickyBookingCard ile aynı minimal yapı; tarih/misafir modalda. */
 export default function StickyInquiryCard({
   priceLabel,
   priceValue,
-  resolveDayPrice,
+  priceMeta,
   inquiryCard,
-  blockedDates,
-  rentalMode,
-  onRentalModeChange,
-  showRentalModeTabs,
-  selectionMode,
-  selectedDate,
-  onSelectDate,
-  overnightRange,
-  onOvernightRangeChange,
-  guestCount,
-  onGuestCountChange,
-  maxGuests = 80,
   onOpenInquiry,
 }: StickyInquiryCardProps) {
   const title = inquiryCard?.title?.trim() || DEFAULT_YACHT_INQUIRY_TITLE
   const ctaText = inquiryCard?.ctaText?.trim() || DEFAULT_YACHT_INQUIRY_CTA
   const trustBadges =
     inquiryCard?.trustBadges?.length && inquiryCard.trustBadges.length > 0
-      ? inquiryCard.trustBadges
-      : [...DEFAULT_STICKY_TRUST_BULLETS]
+      ? inquiryCard.trustBadges.slice(0, 3)
+      : DEFAULT_STICKY_TRUST_BULLETS.slice(0, 3)
   const noteTitle = inquiryCard?.noteTitle?.trim() || DEFAULT_NOTE_TITLE
   const noteSubtitle = inquiryCard?.noteSubtitle?.trim() || DEFAULT_NOTE_SUBTITLE
 
@@ -91,6 +91,7 @@ export default function StickyInquiryCard({
         <div className={styles.priceBlock}>
           {priceLabel ? <span className={styles.priceFrom}>{priceLabel}</span> : null}
           <span className={styles.priceValue}>{priceValue}</span>
+          {priceMeta ? <span className={styles.depositLine}>{priceMeta}</span> : null}
         </div>
 
         <ul className={styles.list}>
@@ -102,80 +103,12 @@ export default function StickyInquiryCard({
           ))}
         </ul>
 
-        {showRentalModeTabs ? (
-          <YachtRentalModeTabs value={rentalMode} onChange={onRentalModeChange} />
-        ) : null}
-
-        <div className="mb-4">
-          <YachtCalendar
-            blockedDates={blockedDates}
-            selectionMode={selectionMode}
-            selectedDate={selectedDate}
-            onSelectDate={onSelectDate}
-            rangeValue={overnightRange}
-            onRangeChange={onOvernightRangeChange}
-            resolveDayPrice={resolveDayPrice}
-            compactTitle
-          />
-        </div>
-
-        <div className="mb-4">
-          <p
-            className="text-sm font-semibold text-zinc-700 mb-2"
-            style={{ fontFamily: 'var(--font-family)' }}
-          >
-            Misafir sayısı
-          </p>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className={bookingStyles.counterBtn}
-              aria-label="Azalt"
-              disabled={guestCount <= 1}
-              onClick={() => onGuestCountChange(Math.max(1, guestCount - 1))}
-            >
-              −
-            </button>
-            <span className={bookingStyles.counterValue}>{guestCount}</span>
-            <button
-              type="button"
-              className={`${bookingStyles.counterBtn} ${bookingStyles.counterBtnPlus}`}
-              aria-label="Artır"
-              disabled={guestCount >= maxGuests}
-              onClick={() => onGuestCountChange(Math.min(maxGuests, guestCount + 1))}
-            >
-              +
-            </button>
-          </div>
-        </div>
-
         <button type="button" className={styles.ctaButton} onClick={onOpenInquiry}>
           {ctaText}
         </button>
 
         <div className={styles.demand} role="note">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden
-            className={styles.demandIcon}
-          >
-            <path
-              d="M12 22C6.477 22 2 17.523 2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22Z"
-              stroke="#fc6c4f"
-              strokeWidth="2"
-            />
-            <path
-              d="M12 7V12L15 14"
-              stroke="#fc6c4f"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <DemandIcon />
           <div className={styles.demandText}>
             <p className={styles.demandTitle}>{noteTitle}</p>
             <p className={styles.demandSubtitle}>{noteSubtitle}</p>

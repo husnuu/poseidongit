@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import YachtCard, { type YachtListItem } from '@/components/yacht/YachtCard'
+import HomePopularYachtCard from '@/components/home/HomePopularYachtCard'
+import type { YachtListCardItem } from '@/lib/yachtListPrice'
 import YachtRentalFiltersSheet from '@/components/yacht/YachtRentalFiltersSheet'
 import YachtRentalSortSheet from '@/components/yacht/YachtRentalSortSheet'
 import { sortYachtList, type YachtSortMode } from '@/lib/yachtListSort'
@@ -12,15 +13,18 @@ import {
   type CapacityFilterId,
   type CabinFilterId,
 } from '@/lib/yachtListFilters'
+import type { SiteLocale } from '@/lib/i18n/config'
 
 interface YachtRentalListSectionProps {
-  yachts: YachtListItem[]
+  yachts: YachtListCardItem[]
   emptyStateMessage: string
+  locale?: SiteLocale
 }
 
 export default function YachtRentalListSection({
   yachts,
   emptyStateMessage,
+  locale = 'tr',
 }: YachtRentalListSectionProps) {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [sortSheetOpen, setSortSheetOpen] = useState(false)
@@ -133,7 +137,7 @@ export default function YachtRentalListSection({
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
           {sorted.map((y) => (
-            <YachtCard key={y._id} yacht={y} />
+            <HomePopularYachtCard key={y._id} yacht={y} locale={locale} />
           ))}
         </div>
       )}

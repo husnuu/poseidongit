@@ -1,4 +1,4 @@
-import type { YachtListItem } from '@/components/yacht/YachtCard'
+import type { YachtListCardItem } from '@/lib/yachtListPrice'
 import { effectiveYachtListAdvertisedPrice } from '@/lib/yachtListPrice'
 
 export type YachtSortMode =
@@ -16,7 +16,7 @@ function num(n: number | null | undefined): number | null {
 }
 
 /** İstemci tarafı sıralama; `default` sunucudan gelen sırayı korur. */
-export function sortYachtList(list: YachtListItem[], mode: YachtSortMode): YachtListItem[] {
+export function sortYachtList(list: YachtListCardItem[], mode: YachtSortMode): YachtListCardItem[] {
   if (mode === 'default') return list
 
   const copy = [...list]

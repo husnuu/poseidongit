@@ -66,7 +66,7 @@ export default function YachtDetailView({ locale, yacht, path }: YachtDetailView
       <JsonLd data={breadcrumbSchema} />
       {images.length > 0 && (
         <div className="relative w-full mb-0">
-          <PhotoGrid images={images} tourTitle={yacht.name} heroBadges={yacht.badges} />
+          <PhotoGrid images={images} tourTitle={yacht.name} heroBadges={yacht.badges} locale={locale} />
         </div>
       )}
       <div className="container mx-auto px-4 py-16 max-w-[1360px]">

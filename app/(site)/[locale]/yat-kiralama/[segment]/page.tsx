@@ -1,15 +1,15 @@
 import { cache } from 'react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { client, safeSanityImageUrl } from '@/lib/sanity'
+import { client } from '@/lib/sanity'
 import {
   yachtRentalBySlugQuery,
   yachtLocationBySlugQuery,
   yachtRentalsByLocationQuery,
 } from '@/lib/yachtQueries'
-import type { YachtRentalDocument } from '@/lib/yachtTypes'
+import type { YachtRentalDocument, SanityYachtCardRow } from '@/lib/yachtTypes'
+import { mapSanityYachtRowsToHomeCards } from '@/lib/mapYachtListItem'
 import YachtDetailView from '@/components/yacht/YachtDetailView'
-import type { YachtListItem } from '@/components/yacht/YachtCard'
 import YachtRentalListSection from '@/components/yacht/YachtRentalListSection'
 import { buildYachtDetailMetadata } from '@/lib/yachtMetadata'
 import listStyles from '../../turlar/page.module.css'
@@ -45,13 +45,9 @@ const getLocationBySlug = cache(async (slug: string) => {
   }
 })
 
-type YachtListRaw = Omit<YachtListItem, 'coverImageUrl' | 'coverImageAlt'> & {
-  mainImage?: { asset?: { _ref: string }; alt?: string | null } | null
-}
-
 const getYachtsByLocation = cache(async (locationSlug: string) => {
   try {
-    return await client.fetch<YachtListRaw[]>(
+    return await client.fetch<SanityYachtCardRow[]>(
       yachtRentalsByLocationQuery,
       { locationSlug },
       { useCdn: true }
@@ -114,32 +110,10 @@ export default async function YatKiralamaSegmentPage({
 
   const location = await getLocationBySlug(segment)
   if (location?.slug) {
-    let yachts: YachtListItem[] = []
+    let yachts = mapSanityYachtRowsToHomeCards([])
     try {
       const raw = await getYachtsByLocation(segment)
-      const list = Array.isArray(raw) ? raw : []
-      yachts = list.map((y) => ({
-        _id: y._id,
-        name: y.name,
-        slug: y.slug,
-        shortDescription: y.shortDescription,
-        locationTitle: y.locationTitle,
-        locationSlug: y.locationSlug,
-        marina: y.marina,
-        priceFrom: y.priceFrom,
-        overnightTotalPrice: y.overnightTotalPrice ?? undefined,
-        overnightNightPricing: y.overnightNightPricing ?? undefined,
-        currency: y.currency,
-        dailyRentalEnabled: y.dailyRentalEnabled,
-        overnightRentalEnabled: y.overnightRentalEnabled,
-        yachtType: y.yachtType,
-        isFeatured: y.isFeatured,
-        specifications: y.specifications ?? undefined,
-        coverImageUrl: safeSanityImageUrl(y.mainImage?.asset ?? undefined, (b) =>
-          b.width(800).height(600)
-        ),
-        coverImageAlt: y.mainImage?.alt ?? null,
-      }))
+      yachts = mapSanityYachtRowsToHomeCards(Array.isArray(raw) ? raw : [])
     } catch {
       yachts = []
     }
@@ -165,6 +139,7 @@ export default async function YatKiralamaSegmentPage({
             <YachtRentalListSection
               yachts={yachts}
               emptyStateMessage="Bu lokasyon için henüz yat eklenmemiş."
+              locale={locale}
             />
           </div>
         </section>

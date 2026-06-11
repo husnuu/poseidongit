@@ -5,6 +5,8 @@ import Image from 'next/image'
 import type { LucideIcon } from 'lucide-react'
 import { BedDouble, Calendar, MapPin, Ruler, Users } from 'lucide-react'
 import YachtTypeGlyph from '@/components/yacht/YachtTypeGlyph'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
 import { yachtTypeLabel, type YachtSpecifications } from '@/lib/yachtTypes'
 import { formatYachtMobilePrice } from '@/lib/yachtFormat'
 
@@ -32,11 +34,12 @@ export type YachtListItem = {
   specifications?: YachtSpecifications | null
 }
 
-function detailHref(y: YachtListItem): string | null {
+function detailHref(y: YachtListItem, locale: SiteLocale = 'tr'): string | null {
   if (!y.slug) return null
-  return y.locationSlug
+  const path = y.locationSlug
     ? `/yat-kiralama/${y.locationSlug}/${y.slug}`
     : `/yat-kiralama/${y.slug}`
+  return withLocalePath(locale, path)
 }
 
 function MetaLabeled({
@@ -61,10 +64,11 @@ function MetaLabeled({
 
 interface YachtCardProps {
   yacht: YachtListItem
+  locale?: SiteLocale
 }
 
-export default function YachtCard({ yacht }: YachtCardProps) {
-  const href = detailHref(yacht)
+export default function YachtCard({ yacht, locale = 'tr' }: YachtCardProps) {
+  const href = detailHref(yacht, locale)
   const typeLabel = yachtTypeLabel(yacht.yachtType ?? undefined)
   const locLine = [yacht.locationTitle, yacht.marina].filter(Boolean).join(' · ')
   const spec = yacht.specifications

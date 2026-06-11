@@ -1,7 +1,10 @@
-import type { YachtListItem } from '@/components/yacht/YachtCard'
+import type { HomePopularYachtCardData } from '@/components/home/HomePopularYachtCard'
+
+/** Liste filtre / sıralama için kart verisi (ana sayfa kartı ile aynı). */
+export type YachtListCardItem = HomePopularYachtCardData
 
 /** Liste / filtre / sıralama: ilan edilen en düşük fiyat (açık modlara göre). */
-export function effectiveYachtListAdvertisedPrice(y: YachtListItem): number | null {
+export function effectiveYachtListAdvertisedPrice(y: YachtListCardItem): number | null {
   const dailyOk = y.dailyRentalEnabled !== false
   const overnightOk = y.overnightRentalEnabled === true
   const vals: number[] = []

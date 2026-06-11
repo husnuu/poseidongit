@@ -23,8 +23,6 @@ import {
 } from '@/lib/yachtCalendarPricing'
 import {
   formatYachtOvernightStickyPriceLine,
-  formatYachtSelectedDayStickyPrice,
-  formatYachtOvernightTotalStickyPrice,
   formatYachtStickyPriceLine,
   splitYachtOvernightStickyLine,
   type YachtStickyPriceDisplay,
@@ -86,12 +84,25 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
     yacht,
   ])
 
-  const stickyPrice = useMemo((): YachtStickyPriceDisplay => {
+  const sidebarPrice = useMemo((): YachtStickyPriceDisplay & { meta?: string } => {
     const cur = yacht.currency ?? 'TRY'
     if (rentalMode === 'daily') {
       if (selectedDate) {
         const p = yachtDailyUnitPrice(yacht, selectedDate)
-        if (p != null) return formatYachtSelectedDayStickyPrice(p)
+        if (p != null) {
+          return {
+            label: 'Seçilen gün',
+            value: `${p.toLocaleString('tr-TR')} ₺`,
+            meta: formatDateTrShort(selectedDate),
+          }
+        }
+      }
+      if (yacht.priceFrom != null) {
+        return {
+          label: 'Günlük',
+          value: `${yacht.priceFrom.toLocaleString('tr-TR')} ₺`,
+          meta: '/ gün',
+        }
       }
       return { value: formatYachtStickyPriceLine(yacht.priceFrom, cur) }
     }
@@ -104,12 +115,29 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
       })
     ) {
       const t = yachtOvernightStayTotal(yacht, overnightRange.checkIn, overnightRange.checkOut)
-      if (t != null) return formatYachtOvernightTotalStickyPrice(t)
+      if (t != null) {
+        return {
+          label: 'Konaklamalı toplam',
+          value: `${t.toLocaleString('tr-TR')} ₺`,
+          meta: formatOvernightSummaryTr({
+            checkIn: overnightRange.checkIn,
+            checkOut: overnightRange.checkOut,
+          }),
+        }
+      }
     }
-    return splitYachtOvernightStickyLine(
-      formatYachtOvernightStickyPriceLine(effectiveOvernightAdvertisedPrice(yacht), cur)
-    )
+    const adv = effectiveOvernightAdvertisedPrice(yacht)
+    if (adv != null) {
+      return {
+        label: 'Konaklamalı',
+        value: `${adv.toLocaleString('tr-TR')} ₺`,
+        meta: 'toplam referans',
+      }
+    }
+    return splitYachtOvernightStickyLine(formatYachtOvernightStickyPriceLine(adv, cur))
   }, [yacht, rentalMode, selectedDate, overnightRange.checkIn, overnightRange.checkOut])
+
+  const stickyPrice = sidebarPrice
 
   const mobileDateSubtitle = useMemo(() => {
     if (rentalMode === 'daily') {
@@ -175,20 +203,8 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
         <StickyInquiryCard
           priceLabel={stickyPrice.label}
           priceValue={stickyPrice.value}
-          resolveDayPrice={resolveDayPrice}
+          priceMeta={stickyPrice.meta ?? null}
           inquiryCard={yacht.inquiryCard}
-          blockedDates={blockedForMode}
-          rentalMode={rentalMode}
-          onRentalModeChange={setMode}
-          showRentalModeTabs={showModeTabs}
-          selectionMode={rentalMode === 'daily' ? 'single' : 'range'}
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-          overnightRange={overnightRange}
-          onOvernightRangeChange={setOvernightRange}
-          guestCount={Math.min(guestCount, maxGuests)}
-          onGuestCountChange={(n) => setGuestCount(Math.min(maxGuests, Math.max(1, n)))}
-          maxGuests={maxGuests}
           onOpenInquiry={openModalFromDesktop}
         />
       </aside>

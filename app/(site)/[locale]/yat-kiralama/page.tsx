@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
-import { client, urlFor } from '@/lib/sanity'
+import { client } from '@/lib/sanity'
 import { yachtRentalsPageQuery } from '@/lib/queries'
 import { yachtRentalsAllQuery } from '@/lib/yachtQueries'
-import type { YachtListItem } from '@/components/yacht/YachtCard'
+import { mapSanityYachtRowsToHomeCards } from '@/lib/mapYachtListItem'
+import type { SanityYachtCardRow } from '@/lib/yachtTypes'
 import YachtRentalListSection from '@/components/yacht/YachtRentalListSection'
 import listStyles from '../turlar/page.module.css'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
+import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 
 export const revalidate = 3600
 
@@ -18,13 +20,6 @@ type YachtRentalsPageData = {
   intro?: string | null
   emptyStateMessage?: string | null
   seo?: { title?: string | null; description?: string | null } | null
-}
-
-type YachtListRaw = Omit<
-  YachtListItem,
-  'coverImageUrl' | 'coverImageAlt'
-> & {
-  mainImage?: { asset?: { _ref: string }; alt?: string | null } | null
 }
 
 const DEFAULT_INTRO =
@@ -64,39 +59,24 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function YatKiralamaPage() {
-  let yachts: YachtListItem[] = []
+export default async function YatKiralamaPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const { locale: loc } = await params
+  const locale = (isSiteLocale(loc) ? loc : 'tr') as SiteLocale
+
+  let yachts = mapSanityYachtRowsToHomeCards([])
   let pageData: YachtRentalsPageData | null = null
 
   try {
     const [raw, page] = await Promise.all([
-      client.fetch<YachtListRaw[]>(yachtRentalsAllQuery, {}, { useCdn: true }),
+      client.fetch<SanityYachtCardRow[]>(yachtRentalsAllQuery, {}, { useCdn: true }),
       client.fetch<YachtRentalsPageData | null>(yachtRentalsPageQuery, {}, { useCdn: true }),
     ])
     pageData = page ?? null
-    const list = Array.isArray(raw) ? raw : []
-    yachts = list.map((y) => ({
-      _id: y._id,
-      name: y.name,
-      slug: y.slug,
-      shortDescription: y.shortDescription,
-      locationTitle: y.locationTitle,
-      locationSlug: y.locationSlug,
-      marina: y.marina ?? undefined,
-      priceFrom: y.priceFrom,
-      overnightTotalPrice: y.overnightTotalPrice ?? undefined,
-      overnightNightPricing: y.overnightNightPricing ?? undefined,
-      currency: y.currency,
-      dailyRentalEnabled: y.dailyRentalEnabled,
-      overnightRentalEnabled: y.overnightRentalEnabled,
-      yachtType: y.yachtType,
-      isFeatured: y.isFeatured,
-      specifications: y.specifications ?? undefined,
-      coverImageUrl: y.mainImage?.asset
-        ? urlFor(y.mainImage.asset).width(800).height(600).url()
-        : null,
-      coverImageAlt: y.mainImage?.alt ?? null,
-    }))
+    yachts = mapSanityYachtRowsToHomeCards(Array.isArray(raw) ? raw : [])
   } catch {
     yachts = []
   }
@@ -123,7 +103,11 @@ export default async function YatKiralamaPage() {
             </p>
           </header>
 
-          <YachtRentalListSection yachts={yachts} emptyStateMessage={emptyStateMessage} />
+          <YachtRentalListSection
+            yachts={yachts}
+            emptyStateMessage={emptyStateMessage}
+            locale={locale}
+          />
         </div>
       </section>
     </div>

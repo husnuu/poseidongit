@@ -1,4 +1,4 @@
-import type { YachtListItem } from '@/components/yacht/YachtCard'
+import type { YachtListCardItem } from '@/lib/yachtListPrice'
 import { effectiveYachtListAdvertisedPrice } from '@/lib/yachtListPrice'
 
 export type PriceFilterId = string
@@ -12,24 +12,24 @@ export interface PriceFilterOption {
   maxPrice: number | null
 }
 
-function nPrice(y: YachtListItem): number | null {
+function nPrice(y: YachtListCardItem): number | null {
   return effectiveYachtListAdvertisedPrice(y)
 }
 
-function nCap(y: YachtListItem): number | null {
+function nCap(y: YachtListCardItem): number | null {
   const c = y.specifications?.capacity
   if (typeof c !== 'number' || Number.isNaN(c)) return null
   return c
 }
 
-function nCab(y: YachtListItem): number | null {
+function nCab(y: YachtListCardItem): number | null {
   const k = y.specifications?.cabins
   if (typeof k !== 'number' || Number.isNaN(k)) return null
   return k
 }
 
 /** Veriye göre fiyat üst sınırı seçenekleri (en fazla 5 kademe + Tümü). */
-export function buildPriceFilterOptions(yachts: YachtListItem[]): PriceFilterOption[] {
+export function buildPriceFilterOptions(yachts: YachtListCardItem[]): PriceFilterOption[] {
   const prices = yachts.map(nPrice).filter((p): p is number => p != null)
   if (prices.length === 0) {
     return [{ id: 'all', label: 'Tümü', maxPrice: null }]
@@ -83,11 +83,11 @@ export function getCabinOptions() {
 }
 
 export function filterYachtList(
-  list: YachtListItem[],
+  list: YachtListCardItem[],
   priceMax: number | null,
   capacityId: CapacityFilterId,
   cabinId: CabinFilterId
-): YachtListItem[] {
+): YachtListCardItem[] {
   const capOpt = CAPACITY_OPTIONS.find((o) => o.id === capacityId) ?? CAPACITY_OPTIONS[0]
   const cabOpt = CABIN_OPTIONS.find((o) => o.id === cabinId) ?? CABIN_OPTIONS[0]
 

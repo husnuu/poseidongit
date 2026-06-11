@@ -1,5 +1,5 @@
-import Image from 'next/image'
 import IncludedNotIncluded from '@/components/IncludedNotIncluded'
+import YachtGalleryGrid from '@/components/yacht/YachtGalleryGrid'
 import type { YachtSidebarGalleryItem } from '@/lib/yachtImages'
 import headingStyles from '@/components/yacht/yachtDetailHeading.module.css'
 import styles from './YachtIncludedWithGallery.module.css'
@@ -27,19 +27,7 @@ export default function YachtIncludedWithGallery({
       {hasGallery ? (
         <div className={hasLists ? styles.galleryBlock : styles.galleryBlockSolo}>
           <h2 className={headingStyles.h2}>Galeri</h2>
-          <div className={styles.galleryGrid}>
-            {gallery.slice(0, 6).map((item, i) => (
-              <div key={`${item.src}-${i}`} className={styles.thumb}>
-                <Image
-                  src={item.src}
-                  alt={item.alt}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 50vw, 320px"
-                />
-              </div>
-            ))}
-          </div>
+          <YachtGalleryGrid images={gallery} />
         </div>
       ) : null}
 

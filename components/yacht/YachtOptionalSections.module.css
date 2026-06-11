@@ -10,6 +10,48 @@
   margin: 0;
 }
 
+.relatedSection {
+  margin: 0;
+}
+
+.relatedHeading {
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: #1e3a5f;
+  margin: 0 0 24px 0;
+  font-size: 26px;
+}
+
+@media (min-width: 640px) {
+  .relatedHeading {
+    font-size: 30px;
+    margin-bottom: 28px;
+  }
+}
+
+@media (min-width: 768px) {
+  .relatedHeading {
+    font-size: 34px;
+    margin-bottom: 32px;
+  }
+}
+
+.yachtGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 640px) {
+  .yachtGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px;
+  }
+}
+
 .chips {
   list-style: none;
   padding: 0;

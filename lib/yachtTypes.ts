@@ -1,5 +1,29 @@
 import type { PortableTextBlock } from '@portabletext/react'
 
+export type SanityYachtCardRow = {
+  _id: string
+  name?: string | null
+  slug?: string | null
+  shortDescription?: string | null
+  locationTitle?: string | null
+  locationSlug?: string | null
+  marina?: string | null
+  priceFrom?: number | null
+  overnightTotalPrice?: number | null
+  overnightNightPricing?: { price?: number | null }[] | null
+  currency?: string | null
+  dailyRentalEnabled?: boolean | null
+  overnightRentalEnabled?: boolean | null
+  yachtType?: string | null
+  badges?: string[] | null
+  included?: string[] | null
+  sailingLicenceRequired?: string | null
+  isFeatured?: boolean | null
+  isActive?: boolean | null
+  specifications?: YachtSpecifications | null
+  mainImage?: YachtGalleryImage | null
+}
+
 export interface YachtGalleryImage {
   asset?: { _ref?: string; _type?: string }
   alt?: string | null
@@ -89,11 +113,7 @@ export interface YachtRentalDocument {
   inquiryCard?: YachtInquiryCard
   routeSuggestions?: string[]
   relatedTours?: { title?: string; slug?: string | null }[]
-  relatedYachts?: {
-    name?: string
-    slug?: string | null
-    locationSlug?: string | null
-  }[]
+  relatedYachts?: (SanityYachtCardRow | null)[] | null
   termsAndNotes?: string
   cancellationPaymentPolicies?: PortableTextBlock[] | null
   cancellationCheckPriceLabel?: string | null

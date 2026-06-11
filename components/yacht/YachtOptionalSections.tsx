@@ -1,5 +1,7 @@
 import Link from 'next/link'
-import type { YachtRentalDocument } from '@/lib/yachtTypes'
+import HomePopularYachtCard from '@/components/home/HomePopularYachtCard'
+import { mapSanityYachtToHomeCard } from '@/lib/mapYachtListItem'
+import type { YachtRentalDocument, SanityYachtCardRow } from '@/lib/yachtTypes'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import headingStyles from '@/components/yacht/yachtDetailHeading.module.css'
@@ -12,7 +14,11 @@ interface YachtOptionalSectionsProps {
 
 export default function YachtOptionalSections({ locale, yacht }: YachtOptionalSectionsProps) {
   const hasTours = yacht.relatedTours && yacht.relatedTours.some((t) => t.slug)
-  const hasYachts = yacht.relatedYachts && yacht.relatedYachts.some((y) => y.slug)
+  const relatedYachtCards = (yacht.relatedYachts ?? [])
+    .filter((row): row is SanityYachtCardRow => row != null)
+    .map((row) => mapSanityYachtToHomeCard(row))
+    .filter((item): item is NonNullable<typeof item> => item != null)
+  const hasYachts = relatedYachtCards.length > 0
   const hasTerms = yacht.termsAndNotes?.trim()
 
   if (!hasTours && !hasYachts && !hasTerms) return null
@@ -39,26 +45,15 @@ export default function YachtOptionalSections({ locale, yacht }: YachtOptionalSe
       )}
 
       {hasYachts && (
-        <section className={styles.section} aria-labelledby="yacht-related">
-          <h2 id="yacht-related" className={headingStyles.h2}>
+        <section className={styles.relatedSection} aria-labelledby="yacht-related">
+          <h2 id="yacht-related" className={styles.relatedHeading}>
             Benzer yatlar
           </h2>
-          <ul className={styles.linkList}>
-            {yacht.relatedYachts!
-              .filter((y): y is typeof y & { slug: string } => Boolean(y.slug))
-              .map((y) => {
-                const href = y.locationSlug
-                  ? `/yat-kiralama/${y.locationSlug}/${y.slug}`
-                  : `/yat-kiralama/${y.slug}`
-                return (
-                  <li key={href}>
-                    <Link href={href} className={styles.link}>
-                      {y.name ?? y.slug}
-                    </Link>
-                  </li>
-                )
-              })}
-          </ul>
+          <div className={styles.yachtGrid}>
+            {relatedYachtCards.map((item) => (
+              <HomePopularYachtCard key={item._id} yacht={item} locale={locale} />
+            ))}
+          </div>
         </section>
       )}
 
