@@ -402,34 +402,31 @@ export async function POST(request: NextRequest) {
   }
 
   if (sendEmailToAdmin) {
-    const adminTo = (email && email.trim()) || process.env.ADMIN_EMAIL?.trim()
-    if (adminTo) {
-      const mealPreferenceForEmail =
-        mealPreference && mealPreference.key && mealPreference.label
-          ? {
-              key: mealPreference.key,
-              label: mealPreference.label,
-              ...(mealPreferenceCountsStored?.length ? { counts: mealPreferenceCountsStored } : {}),
-            }
-          : undefined
-      await sendManualBookingAdminNotification(adminTo, {
-        bookingId: insertedBooking.id,
-        tourTitle,
-        date,
-        className,
-        counts,
-        totalPrice,
-        currency,
-        customer: {
-          firstName: customer.firstName,
-          lastName: customer.lastName,
-          email: customer.email || '',
-          phone: customer.phone,
-        },
-        ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { firstClassLocas: firstClassLocasParsed }),
-        ...(mealPreferenceForEmail && { mealPreference: mealPreferenceForEmail }),
-      })
-    }
+    const mealPreferenceForEmail =
+      mealPreference && mealPreference.key && mealPreference.label
+        ? {
+            key: mealPreference.key,
+            label: mealPreference.label,
+            ...(mealPreferenceCountsStored?.length ? { counts: mealPreferenceCountsStored } : {}),
+          }
+        : undefined
+    await sendManualBookingAdminNotification({
+      bookingId: insertedBooking.id,
+      tourTitle,
+      date,
+      className,
+      counts,
+      totalPrice,
+      currency,
+      customer: {
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        email: customer.email || '',
+        phone: customer.phone,
+      },
+      ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { firstClassLocas: firstClassLocasParsed }),
+      ...(mealPreferenceForEmail && { mealPreference: mealPreferenceForEmail }),
+    })
   }
 
   return NextResponse.json({

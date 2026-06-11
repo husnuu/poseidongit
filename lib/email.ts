@@ -129,6 +129,77 @@ function getFrom(): string {
   return process.env.EMAIL_FROM?.trim() || DEFAULT_FROM
 }
 
+/** Rezervasyon ve form bildirimleri — ADMIN_EMAIL + ADMIN_EMAIL_2… veya virgüllü liste. */
+const ADMIN_EMAIL_ENV_KEYS = [
+  'ADMIN_EMAIL',
+  'ADMIN_EMAIL_2',
+  'ADMIN_EMAIL_3',
+  'ADMIN_EMAIL_4',
+  'ADMIN_NOTIFICATION_EMAILS',
+] as const
+
+function getAdminNotificationEmails(): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+
+  const addRaw = (raw: string | undefined) => {
+    if (!raw?.trim()) return
+    for (const part of raw.split(',')) {
+      const email = part.trim()
+      if (!email || !email.includes('@')) continue
+      const key = email.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.push(email)
+    }
+  }
+
+  for (const envKey of ADMIN_EMAIL_ENV_KEYS) {
+    addRaw(process.env[envKey])
+  }
+
+  return out
+}
+
+type ResendAttachment = { filename: string; content: Buffer; contentId?: string }
+
+async function sendToAdminRecipients(
+  resend: Resend,
+  options: {
+    from: string
+    subject: string
+    html: string
+    replyTo?: string
+    attachments?: ResendAttachment[]
+    logContext?: string
+  }
+): Promise<void> {
+  const recipients = getAdminNotificationEmails()
+  if (recipients.length === 0) {
+    console.warn(
+      '[email] Admin bildirimi gönderilmedi: ADMIN_EMAIL veya ADMIN_EMAIL_2 tanımlı değil.',
+      options.logContext ?? ''
+    )
+    return
+  }
+
+  for (const to of recipients) {
+    const { error } = await resend.emails.send({
+      from: options.from,
+      to: [to],
+      subject: options.subject,
+      html: options.html,
+      ...(options.replyTo ? { replyTo: options.replyTo } : {}),
+      ...(options.attachments?.length ? { attachments: options.attachments } : {}),
+    })
+    if (error) {
+      console.error('[email] Admin e-postası gönderilemedi:', to, options.logContext ?? '', error)
+    } else {
+      console.info('[email] Admin bildirimi gönderildi:', to, options.logContext ?? '')
+    }
+  }
+}
+
 function formatDate(dateStr: string): string {
   try {
     const d = new Date(dateStr)
@@ -493,26 +564,21 @@ function buildAdminEmailHtml(p: BookingEmailPayload): string {
 }
 
 /**
- * Manuel rezervasyon oluşturulduğunda admin'e (veya belirtilen adrese) bildirim e-postası gönderir.
+ * Manuel rezervasyon oluşturulduğunda tüm admin adreslerine bildirim gönderir.
  * RESEND_API_KEY yoksa sessizce atlar.
  */
 export async function sendManualBookingAdminNotification(
-  to: string,
   payload: BookingEmailPayload
 ): Promise<void> {
   const resend = getResend()
-  if (!resend || !to?.trim()) return
+  if (!resend) return
   const from = getFrom()
-  const html = buildAdminEmailHtml(payload)
-  const { error } = await resend.emails.send({
+  await sendToAdminRecipients(resend, {
     from,
-    to: [to.trim()],
     subject: `Manuel rezervasyon: ${payload.tourTitle} – ${payload.date}`,
-    html,
+    html: buildAdminEmailHtml(payload),
+    logContext: payload.bookingId,
   })
-  if (error) {
-    console.error('[email] Manuel rezervasyon admin bildirimi gönderilemedi:', payload.bookingId, error)
-  }
 }
 
 function escapeHtml(s: string): string {
@@ -524,7 +590,7 @@ function escapeHtml(s: string): string {
 }
 
 /**
- * Rezervasyon oluşturulduğunda müşteri ve (ADMIN_EMAIL ayarlıysa) admin'e e-posta gönderir.
+ * Rezervasyon oluşturulduğunda müşteri ve (ADMIN_EMAIL ayarlıysa) admin(ler)e e-posta gönderir.
  * QR kod bookingUrl ile üretilir ve HTML'e base64 inline gömülür (Gmail/Outlook uyumlu).
  * RESEND_API_KEY yoksa sessizce atlar. Hata durumunda loglar, isteği başarısız yapmaz.
  */
@@ -596,18 +662,12 @@ export async function sendBookingEmails(
     console.error('[email] Müşteri e-postası gönderilemedi:', mergedPayload.bookingId, customerError)
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL?.trim()
-  if (adminEmail) {
-    const { error: adminError } = await resend.emails.send({
-      from,
-      to: [adminEmail],
-      subject: `Yeni rezervasyon: ${mergedPayload.tourTitle} – ${mergedPayload.date}`,
-      html: buildAdminEmailHtml(mergedPayload),
-    })
-    if (adminError) {
-      console.error('[email] Admin e-postası gönderilemedi:', mergedPayload.bookingId, adminError)
-    }
-  }
+  await sendToAdminRecipients(resend, {
+    from,
+    subject: `Yeni rezervasyon: ${mergedPayload.tourTitle} – ${mergedPayload.date}`,
+    html: buildAdminEmailHtml(mergedPayload),
+    logContext: mergedPayload.bookingId,
+  })
 }
 
 /**
@@ -912,18 +972,12 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
     console.error('[email] Ödendi müşteri e-postası gönderilemedi:', mergedPayload.bookingId, customerError)
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL?.trim()
-  if (adminEmail) {
-    const { error: adminError } = await resend.emails.send({
-      from,
-      to: [adminEmail],
-      subject: `Rezervasyon ödendi: ${mergedPayload.tourTitle} – ${mergedPayload.date}`,
-      html: buildAdminPaidEmailHtml(mergedPayload),
-    })
-    if (adminError) {
-      console.error('[email] Ödendi admin e-postası gönderilemedi:', mergedPayload.bookingId, adminError)
-    }
-  }
+  await sendToAdminRecipients(resend, {
+    from,
+    subject: `Rezervasyon ödendi: ${mergedPayload.tourTitle} – ${mergedPayload.date}`,
+    html: buildAdminPaidEmailHtml(mergedPayload),
+    logContext: mergedPayload.bookingId,
+  })
 }
 
 // ─── İptal e-postaları ────────────────────────────────────────────────────────
@@ -1111,6 +1165,7 @@ export async function sendBookingCancelledEmails(opts: CancellationEmailOpts): P
   const from = getFrom()
   const siteName = getSiteName() || 'Booking'
 
+  const adminEmails = getAdminNotificationEmails()
   const [customerResult, adminResult] = await Promise.allSettled([
     resend.emails.send({
       from,
@@ -1118,13 +1173,13 @@ export async function sendBookingCancelledEmails(opts: CancellationEmailOpts): P
       subject: `Rezervasyonunuz iptal edildi — ${escapeHtml(opts.tourTitle)}`,
       html: buildCancellationCustomerHtml(opts),
     }),
-    process.env.ADMIN_EMAIL?.trim()
-      ? resend.emails.send({
+    adminEmails.length > 0
+      ? sendToAdminRecipients(resend, {
           from,
-          to: [process.env.ADMIN_EMAIL.trim()],
           subject: `İptal bildirimi: ${opts.tourTitle} – ${opts.date}`,
           html: buildCancellationAdminHtml(opts),
-        })
+          logContext: opts.bookingId,
+        }).then(() => ({ data: null, error: null }))
       : Promise.resolve({ data: null, error: null }),
   ])
 
@@ -1244,21 +1299,17 @@ export async function sendYachtInquiryEmail(
 ): Promise<{ ok: boolean; error?: string }> {
   const resend = getResend()
   if (!resend) return { ok: false, error: 'E-posta yapılandırılmamış' }
-  const to = process.env.ADMIN_EMAIL?.trim()
-  if (!to) return { ok: false, error: 'Alıcı e-posta yok' }
+  const recipients = getAdminNotificationEmails()
+  if (recipients.length === 0) return { ok: false, error: 'Alıcı e-posta yok (ADMIN_EMAIL tanımlayın)' }
   const from = getFrom()
   const subjTail = payload.summaryLine ?? payload.date
-  const { error } = await resend.emails.send({
+  await sendToAdminRecipients(resend, {
     from,
-    to: [to],
-    replyTo: payload.email,
     subject: `Yat talebi: ${payload.yachtName} — ${subjTail}`,
     html: buildYachtInquiryEmailHtml(payload),
+    replyTo: payload.email,
+    logContext: payload.yachtName,
   })
-  if (error) {
-    console.error('[email] Yat talebi e-postası gönderilemedi:', error)
-    return { ok: false, error: error.message }
-  }
   return { ok: true }
 }
 
@@ -1269,20 +1320,16 @@ export async function sendYachtInquiryEmail(
 export async function sendContactFormEmail(payload: ContactFormPayload): Promise<{ ok: boolean; error?: string }> {
   const resend = getResend()
   if (!resend) return { ok: false, error: 'E-posta yapılandırılmamış' }
-  const to = process.env.ADMIN_EMAIL?.trim()
-  if (!to) return { ok: false, error: 'Alıcı e-posta yok' }
+  const recipients = getAdminNotificationEmails()
+  if (recipients.length === 0) return { ok: false, error: 'Alıcı e-posta yok (ADMIN_EMAIL tanımlayın)' }
   const from = getFrom()
-  const { error } = await resend.emails.send({
+  await sendToAdminRecipients(resend, {
     from,
-    to: [to],
-    replyTo: payload.email,
     subject: `İletişim formu: ${payload.name}`,
     html: buildContactFormEmailHtml(payload),
+    replyTo: payload.email,
+    logContext: payload.email,
   })
-  if (error) {
-    console.error('[email] İletişim formu e-postası gönderilemedi:', error)
-    return { ok: false, error: error.message }
-  }
   return { ok: true }
 }
 
@@ -1391,7 +1438,6 @@ export async function sendRefundRequestReceivedEmails(opts: RefundRequestEmailOp
     return
   }
   const from = getFrom()
-  const adminEmail = process.env.ADMIN_EMAIL?.trim()
   const [c, a] = await Promise.allSettled([
     resend.emails.send({
       from,
@@ -1399,13 +1445,13 @@ export async function sendRefundRequestReceivedEmails(opts: RefundRequestEmailOp
       subject: `İade talebiniz alındı — ${opts.tourTitle}`,
       html: refundRequestCustomerHtml(opts),
     }),
-    adminEmail
-      ? resend.emails.send({
+    getAdminNotificationEmails().length > 0
+      ? sendToAdminRecipients(resend, {
           from,
-          to: [adminEmail],
           subject: `Yeni İade Talebi: ${opts.tourTitle} – ${opts.date}`,
           html: refundRequestAdminHtml(opts),
-        })
+          logContext: opts.bookingId,
+        }).then(() => ({ data: null, error: null }))
       : Promise.resolve({ data: null, error: null }),
   ])
   if (c.status === 'fulfilled' && c.value.error) {
