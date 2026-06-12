@@ -36,6 +36,10 @@ export default defineConfig({
               .id('yachtRentalsPage')
               .child(S.document().schemaType('yachtRentalsPage').documentId('yachtRentalsPage')),
             S.listItem()
+              .title('Yat kiralama — kapora ödeme')
+              .id('yachtDepositPage')
+              .child(S.document().schemaType('yachtDepositPage').documentId('yachtDepositPage')),
+            S.listItem()
               .title('Yardım Merkezi — sayfa ayarları')
               .id('helpCenterPage')
               .child(S.document().schemaType('helpCenterPage').documentId('helpCenterPage')),
@@ -59,6 +63,7 @@ export default defineConfig({
                   'yachtLocation',
                   'yachtRental',
                   'yachtRentalsPage',
+                  'yachtDepositPage',
                   'helpCenterPage',
                   'helpCategory',
                   'helpArticle',

@@ -32,6 +32,8 @@ import toursPage from './toursPage'
 import yachtLocation from './yachtLocation'
 import yachtRental from './yachtRental'
 import yachtRentalsPage from './yachtRentalsPage'
+import yachtDepositPage from './yachtDepositPage'
+import yachtDepositPageLocaleOverlay from './yachtDepositPageLocaleOverlay'
 
 export const schemaTypes = [
   aboutPage,
@@ -68,4 +70,6 @@ export const schemaTypes = [
   yachtLocation,
   yachtRental,
   yachtRentalsPage,
+  yachtDepositPage,
+  yachtDepositPageLocaleOverlay,
 ]

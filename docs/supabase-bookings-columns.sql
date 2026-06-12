@@ -42,6 +42,10 @@ alter table public.bookings
   add column if not exists paid_now numeric,
   add column if not exists ui_locale text;
 
+-- Yat kapora kayıtları tour_id = 'yacht-deposit' ile ayırt edilir (source = 'web').
+-- İsterseniz enum'a ayrı değer ekleyebilirsiniz (opsiyonel):
+-- alter type booking_source add value if not exists 'yacht_deposit';
+
 -- NestPay / Payten callback sonrası ödeme metadatası (callbackUrl güvenilir kaynak)
 alter table public.bookings
   add column if not exists payment_status text,

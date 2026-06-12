@@ -1088,6 +1088,20 @@ export const yachtRentalsPageQuery = `*[_type == "yachtRentalsPage"][0] {
   }
 }`
 
+export const yachtDepositPageQuery = `coalesce(
+  *[_id == "drafts.yachtDepositPage"][0],
+  *[_id == "yachtDepositPage"][0]
+) {
+  enabled,
+  depositAmount,
+  titleTop,
+  titleBottom,
+  intro,
+  bullets,
+  seo{ title, description },
+  pageTranslations
+}`
+
 /** Koylar sayfası: başlık ve açıklama (items ayrı veya covesList ile doldurulur) */
 export const covesPageQuery = `*[_type == "covesPage"][0] {
   title,

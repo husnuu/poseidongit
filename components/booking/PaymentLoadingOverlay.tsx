@@ -1,10 +1,49 @@
 'use client'
 
+import type { SiteLocale } from '@/lib/i18n/config'
+
+type PaymentLoadingOverlayUi = {
+  ariaLabel: string
+  line1: string
+  line2: string
+  waitNote: string
+  sslBadge: string
+}
+
+const UI: Record<SiteLocale, PaymentLoadingOverlayUi> = {
+  tr: {
+    ariaLabel: 'Ödeme sayfasına yönlendiriliyorsunuz',
+    line1: 'Güvenli ödeme sayfasına',
+    line2: 'yönlendiriliyorsunuz',
+    waitNote: 'Lütfen bekleyin, sayfayı kapatmayın.',
+    sslBadge: '256-bit SSL ile şifreli bağlantı',
+  },
+  en: {
+    ariaLabel: 'Redirecting to secure payment',
+    line1: 'Redirecting you to the',
+    line2: 'secure payment page',
+    waitNote: 'Please wait and do not close this page.',
+    sslBadge: '256-bit SSL encrypted connection',
+  },
+  de: {
+    ariaLabel: 'Weiterleitung zur Zahlung',
+    line1: 'Sie werden zur',
+    line2: 'sicheren Zahlungsseite weitergeleitet',
+    waitNote: 'Bitte warten Sie und schließen Sie diese Seite nicht.',
+    sslBadge: '256-Bit-SSL-verschlüsselte Verbindung',
+  },
+}
+
+interface PaymentLoadingOverlayProps {
+  locale?: SiteLocale
+}
+
 /**
  * Banka ödeme sayfasına yönlendirme sırasında gösterilen tam ekran yükleme overlay'i.
  * Tekne SVG animasyonu + dalga efekti içerir.
  */
-export default function PaymentLoadingOverlay() {
+export default function PaymentLoadingOverlay({ locale = 'tr' }: PaymentLoadingOverlayProps) {
+  const ui = UI[locale] ?? UI.tr
   return (
     <div
       style={{
@@ -19,7 +58,7 @@ export default function PaymentLoadingOverlay() {
         gap: 32,
       }}
       aria-live="polite"
-      aria-label="Ödeme sayfasına yönlendiriliyorsunuz"
+      aria-label={ui.ariaLabel}
     >
       <style>{`
         @keyframes boat-rock {
@@ -105,13 +144,14 @@ export default function PaymentLoadingOverlay() {
         {/* Yazılar */}
         <div style={{ textAlign: 'center', color: 'white' }}>
           <p style={{ fontSize: 17, fontWeight: 600, margin: 0, letterSpacing: '0.02em' }}>
-            Güvenli ödeme sayfasına
+            {ui.line1}
           </p>
           <p style={{ fontSize: 17, fontWeight: 600, margin: '2px 0 0', letterSpacing: '0.02em' }}>
-            yönlendiriliyorsunuz<span className="loading-dots" />
+            {ui.line2}
+            <span className="loading-dots" />
           </p>
           <p style={{ fontSize: 13, margin: '12px 0 0', color: 'rgba(255,255,255,0.65)', fontWeight: 400 }}>
-            Lütfen bekleyin, sayfayı kapatmayın.
+            {ui.waitNote}
           </p>
         </div>
 
@@ -126,7 +166,7 @@ export default function PaymentLoadingOverlay() {
             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
           <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
-            256-bit SSL ile şifreli bağlantı
+            {ui.sslBadge}
           </span>
         </div>
       </div>

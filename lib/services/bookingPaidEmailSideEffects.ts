@@ -1,11 +1,12 @@
 import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
-import { sendBookingPaidEmails } from '@/lib/email'
+import { sendBookingPaidEmails, sendYachtDepositPaidEmails } from '@/lib/email'
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery, siteSettingsQuery } from '@/lib/queries'
 import { getBaseUrl } from '@/lib/seo'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { isYachtDepositBooking } from '@/lib/yachtDepositBooking'
 
 /**
  * Rezervasyon `paid` olduktan sonra: paid_now / access_token tamamlama ve müşteri + operasyon e-postaları.
@@ -15,6 +16,26 @@ export async function runBookingPaidEmailSideEffects(
   bookingId: string,
   data: SupabaseBookingRow
 ): Promise<void> {
+  if (isYachtDepositBooking(data)) {
+    const paidNow = Number(data.paid_now ?? data.total_price ?? 0)
+    await sendYachtDepositPaidEmails({
+      bookingId,
+      amount: paidNow,
+      currency: String(data.currency ?? 'TRY'),
+      customer: {
+        firstName: String(data.customer_first_name ?? ''),
+        lastName: String(data.customer_last_name ?? ''),
+        email: String(data.customer_email ?? ''),
+        phone: String(data.customer_phone ?? ''),
+        note: data.customer_note != null ? String(data.customer_note) : undefined,
+      },
+      charterDate: data.date != null ? String(data.date) : undefined,
+      pageTitle: String(data.tour_title ?? 'Yat kapora'),
+      locale: (data.ui_locale === 'en' ? 'en' : 'tr') as 'tr' | 'en',
+    })
+    return
+  }
+
   const customer = {
     firstName: String(data.customer_first_name ?? ''),
     lastName: String(data.customer_last_name ?? ''),

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { withLocalePath } from '@/lib/i18n/paths'
+import { isYachtDepositBooking } from '@/lib/yachtDepositBooking'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -33,7 +34,7 @@ export default async function PaymentSuccessPage({
 
   const { data, error } = await supabase
     .from('bookings')
-    .select('id, status, reference, tour_title, date, time, customer_first_name, customer_last_name, paid_at, access_token, paid_now, total_price, currency, adult_count, child_count, infant_count')
+    .select('id, status, source, reference, tour_title, date, time, customer_first_name, customer_last_name, paid_at, access_token, paid_now, total_price, currency, adult_count, child_count, infant_count')
     .eq('id', oid)
     .maybeSingle()
 
@@ -42,6 +43,7 @@ export default async function PaymentSuccessPage({
   }
 
   const row = data as SupabaseBookingRow
+  const isYachtDeposit = isYachtDepositBooking(row)
   const ref = (typeof row.reference === 'string' && row.reference.trim()) || row.id.slice(0, 8).toUpperCase()
   const tourTitle = String(row.tour_title ?? '—')
   const date = formatDate(String(row.date ?? ''))
@@ -75,12 +77,22 @@ export default async function PaymentSuccessPage({
             </div>
           </div>
           <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 text-center">
-            {isPaid ? 'Rezervasyonunuz onaylandı!' : 'Ödemeniz alındı'}
+            {isYachtDeposit
+              ? isPaid
+                ? 'Kapora ödemeniz alındı!'
+                : 'Ödemeniz işleniyor'
+              : isPaid
+                ? 'Rezervasyonunuz onaylandı!'
+                : 'Ödemeniz alındı'}
           </h1>
           <p className="mt-2 text-sm text-slate-500 text-center max-w-xs">
-            {isPaid
-              ? 'Ödemeniz başarıyla tamamlandı. Biletiniz e-posta adresinize gönderilmiştir.'
-              : 'Rezervasyonunuz birkaç saniye içinde onaylanacaktır.'}
+            {isYachtDeposit
+              ? isPaid
+                ? 'Kapora ödemeniz alındı. Onay e-postası adresinize gönderilmiştir; ekibimiz sizinle iletişime geçecektir.'
+                : 'Ödemeniz birkaç saniye içinde onaylanacaktır.'
+              : isPaid
+                ? 'Ödemeniz başarıyla tamamlandı. Biletiniz e-posta adresinize gönderilmiştir.'
+                : 'Rezervasyonunuz birkaç saniye içinde onaylanacaktır.'}
           </p>
         </div>
 
@@ -93,7 +105,15 @@ export default async function PaymentSuccessPage({
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
             <p className="text-xs text-emerald-800">
-              Biletiniz <strong>e-posta olarak gönderilmiştir.</strong>
+              {isYachtDeposit ? (
+                <>
+                  Onay <strong>e-posta olarak gönderilmiştir.</strong>
+                </>
+              ) : (
+                <>
+                  Biletiniz <strong>e-posta olarak gönderilmiştir.</strong>
+                </>
+              )}
             </p>
           </div>
 
@@ -101,7 +121,7 @@ export default async function PaymentSuccessPage({
           <div className="divide-y divide-slate-100 px-5">
             <DetailRow label="Rezervasyon no" value={<span className="font-mono font-semibold text-slate-900">{ref}</span>} />
             <DetailRow label="Misafir" value={customerName} />
-            <DetailRow label="Tur" value={tourTitle} />
+            <DetailRow label={isYachtDeposit ? 'İşlem' : 'Tur'} value={tourTitle} />
             <DetailRow label="Tarih" value={date} />
             {paidAmount != null && Number(paidAmount) > 0 && (
               <DetailRow
@@ -117,7 +137,7 @@ export default async function PaymentSuccessPage({
           </div>
 
           {/* Butonlar */}
-          {ticketPath && (
+          {ticketPath && !isYachtDeposit && (
             <div className="flex flex-col gap-3 px-5 pb-5 pt-5">
               {/* Biletimi Görüntüle */}
               <a

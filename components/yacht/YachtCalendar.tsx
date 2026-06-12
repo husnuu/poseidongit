@@ -5,6 +5,8 @@ import {
   buildYachtCalendarDaysForMonth,
   todayStrLocal,
 } from '@/lib/yachtCalendar'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtCalendarUi } from '@/lib/yachtCalendarUi'
 import styles from '@/components/booking/booking.module.css'
 
 export type YachtCalendarRange = { checkIn: string | null; checkOut: string | null }
@@ -21,6 +23,9 @@ interface YachtCalendarProps {
   resolveDayPrice?: (isoDate: string) => number | undefined
   /** Kart içinde daha kompakt başlık */
   compactTitle?: boolean
+  locale?: SiteLocale
+  /** Başlık metni (yoksa dile göre varsayılan) */
+  title?: string
 }
 
 function normalizeBlocked(set: Set<string>, raw?: string[]) {
@@ -39,6 +44,8 @@ export default function YachtCalendar({
   onRangeChange,
   resolveDayPrice,
   compactTitle,
+  locale = 'tr',
+  title: titleOverride,
 }: YachtCalendarProps) {
   const todayStr = useMemo(() => todayStrLocal(), [])
   const t = new Date()
@@ -56,12 +63,22 @@ export default function YachtCalendar({
     [viewYear, viewMonth]
   )
 
+  const calUi = getYachtCalendarUi(locale)
+  const dateLocale = locale === 'en' ? 'en-US' : locale === 'de' ? 'de-DE' : 'tr-TR'
+
   const monthLabel = useMemo(() => {
     const d = new Date(viewYear, viewMonth - 1, 1)
-    return d.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })
-  }, [viewYear, viewMonth])
+    return d.toLocaleDateString(dateLocale, { month: 'long', year: 'numeric' })
+  }, [viewYear, viewMonth, dateLocale])
 
-  const weekdays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
+  const weekdays = useMemo(() => {
+    const baseMonday = new Date(2024, 0, 1)
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(baseMonday)
+      d.setDate(baseMonday.getDate() + i)
+      return d.toLocaleDateString(dateLocale, { weekday: 'short' })
+    })
+  }, [dateLocale])
   const firstDayOfMonth = new Date(viewYear, viewMonth - 1, 1)
   const gridStart = (firstDayOfMonth.getDay() + 6) % 7
 
@@ -86,8 +103,9 @@ export default function YachtCalendar({
     }
   }
 
-  const title =
-    selectionMode === 'range' ? 'Giriş ve ayrılış tarihi' : 'Tercih ettiğiniz tarih'
+  const defaultTitle =
+    selectionMode === 'range' ? calUi.rangeTitle : calUi.singleTitle
+  const title = titleOverride?.trim() || defaultTitle
 
   return (
     <div className={compactTitle ? undefined : styles.card}>
@@ -101,7 +119,7 @@ export default function YachtCalendar({
         <button
           type="button"
           className={styles.counterBtn}
-          aria-label="Önceki ay"
+          aria-label={calUi.prevMonth}
           disabled={
             viewYear < t.getFullYear() ||
             (viewYear === t.getFullYear() && viewMonth <= t.getMonth() + 1)
@@ -121,7 +139,7 @@ export default function YachtCalendar({
         <button
           type="button"
           className={styles.counterBtn}
-          aria-label="Sonraki ay"
+          aria-label={calUi.nextMonth}
           onClick={() => {
             if (viewMonth === 12) {
               setViewMonth(1)
@@ -174,15 +192,17 @@ export default function YachtCalendar({
                 disabled={!selectable}
                 aria-label={
                   blockedDay
-                    ? `${dayNum} müsait değil`
+                    ? calUi.unavailableDay(dayNum)
                     : past
-                      ? `${dayNum} geçmiş`
-                      : `${dayNum} ${day.date}`
+                      ? calUi.pastDay(dayNum)
+                      : calUi.dayLabel(dayNum, day.date)
                 }
               >
                 <span className={styles.dayNum}>{dayNum}</span>
                 {showPrice ? (
-                  <span className={styles.dayPrice}>{cellPrice!.toLocaleString('tr-TR')} ₺</span>
+                  <span className={styles.dayPrice}>
+                    {cellPrice!.toLocaleString(dateLocale)} ₺
+                  </span>
                 ) : null}
               </button>
             )
@@ -191,12 +211,12 @@ export default function YachtCalendar({
       </div>
       {selectionMode === 'range' && rangeValue.checkIn && !rangeValue.checkOut && (
         <p className="text-xs text-zinc-600 mt-2 mb-0" style={{ fontFamily: 'var(--font-family)' }}>
-          Ayrılış gününü seçin (son konaklama gecesinden sonraki gün).
+          {calUi.rangeCheckoutHint}
         </p>
       )}
       {blocked.size > 0 && (
         <p className="text-xs text-zinc-500 mt-2 mb-0" style={{ fontFamily: 'var(--font-family)' }}>
-          Gri günler şu an için uygun değil. Diğer tarihler için talep bırakabilirsiniz.
+          {calUi.blockedHint}
         </p>
       )}
     </div>

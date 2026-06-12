@@ -1294,6 +1294,99 @@ function buildYachtInquiryEmailHtml(p: YachtInquiryEmailPayload): string {
 /**
  * Yat müsaitlik formu — admin bildirimi (RESEND_API_KEY + ADMIN_EMAIL).
  */
+export type YachtDepositPaidEmailPayload = {
+  bookingId: string
+  amount: number
+  currency: string
+  pageTitle: string
+  charterDate?: string
+  locale?: 'tr' | 'en'
+  customer: {
+    firstName: string
+    lastName: string
+    email: string
+    phone?: string
+    note?: string
+  }
+}
+
+function buildYachtDepositCustomerEmailHtml(p: YachtDepositPaidEmailPayload): string {
+  const siteName = getSiteName() || 'Poseidon'
+  const isEn = p.locale === 'en'
+  const name = `${p.customer.firstName} ${p.customer.lastName}`.trim()
+  const amountStr = `${p.amount.toLocaleString(isEn ? 'en-US' : 'tr-TR')} ${p.currency === 'TRY' ? '₺' : p.currency}`
+  const dateLine = p.charterDate
+    ? `<tr><td style="padding:8px 0;color:#64748b;font-size:14px;">${isEn ? 'Preferred date' : 'Tercih edilen tarih'}</td><td style="padding:8px 0;font-weight:600;color:#0f172a;font-size:14px;text-align:right;">${escapeHtml(formatDate(p.charterDate))}</td></tr>`
+    : ''
+  const noteLine = p.customer.note
+    ? `<tr><td colspan="2" style="padding:12px 0 0;font-size:13px;color:#475569;line-height:1.5;">${escapeHtml(p.customer.note)}</td></tr>`
+    : ''
+  return `<!DOCTYPE html>
+<html lang="${isEn ? 'en' : 'tr'}"><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:Inter,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px;">
+<table width="100%" style="max-width:560px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;">
+<tr><td style="background:#1e3a5f;padding:20px 24px;"><p style="margin:0;color:#fff;font-size:18px;font-weight:700;">${escapeHtml(siteName)}</p></td></tr>
+<tr><td style="padding:24px;">
+<p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#0f172a;">${isEn ? 'Deposit payment received' : 'Kapora ödemeniz alındı'}</p>
+<p style="margin:0 0 20px;font-size:14px;color:#64748b;line-height:1.5;">${isEn ? `Thank you, ${escapeHtml(name)}. We have received your yacht charter deposit.` : `Teşekkürler ${escapeHtml(name)}. Özel yat kiralama kaporanız tarafımıza ulaştı.`}</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;">
+<tr><td style="padding:8px 0;color:#64748b;font-size:14px;">${isEn ? 'Amount paid' : 'Ödenen tutar'}</td><td style="padding:8px 0;font-weight:700;color:#fc6c4f;font-size:16px;text-align:right;">${escapeHtml(amountStr)}</td></tr>
+${dateLine}
+${noteLine}
+</table>
+<p style="margin:20px 0 0;font-size:13px;color:#64748b;line-height:1.5;">${isEn ? 'Our team will contact you shortly regarding availability and charter details.' : 'Ekibimiz müsaitlik ve kiralama detayları için kısa süre içinde sizinle iletişime geçecektir.'}</p>
+</td></tr>
+</table></td></tr></table></body></html>`
+}
+
+function buildYachtDepositAdminEmailHtml(p: YachtDepositPaidEmailPayload): string {
+  const name = `${p.customer.firstName} ${p.customer.lastName}`.trim()
+  const amountStr = `${p.amount.toLocaleString('tr-TR')} ${p.currency === 'TRY' ? '₺' : p.currency}`
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;">
+<h2>Yat kapora ödemesi alındı</h2>
+<p><strong>${escapeHtml(name)}</strong> — ${escapeHtml(p.customer.email)}</p>
+<p>Telefon: ${escapeHtml(p.customer.phone ?? '—')}</p>
+<p>Tutar: <strong>${escapeHtml(amountStr)}</strong></p>
+<p>Rezervasyon ID: ${escapeHtml(p.bookingId)}</p>
+${p.charterDate ? `<p>Tarih: ${escapeHtml(formatDate(p.charterDate))}</p>` : ''}
+${p.customer.note ? `<p>Not:<br>${escapeHtml(p.customer.note).replace(/\n/g, '<br>')}</p>` : ''}
+</body></html>`
+}
+
+export async function sendYachtDepositPaidEmails(p: YachtDepositPaidEmailPayload): Promise<void> {
+  const resend = getResend()
+  if (!resend) {
+    console.warn('[email] Yat kapora: RESEND yapılandırılmamış')
+    return
+  }
+  const from = getFrom()
+  const isEn = p.locale === 'en'
+  const customerSubject = isEn
+    ? `Deposit received — ${getSiteName() || 'Yacht charter'}`
+    : `Kapora ödemeniz alındı — ${getSiteName() || 'Yat kiralama'}`
+
+  const { error: custErr } = await resend.emails.send({
+    from,
+    to: [p.customer.email],
+    subject: customerSubject,
+    html: buildYachtDepositCustomerEmailHtml(p),
+  })
+  if (custErr) console.error('[email] Yat kapora müşteri maili:', custErr)
+
+  await sendToAdminRecipients(resend, {
+    from,
+    subject: `Yat kapora ödendi: ${p.customer.firstName} ${p.customer.lastName} — ${amountStr(p)}`,
+    html: buildYachtDepositAdminEmailHtml(p),
+    replyTo: p.customer.email,
+    logContext: p.bookingId,
+  })
+}
+
+function amountStr(p: YachtDepositPaidEmailPayload): string {
+  return `${p.amount.toLocaleString('tr-TR')} ${p.currency === 'TRY' ? '₺' : p.currency}`
+}
+
 export async function sendYachtInquiryEmail(
   payload: YachtInquiryEmailPayload
 ): Promise<{ ok: boolean; error?: string }> {
