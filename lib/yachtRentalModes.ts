@@ -34,7 +34,7 @@ export function blockedDatesForMode(
   return legacy
 }
 
-/** Liste / yedek vitrin: konaklamalı toplam veya en düşük gece fiyatı. */
+/** Liste / vitrin: konaklamalı gecelik referans veya en düşük gece fiyatı. */
 export function effectiveOvernightAdvertisedPrice(y: YachtRentalDocument): number | undefined {
   const t = y.overnightTotalPrice
   if (t != null && !Number.isNaN(t) && t > 0) return t

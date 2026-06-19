@@ -6,5 +6,5 @@ interface YachtShortSummaryProps {
 
 export default function YachtShortSummary({ text }: YachtShortSummaryProps) {
   if (!text?.trim()) return null
-  return <p className={`${bodyText.text} max-w-[977px] mb-8`}>{text.trim()}</p>
+  return <p className={`${bodyText.text} mb-6 max-w-[977px] sm:mb-8`}>{text.trim()}</p>
 }

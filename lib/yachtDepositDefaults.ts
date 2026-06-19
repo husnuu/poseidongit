@@ -34,6 +34,23 @@ export type YachtDepositFormUi = {
   payError: string
   networkError: string
   disabledMessage: string
+  processingLabel: string
+}
+
+export type YachtDepositApiMessages = {
+  invalidRequest: string
+  requiredFields: string
+  invalidEmail: string
+  turnstileRequired: string
+  turnstileFailed: string
+  recordFailed: string
+  paymentConfigFailed: string
+  genericFailed: string
+  pageDisabled: string
+  amountInvalid: string
+  noteYachtPrefix: string
+  charterDateRequired: string
+  termsRequired: string
 }
 
 const TR_CONTENT: YachtDepositPageContent = {
@@ -98,6 +115,23 @@ const TR_FORM: YachtDepositFormUi = {
   payError: 'Ödeme başlatılamadı. Lütfen tekrar deneyin.',
   networkError: 'Bağlantı hatası. Lütfen tekrar deneyin.',
   disabledMessage: 'Kapora ödeme sayfası şu an kapalı. Lütfen bizimle iletişime geçin.',
+  processingLabel: 'Yönlendiriliyor…',
+}
+
+const TR_API: YachtDepositApiMessages = {
+  invalidRequest: 'Geçersiz istek.',
+  requiredFields: 'Ad, soyad, e-posta ve telefon zorunludur.',
+  invalidEmail: 'Geçerli bir e-posta girin.',
+  turnstileRequired: 'Doğrulama gerekli.',
+  turnstileFailed: 'Doğrulama başarısız.',
+  recordFailed: 'Kayıt oluşturulamadı.',
+  paymentConfigFailed: 'Ödeme sistemi yapılandırılamadı.',
+  genericFailed: 'İşlem tamamlanamadı.',
+  pageDisabled: 'Kapora ödeme sayfası şu an kapalı.',
+  amountInvalid: 'Kapora tutarı yapılandırılmamış.',
+  noteYachtPrefix: 'Tekne',
+  charterDateRequired: 'Kiralama tarihi seçilmelidir.',
+  termsRequired: 'Mesafeli satış sözleşmesini kabul etmeniz gerekir.',
 }
 
 const EN_FORM: YachtDepositFormUi = {
@@ -126,6 +160,23 @@ const EN_FORM: YachtDepositFormUi = {
   payError: 'Could not start payment. Please try again.',
   networkError: 'Connection error. Please try again.',
   disabledMessage: 'Deposit payment is currently unavailable. Please contact us.',
+  processingLabel: 'Redirecting…',
+}
+
+const EN_API: YachtDepositApiMessages = {
+  invalidRequest: 'Invalid request.',
+  requiredFields: 'First name, last name, email and phone are required.',
+  invalidEmail: 'Enter a valid email address.',
+  turnstileRequired: 'Verification is required.',
+  turnstileFailed: 'Verification failed.',
+  recordFailed: 'Could not create your record.',
+  paymentConfigFailed: 'Payment system is not configured.',
+  genericFailed: 'The request could not be completed.',
+  pageDisabled: 'Deposit payment is currently unavailable.',
+  amountInvalid: 'Deposit amount is not configured.',
+  noteYachtPrefix: 'Yacht',
+  charterDateRequired: 'Please select a charter date.',
+  termsRequired: 'You must accept the distance sales agreement.',
 }
 
 const CONTENT: Record<SiteLocale, YachtDepositPageContent> = {
@@ -137,7 +188,13 @@ const CONTENT: Record<SiteLocale, YachtDepositPageContent> = {
 const FORM: Record<SiteLocale, YachtDepositFormUi> = {
   tr: TR_FORM,
   en: EN_FORM,
-  de: EN_FORM,
+  de: { ...EN_FORM, processingLabel: 'Weiterleitung…' },
+}
+
+const API: Record<SiteLocale, YachtDepositApiMessages> = {
+  tr: TR_API,
+  en: EN_API,
+  de: EN_API,
 }
 
 export function getYachtDepositPageContent(locale: SiteLocale): YachtDepositPageContent {
@@ -146,6 +203,16 @@ export function getYachtDepositPageContent(locale: SiteLocale): YachtDepositPage
 
 export function getYachtDepositFormUi(locale: SiteLocale): YachtDepositFormUi {
   return FORM[locale] ?? TR_FORM
+}
+
+export function getYachtDepositApiMessages(locale: SiteLocale): YachtDepositApiMessages {
+  return API[locale] ?? TR_API
+}
+
+export function yachtDepositBookingLocale(uiLocale: string | null | undefined): SiteLocale {
+  if (uiLocale === 'en') return 'en'
+  if (uiLocale === 'de') return 'de'
+  return 'tr'
 }
 
 /** Sanity yalnızca kapora tutarı için; metinler kodda. TR dışı dillerde her zaman kod varsayılanları. */

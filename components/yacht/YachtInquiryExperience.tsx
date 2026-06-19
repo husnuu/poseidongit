@@ -131,7 +131,7 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
       return {
         label: 'Konaklamalı',
         value: `${adv.toLocaleString('tr-TR')} ₺`,
-        meta: 'toplam referans',
+        meta: '/ gece',
       }
     }
     return splitYachtOvernightStickyLine(formatYachtOvernightStickyPriceLine(adv, cur))

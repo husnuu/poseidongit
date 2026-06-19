@@ -1,5 +1,5 @@
+import { CircleCheck } from 'lucide-react'
 import headingStyles from '@/components/yacht/yachtDetailHeading.module.css'
-import chipStyles from './YachtOptionalSections.module.css'
 import styles from './YachtAmenitiesSection.module.css'
 
 interface YachtAmenitiesSectionProps {
@@ -16,10 +16,13 @@ export default function YachtAmenitiesSection({ amenities }: YachtAmenitiesSecti
         <h2 id="yacht-amenities-heading" className={headingStyles.h2}>
           Olanaklar
         </h2>
-        <ul className={chipStyles.chips}>
+        <ul className={styles.grid}>
           {list.map((a) => (
-            <li key={a} className={chipStyles.chip}>
-              {a}
+            <li key={a} className={styles.card}>
+              <span className={styles.iconWrap}>
+                <CircleCheck className={styles.icon} strokeWidth={2} aria-hidden />
+              </span>
+              <span className={styles.label}>{a}</span>
             </li>
           ))}
         </ul>

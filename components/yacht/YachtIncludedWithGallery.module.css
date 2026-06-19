@@ -19,26 +19,36 @@
 
 .galleryGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  grid-auto-rows: minmax(100px, auto);
 }
 
 .thumb {
   position: relative;
   aspect-ratio: 4 / 3;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
   background: #f1f5f9;
   border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
   padding: 0;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.thumbFeatured {
+  grid-column: span 2;
+  grid-row: span 2;
+  aspect-ratio: auto;
+  min-height: 100%;
 }
 
 .thumb:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
 }
 
 .thumb:focus-visible {
@@ -49,11 +59,25 @@
 @media (max-width: 900px) {
   .galleryGrid {
     grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .thumbFeatured {
+    grid-column: span 2;
+    grid-row: span 2;
   }
 }
 
 @media (max-width: 520px) {
   .galleryGrid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .thumbFeatured {
+    grid-column: span 2;
+    grid-row: span 1;
+    aspect-ratio: 16 / 9;
+    min-height: unset;
   }
 }

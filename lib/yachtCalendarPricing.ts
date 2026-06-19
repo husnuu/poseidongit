@@ -40,9 +40,9 @@ export function yachtDailyUnitPrice(y: YachtRentalDocument, dateIso: string): nu
 }
 
 /**
- * Konaklama toplamı: `overnightNightPricing` içindeki gecelik konaklamalı tutarların toplamı.
- * Tüm geceler aynı fiyatdaysa bu, gece sayısı × gecelik fiyat ile aynıdır. Günlük kiralama fiyatı kullanılmaz.
- * Gece takvimi boşsa yalnızca `overnightTotalPrice` (referans).
+ * Konaklama toplamı: seçilen gecelerin gecelik tutarlarının toplamı.
+ * Gece takviminde satır yoksa `overnightTotalPrice` gecelik referans fiyat olarak kullanılır (gece sayısı × tutar).
+ * Takvimde eksik geceler için de aynı referans gecelik fiyatı kullanılır.
  */
 export function yachtOvernightStayTotal(
   y: YachtRentalDocument,
@@ -53,27 +53,33 @@ export function yachtOvernightStayTotal(
   if (n < 1) return undefined
 
   const nightMap = rowPriceMap(y.overnightNightPricing)
-  const totalRef = y.overnightTotalPrice
+  const nightRef = y.overnightTotalPrice
+  const fallbackNight =
+    nightRef != null && !Number.isNaN(nightRef) && nightRef > 0 ? nightRef : undefined
 
   if (nightMap.size === 0) {
-    if (totalRef != null && !Number.isNaN(totalRef) && totalRef > 0) return totalRef
+    if (fallbackNight != null) return fallbackNight * n
     return undefined
   }
 
   let sum = 0
   for (let i = 0; i < n; i++) {
     const d = addDaysIso(checkIn, i)
-    const p = nightMap.get(d)
+    const p = nightMap.get(d) ?? fallbackNight
     if (p == null) return undefined
     sum += p
   }
   return sum
 }
 
-/** Konaklamalı takvim hücresi: yalnızca Sanity `overnightNightPricing` (gece başına) satırı; günlük fiyat gösterilmez. */
+/** Konaklamalı takvim hücresi: gece başına fiyat (takvim satırı veya referans gecelik tutar). */
 export function yachtOvernightCellDisplayPrice(
   y: YachtRentalDocument,
   nightStartIso: string
 ): number | undefined {
-  return rowPriceMap(y.overnightNightPricing).get(nightStartIso)
+  const p = rowPriceMap(y.overnightNightPricing).get(nightStartIso)
+  if (p != null) return p
+  const fb = y.overnightTotalPrice
+  if (fb != null && !Number.isNaN(fb) && fb > 0) return fb
+  return undefined
 }

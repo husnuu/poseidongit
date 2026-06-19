@@ -124,7 +124,7 @@ export default defineType({
           title: 'Başlık Üstü Badge Metni',
           type: 'string',
           description:
-            'Ana başlığın hemen üstünde küçük pill olarak görünür. Örn: "Çeşme’nin En Çok Tercih Edilen Tekne Turu"',
+            'Ana başlığın hemen üstünde küçük pill olarak görünür. Örn: "Hantal Turizm - Belge No: 18888"',
           validation: (Rule) => Rule.max(90),
         }),
         defineField({

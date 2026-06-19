@@ -22,8 +22,11 @@ type YachtRentalsPageData = {
   seo?: { title?: string | null; description?: string | null } | null
 }
 
-const DEFAULT_INTRO =
-  'Tarih seçin, müsaitlik sorun — ekibimiz size özel teklif ve uygunluk için geri dönüş yapar. Online ödeme yoktur.'
+const DEFAULT_INTRO: Record<SiteLocale, string> = {
+  tr: 'Tarih ve misafir sayınızı seçin, müsaitlik talebi bırakın — ekibimiz size özel teklif için en kısa sürede dönüş yapar.',
+  en: 'Pick your dates and guest count, submit an availability request — our team will get back to you with a tailored quote.',
+  de: 'Wählen Sie Datum und Gästezahl, senden Sie eine Verfügbarkeitsanfrage — unser Team meldet sich zeitnah mit einem individuellen Angebot.',
+}
 
 const DEFAULT_EMPTY =
   'Yakında yat ilanları eklenecek. Sanity Studio’dan yat kiralama içeriği ekleyebilirsiniz.'
@@ -83,7 +86,7 @@ export default async function YatKiralamaPage({
 
   const titleTop = pageData?.titleTop?.trim() || 'ÖZEL'
   const titleBottom = pageData?.titleBottom?.trim() || 'YAT KİRALAMA'
-  const intro = pageData?.intro?.trim() || DEFAULT_INTRO
+  const intro = pageData?.intro?.trim() || DEFAULT_INTRO[locale]
   const emptyStateMessage = pageData?.emptyStateMessage?.trim() || DEFAULT_EMPTY
 
   return (
@@ -96,7 +99,7 @@ export default async function YatKiralamaPage({
               {titleBottom && <span className={listStyles.headingLine2}>{titleBottom}</span>}
             </h1>
             <p
-              className="mt-6 max-w-2xl whitespace-pre-wrap text-lg leading-relaxed text-black/70"
+              className="mt-6 max-w-2xl whitespace-pre-wrap text-base leading-relaxed text-zinc-600 sm:text-[17px] sm:leading-[1.65]"
               style={{ fontFamily: 'var(--font-family)' }}
             >
               {intro}

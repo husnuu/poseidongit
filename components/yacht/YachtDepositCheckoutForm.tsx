@@ -260,7 +260,7 @@ export default function YachtDepositCheckoutForm({
             className={styles.ctaButton}
             disabled={submitting || !termsAccepted}
           >
-            {submitting ? '…' : ui.submitLabel}
+            {submitting ? ui.processingLabel : ui.submitLabel}
           </button>
 
           <p className="m-0 text-xs text-zinc-500 leading-snug">{ui.secureNote}</p>

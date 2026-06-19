@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
-import { Check, Trophy } from 'lucide-react'
+import { Trophy } from 'lucide-react'
 import YachtTypeGlyph from '@/components/yacht/YachtTypeGlyph'
 import { yachtTypeLabel } from '@/lib/yachtTypes'
 import type { YachtSpecifications } from '@/lib/yachtTypes'
@@ -35,22 +35,6 @@ function detailHref(y: HomePopularYachtCardData, locale: SiteLocale = 'tr'): str
   if (!y.slug) return null
   const path = y.locationSlug ? `/yat-kiralama/${y.locationSlug}/${y.slug}` : `/yat-kiralama/${y.slug}`
   return withLocalePath(locale, path)
-}
-
-/** Ana sayfa kartında gösterilmeyecek “dahil olanlar” maddeleri (normalize edilmiş küçük harf anahtar). */
-const HOME_CARD_EXCLUDED_INCLUDED_NORMALIZED = new Set([
-  'profesyonel kaptanlı özel mürettebat',
-  'yakıt (günlük standart kullanım dahilinde)',
-])
-
-function normalizeIncludedLine(s: string): string {
-  return s.trim().toLowerCase().replace(/\s+/g, ' ')
-}
-
-function includedLinesForHomeCard(lines: (string | null | undefined)[] | null | undefined): string[] {
-  return (lines ?? [])
-    .filter((line): line is string => Boolean(line?.trim()))
-    .filter((line) => !HOME_CARD_EXCLUDED_INCLUDED_NORMALIZED.has(normalizeIncludedLine(line)))
 }
 
 function specSummary(spec: YachtSpecifications | null | undefined): string | null {
@@ -99,7 +83,6 @@ export default function HomePopularYachtCard({
   const typeLabel = yachtTypeLabel(yacht.yachtType ?? undefined)
   const specLine = specSummary(yacht.specifications ?? undefined)
   const locationLine = yacht.locationTitle?.trim() || ''
-  const included = includedLinesForHomeCard(yacht.included).slice(0, 2)
   const maxExtraPills = yacht.sailingLicenceRequired?.trim() ? 2 : 3
   const badgeStrings = (yacht.badges ?? []).filter(Boolean).slice(0, maxExtraPills)
   const ctaLabel = VIEW_YACHT_CTA[locale] ?? VIEW_YACHT_CTA.tr
@@ -187,21 +170,6 @@ export default function HomePopularYachtCard({
     </>
   )
 
-  const includedBlock =
-    included.length > 0 ? (
-      <ul className="mb-1 flex list-none flex-col gap-1.5 p-0">
-        {included.map((line) => (
-          <li
-            key={line}
-            className={`${tourCardStyles.metaRow} flex items-start gap-2 text-sm font-semibold leading-snug text-zinc-800 sm:text-[15px]`}
-          >
-            <Check className="mt-0.5 size-4 shrink-0 text-emerald-600 stroke-[2.5]" aria-hidden />
-            <span>{line}</span>
-          </li>
-        ))}
-      </ul>
-    ) : null
-
   const articleClass =
     'flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-[0_25px_50px_-12px_rgba(15,23,42,0.09),0_12px_28px_-10px_rgba(15,23,42,0.06)] transition-shadow duration-300 hover:shadow-[0_32px_64px_-14px_rgba(15,23,42,0.11),0_16px_32px_-10px_rgba(15,23,42,0.07)]'
 
@@ -219,7 +187,6 @@ export default function HomePopularYachtCard({
           {metaSection}
         </div>
         <div className="flex min-h-0 flex-1 flex-col px-5 pb-5 pt-3 sm:px-6">
-          {includedBlock}
           <div className="mt-auto flex flex-col gap-3 pt-2">
             {priceBlock}
             <YachtCardCta label={ctaLabel} />
@@ -253,7 +220,6 @@ export default function HomePopularYachtCard({
         className="flex min-h-0 flex-1 flex-col px-5 pb-5 pt-3 text-inherit no-underline outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#1e3a8a] sm:px-6"
         aria-label={`${ctaLabel}: ${titlePlain}`}
       >
-        {includedBlock}
         <div className="mt-auto flex flex-col gap-3 pt-2">
           {priceBlock}
           <YachtCardCta label={ctaLabel} />

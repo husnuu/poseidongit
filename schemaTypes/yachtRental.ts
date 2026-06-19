@@ -83,10 +83,10 @@ export default defineType({
     }),
     defineField({
       name: 'overnightTotalPrice',
-      title: 'Konaklamalı — toplam fiyat (referans)',
+      title: 'Konaklamalı — gecelik referans fiyat',
       type: 'number',
       description:
-        'Gecelik konaklamalı tutarlar “Konaklamalı — gece başına fiyatlar (takvim)” alanına girilir; sitede konaklama toplamı seçilen gecelerin bu tutarların toplamıdır (her gece aynıysa: gece sayısı × gecelik fiyat). Gece takvimi hiç doldurulmamışsa konaklama toplamı olarak yalnızca bu referans tutar kullanılır.',
+        'Gecelik konaklamalı tutarlar “Konaklamalı — gece başına fiyatlar (takvim)” alanına girilir; sitede konaklama toplamı seçilen gecelerin bu tutarların toplamıdır. Gece takvimi boşsa bu alan gecelik referans fiyat olarak kullanılır (toplam = gece sayısı × bu tutar). Takvimde de bu gecelik fiyat gösterilir.',
       validation: (Rule) => Rule.positive().integer(),
     }),
     defineField({
@@ -285,7 +285,7 @@ export default defineType({
       title: 'Konaklamalı — gece başına fiyatlar (takvim)',
       type: 'array',
       description:
-        'Konaklamalı gecelik fiyat burada: her satır, o tarihte başlayan gecenin konaklamalı tutarıdır (₺/gece). Takvimde bu değerler gösterilir. Toplam fiyat, seçilen aralıktaki gecelerin bu tutarlarının toplamıdır; tüm geceler aynı fiyatdaysa gece sayısı × gecelik fiyat ile aynıdır. Hiç satır yoksa “Konaklamalı — toplam fiyat (referans)” kullanılır.',
+        'Konaklamalı gecelik fiyat burada: her satır, o tarihte başlayan gecenin konaklamalı tutarıdır (₺/gece). Takvimde bu değerler gösterilir. Toplam fiyat, seçilen aralıktaki gecelerin bu tutarlarının toplamıdır. Hiç satır yoksa “Konaklamalı — gecelik referans fiyat” kullanılır (gece sayısı × referans).',
       of: [
         {
           type: 'object',

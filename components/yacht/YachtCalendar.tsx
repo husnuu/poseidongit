@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { Star } from 'lucide-react'
 import {
   buildYachtCalendarDaysForMonth,
   todayStrLocal,
@@ -82,6 +83,21 @@ export default function YachtCalendar({
   const firstDayOfMonth = new Date(viewYear, viewMonth - 1, 1)
   const gridStart = (firstDayOfMonth.getDay() + 6) % 7
 
+  const minPriceInMonth = useMemo(() => {
+    if (!resolveDayPrice) return null
+    const prices = calendar
+      .map((day) => {
+        const blockedDay = blocked.has(day.date)
+        const past = day.date < todayStr
+        const selectable = !past && !blockedDay
+        if (!selectable) return null
+        const p = resolveDayPrice(day.date)
+        return p != null && p > 0 ? p : null
+      })
+      .filter((p): p is number => p != null)
+    return prices.length === 0 ? null : Math.min(...prices)
+  }, [calendar, blocked, todayStr, resolveDayPrice])
+
   const isBeforeToday = (dateStr: string) => dateStr < todayStr
 
   const handleDayClick = (dateStr: string, selectable: boolean) => {
@@ -113,7 +129,7 @@ export default function YachtCalendar({
         <h3 className={`${styles.cardTitle} ${styles.wizardMainStepTitle}`}>{title}</h3>
       )}
       <div
-        className="flex items-center justify-between mb-2"
+        className="flex items-center justify-between"
         style={{ marginBottom: 8 }}
       >
         <button
@@ -167,6 +183,9 @@ export default function YachtCalendar({
             const selectable = !past && !blockedDay
             const cellPrice = resolveDayPrice?.(day.date)
             const showPrice = selectable && cellPrice != null && cellPrice > 0
+            const showStar =
+              showPrice && minPriceInMonth != null && cellPrice === minPriceInMonth
+            const isToday = day.date === todayStr
 
             let selected = false
             let inRange = false
@@ -195,9 +214,20 @@ export default function YachtCalendar({
                     ? calUi.unavailableDay(dayNum)
                     : past
                       ? calUi.pastDay(dayNum)
-                      : calUi.dayLabel(dayNum, day.date)
+                      : `${calUi.dayLabel(dayNum, day.date)}${showPrice ? `, ${cellPrice!.toLocaleString(dateLocale)} ₺` : ''}`
+                }
+                aria-pressed={selected}
+                style={
+                  isToday && !selected && selectable
+                    ? { borderColor: '#fc6c4f', color: '#fc6c4f' }
+                    : undefined
                 }
               >
+                {showStar ? (
+                  <span className={styles.dayCellStar} aria-hidden>
+                    <Star className={styles.dayCellStarIcon} fill="currentColor" aria-hidden />
+                  </span>
+                ) : null}
                 <span className={styles.dayNum}>{dayNum}</span>
                 {showPrice ? (
                   <span className={styles.dayPrice}>

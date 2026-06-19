@@ -77,8 +77,8 @@ export function formatYachtMobilePriceOvernight(price?: number, currency = 'TRY'
   if (price == null) return 'Teklif alın'
   const n = price.toLocaleString('tr-TR')
   const c = (currency || 'TRY').toUpperCase()
-  if (c === 'TRY' || c === 'TRL') return `Toplam ${n} ₺`
-  return `Toplam ${n} ${currency}`
+  if (c === 'TRY' || c === 'TRL') return `${n} ₺ / gece`
+  return `${n} ${currency} / gece`
 }
 
 /** Liste kartı: toplam veya gece takvimi varsa en düşük gece. */

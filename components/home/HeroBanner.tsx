@@ -1,8 +1,18 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Crown } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
+
+const DEFAULT_TOP_BADGE_TEXT = 'Hantal Turizm - Belge No: 18888'
+
+function resolveTopBadgeText(raw?: string | null): string {
+  const trimmed = raw?.trim()
+  if (!trimmed) return DEFAULT_TOP_BADGE_TEXT
+  if (trimmed.toLocaleLowerCase('tr-TR').includes('en çok tercih edilen')) {
+    return DEFAULT_TOP_BADGE_TEXT
+  }
+  return trimmed
+}
 
 export type HeroData = {
   eyebrow?: string | null
@@ -101,18 +111,17 @@ export default function HeroBanner({
       {(hero.topBadgeText?.trim() || hero.heroBadgeEnabled) && (
         <div className="pointer-events-none absolute left-5 top-[12px] z-10 md:left-10 md:top-[24px]">
           <span
-            className="relative inline-flex items-center gap-2 overflow-hidden rounded-l-none rounded-r-full border px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-white md:px-5 md:py-2 md:text-sm"
+            className="relative inline-flex items-center overflow-hidden rounded-l-none rounded-r-full border border-sky-200/35 px-4 py-1.5 text-xs font-semibold tracking-wide text-white backdrop-blur-md md:px-5 md:py-2 md:text-sm"
             style={{
               fontFamily: 'var(--font-family)',
-              background: 'linear-gradient(90deg, #fc6c4f 0%, #e85a3d 100%)',
-              borderColor: 'rgba(255, 220, 210, 0.7)',
+              background:
+                'linear-gradient(90deg, rgba(30, 58, 138, 0.72) 0%, rgba(37, 99, 235, 0.48) 100%)',
               boxShadow:
-                '0 4px 14px rgba(0, 0, 0, 0.22), 0 0 12px rgba(252, 108, 79, 0.5), 0 0 22px rgba(232, 90, 61, 0.35), inset 0 0 0 1px rgba(255, 230, 220, 0.32)',
+                '0 4px 16px rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.14)',
             }}
           >
-            <Crown className="h-4 w-4 text-white md:h-5 md:w-5" aria-hidden focusable={false} />
             <span className="relative z-[1]">
-              {hero.topBadgeText?.trim() || 'Çeşme’nin En Çok Tercih Edilen Tekne Turu'}
+              {resolveTopBadgeText(hero.topBadgeText)}
             </span>
           </span>
         </div>

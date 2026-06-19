@@ -69,7 +69,7 @@ export default function YachtGalleryGrid({ images }: YachtGalleryGridProps) {
           <button
             key={`${item.src}-${i}`}
             type="button"
-            className={styles.thumb}
+            className={`${styles.thumb} ${i === 0 ? styles.thumbFeatured : ''}`}
             onClick={() => openLightbox(i)}
             aria-label={`${item.alt} — büyüt`}
           >
@@ -78,7 +78,11 @@ export default function YachtGalleryGrid({ images }: YachtGalleryGridProps) {
               alt={item.alt}
               fill
               className="object-cover"
-              sizes="(max-width: 1024px) 50vw, 320px"
+              sizes={
+                i === 0
+                  ? '(max-width: 520px) 100vw, (max-width: 1024px) 66vw, 560px'
+                  : '(max-width: 520px) 50vw, (max-width: 1024px) 33vw, 280px'
+              }
               {...SANITY_DISPLAY_IMAGE_PROPS}
             />
           </button>

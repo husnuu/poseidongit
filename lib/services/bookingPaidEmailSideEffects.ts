@@ -7,6 +7,7 @@ import { getBaseUrl } from '@/lib/seo'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { isYachtDepositBooking } from '@/lib/yachtDepositBooking'
+import { yachtDepositBookingLocale } from '@/lib/yachtDepositDefaults'
 
 /**
  * Rezervasyon `paid` olduktan sonra: paid_now / access_token tamamlama ve müşteri + operasyon e-postaları.
@@ -18,6 +19,9 @@ export async function runBookingPaidEmailSideEffects(
 ): Promise<void> {
   if (isYachtDepositBooking(data)) {
     const paidNow = Number(data.paid_now ?? data.total_price ?? 0)
+    const locale = yachtDepositBookingLocale(
+      typeof data.ui_locale === 'string' ? data.ui_locale : null
+    )
     await sendYachtDepositPaidEmails({
       bookingId,
       amount: paidNow,
@@ -30,8 +34,11 @@ export async function runBookingPaidEmailSideEffects(
         note: data.customer_note != null ? String(data.customer_note) : undefined,
       },
       charterDate: data.date != null ? String(data.date) : undefined,
-      pageTitle: String(data.tour_title ?? 'Yat kapora'),
-      locale: (data.ui_locale === 'en' ? 'en' : 'tr') as 'tr' | 'en',
+      pageTitle: String(
+        data.tour_title ??
+          (locale === 'tr' ? 'Yat kiralama kapora' : 'Private yacht charter deposit')
+      ),
+      locale: locale === 'tr' ? 'tr' : 'en',
     })
     return
   }
