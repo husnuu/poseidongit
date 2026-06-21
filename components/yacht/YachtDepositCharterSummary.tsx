@@ -53,7 +53,7 @@ export default function YachtDepositCharterSummary({
           <div className={styles.imageWrap}>
             <Image
               src={config.coverImageUrl}
-              alt={config.coverImageAlt}
+              alt={config.coverImageAlt || config.yachtName}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 400px"

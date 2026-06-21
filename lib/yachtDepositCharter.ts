@@ -24,7 +24,7 @@ export type YachtDepositCharterConfig = {
   yachtTypeLabel: string
   locationLabel: string | null
   coverImageUrl: string | null
-  coverImageAlt: string | null
+  coverImageAlt: string
   specLine: string | null
   charterDateStart: string
   charterDateEnd: string | null
@@ -82,7 +82,7 @@ export function buildYachtDepositCharterConfig(
   const yachtId = yacht?._id?.trim()
   const yachtName = yacht?.name?.trim()
   const start = charterDateStart?.trim()?.slice(0, 10)
-  if (!yachtId || !yachtName || !start || !/^\d{4}-\d{2}-\d{2}$/.test(start)) return null
+  if (!yacht || !yachtId || !yachtName || !start || !/^\d{4}-\d{2}-\d{2}$/.test(start)) return null
 
   const endRaw = charterDateEnd?.trim()?.slice(0, 10)
   const end =
