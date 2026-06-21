@@ -124,7 +124,7 @@ export default function YachtDepositCheckoutForm({
           charterDateEnd: charterConfig?.charterDateEnd ?? undefined,
           yachtId: charterConfig?.yachtId,
           yachtSlug: charterConfig?.yachtSlug ?? undefined,
-          yachtName: charterConfig?.yachtName ?? data.yachtName?.trim() || undefined,
+          yachtName: (charterConfig?.yachtName ?? data.yachtName?.trim()) || undefined,
           message: data.message?.trim() || undefined,
           termsAccepted: true,
           locale,
