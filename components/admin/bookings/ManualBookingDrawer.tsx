@@ -53,8 +53,8 @@ function AgentFormSection({
 }) {
   if (!standalone) return <>{children}</>
   return (
-    <section className="rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 p-4 shadow-sm ring-1 ring-slate-900/[0.03] sm:p-5">
-      <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">{title}</h2>
+    <section className="rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-5">
+      <h2 className="mb-3 text-xs font-black uppercase tracking-wide text-[#1e3a5f]">{title}</h2>
       <div className="space-y-4">{children}</div>
     </section>
   )
@@ -297,8 +297,8 @@ export default function ManualBookingDrawer({
   const handleSubmit = async (andNew: boolean) => {
     setSubmitError(null)
     setCapacityExceeded(false)
-    if (!firstName.trim() || !lastName.trim() || !phone.trim()) {
-      setSubmitError('Ad, soyad ve telefon zorunludur.')
+    if (!firstName.trim() || !lastName.trim() || (!standalone && !phone.trim())) {
+      setSubmitError(standalone ? 'Ad ve soyad zorunludur.' : 'Ad, soyad ve telefon zorunludur.')
       return
     }
     if (!tourId || !tourTitle || !date || !classId || !className) {
@@ -318,7 +318,7 @@ export default function ManualBookingDrawer({
       setSubmitError(`First Class için ${requiredLocas} loca seçin (${totalPax} kişi → ${requiredLocas} loca).`)
       return
     }
-    if (mealMenu?.enabled && mealMenu.options.length > 0) {
+    if (!standalone && mealMenu?.enabled && mealMenu.options.length > 0) {
       const selectedMealTotal = mealMenu.options.reduce(
         (sum, opt) => sum + Math.max(0, Number(mealCountsByKey[opt.key] ?? 0) || 0),
         0
@@ -343,7 +343,12 @@ export default function ManualBookingDrawer({
           classId,
           className,
           counts: { adult, child, infant },
-          customer: { firstName: firstName.trim(), lastName: lastName.trim(), phone: phone.trim(), email: email.trim() },
+          customer: {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            phone: standalone ? '' : phone.trim(),
+            email: standalone ? '' : email.trim(),
+          },
           unitPrice,
           totalPrice,
           currency,
@@ -355,7 +360,7 @@ export default function ManualBookingDrawer({
           sendEmail,
           sendEmailToAdmin,
           ...(isFirstClass && (firstClassLocas?.length ?? 0) > 0 && { firstClassLocas: firstClassLocas!.map((id) => id.trim().toUpperCase()) }),
-          ...(mealMenu?.enabled && mealMenu.options.length > 0
+          ...(!standalone && mealMenu?.enabled && mealMenu.options.length > 0
             ? {
                 mealPreference: {
                   counts: mealMenu.options.reduce((acc, opt) => {
@@ -365,7 +370,7 @@ export default function ManualBookingDrawer({
                   }, {} as Record<string, number>),
                 },
               }
-            : mealPreferenceKey.trim()
+            : !standalone && mealPreferenceKey.trim()
             ? { mealPreference: { key: mealPreferenceKey.trim() } }
             : {}),
             }),
@@ -400,38 +405,38 @@ export default function ManualBookingDrawer({
   if (!open && !standalone) return null
 
   const inp = standalone
-    ? 'min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-base text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/15 disabled:bg-slate-50'
+    ? 'min-h-[48px] w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-base text-zinc-900 shadow-sm placeholder:text-zinc-400 transition focus:border-[#fc6c4f] focus:outline-none focus:ring-4 focus:ring-[#fc6c4f]/15 disabled:bg-zinc-50'
     : 'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900'
   const lbl = standalone
-    ? 'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500'
+    ? 'mb-1.5 block text-xs font-bold uppercase tracking-wide text-[#1e3a5f]'
     : 'mb-1 block text-sm font-medium text-zinc-700'
   const ta = standalone
     ? `${inp} min-h-[92px] resize-y py-3`
     : 'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900'
 
   const wrapperClass = standalone
-    ? 'flex max-h-[min(100dvh-3.5rem,calc(100vh-3.5rem))] min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-xl shadow-slate-900/[0.07]'
+    ? 'flex max-h-[min(100dvh-2rem,calc(100vh-2rem))] min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-[0_25px_50px_-12px_rgba(15,23,42,0.1)]'
     : 'fixed right-0 top-0 z-50 flex h-full w-full max-w-xl flex-col border-l border-slate-200 bg-white shadow-xl'
   const headerContent = (
     <div
       className={
         standalone
-          ? 'flex shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 bg-gradient-to-r from-slate-900 via-slate-800 to-teal-950 px-4 py-4 text-white sm:px-5 sm:py-4'
+          ? 'flex shrink-0 items-center justify-between gap-3 border-b border-zinc-100 bg-[#1e3a5f] px-4 py-4 text-white sm:px-5'
           : 'flex items-center justify-between border-b border-slate-200/80 px-5 py-4'
       }
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className={standalone ? 'truncate text-lg font-bold tracking-tight sm:text-xl' : 'text-lg font-semibold text-slate-800'}>
-            {standalone ? 'Yeni rezervasyon' : '+ Manuel Rezervasyon Ekle'}
+          <h3 className={standalone ? 'truncate text-lg font-black uppercase tracking-wide sm:text-xl' : 'text-lg font-semibold text-slate-800'}>
+            {standalone ? 'Rezervasyon ekle' : '+ Manuel Rezervasyon Ekle'}
           </h3>
           {standalone && (
-            <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/90 ring-1 ring-white/25">
+            <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/90">
               Biletçi
             </span>
           )}
         </div>
-        {standalone && <p className="mt-1 text-xs text-white/70 sm:text-sm">Tur, misafir ve ödeme bilgilerini girin</p>}
+        {standalone && <p className="mt-1 text-xs text-white/70 sm:text-sm">Tur, tarih ve misafir bilgilerini girin</p>}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {onLogout && (
@@ -583,7 +588,7 @@ export default function ManualBookingDrawer({
               </div>
             </AgentFormSection>
 
-            {mealMenu?.enabled && mealMenu.options.length > 0 && (
+            {!standalone && mealMenu?.enabled && mealMenu.options.length > 0 && (
               <AgentFormSection standalone={standalone} title="Yemek tercihi">
                 <div>
                   <p className={standalone ? 'mb-2 text-sm font-medium text-slate-700' : bookingFieldStyles.formLabel}>
@@ -724,7 +729,7 @@ export default function ManualBookingDrawer({
                   {standalone && (
                     <span
                       className={`inline-flex w-fit shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold ${
-                        exceedsCapacity && !forceCreate ? 'bg-red-600 text-white' : 'bg-teal-600 text-white'
+                        exceedsCapacity && !forceCreate ? 'bg-red-600 text-white' : 'bg-[#1e3a8a] text-white'
                       }`}
                     >
                       {capacityInfo.remaining} yer
@@ -740,7 +745,7 @@ export default function ManualBookingDrawer({
               )}
             </AgentFormSection>
 
-            <AgentFormSection standalone={standalone} title="Müşteri">
+            <AgentFormSection standalone={standalone} title={standalone ? 'Misafir adı' : 'Müşteri'}>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className={lbl}>Ad *</label>
@@ -765,30 +770,35 @@ export default function ManualBookingDrawer({
                   />
                 </div>
               </div>
-              <div>
-                <label className={lbl}>Telefon *</label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className={inp}
-                  placeholder="+90 …"
-                  autoComplete="tel"
-                />
-              </div>
-              <div>
-                <label className={lbl}>E-posta (opsiyonel)</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={inp}
-                  placeholder="musteri@ornek.com"
-                  autoComplete="email"
-                />
-              </div>
+              {!standalone ? (
+                <>
+                  <div>
+                    <label className={lbl}>Telefon *</label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className={inp}
+                      placeholder="+90 …"
+                      autoComplete="tel"
+                    />
+                  </div>
+                  <div>
+                    <label className={lbl}>E-posta (opsiyonel)</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={inp}
+                      placeholder="musteri@ornek.com"
+                      autoComplete="email"
+                    />
+                  </div>
+                </>
+              ) : null}
             </AgentFormSection>
 
+            {!standalone ? (
             <AgentFormSection standalone={standalone} title="Fiyat">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
@@ -828,9 +838,10 @@ export default function ManualBookingDrawer({
                 </select>
               </div>
             </AgentFormSection>
+            ) : null}
 
-            <AgentFormSection standalone={standalone} title="Ödeme ve kaynak">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <AgentFormSection standalone={standalone} title={standalone ? 'Ödeme' : 'Ödeme ve kaynak'}>
+              <div className={standalone ? '' : 'grid grid-cols-1 gap-4 sm:grid-cols-2'}>
                 <div>
                   <label className={lbl}>Ödeme durumu *</label>
                   <select
@@ -845,29 +856,34 @@ export default function ManualBookingDrawer({
                     ))}
                   </select>
                 </div>
+                {!standalone ? (
+                  <div>
+                    <label className={lbl}>Kaynak *</label>
+                    <select value={manualSource} onChange={(e) => setManualSource(e.target.value)} className={inp}>
+                      {MANUAL_SOURCE_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
+              </div>
+              {!standalone ? (
                 <div>
-                  <label className={lbl}>Kaynak *</label>
-                  <select value={manualSource} onChange={(e) => setManualSource(e.target.value)} className={inp}>
-                    {MANUAL_SOURCE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
+                  <label className={lbl}>Admin notu</label>
+                  <textarea
+                    value={adminNote}
+                    onChange={(e) => setAdminNote(e.target.value)}
+                    rows={2}
+                    className={ta}
+                    placeholder="İç not (isteğe bağlı)"
+                  />
                 </div>
-              </div>
-              <div>
-                <label className={lbl}>Admin notu</label>
-                <textarea
-                  value={adminNote}
-                  onChange={(e) => setAdminNote(e.target.value)}
-                  rows={2}
-                  className={ta}
-                  placeholder="İç not (isteğe bağlı)"
-                />
-              </div>
+              ) : null}
             </AgentFormSection>
 
+            {!standalone ? (
             <AgentFormSection standalone={standalone} title="Bildirimler">
               <div className="space-y-2">
                 <label className={chkRow}>
@@ -905,6 +921,7 @@ export default function ManualBookingDrawer({
                 </label>
               </div>
             </AgentFormSection>
+            ) : null}
           </div>
         </div>
         <div
@@ -920,11 +937,11 @@ export default function ManualBookingDrawer({
             disabled={saving}
             className={
               standalone
-                ? 'min-h-[48px] w-full rounded-2xl bg-teal-600 py-3.5 text-base font-semibold text-white shadow-lg shadow-teal-600/20 transition hover:bg-teal-700 disabled:opacity-50 sm:max-w-md sm:flex-1'
+                ? 'min-h-[50px] w-full rounded-xl bg-[#1e3a8a] py-3.5 text-base font-black uppercase tracking-wide text-white shadow-md transition hover:brightness-110 disabled:opacity-50'
                 : 'min-w-[200px] flex-1 rounded-lg bg-indigo-600 py-2.5 font-medium text-white hover:bg-indigo-700 disabled:opacity-50'
             }
           >
-            {saving ? 'Kaydediliyor…' : standalone ? 'Kaydet ve yeni kayıt' : 'Kaydet ve yeni kayıda geç'}
+            {saving ? 'Kaydediliyor…' : standalone ? 'Kaydet' : 'Kaydet ve yeni kayıda geç'}
           </button>
           {!standalone && (
             <button

@@ -63,8 +63,9 @@ export default function AdminBookingMonthCalendar({
   }, [year, monthNum])
 
   const isBiletci = variant === 'biletci'
-  const cellBase =
-    'relative flex w-full flex-col items-center justify-center rounded-xl border text-center font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed'
+  const cellBase = isBiletci
+    ? 'relative flex w-full flex-col items-center justify-center rounded-xl border text-center font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fc6c4f] focus-visible:ring-offset-2 disabled:cursor-not-allowed'
+    : 'relative flex w-full flex-col items-center justify-center rounded-xl border text-center font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed'
   const cellSize = isBiletci
     ? 'min-h-[44px] sm:min-h-[48px] py-1.5 text-sm sm:text-base'
     : 'min-h-[40px] py-1 text-sm'
@@ -82,7 +83,7 @@ export default function AdminBookingMonthCalendar({
     <div
       className={
         isBiletci
-          ? 'overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 p-3 shadow-md ring-1 ring-slate-900/[0.04] sm:p-4'
+          ? 'overflow-hidden rounded-2xl border border-zinc-100 bg-white p-3 shadow-sm sm:p-4'
           : 'rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4'
       }
     >
@@ -91,7 +92,7 @@ export default function AdminBookingMonthCalendar({
           type="button"
           onClick={() => shiftMonth(-1)}
           disabled={prevDisabled}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-teal-300 hover:bg-teal-50/50 hover:text-teal-900 disabled:pointer-events-none disabled:opacity-40"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm transition hover:border-[#fc6c4f]/40 hover:bg-[#fff0ed] disabled:pointer-events-none disabled:opacity-40"
           aria-label="Önceki ay"
         >
           <ChevronLeft className="h-5 w-5" strokeWidth={2} />
@@ -106,7 +107,11 @@ export default function AdminBookingMonthCalendar({
           type="button"
           onClick={() => shiftMonth(1)}
           disabled={disabled}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-teal-300 hover:bg-teal-50/50 hover:text-teal-900 disabled:opacity-40"
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm transition ${
+            isBiletci
+              ? 'hover:border-[#fc6c4f]/40 hover:bg-[#fff0ed] disabled:opacity-40'
+              : 'hover:border-teal-300 hover:bg-teal-50/50 hover:text-teal-900 disabled:opacity-40'
+          } disabled:pointer-events-none`}
           aria-label="Sonraki ay"
         >
           <ChevronRight className="h-5 w-5" strokeWidth={2} />
@@ -139,15 +144,30 @@ export default function AdminBookingMonthCalendar({
               onClick={() => onChange(date)}
               className={`${cellBase} ${cellSize} ${
                 isSelected
-                  ? 'border-teal-600 bg-teal-600 text-white shadow-md shadow-teal-600/25'
+                  ? isBiletci
+                    ? 'border-[#fc6c4f] bg-[#fc6c4f] text-white shadow-md shadow-[#fc6c4f]/25'
+                    : 'border-teal-600 bg-teal-600 text-white shadow-md shadow-teal-600/25'
                   : isPast
-                    ? 'border-transparent bg-slate-50/50 text-slate-300'
-                    : 'border-slate-100 bg-white text-slate-800 hover:border-teal-200 hover:bg-teal-50/60'
-              } ${isToday && !isSelected ? 'ring-2 ring-teal-400 ring-offset-1' : ''}`}
+                    ? isBiletci
+                      ? 'border-transparent bg-zinc-50 text-zinc-300'
+                      : 'border-transparent bg-slate-50/50 text-slate-300'
+                    : isBiletci
+                      ? 'border-zinc-100 bg-white text-zinc-800 hover:border-[#fc6c4f]/30 hover:bg-[#fff0ed]'
+                      : 'border-slate-100 bg-white text-slate-800 hover:border-teal-200 hover:bg-teal-50/60'
+              } ${
+                isToday && !isSelected
+                  ? isBiletci
+                    ? 'ring-2 ring-[#fc6c4f] ring-offset-1'
+                    : 'ring-2 ring-teal-400 ring-offset-1'
+                  : ''
+              }`}
             >
               <span className="tabular-nums">{dayNum}</span>
               {isToday && !isSelected && (
-                <span className="absolute bottom-1 h-1 w-1 rounded-full bg-teal-500" aria-hidden />
+                <span
+                  className={`absolute bottom-1 h-1 w-1 rounded-full ${isBiletci ? 'bg-[#fc6c4f]' : 'bg-teal-500'}`}
+                  aria-hidden
+                />
               )}
             </button>
           )

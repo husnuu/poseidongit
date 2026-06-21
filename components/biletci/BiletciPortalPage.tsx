@@ -123,59 +123,57 @@ export default function BiletciPortalPage() {
 
   if (!submittedToken) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-gradient-to-b from-slate-50 via-white to-teal-50/30 px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))]">
-        <div className="w-full max-w-[min(100%,420px)]">
-          <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/10 ring-1 ring-slate-900/5">
-            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900 px-5 py-5 text-white sm:px-6 sm:py-6">
-              <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20">
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                  </svg>
-                </div>
-                <div className="min-w-0 pt-0.5">
-                  <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Biletçi</h1>
-                  <p className="mt-1 text-sm text-white/75">Manuel rezervasyon girişi</p>
-                </div>
-              </div>
+      <div
+        className="flex min-h-[100dvh] flex-col items-center justify-center bg-zinc-50 px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))]"
+        style={{ fontFamily: 'var(--font-family)' }}
+      >
+        <div className="w-full max-w-[min(100%,400px)]">
+          <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-[0_25px_50px_-12px_rgba(15,23,42,0.12)]">
+            <div className="bg-[#1e3a5f] px-6 py-6 text-white">
+              <h1 className="text-xl font-black uppercase tracking-wide sm:text-2xl">Biletçi</h1>
+              <p className="mt-1.5 text-sm text-white/75">Manuel rezervasyon girişi</p>
             </div>
-            <div className="p-6 sm:p-8">
-              {error && (
+            <div className="p-6 sm:p-7">
+              {error ? (
                 <div
-                  className="mb-5 rounded-2xl border border-amber-200/90 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                  className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
                   role="alert"
                 >
                   {error}
                 </div>
-              )}
-              <form onSubmit={handleAgentLogin} className="space-y-5">
+              ) : null}
+              <form onSubmit={handleAgentLogin} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800">E-posta</label>
+                  <label className="block text-xs font-bold uppercase tracking-wide text-[#1e3a5f]">
+                    E-posta
+                  </label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="ornek@firma.com"
-                    className="mt-2 min-h-[48px] w-full rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/15"
+                    className="mt-2 min-h-[48px] w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-base text-zinc-900 placeholder:text-zinc-400 focus:border-[#fc6c4f] focus:outline-none focus:ring-4 focus:ring-[#fc6c4f]/15"
                     autoComplete="email"
                     autoFocus
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800">Şifre</label>
+                  <label className="block text-xs font-bold uppercase tracking-wide text-[#1e3a5f]">
+                    Şifre
+                  </label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="mt-2 min-h-[48px] w-full rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/15"
+                    className="mt-2 min-h-[48px] w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-base text-zinc-900 placeholder:text-zinc-400 focus:border-[#fc6c4f] focus:outline-none focus:ring-4 focus:ring-[#fc6c4f]/15"
                     autoComplete="current-password"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={!email.trim() || !password || loginChecking}
-                  className="min-h-[48px] w-full rounded-2xl bg-teal-600 py-3.5 text-base font-semibold text-white shadow-lg shadow-teal-600/25 transition hover:bg-teal-700 focus:outline-none focus:ring-4 focus:ring-teal-500/30 disabled:pointer-events-none disabled:opacity-50"
+                  className="min-h-[50px] w-full rounded-xl bg-[#1e3a8a] py-3.5 text-base font-black uppercase tracking-wide text-white shadow-md transition hover:brightness-110 disabled:pointer-events-none disabled:opacity-50"
                 >
                   {loginChecking ? 'Kontrol ediliyor…' : 'Giriş yap'}
                 </button>
@@ -188,12 +186,15 @@ export default function BiletciPortalPage() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-gradient-to-b from-slate-100/80 to-slate-50 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:pb-6 sm:pt-4">
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col sm:max-w-3xl">
+    <div
+      className="min-h-[100dvh] bg-zinc-50 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-4 sm:pb-6 sm:pt-5"
+      style={{ fontFamily: 'var(--font-family)' }}
+    >
+      <div className="mx-auto w-full max-w-lg sm:max-w-xl">
         {loading ? (
-          <div className="flex flex-1 flex-col items-center justify-center rounded-3xl border border-slate-200/90 bg-white/90 p-12 shadow-lg shadow-slate-900/5 backdrop-blur-sm sm:p-16">
-            <div className="h-11 w-11 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
-            <p className="mt-4 text-sm font-medium text-slate-600">Turlar yükleniyor…</p>
+          <div className="flex min-h-[60dvh] flex-col items-center justify-center rounded-2xl border border-zinc-100 bg-white p-12 shadow-sm">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#1e3a8a] border-t-transparent" />
+            <p className="mt-4 text-sm font-medium text-zinc-600">Turlar yükleniyor…</p>
           </div>
         ) : (
           <ManualBookingDrawer

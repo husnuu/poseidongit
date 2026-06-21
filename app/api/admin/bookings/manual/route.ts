@@ -91,8 +91,8 @@ function parseBody(body: unknown): {
     typeof customer.phone === 'string' ? sanitizePhoneDisplay(customer.phone, 48) : ''
   const email =
     typeof customer.email === 'string' ? customer.email.trim().toLowerCase().slice(0, 254) : ''
-  if (!firstName || !lastName || !phone) {
-    return { error: 'Müşteri ad, soyad ve telefon zorunludur' }
+  if (!firstName || !lastName) {
+    return { error: 'Müşteri ad ve soyad zorunludur' }
   }
   const rawUnit = b.unitPrice != null && b.unitPrice !== '' ? Number(b.unitPrice) : NaN
   const rawTotal = b.totalPrice != null && b.totalPrice !== '' ? Number(b.totalPrice) : NaN
