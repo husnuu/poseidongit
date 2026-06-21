@@ -16,6 +16,8 @@ import { submitNestpayForm } from '@/lib/nestpay/submitPaymentForm'
 import { withLocalePath } from '@/lib/i18n/paths'
 import type { YachtDepositPageUi } from '@/lib/i18n/strings/yachtDepositPage'
 import type { SiteLocale } from '@/lib/i18n/config'
+import type { YachtDepositCharterConfig } from '@/lib/yachtDepositCharter'
+import YachtDepositCharterSummary from '@/components/yacht/YachtDepositCharterSummary'
 import styles from '@/components/StickyBookingCard.module.css'
 import bookingStyles from '@/components/booking/booking.module.css'
 
@@ -36,6 +38,7 @@ interface YachtDepositCheckoutFormProps {
   currency?: string
   locale: SiteLocale
   ui: YachtDepositPageUi
+  charterConfig?: YachtDepositCharterConfig | null
 }
 
 export default function YachtDepositCheckoutForm({
@@ -43,6 +46,7 @@ export default function YachtDepositCheckoutForm({
   currency = 'TRY',
   locale,
   ui,
+  charterConfig = null,
 }: YachtDepositCheckoutFormProps) {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || ''
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
@@ -94,7 +98,8 @@ export default function YachtDepositCheckoutForm({
   }, [])
 
   const onSubmit = async (data: FormValues) => {
-    if (!charterDate) {
+    const effectiveCharterDate = charterConfig?.charterDateStart ?? charterDate
+    if (!effectiveCharterDate) {
       setDateError(ui.valCharterDate)
       return
     }
@@ -115,8 +120,11 @@ export default function YachtDepositCheckoutForm({
           lastName: data.lastName,
           email: data.email,
           phone: data.phone,
-          charterDate,
-          yachtName: data.yachtName?.trim() || undefined,
+          charterDate: effectiveCharterDate,
+          charterDateEnd: charterConfig?.charterDateEnd ?? undefined,
+          yachtId: charterConfig?.yachtId,
+          yachtSlug: charterConfig?.yachtSlug ?? undefined,
+          yachtName: charterConfig?.yachtName ?? data.yachtName?.trim() || undefined,
           message: data.message?.trim() || undefined,
           termsAccepted: true,
           locale,
@@ -161,24 +169,28 @@ export default function YachtDepositCheckoutForm({
         </div>
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-          <div className="w-full min-w-0 overflow-x-auto">
-            <YachtCalendar
-              locale={locale}
-              title={ui.calendarTitle}
-              compactTitle
-              selectionMode="single"
-              selectedDate={charterDate}
-              onSelectDate={(d) => {
-                setCharterDate(d)
-                setDateError(null)
-              }}
-            />
-            {dateError ? (
-              <p className="m-0 mt-2 text-sm font-semibold text-red-600" role="alert">
-                {dateError}
-              </p>
-            ) : null}
-          </div>
+          {charterConfig ? (
+            <YachtDepositCharterSummary config={charterConfig} locale={locale} compact />
+          ) : (
+            <div className="w-full min-w-0 overflow-x-auto">
+              <YachtCalendar
+                locale={locale}
+                title={ui.calendarTitle}
+                compactTitle
+                selectionMode="single"
+                selectedDate={charterDate}
+                onSelectDate={(d) => {
+                  setCharterDate(d)
+                  setDateError(null)
+                }}
+              />
+              {dateError ? (
+                <p className="m-0 mt-2 text-sm font-semibold text-red-600" role="alert">
+                  {dateError}
+                </p>
+              ) : null}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FloatingInput
@@ -208,7 +220,9 @@ export default function YachtDepositCheckoutForm({
             onChange={(v) => setValue('phone', v ?? '', { shouldValidate: true })}
             error={errors.phone?.message}
           />
-          <FloatingInput id="yd-yacht" label={ui.yachtNameLabel} {...register('yachtName')} />
+          {!charterConfig ? (
+            <FloatingInput id="yd-yacht" label={ui.yachtNameLabel} {...register('yachtName')} />
+          ) : null}
           <FloatingTextarea id="yd-msg" label={ui.messageLabel} rows={3} {...register('message')} />
 
           <div className={bookingStyles.termsCard}>

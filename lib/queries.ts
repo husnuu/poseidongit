@@ -1094,12 +1094,31 @@ export const yachtDepositPageQuery = `coalesce(
 ) {
   enabled,
   depositAmount,
+  charterDateStart,
+  charterDateEnd,
   titleTop,
   titleBottom,
   intro,
   bullets,
   seo{ title, description },
-  pageTranslations
+  pageTranslations,
+  yacht->{
+    _id,
+    name,
+    "slug": slug.current,
+    yachtType,
+    locationTitle,
+    marina,
+    mainImage{
+      alt,
+      "url": asset->url
+    },
+    specifications{
+      capacity,
+      length,
+      cabins
+    }
+  }
 }`
 
 /** Koylar sayfası: başlık ve açıklama (items ayrı veya covesList ile doldurulur) */

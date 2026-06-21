@@ -49,7 +49,10 @@ export type YachtDepositApiMessages = {
   pageDisabled: string
   amountInvalid: string
   noteYachtPrefix: string
+  noteDateRangePrefix: string
   charterDateRequired: string
+  charterMismatch: string
+  yachtMismatch: string
   termsRequired: string
 }
 
@@ -130,7 +133,10 @@ const TR_API: YachtDepositApiMessages = {
   pageDisabled: 'Kapora ödeme sayfası şu an kapalı.',
   amountInvalid: 'Kapora tutarı yapılandırılmamış.',
   noteYachtPrefix: 'Tekne',
+  noteDateRangePrefix: 'Kiralama tarihi',
   charterDateRequired: 'Kiralama tarihi seçilmelidir.',
+  charterMismatch: 'Kiralama tarihi güncellendi. Sayfayı yenileyip tekrar deneyin.',
+  yachtMismatch: 'Tekne bilgisi güncellendi. Sayfayı yenileyip tekrar deneyin.',
   termsRequired: 'Mesafeli satış sözleşmesini kabul etmeniz gerekir.',
 }
 
@@ -175,7 +181,10 @@ const EN_API: YachtDepositApiMessages = {
   pageDisabled: 'Deposit payment is currently unavailable.',
   amountInvalid: 'Deposit amount is not configured.',
   noteYachtPrefix: 'Yacht',
+  noteDateRangePrefix: 'Charter dates',
   charterDateRequired: 'Please select a charter date.',
+  charterMismatch: 'Charter dates were updated. Please refresh the page and try again.',
+  yachtMismatch: 'Yacht details were updated. Please refresh the page and try again.',
   termsRequired: 'You must accept the distance sales agreement.',
 }
 

@@ -13,14 +13,40 @@ export default defineType({
       description: 'Kapalıyken sayfa ziyaretçilere gösterilmez.',
     }),
     defineField({
+      name: 'yacht',
+      title: 'Tekne',
+      type: 'reference',
+      to: [{ type: 'yachtRental' }],
+      description:
+        'Kapora alınacak özel tekne. Sayfada tekne adı, görseli ve konumu gösterilir; müşteri hangi tekne için ödeme yaptığını net görür.',
+    }),
+    defineField({
+      name: 'charterDateStart',
+      title: 'Kiralama başlangıç tarihi',
+      type: 'date',
+      description: 'Kiralama döneminin ilk günü (giriş veya tek günlük kiralama tarihi).',
+    }),
+    defineField({
+      name: 'charterDateEnd',
+      title: 'Kiralama bitiş tarihi',
+      type: 'date',
+      description:
+        'Konaklamalı kiralama için çıkış günü. Günlük kiralama için boş bırakın — yalnızca başlangıç tarihi gösterilir.',
+      validation: (Rule) =>
+        Rule.custom((end, context) => {
+          const start = (context.parent as { charterDateStart?: string })?.charterDateStart
+          if (!end || !start) return true
+          if (end <= start) return 'Bitiş tarihi, başlangıç tarihinden sonra olmalıdır.'
+          return true
+        }),
+    }),
+    defineField({
       name: 'depositAmount',
       title: 'Kapora tutarı (TRY)',
       type: 'number',
-      description:
-        'Müşteriden tahsil edilecek kapora miktarı. Sayfa metinleri (başlık, açıklama, form) kodda hazırdır; yalnızca bu tutarı güncellemeniz yeterlidir.',
+      description: 'Müşteriden tahsil edilecek kapora miktarı.',
       validation: (Rule) => Rule.required().min(1),
     }),
-    // İçerik alanları kodda yönetilir; ileride özelleştirmek için gizli tutulur.
     defineField({
       name: 'titleTop',
       title: 'Başlık üst satır',
@@ -72,12 +98,21 @@ export default defineType({
     }),
   ],
   preview: {
-    select: { amount: 'depositAmount', enabled: 'enabled' },
-    prepare({ amount, enabled }) {
+    select: {
+      amount: 'depositAmount',
+      enabled: 'enabled',
+      yachtName: 'yacht.name',
+      start: 'charterDateStart',
+      end: 'charterDateEnd',
+    },
+    prepare({ amount, enabled, yachtName, start, end }) {
       const status = enabled === false ? 'Kapalı' : 'Yayında'
+      const datePart =
+        start && end ? `${start} → ${end}` : start ? start : 'Tarih yok'
+      const yachtPart = yachtName?.trim() || 'Tekne seçilmedi'
       return {
-        title: 'Yat kapora ödeme',
-        subtitle: amount ? `${amount.toLocaleString('tr-TR')} ₺ · ${status}` : `Tutar girin · ${status}`,
+        title: yachtPart,
+        subtitle: `${amount ? `${amount.toLocaleString('tr-TR')} ₺` : 'Tutar girin'} · ${datePart} · ${status}`,
       }
     },
   },

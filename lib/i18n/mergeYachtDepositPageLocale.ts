@@ -1,4 +1,5 @@
 import type { SiteLocale } from './config'
+import type { YachtDepositYachtRef } from '@/lib/yachtDepositCharter'
 import {
   getYachtDepositPageContent,
   resolveYachtDepositPageContent,
@@ -7,6 +8,9 @@ import {
 export type YachtDepositPageData = {
   enabled?: boolean | null
   depositAmount?: number | null
+  charterDateStart?: string | null
+  charterDateEnd?: string | null
+  yacht?: YachtDepositYachtRef | null
   titleTop?: string | null
   titleBottom?: string | null
   intro?: string | null

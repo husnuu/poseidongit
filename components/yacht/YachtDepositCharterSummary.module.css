@@ -1,0 +1,152 @@
+.wrap {
+  margin: 0 0 24px;
+}
+
+.wrapCompact {
+  margin: 0 0 16px;
+}
+
+.lead {
+  font-family: var(--font-family), sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0 0 12px;
+}
+
+.card {
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(30, 58, 95, 0.12);
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.imageWrap {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #f1f5f9;
+}
+
+.imagePlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholderIcon {
+  width: 48px;
+  height: 48px;
+  color: #94a3b8;
+}
+
+.body {
+  padding: 16px 18px 18px;
+}
+
+.eyebrow {
+  font-family: var(--font-family), sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 6px;
+}
+
+.yachtName {
+  font-family: var(--font-family), sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.2;
+  color: #1e3a5f;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.metaPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #f8fafc;
+  font-family: var(--font-family), sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.metaGlyph,
+.metaPin {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: #475569;
+}
+
+.specLine {
+  font-family: var(--font-family), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  margin: 0 0 14px;
+}
+
+.dateBlock {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.08) 0%, rgba(37, 99, 235, 0.06) 100%);
+  border: 1px solid rgba(30, 58, 138, 0.12);
+}
+
+.dateIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #1e3a8a;
+  margin-top: 2px;
+}
+
+.dateLabel {
+  font-family: var(--font-family), sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 4px;
+}
+
+.dateValue {
+  font-family: var(--font-family), sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #1e3a5f;
+  margin: 0;
+}
+
+.wrapCompact .body {
+  padding: 14px 16px 16px;
+}
+
+.wrapCompact .yachtName {
+  font-size: 18px;
+}
+
+.wrapCompact .imageWrap {
+  aspect-ratio: 21 / 9;
+}

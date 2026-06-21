@@ -10,7 +10,12 @@ import { getYachtDepositPageUi } from '@/lib/i18n/strings/yachtDepositPage'
 import { getYachtDepositPageContent } from '@/lib/yachtDepositDefaults'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
+import {
+  buildYachtDepositCharterConfig,
+  yachtDepositContextLine,
+} from '@/lib/yachtDepositCharter'
 import YachtDepositCheckoutForm from '@/components/yacht/YachtDepositCheckoutForm'
+import YachtDepositCharterSummary from '@/components/yacht/YachtDepositCharterSummary'
 import listStyles from '../turlar/page.module.css'
 
 export const dynamic = 'force-dynamic'
@@ -81,6 +86,13 @@ export default async function YachtDepositPage({
   if (!Number.isFinite(depositAmount) || depositAmount <= 0) notFound()
 
   const { titleTop, titleBottom, intro, bullets } = getYachtDepositPageContent(locale)
+  const charterConfig = buildYachtDepositCharterConfig(
+    page.yacht,
+    page.charterDateStart,
+    page.charterDateEnd,
+    locale
+  )
+  const contextLine = charterConfig ? yachtDepositContextLine(charterConfig, locale) : null
 
   return (
     <div className="min-h-screen bg-zinc-50/60">
@@ -100,6 +112,14 @@ export default async function YachtDepositPage({
             >
               {intro}
             </p>
+            {contextLine ? (
+              <p
+                className="mt-4 rounded-xl border border-sky-200/60 bg-sky-50/80 px-4 py-3 text-sm font-semibold leading-relaxed text-sky-950"
+                style={{ fontFamily: 'var(--font-family)' }}
+              >
+                {contextLine}
+              </p>
+            ) : null}
           </header>
 
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12">
@@ -108,24 +128,30 @@ export default async function YachtDepositPage({
                 depositAmount={depositAmount}
                 locale={locale}
                 ui={ui}
+                charterConfig={charterConfig}
               />
             </aside>
 
-            <ul className="order-2 m-0 list-none space-y-3 p-0 max-w-2xl lg:order-1 lg:flex-1 lg:min-w-0">
-              {bullets.map((line) => (
-                <li
-                  key={line}
-                  className="flex items-start gap-3 text-[15px] font-medium leading-snug text-zinc-700"
-                  style={{ fontFamily: 'var(--font-family)' }}
-                >
-                  <span
-                    className="mt-1.5 size-2 shrink-0 rounded-full bg-emerald-500"
-                    aria-hidden
-                  />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="order-2 max-w-2xl lg:order-1 lg:flex-1 lg:min-w-0">
+              {charterConfig ? (
+                <YachtDepositCharterSummary config={charterConfig} locale={locale} />
+              ) : null}
+              <ul className="m-0 list-none space-y-3 p-0">
+                {bullets.map((line) => (
+                  <li
+                    key={line}
+                    className="flex items-start gap-3 text-[15px] font-medium leading-snug text-zinc-700"
+                    style={{ fontFamily: 'var(--font-family)' }}
+                  >
+                    <span
+                      className="mt-1.5 size-2 shrink-0 rounded-full bg-emerald-500"
+                      aria-hidden
+                    />
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </section>

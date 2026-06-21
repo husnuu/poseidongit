@@ -17,18 +17,33 @@ import { buildPaymentFormFields, loadNestpayConfig } from '@/lib/nestpay/hash'
 import { YACHT_DEPOSIT_TOUR_ID } from '@/lib/yachtDepositBooking'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getYachtDepositApiMessages } from '@/lib/yachtDepositDefaults'
+import {
+  buildYachtDepositCharterConfig,
+  formatDepositCharterDateSummary,
+  type YachtDepositYachtRef,
+} from '@/lib/yachtDepositCharter'
 
 export const dynamic = 'force-dynamic'
 
 const CURRENCY = 'TRY'
 
-async function loadDepositAmountFromSanity(): Promise<number> {
-  const page = await client.fetch<{
-    enabled?: boolean | null
-    depositAmount?: number | null
-    titleTop?: string | null
-    titleBottom?: string | null
-  } | null>(yachtDepositPageQuery, {}, { useCdn: false })
+type DepositPageConfig = {
+  enabled?: boolean | null
+  depositAmount?: number | null
+  charterDateStart?: string | null
+  charterDateEnd?: string | null
+  yacht?: YachtDepositYachtRef | null
+}
+
+async function loadDepositPageFromSanity(): Promise<{
+  amount: number
+  charter: ReturnType<typeof buildYachtDepositCharterConfig>
+}> {
+  const page = await client.fetch<DepositPageConfig | null>(
+    yachtDepositPageQuery,
+    {},
+    { useCdn: false }
+  )
 
   if (!page || page.enabled === false) {
     throw new Error('DEPOSIT_PAGE_DISABLED')
@@ -37,7 +52,15 @@ async function loadDepositAmountFromSanity(): Promise<number> {
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new Error('DEPOSIT_AMOUNT_INVALID')
   }
-  return Math.round(amount)
+
+  const charter = buildYachtDepositCharterConfig(
+    page.yacht,
+    page.charterDateStart,
+    page.charterDateEnd,
+    'tr'
+  )
+
+  return { amount: Math.round(amount), charter }
 }
 
 function pageTitleForLocale(locale: SiteLocale): string {
@@ -76,18 +99,21 @@ export async function POST(request: Request) {
       typeof b.charterDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(b.charterDate.trim())
         ? b.charterDate.trim()
         : null
-    const termsAccepted = b.termsAccepted === true
+    const charterDateEnd =
+      typeof b.charterDateEnd === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(b.charterDateEnd.trim())
+        ? b.charterDateEnd.trim()
+        : null
+    const yachtId = typeof b.yachtId === 'string' ? b.yachtId.trim() : ''
+    const yachtSlug = typeof b.yachtSlug === 'string' ? b.yachtSlug.trim() : ''
     const yachtName =
       typeof b.yachtName === 'string' ? sanitizeTourTitleText(b.yachtName, 200) : ''
+    const termsAccepted = b.termsAccepted === true
     const message =
       typeof b.message === 'string' ? sanitizeMultilineText(b.message, 2000) : ''
     const turnstileToken = typeof b.turnstileToken === 'string' ? b.turnstileToken.trim() : ''
 
     if (!firstName || !lastName || !email || !phone) {
       return NextResponse.json({ error: api.requiredFields }, { status: 400 })
-    }
-    if (!charterDate) {
-      return NextResponse.json({ error: api.charterDateRequired }, { status: 400 })
     }
     if (!termsAccepted) {
       return NextResponse.json({ error: api.termsRequired }, { status: 400 })
@@ -110,12 +136,37 @@ export async function POST(request: Request) {
       }
     }
 
-    const depositAmount = await loadDepositAmountFromSanity()
-    const tourTitle = pageTitleForLocale(locale)
-    const dateNorm = normalizeDateOnly(charterDate)
+    const { amount: depositAmount, charter: sanityCharter } =
+      await loadDepositPageFromSanity()
+
+    const resolvedCharterDate = sanityCharter?.charterDateStart ?? charterDate
+    const resolvedCharterEnd = sanityCharter?.charterDateEnd ?? charterDateEnd
+    const resolvedYachtName = sanityCharter?.yachtName ?? yachtName
+    const resolvedYachtSlug = sanityCharter?.yachtSlug ?? yachtSlug
+
+    if (sanityCharter) {
+      if (charterDate && charterDate !== sanityCharter.charterDateStart) {
+        return NextResponse.json({ error: api.charterMismatch }, { status: 400 })
+      }
+      if (yachtId && yachtId !== sanityCharter.yachtId) {
+        return NextResponse.json({ error: api.yachtMismatch }, { status: 400 })
+      }
+    }
+
+    if (!resolvedCharterDate) {
+      return NextResponse.json({ error: api.charterDateRequired }, { status: 400 })
+    }
+
+    const tourTitle = resolvedYachtName
+      ? `${resolvedYachtName} — ${pageTitleForLocale(locale)}`
+      : pageTitleForLocale(locale)
+    const dateNorm = normalizeDateOnly(resolvedCharterDate)
 
     const noteParts = [
-      yachtName ? `${api.noteYachtPrefix}: ${yachtName}` : null,
+      resolvedYachtName ? `${api.noteYachtPrefix}: ${resolvedYachtName}` : null,
+      resolvedCharterEnd
+        ? `${api.noteDateRangePrefix}: ${formatDepositCharterDateSummary(resolvedCharterDate, resolvedCharterEnd, locale)}`
+        : null,
       message || null,
     ].filter(Boolean)
     const customerNote = noteParts.length ? noteParts.join('\n') : undefined
@@ -129,9 +180,15 @@ export async function POST(request: Request) {
       tour_id: YACHT_DEPOSIT_TOUR_ID,
       tour_title: tourTitle,
       date: dateNorm,
-      class_id: 'deposit',
+      class_id: resolvedYachtSlug || 'deposit',
       class_name:
-        locale === 'tr' ? 'Yat kiralama kapora' : 'Yacht charter deposit',
+        locale === 'tr'
+          ? resolvedYachtName
+            ? `${resolvedYachtName} — kapora`
+            : 'Yat kiralama kapora'
+          : resolvedYachtName
+            ? `${resolvedYachtName} — deposit`
+            : 'Yacht charter deposit',
       unit_price: depositAmount,
       total_price: depositAmount,
       paid_now: depositAmount,
