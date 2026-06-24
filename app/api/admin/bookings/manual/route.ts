@@ -11,6 +11,7 @@ import { authorizeAdminOrAgent } from '@/lib/adminAuthServer'
 import { resolveMealPreferenceCountsForBooking, resolveMealPreferenceForBooking } from '@/lib/bookingMealPreference'
 import { supabase } from '@/lib/supabase'
 import { paxCountFromRow, BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { computeDepositAmounts } from '@/lib/bookingDepositAmount'
 import {
   sanitizeAdminNote,
   sanitizePersonName,
@@ -278,6 +279,20 @@ export async function POST(request: NextRequest) {
 
   const reference = generateBookingReference()
   const accessToken = generateBookingAccessToken()
+
+  let depositPaidNow = totalPrice
+  if (totalPrice > 0) {
+    try {
+      const tourDepositMeta = await client.fetch<{ deposit?: { enabled?: boolean; type?: string; value?: number } } | null>(
+        `*[_id == $tourId][0]{ deposit }`,
+        { tourId: firestoreTourId }
+      )
+      depositPaidNow = computeDepositAmounts(totalPrice, tourDepositMeta?.deposit).paidNow
+    } catch {
+      // Kapora bilgisi alınamazsa toplam tutar kullanılır
+    }
+  }
+
   let manualInsertPayload: Record<string, unknown> = {
     created_at: new Date().toISOString(),
     status,
@@ -302,7 +317,7 @@ export async function POST(request: NextRequest) {
     ...(adminNote != null && adminNote !== '' && { admin_note: adminNote }),
     reference,
     access_token: accessToken,
-    ...(status === 'paid' && totalPrice > 0 && { paid_now: totalPrice }),
+    ...(status === 'paid' && totalPrice > 0 && { paid_now: depositPaidNow }),
     ...(firstClassLocasParsed && firstClassLocasParsed.length > 0 && { first_class_locas: firstClassLocasParsed }),
     ...(mealPreference && {
       meal_preference: {
@@ -385,7 +400,8 @@ export async function POST(request: NextRequest) {
       counts,
       totalPrice,
       currency,
-      paidNow: totalPrice,
+      paidNow: depositPaidNow,
+      tourId: firestoreTourId,
       customer: {
         firstName: customer.firstName,
         lastName: customer.lastName,
@@ -412,11 +428,13 @@ export async function POST(request: NextRequest) {
         : undefined
     await sendManualBookingAdminNotification({
       bookingId: insertedBooking.id,
+      tourId: firestoreTourId,
       tourTitle,
       date,
       className,
       counts,
       totalPrice,
+      paidNow: depositPaidNow,
       currency,
       customer: {
         firstName: customer.firstName,

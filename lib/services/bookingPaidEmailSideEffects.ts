@@ -1,5 +1,6 @@
 import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
+import { computeDepositAmounts } from '@/lib/bookingDepositAmount'
 import { sendBookingPaidEmails, sendYachtDepositPaidEmails } from '@/lib/email'
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery, siteSettingsQuery } from '@/lib/queries'
@@ -79,12 +80,7 @@ export async function runBookingPaidEmailSideEffects(
         undefined
       startTime = tourMeta?.quickFacts?.startTime?.trim() || (data.time != null ? String(data.time) : undefined)
       const total = Number(data.total_price ?? 0)
-      const dep = tourMeta?.deposit
-      if (dep?.enabled && dep.value != null && total > 0) {
-        paidNow = dep.type === 'percentage' ? Math.round((total * dep.value) / 100) : Math.round(dep.value)
-      } else {
-        paidNow = total
-      }
+      paidNow = computeDepositAmounts(total, tourMeta?.deposit).paidNow
     } catch {
       startTime = data.time != null ? String(data.time) : undefined
     }
