@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       .from('bookings')
       .select('*')
       .eq('date', date)
-      .neq('status', 'cancelled')
+      .eq('status', 'paid')
       .order('created_at', { ascending: true })
       .limit(500)
 

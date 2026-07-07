@@ -249,7 +249,7 @@ export default function ManifestPrintPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Çıktı Listesi</h1>
             <p className="mt-1 text-sm text-slate-600">
-              Sistemdeki rezervasyonlar ve buraya eklediğiniz manuel kayıtlar birlikte yazdırılır.
+              Sadece ödenen sistem rezervasyonları ve buraya eklediğiniz manuel kayıtlar birlikte yazdırılır.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -388,7 +388,7 @@ export default function ManifestPrintPage() {
 
             <div className="mb-3 flex flex-wrap gap-2">
               <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-medium text-teal-800">
-                Sistem: {bookingRows.length}
+                Ödenen (sistem): {bookingRows.length}
               </span>
               <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">
                 Manuel: {manualRows.filter((r) => classFilter === 'all' || r.classId === classFilter).length}
