@@ -15,6 +15,7 @@ export default function AdminHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const bookingsActive = pathname === '/admin/bookings'
+  const manifestActive = pathname === '/admin/cikti-listesi'
   const yachtInquiriesActive = pathname === '/admin/yacht-inquiries'
 
   useEffect(() => {
@@ -55,6 +56,17 @@ export default function AdminHeader() {
         onClick={() => setMenuOpen(false)}
       >
         Rezervasyonlar
+      </Link>
+      <Link
+        href="/admin/cikti-listesi"
+        className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+          manifestActive
+            ? 'bg-teal-100 text-teal-800'
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+        }`}
+        onClick={() => setMenuOpen(false)}
+      >
+        Çıktı Listesi
       </Link>
       <Link
         href="/admin/yacht-inquiries"

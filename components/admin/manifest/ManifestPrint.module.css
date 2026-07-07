@@ -1,0 +1,88 @@
+@media print {
+  .noPrint {
+    display: none !important;
+  }
+
+  .printOnly {
+    display: block !important;
+  }
+
+  .printSheet {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+  }
+
+  .printTable {
+    font-size: 11px;
+  }
+
+  .printTable th,
+  .printTable td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 6px 8px !important;
+  }
+}
+
+.printOnly {
+  display: none;
+}
+
+.counterBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #334155;
+  transition: background 0.15s;
+}
+
+.counterBtn:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.counterBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.classChip {
+  border-radius: 0.75rem;
+  border: 1.5px solid #cbd5e1;
+  background: #fff;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  transition: all 0.15s;
+}
+
+.classChipActive {
+  border-color: #0d9488;
+  background: #ccfbf1;
+  color: #115e59;
+}
+
+.filterChip {
+  border-radius: 9999px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.filterChipActive {
+  border-color: #0f766e;
+  background: #0d9488;
+  color: #fff;
+}
