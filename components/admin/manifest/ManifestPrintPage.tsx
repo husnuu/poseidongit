@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import AdminBookingMonthCalendar from '@/components/admin/bookings/AdminBookingMonthCalendar'
 import { useAdminAuth } from '@/components/admin/AdminAuthContext'
 import { adminFetchInit } from '@/lib/adminRequestInit'
+import { sortManifestRowsAlphabetically } from '@/lib/manifestSort'
 import {
   addManifestManualEntry,
   clearManifestManualEntriesForDate,
@@ -33,14 +34,6 @@ function formatDateLabel(date: string): string {
 
 function paxTotal(row: Pick<ManifestPrintRow, 'adult' | 'child' | 'infant'>): number {
   return row.adult + row.child + row.infant
-}
-
-function sortRows(rows: ManifestPrintRow[]): ManifestPrintRow[] {
-  return [...rows].sort((a, b) => {
-    const label = (r: ManifestPrintRow) =>
-      `${r.lastName} ${r.firstName}`.trim().toLocaleLowerCase('tr-TR')
-    return label(a).localeCompare(label(b), 'tr-TR', { sensitivity: 'base' })
-  })
 }
 
 function CounterField({
@@ -181,7 +174,7 @@ export default function ManifestPrintPage() {
       classFilter === 'all'
         ? manualRows
         : manualRows.filter((r) => r.classId === classFilter)
-    return sortRows([...bookingRows, ...manualFiltered])
+    return sortManifestRowsAlphabetically([...bookingRows, ...manualFiltered])
   }, [bookingRows, classFilter, manualRows])
 
   const totals = useMemo(() => {
@@ -249,7 +242,7 @@ export default function ManifestPrintPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Çıktı Listesi</h1>
             <p className="mt-1 text-sm text-slate-600">
-              Sadece ödenen sistem rezervasyonları ve buraya eklediğiniz manuel kayıtlar birlikte yazdırılır.
+              Sadece ödenen sistem rezervasyonları ve manuel kayıtlar birlikte yazdırılır. Liste soyada göre A–Z sıralıdır.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -273,7 +266,7 @@ export default function ManifestPrintPage() {
         <div className={`${styles.printOnly} mb-4`}>
           <h1 className="text-xl font-bold text-slate-900">Yolcu Çıktı Listesi</h1>
           <p className="text-sm text-slate-700">
-            {formatDateLabel(date)} · {classFilterLabel} · {totals.count} kayıt · {totals.pax} kişi
+            {formatDateLabel(date)} · {classFilterLabel} · {totals.count} kayıt · {totals.pax} kişi · A–Z sıralı
           </p>
         </div>
 

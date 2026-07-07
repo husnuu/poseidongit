@@ -3,6 +3,7 @@ import { authorizeAdmin } from '@/lib/adminAuthServer'
 import { mapBookingRowToApi, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { supabase } from '@/lib/supabase'
 import type { AdminBookingRow } from '@/types/adminBookings'
+import { sortManifestRowsAlphabetically } from '@/lib/manifestSort'
 
 function normalizeClassKey(classId: string): string {
   const k = (classId ?? '').toLowerCase().trim()
@@ -43,27 +44,29 @@ export async function GET(request: NextRequest) {
       list = list.filter((b) => normalizeClassKey(b.classId) === normalizeClassKey(classIdFilter))
     }
 
-    const bookings = list.map((b) => {
-      const locas = b.firstClassLocas?.length
-        ? b.firstClassLocas
-        : b.firstClassLoca
-          ? [b.firstClassLoca]
-          : []
-      return {
-        id: b.id,
-        date: b.date,
-        classId: b.classId,
-        className: b.className,
-        firstName: b.customer.firstName,
-        lastName: b.customer.lastName,
-        adult: b.counts.adult,
-        child: b.counts.child,
-        infant: b.counts.infant,
-        seatLabel: locas.length > 0 ? locas.join(', ') : '',
-        tourTitle: b.tourTitle,
-        source: 'booking' as const,
-      }
-    })
+    const bookings = sortManifestRowsAlphabetically(
+      list.map((b) => {
+        const locas = b.firstClassLocas?.length
+          ? b.firstClassLocas
+          : b.firstClassLoca
+            ? [b.firstClassLoca]
+            : []
+        return {
+          id: b.id,
+          date: b.date,
+          classId: b.classId,
+          className: b.className,
+          firstName: b.customer.firstName,
+          lastName: b.customer.lastName,
+          adult: b.counts.adult,
+          child: b.counts.child,
+          infant: b.counts.infant,
+          seatLabel: locas.length > 0 ? locas.join(', ') : '',
+          tourTitle: b.tourTitle,
+          source: 'booking' as const,
+        }
+      })
+    )
 
     return NextResponse.json({ bookings, count: bookings.length })
   } catch (e) {
