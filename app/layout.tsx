@@ -6,6 +6,7 @@ import './globals.css'
 import ChunkLoadErrorHandler from '@/components/ChunkLoadErrorHandler'
 import CookieConsentBannerRoot from '@/components/CookieConsentBannerRoot'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import GoogleTagManager, { GoogleTagManagerNoScript } from '@/components/GoogleTagManager'
 import NoScriptSeoFallback from '@/components/seo/NoScriptSeoFallback'
 import { htmlLangForLocale, isSiteLocale } from '@/lib/i18n/config'
 
@@ -100,10 +101,14 @@ export default async function RootLayout({
 
   return (
     <html lang={htmlLang} className={inter.variable}>
+      <head>
+        <GoogleTagManager />
+      </head>
       <body
         className={`${inter.className} min-h-screen min-h-[100dvh] overflow-x-hidden bg-zinc-50 text-zinc-900 antialiased`}
         suppressHydrationWarning
       >
+        <GoogleTagManagerNoScript />
         <Suspense fallback={null}>{children}</Suspense>
         <ChunkLoadErrorHandler />
         <GoogleAnalytics />
