@@ -172,21 +172,32 @@ export default function Step3CustomerInfo({
           </div>
           {state.pricingSummary && (
             <>
-              <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowDeposit}`}>
-                <span className={styles.summaryPriceLbl}>
-                  {ui.payDepositNowLabel(state.pricingSummary.depositPercent)}
-                </span>
-                <span className={styles.summaryPriceVal}>
-                  {state.pricingSummary.depositAmount.toLocaleString(ui.numberLocale)} ₺
-                </span>
-              </div>
-              {state.pricingSummary.remainingAmount > 0 && (
+              {state.pricingSummary.cashPaymentEnabled ? (
                 <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowRemaining}`}>
                   <span className={styles.summaryPriceLbl}>{ui.payRemainingAtDoorLabel}</span>
                   <span className={styles.summaryPriceVal}>
                     {state.pricingSummary.remainingAmount.toLocaleString(ui.numberLocale)} ₺
                   </span>
                 </div>
+              ) : (
+                <>
+                  <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowDeposit}`}>
+                    <span className={styles.summaryPriceLbl}>
+                      {ui.payDepositNowLabel(state.pricingSummary.depositPercent)}
+                    </span>
+                    <span className={styles.summaryPriceVal}>
+                      {state.pricingSummary.depositAmount.toLocaleString(ui.numberLocale)} ₺
+                    </span>
+                  </div>
+                  {state.pricingSummary.remainingAmount > 0 && (
+                    <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowRemaining}`}>
+                      <span className={styles.summaryPriceLbl}>{ui.payRemainingAtDoorLabel}</span>
+                      <span className={styles.summaryPriceVal}>
+                        {state.pricingSummary.remainingAmount.toLocaleString(ui.numberLocale)} ₺
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}

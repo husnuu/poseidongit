@@ -97,6 +97,7 @@ export const tourForBookingProjection = `{
     type,
     value
   },
+  cashPaymentEnabled,
   pickupPoints[]{
     name,
     address,

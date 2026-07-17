@@ -44,18 +44,29 @@ export default function StepPayment({
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
-          <div className={styles.summaryRow}>
-            <span className={styles.summaryRowLabel}>
-              {ui.payNowSummary(p.depositAmount.toLocaleString(ui.numberLocale), p.depositPercent)}
-            </span>
-            <span className={styles.summaryRowValue} />
-          </div>
-          <div className={styles.summaryRow}>
-            <span className={styles.summaryRowLabel}>
-              {ui.remainingPayTourDay(p.remainingAmount.toLocaleString(ui.numberLocale))}
-            </span>
-            <span className={styles.summaryRowValue} />
-          </div>
+          {p.cashPaymentEnabled ? (
+            <div className={styles.summaryRow}>
+              <span className={styles.summaryRowLabel}>
+                {ui.remainingPayTourDay(p.remainingAmount.toLocaleString(ui.numberLocale))}
+              </span>
+              <span className={styles.summaryRowValue} />
+            </div>
+          ) : (
+            <>
+              <div className={styles.summaryRow}>
+                <span className={styles.summaryRowLabel}>
+                  {ui.payNowSummary(p.depositAmount.toLocaleString(ui.numberLocale), p.depositPercent)}
+                </span>
+                <span className={styles.summaryRowValue} />
+              </div>
+              <div className={styles.summaryRow}>
+                <span className={styles.summaryRowLabel}>
+                  {ui.remainingPayTourDay(p.remainingAmount.toLocaleString(ui.numberLocale))}
+                </span>
+                <span className={styles.summaryRowValue} />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -68,12 +79,16 @@ export default function StepPayment({
               <path d="m9 12 2 2 4-4" />
             </svg>
           </span>
-          <h3 className={styles.cardCaptionTitle}>{ui.nestpayRedirectTitle}</h3>
+          <h3 className={styles.cardCaptionTitle}>
+            {p.cashPaymentEnabled ? ui.confirmCashReservation : ui.nestpayRedirectTitle}
+          </h3>
         </div>
         <hr className={styles.cardDivider} />
         <div className={styles.cardContent}>
           <p className="text-sm leading-relaxed text-zinc-600" style={{ margin: 0 }}>
-            {ui.nestpayRedirectBody}
+            {p.cashPaymentEnabled
+              ? ui.remainingPayTourDay(p.remainingAmount.toLocaleString(ui.numberLocale))
+              : ui.nestpayRedirectBody}
           </p>
           <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm text-zinc-600">
             <input

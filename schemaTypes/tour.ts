@@ -1591,6 +1591,15 @@ export default defineType({
       ],
     }),
 
+    defineField({
+      name: 'cashPaymentEnabled',
+      title: 'Nakit ödeme seçeneği aktif',
+      type: 'boolean',
+      description:
+        'Açıksa müşteri online ödemeye gitmez; rezervasyon onaylanır ve tutarın tamamı kapıda nakit ödenir.',
+      initialValue: false,
+    }),
+
     // 15) Ekstra Hizmetler
     defineField({
       name: 'extras',

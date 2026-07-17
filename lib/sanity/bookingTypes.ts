@@ -153,6 +153,8 @@ export interface TourForBooking {
   ticketClasses?: TicketClassForBooking[]
   seasonRules?: SeasonRule[]
   deposit?: DepositConfig
+  /** Sanity: nakit / kapıda ödeme — online NestPay atlanır. */
+  cashPaymentEnabled?: boolean
   quickFacts?: { maxCapacity?: number }
   bookingRules?: BookingRules
   baseCapacity?: BaseCapacity
@@ -192,6 +194,7 @@ export interface PricingSummary {
   depositAmount: number
   remainingAmount: number
   currency?: string
+  cashPaymentEnabled?: boolean
 }
 
 export interface BookingWizardState {

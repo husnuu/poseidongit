@@ -50,6 +50,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Rezervasyon yüklenemedi.' }, { status: 500 })
   }
 
+  try {
+    const { client } = await import('@/lib/sanity')
+    const { supabase } = await import('@/lib/supabase')
+    const { data: bookingRow } = await supabase
+      .from('bookings')
+      .select('tour_id')
+      .eq('id', id)
+      .maybeSingle()
+    const tourId = typeof bookingRow?.tour_id === 'string' ? bookingRow.tour_id.trim() : ''
+    if (tourId) {
+      const tourCash = await client.fetch<{ cashPaymentEnabled?: boolean } | null>(
+        `*[_type == "tour" && (_id == $id || slug.current == $id)][0]{ cashPaymentEnabled }`,
+        { id: tourId }
+      )
+      if (tourCash?.cashPaymentEnabled) {
+        return NextResponse.json(
+          { error: 'Bu tur için online ödeme kapalıdır. Ödeme kapıda nakit alınır.' },
+          { status: 400 }
+        )
+      }
+    }
+  } catch {
+    // Sanity kontrolü başarısızsa NestPay devam edebilir; nakit turlar API yanıtında cashPayment döner
+  }
+
   let config
   try {
     config = loadNestpayConfig()

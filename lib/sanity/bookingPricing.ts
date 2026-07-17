@@ -335,6 +335,17 @@ export function computePricingForSelection(
     })
   }
   const total = unitPrices.reduce((s, u) => s + u.subtotal, 0)
+  if (tour.cashPaymentEnabled) {
+    return {
+      unitPrices,
+      total,
+      depositPercent: 0,
+      depositAmount: 0,
+      remainingAmount: total,
+      currency: 'TRY',
+      cashPaymentEnabled: true,
+    }
+  }
   const deposit = tour.deposit
   let depositPercent = 0
   let depositAmount = 0
@@ -358,6 +369,7 @@ export function computePricingForSelection(
     depositAmount,
     remainingAmount,
     currency: 'TRY',
+    cashPaymentEnabled: false,
   }
 }
 

@@ -85,18 +85,31 @@ export default function Step4Payment({
             <span className={styles.paymentSummaryLabel}>{ui.paymentTotalPrice}</span>
             <span className={styles.paymentSummaryAmount}>{p.total.toLocaleString(ui.numberLocale)} ₺</span>
           </div>
-          <div className={styles.paymentSummaryDue}>
-            <span className={styles.paymentSummaryDueLabel}>
-              {ui.payDepositNowLabel(p.depositPercent)}
-            </span>
-            <span className={styles.paymentSummaryDueAmount}>
-              {p.depositAmount.toLocaleString(ui.numberLocale)} ₺
-            </span>
-          </div>
-          <div className={styles.paymentSummaryRow}>
-            <span className={styles.paymentSummaryLabel}>{ui.paymentRemainingTourDay}</span>
-            <span className={styles.paymentSummaryAmount}>{p.remainingAmount.toLocaleString(ui.numberLocale)} ₺</span>
-          </div>
+          {p.cashPaymentEnabled ? (
+            <div className={styles.paymentSummaryRow}>
+              <span className={styles.paymentSummaryLabel}>{ui.paymentRemainingTourDay}</span>
+              <span className={styles.paymentSummaryAmount}>
+                {p.remainingAmount.toLocaleString(ui.numberLocale)} ₺
+              </span>
+            </div>
+          ) : (
+            <>
+              <div className={styles.paymentSummaryDue}>
+                <span className={styles.paymentSummaryDueLabel}>
+                  {ui.payDepositNowLabel(p.depositPercent)}
+                </span>
+                <span className={styles.paymentSummaryDueAmount}>
+                  {p.depositAmount.toLocaleString(ui.numberLocale)} ₺
+                </span>
+              </div>
+              <div className={styles.paymentSummaryRow}>
+                <span className={styles.paymentSummaryLabel}>{ui.paymentRemainingTourDay}</span>
+                <span className={styles.paymentSummaryAmount}>
+                  {p.remainingAmount.toLocaleString(ui.numberLocale)} ₺
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

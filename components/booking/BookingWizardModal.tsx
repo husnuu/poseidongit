@@ -269,7 +269,13 @@ export default function BookingWizardModal({
           }),
         })
         const text = await res.text()
-        let data: { error?: string; bookingId?: string; accessToken?: string; summary?: unknown } = {}
+        let data: {
+          error?: string
+          bookingId?: string
+          accessToken?: string
+          cashPayment?: boolean
+          summary?: unknown
+        } = {}
         try {
           data = text ? JSON.parse(text) : {}
         } catch {
@@ -299,6 +305,13 @@ export default function BookingWizardModal({
           }))
         }
 
+        const useCashPayment = Boolean(data.cashPayment || tour.cashPaymentEnabled)
+        if (useCashPayment) {
+          window.location.assign(
+            withLocalePath(locale, `/rezervasyon/onaylandi?bookingId=${encodeURIComponent(data.bookingId)}`)
+          )
+          return
+        }
 
         // Ödeme başlatma
         const payRes = await fetch('/api/payment/start', {
@@ -331,6 +344,7 @@ export default function BookingWizardModal({
     if (state.step === 1) label = ui.continue
     else if (state.step === 2) label = ui.continue
     else if (submitting) label = ui.processing
+    else if (tour.cashPaymentEnabled) label = ui.confirmCashReservation
     else label = ui.toPayment
 
     let disabled: boolean
@@ -340,7 +354,7 @@ export default function BookingWizardModal({
     else disabled = false
 
     return { ctaLabel: label, ctaDisabled: disabled }
-  }, [state.step, submitting, canProceedStep1, canProceedStep2, state, ui])
+  }, [state.step, submitting, canProceedStep1, canProceedStep2, state, tour.cashPaymentEnabled, ui])
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) handleClose()

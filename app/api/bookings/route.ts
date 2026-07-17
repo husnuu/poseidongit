@@ -52,7 +52,12 @@ async function computePrices(
   date: string,
   classId: string,
   counts: { adult: number; child: number; infant: number }
-): Promise<{ unitPrice: number; totalPrice: number; depositAmount: number }> {
+): Promise<{
+  unitPrice: number
+  totalPrice: number
+  depositAmount: number
+  cashPaymentEnabled: boolean
+}> {
   try {
     const tour = await client.fetch<TourForBooking | null>(tourForBookingBySanityIdQuery, {
       id: tourId,
@@ -64,17 +69,21 @@ async function computePrices(
       baby: counts.infant,
     })
     const totalPax = counts.adult + counts.child + counts.infant
+    const cashPaymentEnabled = Boolean(tour?.cashPaymentEnabled)
     if (!summary || totalPax <= 0) {
-      return { unitPrice: 0, totalPrice: 0, depositAmount: 0 }
+      return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled }
     }
     const unitPrice = Math.round(summary.total / totalPax)
     return {
       unitPrice,
       totalPrice: summary.total,
-      depositAmount: Math.max(0, Math.min(summary.total, summary.depositAmount)),
+      depositAmount: cashPaymentEnabled
+        ? 0
+        : Math.max(0, Math.min(summary.total, summary.depositAmount)),
+      cashPaymentEnabled,
     }
   } catch {
-    return { unitPrice: 0, totalPrice: 0, depositAmount: 0 }
+    return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled: false }
   }
 }
 
@@ -103,7 +112,7 @@ export async function POST(request: Request) {
       lastName: t.lastName,
       ...(t.gender && { gender: t.gender }),
     }))
-    const { unitPrice, totalPrice, depositAmount } = await computePrices(
+    const { unitPrice, totalPrice, depositAmount, cashPaymentEnabled } = await computePrices(
       firestoreTourId,
       payload.date,
       payload.classId,
@@ -197,7 +206,11 @@ export async function POST(request: Request) {
       ...(payload.firstClassLocas && payload.firstClassLocas.length > 0 && { first_class_locas: payload.firstClassLocas }),
       unit_price: unitPrice,
       total_price: totalPrice,
-      ...(depositAmount > 0 && { paid_now: depositAmount }),
+      ...(cashPaymentEnabled
+        ? { paid_now: 0 }
+        : depositAmount > 0
+          ? { paid_now: depositAmount }
+          : {}),
       currency: CURRENCY,
       customer_first_name: customer.firstName,
       customer_last_name: customer.lastName,
@@ -254,11 +267,43 @@ export async function POST(request: Request) {
       throw new Error('Supabase booking insert failed: No id returned')
     }
 
-    // E-posta yalnızca ödeme onaylandığında (admin "paid" yaptığında) gönderilir.
+    // Online kapora: e-posta ödeme sonrası. Nakit (kapıda): rezervasyon anında bildirim.
+    if (cashPaymentEnabled) {
+      try {
+        const { sendBookingEmails } = await import('@/lib/email')
+        await sendBookingEmails({
+          bookingId: insertedRow.id,
+          accessToken,
+          tourId: firestoreTourId,
+          tourTitle: payload.tourTitle,
+          date: /^\d{4}-\d{2}-\d{2}$/.test(dateNorm) ? dateNorm : payload.date,
+          ...(timeToSave && { time: timeToSave }),
+          className: payload.className,
+          ...(payload.firstClassLocas &&
+            payload.firstClassLocas.length > 0 && { firstClassLocas: payload.firstClassLocas }),
+          counts: payload.counts,
+          totalPrice,
+          currency: CURRENCY,
+          paidNow: 0,
+          customer: {
+            firstName: customer.firstName,
+            lastName: customer.lastName,
+            email: customer.email,
+            phone: customer.phone,
+            ...(customer.note ? { note: customer.note } : {}),
+          },
+          ...(payload.meetingPoint && { pickup: payload.meetingPoint }),
+          siteLocale: payload.uiLocale ?? 'tr',
+        })
+      } catch (emailErr) {
+        console.error('[bookings] Nakit rezervasyon e-postası gönderilemedi:', emailErr)
+      }
+    }
 
     return NextResponse.json({
       bookingId: insertedRow.id,
       accessToken,
+      cashPayment: cashPaymentEnabled,
       summary: {
         tourTitle: payload.tourTitle,
         date: payload.date,
@@ -266,6 +311,9 @@ export async function POST(request: Request) {
         totalPrice,
         currency: CURRENCY,
         status: 'pending',
+        paidNow: cashPaymentEnabled ? 0 : depositAmount,
+        remainingAmount: cashPaymentEnabled ? totalPrice : Math.max(0, totalPrice - depositAmount),
+        cashPayment: cashPaymentEnabled,
       },
     })
   } catch (e) {

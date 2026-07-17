@@ -115,6 +115,7 @@ export type BookingWizardUi = {
   closeAria: string
   continue: string
   toPayment: string
+  confirmCashReservation: string
   processing: string
   pay: string
   payAria: string
@@ -281,6 +282,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     closeAria: 'Kapat',
     continue: 'Devam',
     toPayment: 'Ödemeye Geç',
+    confirmCashReservation: 'Rezervasyonu Onayla',
     processing: 'İşleniyor…',
     pay: 'ÖDE',
     payAria: 'Öde',
@@ -448,6 +450,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     closeAria: 'Close',
     continue: 'Continue',
     toPayment: 'Continue to payment',
+    confirmCashReservation: 'Confirm reservation',
     processing: 'Processing…',
     pay: 'PAY',
     payAria: 'Pay',
@@ -614,6 +617,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     closeAria: 'Schließen',
     continue: 'Weiter',
     toPayment: 'Zur Zahlung',
+    confirmCashReservation: 'Reservierung bestätigen',
     processing: 'Wird verarbeitet…',
     pay: 'ZAHLEN',
     payAria: 'Zahlen',

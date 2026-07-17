@@ -192,7 +192,13 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
           }),
         })
         const text = await res.text()
-        let data: { error?: string; bookingId?: string; accessToken?: string; summary?: unknown } = {}
+        let data: {
+          error?: string
+          bookingId?: string
+          accessToken?: string
+          cashPayment?: boolean
+          summary?: unknown
+        } = {}
         try {
           data = text ? JSON.parse(text) : {}
         } catch {
@@ -219,6 +225,14 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
               [classKey]: (prev?.[dateNorm]?.[classKey] ?? 0) + totalPax,
             },
           }))
+        }
+
+        const useCashPayment = Boolean(data.cashPayment || tour.cashPaymentEnabled)
+        if (useCashPayment) {
+          window.location.assign(
+            withLocalePath(locale, `/rezervasyon/onaylandi?bookingId=${encodeURIComponent(data.bookingId)}`)
+          )
+          return
         }
 
         // Ödeme başlatma
@@ -248,10 +262,11 @@ export default function BookingWizard({ tour, locale = 'tr' }: BookingWizardProp
   const ctaLabel = useMemo(() => {
     if (state.step === 1) return ui.continue
     if (state.step === 2) return ui.continue
-    if (state.step === 3) return ui.toPayment
+    if (state.step === 3) return ui.continue
     if (state.step === 4 && submitting) return ui.processing
+    if (state.step === 4 && tour.cashPaymentEnabled) return ui.confirmCashReservation
     return ui.pay
-  }, [state.step, submitting, ui])
+  }, [state.step, submitting, tour.cashPaymentEnabled, ui])
 
   const ctaDisabled = useMemo(() => {
     if (state.step === 1) return !canProceedStep1

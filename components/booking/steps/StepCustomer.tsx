@@ -168,21 +168,32 @@ export default function StepCustomer({
           </div>
           {state.pricingSummary && (
             <div className={styles.summaryPaymentSplit}>
-              <div className={styles.summaryDueBox}>
-                <p className={styles.summaryDueLabel}>
-                  {ui.payDepositNowLabel(state.pricingSummary.depositPercent)}
-                </p>
-                <p className={styles.summaryDueValue}>
-                  {state.pricingSummary.depositAmount.toLocaleString(ui.numberLocale)} ₺
-                </p>
-              </div>
-              {state.pricingSummary.remainingAmount > 0 && (
+              {state.pricingSummary.cashPaymentEnabled ? (
                 <div className={styles.summaryRemainingBox}>
                   <p className={styles.summaryRemainingLabel}>{ui.payRemainingAtDoorLabel}</p>
                   <p className={styles.summaryRemainingValue}>
                     {state.pricingSummary.remainingAmount.toLocaleString(ui.numberLocale)} ₺
                   </p>
                 </div>
+              ) : (
+                <>
+                  <div className={styles.summaryDueBox}>
+                    <p className={styles.summaryDueLabel}>
+                      {ui.payDepositNowLabel(state.pricingSummary.depositPercent)}
+                    </p>
+                    <p className={styles.summaryDueValue}>
+                      {state.pricingSummary.depositAmount.toLocaleString(ui.numberLocale)} ₺
+                    </p>
+                  </div>
+                  {state.pricingSummary.remainingAmount > 0 && (
+                    <div className={styles.summaryRemainingBox}>
+                      <p className={styles.summaryRemainingLabel}>{ui.payRemainingAtDoorLabel}</p>
+                      <p className={styles.summaryRemainingValue}>
+                        {state.pricingSummary.remainingAmount.toLocaleString(ui.numberLocale)} ₺
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

@@ -45,6 +45,11 @@ export default async function RezervasyonOnaylandiPage({
   const status = String(row.status ?? 'pending').toLowerCase()
   const isPaid = status === 'paid' || status === 'confirmed'
   const isFailed = status === 'failed'
+  const isPendingCash =
+    !isPaid &&
+    !isFailed &&
+    (row.paid_now == null || Number(row.paid_now) === 0) &&
+    Number(row.total_price ?? 0) > 0
   const ref = (typeof row.reference === 'string' && row.reference.trim()) || row.id.slice(0, 8).toUpperCase()
   const tourTitle = String(row.tour_title ?? '—')
   const date = formatDate(String(row.date ?? ''))
@@ -52,7 +57,9 @@ export default async function RezervasyonOnaylandiPage({
   const paidAt = row.paid_at ? new Date(String(row.paid_at)).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Istanbul' }) : null
   const accessToken = typeof row.access_token === 'string' ? row.access_token.trim() : ''
   const paidAmount = row.paid_now ?? row.total_price
+  const totalAmount = Number(row.total_price ?? 0)
   const currency = String(row.currency ?? 'TRY')
+  const remainingAtDoor = isPendingCash ? totalAmount : Math.max(0, totalAmount - Number(row.paid_now ?? 0))
 
   const ticketPath = accessToken && isPaid
     ? withLocalePath('tr', `/bilet/${encodeURIComponent(row.id)}?token=${encodeURIComponent(accessToken)}`)
@@ -82,6 +89,17 @@ export default async function RezervasyonOnaylandiPage({
     )
   }
 
+  const title = isPaid
+    ? 'Rezervasyonunuz onaylandı!'
+    : isPendingCash
+      ? 'Rezervasyonunuz alındı!'
+      : 'Ödemeniz alındı'
+  const subtitle = isPaid
+    ? 'Ödemeniz başarıyla tamamlandı. Biletiniz e-posta adresinize gönderilmiştir.'
+    : isPendingCash
+      ? 'Online ödeme yoktur. Toplam tutar tur günü teknede nakit olarak ödenmesi rica olunur.'
+      : 'Kesin onay ve biletiniz birkaç saniye içinde e-postanıza ulaşacaktır.'
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/40 to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -97,12 +115,10 @@ export default async function RezervasyonOnaylandiPage({
             </div>
           </div>
           <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 text-center">
-            {isPaid ? 'Rezervasyonunuz onaylandı!' : 'Ödemeniz alındı'}
+            {title}
           </h1>
           <p className="mt-2 text-sm text-slate-500 text-center max-w-xs">
-            {isPaid
-              ? 'Ödemeniz başarıyla tamamlandı. Biletiniz e-posta adresinize gönderilmiştir.'
-              : 'Kesin onay ve biletiniz birkaç saniye içinde e-postanıza ulaşacaktır.'}
+            {subtitle}
           </p>
         </div>
 
@@ -115,7 +131,9 @@ export default async function RezervasyonOnaylandiPage({
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
             <p className="text-xs text-emerald-800">
-              Biletiniz <strong>e-posta olarak gönderilmiştir.</strong>
+              {isPendingCash
+                ? 'Rezervasyon bilginiz e-posta ile gönderilmiştir.'
+                : <>Biletiniz <strong>e-posta olarak gönderilmiştir.</strong></>}
             </p>
           </div>
 
@@ -125,12 +143,34 @@ export default async function RezervasyonOnaylandiPage({
             <DetailRow label="Misafir" value={customerName} />
             <DetailRow label="Tur" value={tourTitle} />
             <DetailRow label="Tarih" value={date} />
-            {paidAmount != null && Number(paidAmount) > 0 && (
+            {isPendingCash ? (
               <DetailRow
-                label="Ödenen tutar"
+                label="Kapıda ödenecek (nakit)"
                 value={
                   <span className="font-semibold text-slate-900">
-                    {Number(paidAmount).toLocaleString('tr-TR')} {currency}
+                    {totalAmount.toLocaleString('tr-TR')} {currency}
+                  </span>
+                }
+              />
+            ) : (
+              paidAmount != null &&
+              Number(paidAmount) > 0 && (
+                <DetailRow
+                  label="Ödenen tutar"
+                  value={
+                    <span className="font-semibold text-slate-900">
+                      {Number(paidAmount).toLocaleString('tr-TR')} {currency}
+                    </span>
+                  }
+                />
+              )
+            )}
+            {!isPendingCash && remainingAtDoor > 0 && Number(row.paid_now ?? 0) > 0 && (
+              <DetailRow
+                label="Kapıda ödenecek"
+                value={
+                  <span className="font-semibold text-slate-900">
+                    {remainingAtDoor.toLocaleString('tr-TR')} {currency}
                   </span>
                 }
               />
