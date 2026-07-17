@@ -27,6 +27,10 @@ export interface ManifestPrintRow {
   infant: number
   seatLabel: string
   tourTitle?: string
+  totalPrice?: number
+  paidNow?: number
+  remainingAmount?: number
+  currency?: string
 }
 
 export const MANIFEST_CLASS_OPTIONS: { id: ManifestClassId; label: string }[] = [

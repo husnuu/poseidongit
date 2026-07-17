@@ -36,6 +36,20 @@ function paxTotal(row: Pick<ManifestPrintRow, 'adult' | 'child' | 'infant'>): nu
   return row.adult + row.child + row.infant
 }
 
+function formatMoney(amount: number | undefined, currency = 'TRY'): string {
+  if (amount == null || Number.isNaN(amount)) return '—'
+  try {
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  } catch {
+    return `${amount} ${currency}`
+  }
+}
+
 function CounterField({
   label,
   value,
@@ -134,6 +148,10 @@ export default function ManifestPrintPage() {
           infant: number
           seatLabel: string
           tourTitle?: string
+          totalPrice?: number
+          paidNow?: number
+          remainingAmount?: number
+          currency?: string
           source: 'booking'
         }>
       }
@@ -151,6 +169,10 @@ export default function ManifestPrintPage() {
           infant: b.infant,
           seatLabel: b.seatLabel,
           tourTitle: b.tourTitle,
+          totalPrice: b.totalPrice,
+          paidNow: b.paidNow,
+          remainingAmount: b.remainingAmount,
+          currency: b.currency,
         }))
       )
     } catch (e) {
@@ -179,7 +201,9 @@ export default function ManifestPrintPage() {
 
   const totals = useMemo(() => {
     const pax = allRows.reduce((sum, r) => sum + paxTotal(r), 0)
-    return { count: allRows.length, pax }
+    const paid = allRows.reduce((sum, r) => sum + (r.paidNow ?? 0), 0)
+    const remaining = allRows.reduce((sum, r) => sum + (r.remainingAmount ?? 0), 0)
+    return { count: allRows.length, pax, paid, remaining }
   }, [allRows])
 
   const handleAddManual = () => {
@@ -267,6 +291,9 @@ export default function ManifestPrintPage() {
           <h1 className="text-xl font-bold text-slate-900">Yolcu Çıktı Listesi</h1>
           <p className="text-sm text-slate-700">
             {formatDateLabel(date)} · {classFilterLabel} · {totals.count} kayıt · {totals.pax} kişi · A–Z sıralı
+            {totals.paid > 0 || totals.remaining > 0
+              ? ` · Kapora: ${formatMoney(totals.paid)} · Kapıda: ${formatMoney(totals.remaining)}`
+              : ''}
           </p>
         </div>
 
@@ -353,7 +380,9 @@ export default function ManifestPrintPage() {
               <div>
                 <h2 className="text-lg font-bold text-slate-900">{formatDateLabel(date)}</h2>
                 <p className="text-sm text-slate-600">
-                  {loading ? 'Yükleniyor…' : `${totals.count} kayıt · ${totals.pax} kişi`}
+                  {loading
+                    ? 'Yükleniyor…'
+                    : `${totals.count} kayıt · ${totals.pax} kişi · Kapora ${formatMoney(totals.paid)} · Kapıda ${formatMoney(totals.remaining)}`}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -398,7 +427,7 @@ export default function ManifestPrintPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className={`${styles.printTable} w-full min-w-[720px] border-collapse text-sm`}>
+          <table className={`${styles.printTable} w-full min-w-[960px] border-collapse text-sm`}>
             <thead>
               <tr className="bg-slate-100 text-left text-xs uppercase tracking-wide text-slate-600">
                 <th className="border border-slate-200 px-3 py-2">#</th>
@@ -407,7 +436,9 @@ export default function ManifestPrintPage() {
                 <th className="border border-slate-200 px-3 py-2">Yetişkin</th>
                 <th className="border border-slate-200 px-3 py-2">Çocuk</th>
                 <th className="border border-slate-200 px-3 py-2">Bebek</th>
-                <th className="border border-slate-200 px-3 py-2">Toplam</th>
+                <th className="border border-slate-200 px-3 py-2">Kişi</th>
+                <th className="border border-slate-200 px-3 py-2">Ödenen (kapora)</th>
+                <th className="border border-slate-200 px-3 py-2">Kapıda ödenecek</th>
                 <th className="border border-slate-200 px-3 py-2">Oturacağı Yer</th>
                 <th className={`${styles.noPrint} border border-slate-200 px-3 py-2`}>Kaynak</th>
                 <th className={`${styles.noPrint} border border-slate-200 px-3 py-2`} />
@@ -416,7 +447,7 @@ export default function ManifestPrintPage() {
             <tbody>
               {allRows.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="border border-slate-200 px-3 py-8 text-center text-slate-500">
+                  <td colSpan={12} className="border border-slate-200 px-3 py-8 text-center text-slate-500">
                     {loading ? 'Liste yükleniyor…' : 'Bu tarih için kayıt yok.'}
                   </td>
                 </tr>
@@ -433,6 +464,12 @@ export default function ManifestPrintPage() {
                     <td className="border border-slate-200 px-3 py-2 text-center">{row.infant}</td>
                     <td className="border border-slate-200 px-3 py-2 text-center font-semibold">
                       {paxTotal(row)}
+                    </td>
+                    <td className="border border-slate-200 px-3 py-2 text-right font-medium text-teal-800">
+                      {formatMoney(row.paidNow, row.currency)}
+                    </td>
+                    <td className="border border-slate-200 px-3 py-2 text-right font-medium text-amber-900">
+                      {formatMoney(row.remainingAmount, row.currency)}
                     </td>
                     <td className="border border-slate-200 px-3 py-2">{row.seatLabel || '—'}</td>
                     <td className={`${styles.noPrint} border border-slate-200 px-3 py-2`}>

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authorizeAdmin } from '@/lib/adminAuthServer'
+import { computeDepositAmounts, type TourDepositConfig } from '@/lib/bookingDepositAmount'
 import { mapBookingRowToApi, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { client } from '@/lib/sanity'
 import { supabase } from '@/lib/supabase'
 import type { AdminBookingRow } from '@/types/adminBookings'
 import { sortManifestRowsAlphabetically } from '@/lib/manifestSort'
@@ -11,6 +13,32 @@ function normalizeClassKey(classId: string): string {
   if (k === 'premium' || k.startsWith('prem')) return 'premium'
   if (k === 'first' || k.startsWith('first')) return 'first'
   return k
+}
+
+async function getTourDepositMap(tourIds: string[]): Promise<Record<string, TourDepositConfig | null>> {
+  const unique = [...new Set(tourIds)].filter(Boolean).slice(0, 80)
+  if (unique.length === 0) return {}
+  const tours = await client.fetch<{ _id: string; deposit?: TourDepositConfig }[]>(
+    `*[_type == "tour" && _id in $ids]{ _id, deposit }`,
+    { ids: unique }
+  )
+  const map: Record<string, TourDepositConfig | null> = {}
+  for (const tour of tours ?? []) {
+    if (tour._id) map[tour._id] = tour.deposit ?? null
+  }
+  return map
+}
+
+function resolvePaymentAmounts(
+  totalPrice: number,
+  paidNowRaw: number | null | undefined,
+  deposit?: TourDepositConfig | null
+): { paidNow: number; remainingAmount: number } {
+  if (paidNowRaw != null && !Number.isNaN(Number(paidNowRaw)) && Number(paidNowRaw) >= 0) {
+    const paidNow = Math.min(Number(paidNowRaw), totalPrice)
+    return { paidNow, remainingAmount: Math.max(0, totalPrice - paidNow) }
+  }
+  return computeDepositAmounts(totalPrice, deposit)
 }
 
 export async function GET(request: NextRequest) {
@@ -44,6 +72,8 @@ export async function GET(request: NextRequest) {
       list = list.filter((b) => normalizeClassKey(b.classId) === normalizeClassKey(classIdFilter))
     }
 
+    const depositMap = await getTourDepositMap(list.map((b) => b.tourId))
+
     const bookings = sortManifestRowsAlphabetically(
       list.map((b) => {
         const locas = b.firstClassLocas?.length
@@ -51,6 +81,13 @@ export async function GET(request: NextRequest) {
           : b.firstClassLoca
             ? [b.firstClassLoca]
             : []
+        const totalPrice = Number(b.totalPrice ?? 0)
+        const paidNowFromRow = (b as AdminBookingRow & { paidNow?: number }).paidNow
+        const { paidNow, remainingAmount } = resolvePaymentAmounts(
+          totalPrice,
+          paidNowFromRow,
+          depositMap[b.tourId]
+        )
         return {
           id: b.id,
           date: b.date,
@@ -63,6 +100,10 @@ export async function GET(request: NextRequest) {
           infant: b.counts.infant,
           seatLabel: locas.length > 0 ? locas.join(', ') : '',
           tourTitle: b.tourTitle,
+          totalPrice,
+          paidNow,
+          remainingAmount,
+          currency: b.currency || 'TRY',
           source: 'booking' as const,
         }
       })
