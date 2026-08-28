@@ -21,6 +21,7 @@ import {
 } from './steps'
 import PaymentSuccessPanel from './PaymentSuccessPanel'
 import PaymentLoadingOverlay from './PaymentLoadingOverlay'
+import ReservationTourSnapshot from './ReservationTourSnapshot'
 import styles from './booking.module.css'
 
 /** CMS başlığının kısa özeti — tire/pipe sonrası alt başlığı atar, tek bakışta tur adı. */
@@ -172,7 +173,7 @@ export default function BookingWizardModal({
 
   // Focus trap
   useEffect(() => {
-    if (!open || !paneRef.current) return
+    if (!open || !paneRef.current || variant === 'page') return
     const pane = paneRef.current
     const focusables = pane.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -196,7 +197,7 @@ export default function BookingWizardModal({
     }
     pane.addEventListener('keydown', handleKey)
     return () => pane.removeEventListener('keydown', handleKey)
-  }, [open, state.step])
+  }, [open, state.step, variant])
 
   const goNext = useCallback(() => {
     if (state.step < 4) setState((prev) => ({ ...prev, step: (prev.step + 1) as 1 | 2 | 3 | 4 }))
@@ -381,15 +382,7 @@ export default function BookingWizardModal({
 
   if (submitting) return <PaymentLoadingOverlay />
 
-  const modalContent = (
-    <div
-      className={variant === 'page' ? styles.pageOverlay : styles.modalOverlay}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="booking-wizard-title"
-      aria-describedby="booking-wizard-desc"
-      onClick={handleBackdropClick}
-    >
+  const wizardPane = (
       <div
         ref={paneRef}
         className={`${styles.wizardModalPane} ${variant === 'page' ? styles.pagePane : ''}`}
@@ -575,6 +568,25 @@ export default function BookingWizardModal({
           )}
         </main>
       </div>
+  )
+
+  const modalContent = (
+    <div
+      className={variant === 'page' ? styles.pageOverlay : styles.modalOverlay}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="booking-wizard-title"
+      aria-describedby="booking-wizard-desc"
+      onClick={handleBackdropClick}
+    >
+      {variant === 'page' ? (
+        <div className={styles.pageLayout}>
+          <ReservationTourSnapshot tour={tour} locale={locale} />
+          {wizardPane}
+        </div>
+      ) : (
+        wizardPane
+      )}
     </div>
   )
 

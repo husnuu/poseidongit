@@ -138,6 +138,10 @@ export type BookingWizardUi = {
   manageBookingHintAfter: string
   modalTitle: string
   modalCloseAria: string
+  pageFactsHeading: string
+  pageAboutHeading: string
+  pageStartTime: string
+  pageReturnTime: string
   stepProgressAria: (step: number, max: number) => string
   savingReservation: string
   close: string
@@ -308,6 +312,10 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     manageBookingHintAfter: ' sayfasına gidip e-postanızı girin.',
     modalTitle: 'Rezervasyon',
     modalCloseAria: 'Rezervasyonu kapat',
+    pageFactsHeading: 'Temel bilgiler',
+    pageAboutHeading: 'Tur hakkında',
+    pageStartTime: 'Kalkış saati',
+    pageReturnTime: 'Dönüş saati',
     stepProgressAria: (step, max) => `Adım ${step} / ${max}`,
     savingReservation: 'Rezervasyonunuz kaydediliyor…',
     close: 'Kapat',
@@ -475,6 +483,10 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     manageBookingHintAfter: ' and enter your email.',
     modalTitle: 'Book',
     modalCloseAria: 'Close booking',
+    pageFactsHeading: 'At a glance',
+    pageAboutHeading: 'About this tour',
+    pageStartTime: 'Departure',
+    pageReturnTime: 'Return',
     stepProgressAria: (step, max) => `Step ${step} of ${max}`,
     savingReservation: 'Saving your booking…',
     close: 'Close',
@@ -642,6 +654,10 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     manageBookingHintAfter: ' und geben Sie Ihre E-Mail ein.',
     modalTitle: 'Buchung',
     modalCloseAria: 'Buchung schließen',
+    pageFactsHeading: 'Auf einen Blick',
+    pageAboutHeading: 'Über die Tour',
+    pageStartTime: 'Abfahrt',
+    pageReturnTime: 'Rückkehr',
     stepProgressAria: (step, max) => `Schritt ${step} von ${max}`,
     savingReservation: 'Ihre Buchung wird gespeichert…',
     close: 'Schließen',
