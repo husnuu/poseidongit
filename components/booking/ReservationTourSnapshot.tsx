@@ -90,7 +90,7 @@ export default function ReservationTourSnapshot({
   }, [tour.title])
 
   return (
-    <aside className={styles.card} aria-label={ui.pageAboutHeading}>
+    <>
       <div className={styles.cover}>
         {cover ? (
           <Image
@@ -244,6 +244,6 @@ export default function ReservationTourSnapshot({
           ) : null}
         </div>
       ) : null}
-    </aside>
+    </>
   )
 }
