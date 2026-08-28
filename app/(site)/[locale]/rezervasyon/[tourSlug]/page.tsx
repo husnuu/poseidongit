@@ -37,7 +37,7 @@ export default async function RezervasyonPage({
   const safeTour = serializeTour(tour)
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="min-h-[100dvh] bg-[#e8eef5]">
       <BookingWizard tour={safeTour} locale={locale} />
     </div>
   )
