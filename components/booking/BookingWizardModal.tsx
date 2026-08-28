@@ -137,23 +137,6 @@ export default function BookingWizardModal({
     })
   }, [tour, state.selectedDate, state.selectedClassKey, state.counts.adult, state.counts.child, state.counts.baby])
 
-  useEffect(() => {
-    if (!open) return
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prevOverflow
-    }
-  }, [open])
-
-  // Onay ekranına geçince içeriği en üste kaydır
-  useEffect(() => {
-    if (submitted && paneRef.current) {
-      const main = paneRef.current.querySelector('main')
-      if (main) main.scrollTop = 0
-    }
-  }, [submitted])
-
   const handleClose = useCallback(() => {
     setSubmitted(false)
     setBookingResult(null)
@@ -164,12 +147,31 @@ export default function BookingWizardModal({
   }, [onClose, tourSlug])
 
   useEffect(() => {
+    if (!open) return
+    if (variant === 'page') return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [open, variant])
+
+  useEffect(() => {
+    if (variant === 'page') return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') handleClose()
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleClose])
+  }, [handleClose, variant])
+
+  // Onay ekranına geçince içeriği en üste kaydır
+  useEffect(() => {
+    if (submitted && paneRef.current) {
+      const main = paneRef.current.querySelector('main')
+      if (main) main.scrollTop = 0
+    }
+  }, [submitted])
 
   // Focus trap
   useEffect(() => {
@@ -406,14 +408,16 @@ export default function BookingWizardModal({
               {ui.modalTitle}
             </h1>
           )}
-          <button
-            type="button"
-            className={`${styles.closeBtn} ${styles.wizardModalClose}`}
-            onClick={handleClose}
-            aria-label={ui.modalCloseAria}
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {variant !== 'page' ? (
+            <button
+              type="button"
+              className={`${styles.closeBtn} ${styles.wizardModalClose}`}
+              onClick={handleClose}
+              aria-label={ui.modalCloseAria}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          ) : null}
         </header>
 
         <div className={styles.wizardModalStepArea} id="booking-wizard-desc">
@@ -573,11 +577,15 @@ export default function BookingWizardModal({
   const modalContent = (
     <div
       className={variant === 'page' ? styles.pageOverlay : styles.modalOverlay}
-      role="dialog"
-      aria-modal="true"
+      {...(variant === 'page'
+        ? {}
+        : {
+            role: 'dialog' as const,
+            'aria-modal': true,
+            onClick: handleBackdropClick,
+          })}
       aria-labelledby="booking-wizard-title"
       aria-describedby="booking-wizard-desc"
-      onClick={handleBackdropClick}
     >
       {variant === 'page' ? (
         <div className={styles.pageLayout}>
@@ -590,6 +598,7 @@ export default function BookingWizardModal({
     </div>
   )
 
+  if (variant === 'page') return modalContent
   if (!portalEl) return null
   return createPortal(modalContent, portalEl)
 }

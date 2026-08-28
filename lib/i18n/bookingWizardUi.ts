@@ -142,6 +142,7 @@ export type BookingWizardUi = {
   pageAboutHeading: string
   pageStartTime: string
   pageReturnTime: string
+  pageDetailsHeading: string
   stepProgressAria: (step: number, max: number) => string
   savingReservation: string
   close: string
@@ -316,6 +317,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     pageAboutHeading: 'Tur hakkında',
     pageStartTime: 'Kalkış saati',
     pageReturnTime: 'Dönüş saati',
+    pageDetailsHeading: 'Menü ve tur detayı',
     stepProgressAria: (step, max) => `Adım ${step} / ${max}`,
     savingReservation: 'Rezervasyonunuz kaydediliyor…',
     close: 'Kapat',
@@ -487,6 +489,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     pageAboutHeading: 'About this tour',
     pageStartTime: 'Departure',
     pageReturnTime: 'Return',
+    pageDetailsHeading: 'Menu and tour details',
     stepProgressAria: (step, max) => `Step ${step} of ${max}`,
     savingReservation: 'Saving your booking…',
     close: 'Close',
@@ -658,6 +661,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     pageAboutHeading: 'Über die Tour',
     pageStartTime: 'Abfahrt',
     pageReturnTime: 'Rückkehr',
+    pageDetailsHeading: 'Menü und Tourdetails',
     stepProgressAria: (step, max) => `Schritt ${step} von ${max}`,
     savingReservation: 'Ihre Buchung wird gespeichert…',
     close: 'Schließen',
