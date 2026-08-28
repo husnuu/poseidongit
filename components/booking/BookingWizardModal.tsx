@@ -23,6 +23,15 @@ import PaymentSuccessPanel from './PaymentSuccessPanel'
 import PaymentLoadingOverlay from './PaymentLoadingOverlay'
 import styles from './booking.module.css'
 
+/** CMS başlığının kısa özeti — tire/pipe sonrası alt başlığı atar, tek bakışta tur adı. */
+export function shortTourHeading(title: string | undefined | null): string {
+  const raw = (title ?? '').replace(/\s+/g, ' ').trim()
+  if (!raw) return ''
+  const primary = raw.split(/\s+[–—|:]\s+/)[0]?.trim() || raw
+  if (primary.length <= 56) return primary
+  return `${primary.slice(0, 53).trimEnd()}…`
+}
+
 export interface BookingWizardModalProps {
   open: boolean
   onClose: () => void
@@ -42,6 +51,10 @@ export default function BookingWizardModal({
   variant = 'modal',
 }: BookingWizardModalProps) {
   const ui = useMemo(() => getBookingWizardUi(locale), [locale])
+  const pageTourTitle = useMemo(
+    () => (variant === 'page' ? shortTourHeading(tour.title) : ''),
+    [variant, tour.title]
+  )
   const [portalEl, setPortalEl] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -383,10 +396,23 @@ export default function BookingWizardModal({
         onClick={(e) => e.stopPropagation()}
         tabIndex={-1}
       >
-        <header className={styles.wizardModalHeader}>
-          <h1 id="booking-wizard-title" className={styles.wizardModalTitle}>
-            {ui.modalTitle}
-          </h1>
+        <header
+          className={`${styles.wizardModalHeader} ${
+            variant === 'page' ? styles.wizardModalHeaderPage : ''
+          }`}
+        >
+          {pageTourTitle ? (
+            <div className={styles.pageTourHeading}>
+              <p className={styles.pageTourKicker}>{ui.modalTitle}</p>
+              <h1 id="booking-wizard-title" className={styles.pageTourTitle}>
+                {pageTourTitle}
+              </h1>
+            </div>
+          ) : (
+            <h1 id="booking-wizard-title" className={styles.wizardModalTitle}>
+              {ui.modalTitle}
+            </h1>
+          )}
           <button
             type="button"
             className={`${styles.closeBtn} ${styles.wizardModalClose}`}
