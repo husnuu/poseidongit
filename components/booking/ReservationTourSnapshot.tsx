@@ -115,7 +115,7 @@ export default function ReservationTourSnapshot({
         ) : null}
       </div>
 
-      <div className={styles.intro}>
+      <div className={styles.intro} aria-label={ui.pageAboutHeading}>
         {description ? (
           <section className={styles.block}>
             <h2 className={styles.heading}>{ui.pageAboutHeading}</h2>
