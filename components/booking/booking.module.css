@@ -2781,8 +2781,12 @@
   position: relative;
   z-index: 0;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
   background: #e8eef5;
   padding: 0 0 32px;
+  box-sizing: border-box;
 }
 
 .pageLayout {
@@ -2790,13 +2794,15 @@
   max-width: 1180px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     'cover'
     'intro'
     'wizard'
     'details';
   gap: 0;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .pageLayout .pagePane,
@@ -2805,8 +2811,10 @@
   max-height: none;
   min-height: auto;
   width: 100%;
-  max-width: none;
+  max-width: 100%;
+  min-width: 0;
   box-shadow: none;
+  box-sizing: border-box;
 }
 
 .pagePane {
@@ -2823,15 +2831,42 @@
     font-size: 15px;
   }
 
-  .pageLayout .wizardModalPane {
-    border-radius: 16px 16px 0 0;
-    overflow: hidden;
-    margin-top: 8px;
+  .pageLayout .wizardModalHeaderPage {
+    padding: 12px 16px;
+    min-height: 0;
   }
 
-  .pageLayout .wizardModalHeaderPage {
-    padding-top: 12px;
-    padding-bottom: 12px;
+  .pageLayout .wizardModalPane {
+    border-radius: 0;
+    overflow: hidden;
+    margin-top: 0;
+  }
+
+  .pageLayout .wizardModalContent {
+    overflow: visible;
+  }
+
+  .pageLayout .calendarGrid {
+    gap: 3px;
+  }
+
+  .pageLayout .dayCell {
+    min-width: 0;
+    min-height: 42px;
+    padding: 2px 1px;
+    font-size: 12px;
+  }
+
+  .pageLayout .dayPrice {
+    font-size: 9px;
+  }
+
+  .pageLayout .sectionFlat {
+    padding: 16px 12px;
+  }
+
+  .pageLayout .wizardModalStepArea {
+    padding: 12px 10px 14px;
   }
 }
 
@@ -2841,7 +2876,7 @@
   }
 
   .pageLayout {
-    grid-template-columns: 380px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
     grid-template-areas:
       'cover wizard'
       'intro wizard'
