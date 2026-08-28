@@ -9,7 +9,42 @@ export const tourForBookingProjection = `{
   _id,
   title,
   "slug": slug.current,
-  quickFacts{ maxCapacity },
+  shortDescription,
+  mainImage{
+    asset,
+    alt,
+    "url": asset->url,
+    "metadata": asset->metadata { lqip, dimensions }
+  },
+  quickFacts{
+    durationText,
+    availabilityText,
+    meetingLocation,
+    startTime,
+    returnTime,
+    language,
+    groupType,
+    maxCapacity
+  },
+  highlights[]{ icon, title, description },
+  foodMenu{
+    enabled,
+    sectionTitle,
+    intro,
+    items[]{
+      title,
+      excerpt,
+      priceLabel,
+      metaLine1,
+      metaLine2,
+      image{
+        asset,
+        alt,
+        "url": asset->url,
+        "metadata": asset->metadata { lqip, dimensions }
+      }
+    }
+  },
   bookingRules{ show, title, bullets },
   baseCapacity{ ecoCapacity, premiumCapacity, firstCapacity },
   availabilityOverrides[]{

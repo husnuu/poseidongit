@@ -123,6 +123,8 @@ export interface AvailabilityConfig {
 export interface TourImageForBooking {
   asset?: { _ref?: string; _type?: string }
   url?: string
+  alt?: string
+  metadata?: { lqip?: string; dimensions?: { width: number; height: number } }
 }
 
 export interface PickupPoint {
@@ -145,23 +147,59 @@ export interface MealMenuForBooking {
   options?: MealMenuOption[]
 }
 
+export interface TourHighlightForBooking {
+  icon?: string
+  title: string
+  description?: string
+}
+
+export interface TourFoodMenuItemForBooking {
+  title?: string
+  excerpt?: string
+  priceLabel?: string
+  metaLine1?: string
+  metaLine2?: string
+  image?: TourImageForBooking
+}
+
+export interface TourFoodMenuForBooking {
+  enabled?: boolean
+  sectionTitle?: string
+  intro?: string
+  items?: TourFoodMenuItemForBooking[]
+}
+
+export interface TourQuickFactsForBooking {
+  durationText?: string
+  availabilityText?: string
+  meetingLocation?: string
+  startTime?: string
+  returnTime?: string
+  language?: string
+  groupType?: string
+  maxCapacity?: number
+}
+
 export interface TourForBooking {
   _id?: string
   title: string
   slug: string
+  shortDescription?: string
   mainImage?: TourImageForBooking
   ticketClasses?: TicketClassForBooking[]
   seasonRules?: SeasonRule[]
   deposit?: DepositConfig
   /** Sanity: nakit / kapıda ödeme — online NestPay atlanır. */
   cashPaymentEnabled?: boolean
-  quickFacts?: { maxCapacity?: number }
+  quickFacts?: TourQuickFactsForBooking
+  highlights?: TourHighlightForBooking[]
   bookingRules?: BookingRules
   baseCapacity?: BaseCapacity
   availabilityOverrides?: AvailabilityOverride[]
   availability?: AvailabilityConfig
   pickupPoints?: PickupPoint[]
   mealMenu?: MealMenuForBooking
+  foodMenu?: TourFoodMenuForBooking
 }
 
 /** Supabase bookings: tourId = Sanity _id (UUID), date "YYYY-MM-DD", classId "eco"|"premium"|"first", counts { adult, child, infant }, status "pending"|"paid". */
