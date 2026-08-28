@@ -29,6 +29,8 @@ export interface BookingWizardModalProps {
   tourSlug: string
   initialTourData: TourForBooking
   locale?: SiteLocale
+  /** Dedicated /rezervasyon/[slug] page: same wizard UI, no dimmed dismissible overlay */
+  variant?: 'modal' | 'page'
 }
 
 export default function BookingWizardModal({
@@ -37,6 +39,7 @@ export default function BookingWizardModal({
   tourSlug,
   initialTourData: tour,
   locale = 'tr',
+  variant = 'modal',
 }: BookingWizardModalProps) {
   const ui = useMemo(() => getBookingWizardUi(locale), [locale])
   const [portalEl, setPortalEl] = useState<HTMLElement | null>(null)
@@ -357,6 +360,7 @@ export default function BookingWizardModal({
   }, [state.step, submitting, canProceedStep1, canProceedStep2, state, tour.cashPaymentEnabled, ui])
 
   const handleBackdropClick = (e: React.MouseEvent) => {
+    if (variant === 'page') return
     if (e.target === e.currentTarget) handleClose()
   }
 
@@ -366,7 +370,7 @@ export default function BookingWizardModal({
 
   const modalContent = (
     <div
-      className={styles.modalOverlay}
+      className={variant === 'page' ? styles.pageOverlay : styles.modalOverlay}
       role="dialog"
       aria-modal="true"
       aria-labelledby="booking-wizard-title"
@@ -375,7 +379,7 @@ export default function BookingWizardModal({
     >
       <div
         ref={paneRef}
-        className={styles.wizardModalPane}
+        className={`${styles.wizardModalPane} ${variant === 'page' ? styles.pagePane : ''}`}
         onClick={(e) => e.stopPropagation()}
         tabIndex={-1}
       >
