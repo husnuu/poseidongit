@@ -81,6 +81,14 @@ export default function ReservationTourSnapshot({
     ? (tour.foodMenu.items ?? []).filter((i) => i?.title?.trim())
     : []
 
+  const heading = useMemo(() => {
+    const raw = (tour.title ?? '').replace(/\s+/g, ' ').trim()
+    if (!raw) return ''
+    const primary = raw.split(/\s+[–—|:]\s+/)[0]?.trim() || raw
+    if (primary.length <= 56) return primary
+    return `${primary.slice(0, 53).trimEnd()}…`
+  }, [tour.title])
+
   return (
     <aside className={styles.card} aria-label={ui.pageAboutHeading}>
       <div className={styles.cover}>
@@ -98,9 +106,16 @@ export default function ReservationTourSnapshot({
         ) : (
           <div className={styles.coverFallback} aria-hidden />
         )}
+        <div className={styles.coverShade} aria-hidden />
+        {heading ? (
+          <div className={styles.coverCaption}>
+            <p className={styles.coverKicker}>{ui.modalTitle}</p>
+            <p className={styles.coverTitle}>{heading}</p>
+          </div>
+        ) : null}
       </div>
 
-      <div className={styles.body}>
+      <div className={styles.intro}>
         {description ? (
           <section className={styles.block}>
             <h2 className={styles.heading}>{ui.pageAboutHeading}</h2>
@@ -140,91 +155,95 @@ export default function ReservationTourSnapshot({
             </ul>
           </section>
         ) : null}
+      </div>
 
-        {highlights.length > 0 ? (
-          <section className={styles.block}>
-            <h2 className={styles.heading}>{tourUi.highlightsTitle}</h2>
-            <ul className={styles.highlights}>
-              {highlights.map((h, i) => (
-                <li key={`${h.title}-${i}`}>
-                  <p className={styles.hiTitle}>{h.title}</p>
-                  {h.description?.trim() ? (
-                    <p className={styles.hiDesc}>{h.description.trim()}</p>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+      {highlights.length > 0 || foodItems.length > 0 ? (
+        <div className={styles.details}>
+          {highlights.length > 0 ? (
+            <section className={styles.block}>
+              <h2 className={styles.heading}>{tourUi.highlightsTitle}</h2>
+              <ul className={styles.highlights}>
+                {highlights.map((h, i) => (
+                  <li key={`${h.title}-${i}`}>
+                    <p className={styles.hiTitle}>{h.title}</p>
+                    {h.description?.trim() ? (
+                      <p className={styles.hiDesc}>{h.description.trim()}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
-        {foodItems.length > 0 ? (
-          <section className={styles.block}>
-            <h2 className={styles.heading}>
-              <Utensils size={16} strokeWidth={2} aria-hidden />
-              {tour.foodMenu?.sectionTitle?.trim() || tourUi.foodMenuFallbackTitle}
-            </h2>
-            {tour.foodMenu?.intro?.trim() ? (
-              <p className={styles.menuIntro}>{tour.foodMenu.intro.trim()}</p>
-            ) : null}
-            <ul className={styles.menuList}>
-              {foodItems.map((item, index) => {
-                const title = item.title!.trim()
-                const thumb = imageUrl(item.image, 240, 240)
-                const excerpt = item.excerpt?.trim() || ''
-                const open = openMenu === index
-                return (
-                  <li key={`${title}-${index}`} className={styles.menuItem}>
-                    <div className={styles.menuThumb}>
-                      {thumb ? (
-                        <Image
-                          src={thumb}
-                          alt=""
-                          fill
-                          className={styles.menuThumbImg}
-                          sizes="72px"
-                          aria-hidden
-                        />
-                      ) : (
-                        <span className={styles.menuThumbPh} aria-hidden>
-                          ···
-                        </span>
-                      )}
-                    </div>
-                    <div className={styles.menuMain}>
-                      <div className={styles.menuTop}>
-                        <h3 className={styles.menuTitle}>{title}</h3>
-                        {item.priceLabel?.trim() ? (
-                          <span className={styles.menuPrice}>{item.priceLabel.trim()}</span>
+          {foodItems.length > 0 ? (
+            <section className={styles.block}>
+              <h2 className={styles.heading}>
+                <Utensils size={16} strokeWidth={2} aria-hidden />
+                {tour.foodMenu?.sectionTitle?.trim() || tourUi.foodMenuFallbackTitle}
+              </h2>
+              {tour.foodMenu?.intro?.trim() ? (
+                <p className={styles.menuIntro}>{tour.foodMenu.intro.trim()}</p>
+              ) : null}
+              <ul className={styles.menuList}>
+                {foodItems.map((item, index) => {
+                  const title = item.title!.trim()
+                  const thumb = imageUrl(item.image, 240, 240)
+                  const excerpt = item.excerpt?.trim() || ''
+                  const open = openMenu === index
+                  return (
+                    <li key={`${title}-${index}`} className={styles.menuItem}>
+                      <div className={styles.menuThumb}>
+                        {thumb ? (
+                          <Image
+                            src={thumb}
+                            alt=""
+                            fill
+                            className={styles.menuThumbImg}
+                            sizes="72px"
+                            aria-hidden
+                          />
+                        ) : (
+                          <span className={styles.menuThumbPh} aria-hidden>
+                            ···
+                          </span>
+                        )}
+                      </div>
+                      <div className={styles.menuMain}>
+                        <div className={styles.menuTop}>
+                          <h3 className={styles.menuTitle}>{title}</h3>
+                          {item.priceLabel?.trim() ? (
+                            <span className={styles.menuPrice}>{item.priceLabel.trim()}</span>
+                          ) : null}
+                        </div>
+                        {item.metaLine1?.trim() ? (
+                          <p className={styles.menuMeta}>{item.metaLine1.trim()}</p>
+                        ) : null}
+                        {item.metaLine2?.trim() ? (
+                          <p className={styles.menuMeta}>{item.metaLine2.trim()}</p>
+                        ) : null}
+                        {excerpt ? (
+                          <>
+                            <p className={open ? styles.menuExcerpt : `${styles.menuExcerpt} ${styles.descClamp}`}>
+                              {excerpt}
+                            </p>
+                            <button
+                              type="button"
+                              className={styles.moreBtn}
+                              onClick={() => setOpenMenu(open ? null : index)}
+                            >
+                              {open ? tourUi.tourDescriptionShowLess : tourUi.foodMenuDetailBtn}
+                            </button>
+                          </>
                         ) : null}
                       </div>
-                      {item.metaLine1?.trim() ? (
-                        <p className={styles.menuMeta}>{item.metaLine1.trim()}</p>
-                      ) : null}
-                      {item.metaLine2?.trim() ? (
-                        <p className={styles.menuMeta}>{item.metaLine2.trim()}</p>
-                      ) : null}
-                      {excerpt ? (
-                        <>
-                          <p className={open ? styles.menuExcerpt : `${styles.menuExcerpt} ${styles.descClamp}`}>
-                            {excerpt}
-                          </p>
-                          <button
-                            type="button"
-                            className={styles.moreBtn}
-                            onClick={() => setOpenMenu(open ? null : index)}
-                          >
-                            {open ? tourUi.tourDescriptionShowLess : tourUi.foodMenuDetailBtn}
-                          </button>
-                        </>
-                      ) : null}
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          </section>
-        ) : null}
-      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          ) : null}
+        </div>
+      ) : null}
     </aside>
   )
 }
