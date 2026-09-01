@@ -102,6 +102,15 @@ function mergeExtrasByIndex(base: unknown, patch: unknown): unknown {
       ...item,
       ...(p.title !== undefined ? { title: p.title } : {}),
       ...(p.description !== undefined ? { description: p.description } : {}),
+      ...(p.hotelNameLabel !== undefined ? { hotelNameLabel: p.hotelNameLabel } : {}),
+      ...(p.hotelNamePlaceholder !== undefined ? { hotelNamePlaceholder: p.hotelNamePlaceholder } : {}),
+      ...(p.hotelNameHelp !== undefined ? { hotelNameHelp: p.hotelNameHelp } : {}),
+      ...(p.transferFromHotelLabel !== undefined
+        ? { transferFromHotelLabel: p.transferFromHotelLabel }
+        : {}),
+      ...(p.transferFromHotelDescription !== undefined
+        ? { transferFromHotelDescription: p.transferFromHotelDescription }
+        : {}),
     }
   })
 }

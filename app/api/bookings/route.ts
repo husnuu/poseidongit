@@ -11,6 +11,7 @@ import { tourForAvailabilityQuery } from '@/lib/queries'
 import { tourForBookingBySanityIdQuery } from '@/lib/sanity/bookingQueries'
 import { computePricingForSelection } from '@/lib/sanity/bookingPricing'
 import type { TourForBooking } from '@/lib/sanity/bookingTypes'
+import { applyExtrasToPricing, resolveSelectedExtrasAgainstTour, type StoredSelectedExtra } from '@/lib/bookingExtras'
 import { genderLabel } from '@/lib/bookingPassengerGender'
 import { supabase } from '@/lib/supabase'
 import {
@@ -51,13 +52,20 @@ async function computePrices(
   tourId: string,
   date: string,
   classId: string,
-  counts: { adult: number; child: number; infant: number }
-): Promise<{
-  unitPrice: number
-  totalPrice: number
-  depositAmount: number
-  cashPaymentEnabled: boolean
-}> {
+  counts: { adult: number; child: number; infant: number },
+  selectedExtras: Array<{ key: string; hotelName?: string; transferFromHotel?: boolean }>
+): Promise<
+  | {
+      ok: true
+      unitPrice: number
+      totalPrice: number
+      depositAmount: number
+      cashPaymentEnabled: boolean
+      storedExtras: StoredSelectedExtra[]
+      extrasTotal: number
+    }
+  | { ok: false; error: string }
+> {
   try {
     const tour = await client.fetch<TourForBooking | null>(tourForBookingBySanityIdQuery, {
       id: tourId,
@@ -68,22 +76,39 @@ async function computePrices(
       child: counts.child,
       baby: counts.infant,
     })
+    const extrasResolved = resolveSelectedExtrasAgainstTour(tour, selectedExtras, counts)
+    if (!extrasResolved.ok) {
+      return { ok: false, error: extrasResolved.error }
+    }
     const totalPax = counts.adult + counts.child + counts.infant
     const cashPaymentEnabled = Boolean(tour?.cashPaymentEnabled)
-    if (!summary || totalPax <= 0) {
-      return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled }
+    if (!summary || !tour || totalPax <= 0) {
+      return {
+        ok: true,
+        unitPrice: 0,
+        totalPrice: extrasResolved.extrasTotal,
+        depositAmount: 0,
+        cashPaymentEnabled,
+        storedExtras: extrasResolved.stored,
+        extrasTotal: extrasResolved.extrasTotal,
+      }
     }
-    const unitPrice = Math.round(summary.total / totalPax)
+    const priced = applyExtrasToPricing(summary, extrasResolved.extrasTotal, tour)
+    const tickets = priced.ticketsTotal ?? priced.total - extrasResolved.extrasTotal
+    const unitPrice = Math.round(tickets / Math.max(1, totalPax))
     return {
+      ok: true,
       unitPrice,
-      totalPrice: summary.total,
+      totalPrice: priced.total,
       depositAmount: cashPaymentEnabled
         ? 0
-        : Math.max(0, Math.min(summary.total, summary.depositAmount)),
+        : Math.max(0, Math.min(priced.total, priced.depositAmount)),
       cashPaymentEnabled,
+      storedExtras: extrasResolved.stored,
+      extrasTotal: extrasResolved.extrasTotal,
     }
   } catch {
-    return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled: false }
+    return { ok: false, error: 'Fiyat hesaplanamadı. Lütfen tekrar deneyin.' }
   }
 }
 
@@ -112,12 +137,17 @@ export async function POST(request: Request) {
       lastName: t.lastName,
       ...(t.gender && { gender: t.gender }),
     }))
-    const { unitPrice, totalPrice, depositAmount, cashPaymentEnabled } = await computePrices(
+    const priced = await computePrices(
       firestoreTourId,
       payload.date,
       payload.classId,
-      payload.counts
+      payload.counts,
+      payload.selectedExtras ?? []
     )
+    if (!priced.ok) {
+      return NextResponse.json({ error: priced.error }, { status: 400 })
+    }
+    const { unitPrice, totalPrice, depositAmount, cashPaymentEnabled, storedExtras, extrasTotal } = priced
     // Kalkış saati: istekte varsa onu kullan, yoksa turun quickFacts.startTime (voucher/bilet sayfasında gösterilir)
     let timeToSave: string | undefined = payload.time?.trim() || undefined
     if (!timeToSave) {
@@ -227,6 +257,10 @@ export async function POST(request: Request) {
       ...(payload.infantGenders && payload.infantGenders.length > 0 && {
         infant_genders: payload.infantGenders,
       }),
+      ...(storedExtras.length > 0 && {
+        selected_extras: storedExtras,
+        extras_total: extrasTotal,
+      }),
       passenger_genders: {
         customer: payload.customer.gender,
         customerLabel: payload.customer.gender ? genderLabel(payload.customer.gender, payload.uiLocale ?? 'tr') : undefined,
@@ -294,6 +328,7 @@ export async function POST(request: Request) {
           },
           ...(payload.meetingPoint && { pickup: payload.meetingPoint }),
           siteLocale: payload.uiLocale ?? 'tr',
+          ...(storedExtras.length > 0 && { selectedExtras: storedExtras }),
         })
       } catch (emailErr) {
         console.error('[bookings] Nakit rezervasyon e-postası gönderilemedi:', emailErr)

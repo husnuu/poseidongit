@@ -254,11 +254,28 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
   },
   cashPaymentEnabled,
   extras[]{
+    _key,
+    key,
     title,
     description,
     price,
     priceType,
-    icon
+    icon,
+    extraKind,
+    offerInBooking,
+    hotelNameLabel,
+    hotelNamePlaceholder,
+    hotelNameHelp,
+    requireHotelName,
+    transferFromHotelLabel,
+    transferFromHotelDescription,
+    requireTransferFromHotel,
+    image{
+      asset,
+      alt,
+      "url": asset->url,
+      "metadata": asset->metadata { lqip, dimensions }
+    }
   },
   bookingCard{
     fromText,
@@ -547,11 +564,28 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
   },
   cashPaymentEnabled,
   extras[]{
+    _key,
+    key,
     title,
     description,
     price,
     priceType,
-    icon
+    icon,
+    extraKind,
+    offerInBooking,
+    hotelNameLabel,
+    hotelNamePlaceholder,
+    hotelNameHelp,
+    requireHotelName,
+    transferFromHotelLabel,
+    transferFromHotelDescription,
+    requireTransferFromHotel,
+    image{
+      asset,
+      alt,
+      "url": asset->url,
+      "metadata": asset->metadata { lqip, dimensions }
+    }
   },
   bookingCard{
     fromText,

@@ -1,4 +1,5 @@
 import { normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
+import { extrasTotalFromStored, normalizeSelectedExtrasFromStorage } from '@/lib/bookingExtras'
 
 /**
  * Kapasite, doluluk ve First Class loca çakışması hesaplarında sayılacak rezervasyon statüleri.
@@ -83,6 +84,8 @@ export type SupabaseBookingRow = {
   child_count?: number | null
   infant_count?: number | null
   additional_travelers?: JsonValue | null
+  selected_extras?: JsonValue | null
+  extras_total?: number | null
   meal_preference?: JsonValue | null
   source?: string | null
   access_token?: string | null
@@ -146,6 +149,11 @@ export function mapBookingRowToApi(row: SupabaseBookingRow): Record<string, unkn
   const firstClassLocas = firstClassLocasFromRow(row)
   const additionalTravelers = normalizeAdditionalTravelersFromStorage(row.additional_travelers)
   const mealPreference = normalizeMealPreferenceColumn(row.meal_preference)
+  const selectedExtras = normalizeSelectedExtrasFromStorage(row.selected_extras)
+  const extrasTotal =
+    row.extras_total != null && Number.isFinite(Number(row.extras_total))
+      ? Number(row.extras_total)
+      : extrasTotalFromStored(selectedExtras)
   return {
     id: row.id,
     status: row.status ?? 'pending',
@@ -173,6 +181,7 @@ export function mapBookingRowToApi(row: SupabaseBookingRow): Record<string, unkn
       ...(row.customer_note && { note: row.customer_note }),
     },
     ...(additionalTravelers.length > 0 && { additionalTravelers }),
+    ...(selectedExtras.length > 0 && { selectedExtras, extrasTotal }),
     ...(mealPreference && { mealPreference }),
     source: row.source ?? 'web',
     ...(row.manual_source && { manualSource: row.manual_source }),

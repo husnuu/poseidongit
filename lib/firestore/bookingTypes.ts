@@ -92,4 +92,9 @@ export interface BookingCreatePayload {
   }>
   infantGenders?: Array<'male' | 'female'>
   mealPreference?: { key: string; label: string }
+  selectedExtras?: Array<{
+    key: string
+    hotelName?: string
+    transferFromHotel?: boolean
+  }>
 }

@@ -1600,16 +1600,31 @@ export default defineType({
       initialValue: false,
     }),
 
-    // 15) Ekstra Hizmetler
+    // 15) Ekstra Hizmetler (tur sayfası + rezervasyon popup)
     defineField({
       name: 'extras',
       title: 'Ekstra Hizmetler',
       type: 'array',
-      description: 'Ekstra hizmetler ve fiyatları',
+      description:
+        'Tur sayfasında listelenir. “Rezervasyonda sun” açıksa sınıf seçiminden sonra popup’ta da çıkar. Otel transferi için türü “Otel transferi” seçin; müşteri otel adı yazar ve “otelden transfer” kutusunu işaretler.',
       of: [
         {
           type: 'object',
           fields: [
+            defineField({
+              name: 'key',
+              title: 'Anahtar',
+              type: 'string',
+              description:
+                'Benzersiz kod (örn. hotel-transfer). Rezervasyon kaydında kullanılır. Boş bırakılırsa sistem otomatik kimlik üretir.',
+              validation: (Rule) =>
+                Rule.custom((val) => {
+                  if (val == null || String(val).trim() === '') return true
+                  return /^[a-z0-9][a-z0-9-]{0,79}$/.test(String(val).trim())
+                    ? true
+                    : 'Küçük harf, rakam ve tire kullanın (örn. hotel-transfer).'
+                }),
+            }),
             defineField({
               name: 'title',
               title: 'Başlık',
@@ -1620,8 +1635,21 @@ export default defineType({
               name: 'description',
               title: 'Açıklama',
               type: 'text',
-              description: 'Hizmet açıklaması (opsiyonel)',
-              rows: 2,
+              description: 'Popup ve tur sayfasında görünen kısa açıklama',
+              rows: 3,
+            }),
+            defineField({
+              name: 'image',
+              title: 'Küçük fotoğraf',
+              type: 'image',
+              options: { hotspot: true },
+              fields: [
+                defineField({
+                  name: 'alt',
+                  title: 'Alt metin',
+                  type: 'string',
+                }),
+              ],
             }),
             defineField({
               name: 'price',
@@ -1638,17 +1666,89 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  { title: 'Kişi Başı', value: 'perPerson' },
-                  { title: 'Toplam', value: 'total' },
+                  { title: 'Kişi Başı (yetişkin + çocuk)', value: 'perPerson' },
+                  { title: 'Toplam (grup / araç)', value: 'total' },
                 ],
               },
               initialValue: 'perPerson',
             }),
             defineField({
+              name: 'offerInBooking',
+              title: 'Rezervasyonda sun',
+              type: 'boolean',
+              description: 'Açıksa sınıf seçiminden sonra extras popup’ında görünür.',
+              initialValue: true,
+            }),
+            defineField({
+              name: 'extraKind',
+              title: 'Tür',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'Standart ekstra', value: 'standard' },
+                  { title: 'Otel transferi', value: 'hotelTransfer' },
+                ],
+                layout: 'radio',
+              },
+              initialValue: 'standard',
+            }),
+            defineField({
+              name: 'hotelNameLabel',
+              title: 'Otel adı etiketi',
+              type: 'string',
+              initialValue: 'Otel adı',
+              hidden: ({ parent }) => parent?.extraKind !== 'hotelTransfer',
+            }),
+            defineField({
+              name: 'hotelNamePlaceholder',
+              title: 'Otel adı yer tutucu',
+              type: 'string',
+              initialValue: 'Örn. Boyalık Beach Hotel',
+              hidden: ({ parent }) => parent?.extraKind !== 'hotelTransfer',
+            }),
+            defineField({
+              name: 'hotelNameHelp',
+              title: 'Otel adı yardım metni',
+              type: 'text',
+              rows: 2,
+              initialValue: 'Transferin yapılacağı otelin tam adını yazın.',
+              hidden: ({ parent }) => parent?.extraKind !== 'hotelTransfer',
+            }),
+            defineField({
+              name: 'requireHotelName',
+              title: 'Otel adı zorunlu',
+              type: 'boolean',
+              initialValue: true,
+              hidden: ({ parent }) => parent?.extraKind !== 'hotelTransfer',
+            }),
+            defineField({
+              name: 'transferFromHotelLabel',
+              title: 'Otelden transfer seçeneği — başlık',
+              type: 'string',
+              initialValue: 'Otelden transfer',
+              description: 'Müşterinin işaretleyeceği kutu metni (Sanity’den yönetilir).',
+              hidden: ({ parent }) => parent?.extraKind !== 'hotelTransfer',
+            }),
+            defineField({
+              name: 'transferFromHotelDescription',
+              title: 'Otelden transfer seçeneği — açıklama',
+              type: 'text',
+              rows: 2,
+              initialValue: 'Otelinizden kalkış noktasına transfer istiyorum.',
+              hidden: ({ parent }) => parent?.extraKind !== 'hotelTransfer',
+            }),
+            defineField({
+              name: 'requireTransferFromHotel',
+              title: 'Otelden transfer kutusu zorunlu',
+              type: 'boolean',
+              initialValue: true,
+              hidden: ({ parent }) => parent?.extraKind !== 'hotelTransfer',
+            }),
+            defineField({
               name: 'icon',
               title: 'İkon',
               type: 'string',
-              description: 'İkon anahtarı (opsiyonel)',
+              description: 'İkon anahtarı veya emoji (opsiyonel)',
             }),
           ],
           preview: {
@@ -1656,11 +1756,16 @@ export default defineType({
               title: 'title',
               price: 'price',
               priceType: 'priceType',
+              extraKind: 'extraKind',
+              media: 'image',
             },
-            prepare({ title, price, priceType }) {
+            prepare({ title, price, priceType, extraKind, media }) {
+              const kind = extraKind === 'hotelTransfer' ? 'Otel transferi' : 'Ekstra'
+              const unit = priceType === 'perPerson' ? 'kişi başı' : 'toplam'
               return {
-                title: title,
-                subtitle: `${price} ₺ (${priceType === 'perPerson' ? 'Kişi Başı' : 'Toplam'})`,
+                title: title || 'Ekstra',
+                subtitle: `${kind} · ${price ?? 0} ₺ (${unit})`,
+                media,
               }
             },
           },

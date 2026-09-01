@@ -16,6 +16,20 @@ export interface AdminBookingRow {
     note?: string
   }
   additionalTravelers?: { firstName: string; lastName: string; mealPreference?: { key: string; label: string } }[]
+  selectedExtras?: Array<{
+    key: string
+    title: string
+    description?: string
+    price: number
+    priceType: 'perPerson' | 'total'
+    extraKind: 'standard' | 'hotelTransfer'
+    quantity: number
+    lineTotal: number
+    hotelName?: string
+    transferFromHotel?: boolean
+    transferFromHotelLabel?: string
+  }>
+  extrasTotal?: number
   counts: { adult: number; child: number; infant: number }
   classId: string
   className: string

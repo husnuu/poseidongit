@@ -450,6 +450,8 @@ export default function AdminBookingsPage() {
           time: b.time,
           customer: b.customer ?? {},
           additionalTravelers: extras.length > 0 ? extras : undefined,
+          selectedExtras: Array.isArray(b.selectedExtras) ? b.selectedExtras : undefined,
+          extrasTotal: typeof b.extrasTotal === 'number' ? b.extrasTotal : undefined,
           counts: b.counts ?? { adult: 0, child: 0, infant: 0 },
           classId: b.classId,
           className: b.className,

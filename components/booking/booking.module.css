@@ -2737,6 +2737,7 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+  position: relative;
 }
 
 /* Dedicated reservation URL — same pane as the tour modal, page chrome instead of dim overlay */
@@ -2778,5 +2779,262 @@
 @media (max-width: 639px) {
   .wizardModalPane {
     max-height: 100dvh;
+  }
+}
+
+.extrasPopupBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(12, 25, 41, 0.45);
+  padding: 12px;
+}
+
+.extrasPopup {
+  width: min(560px, 100%);
+  max-height: min(88dvh, 720px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 16px 16px 12px 12px;
+  box-shadow: 0 24px 60px rgba(12, 25, 41, 0.28);
+  display: flex;
+  flex-direction: column;
+}
+
+.extrasPopupHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 8px;
+}
+
+.extrasPopupTitle {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0c1929;
+}
+
+.extrasPopupSub {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.extrasPopupClose {
+  border: 0;
+  background: #f1f5f9;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #334155;
+  cursor: pointer;
+}
+
+.extrasPopupList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 16px 4px;
+}
+
+.extrasCard {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.extrasCardActive {
+  border-color: #0c1929;
+  box-shadow: 0 0 0 1px #0c1929;
+}
+
+.extrasCardMain {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.extrasCardThumb {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #e8eef5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.extrasCardThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.extrasCardIcon,
+.extrasCardIconFallback {
+  font-size: 1.5rem;
+  color: #0c1929;
+}
+
+.extrasCardBody {
+  min-width: 0;
+  flex: 1;
+}
+
+.extrasCardTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.extrasCardTitleRow h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0c1929;
+}
+
+.extrasCardBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #0c1929;
+  background: #e8eef5;
+  border-radius: 999px;
+  padding: 3px 8px;
+}
+
+.extrasCardDesc {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.extrasCardPrice {
+  margin: 8px 0 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0c1929;
+}
+
+.extrasCardPrice span {
+  font-weight: 500;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.extrasHotelBox {
+  padding: 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.extrasHotelLabel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0c1929;
+}
+
+.extrasHotelInput {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+}
+
+.extrasHotelHelp {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.extrasTransferCheck {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+.extrasTransferCheck strong {
+  display: block;
+}
+
+.extrasTransferCheck em {
+  display: block;
+  font-style: normal;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.extrasPopupError {
+  margin: 8px 16px 0;
+  color: #b91c1c;
+  font-size: 0.82rem;
+}
+
+.extrasPopupHint {
+  margin: 8px 16px 0;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.extrasPopupActions {
+  display: flex;
+  gap: 8px;
+  padding: 14px 16px 16px;
+}
+
+.extrasSkipBtn,
+.extrasContinueBtn {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.extrasSkipBtn {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+}
+
+.extrasContinueBtn {
+  border: 0;
+  background: #0c1929;
+  color: #fff;
+}
+
+@media (min-width: 640px) {
+  .extrasPopupBackdrop {
+    align-items: center;
+  }
+  .extrasPopup {
+    border-radius: 16px;
   }
 }

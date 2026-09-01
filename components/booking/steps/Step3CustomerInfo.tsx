@@ -14,6 +14,7 @@ import type { PassengerGender } from '@/lib/bookingPassengerGender'
 import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
+import { extraIdentity, extraLineTotal, extrasOfferedInBooking, formatStoredExtraLine, payingPaxForExtras } from '@/lib/bookingExtras'
 import { useBookingPassengerValidation } from '../hooks/useBookingPassengerValidation'
 import styles from '../booking.module.css'
 
@@ -160,6 +161,31 @@ export default function Step3CustomerInfo({
                 </span>
                 <span className={styles.summaryPriceVal}>
                   {u.subtotal.toLocaleString(ui.numberLocale)} ₺
+                </span>
+              </div>
+            )
+          })}
+          {(state.selectedExtras ?? []).map((sel) => {
+            const extra = extrasOfferedInBooking(tour).find((e, i) => extraIdentity(e, i) === sel.key)
+            if (!extra) return null
+            const line = extraLineTotal(extra, payingPaxForExtras(state.counts))
+            const label = formatStoredExtraLine({
+              key: sel.key,
+              title: extra.title,
+              price: extra.price,
+              priceType: extra.priceType === 'total' ? 'total' : 'perPerson',
+              extraKind: extra.extraKind === 'hotelTransfer' ? 'hotelTransfer' : 'standard',
+              quantity: 1,
+              lineTotal: line,
+              hotelName: sel.hotelName,
+              transferFromHotel: sel.transferFromHotel,
+              transferFromHotelLabel: extra.transferFromHotelLabel,
+            })
+            return (
+              <div key={sel.key} className={styles.summaryPriceRow}>
+                <span className={styles.summaryPriceLbl}>{label}</span>
+                <span className={styles.summaryPriceVal}>
+                  {line.toLocaleString(ui.numberLocale)} ₺
                 </span>
               </div>
             )

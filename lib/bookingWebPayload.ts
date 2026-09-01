@@ -5,6 +5,7 @@ import {
   parseAdditionalTravelersFromBody,
 } from '@/lib/bookingAdditionalTravelers'
 import { parseInfantGendersFromBody, parsePassengerGender } from '@/lib/bookingPassengerGender'
+import { parseSelectedExtrasFromBody } from '@/lib/bookingExtras'
 import { DEFAULT_LOCALE, isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import {
   sanitizeCustomerNote,
@@ -76,6 +77,7 @@ const bookingWebJsonSchema = z.object({
   customer: customerSchema,
   additionalTravelers: z.unknown().optional(),
   infantGenders: z.unknown().optional(),
+  selectedExtras: z.unknown().optional(),
 })
 
 function formatZodIssues(err: z.ZodError): string {
@@ -153,6 +155,11 @@ export function parseBookingWebPayload(body: unknown): ParseWebBookingResult {
     return { ok: false, error: 'Eksik veya geçersiz alan: tüm bebeklerin cinsiyeti.' }
   }
 
+  const parsedSelectedExtras = parseSelectedExtrasFromBody(v.selectedExtras)
+  if (parsedSelectedExtras === null) {
+    return { ok: false, error: 'Eksik veya geçersiz alan: ekstra hizmet seçimi.' }
+  }
+
   const extraGenders = parsedExtras
     .map((t) => t.gender)
     .filter((g): g is 'male' | 'female' => g === 'male' || g === 'female')
@@ -204,6 +211,7 @@ export function parseBookingWebPayload(body: unknown): ParseWebBookingResult {
         }
       : {}),
     ...(parsedInfantGenders.length > 0 ? { infantGenders: [...parsedInfantGenders] } : {}),
+    ...(parsedSelectedExtras.length > 0 ? { selectedExtras: parsedSelectedExtras } : {}),
   }
 
   return { ok: true, payload }

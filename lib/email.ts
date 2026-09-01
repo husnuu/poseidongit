@@ -26,6 +26,11 @@ import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { client, urlFor } from '@/lib/sanity'
 import { tourImageAndPickupQuery } from '@/lib/queries'
 import { additionalTravelerLabels, normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
+import {
+  extrasTotalFromStored,
+  formatStoredExtraLine,
+  normalizeSelectedExtrasFromStorage,
+} from '@/lib/bookingExtras'
 import { computeDepositAmounts, type TourDepositConfig } from '@/lib/bookingDepositAmount'
 
 const DEFAULT_FROM = (() => {
@@ -102,6 +107,17 @@ export interface BookingEmailPayload {
   mealPreference?: { key: string; label: string; counts?: Array<{ key: string; label: string; count: number }> }
   /** Ana müşteri dışındaki yolcular (web rezervasyonunda girilen ad-soyad). */
   additionalTravelers?: Array<{ firstName: string; lastName: string; mealPreference?: { key: string; label: string } }>
+  selectedExtras?: Array<{
+    title: string
+    lineTotal?: number
+    extraKind?: string
+    hotelName?: string
+    transferFromHotel?: boolean
+    transferFromHotelLabel?: string
+    priceType?: string
+    quantity?: number
+  }>
+  extrasTotal?: number
   /** Opsiyonel: etkinlik süresi (saat). Google Calendar linki için; yoksa 2. */
   durationHours?: number
   /** Opsiyonel: IANA timezone (örn. Europe/Istanbul). Yoksa Europe/Istanbul. */
@@ -608,6 +624,49 @@ function buildPremiumAdminNotificationHtml(p: BookingEmailPayload, variant: Admi
         )
       : ''
 
+  const extras = p.selectedExtras ?? []
+  const extrasBlock =
+    extras.length > 0
+      ? `<tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <div style="background:#fff7ed;border:1px solid #fdba74;border-left:4px solid #ea580c;border-radius:8px;padding:16px 18px;">
+      <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9a3412;">Ekstra hizmetler</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        ${extras
+          .map((item) => {
+            const line = formatStoredExtraLine({
+              key: item.title,
+              title: item.title,
+              price: item.lineTotal ?? 0,
+              priceType: item.priceType === 'total' ? 'total' : 'perPerson',
+              extraKind: item.extraKind === 'hotelTransfer' ? 'hotelTransfer' : 'standard',
+              quantity: item.quantity ?? 1,
+              lineTotal: item.lineTotal ?? 0,
+              hotelName: item.hotelName,
+              transferFromHotel: item.transferFromHotel,
+              transferFromHotelLabel: item.transferFromHotelLabel,
+            })
+            const amount = formatAdminPrice(item.lineTotal ?? 0, p.currency)
+            return `<tr>
+              <td style="padding:6px 0;color:${EMAIL_TEXT_BODY};font-size:13px;font-weight:600;vertical-align:top;">${escapeHtml(line)}</td>
+              <td style="padding:6px 0;color:${navy};font-size:13px;font-weight:700;text-align:right;white-space:nowrap;vertical-align:top;">${escapeHtml(amount)}</td>
+            </tr>`
+          })
+          .join('')}
+        ${
+          extras.reduce((s, x) => s + (x.lineTotal ?? 0), 0) > 0
+            ? `<tr>
+          <td style="padding:10px 0 0;border-top:1px solid #fdba74;color:#9a3412;font-size:13px;font-weight:700;">Ekstralar toplam</td>
+          <td style="padding:10px 0 0;border-top:1px solid #fdba74;color:#9a3412;font-size:13px;font-weight:700;text-align:right;">${escapeHtml(
+            formatAdminPrice(p.extrasTotal ?? extras.reduce((s, x) => s + (x.lineTotal ?? 0), 0), p.currency)
+          )}</td>
+        </tr>`
+            : ''
+        }
+      </table>
+    </div>
+  </td></tr>`
+      : ''
+
   const noteBlock =
     p.customer.note && p.customer.note.trim()
       ? `<tr><td style="background:${EMAIL_SURFACE};padding:0 28px 18px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
@@ -663,6 +722,8 @@ function buildPremiumAdminNotificationHtml(p: BookingEmailPayload, variant: Admi
       ${extraTravelersRowHtml}
     </table>
   </td></tr>
+
+  ${extrasBlock}
 
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:${navy};text-transform:uppercase;letter-spacing:0.08em;">Ödeme Özeti</p>
@@ -755,7 +816,19 @@ export async function sendBookingEmails(
     .single()
   const row = bookingRow as SupabaseBookingRow | null
   const loc = normalizeBookingFlowLocale(payload.siteLocale ?? row?.ui_locale)
-  const mergedPayload: BookingEmailPayload = { ...payload, siteLocale: loc }
+  const extrasFromRow = normalizeSelectedExtrasFromStorage(row?.selected_extras)
+  const mergedPayload: BookingEmailPayload = {
+    ...payload,
+    siteLocale: loc,
+    selectedExtras: payload.selectedExtras?.length
+      ? payload.selectedExtras
+      : extrasFromRow.length
+        ? extrasFromRow
+        : payload.selectedExtras,
+    extrasTotal:
+      payload.extrasTotal ??
+      (row?.extras_total != null ? Number(row.extras_total) : extrasTotalFromStored(extrasFromRow)),
+  }
   const subjT = bookingEmailPremiumStrings(loc)
 
   const customerHtml = buildCustomerEmailHtml({ ...mergedPayload, bookingUrl })
@@ -926,6 +999,22 @@ function buildPremiumConfirmationEmailHtml(
       ${p.mealPreference?.label?.trim() ? detailRow(t.mealPref, p.mealPreference.label.trim()) : ''}
       ${mealCounts ? detailRow(t.mealDist, mealCounts) : ''}
       ${extraTravelersRowHtml}
+      ${(p.selectedExtras ?? [])
+        .map((item) =>
+          detailRow(
+            `${t.extrasTitle}: ${item.title}`,
+            [
+              item.hotelName ? `${t.extrasHotel}: ${item.hotelName}` : '',
+              item.transferFromHotel
+                ? item.transferFromHotelLabel || t.extrasTransfer
+                : '',
+              item.lineTotal != null ? fmtPrice(item.lineTotal, p.currency) : '',
+            ]
+              .filter(Boolean)
+              .join(' · ') || '—'
+          )
+        )
+        .join('')}
       ${paidNow > 0 ? detailRow(t.paidRow, fmtPrice(paidNow, p.currency)) : ''}
       ${showCashRemaining ? detailRow(t.remainingRow, fmtPrice(remainingAmount, p.currency)) : ''}
       <tr>
@@ -1028,6 +1117,7 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
     .single()
   const row = bookingRow as SupabaseBookingRow | null
   const fromDb = normalizeAdditionalTravelersFromStorage(row?.additional_travelers)
+  const extrasFromDb = normalizeSelectedExtrasFromStorage(row?.selected_extras)
   const additionalTravelersMerged =
     payload.additionalTravelers && payload.additionalTravelers.length > 0
       ? payload.additionalTravelers
@@ -1038,6 +1128,9 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
     ...payload,
     siteLocale: normalizeBookingFlowLocale(payload.siteLocale ?? row?.ui_locale),
     ...(additionalTravelersMerged?.length ? { additionalTravelers: additionalTravelersMerged } : {}),
+    ...(!payload.selectedExtras?.length && extrasFromDb.length
+      ? { selectedExtras: extrasFromDb, extrasTotal: extrasTotalFromStored(extrasFromDb) }
+      : {}),
     ...(payload.paidNow == null &&
     row?.paid_now != null &&
     !Number.isNaN(Number(row.paid_now)) && { paidNow: Number(row.paid_now) }),

@@ -98,6 +98,30 @@ export const tourForBookingProjection = `{
     value
   },
   cashPaymentEnabled,
+  extras[]{
+    _key,
+    key,
+    title,
+    description,
+    price,
+    priceType,
+    icon,
+    extraKind,
+    offerInBooking,
+    hotelNameLabel,
+    hotelNamePlaceholder,
+    hotelNameHelp,
+    requireHotelName,
+    transferFromHotelLabel,
+    transferFromHotelDescription,
+    requireTransferFromHotel,
+    image{
+      asset,
+      alt,
+      "url": asset->url,
+      "metadata": asset->metadata { lqip, dimensions }
+    }
+  },
   pickupPoints[]{
     name,
     address,

@@ -173,6 +173,13 @@ export default function BookingsTable({
                   <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[b.status]}`}>
                     {STATUS_LABELS[b.status]}
                   </span>
+                  {(b.selectedExtras?.length ?? 0) > 0 && (
+                    <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-800">
+                      {b.selectedExtras!.some((x) => x.extraKind === 'hotelTransfer')
+                        ? 'Ekstra + transfer'
+                        : `Ekstra × ${b.selectedExtras!.length}`}
+                    </span>
+                  )}
                   <span className="text-xs text-zinc-500">
                     {b.totalPrice > 0 ? `${b.totalPrice.toLocaleString('tr-TR')} ${b.currency}` : ''}
                   </span>
@@ -290,6 +297,15 @@ export default function BookingsTable({
               </td>
               <td className="px-4 py-3">
                 <span className="font-medium text-zinc-900">{b.tourTitle}</span>
+                {(b.selectedExtras?.length ?? 0) > 0 && (
+                  <div className="mt-1">
+                    <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-semibold text-orange-800">
+                      {b.selectedExtras!.some((x) => x.extraKind === 'hotelTransfer')
+                        ? `Ekstra${b.selectedExtras!.find((x) => x.hotelName) ? ` · ${b.selectedExtras!.find((x) => x.hotelName)?.hotelName}` : ' + transfer'}`
+                        : `Ekstra × ${b.selectedExtras!.length}`}
+                    </span>
+                  </div>
+                )}
               </td>
               <td className="px-4 py-3 text-zinc-700">{b.date}</td>
               <td className="px-4 py-3 text-zinc-900">

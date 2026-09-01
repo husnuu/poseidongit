@@ -220,6 +220,54 @@ export default function BookingDetailModal({
               </div>
             )}
 
+            {(booking.selectedExtras?.length ?? 0) > 0 && (
+              <div className="rounded-lg border-2 border-orange-300 bg-orange-50 p-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-orange-900">
+                  Ekstra hizmetler
+                </p>
+                <ul className="mt-2 space-y-2">
+                  {booking.selectedExtras!.map((ex, i) => (
+                    <li
+                      key={`${ex.key}-${i}`}
+                      className="rounded-md border border-orange-200 bg-white px-3 py-2 text-sm"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-semibold text-zinc-900">{ex.title}</p>
+                        <p className="shrink-0 font-bold text-orange-800">
+                          {ex.lineTotal.toLocaleString('tr-TR')} {booking.currency}
+                        </p>
+                      </div>
+                      {ex.extraKind === 'hotelTransfer' && (
+                        <div className="mt-1.5 space-y-0.5 text-xs text-zinc-700">
+                          {ex.hotelName ? (
+                            <p>
+                              <span className="font-semibold text-orange-900">Otel: </span>
+                              {ex.hotelName}
+                            </p>
+                          ) : null}
+                          {ex.transferFromHotel ? (
+                            <p className="font-medium text-orange-800">
+                              {ex.transferFromHotelLabel || 'Otelden transfer'}
+                            </p>
+                          ) : null}
+                        </div>
+                      )}
+                      {ex.priceType === 'perPerson' && ex.quantity > 1 ? (
+                        <p className="mt-1 text-xs text-zinc-500">
+                          {ex.price.toLocaleString('tr-TR')} {booking.currency} × {ex.quantity} kişi
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+                {typeof booking.extrasTotal === 'number' && booking.extrasTotal > 0 ? (
+                  <p className="mt-2 text-right text-sm font-bold text-orange-900">
+                    Ekstralar toplam: {booking.extrasTotal.toLocaleString('tr-TR')} {booking.currency}
+                  </p>
+                ) : null}
+              </div>
+            )}
+
             <div>
               <p className="text-xs font-medium uppercase text-zinc-500">Katılımcılar</p>
               <div className="mt-1 text-sm text-zinc-700">

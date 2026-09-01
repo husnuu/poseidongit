@@ -19,9 +19,18 @@ import {
   Step3CustomerInfo,
   Step4Payment,
 } from './steps'
+import BookingExtrasPopup from './BookingExtrasPopup'
 import PaymentSuccessPanel from './PaymentSuccessPanel'
 import PaymentLoadingOverlay from './PaymentLoadingOverlay'
 import styles from './booking.module.css'
+import {
+  applyExtrasToPricing,
+  extraIdentity,
+  extraLineTotal,
+  extrasOfferedInBooking,
+  isHotelTransferExtra,
+  payingPaxForExtras,
+} from '@/lib/bookingExtras'
 
 export interface BookingWizardModalProps {
   open: boolean
@@ -66,6 +75,8 @@ export default function BookingWizardModal({
   } | null>(null)
   const [step3Valid, setStep3Valid] = useState(false)
   const [step3TermsAccepted, setStep3TermsAccepted] = useState(false)
+  const [extrasPopupOpen, setExtrasPopupOpen] = useState(false)
+  const [extrasPopupError, setExtrasPopupError] = useState<string | null>(null)
   /** Rezervasyon başarılı olunca anlık kalan kontenjan = Sanity kapasitesi - (API used + bu). */
   const [optimisticUsed, setOptimisticUsed] = useState<UsedByDateAndClass | null>(null)
   /** Modal her açıldığında güncellenir; useAvailability bu sayede önceki rezervasyonları yeniden çeker. */
@@ -100,28 +111,73 @@ export default function BookingWizardModal({
 
   const onPricingComputed = useCallback((pricingSummary: PricingSummary | null) => {
     setState((prev) => {
-      if (prev.pricingSummary === pricingSummary) return prev
-      return { ...prev, pricingSummary }
+      if (!pricingSummary) {
+        if (prev.pricingSummary == null) return prev
+        return { ...prev, pricingSummary: null }
+      }
+      const payingPax = payingPaxForExtras(prev.counts)
+      const extrasTotal = (prev.selectedExtras ?? []).reduce((sum, sel) => {
+        const extra = extrasOfferedInBooking(tour).find((e, i) => extraIdentity(e, i) === sel.key)
+        if (!extra) return sum
+        return sum + extraLineTotal(extra, payingPax)
+      }, 0)
+      const summary = applyExtrasToPricing(pricingSummary, extrasTotal, tour)
+      if (
+        prev.pricingSummary?.total === summary.total &&
+        prev.pricingSummary?.extrasTotal === summary.extrasTotal
+      ) {
+        return prev
+      }
+      return { ...prev, pricingSummary: summary }
     })
-  }, [])
+  }, [tour])
 
-  // Sınıf/tarih/kişi değişince fiyatı her zaman güncelle (geri gelip başka sınıf seçince doğru fiyat görünsün)
+  const bookingExtras = useMemo(() => extrasOfferedInBooking(tour), [tour])
+
+  // Sınıf/tarih/kişi/ekstra değişince fiyatı her zaman güncelle
   useEffect(() => {
     if (!state.selectedDate || !state.selectedClassKey) {
       setState((prev) => (prev.pricingSummary == null ? prev : { ...prev, pricingSummary: null }))
       return
     }
-    const summary = computePricingForSelection(
+    const base = computePricingForSelection(
       tour,
       state.selectedDate,
       state.selectedClassKey,
       state.counts
     )
+    if (!base) {
+      setState((prev) => (prev.pricingSummary == null ? prev : { ...prev, pricingSummary: null }))
+      return
+    }
+    const payingPax = payingPaxForExtras(state.counts)
+    const extrasTotal = (state.selectedExtras ?? []).reduce((sum, sel) => {
+      const extra = bookingExtras.find((e, i) => extraIdentity(e, i) === sel.key)
+      if (!extra) return sum
+      return sum + extraLineTotal(extra, payingPax)
+    }, 0)
+    const summary = applyExtrasToPricing(base, extrasTotal, tour)
     setState((prev) => {
-      if (summary && prev.pricingSummary?.total === summary.total && prev.pricingSummary?.currency === summary.currency) return prev
+      if (
+        summary &&
+        prev.pricingSummary?.total === summary.total &&
+        prev.pricingSummary?.extrasTotal === summary.extrasTotal &&
+        prev.pricingSummary?.currency === summary.currency
+      ) {
+        return prev
+      }
       return { ...prev, pricingSummary: summary ?? null }
     })
-  }, [tour, state.selectedDate, state.selectedClassKey, state.counts.adult, state.counts.child, state.counts.baby])
+  }, [
+    tour,
+    bookingExtras,
+    state.selectedDate,
+    state.selectedClassKey,
+    state.counts.adult,
+    state.counts.child,
+    state.counts.baby,
+    state.selectedExtras,
+  ])
 
   useEffect(() => {
     if (!open) return
@@ -145,17 +201,25 @@ export default function BookingWizardModal({
     setBookingResult(null)
     setSubmitError(null)
     setOptimisticUsed(null)
+    setExtrasPopupOpen(false)
+    setExtrasPopupError(null)
     setState((prev) => ({ ...DEFAULT_BOOKING_STATE, tourSlug: prev.tourSlug }))
     onClose()
   }, [onClose, tourSlug])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose()
+      if (e.key !== 'Escape') return
+      if (extrasPopupOpen) {
+        setExtrasPopupOpen(false)
+        setExtrasPopupError(null)
+        return
+      }
+      handleClose()
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleClose])
+  }, [handleClose, extrasPopupOpen])
 
   // Focus trap
   useEffect(() => {
@@ -188,6 +252,42 @@ export default function BookingWizardModal({
   const goNext = useCallback(() => {
     if (state.step < 4) setState((prev) => ({ ...prev, step: (prev.step + 1) as 1 | 2 | 3 | 4 }))
   }, [state.step])
+
+  const openExtrasOrNext = useCallback(() => {
+    if (bookingExtras.length > 0) {
+      setExtrasPopupError(null)
+      setExtrasPopupOpen(true)
+      return
+    }
+    goNext()
+  }, [bookingExtras.length, goNext])
+
+  const confirmExtrasAndNext = useCallback(() => {
+    for (const sel of state.selectedExtras ?? []) {
+      const extra = bookingExtras.find((e, i) => extraIdentity(e, i) === sel.key)
+      if (!extra) continue
+      if (isHotelTransferExtra(extra)) {
+        if (extra.requireHotelName !== false && !sel.hotelName?.trim()) {
+          setExtrasPopupError(ui.extrasHotelRequired)
+          return
+        }
+        if (extra.requireTransferFromHotel !== false && sel.transferFromHotel !== true) {
+          setExtrasPopupError(ui.extrasTransferRequired)
+          return
+        }
+      }
+    }
+    setExtrasPopupError(null)
+    setExtrasPopupOpen(false)
+    goNext()
+  }, [bookingExtras, goNext, state.selectedExtras, ui.extrasHotelRequired, ui.extrasTransferRequired])
+
+  const skipExtrasAndNext = useCallback(() => {
+    setExtrasPopupError(null)
+    setExtrasPopupOpen(false)
+    updateState({ selectedExtras: [] })
+    goNext()
+  }, [goNext, updateState])
 
   const goBack = useCallback(() => {
     if (state.step > 1) setState((prev) => ({ ...prev, step: (prev.step - 1) as 1 | 2 | 3 | 4 }))
@@ -223,7 +323,7 @@ export default function BookingWizardModal({
 
   const handleCta = useCallback(async () => {
     if (state.step === 1 && canProceedStep1) goNext()
-    else if (state.step === 2 && canProceedStep2) goNext()
+    else if (state.step === 2 && canProceedStep2) openExtrasOrNext()
     else if (state.step === 3 && canProceedStep3) {
       setSubmitError(null)
       setSubmitting(true)
@@ -268,6 +368,13 @@ export default function BookingWizardModal({
             }),
             ...(state.counts.baby > 0 && {
               infantGenders: (state.infantGenders ?? []).filter((g) => g === 'male' || g === 'female'),
+            }),
+            ...((state.selectedExtras ?? []).length > 0 && {
+              selectedExtras: (state.selectedExtras ?? []).map((s) => ({
+                key: s.key,
+                ...(s.hotelName?.trim() ? { hotelName: s.hotelName.trim() } : {}),
+                ...(s.transferFromHotel ? { transferFromHotel: true } : {}),
+              })),
             }),
           }),
         })
@@ -340,7 +447,7 @@ export default function BookingWizardModal({
         setSubmitting(false)
       }
     }
-  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext, ui, locale])
+  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext, openExtrasOrNext, ui, locale])
 
   const { ctaLabel, ctaDisabled } = useMemo(() => {
     let label: string
@@ -498,7 +605,7 @@ export default function BookingWizardModal({
                   onPricingComputed={onPricingComputed}
                   onBack={goBack}
                   onNext={handleCta}
-                  onStepNext={goNext}
+                  onStepNext={openExtrasOrNext}
                   canProceed={canProceedStep2}
                   ctaLabel={ctaLabel}
                   ctaDisabled={ctaDisabled}
@@ -548,6 +655,25 @@ export default function BookingWizardModal({
             </>
           )}
         </main>
+        {extrasPopupOpen && bookingExtras.length > 0 && (
+          <BookingExtrasPopup
+            extras={bookingExtras}
+            selected={state.selectedExtras ?? []}
+            counts={state.counts}
+            ui={ui}
+            error={extrasPopupError}
+            onChange={(next) => {
+              setExtrasPopupError(null)
+              updateState({ selectedExtras: next })
+            }}
+            onSkip={skipExtrasAndNext}
+            onConfirm={confirmExtrasAndNext}
+            onClose={() => {
+              setExtrasPopupOpen(false)
+              setExtrasPopupError(null)
+            }}
+          />
+        )}
       </div>
     </div>
   )

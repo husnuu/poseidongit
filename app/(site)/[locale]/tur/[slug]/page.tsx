@@ -158,6 +158,7 @@ interface Extra {
   price: number
   priceType?: 'perPerson' | 'total'
   icon?: string
+  image?: { url?: string; alt?: string }
 }
 
 interface BookingCard {
@@ -601,21 +602,30 @@ export default async function TourPage({
                   key={index}
                   className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-6"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      {extra.icon && (
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-1 gap-3">
+                      {extra.image?.url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={extra.image.url}
+                          alt={extra.image.alt || extra.title}
+                          className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                        />
+                      ) : extra.icon ? (
                         <span className="text-2xl mb-2 block">
                           {extra.icon}
                         </span>
-                      )}
-                      <h3 className="text-lg font-semibold mb-2 text-black dark:text-zinc-50">
-                        {extra.title}
-                      </h3>
-                      {extra.description && (
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
-                          {extra.description}
-                        </p>
-                      )}
+                      ) : null}
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold mb-2 text-black dark:text-zinc-50">
+                          {extra.title}
+                        </h3>
+                        {extra.description && (
+                          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
+                            {extra.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-bold text-black dark:text-zinc-50">

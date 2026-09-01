@@ -156,6 +156,21 @@ export type BookingWizardUi = {
   classAriaFull: string
   classAriaClosed: string
   calendarDayAria: (dayNum: number, isoDate: string, pricePart: string) => string
+  extrasPopupTitle: string
+  extrasPopupSubtitle: string
+  extrasSkip: string
+  extrasContinue: string
+  extrasSelected: string
+  extrasPerPerson: string
+  extrasFlat: string
+  extrasNoneHint: string
+  extrasHotelRequired: string
+  extrasTransferRequired: string
+  extrasHotelFallbackLabel: string
+  extrasTransferFallbackLabel: string
+  extrasLine: string
+  extrasTotalLine: string
+  extrasEdit: string
   validation: {
     firstName: string
     lastName: string
@@ -326,6 +341,21 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     classAriaFull: 'Dolu',
     classAriaClosed: 'Kapalı',
     calendarDayAria: (dayNum, isoDate, pricePart) => `${dayNum} ${isoDate}${pricePart}`,
+    extrasPopupTitle: 'Ekstra hizmetler',
+    extrasPopupSubtitle: 'İsterseniz turunuza ekstra ekleyin. Seçmek zorunlu değildir.',
+    extrasSkip: 'Ekstra istemiyorum',
+    extrasContinue: 'Seçilenlerle devam et',
+    extrasSelected: 'Seçildi',
+    extrasPerPerson: 'kişi başı',
+    extrasFlat: 'toplam',
+    extrasNoneHint: 'Hiç ekstra seçmeden devam edebilirsiniz.',
+    extrasHotelRequired: 'Otel adını yazın.',
+    extrasTransferRequired: 'Otelden transfer seçeneğini işaretleyin.',
+    extrasHotelFallbackLabel: 'Otel adı',
+    extrasTransferFallbackLabel: 'Otelden transfer',
+    extrasLine: 'Ekstralar',
+    extrasTotalLine: 'Ekstralar toplam',
+    extrasEdit: 'Ekstraları düzenle',
     validation: {
       firstName: 'Ad zorunludur.',
       lastName: 'Soyad zorunludur.',
@@ -493,6 +523,21 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     classAriaFull: 'Full',
     classAriaClosed: 'Closed',
     calendarDayAria: (dayNum, isoDate, pricePart) => `${dayNum} ${isoDate}${pricePart}`,
+    extrasPopupTitle: 'Optional extras',
+    extrasPopupSubtitle: 'Add optional extras to your tour. This step is not required.',
+    extrasSkip: 'No extras',
+    extrasContinue: 'Continue with extras',
+    extrasSelected: 'Selected',
+    extrasPerPerson: 'per person',
+    extrasFlat: 'total',
+    extrasNoneHint: 'You can continue without selecting extras.',
+    extrasHotelRequired: 'Please enter your hotel name.',
+    extrasTransferRequired: 'Please select hotel transfer.',
+    extrasHotelFallbackLabel: 'Hotel name',
+    extrasTransferFallbackLabel: 'Transfer from hotel',
+    extrasLine: 'Extras',
+    extrasTotalLine: 'Extras total',
+    extrasEdit: 'Edit extras',
     validation: {
       firstName: 'First name is required.',
       lastName: 'Last name is required.',
@@ -660,6 +705,21 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     classAriaFull: 'Ausgebucht',
     classAriaClosed: 'Geschlossen',
     calendarDayAria: (dayNum, isoDate, pricePart) => `${dayNum} ${isoDate}${pricePart}`,
+    extrasPopupTitle: 'Zusatzleistungen',
+    extrasPopupSubtitle: 'Fügen Sie optional Extras hinzu. Dieser Schritt ist nicht erforderlich.',
+    extrasSkip: 'Keine Extras',
+    extrasContinue: 'Mit Extras fortfahren',
+    extrasSelected: 'Ausgewählt',
+    extrasPerPerson: 'pro Person',
+    extrasFlat: 'gesamt',
+    extrasNoneHint: 'Sie können ohne Extras fortfahren.',
+    extrasHotelRequired: 'Bitte geben Sie den Hotelnamen ein.',
+    extrasTransferRequired: 'Bitte wählen Sie den Hoteltransfer.',
+    extrasHotelFallbackLabel: 'Hotelname',
+    extrasTransferFallbackLabel: 'Transfer vom Hotel',
+    extrasLine: 'Extras',
+    extrasTotalLine: 'Extras gesamt',
+    extrasEdit: 'Extras bearbeiten',
     validation: {
       firstName: 'Vorname ist erforderlich.',
       lastName: 'Nachname ist erforderlich.',

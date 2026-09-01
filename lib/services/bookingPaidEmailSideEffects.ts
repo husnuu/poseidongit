@@ -1,5 +1,6 @@
 import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
+import { extrasTotalFromStored, normalizeSelectedExtrasFromStorage } from '@/lib/bookingExtras'
 import { computeDepositAmounts } from '@/lib/bookingDepositAmount'
 import { sendBookingPaidEmails, sendYachtDepositPaidEmails } from '@/lib/email'
 import { client, urlFor } from '@/lib/sanity'
@@ -121,6 +122,7 @@ export async function runBookingPaidEmailSideEffects(
       : undefined
 
   const additionalTravelers = normalizeAdditionalTravelersFromStorage(data.additional_travelers)
+  const selectedExtras = normalizeSelectedExtrasFromStorage(data.selected_extras)
 
   await sendBookingPaidEmails({
     bookingId,
@@ -153,5 +155,9 @@ export async function runBookingPaidEmailSideEffects(
     siteBaseUrl,
     ...(mealPreference && { mealPreference }),
     ...(additionalTravelers.length > 0 && { additionalTravelers }),
+    ...(selectedExtras.length > 0 && {
+      selectedExtras,
+      extrasTotal: extrasTotalFromStored(selectedExtras),
+    }),
   })
 }

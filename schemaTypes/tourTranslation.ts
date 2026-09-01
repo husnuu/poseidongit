@@ -279,12 +279,27 @@ export default defineType({
       name: 'extras',
       title: 'Ekstralar',
       type: 'array',
+      description: 'Sıra, Türkçe ekstralar listesi ile aynı olmalıdır. Fiyat ve fotoğraf Türkçe kayıttan gelir.',
       of: [
         {
           type: 'object',
           fields: [
             defineField({ name: 'title', type: 'string', title: 'Başlık' }),
             defineField({ name: 'description', type: 'text', rows: 2, title: 'Açıklama' }),
+            defineField({ name: 'hotelNameLabel', type: 'string', title: 'Otel adı etiketi' }),
+            defineField({ name: 'hotelNamePlaceholder', type: 'string', title: 'Otel adı yer tutucu' }),
+            defineField({ name: 'hotelNameHelp', type: 'text', rows: 2, title: 'Otel adı yardım metni' }),
+            defineField({
+              name: 'transferFromHotelLabel',
+              type: 'string',
+              title: 'Otelden transfer seçeneği — başlık',
+            }),
+            defineField({
+              name: 'transferFromHotelDescription',
+              type: 'text',
+              rows: 2,
+              title: 'Otelden transfer seçeneği — açıklama',
+            }),
           ],
         },
       ],

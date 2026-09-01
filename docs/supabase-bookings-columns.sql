@@ -32,6 +32,8 @@ alter table public.bookings
   add column if not exists child_count integer,
   add column if not exists infant_count integer,
   add column if not exists additional_travelers jsonb,
+  add column if not exists selected_extras jsonb,
+  add column if not exists extras_total numeric,
   add column if not exists meal_preference jsonb,
   add column if not exists source text,
   add column if not exists access_token text,
@@ -71,6 +73,8 @@ alter table public.bookings
   add column if not exists refund_requested_at timestamptz;
 
 comment on column public.bookings.ui_locale is 'Site language at booking (tr|en|de) — customer emails / PDF';
+comment on column public.bookings.selected_extras is 'JSON: rezervasyonda seçilen ekstra hizmetler (otel transferi, otel adı vb.)';
+comment on column public.bookings.extras_total is 'Seçilen ekstraların toplam tutarı (TRY)';
 comment on column public.bookings.payment_status is 'Ödeme durumu özeti: paid | failed (status ile uyumlu olmalı)';
 comment on column public.bookings.payment_verification_status is 'NestPay HASH: verified | hash_mismatch';
 comment on column public.bookings.refund_status is 'İade durumu: requested | request_rejected | refunded | partial_refunded | refund_pending | refund_failed | null';

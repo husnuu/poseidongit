@@ -145,6 +145,39 @@ export interface MealMenuForBooking {
   options?: MealMenuOption[]
 }
 
+export interface ExtraImageForBooking {
+  asset?: { _ref?: string; _type?: string }
+  url?: string
+  alt?: string
+  metadata?: { lqip?: string; dimensions?: { width: number; height: number } }
+}
+
+export interface ExtraForBooking {
+  _key?: string
+  key?: string
+  title: string
+  description?: string
+  price: number
+  priceType?: 'perPerson' | 'total'
+  icon?: string
+  extraKind?: 'standard' | 'hotelTransfer'
+  offerInBooking?: boolean
+  image?: ExtraImageForBooking
+  hotelNameLabel?: string
+  hotelNamePlaceholder?: string
+  hotelNameHelp?: string
+  requireHotelName?: boolean
+  transferFromHotelLabel?: string
+  transferFromHotelDescription?: string
+  requireTransferFromHotel?: boolean
+}
+
+export interface SelectedBookingExtraState {
+  key: string
+  hotelName?: string
+  transferFromHotel?: boolean
+}
+
 export interface TourForBooking {
   _id?: string
   title: string
@@ -162,6 +195,7 @@ export interface TourForBooking {
   availability?: AvailabilityConfig
   pickupPoints?: PickupPoint[]
   mealMenu?: MealMenuForBooking
+  extras?: ExtraForBooking[]
 }
 
 /** Supabase bookings: tourId = Sanity _id (UUID), date "YYYY-MM-DD", classId "eco"|"premium"|"first", counts { adult, child, infant }, status "pending"|"paid". */
@@ -195,6 +229,9 @@ export interface PricingSummary {
   remainingAmount: number
   currency?: string
   cashPaymentEnabled?: boolean
+  /** Bilet tutarı (ekstralar hariç). */
+  ticketsTotal?: number
+  extrasTotal?: number
 }
 
 export interface BookingWizardState {
@@ -227,6 +264,8 @@ export interface BookingWizardState {
   }[]
   /** Bebekler için cinsiyet (counts.baby uzunluğunda). */
   infantGenders?: ('male' | 'female' | '')[]
+  /** Sınıf seçiminden sonra popup’ta işaretlenen ekstralar. */
+  selectedExtras?: SelectedBookingExtraState[]
   pricingSummary: PricingSummary | null
   step: 1 | 2 | 3 | 4
 }
@@ -239,6 +278,7 @@ export const DEFAULT_BOOKING_STATE: Omit<BookingWizardState, 'tourSlug'> = {
   customer: { firstName: '', lastName: '', email: '', phoneCountryCode: '90', phone: '', note: '', gender: '' },
   additionalTravelers: [],
   infantGenders: [],
+  selectedExtras: [],
   pricingSummary: null,
   step: 1,
 }

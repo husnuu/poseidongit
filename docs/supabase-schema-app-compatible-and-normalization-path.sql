@@ -83,6 +83,8 @@ alter table public.bookings
   add column if not exists child_count integer,
   add column if not exists infant_count integer,
   add column if not exists additional_travelers jsonb,
+  add column if not exists selected_extras jsonb,
+  add column if not exists extras_total numeric,
   add column if not exists meal_preference jsonb,
   add column if not exists source text,
   add column if not exists access_token text,
