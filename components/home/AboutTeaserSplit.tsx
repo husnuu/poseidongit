@@ -30,7 +30,7 @@ const bodyComponents = {
   block: {
     normal: ({ children }: { children?: React.ReactNode }) => (
       <p
-        className="text-[16px] md:text-[17px] leading-[1.65] max-w-[540px] mb-3 last:mb-0"
+        className="mx-auto max-w-[540px] text-base leading-relaxed md:text-lg mb-3 last:mb-0"
         style={{ color: 'var(--text-color, #58595b)' }}
       >
         {children}
@@ -74,7 +74,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
       >
         <div
           ref={contentRef}
-          className="w-full max-w-[600px] transition-all duration-700 ease-out"
+          className="w-full max-w-[600px] text-center transition-all duration-700 ease-out"
           style={{
             opacity: visible ? 1 : 0,
             transform: visible ? 'translateY(0)' : 'translateY(16px)',
@@ -83,10 +83,11 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
           {heading && (
             <h2
               id="about-teaser-heading"
-              className="font-black uppercase text-[26px] leading-[1.15] sm:text-[30px] md:text-[34px] lg:text-[38px] mb-4 -mt-6 text-[#1e3a5f]"
+              className="font-black uppercase text-[26px] leading-[1.15] sm:text-[30px] md:text-[34px] lg:text-[38px] mb-4 -mt-6"
               style={{
                 fontFamily: 'var(--font-family-title, var(--font-family))',
                 fontWeight: 900,
+                color: 'var(--primary, #2168b8)',
               }}
             >
               {heading}
@@ -98,14 +99,14 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
             </div>
           )}
           {(primaryCta?.label || secondaryCta?.label) && (
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-8">
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6 mt-8">
               {primaryCta?.label && (
                 <>
                   {primaryPath ? (
                     <Link
                       href={primaryPath}
-                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md bg-[#111] text-white font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#222] text-[17px]"
-                      style={{ fontFamily: 'var(--font-family)' }}
+                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-lg text-white font-bold uppercase flex items-center justify-center transition hover:brightness-110 text-[17px]"
+                      style={{ fontFamily: 'var(--font-family)', background: 'var(--primary, #2168b8)' }}
                     >
                       {primaryCta.label}
                     </Link>
@@ -114,8 +115,8 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                       href={primaryCta.href || '#'}
                       target={primaryCta.href?.startsWith('http') ? '_blank' : undefined}
                       rel={primaryCta.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md bg-[#111] text-white font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-[#222] text-[17px]"
-                      style={{ fontFamily: 'var(--font-family)' }}
+                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-lg text-white font-bold uppercase flex items-center justify-center transition hover:brightness-110 text-[17px]"
+                      style={{ fontFamily: 'var(--font-family)', background: 'var(--primary, #2168b8)' }}
                     >
                       {primaryCta.label}
                     </a>
@@ -127,8 +128,8 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                   {secondaryPath ? (
                     <Link
                       href={secondaryPath}
-                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md border border-zinc-300 bg-white text-[#111] font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-zinc-50 text-[17px]"
-                      style={{ fontFamily: 'var(--font-family)' }}
+                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-lg border-2 bg-white font-bold uppercase flex items-center justify-center transition hover:bg-[var(--primary)]/[0.06] text-[17px]"
+                      style={{ fontFamily: 'var(--font-family)', borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
                     >
                       {secondaryCta.label}
                     </Link>
@@ -137,8 +138,8 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                       href={secondaryCta.href || '#'}
                       target={secondaryCta.href?.startsWith('http') ? '_blank' : undefined}
                       rel={secondaryCta.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-md border border-zinc-300 bg-white text-[#111] font-bold uppercase flex items-center justify-center transition-colors duration-200 hover:bg-zinc-50 text-[17px]"
-                      style={{ fontFamily: 'var(--font-family)' }}
+                      className="h-[48px] min-w-[200px] w-full sm:w-[200px] px-5 rounded-lg border-2 bg-white font-bold uppercase flex items-center justify-center transition hover:bg-[var(--primary)]/[0.06] text-[17px]"
+                      style={{ fontFamily: 'var(--font-family)', borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
                     >
                       {secondaryCta.label}
                     </a>

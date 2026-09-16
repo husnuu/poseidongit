@@ -44,10 +44,6 @@ export default function HelpContactBanner({
   const t = getHelpBannerStrings(locale)
   const localeUpper = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
   const titleUpper = t.heading.trim().toLocaleUpperCase(localeUpper)
-  const words = titleUpper.split(/\s+/).filter(Boolean)
-  const firstTwo = words.slice(0, 2).join(' ')
-  const nextTwo = words.slice(2, 4).join(' ')
-  const rest = words.slice(4).join(' ')
   const waUrl = buildWhatsAppLink(chatValue, phone)
   const telHref = phone ? `tel:${phone.replace(/\s/g, '')}` : null
   const numberForDisplay = phone?.trim() || chatValue?.trim() || ''
@@ -65,9 +61,10 @@ export default function HelpContactBanner({
     'flex min-w-0 flex-col gap-2 text-center sm:gap-2.5 lg:items-start lg:text-left lg:gap-2'
   const labelClass = 'text-sm font-normal text-zinc-600 sm:text-[15px] md:text-base'
   const phoneWaLinkClass =
-    'block w-full min-w-0 max-w-full text-center font-bold text-[#1e3a5f] underline-offset-2 hover:underline text-sm leading-snug tabular-nums tracking-tight sm:text-[15px] md:text-lg lg:text-xl'
+    'block w-full min-w-0 max-w-full text-center font-bold underline-offset-2 hover:underline text-sm leading-snug tabular-nums tracking-tight sm:text-[15px] md:text-lg lg:text-xl'
   const emailLinkClass =
-    'block w-full min-w-0 max-w-full break-all text-center font-bold text-[#1e3a5f] underline-offset-2 hover:underline text-sm leading-snug sm:text-[15px] md:text-lg lg:text-xl'
+    'block w-full min-w-0 max-w-full break-all text-center font-bold underline-offset-2 hover:underline text-sm leading-snug sm:text-[15px] md:text-lg lg:text-xl'
+  const linkColorStyle = { color: 'var(--primary, #2168b8)' }
 
   return (
     <section
@@ -77,28 +74,25 @@ export default function HelpContactBanner({
     >
       <div className="mx-auto max-w-[1200px] px-4 py-12 md:py-14 md:px-6">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-14 lg:items-start">
-          <div className="min-w-0 text-center lg:text-left">
+          <div className="min-w-0 text-center">
             <h2
               id="help-banner-heading"
-              className="mx-auto max-w-xl text-[26px] font-black uppercase leading-[1.15] tracking-tight sm:text-[30px] md:text-[34px] lg:text-[38px] lg:mx-0 lg:max-w-none"
+              className="mx-auto max-w-xl text-[26px] font-black uppercase leading-[1.15] tracking-tight sm:text-[30px] md:text-[34px] lg:text-[38px]"
               style={{
                 fontFamily: 'var(--font-family-title, var(--font-family))',
                 fontWeight: 900,
+                color: 'var(--primary, #2168b8)',
               }}
             >
-              {firstTwo ? <span style={{ color: '#1e3a8a' }}>{firstTwo}</span> : null}
-              {nextTwo ? (
-                <span style={{ color: '#000' }}>{(firstTwo ? ' ' : '') + nextTwo}</span>
-              ) : null}
-              {rest ? <span style={{ color: '#000' }}>{' ' + rest}</span> : null}
+              {titleUpper}
             </h2>
             <p
-              className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-zinc-800 md:text-[17px] lg:mx-0 lg:max-w-xl"
-              style={{ fontFamily: 'var(--font-family)' }}
+              className="mx-auto mt-4 max-w-xl text-base font-normal leading-relaxed md:text-lg"
+              style={{ fontFamily: 'var(--font-family)', color: 'var(--text-color)' }}
             >
               {t.lead}
             </p>
-            <div className="mx-auto mt-6 max-w-xl space-y-1.5 text-sm text-zinc-600 lg:mx-0">
+            <div className="mx-auto mt-6 max-w-xl space-y-1.5 text-sm text-zinc-600">
               {openingHoursLine?.trim() && <p>{openingHoursLine.trim()}</p>}
               <p>{t.languagesLine}</p>
             </div>
@@ -117,7 +111,7 @@ export default function HelpContactBanner({
                   <a
                     href={telHref!}
                     className={phoneWaLinkClass}
-                    style={{ fontFamily: 'var(--font-family)' }}
+                    style={{ fontFamily: 'var(--font-family)', ...linkColorStyle }}
                   >
                     {phone}
                   </a>
@@ -133,7 +127,7 @@ export default function HelpContactBanner({
                     target="_blank"
                     rel="noopener noreferrer"
                     className={phoneWaLinkClass}
-                    style={{ fontFamily: 'var(--font-family)' }}
+                    style={{ fontFamily: 'var(--font-family)', ...linkColorStyle }}
                   >
                     {phone?.trim() ? phone : numberForDisplay}
                   </a>
@@ -151,7 +145,7 @@ export default function HelpContactBanner({
                   <a
                     href={`mailto:${email}`}
                     className={emailLinkClass}
-                    style={{ fontFamily: 'var(--font-family)' }}
+                    style={{ fontFamily: 'var(--font-family)', ...linkColorStyle }}
                   >
                     {email}
                   </a>

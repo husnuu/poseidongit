@@ -6,11 +6,11 @@
 
 .heading {
   font-family: var(--font-family), sans-serif;
-  font-weight: 700;
+  font-weight: 900;
   font-size: 24px;
   line-height: 36px;
   text-transform: uppercase;
-  color: #1e3a5f;
+  color: var(--primary, #2168b8);
   margin: 0 0 24px 0;
 }
 

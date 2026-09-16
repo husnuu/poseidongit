@@ -90,9 +90,10 @@ export default function YachtRentalListSection({
                 setFilterSheetOpen(false)
                 setSortSheetOpen(true)
               }}
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full border-2 border-zinc-200 bg-white px-5 py-2.5 text-sm font-black uppercase tracking-wide text-zinc-800 shadow-sm transition hover:border-[#1e3a5f]/30 hover:bg-zinc-50 sm:flex-initial"
+              className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full border-2 bg-white px-5 py-2.5 text-sm font-black uppercase tracking-wide shadow-sm transition hover:bg-[var(--primary)]/[0.06] sm:flex-initial"
+              style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
             >
-              <svg className="h-5 w-5 text-[#1e3a5f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -107,7 +108,8 @@ export default function YachtRentalListSection({
             <button
               type="button"
               onClick={openFilterSheet}
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full border-2 border-[#1e3a5f] bg-white px-5 py-2.5 text-sm font-black uppercase tracking-wide text-[#1e3a5f] shadow-sm transition hover:bg-[#1e3a5f]/[0.06] sm:flex-initial"
+              className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full border-2 bg-white px-5 py-2.5 text-sm font-black uppercase tracking-wide shadow-sm transition hover:bg-[var(--primary)]/[0.06] sm:flex-initial"
+              style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
                 <path
@@ -118,7 +120,10 @@ export default function YachtRentalListSection({
               </svg>
               Filtreler
               {filterActiveCount > 0 ? (
-                <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-[#2168b8] px-1.5 text-xs font-black text-white">
+                <span
+                  className="flex h-6 min-w-[24px] items-center justify-center rounded-full px-1.5 text-xs font-black text-white"
+                  style={{ background: 'var(--primary, #2168b8)' }}
+                >
                   {filterActiveCount}
                 </span>
               ) : null}

@@ -59,8 +59,8 @@ export default function WhereSection({
     <section className="mb-8" aria-labelledby="where-section-heading">
       <h2
         id="where-section-heading"
-        className="text-2xl font-bold mb-4"
-        style={{ color: '#1e3a5f' }}
+        className="text-2xl font-black mb-4"
+        style={{ color: 'var(--primary, #2168b8)' }}
       >
         {headingText}
       </h2>

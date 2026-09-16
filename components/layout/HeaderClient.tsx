@@ -12,6 +12,7 @@ import {
   Anchor,
   Bell,
   Calendar,
+  Heart,
   Info,
   Megaphone,
   Percent,
@@ -19,11 +20,59 @@ import {
   Sparkles,
   Star,
   Tag,
+  Trash2,
+  X,
   type LucideIcon,
 } from 'lucide-react'
 import { urlFor } from '@/lib/sanity'
 import type { AnnouncementBarData } from './announcementBarTypes'
+import { useWishlist, type WishlistItem } from '@/lib/wishlist/WishlistContext'
 import styles from './Header.module.css'
+
+const WISHLIST_LABELS: Record<
+  SiteLocale,
+  {
+    open: string
+    title: string
+    emptyTitle: string
+    emptyBody: string
+    remove: string
+    close: string
+    groupTour: string
+    groupYacht: string
+  }
+> = {
+  tr: {
+    open: 'Favoriler',
+    title: 'KAYDEDİLENLER',
+    emptyTitle: 'Henüz bir şey kaydetmediniz.',
+    emptyBody: 'Bir tur veya yatın üzerindeki kalbe dokunarak buraya kaydedin.',
+    remove: 'Kaldır',
+    close: 'Kapat',
+    groupTour: 'TURLAR',
+    groupYacht: 'YATLAR',
+  },
+  en: {
+    open: 'Wishlist',
+    title: 'SAVED',
+    emptyTitle: "You haven't saved anything yet.",
+    emptyBody: 'Tap the heart on a tour or yacht to save it here.',
+    remove: 'Remove',
+    close: 'Close',
+    groupTour: 'TOURS',
+    groupYacht: 'YACHTS',
+  },
+  de: {
+    open: 'Merkliste',
+    title: 'GESPEICHERT',
+    emptyTitle: 'Noch nichts gespeichert.',
+    emptyBody: 'Tippen Sie auf das Herz einer Tour oder Yacht, um sie hier zu speichern.',
+    remove: 'Entfernen',
+    close: 'Schließen',
+    groupTour: 'TOUREN',
+    groupYacht: 'YACHTEN',
+  },
+}
 
 const ANNOUNCEMENT_ICONS: Record<string, LucideIcon> = {
   megaphone: Megaphone,
@@ -324,9 +373,14 @@ export default function HeaderClient({
   announcementBar = null,
 }: HeaderClientProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [headerVisible, setHeaderVisible] = useState(true)
-  const lastScrollY = useRef(0)
+  const [wishlistOpen, setWishlistOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const [headerTop, setHeaderTop] = useState(0)
+  const [headerHeight, setHeaderHeight] = useState(0)
+  const announcementRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLElement>(null)
   const aria = headerAria(locale)
+  const { items: wishlistItems, remove: removeFromWishlist } = useWishlist()
 
   const announcementText =
     (locale === 'en' && announcementBar?.textEn?.trim()) ||
@@ -338,23 +392,47 @@ export default function HeaderClient({
   const linkResolved = linkTrimmed ? localizeNavHref(locale, linkTrimmed) : '#'
   const hasWorkingLink = Boolean(linkTrimmed && linkResolved !== '#')
 
+  // Header'ı gerçek anlamda viewport'a sabitler (native `position: sticky`,
+  // body'deki global `overflow-x: hidden` yüzünden çalışmıyor — bu yüzden
+  // duyuru şeridinin kalan yüksekliğini scroll'a göre hesaplayıp `fixed` ile taklit ediyoruz).
   useEffect(() => {
-    function onScroll() {
-      const y = window.scrollY
-      if (y > lastScrollY.current && y > SCROLL_THRESHOLD) {
-        setHeaderVisible(false)
-      } else {
-        setHeaderVisible(true)
-      }
-      lastScrollY.current = y
+    function measure() {
+      const annH = announcementRef.current?.offsetHeight ?? 0
+      const hdrH = headerRef.current?.offsetHeight ?? 0
+      setHeaderHeight(hdrH)
+      setHeaderTop(Math.max(0, annH - window.scrollY))
+      setScrolled(window.scrollY > SCROLL_THRESHOLD)
     }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+    measure()
+    window.addEventListener('scroll', measure, { passive: true })
+    window.addEventListener('resize', measure)
+    return () => {
+      window.removeEventListener('scroll', measure)
+      window.removeEventListener('resize', measure)
+    }
+  }, [showAnnouncement])
+
+  useEffect(() => {
+    if (!wishlistOpen) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setWishlistOpen(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = ''
+    }
+  }, [wishlistOpen])
 
   const logoUrl = settings.logo?.asset
     ? urlFor(settings.logo.asset).width(220).height(60).url()
     : settings.logo?.url ?? null
+
+  const wishlistGroups: { label: string; items: WishlistItem[] }[] = [
+    { label: WISHLIST_LABELS[locale].groupTour, items: wishlistItems.filter((i) => i.type === 'tour') },
+    { label: WISHLIST_LABELS[locale].groupYacht, items: wishlistItems.filter((i) => i.type === 'yacht') },
+  ].filter((g) => g.items.length > 0)
 
   const AnnouncementIcon = announcementIconComponent(announcementBar?.icon)
   const announcementInnerClass =
@@ -382,7 +460,7 @@ export default function HeaderClient({
   return (
     <div className={`${styles.siteHeaderStack} print:hidden`}>
       {showAnnouncement && (
-        <div className={styles.announcementStrip} role="region" aria-label={aria.announcement}>
+        <div ref={announcementRef} className={styles.announcementStrip} role="region" aria-label={aria.announcement}>
           {hasWorkingLink ? (
             isExternalHttpUrl(linkResolved) ? (
               <a
@@ -413,7 +491,11 @@ export default function HeaderClient({
           )}
         </div>
       )}
-      <header className={`${styles.header} ${!headerVisible ? styles.headerHidden : ''}`}>
+      <header
+        ref={headerRef}
+        className={`${styles.header} ${scrolled ? styles.headerScrolled : ''}`}
+        style={{ top: headerTop }}
+      >
         <div className={styles.headerInner}>
           <div className={styles.headerLeft}>
             <Link href={withLocalePath(locale, '/')} className={styles.logoLink} aria-label={aria.home}>
@@ -424,7 +506,7 @@ export default function HeaderClient({
                     alt={settings.siteName || 'Logo'}
                     width={220}
                     height={55}
-                    className={styles.logoImage}
+                    className={`${styles.logoImage} ${scrolled ? styles.logoImageOnDark : ''}`}
                     priority
                   />
                 ) : (
@@ -458,6 +540,21 @@ export default function HeaderClient({
               ariaLabel={aria.selectLanguage}
               languages={settings.headerLanguages?.length ? settings.headerLanguages : DEFAULT_HEADER_LANGUAGES}
             />
+            <div className={styles.wishlistWrap}>
+              <button
+                type="button"
+                className={styles.wishlistTrigger}
+                onClick={() => setWishlistOpen(true)}
+                aria-expanded={wishlistOpen}
+                aria-haspopup="dialog"
+                aria-label={WISHLIST_LABELS[locale].open}
+              >
+                <Heart className={styles.wishlistIcon} strokeWidth={2} fill="none" aria-hidden />
+                {wishlistItems.length > 0 && (
+                  <span className={styles.wishlistCount}>{wishlistItems.length}</span>
+                )}
+              </button>
+            </div>
             <div className={styles.mobileRightBlock}>
               <button
                 type="button"
@@ -473,6 +570,92 @@ export default function HeaderClient({
           </div>
         </div>
       </header>
+      <div style={{ height: headerHeight }} aria-hidden />
+
+      {wishlistOpen && (
+        <div
+          className={styles.wishlistOverlay}
+          onClick={() => setWishlistOpen(false)}
+        >
+          <div
+            className={styles.wishlistDrawer}
+            role="dialog"
+            aria-modal="true"
+            aria-label={WISHLIST_LABELS[locale].title}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.wishlistDrawerHeader}>
+              <span className={styles.wishlistDrawerTitle}>
+                {WISHLIST_LABELS[locale].title}
+                {wishlistItems.length > 0 && (
+                  <span className={styles.wishlistDrawerCount}>{wishlistItems.length}</span>
+                )}
+              </span>
+              <button
+                type="button"
+                className={styles.wishlistDrawerClose}
+                onClick={() => setWishlistOpen(false)}
+                aria-label={WISHLIST_LABELS[locale].close}
+              >
+                <X className="h-5 w-5" strokeWidth={2} aria-hidden />
+              </button>
+            </div>
+
+            {wishlistItems.length === 0 ? (
+              <div className={styles.wishlistEmptyState}>
+                <Heart className={styles.wishlistEmptyIcon} strokeWidth={1.5} aria-hidden />
+                <p className={styles.wishlistEmptyTitle}>{WISHLIST_LABELS[locale].emptyTitle}</p>
+                <p className={styles.wishlistEmptyBody}>{WISHLIST_LABELS[locale].emptyBody}</p>
+              </div>
+            ) : (
+              <div className={styles.wishlistDrawerBody}>
+                {wishlistGroups.map((group) => (
+                  <div key={group.label} className={styles.wishlistGroup}>
+                    <div className={styles.wishlistGroupLabel}>{group.label}</div>
+                    <ul className={styles.wishlistList}>
+                      {group.items.map((item) => (
+                        <li key={item.id} className={styles.wishlistItem}>
+                          <Link
+                            href={item.href}
+                            className={styles.wishlistItemLink}
+                            onClick={() => setWishlistOpen(false)}
+                          >
+                            <span className={styles.wishlistItemThumb}>
+                              {item.imageUrl ? (
+                                <Image
+                                  src={item.imageUrl}
+                                  alt={item.title}
+                                  width={64}
+                                  height={64}
+                                  className={styles.wishlistItemThumbImg}
+                                />
+                              ) : null}
+                            </span>
+                            <span className={styles.wishlistItemInfo}>
+                              <span className={styles.wishlistItemTitle}>{item.title}</span>
+                              {item.priceLabel && (
+                                <span className={styles.wishlistItemPrice}>{item.priceLabel}</span>
+                              )}
+                            </span>
+                          </Link>
+                          <button
+                            type="button"
+                            className={styles.wishlistItemRemove}
+                            onClick={() => removeFromWishlist(item.id)}
+                            aria-label={WISHLIST_LABELS[locale].remove}
+                          >
+                            <Trash2 className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {mobileOpen && (
         <div

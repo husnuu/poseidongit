@@ -34,9 +34,9 @@ type FeatureBarProps = {
 const ICON_SIZE = 32
 
 const FEATURE_BAR_BG = {
-  backgroundColor: '#1e3a8a',
-  backgroundImage:
-    'linear-gradient(to right, #1e3a8a 0%, #1e4976 35%, #2563eb 70%, #38bdf8 100%)',
+  backgroundColor: 'var(--primary, #2168b8)',
+  backgroundImage: 'linear-gradient(to right, var(--primary, #2168b8), #a17fe0, #59c173)',
+  boxShadow: 'var(--shadow-md, 0 6px 24px rgba(19, 23, 25, 0.08))',
 } as const
 
 export default function FeatureBar({ items }: FeatureBarProps) {
@@ -45,7 +45,7 @@ export default function FeatureBar({ items }: FeatureBarProps) {
 
   return (
     <section
-      className="w-full min-w-0 text-white py-10 md:py-12"
+      className="relative w-full min-w-0 text-white py-12"
       style={FEATURE_BAR_BG}
       aria-label="Özellikler"
     >
@@ -65,8 +65,8 @@ export default function FeatureBar({ items }: FeatureBarProps) {
                     className="stroke-white"
                   />
                 </div>
-                <div className="min-w-0">
-                  <div className="font-bold uppercase text-base md:text-lg leading-tight tracking-wide">
+                <div className="min-w-0" style={{ fontFamily: 'var(--font-family)' }}>
+                  <div className="font-black uppercase text-base md:text-lg leading-tight tracking-wide">
                     {item.title}
                   </div>
                   {item.description && (

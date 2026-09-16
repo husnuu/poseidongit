@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
+import { ChevronRight } from 'lucide-react'
 import type { PortableTextBlock } from '@portabletext/react'
 import type { Metadata } from 'next'
 import { client, urlFor } from '@/lib/sanity'
@@ -475,7 +476,14 @@ export default async function TourPage({
       {/* Full-width tour gallery hero (edge-to-edge) */}
       {galleryHeroImages.length > 0 && (
         <div className="w-full mb-0">
-          <PhotoGrid images={galleryHeroImages} tourTitle={tour.title} locale={locale} />
+          <PhotoGrid
+            images={galleryHeroImages}
+            tourTitle={tour.title}
+            locale={locale}
+            tourId={tour._id}
+            tourSlug={tour.slug}
+            tourDescription={tour.shortDescription}
+          />
         </div>
       )}
       <div className="container mx-auto px-4 pt-12 pb-16 max-w-[1360px]">
@@ -592,39 +600,51 @@ export default async function TourPage({
         {/* Extras */}
         {tour.extras && tour.extras.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4" style={{ color: '#1e3a5f' }}>
+            <h2
+              className="text-2xl font-black uppercase mb-4"
+              style={{ color: 'var(--primary, #2168b8)' }}
+            >
               {tourUi.extrasSectionTitle}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-4">
               {tour.extras.map((extra, index) => (
                 <div
                   key={index}
-                  className="bg-white dark:bg-zinc-900 rounded-lg shadow-md p-6"
+                  className="flex items-center gap-4 rounded-2xl p-4"
+                  style={{ background: '#f8fafc' }}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      {extra.icon && (
-                        <span className="text-2xl mb-2 block">
-                          {extra.icon}
-                        </span>
-                      )}
-                      <h3 className="text-lg font-semibold mb-2 text-black dark:text-zinc-50">
-                        {extra.title}
-                      </h3>
-                      {extra.description && (
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
-                          {extra.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-black dark:text-zinc-50">
+                  <div
+                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-white text-3xl shadow-sm md:h-20 md:w-20"
+                    aria-hidden
+                  >
+                    {extra.icon || '✨'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3
+                      className="text-base font-bold md:text-lg"
+                      style={{ color: 'var(--secondary, #131719)' }}
+                    >
+                      {extra.title}
+                    </h3>
+                    {extra.description && (
+                      <p
+                        className="mt-1 line-clamp-2 text-sm"
+                        style={{ color: 'var(--muted, #81848b)' }}
+                      >
+                        {extra.description}
+                      </p>
+                    )}
+                    <p className="mt-1 text-sm">
+                      <span className="font-bold" style={{ color: 'var(--primary, #2168b8)' }}>
                         {extra.price} ₺
-                      </p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-500">
-                        {extra.priceType === 'perPerson' ? tourUi.pricePerPerson : tourUi.priceTotal}
-                      </p>
-                    </div>
+                      </span>{' '}
+                      <span style={{ color: 'var(--muted, #81848b)' }}>
+                        · {extra.priceType === 'perPerson' ? tourUi.pricePerPerson : tourUi.priceTotal}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
+                    <ChevronRight className="h-4 w-4" style={{ color: 'var(--secondary, #131719)' }} aria-hidden />
                   </div>
                 </div>
               ))}

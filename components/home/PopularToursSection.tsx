@@ -39,10 +39,6 @@ export default function PopularToursSection({ data, locale = 'tr' }: PopularTour
   const { title, subtitle, items } = data
   const localeUpper = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
   const titleUpper = (title || 'Popüler Turlar').trim().toLocaleUpperCase(localeUpper)
-  const words = titleUpper.split(/\s+/).filter(Boolean)
-  const firstTwo = words.slice(0, 2).join(' ')
-  const nextTwo = words.slice(2, 4).join(' ')
-  const rest = words.slice(4).join(' ')
 
   return (
     <section
@@ -55,7 +51,7 @@ export default function PopularToursSection({ data, locale = 'tr' }: PopularTour
       aria-labelledby="popular-tours-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">
-        <header className="mb-10 md:mb-12">
+        <header className="mb-10 text-center md:mb-12">
           {subtitle && (
             <p
               className="text-sm uppercase tracking-[0.1em] mb-1"
@@ -67,11 +63,13 @@ export default function PopularToursSection({ data, locale = 'tr' }: PopularTour
           <h2
             id="popular-tours-heading"
             className="text-[30px] font-black uppercase leading-[1.15] mb-6 sm:text-[36px] md:text-[40px] lg:text-[46px]"
-            style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+            style={{
+              fontFamily: 'var(--font-family-title, var(--font-family))',
+              fontWeight: 900,
+              color: 'var(--primary, #2168b8)',
+            }}
           >
-            {firstTwo && <span style={{ color: '#1e3a8a' }}>{firstTwo}</span>}
-            {nextTwo && <span style={{ color: '#000' }}>{(firstTwo ? ' ' : '') + nextTwo}</span>}
-            {rest && <span style={{ color: '#000' }}>{' ' + rest}</span>}
+            {titleUpper}
           </h2>
         </header>
 

@@ -43,10 +43,6 @@ export default function HomeClassesSection({ data, locale }: Props) {
   const titleUpper = (data.heading?.trim() || 'BİLET SINIFLARI')
     .trim()
     .toLocaleUpperCase(localeUpper)
-  const words = titleUpper.split(/\s+/).filter(Boolean)
-  const firstTwo = words.slice(0, 2).join(' ')
-  const nextTwo = words.slice(2, 4).join(' ')
-  const rest = words.slice(4).join(' ')
 
   return (
     <section
@@ -59,7 +55,7 @@ export default function HomeClassesSection({ data, locale }: Props) {
       aria-labelledby="home-classes-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">
-        <header className="mb-8 md:mb-10">
+        <header className="mb-8 text-center md:mb-10">
           {data.subtitle && (
             <p
               className="text-sm uppercase tracking-[0.1em] mb-1"
@@ -70,12 +66,14 @@ export default function HomeClassesSection({ data, locale }: Props) {
           )}
           <h2
             id="home-classes-heading"
-            className="text-[22px] font-black uppercase leading-[1.15] mb-5 sm:text-[24px] md:text-[26px] lg:text-[28px]"
-            style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+            className="text-[26px] font-black uppercase leading-[1.15] mb-5 sm:text-[30px] md:text-[34px] lg:text-[38px]"
+            style={{
+              fontFamily: 'var(--font-family-title, var(--font-family))',
+              fontWeight: 900,
+              color: 'var(--primary, #2168b8)',
+            }}
           >
-            {firstTwo && <span style={{ color: '#1e3a8a' }}>{firstTwo}</span>}
-            {nextTwo && <span style={{ color: '#000' }}>{(firstTwo ? ' ' : '') + nextTwo}</span>}
-            {rest && <span style={{ color: '#000' }}>{' ' + rest}</span>}
+            {titleUpper}
           </h2>
         </header>
 

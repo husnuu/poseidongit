@@ -61,10 +61,7 @@ export default function BlogSection({
   if (!data?.enabled || !data?.posts?.length) return null
 
   const { heading, subtitle, posts, ctaButton } = data
-  const words = (heading || 'Blog').toUpperCase().trim().split(/\s+/)
-  const firstTwo = words.slice(0, 2).join(' ')
-  const nextTwo = words.slice(2, 4).join(' ')
-  const rest = words.slice(4).join(' ')
+  const titleUpper = (heading || 'Blog').toUpperCase().trim()
 
   const blogIndexPath = withLocalePath(locale, '/blog')
   const seeAllHref = (ctaButton?.href?.trim() || blogIndexPath) as string
@@ -82,18 +79,25 @@ export default function BlogSection({
       aria-labelledby="blog-section-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">
-        <header className="mb-8 md:mb-10">
+        <header className="mb-8 text-center md:mb-10">
           <h2
             id="blog-section-heading"
             className="mb-4 text-[26px] font-black uppercase leading-[1.15] sm:text-[30px] md:mb-3 md:text-[34px] lg:text-[38px]"
-            style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+            style={{
+              fontFamily: 'var(--font-family-title, var(--font-family))',
+              fontWeight: 900,
+              color: 'var(--primary, #2168b8)',
+            }}
           >
-            {firstTwo && <span style={{ color: '#1e3a8a' }}>{firstTwo}</span>}
-            {nextTwo && <span style={{ color: '#000' }}>{(firstTwo ? ' ' : '') + nextTwo}</span>}
-            {rest && <span style={{ color: '#000' }}>{' ' + rest}</span>}
+            {titleUpper}
           </h2>
           {subtitle ? (
-            <p className="max-w-2xl text-base font-semibold leading-relaxed text-black md:text-lg">{subtitle}</p>
+            <p
+              className="mx-auto max-w-2xl text-base font-normal leading-relaxed md:text-lg"
+              style={{ color: 'var(--text-color)' }}
+            >
+              {subtitle}
+            </p>
           ) : null}
         </header>
 
@@ -126,7 +130,8 @@ export default function BlogSection({
           <button
             type="button"
             onClick={scrollNext}
-            className="pointer-events-auto absolute right-0 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 translate-x-1 items-center justify-center rounded-full border border-zinc-200 bg-white text-[#1e3a5f] shadow-md transition hover:bg-zinc-50 md:flex"
+            className="pointer-events-auto absolute right-0 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 translate-x-1 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-md transition hover:bg-zinc-50 md:flex"
+            style={{ color: 'var(--primary, #2168b8)' }}
             aria-label="Sonraki yazılar"
           >
             <ChevronRight className="h-6 w-6" strokeWidth={2} aria-hidden />
@@ -136,8 +141,8 @@ export default function BlogSection({
         <div className="mt-8 flex justify-center md:mt-10">
           <Link
             href={seeAllHref}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-lg border-2 px-8 py-2.5 text-xs font-bold uppercase tracking-wide transition hover:bg-zinc-50"
-            style={{ background: '#fff', color: '#1e3a8a', borderColor: '#1e3a8a' }}
+            className="inline-flex min-h-[44px] items-center justify-center rounded-lg border-2 px-8 py-2.5 text-xs font-bold uppercase tracking-wide transition hover:bg-[var(--primary)]/[0.06]"
+            style={{ background: '#fff', color: 'var(--primary, #2168b8)', borderColor: 'var(--primary, #2168b8)' }}
           >
             {seeAllLabel}
           </Link>

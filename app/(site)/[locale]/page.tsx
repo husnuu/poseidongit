@@ -3,9 +3,11 @@ import { tourCoverImageUrl } from '@/lib/sanityImage'
 import {
   homePageHeroImageUrlsQuery,
   homePageHeroQuery,
+  homeReviewsQuery,
   siteFooterContactQuery,
   siteSettingsTravelAgencyImagesQuery,
 } from '@/lib/queries'
+import HomeReviewsSection, { type HomeReviewsSectionData, type HomeReviewItem } from '@/components/home/HomeReviewsSection'
 import HeroBanner from '@/components/home/HeroBanner'
 import FeatureBar from '@/components/home/FeatureBar'
 import PopularToursSection from '@/components/home/PopularToursSection'
@@ -541,6 +543,73 @@ function mapRouteSection(raw: RouteSectionRaw | null): {
   }
 }
 
+type HomeReviewsTourRow = {
+  _id: string
+  title?: string | null
+  slug?: string | null
+  reviewsUrl?: string | null
+  reviewsSection?: {
+    reviewCount?: number | null
+    ratingValue?: number | null
+    items?: Array<{
+      name?: string | null
+      title?: string | null
+      description?: string | null
+      rating?: number | null
+      avatar?: {
+        asset?: { _ref?: string; _type?: string } | null
+        url?: string | null
+        metadata?: { lqip?: string | null } | null
+      } | null
+    }> | null
+  } | null
+}
+
+/** Tüm turlardaki yorumları tek listede toplar (anasayfa "Misafirlerimizin Kaleminden" bölümü). */
+function flattenHomeReviews(rows: HomeReviewsTourRow[] | null | undefined): HomeReviewsSectionData | null {
+  if (!rows || rows.length === 0) return null
+
+  const items: HomeReviewItem[] = []
+  let ratingSum = 0
+  let ratingCount = 0
+  let totalCount = 0
+  let googleReviewsUrl: string | null = null
+
+  for (const row of rows) {
+    if (!row.slug || !row.title) continue
+    if (!googleReviewsUrl && row.reviewsUrl) googleReviewsUrl = row.reviewsUrl
+    if (typeof row.reviewsSection?.reviewCount === 'number') totalCount += row.reviewsSection.reviewCount
+    if (typeof row.reviewsSection?.ratingValue === 'number') {
+      ratingSum += row.reviewsSection.ratingValue
+      ratingCount += 1
+    }
+    for (const it of row.reviewsSection?.items ?? []) {
+      if (!it?.name || !it?.description) continue
+      items.push({
+        id: `${row._id}-${items.length}`,
+        name: it.name,
+        dateLabel: it.title ?? null,
+        description: it.description,
+        rating: typeof it.rating === 'number' ? it.rating : 5,
+        avatarUrl: it.avatar?.url ?? null,
+        avatarLqip: it.avatar?.metadata?.lqip ?? null,
+        tourTitle: row.title,
+        tourSlug: row.slug,
+      })
+    }
+  }
+
+  if (items.length === 0) return null
+
+  return {
+    enabled: true,
+    items: items.slice(0, 12),
+    avgRating: ratingCount > 0 ? ratingSum / ratingCount : 5,
+    totalCount,
+    googleReviewsUrl,
+  }
+}
+
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: loc } = await params
   if (!isSiteLocale(loc)) notFound()
@@ -610,6 +679,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     footerContact = null
   }
 
+  let homeReviews: HomeReviewsSectionData | null = null
+  try {
+    const reviewRows = await client.fetch<HomeReviewsTourRow[]>(homeReviewsQuery, {}, { useCdn: false })
+    homeReviews = flattenHomeReviews(reviewRows)
+  } catch {
+    homeReviews = null
+  }
+
   const footerFields = footerContact?.contact
   const helpBannerOpening =
     footerFields &&
@@ -657,6 +734,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           locations={routeSection.locations}
         />
       )}
+      <HomeReviewsSection data={homeReviews} locale={locale} />
       <AboutTeaserSplit data={aboutTeaser} />
 
       {loyaltyBanner && (

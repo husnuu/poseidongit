@@ -31,9 +31,9 @@
 }
 
 .headingLine1 {
-  color: #1e3a8a;
+  color: var(--primary, #2168b8);
 }
 
 .headingLine2 {
-  color: #000;
+  color: var(--primary, #2168b8);
 }

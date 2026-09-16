@@ -45,12 +45,15 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
           <h2
             id="instagram-section-heading"
             className="text-[26px] font-black leading-[1.15] mb-3 sm:text-[30px] md:text-[34px] lg:text-[38px]"
-            style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900, color: '#1e3a8a' }}
+            style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900, color: 'var(--primary, #2168b8)' }}
           >
             {displayHeading}
           </h2>
           {description && (
-            <p className="text-base md:text-lg text-zinc-700 font-medium leading-relaxed max-w-2xl mx-auto">
+            <p
+              className="mx-auto max-w-2xl text-base font-normal leading-relaxed md:text-lg"
+              style={{ color: 'var(--text-color)' }}
+            >
               {description}
             </p>
           )}
@@ -96,11 +99,8 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
             href={instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-xl py-3 px-6 font-bold uppercase text-sm text-white transition hover:opacity-90"
-            style={{
-              background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
-              boxShadow: '0 4px 14px rgba(225, 48, 108, 0.4)',
-            }}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border-2 px-8 py-2.5 text-xs font-bold uppercase tracking-wide transition hover:bg-[var(--primary)]/[0.06]"
+            style={{ background: '#fff', color: 'var(--primary, #2168b8)', borderColor: 'var(--primary, #2168b8)' }}
           >
             {ctaText || 'Bizi takip et'}
           </Link>

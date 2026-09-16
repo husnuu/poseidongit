@@ -43,9 +43,7 @@ export default function RouteSection({
 
   const displayLocations = locations.slice(0, 4)
   const hasAnyLocations = displayLocations.length > 0
-  const words = heading.trim().split(/\s+/)
-  const firstTwo = words.slice(0, 2).join(' ')
-  const rest = words.slice(2).join(' ')
+  const titleText = heading.trim()
 
   return (
     <section
@@ -60,19 +58,21 @@ export default function RouteSection({
       >
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-14">
           {/* Sol: Başlık, Açıklama, CTA */}
-          <div className="flex flex-col">
+          <div className="flex flex-col items-center text-center lg:items-center lg:text-center">
             <h2
               id="route-section-heading"
               className="text-[26px] font-black uppercase leading-[1.15] sm:text-[30px] md:text-[34px] lg:text-[38px]"
-              style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+              style={{
+                fontFamily: 'var(--font-family-title, var(--font-family))',
+                fontWeight: 900,
+                color: 'var(--primary, #2168b8)',
+              }}
             >
-              {firstTwo && <span style={{ color: '#1e3a8a' }}>{firstTwo}</span>}
-              {(firstTwo && rest) ? ' ' : ''}
-              {rest && <span style={{ color: '#000' }}>{rest}</span>}
+              {titleText}
             </h2>
             {description && (
               <p
-                className="mt-4 max-w-[480px] text-base leading-[1.7] md:text-lg"
+                className="mx-auto mt-4 max-w-[480px] text-base leading-relaxed md:text-lg"
                 style={{ color: 'var(--text-color)' }}
               >
                 {description}
@@ -82,8 +82,13 @@ export default function RouteSection({
               <p className="mt-8 md:mt-10">
                 <Link
                   href={ctaButton.href || '#'}
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-full border-2 border-[#1e3a5f] bg-white px-8 py-3 text-sm font-black uppercase tracking-wide text-[#1e3a5f] shadow-sm transition hover:bg-[#1e3a5f]/[0.06] outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#1e3a8a]"
-                  style={{ fontFamily: 'var(--font-family)' }}
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg border-2 px-8 py-3 text-sm font-bold uppercase tracking-wide shadow-sm transition outline-none ring-offset-2 hover:bg-[var(--primary)]/[0.06] focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                  style={{
+                    fontFamily: 'var(--font-family)',
+                    borderColor: 'var(--primary, #2168b8)',
+                    color: 'var(--primary, #2168b8)',
+                    background: '#fff',
+                  }}
                 >
                   {ctaButton.label}
                 </Link>

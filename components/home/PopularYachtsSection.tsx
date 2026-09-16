@@ -24,9 +24,17 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
   const sectionRef = useRef<HTMLElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
+  const [activeDot, setActiveDot] = useState(0)
 
   const scrollNext = () => {
     scrollRef.current?.scrollBy({ left: 336, behavior: 'smooth' })
+  }
+
+  const scrollToIndex = (index: number) => {
+    const el = scrollRef.current
+    const card = el?.children[index] as HTMLElement | undefined
+    if (!el || !card) return
+    el.scrollTo({ left: card.offsetLeft - el.offsetLeft, behavior: 'smooth' })
   }
 
   useEffect(() => {
@@ -42,13 +50,32 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
     return () => observer.disconnect()
   }, [])
 
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const onScroll = () => {
+      const cards = Array.from(el.children) as HTMLElement[]
+      if (cards.length === 0) return
+      let closest = 0
+      let closestDist = Infinity
+      cards.forEach((card, i) => {
+        const dist = Math.abs(card.offsetLeft - el.offsetLeft - el.scrollLeft)
+        if (dist < closestDist) {
+          closestDist = dist
+          closest = i
+        }
+      })
+      setActiveDot(closest)
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [data?.items?.length])
+
   if (!data?.enabled || !data?.items?.length) return null
 
   const { title, subtitle, items, ctaButton } = data
-  const words = (title || 'En popüler tekneler').toUpperCase().trim().split(/\s+/)
-  const firstTwo = words.slice(0, 2).join(' ')
-  const nextTwo = words.slice(2, 4).join(' ')
-  const rest = words.slice(4).join(' ')
+  const titleUpper = (title || 'En popüler tekneler').toUpperCase().trim()
   const ctaLabel = ctaButton?.label?.trim() || 'Tüm tekneleri gör'
   const ctaHref = ctaButton?.href?.trim()
     ? ctaButton.href
@@ -65,20 +92,23 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
       aria-labelledby="popular-yachts-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">
-        <header className="mb-10 md:mb-12">
+        <header className="mb-10 text-center md:mb-12">
           <h2
             id="popular-yachts-heading"
             className="text-[26px] font-black uppercase leading-[1.15] mb-3 sm:text-[30px] md:text-[34px] lg:text-[38px]"
-            style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+            style={{
+              fontFamily: 'var(--font-family-title, var(--font-family))',
+              fontWeight: 900,
+              color: 'var(--primary, #2168b8)',
+            }}
           >
-            {firstTwo ? <span style={{ color: '#1e3a8a' }}>{firstTwo}</span> : null}
-            {nextTwo ? (
-              <span style={{ color: '#000' }}>{(firstTwo ? ' ' : '') + nextTwo}</span>
-            ) : null}
-            {rest ? <span style={{ color: '#000' }}>{' ' + rest}</span> : null}
+            {titleUpper}
           </h2>
           {subtitle ? (
-            <p className="max-w-3xl text-base font-normal normal-case leading-relaxed tracking-normal text-zinc-900 md:text-lg">
+            <p
+              className="mx-auto max-w-3xl text-base font-normal leading-relaxed md:text-lg"
+              style={{ color: 'var(--text-color)' }}
+            >
               {subtitle}
             </p>
           ) : null}
@@ -113,18 +143,40 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
           <button
             type="button"
             onClick={scrollNext}
-            className="pointer-events-auto absolute right-0 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 translate-x-1 items-center justify-center rounded-full border border-zinc-200 bg-white text-[#1e3a5f] shadow-md transition hover:bg-zinc-50 md:flex"
+            className="pointer-events-auto absolute right-0 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 translate-x-1 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-md transition hover:bg-zinc-50 md:flex"
+            style={{ color: 'var(--primary, #2168b8)' }}
             aria-label="Sonraki tekneler"
           >
             <ChevronRight className="h-6 w-6" strokeWidth={2} aria-hidden />
           </button>
         </div>
 
+        {items.length > 1 ? (
+          <div className="mt-5 flex items-center justify-center gap-1.5" role="tablist" aria-label="Tekne sayfaları">
+            {items.map((yacht, i) => (
+              <button
+                key={yacht._id}
+                type="button"
+                role="tab"
+                aria-selected={i === activeDot}
+                aria-label={`${i + 1}. tekneye git`}
+                onClick={() => scrollToIndex(i)}
+                className="h-2 rounded-full transition-all duration-300"
+                style={{
+                  width: i === activeDot ? 22 : 8,
+                  background: i === activeDot ? 'var(--primary, #2168b8)' : '#d4d4d8',
+                }}
+              />
+            ))}
+          </div>
+        ) : null}
+
         {ctaLabel && ctaHref ? (
           <p className="mt-10 text-center md:mt-12">
             <Link
               href={ctaHref}
-              className="inline-flex min-h-[48px] items-center justify-center rounded-full border-2 border-[#1e3a5f] bg-white px-8 py-3 text-sm font-black uppercase tracking-wide text-[#1e3a5f] shadow-sm transition hover:bg-[#1e3a5f]/[0.06]"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-lg border-2 bg-white px-8 py-3 text-sm font-bold uppercase tracking-wide shadow-sm transition hover:bg-[var(--primary)]/[0.06]"
+              style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
             >
               {ctaLabel}
             </Link>

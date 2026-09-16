@@ -1072,6 +1072,39 @@ export const homePopularToursOrderQuery = `*[_type == "homePage"][0] {
   pageTranslations
 }`
 
+/**
+ * Anasayfa "Misafirlerimizin Kaleminden" bölümü: tüm turlardaki yorumları
+ * tek listede toplamak için — her yorum kendi turunun başlığı/slug'ı ve
+ * reviewsUrl'i ile birlikte gelir (flatten işlemi kod tarafında yapılır).
+ */
+export const homeReviewsQuery = `*[
+  _type == "tour" &&
+  defined(reviewsSection) &&
+  reviewsSection.enabled == true &&
+  count(reviewsSection.items) > 0
+]{
+  _id,
+  title,
+  "slug": slug.current,
+  reviewsUrl,
+  reviewsSection{
+    reviewCount,
+    ratingValue,
+    sourceLabel,
+    items[]{
+      name,
+      title,
+      description,
+      rating,
+      avatar{
+        asset,
+        "url": asset->url,
+        metadata{ lqip, dimensions{ width, height } }
+      }
+    }
+  }
+}`
+
 export const toursPageQuery = `*[_type == "toursPage"][0] {
   "slug": slug.current,
   titleTop,
