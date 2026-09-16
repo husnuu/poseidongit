@@ -727,7 +727,7 @@
 .mobileMenuOverlay {
   position: fixed;
   inset: 0;
-  background: #1e3a5f;
+  background: var(--primary, #2168b8);
   z-index: 9999;
   display: flex;
   flex-direction: column;
