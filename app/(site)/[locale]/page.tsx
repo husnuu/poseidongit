@@ -1,13 +1,14 @@
 import { client, safeSanityImageUrl, urlFor } from '@/lib/sanity'
 import { tourCoverImageUrl } from '@/lib/sanityImage'
 import {
+  faqPageQuery,
   homePageHeroImageUrlsQuery,
   homePageHeroQuery,
   homeReviewsQuery,
-  siteFooterContactQuery,
   siteSettingsTravelAgencyImagesQuery,
 } from '@/lib/queries'
 import HomeReviewsSection, { type HomeReviewsSectionData, type HomeReviewItem } from '@/components/home/HomeReviewsSection'
+import HomeFaqSection, { type HomeFaqItem } from '@/components/home/HomeFaqSection'
 import HeroBanner from '@/components/home/HeroBanner'
 import FeatureBar from '@/components/home/FeatureBar'
 import PopularToursSection from '@/components/home/PopularToursSection'
@@ -21,7 +22,6 @@ import type { FeatureBarItem } from '@/components/home/FeatureBar'
 import type { PopularToursSectionData } from '@/components/home/PopularToursSection'
 import type { PopularYachtsSectionData } from '@/components/home/PopularYachtsSection'
 import BlogSection from '@/components/home/BlogSection'
-import HelpContactBanner from '@/components/home/HelpContactBanner'
 import RouteSection from '@/components/home/RouteSection'
 import PoseidonSecure from '@/components/tour/PoseidonSecure'
 import Image from 'next/image'
@@ -53,7 +53,6 @@ import { mergeTourForLocale } from '@/lib/i18n/mergeTourForLocale'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
 import { mergeHomePageLocale, mergeHomePageSeoForLocale } from '@/lib/i18n/mergeHomePageLocale'
 import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
-import { pickLocalizedString } from '@/lib/i18n/localizedLabels'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,17 +83,6 @@ type HomePageSeoPayload = {
   ogDescription?: string | null
   ogImage?: { asset?: unknown; alt?: string | null } | null
 }
-
-type SiteFooterContactPayload = {
-  contact?: {
-    email?: string | null
-    phone?: string | null
-    chatValue?: string | null
-    openingValue?: string | null
-    openingValueEn?: string | null
-    openingValueDe?: string | null
-  } | null
-} | null
 
 const homePageMetaQuery = `*[_type == "homePage"][0]{
   seo{
@@ -627,16 +615,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   let routeSection: ReturnType<typeof mapRouteSection> = null
   let instagramSection: InstagramSectionData | null = null
   let loyaltyBanner: { imageUrl?: string | null; imageAlt?: string | null; href?: string | null } | null = null
-  let footerContact: SiteFooterContactPayload = null
   let travelAgencyImageOverrides: TravelAgencyStructuredDataImageOverrides = {}
   try {
-    const [raw, settingsRow, heroRow, footerRow] = await Promise.all([
+    const [raw, settingsRow, heroRow] = await Promise.all([
       client.fetch<HomePageHeroResult>(homePageHeroQuery, {}, { useCdn: false }),
       client.fetch(siteSettingsTravelAgencyImagesQuery, {}, { useCdn: false }),
       client.fetch(homePageHeroImageUrlsQuery, {}, { useCdn: false }),
-      client.fetch<SiteFooterContactPayload>(siteFooterContactQuery, {}, { useCdn: false }),
     ])
-    footerContact = footerRow
     travelAgencyImageOverrides = travelAgencyImageOverridesFromSanity({
       settings: settingsRow,
       hero: heroRow,
@@ -676,7 +661,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     routeSection = null
     instagramSection = null
     loyaltyBanner = null
-    footerContact = null
   }
 
   let homeReviews: HomeReviewsSectionData | null = null
@@ -687,16 +671,21 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     homeReviews = null
   }
 
-  const footerFields = footerContact?.contact
-  const helpBannerOpening =
-    footerFields &&
-    pickLocalizedString(
-      footerFields.openingValue,
-      footerFields.openingValueEn,
-      footerFields.openingValueDe,
-      locale,
-      '',
-    ).trim()
+  let homeFaqItems: HomeFaqItem[] | null = null
+  try {
+    const faqData = await client.fetch<{ sections?: Array<{ items?: Array<{ question?: string | null; answer?: string | null }> | null }> | null } | null>(
+      faqPageQuery,
+      {},
+      { useCdn: false },
+    )
+    const flattened =
+      faqData?.sections?.flatMap((s) => s.items ?? []).filter((it): it is { question: string; answer: string } => !!(it?.question && it?.answer)) ?? []
+    // Sanity'de henüz yeterli/tam Türkçe içerik yoksa bileşenin kendi varsayılan
+    // listesi (kullanıcının verdiği güncel SSS metinleri) gösterilir.
+    homeFaqItems = flattened.length >= 4 ? flattened.slice(0, 7) : null
+  } catch {
+    homeFaqItems = null
+  }
 
   const organizationSchema = buildOrganizationSchema()
   const websiteSchema = buildWebSiteSchema({
@@ -766,13 +755,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       )}
 
       <PopularYachtsSection data={popularYachtsSection} locale={locale} />
-      <HelpContactBanner
-        locale={locale}
-        email={footerFields?.email}
-        phone={footerFields?.phone}
-        chatValue={footerFields?.chatValue}
-        openingHoursLine={helpBannerOpening || undefined}
-      />
+      <HomeFaqSection items={homeFaqItems} locale={locale} />
       <BlogSection data={blogSection} locale={locale} noImageLabel={blogUi.noCoverImage} />
       <InstagramSection data={instagramSection} />
     </div>

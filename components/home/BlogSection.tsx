@@ -32,6 +32,12 @@ function seeAllPostsLabel(locale: SiteLocale): string {
   return 'Tüm yazıları gör'
 }
 
+const SECTION_TITLE: Record<SiteLocale, string> = {
+  tr: 'MAVİ HİKAYELER',
+  en: 'FROM OUR LOGBOOK',
+  de: 'AUS UNSEREM LOGBUCH',
+}
+
 export default function BlogSection({
   data,
   locale = 'tr',
@@ -60,8 +66,8 @@ export default function BlogSection({
 
   if (!data?.enabled || !data?.posts?.length) return null
 
-  const { heading, subtitle, posts, ctaButton } = data
-  const titleUpper = (heading || 'Blog').toUpperCase().trim()
+  const { subtitle, posts, ctaButton } = data
+  const titleUpper = SECTION_TITLE[locale]
 
   const blogIndexPath = withLocalePath(locale, '/blog')
   const seeAllHref = (ctaButton?.href?.trim() || blogIndexPath) as string

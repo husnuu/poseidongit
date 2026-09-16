@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 
@@ -9,6 +10,8 @@ export type CompactBlogCardPost = {
   slug: string | null
   coverImageUrl?: string | null
   coverImageAlt?: string | null
+  excerpt?: string | null
+  publishDate?: string | null
 }
 
 type CompactBlogCardProps = {
@@ -19,6 +22,20 @@ type CompactBlogCardProps = {
   imageSizes?: string
 }
 
+const READ_MORE_LABEL: Record<SiteLocale, string> = {
+  tr: 'Yazıyı oku',
+  en: 'Read the post',
+  de: 'Artikel lesen',
+}
+
+function formatDate(dateStr: string | null | undefined, locale: SiteLocale): string | null {
+  if (!dateStr) return null
+  const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return null
+  const tag = locale === 'de' ? 'de-DE' : locale === 'en' ? 'en-US' : 'tr-TR'
+  return new Intl.DateTimeFormat(tag, { day: 'numeric', month: 'long', year: 'numeric' }).format(date)
+}
+
 export default function CompactBlogCard({
   post,
   locale = 'tr',
@@ -26,11 +43,13 @@ export default function CompactBlogCard({
   imageSizes = '(max-width: 640px) 100vw, 300px',
 }: CompactBlogCardProps) {
   const href = post.slug ? withLocalePath(locale, `/blog/${post.slug}`) : '#'
+  const dateLabel = formatDate(post.publishDate, locale)
+
   return (
-    <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_8px_28px_rgba(0,0,0,0.07)] transition-shadow duration-300 hover:shadow-[0_12px_36px_rgba(0,0,0,0.1)]">
+    <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-shadow duration-300 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.12)]">
       <Link
         href={href}
-        className="flex min-h-0 flex-1 flex-col rounded-2xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#1e3a5f]"
+        className="flex min-h-0 flex-1 flex-col rounded-2xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#2168b8]"
       >
         <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-zinc-100">
           {post.coverImageUrl ? (
@@ -46,12 +65,32 @@ export default function CompactBlogCard({
           )}
         </div>
         <div className="flex flex-1 flex-col px-5 pb-5 pt-5 md:px-6 md:pb-6 md:pt-6">
+          {dateLabel && (
+            <p className="text-[13px]" style={{ color: 'var(--muted, #81848b)' }}>
+              {dateLabel}
+            </p>
+          )}
           <h3
-            className="line-clamp-4 text-[15px] font-semibold leading-snug tracking-tight text-zinc-900 md:text-base"
-            style={{ fontFamily: 'var(--font-family)' }}
+            className="mt-1.5 line-clamp-3 text-base font-bold leading-snug"
+            style={{ fontFamily: 'var(--font-family)', color: 'var(--secondary, #131719)' }}
           >
             {post.title}
           </h3>
+          {post.excerpt && (
+            <p
+              className="mt-2 line-clamp-2 text-sm leading-relaxed"
+              style={{ color: 'var(--text-color, #58595b)' }}
+            >
+              {post.excerpt}
+            </p>
+          )}
+          <span
+            className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-bold uppercase tracking-wide"
+            style={{ color: 'var(--secondary, #131719)' }}
+          >
+            {READ_MORE_LABEL[locale]}
+            <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+          </span>
         </div>
       </Link>
     </article>

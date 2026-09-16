@@ -33,7 +33,7 @@ type HomeReviewsSectionProps = {
 }
 
 const HEADING: Record<SiteLocale, string> = {
-  tr: 'MİSAFİRLERİMİZİN KALEMİNDEN',
+  tr: 'SİZDEN GELENLER',
   en: 'FROM OUR GUESTS',
   de: 'VON UNSEREN GÄSTEN',
 }
