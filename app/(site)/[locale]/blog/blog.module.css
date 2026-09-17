@@ -34,7 +34,7 @@
   line-height: 1.15;
   text-transform: uppercase;
   margin: 0 0 1.5rem;
-  font-size: 1.875rem;
+  font-size: 2rem;
   display: flex;
   flex-direction: column;
   gap: 0.1em;
@@ -43,28 +43,25 @@
 
 @media (min-width: 640px) {
   .heroH1 {
-    font-size: 2.125rem;
+    font-size: 2.25rem;
   }
 }
 
 @media (min-width: 768px) {
   .heroH1 {
-    font-size: 2.375rem;
+    font-size: 2.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .heroH1 {
-    font-size: 2.625rem;
+    font-size: 2.75rem;
   }
 }
 
-.heroH1Line1 {
-  color: #1e3a8a;
-}
-
+.heroH1Line1,
 .heroH1Line2 {
-  color: #000;
+  color: var(--primary, #2168b8);
 }
 
 .heroLead {

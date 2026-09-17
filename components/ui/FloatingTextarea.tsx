@@ -11,11 +11,11 @@ const WRAPPER_STYLE = {
   boxShadow: 'none',
 }
 const FOCUS_STYLE = {
-  borderColor: '#fc6c4f',
-  boxShadow: '0 0 0 2px rgba(252,108,79,0.1)',
+  borderColor: 'var(--primary, #2168b8)',
+  boxShadow: '0 0 0 2px rgba(var(--primary-rgb, 33, 104, 184), 0.1)',
 }
 const LABEL_COLOR = '#94a3b8'
-const LABEL_COLOR_FOCUS = '#fc6c4f'
+const LABEL_COLOR_FOCUS = 'var(--primary, #2168b8)'
 
 export interface FloatingTextareaProps
   extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'placeholder'> {

@@ -292,7 +292,7 @@ export default function Step2ClassSelect({
                       <div
                         className={styles.classCardPremiumImage}
                         style={{
-                          background: 'linear-gradient(135deg, #1e3a5f 0%, #2168b8 100%)',
+                          background: 'linear-gradient(135deg, var(--primary, #2168b8) 0%, #4f8dc7 100%)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',

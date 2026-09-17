@@ -14,8 +14,8 @@ const WRAPPER_STYLE = {
   boxShadow: 'none',
 }
 const FOCUS_STYLE = {
-  borderColor: '#fc6c4f',
-  boxShadow: '0 0 0 2px rgba(252,108,79,0.1)',
+  borderColor: 'var(--primary, #2168b8)',
+  boxShadow: '0 0 0 2px rgba(var(--primary-rgb, 33, 104, 184), 0.1)',
 }
 const INPUT_HEIGHT = 52
 const INPUT_HEIGHT_COMPACT = 42
@@ -93,7 +93,7 @@ export default function PhoneField({
           htmlFor={id}
           className={`${styles.label} ${active ? styles.labelActive : styles.labelInactive} ${compact ? styles.labelCompact : ''} ${isOutlined && active ? styles.labelOutlined : ''}`}
           style={{
-            color: active && isOutlined ? '#fc6c4f' : LABEL_COLOR,
+            color: active && isOutlined ? 'var(--primary, #2168b8)' : LABEL_COLOR,
           }}
         >
           {label}

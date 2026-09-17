@@ -3,10 +3,10 @@
 import type { ContactPageUiStrings } from '@/lib/i18n/strings/contactPage'
 
 const CARD_BG = '#f5f6f7'
-const TITLE_COLOR = '#0f172a'
-const VALUE_COLOR = '#0f172a'
-const ACCENT_COLOR = '#d97a1d'
-const ICON_COLOR = '#181818'
+const TITLE_COLOR = 'var(--secondary, #131719)'
+const VALUE_COLOR = 'var(--secondary, #131719)'
+const ACCENT_COLOR = 'var(--primary, #2168b8)'
+const ICON_COLOR = 'var(--primary, #2168b8)'
 const ICON_SIZE = 32
 
 export interface ContactSidebarData {

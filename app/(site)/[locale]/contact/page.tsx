@@ -19,22 +19,7 @@ import { getContactPageUiStrings, mergeContactUiFromSanity } from '@/lib/i18n/st
 export const dynamic = 'force-dynamic'
 
 const CONTACT_HEADING_CLASS =
-  'text-[30px] font-black uppercase leading-[1.15] mb-6 sm:text-[34px] md:text-[38px] lg:text-[42px]'
-
-function splitHeadingSpans(headingUpper: string) {
-  const words = headingUpper.trim().split(/\s+/).filter(Boolean)
-  if (words.length === 0) return null
-  const firstTwo = words.slice(0, 2).join(' ')
-  const nextTwo = words.slice(2, 4).join(' ')
-  const rest = words.slice(4).join(' ')
-  return (
-    <>
-      {firstTwo ? <span style={{ color: '#1e3a8a' }}>{firstTwo}</span> : null}
-      {nextTwo ? <span style={{ color: '#000' }}>{(firstTwo ? ' ' : '') + nextTwo}</span> : null}
-      {rest ? <span style={{ color: '#000' }}>{' ' + rest}</span> : null}
-    </>
-  )
-}
+  'text-[32px] font-extrabold uppercase leading-[1.15] mb-6 sm:text-[36px] md:text-[40px] lg:text-[44px]'
 
 type ContactPageData = {
   title?: string | null
@@ -168,19 +153,19 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
   }
 
   return (
-    <main className="min-h-screen bg-zinc-50">
+    <main className="min-h-screen bg-white">
       <div className="mx-auto max-w-[1400px] px-4 py-12 sm:py-16">
         <header className="mb-12">
           <h1
             className={CONTACT_HEADING_CLASS}
-            style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+            style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--primary, #2168b8)' }}
           >
-            {splitHeadingSpans(toHeadingUpper(title || ui.defaultTitle))}
+            {toHeadingUpper(title || ui.defaultTitle)}
           </h1>
           {intro.length > 0 && (
             <div
-              className="max-w-4xl text-zinc-700 text-base leading-relaxed space-y-4"
-              style={{ fontFamily: 'var(--font-family)' }}
+              className="max-w-4xl text-base leading-relaxed space-y-4"
+              style={{ fontFamily: 'var(--font-family)', color: 'var(--text-color, #58595b)' }}
             >
               <PortableText value={intro} />
             </div>
@@ -232,13 +217,11 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
             <h2
               id="contact-location-heading"
               className={CONTACT_HEADING_CLASS}
-              style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
+              style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--primary, #2168b8)' }}
             >
-              {splitHeadingSpans(
-                toHeadingUpper(
-                  data.locationTitle?.trim() ||
-                    (locale === 'tr' ? 'Konum' : locale === 'de' ? 'Standort' : 'Location'),
-                ),
+              {toHeadingUpper(
+                data.locationTitle?.trim() ||
+                  (locale === 'tr' ? 'Konum' : locale === 'de' ? 'Standort' : 'Location'),
               )}
             </h2>
             <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 shadow-sm">

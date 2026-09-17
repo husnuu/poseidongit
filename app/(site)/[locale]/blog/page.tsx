@@ -169,6 +169,8 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
                       slug: merged.slug,
                       coverImageUrl,
                       coverImageAlt: merged.coverImage?.alt ?? null,
+                      excerpt: merged.excerpt ?? null,
+                      publishDate: merged.publishDate ?? null,
                     }}
                     locale={locale}
                     noImageLabel={ui.noCoverImage}

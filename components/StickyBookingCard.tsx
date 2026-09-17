@@ -71,12 +71,12 @@ function DemandIcon() {
     >
       <path
         d="M12 22C6.477 22 2 17.523 2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22Z"
-        stroke="#fc6c4f"
+        stroke="var(--primary, #2168b8)"
         strokeWidth="2"
       />
       <path
         d="M12 7V12L15 14"
-        stroke="#fc6c4f"
+        stroke="var(--primary, #2168b8)"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"

@@ -5,7 +5,7 @@
   max-width: 100%;
   min-width: 0;
   aspect-ratio: 16 / 9;
-  background: linear-gradient(145deg, #1e3a5f 0%, #2c5282 100%);
+  background: linear-gradient(135deg, var(--primary, #2168b8) 0%, #4f8dc7 100%);
   overflow: hidden;
 }
 
@@ -83,7 +83,7 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #1e3a5f;
+  color: var(--primary, #2168b8);
 }
 
 .desc {
@@ -141,7 +141,7 @@
   height: 28px;
   border-radius: 8px;
   background: #fff;
-  color: #1e3a5f;
+  color: var(--primary, #2168b8);
   flex-shrink: 0;
 }
 
@@ -181,7 +181,7 @@
   margin: 0;
   font-size: 13px;
   font-weight: 700;
-  color: #1e3a5f;
+  color: var(--primary, #2168b8);
 }
 
 .hiDesc {

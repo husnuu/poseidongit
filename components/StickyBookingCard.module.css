@@ -23,9 +23,8 @@
   line-height: 1.3;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #0f172a;
+  color: var(--secondary, #131719);
   margin: 0 0 16px 0;
-  -webkit-text-stroke: 0.03em currentColor;
 }
 
 /* ── Price block (mobil sticky bar ile aynı dil) ── */
@@ -49,7 +48,7 @@
   font-size: 32px;
   font-weight: 800;
   line-height: 1.15;
-  color: #fc6c4f;
+  color: var(--secondary, #131719);
   letter-spacing: -0.5px;
 }
 
@@ -95,12 +94,12 @@
   color: #22c55e;
 }
 
-/* ── CTA button (mobil sticky bar rengi) ── */
+/* ── CTA button (mobil sticky bar ile aynı mavi degrade) ── */
 .ctaButton {
   display: block;
   width: 100%;
   text-align: center;
-  background: #fc6c4f;
+  background: linear-gradient(to right, var(--primary, #2168b8) 0%, #4f8dc7 51%, var(--primary, #2168b8) 100%);
   color: #fff;
   font-family: var(--font-family), sans-serif;
   font-weight: 700;
@@ -112,20 +111,18 @@
   border: none;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.15s ease;
-  box-shadow: 0 4px 16px rgba(252, 108, 79, 0.35);
+  transition: filter 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 4px 16px rgba(var(--primary-rgb, 33, 104, 184), 0.35);
 }
 
 .ctaButton:hover {
-  background: #f85a3a;
+  filter: brightness(1.08);
   color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(252, 108, 79, 0.45);
 }
 
 .ctaButton:active {
   transform: scale(0.98);
-  background: #e84d2d;
+  filter: brightness(0.96);
 }
 
 /* ── Demand notice ── */
@@ -136,8 +133,8 @@
   margin-top: 16px;
   padding: 12px 14px;
   border-radius: 10px;
-  background: rgba(252, 108, 79, 0.07);
-  border: 1px solid rgba(252, 108, 79, 0.15);
+  background: rgba(var(--primary-rgb, 33, 104, 184), 0.07);
+  border: 1px solid rgba(var(--primary-rgb, 33, 104, 184), 0.15);
 }
 
 .demandIcon {
@@ -152,7 +149,7 @@
   font-family: var(--font-family), sans-serif;
   font-weight: 700;
   font-size: 13px;
-  color: #0f172a;
+  color: var(--secondary, #131719);
   margin: 0 0 2px 0;
 }
 

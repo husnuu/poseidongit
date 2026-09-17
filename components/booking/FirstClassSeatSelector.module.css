@@ -115,15 +115,15 @@
 .locaBtnAvailable:hover {
   border-color: #bfdbfe;
   background: #f0f9ff;
-  box-shadow: 0 2px 8px rgba(30, 58, 95, 0.08);
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb, 33, 104, 184), 0.08);
 }
 
 .locaBtnSelected {
   cursor: pointer;
-  border-color: #1e3a5f;
+  border-color: var(--primary, #2168b8);
   background: linear-gradient(180deg, #f0f7ff 0%, #e8f2fc 100%);
-  color: #1e3a5f;
-  box-shadow: 0 2px 10px rgba(30, 58, 95, 0.12);
+  color: var(--primary, #2168b8);
+  box-shadow: 0 2px 10px rgba(var(--primary-rgb, 33, 104, 184), 0.12);
 }
 
 .locaBtnMine {
@@ -196,7 +196,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  background: rgba(30, 58, 95, 0.1);
+  background: rgba(var(--primary-rgb, 33, 104, 184), 0.1);
   padding: 3px;
 }
 
@@ -216,5 +216,5 @@
   width: 1.25rem;
   height: 1.25rem;
   flex-shrink: 0;
-  color: #1e3a5f;
+  color: var(--primary, #2168b8);
 }
