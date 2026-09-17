@@ -22,10 +22,10 @@
 .heading {
   font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-size: 24px;
-  font-weight: 900;
-  line-height: 1.35;
+  font-weight: 800;
+  line-height: 1.25;
   text-transform: uppercase;
-  color: var(--primary, #2168b8);
+  color: var(--secondary, #131719);
   margin: 0;
 }
 

@@ -67,7 +67,7 @@ export default function HostBlock({ host, whyYouWillLove, tourUi: tourUiProp }: 
   const bodyParagraphs = paragraphs(bodyText)
   const rawTitle = whyYouWillLove?.title?.trim()
   const mainTitle = rawTitle
-    ? rawTitle.replace(/\s+/g, ' ').toUpperCase()
+    ? rawTitle.replace(/\s+/g, ' ')
     : bodyParagraphs.length > 0
       ? tourUi.hostWhyFallbackTitle
       : ''
@@ -78,57 +78,45 @@ export default function HostBlock({ host, whyYouWillLove, tourUi: tourUiProp }: 
       className={styles.band}
       aria-labelledby={mainTitle ? 'host-card-title' : undefined}
     >
-      <div className={styles.bandInner}>
-        <div className={styles.layout}>
-          <div className={styles.content}>
-            {showHostLine && (
-              <p className={styles.hostLine}>
-                {hostLineTitle ? (
-                  <>
-                    {tourUi.captainLabel}: {host?.name} · {hostLineTitle}
-                  </>
-                ) : (
-                  <>
-                    {tourUi.captainLabel}: {host?.name}
-                  </>
-                )}
-              </p>
-            )}
-
-            {mainTitle && (
-              <h2 id="host-card-title" className={styles.mainTitle}>
-                {mainTitle}
-              </h2>
-            )}
-
-            {bodyParagraphs.length > 0 && (
-              <div className={styles.body}>
-                {bodyParagraphs.map((para, i) => (
-                  <p key={i} className={styles.paragraph}>
-                    {para}
-                  </p>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {avatarAsset && (
-            <div className={styles.avatarWrap}>
-              <Image
-                src={urlFor(avatarAsset).width(320).height(320).url()}
-                alt={host?.name ?? tourUi.captainAvatarAltFallback}
-                width={140}
-                height={140}
-                className={styles.avatarImg}
-                placeholder={
-                  host?.photo?.metadata?.lqip ? 'blur' : 'empty'
-                }
-                blurDataURL={host?.photo?.metadata?.lqip}
-              />
-            </div>
-          )}
+      {avatarAsset && (
+        <div className={styles.avatarWrap}>
+          <Image
+            src={urlFor(avatarAsset).width(320).height(320).url()}
+            alt={host?.name ?? tourUi.captainAvatarAltFallback}
+            width={140}
+            height={140}
+            className={styles.avatarImg}
+            placeholder={host?.photo?.metadata?.lqip ? 'blur' : 'empty'}
+            blurDataURL={host?.photo?.metadata?.lqip}
+          />
         </div>
-      </div>
+      )}
+
+      {showHostLine && (
+        <p className={styles.hostLine}>
+          <strong className={styles.hostName}>
+            {host?.name}
+            {hostLineTitle ? ',' : ''}
+          </strong>
+          {hostLineTitle && <span className={styles.hostRole}>{hostLineTitle}</span>}
+        </p>
+      )}
+
+      {mainTitle && (
+        <h2 id="host-card-title" className={styles.mainTitle}>
+          {mainTitle}
+        </h2>
+      )}
+
+      {bodyParagraphs.length > 0 && (
+        <div className={styles.body}>
+          {bodyParagraphs.map((para, i) => (
+            <p key={i} className={styles.paragraph}>
+              {para}
+            </p>
+          ))}
+        </div>
+      )}
     </section>
   )
 }

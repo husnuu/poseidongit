@@ -35,6 +35,7 @@ export type TourPageUi = {
   faqDefaultTitle: string
   faqMissingQuestion: string
   faqWhatsappCta: string
+  faqContactCta: string
   reviewsSectionTitle: string
   /** Çok küçük kaynak satırı (Google). */
   reviewsGoogleAttribution: string
@@ -136,8 +137,9 @@ const UI: Record<SiteLocale, TourPageUi> = {
     captainAvatarAltFallback: 'Kaptan',
     hostWhyFallbackTitle: "WHY I THINK YOU'LL LOVE THIS TOUR",
     faqDefaultTitle: 'Sık Sorulan Sorular',
-    faqMissingQuestion: 'Sorunuz yukarıda yok mu?',
-    faqWhatsappCta: "WhatsApp'tan ulaşın",
+    faqMissingQuestion: 'Sorunuz yukarıda yer almıyor mu?',
+    faqWhatsappCta: "WhatsApp'tan Yazın",
+    faqContactCta: 'Bize Ulaşın',
     reviewsSectionTitle: 'Yorumlar',
     reviewsGoogleAttribution: "Yorumlar Google'dan alınmıştır.",
     reviewsMoreDefault: 'Daha fazla yorumu okuyun',
@@ -230,7 +232,8 @@ const UI: Record<SiteLocale, TourPageUi> = {
     hostWhyFallbackTitle: "WHY I THINK YOU'LL LOVE THIS TOUR",
     faqDefaultTitle: 'Frequently asked questions',
     faqMissingQuestion: "Don't see your question?",
-    faqWhatsappCta: 'Contact us on WhatsApp',
+    faqWhatsappCta: 'Message us on WhatsApp',
+    faqContactCta: 'Contact Us',
     reviewsSectionTitle: 'Reviews',
     reviewsGoogleAttribution: 'Reviews are from Google.',
     reviewsMoreDefault: 'Read more reviews',
@@ -323,7 +326,8 @@ const UI: Record<SiteLocale, TourPageUi> = {
     hostWhyFallbackTitle: 'WARUM SIE DIESE TOUR LIEBEN WERDEN',
     faqDefaultTitle: 'Häufige Fragen',
     faqMissingQuestion: 'Ihre Frage ist nicht dabei?',
-    faqWhatsappCta: 'Schreiben Sie uns auf WhatsApp',
+    faqWhatsappCta: 'Auf WhatsApp schreiben',
+    faqContactCta: 'Kontaktieren Sie uns',
     reviewsSectionTitle: 'Bewertungen',
     reviewsGoogleAttribution: 'Bewertungen stammen von Google.',
     reviewsMoreDefault: 'Weitere Bewertungen lesen',

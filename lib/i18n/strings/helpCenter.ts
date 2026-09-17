@@ -33,6 +33,7 @@ export type HelpCenterUiStrings = {
   homeTopicsHeadingSecondary: string
   homeEmptySearch: string
   homeEmptyNoArticles: string
+  filterAllLabel: string
 }
 
 const TR: HelpCenterUiStrings = {
@@ -72,6 +73,7 @@ const TR: HelpCenterUiStrings = {
   homeTopicsHeadingSecondary: ' göz atın',
   homeEmptySearch: 'Aramanızla eşleşen makale bulunamadı. Farklı bir kelime deneyin.',
   homeEmptyNoArticles: 'Henüz gösterilecek makale yok. Lütfen daha sonra tekrar deneyin.',
+  filterAllLabel: 'Tümü',
 }
 
 const EN: HelpCenterUiStrings = {
@@ -111,6 +113,7 @@ const EN: HelpCenterUiStrings = {
   homeTopicsHeadingSecondary: ' topics',
   homeEmptySearch: 'No articles matched your search. Try a different keyword.',
   homeEmptyNoArticles: 'There are no articles to show yet. Please check back later.',
+  filterAllLabel: 'All',
 }
 
 const DE: HelpCenterUiStrings = {
@@ -150,6 +153,7 @@ const DE: HelpCenterUiStrings = {
   homeTopicsHeadingSecondary: ' durchsuchen',
   homeEmptySearch: 'Keine Artikel zu Ihrer Suche. Bitte anderen Begriff versuchen.',
   homeEmptyNoArticles: 'Es gibt noch keine Artikel. Bitte später erneut vorbeischauen.',
+  filterAllLabel: 'Alle',
 }
 
 export function getHelpCenterUiStrings(locale: SiteLocale): HelpCenterUiStrings {

@@ -1,12 +1,12 @@
 import { cache } from 'react'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
-import { ChevronRight } from 'lucide-react'
 import type { PortableTextBlock } from '@portabletext/react'
 import type { Metadata } from 'next'
 import { client, urlFor } from '@/lib/sanity'
 import { tourGalleryHeroImageUrl } from '@/lib/sanityImage'
-import { tourByLocaleSlugQuery, tourSlugRowsForLocalesQuery } from '@/lib/queries'
+import { tourByLocaleSlugQuery, tourSlugRowsForLocalesQuery, siteFooterQuery } from '@/lib/queries'
+import { buildWhatsAppLink } from '@/lib/whatsapp'
 import { mergeTourForLocale } from '@/lib/i18n/mergeTourForLocale'
 import { withLocalePath } from '@/lib/i18n/paths'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -27,7 +27,6 @@ import TourBookingSidebar from '@/components/booking/TourBookingSidebar'
 import type { TourForBooking } from '@/lib/sanity/bookingTypes'
 import ReviewsSection from '@/components/ReviewsSection'
 import WhereSection, { type WhereSectionData } from '@/components/tour/WhereSection'
-import TourFoodMenu from '@/components/tour/TourFoodMenu'
 import TourReelsRail from '@/components/tour/TourReelsRail'
 import PoseidonSecure from '@/components/tour/PoseidonSecure'
 import JsonLd from '@/components/seo/JsonLd'
@@ -417,6 +416,18 @@ export default async function TourPage({
     notFound()
   }
 
+  let whatsappUrl: string | null = null
+  try {
+    const footer = await client.fetch<{ contact?: { chatValue?: string | null } | null } | null>(
+      siteFooterQuery,
+      {},
+      { useCdn: false }
+    )
+    whatsappUrl = buildWhatsAppLink(footer?.contact?.chatValue ?? null)
+  } catch {
+    whatsappUrl = null
+  }
+
   const videoEmbedUrl = tour.tourVideo ? getVideoEmbedUrl(tour.tourVideo) : null
   const galleryHeroImages = buildGalleryHeroImages(tour, tourUi)
   const itineraryTimelineItems = buildItineraryTimelineItems(tour)
@@ -573,89 +584,10 @@ export default async function TourPage({
 
         <IncludedNotIncluded included={tour.included} notIncluded={tour.notIncluded} tourUi={tourUi} />
 
-        {tour.foodMenu?.enabled &&
-        tour.foodMenu.items &&
-        tour.foodMenu.items.filter((i) => i?.title?.trim()).length > 0 ? (
-          <TourFoodMenu
-            sectionTitle={tour.foodMenu.sectionTitle?.trim() || tourUi.foodMenuFallbackTitle}
-            intro={tour.foodMenu.intro?.trim() || null}
-            items={tour.foodMenu.items
-              .filter((i) => i?.title?.trim())
-              .map((i) => ({
-                title: i.title!.trim(),
-                excerpt: i.excerpt?.trim() || null,
-                priceLabel: i.priceLabel?.trim() || null,
-                metaLine1: i.metaLine1?.trim() || null,
-                metaLine2: i.metaLine2?.trim() || null,
-                imageUrl: i.image?.asset
-                  ? urlFor(i.image.asset).width(960).height(720).url()
-                  : null,
-                imageAlt: i.image?.alt?.trim() || i.title!.trim(),
-                detail: i.detail?.length ? i.detail : null,
-              }))}
-            locale={locale}
-          />
-        ) : null}
-
-        {/* Extras */}
-        {tour.extras && tour.extras.length > 0 && (
-          <div className="mb-8">
-            <h2
-              className="text-2xl font-black uppercase mb-4"
-              style={{ color: 'var(--primary, #2168b8)' }}
-            >
-              {tourUi.extrasSectionTitle}
-            </h2>
-            <div className="flex flex-col gap-4">
-              {tour.extras.map((extra, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-4 rounded-2xl p-4"
-                  style={{ background: '#f8fafc' }}
-                >
-                  <div
-                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-white text-3xl shadow-sm md:h-20 md:w-20"
-                    aria-hidden
-                  >
-                    {extra.icon || '✨'}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3
-                      className="text-base font-bold md:text-lg"
-                      style={{ color: 'var(--secondary, #131719)' }}
-                    >
-                      {extra.title}
-                    </h3>
-                    {extra.description && (
-                      <p
-                        className="mt-1 line-clamp-2 text-sm"
-                        style={{ color: 'var(--muted, #81848b)' }}
-                      >
-                        {extra.description}
-                      </p>
-                    )}
-                    <p className="mt-1 text-sm">
-                      <span className="font-bold" style={{ color: 'var(--primary, #2168b8)' }}>
-                        {extra.price} ₺
-                      </span>{' '}
-                      <span style={{ color: 'var(--muted, #81848b)' }}>
-                        · {extra.priceType === 'perPerson' ? tourUi.pricePerPerson : tourUi.priceTotal}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
-                    <ChevronRight className="h-4 w-4" style={{ color: 'var(--secondary, #131719)' }} aria-hidden />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         <HostBlock host={tour.host} whyYouWillLove={tour.whyYouWillLove} tourUi={tourUi} />
 
         <div className="mb-14">
-          <FAQAccordion faqs={tour.faqs} locale={locale} />
+          <FAQAccordion faqs={tour.faqs} locale={locale} whatsappUrl={whatsappUrl} />
         </div>
 
         <div className="mt-14 mb-14">

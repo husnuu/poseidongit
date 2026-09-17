@@ -26,7 +26,7 @@ export default function ReviewCardExpand({ text, maxChars = 130 }: ReviewCardExp
           onClick={() => setExpanded((p) => !p)}
           aria-expanded={expanded}
         >
-          {expanded ? 'Daha az' : 'Tümünü oku'}
+          {expanded ? 'Daha az' : 'Devamını oku'}
         </button>
       )}
     </p>

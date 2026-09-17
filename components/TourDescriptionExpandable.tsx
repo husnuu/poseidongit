@@ -157,7 +157,7 @@ export default function TourDescriptionExpandable({
         >
           <span>{showMore}</span>
           <span className={styles.toggleIcon} aria-hidden>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <svg width="20" height="21" viewBox="0 0 24 25" fill="none">
               <path d="M19.293 7.793L20.707 9.207 12 17.914 3.293 9.207 4.707 7.793 12 15.086l7.293-7.293z" fill="currentColor" />
             </svg>
           </span>
