@@ -71,6 +71,8 @@ export type SupabaseBookingRow = {
   class_name?: string | null
   first_class_locas?: string[] | null
   first_class_loca?: string | null
+  /** Rezervasyonda seçilen ekstralar: [{key,title,unitPrice,priceType,quantity,lineTotal,note}] */
+  selected_extras?: JsonValue | null
   unit_price?: number | null
   total_price?: number | null
   currency?: string | null
@@ -135,6 +137,44 @@ export function firstClassLocasFromRow(row: Partial<SupabaseBookingRow>): string
   return [...out]
 }
 
+export interface SelectedExtraForApi {
+  key: string
+  title: string
+  unitPrice: number
+  priceType: 'perPerson' | 'total'
+  quantity: number
+  lineTotal: number
+  note?: string
+}
+
+/** Admin / public API: jsonb bazen string olarak gelebilir; güvenli şekilde diziye çevirir. */
+export function selectedExtrasFromRow(row: Partial<SupabaseBookingRow>): SelectedExtraForApi[] {
+  let raw: unknown = row.selected_extras
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw) as unknown
+    } catch {
+      return []
+    }
+  }
+  if (!Array.isArray(raw)) return []
+  const out: SelectedExtraForApi[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const x = item as Record<string, unknown>
+    const key = typeof x.key === 'string' ? x.key.trim() : ''
+    const title = typeof x.title === 'string' ? x.title.trim() : ''
+    const unitPrice = Number(x.unitPrice)
+    if (!key || !title || !Number.isFinite(unitPrice)) continue
+    const priceType: 'perPerson' | 'total' = x.priceType === 'perPerson' ? 'perPerson' : 'total'
+    const quantity = Math.max(1, Number(x.quantity) || 1)
+    const lineTotal = Number.isFinite(Number(x.lineTotal)) ? Number(x.lineTotal) : unitPrice * quantity
+    const note = typeof x.note === 'string' && x.note.trim() ? x.note.trim() : undefined
+    out.push({ key, title, unitPrice, priceType, quantity, lineTotal, ...(note && { note }) })
+  }
+  return out
+}
+
 export function paxCountFromRow(row: Partial<SupabaseBookingRow>): number {
   const adult = Math.max(0, Number(row.adult_count ?? 0) || 0)
   const child = Math.max(0, Number(row.child_count ?? 0) || 0)
@@ -146,6 +186,7 @@ export function mapBookingRowToApi(row: SupabaseBookingRow): Record<string, unkn
   const firstClassLocas = firstClassLocasFromRow(row)
   const additionalTravelers = normalizeAdditionalTravelersFromStorage(row.additional_travelers)
   const mealPreference = normalizeMealPreferenceColumn(row.meal_preference)
+  const selectedExtras = selectedExtrasFromRow(row)
   return {
     id: row.id,
     status: row.status ?? 'pending',
@@ -157,6 +198,7 @@ export function mapBookingRowToApi(row: SupabaseBookingRow): Record<string, unkn
     classId: row.class_id ?? '',
     className: row.class_name ?? '',
     ...(firstClassLocas.length > 0 && { firstClassLocas }),
+    ...(selectedExtras.length > 0 && { selectedExtras }),
     unitPrice: Number(row.unit_price ?? 0),
     totalPrice: Number(row.total_price ?? 0),
     currency: row.currency ?? 'TRY',

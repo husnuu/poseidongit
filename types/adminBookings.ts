@@ -1,6 +1,17 @@
 /** Admin panelinde kullanılan rezervasyon satırı (API'den gelen + tourCoverImageUrl). */
 export type BookingStatus = 'pending' | 'paid' | 'failed' | 'cancelled'
 
+export interface SelectedExtraForAdmin {
+  key: string
+  title: string
+  unitPrice: number
+  priceType: 'perPerson' | 'total'
+  quantity: number
+  lineTotal: number
+  /** Müşterinin girdiği ek bilgi (örn. otel adı). */
+  note?: string
+}
+
 export interface AdminBookingRow {
   id: string
   tourId: string
@@ -22,6 +33,8 @@ export interface AdminBookingRow {
   /** First Class localar (L1–L10). Eski tek loca için firstClassLoca da olabilir. */
   firstClassLocas?: string[]
   firstClassLoca?: string
+  /** Rezervasyonda seçilen ekstra hizmetler (Sanity `tour.extras`). */
+  selectedExtras?: SelectedExtraForAdmin[]
   totalPrice: number
   unitPrice?: number
   currency: string

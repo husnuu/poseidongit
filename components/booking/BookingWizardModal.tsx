@@ -11,7 +11,7 @@ import type { TourForBooking, BookingWizardState, PricingSummary } from '@/lib/s
 import { DEFAULT_BOOKING_STATE, MAX_PAX_FALLBACK, getTourIdForBooking } from '@/lib/sanity/bookingTypes'
 import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bookingAdditionalTravelers'
 import { allPassengersAreMale, resizeInfantGenders } from '@/lib/bookingPassengerGender'
-import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey } from '@/lib/sanity/bookingPricing'
+import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey, resolveExtraNoteConfig } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import {
   Step1PeopleDate,
@@ -129,13 +129,24 @@ export default function BookingWizardModal({
       tour,
       state.selectedDate,
       state.selectedClassKey,
-      state.counts
+      state.counts,
+      state.selectedExtraKeys,
+      state.extraNotes
     )
     setState((prev) => {
       if (summary && prev.pricingSummary?.total === summary.total && prev.pricingSummary?.currency === summary.currency) return prev
       return { ...prev, pricingSummary: summary ?? null }
     })
-  }, [tour, state.selectedDate, state.selectedClassKey, state.counts.adult, state.counts.child, state.counts.baby])
+  }, [
+    tour,
+    state.selectedDate,
+    state.selectedClassKey,
+    state.counts.adult,
+    state.counts.child,
+    state.counts.baby,
+    state.selectedExtraKeys,
+    state.extraNotes,
+  ])
 
   const handleClose = useCallback(() => {
     setSubmitted(false)
@@ -229,11 +240,17 @@ export default function BookingWizardModal({
   const requiresFirstClassLoca = isFirstClassKey(tour, state.selectedClassKey)
   const requiredFirstClassLocas = requiresFirstClassLoca ? Math.ceil(totalPax / 2) : 0
   const hasRequiredLocas = (state.firstClassLocas?.length ?? 0) === requiredFirstClassLocas
+  const missingRequiredExtraNotes = (state.selectedExtraKeys ?? []).some((key) => {
+    const extra = tour.extras?.find((e) => e.key === key)
+    if (!extra) return false
+    return resolveExtraNoteConfig(extra).requiresNote && !state.extraNotes?.[key]?.trim()
+  })
   const canProceedStep2 = Boolean(
     state.selectedClassKey &&
       state.pricingSummary &&
       hasEnoughCapacityStep2 &&
-      (!requiresFirstClassLoca || hasRequiredLocas)
+      (!requiresFirstClassLoca || hasRequiredLocas) &&
+      !missingRequiredExtraNotes
   )
   const canProceedStep3 = step3Valid && step3TermsAccepted && !allPassengersAreMale(state)
 
@@ -265,6 +282,10 @@ export default function BookingWizardModal({
             classId: state.selectedClassKey ?? '',
             className: tour.ticketClasses?.find((c) => c.key === state.selectedClassKey)?.label ?? state.selectedClassKey ?? '',
             ...(requiresFirstClassLoca && (state.firstClassLocas?.length ?? 0) > 0 && { firstClassLocas: state.firstClassLocas!.map((id) => id.trim().toUpperCase()) }),
+            ...((state.selectedExtraKeys?.length ?? 0) > 0 && {
+              selectedExtraKeys: state.selectedExtraKeys,
+              ...(state.extraNotes && Object.keys(state.extraNotes).length > 0 && { extraNotes: state.extraNotes }),
+            }),
             customer: {
               firstName: state.customer.firstName?.trim() ?? '',
               lastName: state.customer.lastName?.trim() ?? '',

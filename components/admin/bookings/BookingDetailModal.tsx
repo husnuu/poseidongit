@@ -230,6 +230,27 @@ export default function BookingDetailModal({
               </div>
             </div>
 
+            {(booking.selectedExtras?.length ?? 0) > 0 && (
+              <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-3">
+                <p className="text-xs font-medium uppercase text-blue-800/90">Ekstralar</p>
+                <ul className="mt-2 space-y-1.5 text-sm text-zinc-800">
+                  {booking.selectedExtras!.map((extra) => (
+                    <li key={extra.key} className="flex items-start justify-between gap-3">
+                      <span>
+                        <span className="font-medium">{extra.title}</span>
+                        {extra.note && (
+                          <span className="block text-xs text-zinc-500">{extra.note}</span>
+                        )}
+                      </span>
+                      <span className="shrink-0 font-medium text-zinc-900">
+                        {extra.lineTotal.toLocaleString('tr-TR')} ₺
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="flex justify-between text-sm">
               <span className="text-zinc-500">Birim fiyat</span>
               <span className="text-zinc-900">

@@ -169,6 +169,20 @@ export interface TourFoodMenuForBooking {
   items?: TourFoodMenuItemForBooking[]
 }
 
+export interface ExtraForBooking {
+  key: string
+  title: string
+  description?: string
+  price: number
+  priceType?: 'perPerson' | 'total'
+  icon?: string
+  image?: TourImageForBooking
+  /** Açık ise, seçildiğinde müşteriden serbest metin istenir (örn. otel adı). */
+  requiresNote?: boolean
+  /** requiresNote açıkken metin kutusunun etiketi (örn. "Otel Adınız"). */
+  noteLabel?: string
+}
+
 export interface TourQuickFactsForBooking {
   durationText?: string
   availabilityText?: string
@@ -200,6 +214,7 @@ export interface TourForBooking {
   pickupPoints?: PickupPoint[]
   mealMenu?: MealMenuForBooking
   foodMenu?: TourFoodMenuForBooking
+  extras?: ExtraForBooking[]
 }
 
 /** Supabase bookings: tourId = Sanity _id (UUID), date "YYYY-MM-DD", classId "eco"|"premium"|"first", counts { adult, child, infant }, status "pending"|"paid". */
@@ -225,8 +240,21 @@ export interface PricingUnit {
   subtotal: number
 }
 
+export interface ExtraLineItem {
+  key: string
+  title: string
+  unitPrice: number
+  priceType: 'perPerson' | 'total'
+  quantity: number
+  lineTotal: number
+  /** Müşterinin girdiği ek bilgi (örn. otel adı) — requiresNote açık ekstralarda. */
+  note?: string
+}
+
 export interface PricingSummary {
   unitPrices: PricingUnit[]
+  extras: ExtraLineItem[]
+  extrasTotal: number
   total: number
   depositPercent: number
   depositAmount: number
@@ -240,6 +268,10 @@ export interface BookingWizardState {
   counts: { adult: number; child: number; baby: number }
   selectedDate: string | null
   selectedClassKey: string | null
+  /** Seçilen ekstraların (Sanity `extras[]._key`) anahtar listesi. */
+  selectedExtraKeys: string[]
+  /** requiresNote açık ekstralar için girilen serbest metin (key → metin). */
+  extraNotes: Record<string, string>
   /** First Class seçildiğinde seçilen localar (L1–L10). Her loca 2 kişilik; N kişi → N/2 loca. */
   firstClassLocas?: string[] | null
   /** Seçilen toplanma / alım noktası (Sanity pickupPoints varsa müşteri seçer). */
@@ -273,6 +305,8 @@ export const DEFAULT_BOOKING_STATE: Omit<BookingWizardState, 'tourSlug'> = {
   counts: { adult: 1, child: 0, baby: 0 },
   selectedDate: null,
   selectedClassKey: null,
+  selectedExtraKeys: [],
+  extraNotes: {},
   firstClassLocas: [],
   customer: { firstName: '', lastName: '', email: '', phoneCountryCode: '90', phone: '', note: '', gender: '' },
   additionalTravelers: [],

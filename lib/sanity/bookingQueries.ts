@@ -133,6 +133,22 @@ export const tourForBookingProjection = `{
     value
   },
   cashPaymentEnabled,
+  extras[]{
+    "key": _key,
+    title,
+    description,
+    price,
+    priceType,
+    icon,
+    image{
+      asset,
+      alt,
+      "url": asset->url,
+      "metadata": asset->metadata { lqip, dimensions }
+    },
+    requiresNote,
+    noteLabel
+  },
   pickupPoints[]{
     name,
     address,

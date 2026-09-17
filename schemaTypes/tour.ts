@@ -1648,7 +1648,29 @@ export default defineType({
               name: 'icon',
               title: 'İkon',
               type: 'string',
-              description: 'İkon anahtarı (opsiyonel)',
+              description: 'İkon anahtarı (opsiyonel) — görsel yüklenmezse emoji/ikon olarak gösterilir',
+            }),
+            defineField({
+              name: 'image',
+              title: 'Görsel',
+              type: 'image',
+              description: 'Opsiyonel: yüklenirse listede ikon yerine bu görsel gösterilir',
+              options: { hotspot: true },
+            }),
+            defineField({
+              name: 'requiresNote',
+              title: 'Ek Bilgi Gerektirir mi?',
+              type: 'boolean',
+              description:
+                'Açık ise, müşteri bu hizmeti seçtiğinde bir metin kutusu açılır (örn. otel adı).',
+              initialValue: false,
+            }),
+            defineField({
+              name: 'noteLabel',
+              title: 'Ek Bilgi Etiketi',
+              type: 'string',
+              description: 'Örn: "Otel Adınız". Yalnızca "Ek Bilgi Gerektirir mi?" açıkken kullanılır.',
+              hidden: ({ parent }) => !parent?.requiresNote,
             }),
           ],
           preview: {
@@ -1656,11 +1678,13 @@ export default defineType({
               title: 'title',
               price: 'price',
               priceType: 'priceType',
+              media: 'image',
             },
-            prepare({ title, price, priceType }) {
+            prepare({ title, price, priceType, media }) {
               return {
                 title: title,
                 subtitle: `${price} ₺ (${priceType === 'perPerson' ? 'Kişi Başı' : 'Toplam'})`,
+                media,
               }
             },
           },

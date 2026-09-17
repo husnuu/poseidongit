@@ -10,9 +10,29 @@ import type {
   CalendarDay,
   PricingSummary,
   PricingUnit,
+  ExtraLineItem,
+  ExtraForBooking,
   SeasonRule,
   SeasonClassAdjustment,
 } from './bookingTypes'
+
+/**
+ * Ekstra için not (örn. otel adı) alınıp alınmayacağını çözer.
+ * Sanity'de "Ek Bilgi Gerektirir mi?" açıksa onu kullanır; kapalıysa ve başlıkta
+ * "otel" geçiyorsa (örn. "Otel Transferi") yine de akıllı bir varsayılan uygular —
+ * böylece admin panelinde ayrıca işaretlemeye gerek kalmadan otel adı sorulur.
+ */
+export function resolveExtraNoteConfig(
+  extra: Pick<ExtraForBooking, 'title' | 'requiresNote' | 'noteLabel'>
+): { requiresNote: boolean; noteLabel: string } {
+  if (extra.requiresNote) {
+    return { requiresNote: true, noteLabel: extra.noteLabel?.trim() || 'Otel Adınız' }
+  }
+  if (/otel/i.test(extra.title || '')) {
+    return { requiresNote: true, noteLabel: extra.noteLabel?.trim() || 'Otel Adınız' }
+  }
+  return { requiresNote: false, noteLabel: '' }
+}
 
 /** YYYY-MM-DD aralığında (uçlar dahil) mi — yerel öğlen ile DST kayması azaltılır. */
 function dateInRangeISO(dateStr: string, start: string, end: string): boolean {
@@ -306,11 +326,45 @@ function isDateAvailable(tour: TourForBooking, dateStr: string): boolean {
   return avail.defaultAvailable ?? false
 }
 
+/** Seçilen ekstraların (Sanity `extras[]._key`) fiyat kırılımı; kişi başı olanlar toplam kişi sayısıyla çarpılır. */
+export function computeExtrasBreakdown(
+  tour: TourForBooking | null,
+  selectedExtraKeys: string[] | undefined,
+  totalPax: number,
+  extraNotes?: Record<string, string>
+): { breakdown: ExtraLineItem[]; extrasTotal: number } {
+  const keys = new Set((selectedExtraKeys ?? []).filter(Boolean))
+  const breakdown: ExtraLineItem[] = []
+  if (keys.size === 0 || totalPax <= 0) return { breakdown, extrasTotal: 0 }
+  for (const extra of tour?.extras ?? []) {
+    if (!extra?.key || !keys.has(extra.key)) continue
+    const unitPrice = Number(extra.price)
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) continue
+    const priceType: 'perPerson' | 'total' = extra.priceType === 'perPerson' ? 'perPerson' : 'total'
+    const quantity = priceType === 'perPerson' ? totalPax : 1
+    const { requiresNote } = resolveExtraNoteConfig(extra)
+    const note = requiresNote ? extraNotes?.[extra.key]?.trim() || undefined : undefined
+    breakdown.push({
+      key: extra.key,
+      title: extra.title,
+      unitPrice,
+      priceType,
+      quantity,
+      lineTotal: Math.round(unitPrice * quantity),
+      ...(note && { note }),
+    })
+  }
+  const extrasTotal = breakdown.reduce((s, e) => s + e.lineTotal, 0)
+  return { breakdown, extrasTotal }
+}
+
 export function computePricingForSelection(
   tour: TourForBooking | null,
   dateStr: string | null,
   classKey: string | null,
-  counts: { adult: number; child: number; baby: number }
+  counts: { adult: number; child: number; baby: number },
+  selectedExtraKeys?: string[],
+  extraNotes?: Record<string, string>
 ): PricingSummary | null {
   if (!tour || !dateStr || !classKey) return null
   const cls = tour.ticketClasses?.find((c) => c.key === classKey)
@@ -334,10 +388,20 @@ export function computePricingForSelection(
       subtotal: unitPrice * count,
     })
   }
-  const total = unitPrices.reduce((s, u) => s + u.subtotal, 0)
+  const classTotal = unitPrices.reduce((s, u) => s + u.subtotal, 0)
+  const totalPax = counts.adult + counts.child + counts.baby
+  const { breakdown: extras, extrasTotal } = computeExtrasBreakdown(
+    tour,
+    selectedExtraKeys,
+    totalPax,
+    extraNotes
+  )
+  const total = classTotal + extrasTotal
   if (tour.cashPaymentEnabled) {
     return {
       unitPrices,
+      extras,
+      extrasTotal,
       total,
       depositPercent: 0,
       depositAmount: 0,
@@ -364,6 +428,8 @@ export function computePricingForSelection(
   const remainingAmount = total - depositAmount
   return {
     unitPrices,
+    extras,
+    extrasTotal,
     total,
     depositPercent,
     depositAmount,

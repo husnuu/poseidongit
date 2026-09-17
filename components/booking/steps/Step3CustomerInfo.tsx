@@ -164,6 +164,17 @@ export default function Step3CustomerInfo({
               </div>
             )
           })}
+          {(state.pricingSummary?.extras ?? []).map((e) => (
+            <div key={e.key} className={styles.summaryPriceRow}>
+              <span className={styles.summaryPriceLbl}>
+                {e.title}
+                {e.note && <span style={{ opacity: 0.7 }}> · {e.note}</span>}
+              </span>
+              <span className={styles.summaryPriceVal}>
+                {e.lineTotal.toLocaleString(ui.numberLocale)} ₺
+              </span>
+            </div>
+          ))}
           <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowTotal}`}>
             <span className={styles.summaryPriceLbl}>{ui.totalLabel}</span>
             <span className={styles.summaryPriceVal}>

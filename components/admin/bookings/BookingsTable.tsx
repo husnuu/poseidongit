@@ -176,6 +176,11 @@ export default function BookingsTable({
                   <span className="text-xs text-zinc-500">
                     {b.totalPrice > 0 ? `${b.totalPrice.toLocaleString('tr-TR')} ${b.currency}` : ''}
                   </span>
+                  {(b.selectedExtras?.length ?? 0) > 0 && (
+                    <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                      +{b.selectedExtras!.length} ekstra
+                    </span>
+                  )}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   <button
@@ -299,7 +304,14 @@ export default function BookingsTable({
               <td className="px-4 py-3">
                 <ParticipantsBreakdown counts={b.counts} />
               </td>
-              <td className="px-4 py-3 text-zinc-600">{b.className}{(b.firstClassLocas?.length ? ` · ${b.firstClassLocas.join(', ')}` : b.firstClassLoca ? ` · ${b.firstClassLoca}` : '')}</td>
+              <td className="px-4 py-3 text-zinc-600">
+                {b.className}{(b.firstClassLocas?.length ? ` · ${b.firstClassLocas.join(', ')}` : b.firstClassLoca ? ` · ${b.firstClassLoca}` : '')}
+                {(b.selectedExtras?.length ?? 0) > 0 && (
+                  <span className="ml-1.5 inline-flex rounded-full bg-blue-100 px-1.5 py-0.5 text-[11px] font-medium text-blue-700">
+                    +{b.selectedExtras!.length}
+                  </span>
+                )}
+              </td>
               <td className="px-4 py-3">
                 <SourceBadge source={b.source} manualSource={b.manualSource} />
               </td>

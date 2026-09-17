@@ -73,6 +73,8 @@ const bookingWebJsonSchema = z.object({
   className: z.string().max(400).trim().min(1, { message: 'Sınıf adı gerekli' }),
   firstClassLocas: z.array(z.unknown()).optional(),
   firstClassLoca: z.union([z.string(), z.undefined(), z.null()]).optional(),
+  selectedExtraKeys: z.array(z.unknown()).optional(),
+  extraNotes: z.unknown().optional(),
   customer: customerSchema,
   additionalTravelers: z.unknown().optional(),
   infantGenders: z.unknown().optional(),
@@ -175,6 +177,27 @@ export function parseBookingWebPayload(body: unknown): ParseWebBookingResult {
     v.firstClassLoca
   )
 
+  const selectedExtraKeys = Array.isArray(v.selectedExtraKeys)
+    ? Array.from(
+        new Set(
+          v.selectedExtraKeys
+            .map((x) => (typeof x === 'string' ? x.trim() : ''))
+            .filter((x) => x.length > 0 && x.length <= 200)
+        )
+      ).slice(0, 50)
+    : []
+
+  const extraNotes: Record<string, string> = {}
+  if (v.extraNotes && typeof v.extraNotes === 'object' && !Array.isArray(v.extraNotes)) {
+    for (const key of selectedExtraKeys) {
+      const raw = (v.extraNotes as Record<string, unknown>)[key]
+      if (typeof raw === 'string') {
+        const note = sanitizeCustomerNote(raw, 200)
+        if (note) extraNotes[key] = note
+      }
+    }
+  }
+
   const payload: BookingCreatePayload = {
     uiLocale,
     tourId: v.tourId,
@@ -186,6 +209,8 @@ export function parseBookingWebPayload(body: unknown): ParseWebBookingResult {
     classId: v.classId.trim(),
     className: v.className.trim(),
     ...(firstClassLocas && firstClassLocas.length > 0 && { firstClassLocas }),
+    ...(selectedExtraKeys.length > 0 && { selectedExtraKeys }),
+    ...(Object.keys(extraNotes).length > 0 && { extraNotes }),
     customer: {
       firstName: v.customer.firstName,
       lastName: v.customer.lastName,

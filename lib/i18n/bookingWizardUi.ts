@@ -39,6 +39,14 @@ export type BookingWizardUi = {
   nextMonthAria: string
   weekdaysShort: string[]
   classSelectTitle: string
+  extrasTitle: string
+  extraPerPersonSuffix: string
+  extraTotalSuffix: string
+  extraNoteDefaultLabel: string
+  extrasDoneButton: string
+  extrasSkipButton: string
+  extrasSummaryNone: string
+  extrasSummarySelected: (n: number) => string
   bungalowTwoPersonOdd: string
   statusFull: string
   statusClosed: string
@@ -212,6 +220,14 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     nextMonthAria: 'Sonraki ay',
     weekdaysShort: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'],
     classSelectTitle: 'Sınıf Seçimi',
+    extrasTitle: 'Ekstralar',
+    extraPerPersonSuffix: 'kişi başı',
+    extraTotalSuffix: 'toplam',
+    extraNoteDefaultLabel: 'Ek bilgi',
+    extrasDoneButton: 'Tamam',
+    extrasSkipButton: 'Ekstra İstemiyorum',
+    extrasSummaryNone: 'Ekstraları görmek için dokunun',
+    extrasSummarySelected: (n) => `${n} ekstra seçildi`,
     bungalowTwoPersonOdd:
       'Bu alandaki bungalov yataklarımız 2 kişiliktir. Tek sayılı kişi ile rezervasyon verilmemektedir.',
     statusFull: 'DOLU',
@@ -385,6 +401,14 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     nextMonthAria: 'Next month',
     weekdaysShort: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     classSelectTitle: 'Choose a class',
+    extrasTitle: 'Extras',
+    extraPerPersonSuffix: 'per person',
+    extraTotalSuffix: 'total',
+    extraNoteDefaultLabel: 'Additional info',
+    extrasDoneButton: 'Done',
+    extrasSkipButton: 'No extras, thanks',
+    extrasSummaryNone: 'Tap to see extras',
+    extrasSummarySelected: (n) => `${n} extra${n === 1 ? '' : 's'} selected`,
     bungalowTwoPersonOdd:
       'Booth beds in this area are for two guests. Bookings with an odd number of guests are not available.',
     statusFull: 'FULL',
@@ -557,6 +581,14 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     nextMonthAria: 'Nächster Monat',
     weekdaysShort: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
     classSelectTitle: 'Klasse wählen',
+    extrasTitle: 'Extras',
+    extraPerPersonSuffix: 'pro Person',
+    extraTotalSuffix: 'gesamt',
+    extraNoteDefaultLabel: 'Zusätzliche Angabe',
+    extrasDoneButton: 'Fertig',
+    extrasSkipButton: 'Keine Extras',
+    extrasSummaryNone: 'Zum Anzeigen der Extras tippen',
+    extrasSummarySelected: (n) => `${n} Extra${n === 1 ? '' : 's'} ausgewählt`,
     bungalowTwoPersonOdd:
       'Die Kabinenbetten in diesem Bereich sind für zwei Personen. Buchungen mit ungerader Personenzahl sind nicht möglich.',
     statusFull: 'AUSGEBUCHT',

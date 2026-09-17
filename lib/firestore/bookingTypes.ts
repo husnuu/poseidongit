@@ -75,6 +75,10 @@ export interface BookingCreatePayload {
   className: string
   /** First Class için seçilen localar (L1–L10). */
   firstClassLocas?: string[]
+  /** Seçilen ekstraların (Sanity `extras[]._key`) anahtar listesi. */
+  selectedExtraKeys?: string[]
+  /** requiresNote açık ekstralar için girilen serbest metin (key → metin). */
+  extraNotes?: Record<string, string>
   customer: {
     firstName: string
     lastName: string

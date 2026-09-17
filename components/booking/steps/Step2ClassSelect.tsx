@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Check, ChevronLeft, Users, CalendarDays, Ticket } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Users, CalendarDays, Ticket, Sparkles } from 'lucide-react'
+import ExtrasModal from '../ExtrasModal'
 import type {
   TourForBooking,
   BookingWizardState,
@@ -56,6 +57,10 @@ export default function Step2ClassSelect({
 }: Step2ClassSelectProps) {
   const locaSectionRef = useRef<HTMLDivElement>(null)
   const advance = onStepNext ?? onNext
+  const extrasList = tour.extras ?? []
+  const hasExtras = extrasList.length > 0
+  const selectedExtraKeys = state.selectedExtraKeys ?? []
+  const [extrasModalOpen, setExtrasModalOpen] = useState(false)
 
   const datesToFetch = useMemo(
     () => (state.selectedDate ? [state.selectedDate] : []),
@@ -130,7 +135,9 @@ export default function Step2ClassSelect({
       tour,
       state.selectedDate,
       state.selectedClassKey,
-      state.counts
+      state.counts,
+      state.selectedExtraKeys,
+      state.extraNotes
     )
     onPricingComputed(summary)
   }, [
@@ -140,6 +147,8 @@ export default function Step2ClassSelect({
     state.counts.adult,
     state.counts.child,
     state.counts.baby,
+    state.selectedExtraKeys,
+    state.extraNotes,
     onPricingComputed,
   ])
 
@@ -228,7 +237,8 @@ export default function Step2ClassSelect({
                       selectedClassKey: cls.key,
                       ...(isFirst ? {} : { firstClassLocas: [] }),
                     })
-                    if (!isFirst) advance()
+                    if (!isFirst && !hasExtras) advance()
+                    else if (hasExtras) setExtrasModalOpen(true)
                   }
                 }}
                 onKeyDown={(e) => {
@@ -239,7 +249,8 @@ export default function Step2ClassSelect({
                       selectedClassKey: cls.key,
                       ...(isFirst ? {} : { firstClassLocas: [] }),
                     })
-                    if (!isFirst) advance()
+                    if (!isFirst && !hasExtras) advance()
+                    else if (hasExtras) setExtrasModalOpen(true)
                   }
                 }}
                 tabIndex={available ? 0 : undefined}
@@ -421,7 +432,8 @@ export default function Step2ClassSelect({
                               selectedClassKey: cls.key,
                               ...(isFirst ? {} : { firstClassLocas: [] }),
                             })
-                            if (!isFirst) advance()
+                            if (!isFirst && !hasExtras) advance()
+                            else if (hasExtras) setExtrasModalOpen(true)
                           }
                         }}
                         aria-label={
@@ -526,6 +538,47 @@ export default function Step2ClassSelect({
             </div>
           )
         })()}
+
+      {/* Ekstralar — sınıf seçildikten sonra kompakt satır, popup açar */}
+      {state.selectedClassKey && hasExtras && (
+        <div className={styles.sectionFlat}>
+          <button
+            type="button"
+            className={styles.extrasTrigger}
+            onClick={() => setExtrasModalOpen(true)}
+          >
+            <span className={styles.extrasTriggerIcon} aria-hidden>
+              <Sparkles width={18} height={18} />
+            </span>
+            <span className={styles.extrasTriggerBody}>
+              <span className={styles.extrasTriggerTitle}>{ui.extrasTitle}</span>
+              <span className={styles.extrasTriggerSubtitle}>
+                {selectedExtraKeys.length > 0
+                  ? ui.extrasSummarySelected(selectedExtraKeys.length)
+                  : ui.extrasSummaryNone}
+              </span>
+            </span>
+            <ChevronRight width={18} height={18} className={styles.extrasTriggerChevron} aria-hidden />
+          </button>
+        </div>
+      )}
+
+      <ExtrasModal
+        open={extrasModalOpen}
+        onClose={() => setExtrasModalOpen(false)}
+        onSkip={() => {
+          setExtrasModalOpen(false)
+          advance()
+        }}
+        onContinue={() => {
+          setExtrasModalOpen(false)
+          advance()
+        }}
+        extras={extrasList}
+        state={state}
+        onUpdate={onUpdate}
+        ui={ui}
+      />
 
       {/* CTA */}
       <div className={styles.ctaSection}>

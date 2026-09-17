@@ -20,6 +20,7 @@ alter table public.bookings
   add column if not exists class_name text,
   add column if not exists first_class_locas text[],
   add column if not exists first_class_loca text,
+  add column if not exists selected_extras jsonb,
   add column if not exists unit_price numeric,
   add column if not exists total_price numeric,
   add column if not exists currency text,
@@ -70,6 +71,7 @@ alter table public.bookings
   -- Müşteri "İade Talebi Gönder" akışı: talep zamanı (admin onayını bekler)
   add column if not exists refund_requested_at timestamptz;
 
+comment on column public.bookings.selected_extras is 'Rezervasyonda seçilen ekstralar (Sanity extras[]): [{key,title,unitPrice,priceType,quantity,lineTotal}]';
 comment on column public.bookings.ui_locale is 'Site language at booking (tr|en|de) — customer emails / PDF';
 comment on column public.bookings.payment_status is 'Ödeme durumu özeti: paid | failed (status ile uyumlu olmalı)';
 comment on column public.bookings.payment_verification_status is 'NestPay HASH: verified | hash_mismatch';

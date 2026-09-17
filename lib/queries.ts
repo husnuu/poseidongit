@@ -254,11 +254,20 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
   },
   cashPaymentEnabled,
   extras[]{
+    "key": _key,
     title,
     description,
     price,
     priceType,
-    icon
+    icon,
+    image{
+      asset,
+      alt,
+      "url": asset->url,
+      "metadata": asset->metadata { lqip, dimensions }
+    },
+    requiresNote,
+    noteLabel
   },
   bookingCard{
     fromText,
@@ -547,11 +556,20 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
   },
   cashPaymentEnabled,
   extras[]{
+    "key": _key,
     title,
     description,
     price,
     priceType,
-    icon
+    icon,
+    image{
+      asset,
+      alt,
+      "url": asset->url,
+      "metadata": asset->metadata { lqip, dimensions }
+    },
+    requiresNote,
+    noteLabel
   },
   bookingCard{
     fromText,
