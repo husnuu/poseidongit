@@ -4,31 +4,25 @@ interface CovesHeroProps {
 }
 
 export default function CovesHero({ title, description }: CovesHeroProps) {
-  const words = (title || '').toUpperCase().trim().split(/\s+/).filter(Boolean)
-  const firstTwo = words.slice(0, 2).join(' ')
-  const nextTwo = words.slice(2, 4).join(' ')
-  const rest = words.slice(4).join(' ')
+  const titleUpper = (title || '').toUpperCase().trim()
 
   return (
     <header className="mb-10 md:mb-12">
-      <h1
-        className="text-[30px] font-black uppercase leading-[1.15] mb-6 sm:text-[34px] md:text-[38px] lg:text-[42px]"
-        style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900 }}
-      >
-        {firstTwo ? (
-          <>
-            <span style={{ color: '#1e3a8a' }}>{firstTwo}</span>
-            {nextTwo ? <span style={{ color: '#000' }}>{' ' + nextTwo}</span> : null}
-            {rest ? <span style={{ color: '#000' }}>{' ' + rest}</span> : null}
-          </>
-        ) : title?.trim() ? (
-          <span style={{ color: '#1e3a8a' }}>{title.trim()}</span>
-        ) : null}
-      </h1>
+      {titleUpper && (
+        <h1
+          className="text-[32px] font-extrabold uppercase leading-[1.15] mb-6 sm:text-[36px] md:text-[40px] lg:text-[44px]"
+          style={{
+            fontFamily: 'var(--font-family-title, var(--font-family))',
+            color: 'var(--primary, #2168b8)',
+          }}
+        >
+          {titleUpper}
+        </h1>
+      )}
       {description?.trim() && (
         <p
-          className="max-w-4xl text-base leading-relaxed text-zinc-700"
-          style={{ fontFamily: 'var(--font-family)' }}
+          className="max-w-2xl text-base leading-relaxed"
+          style={{ fontFamily: 'var(--font-family)', color: 'var(--text-color, #58595b)' }}
         >
           {description}
         </p>

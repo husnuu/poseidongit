@@ -6,7 +6,7 @@
 /* Duyuru: mobilde kenardan kenara (içerik max-width ile ortalanır) */
 .announcementStrip {
   width: 100%;
-  background: #1e3a8a;
+  background: var(--primary, #2168b8);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: env(safe-area-inset-top, 0px);
   box-sizing: border-box;
@@ -144,8 +144,8 @@
 .desktopNavLink {
   font-family: var(--font-family), 'Inter', system-ui, -apple-system, sans-serif;
   font-weight: 700;
-  font-size: 18px;
-  line-height: 27px;
+  font-size: 15px;
+  line-height: 22px;
   text-transform: uppercase;
   color: var(--primary, #2168b8);
   text-decoration: none;

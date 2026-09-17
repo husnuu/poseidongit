@@ -224,11 +224,15 @@ export default function ContactForm(props: ContactFormProps) {
         <button
           type="submit"
           disabled={status === 'sending' || (!!siteKey && !turnstileToken)}
-          className="w-full rounded-xl font-bold uppercase text-white text-base transition disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-110"
+          className="w-full font-bold uppercase text-white transition disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.98]"
           style={{
             height: 56,
+            borderRadius: 10,
+            fontSize: 16,
+            letterSpacing: '0.02em',
             backgroundImage:
               'linear-gradient(to right, var(--primary, #2168b8) 0%, #4f8dc7 51%, var(--primary, #2168b8) 100%)',
+            boxShadow: '0 4px 18px rgba(var(--primary-rgb, 33, 104, 184), 0.35)',
           }}
         >
           {status === 'sending' ? sending : submitLabel}
