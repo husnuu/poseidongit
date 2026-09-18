@@ -6,11 +6,13 @@ import {
   PartyPopper,
   Maximize2,
   CalendarPlus,
+  CalendarDays,
   CalendarClock,
   XCircle,
   MapPin,
   Clock,
   Wine,
+  UtensilsCrossed,
   MessageCircle,
   CheckCircle2,
   AlertCircle,
@@ -22,6 +24,29 @@ import BoardingPassModal from './BoardingPassModal'
 function money(amount: number, currency: string): string {
   const symbol = currency === 'TRY' ? '₺' : currency
   return `${amount.toLocaleString('tr-TR')} ${symbol}`
+}
+
+function GoogleLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" aria-hidden>
+      <path
+        fill="#FFC107"
+        d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"
+      />
+      <path
+        fill="#FF3D00"
+        d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 44c5.4 0 10.3-2.1 14-5.5l-6.5-5.5c-2 1.5-4.6 2.5-7.5 2.5-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.3 44 24 44z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.6l6.5 5.5C39.9 37 44 31.5 44 24c0-1.3-.1-2.7-.4-3.5z"
+      />
+    </svg>
+  )
 }
 
 function StatusOnlyCard({
@@ -215,9 +240,10 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
                       {data.icsUrl && (
                         <a
                           href={data.icsUrl}
-                          className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[#131719] hover:bg-zinc-50"
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#131719] hover:bg-zinc-50"
                           onClick={() => setCalendarOpen(false)}
                         >
+                          <CalendarDays className="h-4 w-4 shrink-0 text-zinc-500" aria-hidden />
                           {ui.appleOutlookCalendar}
                         </a>
                       )}
@@ -226,9 +252,10 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
                           href={data.googleCalendarUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[#131719] hover:bg-zinc-50"
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#131719] hover:bg-zinc-50"
                           onClick={() => setCalendarOpen(false)}
                         >
+                          <GoogleLogo className="h-4 w-4 shrink-0" />
                           {ui.googleCalendar}
                         </a>
                       )}
@@ -344,35 +371,40 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
                 {ui.viewOnMap}
               </a>
             )}
-            {(data.boardingTime || data.time || data.arrivalTime) && (
-              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#f1f5f9] pt-4 text-center">
-                {data.boardingTime && (
-                  <div>
-                    <p className="m-0 flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
-                      <Clock className="h-3 w-3" aria-hidden />
-                      {ui.boardingTimeLabel}
-                    </p>
-                    <p className="m-0 mt-1 font-bold text-[#131719]">{data.boardingTime}</p>
-                  </div>
-                )}
-                {data.time && (
-                  <div>
-                    <p className="m-0 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
-                      {ui.departureTimeLabel}
-                    </p>
-                    <p className="m-0 mt-1 font-bold text-[#131719]">{data.time}</p>
-                  </div>
-                )}
-                {data.arrivalTime && (
-                  <div>
-                    <p className="m-0 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
-                      {ui.latestBoardingLabel}
-                    </p>
-                    <p className="m-0 mt-1 font-bold text-[#131719]">{data.arrivalTime}</p>
-                  </div>
-                )}
+            <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#f1f5f9] pt-4 text-center">
+              <div>
+                <p className="m-0 flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+                  <Clock className="h-3 w-3" aria-hidden />
+                  {ui.boardingTimeLabel}
+                </p>
+                <p className="m-0 mt-1 font-bold text-[#131719]">{data.boardingTime ?? '—'}</p>
               </div>
-            )}
+              <div>
+                <p className="m-0 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+                  {ui.departureTimeLabel}
+                </p>
+                <p className="m-0 mt-1 font-bold text-[#131719]">{data.time ?? '—'}</p>
+              </div>
+              <div>
+                <p className="m-0 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+                  {ui.returnTimeLabel}
+                </p>
+                <p className="m-0 mt-1 font-bold text-[#131719]">{data.arrivalTime ?? '—'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Yiyecek & İçecek */}
+        {!cancelled && !data.isYachtDeposit && (
+          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-[#f1f5f9] bg-white p-5 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500">
+              <UtensilsCrossed className="h-4 w-4" aria-hidden />
+            </div>
+            <div>
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">{ui.foodDrinkTitle}</p>
+              <p className="m-0 mt-1 text-sm font-medium text-[#131719]">{ui.foodDrinkPolicyText}</p>
+            </div>
           </div>
         )}
 

@@ -40,10 +40,12 @@ export interface BookingConfirmationUi {
   boatBarCta: string
   whereTitle: string
   boardingTimeLabel: string
-  latestBoardingLabel: string
+  returnTimeLabel: string
   departureTimeLabel: string
   viewOnMap: string
   goodToKnowTitle: string
+  foodDrinkTitle: string
+  foodDrinkPolicyText: string
   needHelpTitle: string
   whatsappCta: string
   viewTicket: string
@@ -98,10 +100,12 @@ const TR: BookingConfirmationUi = {
   boatBarCta: 'Bar menüsünü gör',
   whereTitle: 'Toplanma noktası',
   boardingTimeLabel: 'Biniş saati',
-  latestBoardingLabel: 'En geç biniş',
+  returnTimeLabel: 'Dönüş saati',
   departureTimeLabel: 'Hareket saati',
   viewOnMap: 'Haritada görüntüle',
   goodToKnowTitle: 'Bilmeniz gerekenler',
+  foodDrinkTitle: 'Yiyecek & İçecek',
+  foodDrinkPolicyText: 'Dışarıdan yiyecek getirmeniz serbesttir; içecek getirilmesine izin verilmemektedir.',
   needHelpTitle: 'Sorunuz mu var?',
   whatsappCta: "WhatsApp'tan yazın",
   viewTicket: 'Biletimi görüntüle',
@@ -156,10 +160,12 @@ const EN: BookingConfirmationUi = {
   boatBarCta: 'View bar menu',
   whereTitle: 'Meeting point',
   boardingTimeLabel: 'Boarding time',
-  latestBoardingLabel: 'Latest boarding',
+  returnTimeLabel: 'Return time',
   departureTimeLabel: 'Departure time',
   viewOnMap: 'View on map',
   goodToKnowTitle: 'Good to know',
+  foodDrinkTitle: 'Food & Drinks',
+  foodDrinkPolicyText: "You're welcome to bring your own food; outside drinks are not permitted on board.",
   needHelpTitle: 'Need help?',
   whatsappCta: 'Message us on WhatsApp',
   viewTicket: 'View my ticket',

@@ -35,8 +35,8 @@ export type BoardingPassTicketProps = {
   locale?: SiteLocale
 }
 
-const BLUE = '#1e3a8a'
-const BLUE_LIGHT = '#2563eb'
+const BLUE = 'var(--primary, #2168b8)'
+const BLUE_LIGHT = 'var(--primary, #2168b8)'
 
 function boardingTimeBefore(time: string | undefined): string | null {
   if (!time?.trim()) return null
@@ -101,12 +101,8 @@ export default function BoardingPassTicket({
   return (
     <div
       className="min-h-screen bg-slate-200/90 px-4 py-6 sm:px-6 sm:py-8 print:min-h-0 print:h-auto print:bg-white print:px-0 print:py-0 [-webkit-print-color-adjust:exact] [print-color-adjust:exact]"
-      style={{ fontFamily: "'Montserrat', system-ui, sans-serif" }}
+      style={{ fontFamily: 'var(--font-family), sans-serif' }}
     >
-      <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-      />
 
       <div className="mx-auto w-full max-w-[min(100%,36rem)] print:max-w-none print:w-full">
         {/* Yazdırmada tam A4 (210×297mm), dikeyde esneyen orta bölüm */}
@@ -140,7 +136,8 @@ export default function BoardingPassTicket({
                   <div className="relative flex min-w-[3rem] flex-1 items-center justify-center px-1">
                     <div className="h-px w-full border-t border-dashed border-white/50" aria-hidden />
                     <Ship
-                      className="absolute h-5 w-5 rounded-full bg-[#1e3a8a] p-0.5 text-white print:h-6 print:w-6"
+                      className="absolute h-5 w-5 rounded-full p-0.5 text-white print:h-6 print:w-6"
+                      style={{ background: 'var(--primary, #2168b8)' }}
                       strokeWidth={2.2}
                       aria-hidden
                     />

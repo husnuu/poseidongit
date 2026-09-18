@@ -60,6 +60,15 @@ function buildVoucherPdfUrl(bookingId: string, accessToken?: string): string {
   return `${base}/api/voucher?${params.toString()}`
 }
 
+function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <dt className="shrink-0 text-zinc-500">{label}</dt>
+      <dd className="m-0 text-right font-semibold text-[#131719]">{value}</dd>
+    </div>
+  )
+}
+
 export default function ManageBookingClient({
   initialBookingId,
   locale = 'tr',
@@ -319,70 +328,43 @@ export default function ManageBookingClient({
   }, [booking, newDate, isFirstClass, selectedNewDate, selectedFirstClassLocas, requiredLocas, totalPax])
 
   return (
-    <div style={{ maxWidth: 560, margin: '0 auto', padding: 24 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, color: '#0c1929', marginBottom: 8 }}>
-        Rezervasyonumu Yönet
-      </h1>
-      <p style={{ color: '#6b7280', marginBottom: 24 }}>
-        Rezervasyonunuza erişmek için e-posta adresinizi girin.
-      </p>
+    <div className="mx-auto max-w-xl px-4" style={{ fontFamily: 'var(--font-family)' }}>
+      <h1 className="text-2xl font-black text-[#131719] sm:text-[28px]">Rezervasyonumu Yönet</h1>
+      <p className="mt-2 text-sm text-zinc-500">Rezervasyonunuza erişmek için e-posta adresinizi girin.</p>
 
       {!booking && booking !== 'cancelled' && (
-        <form onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+        <form
+          onSubmit={handleSubmit}
+          className="mt-6 rounded-2xl border border-[#f1f5f9] bg-white p-6 shadow-[0_2px_8px_rgba(19,23,25,0.06)]"
+        >
+          <div className="mb-4">
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-zinc-500">
               Rezervasyon No
             </label>
             <input
               type="text"
               readOnly
               value={initialBookingId}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '1px solid #e5e7eb',
-                borderRadius: 8,
-                fontSize: 15,
-                backgroundColor: '#f9fafb',
-              }}
+              className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-3 text-sm text-zinc-600"
             />
           </div>
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-              E-posta
-            </label>
+          <div className="mb-5">
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-zinc-500">E-posta</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="rezervasyonda kullandığınız e-posta"
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '1px solid #e5e7eb',
-                borderRadius: 8,
-                fontSize: 15,
-              }}
+              className="w-full rounded-xl border border-zinc-200 px-3.5 py-3 text-sm focus:border-[#2168b8] focus:outline-none"
             />
           </div>
-          {error && (
-            <p style={{ color: '#dc2626', fontSize: 14, marginBottom: 12 }}>{error}</p>
-          )}
+          {error && <p className="mb-3 text-sm font-medium text-red-600">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '14px 24px',
-              background: '#1f3c88',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 10,
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
+            className="w-full rounded-xl px-6 py-3.5 text-base font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            style={{ background: 'var(--primary, #2168b8)' }}
           >
             {loading ? 'Yükleniyor...' : 'Rezervasyonu Görüntüle'}
           </button>
@@ -390,152 +372,119 @@ export default function ManageBookingClient({
       )}
 
       {booking === 'cancelled' && (
-        <div
-          style={{
-            padding: 20,
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: 12,
-            marginBottom: 24,
-          }}
-        >
-          <p style={{ margin: 0, fontWeight: 600, color: '#991b1b' }}>
-            Bu rezervasyon iptal edilmiştir.
-          </p>
+        <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 p-5">
+          <p className="m-0 font-bold text-red-800">Bu rezervasyon iptal edilmiştir.</p>
         </div>
       )}
 
       {booking && booking !== 'cancelled' && (
         <>
-          <div
-            style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: 12,
-              padding: 20,
-              marginBottom: 24,
-            }}
-          >
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1f2937', marginBottom: 16 }}>
-              Rezervasyon Detayları
-            </h2>
-            <table style={{ width: '100%', fontSize: 14 }}>
-              <tbody>
-                <tr>
-                  <td style={{ color: '#6b7280', padding: '8px 0' }}>Rezervasyon No</td>
-                  <td style={{ textAlign: 'right', fontWeight: 600, fontFamily: 'monospace' }}>{booking.id}</td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#6b7280', padding: '8px 0' }}>Yolcu</td>
-                  <td style={{ textAlign: 'right', fontWeight: 500 }}>{booking.customer.firstName} {booking.customer.lastName}</td>
-                </tr>
-                {booking.additionalTravelers && booking.additionalTravelers.length > 0 && (
-                  <tr>
-                    <td style={{ color: '#6b7280', padding: '8px 0', verticalAlign: 'top' }}>Diğer yolcular</td>
-                    <td style={{ textAlign: 'right', fontWeight: 500, lineHeight: 1.5 }}>
+          <div className="mt-6 rounded-2xl border border-[#f1f5f9] bg-white p-6 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+            <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Rezervasyon No</p>
+            <p className="m-0 mt-1 font-mono text-2xl font-black tracking-wide text-[#131719]">
+              #{booking.id.slice(0, 8).toUpperCase()}
+            </p>
+
+            <dl className="m-0 mt-5 space-y-3 border-t border-[#f1f5f9] pt-4 text-sm">
+              <DetailRow label="Yolcu" value={`${booking.customer.firstName} ${booking.customer.lastName}`} />
+              {booking.additionalTravelers && booking.additionalTravelers.length > 0 && (
+                <DetailRow
+                  label="Diğer yolcular"
+                  value={
+                    <div className="space-y-1.5 text-right">
                       {booking.additionalTravelers.map((t, iRow) => (
                         <div key={`${t.firstName}-${t.lastName}-${iRow}`}>
-                          {t.firstName} {t.lastName}
-                          {t.mealPreference?.label?.trim() ? (
-                            <span style={{ color: '#6b7280', fontSize: 12, display: 'block' }}>
+                          <span className="font-semibold text-[#131719]">
+                            {t.firstName} {t.lastName}
+                          </span>
+                          {t.mealPreference?.label?.trim() && (
+                            <span className="block text-xs text-zinc-500">
                               Yemek: {t.mealPreference.label.trim()}
                             </span>
-                          ) : null}
+                          )}
                         </div>
                       ))}
-                    </td>
-                  </tr>
-                )}
-                <tr>
-                  <td style={{ color: '#6b7280', padding: '8px 0' }}>Durum</td>
-                  <td style={{ textAlign: 'right' }}>{booking.status === 'paid' ? 'Ödendi' : booking.status === 'confirmed' ? 'Onaylandı' : 'Beklemede'}</td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#6b7280', padding: '8px 0' }}>Tur</td>
-                  <td style={{ textAlign: 'right', fontWeight: 500 }}>{booking.tourTitle}</td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#6b7280', padding: '8px 0' }}>Tarih</td>
-                  <td style={{ textAlign: 'right' }}>{booking.date}</td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#6b7280', padding: '8px 0' }}>Kalkış</td>
-                  <td style={{ textAlign: 'right' }}>{booking.time || '—'}</td>
-                </tr>
-                {booking.meetingPoint != null && booking.meetingPoint !== '' && (
-                  <tr>
-                    <td style={{ color: '#6b7280', padding: '8px 0' }}>Toplanma noktası</td>
-                    <td style={{ textAlign: 'right', fontWeight: 500 }}>{booking.meetingPoint}</td>
-                  </tr>
-                )}
-                {booking.mealPreference?.label?.trim() && (
-                  <tr>
-                    <td style={{ color: '#6b7280', padding: '8px 0' }}>Yemek tercihi</td>
-                    <td style={{ textAlign: 'right', fontWeight: 500 }}>
+                    </div>
+                  }
+                />
+              )}
+              <DetailRow
+                label="Durum"
+                value={booking.status === 'paid' ? 'Ödendi' : booking.status === 'confirmed' ? 'Onaylandı' : 'Beklemede'}
+              />
+              <DetailRow label="Tur" value={booking.tourTitle} />
+              <DetailRow label="Tarih" value={booking.date} />
+              <DetailRow label="Kalkış" value={booking.time || '—'} />
+              {booking.meetingPoint != null && booking.meetingPoint !== '' && (
+                <DetailRow label="Toplanma noktası" value={booking.meetingPoint} />
+              )}
+              {booking.mealPreference?.label?.trim() && (
+                <DetailRow
+                  label="Yemek tercihi"
+                  value={
+                    <>
                       {booking.mealPreference.label.trim()}
                       {booking.mealPreference.counts?.length ? (
-                        <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+                        <span className="mt-1 block text-xs font-normal text-zinc-500">
                           {booking.mealPreference.counts
                             .filter((x) => x.count > 0)
                             .map((x) => `${x.label} (${x.count})`)
                             .join(' · ')}
-                        </div>
+                        </span>
                       ) : null}
-                    </td>
-                  </tr>
-                )}
-                <tr>
-                  <td style={{ color: '#6b7280', padding: '8px 0' }}>Sınıf</td>
-                  <td style={{ textAlign: 'right', fontWeight: 500 }}>{booking.className}</td>
-                </tr>
-                {isFirstClass && (
-                  <tr>
-                    <td style={{ color: '#6b7280', padding: '8px 0' }}>Loca</td>
-                    <td style={{ textAlign: 'right', fontWeight: 600, color: '#92400e', fontFamily: 'monospace' }}>
-                      {(booking.firstClassLocas?.length ? booking.firstClassLocas.join(', ') : '—')}
-                    </td>
-                  </tr>
-                )}
-                <tr>
-                  <td style={{ color: '#6b7280', padding: '8px 0' }}>Misafirler</td>
-                  <td style={{ textAlign: 'right' }}>
-                    {booking.counts.adult} Yetişkin
-                    {(booking.counts.child || booking.counts.infant) &&
-                      `, ${booking.counts.child || 0} Çocuk, ${booking.counts.infant || 0} Bebek`}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#6b7280', padding: '12px 0 0', borderTop: '2px solid #e5e7eb' }}>
-                    Toplam
-                  </td>
-                  <td style={{ textAlign: 'right', fontWeight: 700, color: '#1f3c88', padding: '12px 0 0', borderTop: '2px solid #e5e7eb' }}>
-                    {booking.totalPrice} {booking.currency}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    </>
+                  }
+                />
+              )}
+              <DetailRow label="Sınıf" value={booking.className} />
+              {isFirstClass && (
+                <DetailRow
+                  label="Loca"
+                  value={
+                    <span className="font-mono">
+                      {booking.firstClassLocas?.length ? booking.firstClassLocas.join(', ') : '—'}
+                    </span>
+                  }
+                />
+              )}
+              <DetailRow
+                label="Misafirler"
+                value={`${booking.counts.adult} Yetişkin${
+                  booking.counts.child || booking.counts.infant
+                    ? `, ${booking.counts.child || 0} Çocuk, ${booking.counts.infant || 0} Bebek`
+                    : ''
+                }`}
+              />
+            </dl>
+
+            <div className="mt-5 flex items-center justify-between border-t border-[#f1f5f9] pt-4">
+              <p className="m-0 text-sm font-bold uppercase tracking-wide text-zinc-500">Toplam</p>
+              <p className="m-0 text-xl font-black text-[#131719]">
+                {booking.totalPrice.toLocaleString('tr-TR')} {booking.currency === 'TRY' ? '₺' : booking.currency}
+              </p>
+            </div>
           </div>
 
           {success && (
             <div
-              className="mb-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm"
+              className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
               role="alert"
             >
               {success}
             </div>
           )}
 
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-            <h3 className="text-sm font-semibold text-amber-900 mb-2">Tarih değiştir</h3>
+          <div className="mt-4 rounded-2xl border border-[#f1f5f9] bg-white p-5 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+            <h3 className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Tarihi değiştir</h3>
             {refundAlreadyRequested && (
-              <p className="text-xs text-amber-900 mb-3 rounded-lg border border-amber-300/80 bg-amber-100/60 px-3 py-2">
+              <p className="mb-3 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                 İade talebiniz veya iade süreciniz devam ettiği için bilet tarihini buradan
                 güncelleyemezsiniz.
               </p>
             )}
             {isFirstClass ? (
               <>
-                <p className="text-xs text-amber-800 mb-3">
+                <p className="mb-3 mt-3 text-xs text-zinc-500">
                   Aynı gün sadece loca değiştirmek için tur tarihinizi tekrar seçin. Takvimde{' '}
                   <strong>müsait loca sayısı</strong> (L1–L10) gösterilir; dolu localar seçicide kilitlidir.
                 </p>
@@ -628,7 +577,7 @@ export default function ManageBookingClient({
                   <div
                     className={`mt-4 ${refundAlreadyRequested ? 'pointer-events-none opacity-55' : ''}`}
                   >
-                    <p className="text-sm font-medium text-amber-900 mb-2">
+                    <p className="mb-2 text-sm font-semibold text-[#131719]">
                       {selectedNewDate} için loca seçin ({requiredLocas} loca gerekli)
                     </p>
                     <FirstClassSeatSelector
@@ -666,7 +615,8 @@ export default function ManageBookingClient({
                       !selectedNewDate ||
                       (requiredLocas > 0 && selectedFirstClassLocas.length !== requiredLocas)
                     }
-                    className="px-4 py-2 rounded-lg bg-amber-600 text-white font-semibold text-sm hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-lg px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{ background: 'var(--primary, #2168b8)' }}
                   >
                     {changeDateLoading ? 'Güncelleniyor...' : 'Tarihi Güncelle'}
                   </button>
@@ -678,7 +628,7 @@ export default function ManageBookingClient({
                         setSelectedFirstClassLocas([])
                       }}
                       disabled={refundAlreadyRequested}
-                      className="px-4 py-2 rounded-lg border border-amber-300 text-amber-800 text-sm hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-semibold text-[#131719] hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Seçimi temizle
                     </button>
@@ -686,23 +636,24 @@ export default function ManageBookingClient({
                 </div>
               </>
             ) : (
-              <div className="flex flex-wrap gap-2 items-end">
-                <div className="flex-1 min-w-[140px]">
-                  <label className="block text-xs font-medium text-amber-800 mb-1">Yeni tarih</label>
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="min-w-[140px] flex-1">
+                  <label className="mb-1 block text-xs font-medium text-zinc-500">Yeni tarih</label>
                   <input
                     type="date"
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
                     min={minBookableStr}
                     disabled={refundAlreadyRequested}
-                    className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-[#2168b8] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleChangeDate}
                   disabled={refundAlreadyRequested || changeDateLoading || !newDate.trim()}
-                  className="px-4 py-2 rounded-lg bg-amber-600 text-white font-semibold text-sm hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-lg px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ background: 'var(--primary, #2168b8)' }}
                 >
                   {changeDateLoading ? 'Güncelleniyor...' : 'Tarihi Güncelle'}
                 </button>
@@ -713,17 +664,18 @@ export default function ManageBookingClient({
             )}
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="mt-4 flex flex-col gap-3">
             <a
               href={withLocalePath(locale, ticketPagePath(booking.id, booking.accessToken))}
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-center py-3.5 px-5 rounded-xl border-2 border-[#1f3c88] text-[#1f3c88] font-semibold hover:bg-[#1f3c88] hover:text-white transition-colors"
+              className="block rounded-xl px-5 py-3.5 text-center font-bold text-white"
+              style={{ background: '#fc6c4f' }}
             >
               Biletimi Görüntüle
             </a>
             {isOnlinePaid && refundAlreadyRequested ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                 <p className="font-semibold">İade talebi yöneticilerimize iletildi.</p>
                 <p className="mt-1 text-amber-800">
                   Talebiniz 24 saat içinde sonuçlanacaktır. Onaylanma anında size e-posta gönderilecektir.
@@ -735,7 +687,8 @@ export default function ManageBookingClient({
                   type="button"
                   onClick={handleRefundClick}
                   disabled={loading || !canRequestRefund}
-                  className="py-3.5 px-5 rounded-xl border-2 border-orange-500 text-orange-700 font-semibold hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-xl border-2 px-5 py-3.5 font-bold disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ borderColor: '#fc6c4f', color: '#fc6c4f' }}
                 >
                   İade Talebi Gönder
                 </button>
@@ -757,8 +710,8 @@ export default function ManageBookingClient({
         </>
       )}
 
-      <p style={{ marginTop: 32, fontSize: 13, color: '#9ca3af' }}>
-        <Link href={withLocalePath(locale, '/')} style={{ color: '#1f3c88' }}>
+      <p className="mt-8 pb-12 text-center text-sm text-zinc-500">
+        <Link href={withLocalePath(locale, '/')} className="font-semibold text-[#2168b8] hover:underline">
           Ana sayfaya dön
         </Link>
       </p>
@@ -787,7 +740,7 @@ export default function ManageBookingClient({
               rows={3}
               maxLength={500}
               placeholder="Örn. tarih değişikliği yapamadım, hava koşulları, vb."
-              className="w-full mb-5 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+              className="w-full mb-5 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#fc6c4f] focus:outline-none"
             />
             <div className="flex gap-3">
               <button
@@ -801,7 +754,8 @@ export default function ManageBookingClient({
                 type="button"
                 onClick={handleRefundConfirm}
                 disabled={loading}
-                className="flex-1 py-2.5 rounded-xl bg-orange-600 text-white font-semibold hover:bg-orange-700 disabled:opacity-50"
+                className="flex-1 rounded-xl py-2.5 font-bold text-white disabled:opacity-50"
+                style={{ background: '#fc6c4f' }}
               >
                 {loading ? 'Gönderiliyor...' : 'Talebi Gönder'}
               </button>

@@ -5,7 +5,7 @@
  */
 import { supabase } from '@/lib/supabase'
 import { client } from '@/lib/sanity'
-import { tourImageAndPickupQuery } from '@/lib/queries'
+import { tourImageAndPickupQuery, siteSettingsWhatsappQuery } from '@/lib/queries'
 import { normalizeMealPreferenceColumn, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
 import { isYachtDepositBooking } from '@/lib/yachtDepositBooking'
@@ -13,6 +13,7 @@ import { buildGoogleCalendarUrl } from '@/lib/calendar'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getSiteBaseUrl } from '@/lib/siteUrls'
 import { formatTicketDate } from '@/lib/voucher/formatTicketDate'
+import { buildWhatsAppHref } from '@/lib/buildWhatsAppHref'
 import type { SiteLocale } from '@/lib/i18n/config'
 
 /** ui_locale sütunundan sadece desteklenen dilleri kabul eder; diğerleri (veya boş) TR'ye düşer. */
@@ -128,11 +129,18 @@ function resolveCancelInfo(dateStr: string): { canCancel: boolean; deadlineLabel
   return { canCancel, deadlineLabel }
 }
 
-function buildWhatsappHref(reference: string): string | null {
-  const num = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.trim()
-  if (!num) return null
+async function resolveWhatsappHref(reference: string): Promise<string | null> {
+  let whatsapp: string | null | undefined
+  try {
+    const row = await client.fetch<{ whatsapp?: string | null } | null>(siteSettingsWhatsappQuery)
+    whatsapp = row?.whatsapp ?? null
+  } catch {
+    whatsapp = null
+  }
+  const base = buildWhatsAppHref(whatsapp)
+  if (!base) return null
   const text = `Merhaba, rezervasyonum hakkında bir sorum var. Rezervasyon no: ${reference}`
-  return `https://wa.me/${num.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`
+  return `${base}?text=${encodeURIComponent(text)}`
 }
 
 export async function getBookingConfirmationData(
@@ -282,6 +290,6 @@ export async function getBookingConfirmationData(
     googleCalendarUrl,
     icsUrl,
     notIncluded: Array.isArray(tourMeta?.notIncluded) ? tourMeta!.notIncluded!.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : [],
-    whatsappHref: buildWhatsappHref(reference),
+    whatsappHref: await resolveWhatsappHref(reference),
   }
 }
