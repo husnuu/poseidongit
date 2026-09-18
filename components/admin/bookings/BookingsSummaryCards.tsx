@@ -3,15 +3,15 @@
 import type { BookingsStats } from '@/types/adminBookings'
 
 const CARD_CLASS =
-  'rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md'
+  'rounded-2xl border border-[#f1f5f9] bg-white p-5 shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-shadow hover:shadow-[0_4px_16px_rgba(19,23,25,0.09)]'
 
-const ICON_WRAP = 'flex h-10 w-10 items-center justify-center rounded-lg'
+const ICON_WRAP = 'flex h-10 w-10 items-center justify-center rounded-xl'
 
 export default function BookingsSummaryCards({ stats }: { stats: BookingsStats }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <div className={CARD_CLASS}>
-        <div className={`${ICON_WRAP} bg-teal-100 text-teal-600`}>
+        <div className={`${ICON_WRAP} bg-blue-50 text-[#2168b8]`}>
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
@@ -21,19 +21,19 @@ export default function BookingsSummaryCards({ stats }: { stats: BookingsStats }
             />
           </svg>
         </div>
-        <p className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
+        <p className="mt-3 text-2xl font-black tracking-tight text-[#131719]">
           {stats.totalBookings.toLocaleString('tr-TR')}
         </p>
-        <p className="text-sm text-slate-500">Toplam Rezervasyon</p>
+        <p className="text-sm text-zinc-500">Toplam Rezervasyon</p>
         {typeof stats.onlineBookings === 'number' && typeof stats.manualBookings === 'number' && (
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-zinc-400">
             {stats.onlineBookings} online · {stats.manualBookings} manuel
           </p>
         )}
       </div>
 
       <div className={CARD_CLASS}>
-        <div className={`${ICON_WRAP} bg-amber-100 text-amber-600`}>
+        <div className={`${ICON_WRAP} bg-orange-50`} style={{ color: '#fc6c4f' }}>
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
@@ -43,14 +43,14 @@ export default function BookingsSummaryCards({ stats }: { stats: BookingsStats }
             />
           </svg>
         </div>
-        <p className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
+        <p className="mt-3 text-2xl font-black tracking-tight text-[#131719]">
           {stats.todayBookings.toLocaleString('tr-TR')}
         </p>
-        <p className="text-sm text-slate-500">Bugünkü Rezervasyon</p>
+        <p className="text-sm text-zinc-500">Bugünkü Rezervasyon</p>
       </div>
 
       <div className={CARD_CLASS}>
-        <div className={`${ICON_WRAP} bg-orange-100 text-orange-600`}>
+        <div className={`${ICON_WRAP} bg-emerald-50 text-emerald-600`}>
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
@@ -60,10 +60,10 @@ export default function BookingsSummaryCards({ stats }: { stats: BookingsStats }
             />
           </svg>
         </div>
-        <p className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
+        <p className="mt-3 text-2xl font-black tracking-tight text-[#131719]">
           {stats.todayOccupancy.toLocaleString('tr-TR')} kişi
         </p>
-        <p className="text-sm text-slate-500">Bugünkü Katılımcı</p>
+        <p className="text-sm text-zinc-500">Bugünkü Katılımcı</p>
       </div>
     </div>
   )

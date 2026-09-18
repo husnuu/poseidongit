@@ -740,6 +740,25 @@ export default function AdminBookingsPage() {
     }
   }
 
+  const handleSendPaymentLink = async (bookingId: string) => {
+    try {
+      const res = await fetch(
+        `/api/admin/bookings/${encodeURIComponent(bookingId)}/send-payment-link`,
+        adminFetchInit(
+          { method: 'POST' },
+          { adminEmail: adminEmailHeader || null }
+        )
+      )
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        return { ok: false, error: data.error || 'Ödeme linki gönderilemedi.' }
+      }
+      return { ok: true, url: data.url as string | undefined }
+    } catch {
+      return { ok: false, error: 'Bağlantı hatası.' }
+    }
+  }
+
   const handleApproveRefundRequest = useCallback(
     async (booking: AdminBookingRow) => {
       if (!isAdmin) return
@@ -1075,6 +1094,7 @@ export default function AdminBookingsPage() {
         onStatusChange={handleStatusChange}
         onAdminNoteSave={handleAdminNoteSave}
         onRefund={handleRefund}
+        onSendPaymentLink={handleSendPaymentLink}
         updating={updatingId !== null}
       />
 

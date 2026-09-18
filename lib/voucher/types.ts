@@ -47,6 +47,8 @@ export interface VoucherData {
   notIncluded?: string[]
   /** Toplanma noktası harita linki (Sanity whereSection.locationMapLink) */
   mapLink?: string
+  /** Toplanma noktası statik harita görseli (Sanity whereSection.mapEmbedUrl'den türetilir) */
+  mapImageUrl?: string
   /** Yemek tercihi dağılımı (örn. Balık × 2, Tavuk × 1) */
   mealCounts?: { label: string; count: number }[]
 

@@ -179,6 +179,25 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
 
   let y = H - topH - 28
 
+  // —— Tur kapak fotoğrafı ——
+  if (payload.tourImageUrl) {
+    const heroImg = await tryEmbedRemoteImage(doc, payload.tourImageUrl)
+    if (heroImg) {
+      const heroH = 130
+      const heroScale = Math.min(cardW / heroImg.width, heroH / heroImg.height)
+      const drawW = heroImg.width * heroScale
+      const drawH = heroImg.height * heroScale
+      page.drawRectangle({ x: padX, y: y - heroH, width: cardW, height: heroH, color: OFF_WHITE })
+      page.drawImage(heroImg, {
+        x: padX + (cardW - drawW) / 2,
+        y: y - heroH + (heroH - drawH) / 2,
+        width: drawW,
+        height: drawH,
+      })
+      y -= heroH + 16
+    }
+  }
+
   // —— Tur başlığı ——
   if (payload.tourTitle?.trim()) {
     page.drawText(payload.tourTitle.trim().toUpperCase(), {
@@ -375,6 +394,27 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
         x: padX, y: y2, size: 10, font, color: SLATE, maxWidth: cardW, lineHeight: 14,
       })
       y2 -= 30
+    }
+    if (payload.mapImageUrl) {
+      const mapImg = await tryEmbedRemoteImage(doc, payload.mapImageUrl)
+      if (mapImg) {
+        const mapH = 150
+        const mapScale = Math.min(cardW / mapImg.width, mapH / mapImg.height)
+        const drawW = mapImg.width * mapScale
+        const drawH = mapImg.height * mapScale
+        page2.drawRectangle({ x: padX, y: y2 - mapH, width: cardW, height: mapH, color: OFF_WHITE })
+        page2.drawRectangle({ x: padX, y: y2 - mapH, width: cardW, height: mapH, borderColor: DIVIDER, borderWidth: 0.7 })
+        page2.drawImage(mapImg, {
+          x: padX + (cardW - drawW) / 2,
+          y: y2 - mapH + (mapH - drawH) / 2,
+          width: drawW,
+          height: drawH,
+        })
+        // Merkez nokta işaretçisi (toplanma noktası)
+        page2.drawCircle({ x: padX + cardW / 2, y: y2 - mapH / 2, size: 8, color: WHITE })
+        page2.drawCircle({ x: padX + cardW / 2, y: y2 - mapH / 2, size: 5.5, color: CORAL })
+        y2 -= mapH + 14
+      }
     }
     if (payload.mapLink) {
       page2.drawText(`${L.viewOnMap}: ${payload.mapLink}`, {

@@ -8,16 +8,30 @@ import { client } from '@/lib/sanity'
 import { normalizeMealPreferenceColumn, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
 
-const tourCapacityQuery = `*[_type == "tour" && (_id == $id || slug.current == $id)][0]{
-  "capacity": quickFacts.maxCapacity
+const tourCrewMetaQuery = `*[_type == "tour" && (_id == $id || slug.current == $id)][0]{
+  "capacity": quickFacts.maxCapacity,
+  title
 }`
 
-async function getTourCapacity(tourId: string): Promise<number | null> {
+interface TourCrewMeta {
+  capacity: number | null
+  title: string | null
+}
+
+/** Sanity'den kapasite + güncel tur adını birlikte getirir. Tur Sanity'de bulunamazsa null döner. */
+async function getTourCrewMeta(tourId: string): Promise<TourCrewMeta | null> {
   if (!tourId) return null
   try {
-    const row = await client.fetch<{ capacity?: number | null } | null>(tourCapacityQuery, { id: tourId })
-    const cap = row?.capacity
-    return typeof cap === 'number' && cap > 0 ? cap : null
+    const row = await client.fetch<{ capacity?: number | null; title?: string | null } | null>(
+      tourCrewMetaQuery,
+      { id: tourId }
+    )
+    if (!row) return null
+    const cap = row.capacity
+    return {
+      capacity: typeof cap === 'number' && cap > 0 ? cap : null,
+      title: row.title?.trim() || null,
+    }
   } catch {
     return null
   }
@@ -137,14 +151,23 @@ export async function getTripsForDate(dateStr: string): Promise<CrewTripSummary[
   }
 
   const uniqueTourIds = Array.from(new Set(Array.from(byTrip.values()).map((t) => t.tourId)))
-  const capacities = await Promise.all(uniqueTourIds.map((id) => getTourCapacity(id)))
-  const capacityByTourId = new Map(uniqueTourIds.map((id, i) => [id, capacities[i]]))
+  const metas = await Promise.all(uniqueTourIds.map((id) => getTourCrewMeta(id)))
+  const metaByTourId = new Map(uniqueTourIds.map((id, i) => [id, metas[i]]))
 
   const now = Date.now()
-  const trips = Array.from(byTrip.values()).map((t) => {
-    const dt = tripDateTime(t.date, t.time)
-    return { ...t, capacity: capacityByTourId.get(t.tourId) ?? null, departed: dt != null && dt.getTime() <= now }
-  })
+  const trips = Array.from(byTrip.values())
+    // Sanity'de artık bulunmayan (silinmiş/arşivlenmiş) turlara ait seferler listelenmez.
+    .filter((t) => metaByTourId.get(t.tourId) != null)
+    .map((t) => {
+      const meta = metaByTourId.get(t.tourId)
+      const dt = tripDateTime(t.date, t.time)
+      return {
+        ...t,
+        tourTitle: meta?.title || t.tourTitle,
+        capacity: meta?.capacity ?? null,
+        departed: dt != null && dt.getTime() <= now,
+      }
+    })
 
   trips.sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''))
   return trips
@@ -164,7 +187,7 @@ export async function getManifestForTrip(
 
   query = time ? query.eq('time', time) : query.is('time', null)
 
-  const [{ data, error }, capacity] = await Promise.all([query, getTourCapacity(tourId)])
+  const [{ data, error }, tourMeta] = await Promise.all([query, getTourCrewMeta(tourId)])
   if (error || !data) return null
 
   const rows = data as SupabaseBookingRow[]
@@ -222,10 +245,10 @@ export async function getManifestForTrip(
   return {
     tripKey: buildTripKey(tourId, dateStr, time),
     tourId,
-    tourTitle: String(rows[0].tour_title ?? '—'),
+    tourTitle: tourMeta?.title || String(rows[0].tour_title ?? '—'),
     date: dateStr,
     time,
-    capacity,
+    capacity: tourMeta?.capacity ?? null,
     bookingsCount: bookings.length,
     guestsTotal,
     boardedCount,

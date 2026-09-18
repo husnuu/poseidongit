@@ -31,6 +31,7 @@ interface BookingDetailModalProps {
   onStatusChange: (bookingId: string, status: BookingStatus) => void
   onAdminNoteSave: (bookingId: string, adminNote: string) => Promise<void>
   onRefund?: (bookingId: string, amount: number, reason: string) => Promise<{ ok: boolean; errMsg?: string | null; refundStatus?: string | null }>
+  onSendPaymentLink?: (bookingId: string) => Promise<{ ok: boolean; url?: string; error?: string }>
   updating: boolean
 }
 
@@ -43,10 +44,13 @@ export default function BookingDetailModal({
   onStatusChange,
   onAdminNoteSave,
   onRefund,
+  onSendPaymentLink,
   updating,
 }: BookingDetailModalProps) {
   const [adminNote, setAdminNote] = useState(booking?.adminNote ?? '')
   const [savingNote, setSavingNote] = useState(false)
+  const [sendingLink, setSendingLink] = useState(false)
+  const [linkResult, setLinkResult] = useState<{ ok: boolean; text: string } | null>(null)
 
   const [showRefundPanel, setShowRefundPanel] = useState(false)
   const [refundAmount, setRefundAmount] = useState('')
@@ -61,8 +65,24 @@ export default function BookingDetailModal({
       setRefundAmount(String(booking.totalPrice ?? ''))
       setRefundReason('')
       setRefundMsg(null)
+      setLinkResult(null)
     }
   }, [booking?.id, booking?.adminNote])
+
+  const handleSendPaymentLink = async () => {
+    if (!booking || !onSendPaymentLink) return
+    setSendingLink(true)
+    setLinkResult(null)
+    try {
+      const result = await onSendPaymentLink(booking.id)
+      setLinkResult({
+        ok: result.ok,
+        text: result.ok ? 'Ödeme linki e-posta ile gönderildi.' : result.error || 'Ödeme linki gönderilemedi.',
+      })
+    } finally {
+      setSendingLink(false)
+    }
+  }
 
   if (!open) return null
   if (!booking) return null
@@ -502,7 +522,20 @@ export default function BookingDetailModal({
               >
                 Rezervasyonu Yönet
               </a>
+              {booking.status === 'pending' && onSendPaymentLink && (
+                <button
+                  type="button"
+                  onClick={handleSendPaymentLink}
+                  disabled={sendingLink}
+                  className="inline-flex rounded-lg bg-[#2168b8] px-3 py-2 text-sm font-medium text-white hover:bg-[#1b5697] disabled:opacity-60"
+                >
+                  {sendingLink ? 'Gönderiliyor…' : 'Ödeme Linki Gönder'}
+                </button>
+              )}
             </div>
+            {linkResult && (
+              <p className={`text-sm ${linkResult.ok ? 'text-emerald-700' : 'text-rose-700'}`}>{linkResult.text}</p>
+            )}
 
             <div className="border-t border-zinc-200 pt-4">
               <label className="block text-sm font-medium text-zinc-700">Admin notu</label>

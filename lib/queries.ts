@@ -650,7 +650,7 @@ export const tourImageAndPickupQuery = `*[_type == "tour" && (_id == $tourId || 
   "durationLabel": quickFacts.durationText,
   "meetingPoint": coalesce(whereSection.meetingPointAddress, quickFacts.meetingLocation),
   quickFacts{ meetingLocation, startTime, returnTime, durationText },
-  whereSection{ meetingPointAddress, locationMapLink },
+  whereSection{ meetingPointAddress, locationMapLink, mapEmbedUrl },
   deposit{ enabled, type, value },
   included,
   notIncluded

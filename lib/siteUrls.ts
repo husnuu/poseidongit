@@ -105,6 +105,19 @@ export function ticketPageUrlForLocale(
   return `${base}${rel}`
 }
 
+/** Ödeme bekleyen rezervasyon için ödeme linki (dil önekli, erişim tokenı ile). */
+export function paymentLinkUrlForLocale(
+  bookingId: string,
+  accessToken: string,
+  locale?: string | null
+): string {
+  const loc = coerceSiteLocale(locale ?? DEFAULT_LOCALE)
+  const base = getEmailBaseUrl().replace(/\/$/, '')
+  const path = `/odeme/${encodeURIComponent(bookingId)}?token=${encodeURIComponent(accessToken)}`
+  const rel = withLocalePath(loc, path)
+  return `${base}${rel}`
+}
+
 /** Müşteri CTA: token varsa doğrudan bilet sayfası, yoksa Rezervasyonumu Yönet. */
 export function customerTicketViewUrl(
   bookingId: string,

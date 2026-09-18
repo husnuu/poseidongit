@@ -98,6 +98,17 @@ export async function getBarOrdersForTrip(
   return (data as BarOrderRow[]).map(mapRow)
 }
 
+/** Belirli bir güne ait tüm bar siparişleri (tüm seferler dahil) — gün gün gezinme için. */
+export async function getBarOrdersForDate(dateStr: string): Promise<BarOrder[]> {
+  const { data, error } = await supabase
+    .from('bar_orders')
+    .select('*')
+    .eq('trip_date', dateStr)
+    .order('created_at', { ascending: true })
+  if (error || !data) return []
+  return (data as BarOrderRow[]).map(mapRow)
+}
+
 export async function getPendingCountsForTrips(
   trips: { tourId: string; date: string; time: string | null }[]
 ): Promise<Map<string, number>> {
@@ -144,6 +155,65 @@ export async function createWalkInOrder(input: {
     .single()
   if (error || !data) return null
   return mapRow(data as BarOrderRow)
+}
+
+function mergeOrderItems(existing: BarOrderItem[], incoming: BarOrderItem[]): BarOrderItem[] {
+  const map = new Map<string, BarOrderItem>()
+  for (const item of [...existing, ...incoming]) {
+    const key = `${item.title}__${item.price}`
+    const current = map.get(key)
+    if (current) current.qty += item.qty
+    else map.set(key, { ...item })
+  }
+  return Array.from(map.values())
+}
+
+/**
+ * Aynı isme (guest_label) ait, aynı sefer + aynı gün için henüz ödenmemiş açık bir
+ * sipariş varsa yeni ürünler ona eklenir (tek "hesap"/tab); yoksa yeni sipariş açılır.
+ */
+export async function createOrAppendWalkInOrder(input: {
+  tourId: string
+  tourTitle: string
+  tripDate: string
+  tripTime: string | null
+  guestLabel: string
+  items: BarOrderItem[]
+}): Promise<BarOrder | null> {
+  const guestLabel = input.guestLabel.trim() || 'Misafir'
+
+  let query = supabase
+    .from('bar_orders')
+    .select('*')
+    .eq('tour_id', input.tourId)
+    .eq('trip_date', input.tripDate)
+    .eq('guest_label', guestLabel)
+    .eq('payment_status', 'unpaid')
+    .order('created_at', { ascending: false })
+    .limit(1)
+  query = input.tripTime ? query.eq('trip_time', input.tripTime) : query.is('trip_time', null)
+  const { data: existingRows } = await query
+  const existing = (existingRows as BarOrderRow[] | null)?.[0]
+
+  if (existing) {
+    const mergedItems = mergeOrderItems(normalizeItems(existing.items), input.items)
+    const newTotal = mergedItems.reduce((sum, i) => sum + i.price * i.qty, 0)
+    const { data, error } = await supabase
+      .from('bar_orders')
+      .update({
+        items: mergedItems,
+        total_amount: newTotal,
+        // Servis edilmiş bir hesaba yeni ürün eklenince tekrar "yeni" duruma döner.
+        ...(existing.status === 'served' && { status: 'new' }),
+      })
+      .eq('id', existing.id)
+      .select('*')
+      .single()
+    if (error || !data) return null
+    return mapRow(data as BarOrderRow)
+  }
+
+  return createWalkInOrder({ ...input, guestLabel })
 }
 
 export async function updateOrderStatus(

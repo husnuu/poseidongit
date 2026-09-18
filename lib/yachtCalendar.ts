@@ -26,3 +26,9 @@ export function todayStrLocal(): string {
   const t = new Date()
   return toYachtDateStr(t.getFullYear(), t.getMonth() + 1, t.getDate())
 }
+
+export function tomorrowStrLocal(): string {
+  const t = new Date()
+  t.setDate(t.getDate() + 1)
+  return toYachtDateStr(t.getFullYear(), t.getMonth() + 1, t.getDate())
+}

@@ -101,11 +101,28 @@ export default function BarTripClient({
   }
 
   const handleCreated = (order: BarOrder) => {
-    setOrders((prev) => [...prev, order])
+    setOrders((prev) => (prev.some((o) => o.id === order.id) ? prev.map((o) => (o.id === order.id ? order : o)) : [...prev, order]))
     setNewOrderOpen(false)
   }
 
   const list = tab === 'active' ? activeOrders : servedOrders
+
+  // Aynı isme (guest label) ait siparişler tek bir "hesap" kartı olarak gösterilir.
+  const tabs = useMemo(() => {
+    const byName = new Map<string, BarOrder[]>()
+    for (const o of list) {
+      const key = o.guestLabel.trim() || 'Misafir'
+      const arr = byName.get(key)
+      if (arr) arr.push(o)
+      else byName.set(key, [o])
+    }
+    return Array.from(byName.entries())
+      .map(([guestLabel, guestOrders]) => ({
+        guestLabel,
+        orders: guestOrders.sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+      }))
+      .sort((a, b) => a.orders[0].createdAt.localeCompare(b.orders[0].createdAt))
+  }, [list])
 
   return (
     <div className="space-y-4">
@@ -158,14 +175,14 @@ export default function BarTripClient({
         </button>
       </div>
 
-      {list.length === 0 ? (
+      {tabs.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-10 text-center text-sm text-zinc-500">
           Şu anda {tab === 'active' ? 'aktif' : 'servis edilmiş'} sipariş yok.
         </div>
       ) : (
         <div className="space-y-3">
-          {list.map((order) => (
-            <OrderCard key={order.id} order={order} onStatusChange={handleStatusChange} onPay={handlePay} />
+          {tabs.map((t) => (
+            <GuestTabCard key={t.guestLabel} guestLabel={t.guestLabel} orders={t.orders} onStatusChange={handleStatusChange} onPay={handlePay} />
           ))}
         </div>
       )}
@@ -185,60 +202,87 @@ export default function BarTripClient({
   )
 }
 
-function OrderCard({
-  order,
+/** Bir isme (guest label) ait tüm siparişler birleştirilip tek "hesap" kartı olarak gösterilir. */
+function GuestTabCard({
+  guestLabel,
+  orders,
   onStatusChange,
   onPay,
 }: {
-  order: BarOrder
+  guestLabel: string
+  orders: BarOrder[]
   onStatusChange: (order: BarOrder, action: 'preparing' | 'served') => void
   onPay: (order: BarOrder, method: 'cash' | 'card') => void
 }) {
   const [payOpen, setPayOpen] = useState(false)
-  const time = new Date(order.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
-  const isNew = order.status === 'new'
+  const firstTime = new Date(orders[0].createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+
+  const mergedItems = useMemo(() => {
+    const map = new Map<string, BarOrderItem>()
+    for (const item of orders.flatMap((o) => o.items)) {
+      const key = `${item.title}__${item.price}`
+      const cur = map.get(key)
+      if (cur) cur.qty += item.qty
+      else map.set(key, { ...item })
+    }
+    return Array.from(map.values())
+  }, [orders])
+
+  const totalAmount = orders.reduce((s, o) => s + o.totalAmount, 0)
+  const allServed = orders.every((o) => o.status === 'served')
+  const allUnpaid = orders.every((o) => o.paymentStatus === 'unpaid')
+  const allPaid = orders.every((o) => o.paymentStatus === 'paid')
+  const hasNew = orders.some((o) => o.status === 'new')
+  const statusLabel = allServed ? 'Servis Edildi' : hasNew ? 'Yeni' : 'Hazırlanıyor'
+  const paidMethod = orders.find((o) => o.paymentStatus === 'paid')?.paymentMethod
+
+  const pendingOrders = orders.filter((o) => o.status !== 'served')
+  const unpaidOrders = orders.filter((o) => o.paymentStatus === 'unpaid')
 
   return (
     <div
       className={`rounded-2xl border bg-white p-4 shadow-[0_2px_8px_rgba(19,23,25,0.06)] ${
-        order.status !== 'served' ? 'border-amber-200' : 'border-[#f1f5f9]'
+        !allServed ? 'border-amber-200' : 'border-[#f1f5f9]'
       }`}
     >
       <div className="flex items-center justify-between gap-2 border-b border-[#f1f5f9] pb-3">
         <span className="flex items-center gap-2 text-sm">
-          <span className="font-mono font-bold text-[#131719]">#{order.id.slice(0, 4)}</span>
-          <span className="text-zinc-400">{time}</span>
-          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase text-[#2168b8]">
-            Sipariş
-          </span>
+          <span className="text-zinc-400">{firstTime}</span>
+          {orders.length > 1 && (
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase text-[#2168b8]">
+              {orders.length} sipariş
+            </span>
+          )}
         </span>
         <span
           className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
-            order.status === 'new'
-              ? 'bg-amber-100 text-amber-700'
-              : order.status === 'preparing'
-                ? 'bg-blue-50 text-[#2168b8]'
-                : 'bg-emerald-50 text-emerald-700'
+            allServed
+              ? 'bg-emerald-50 text-emerald-700'
+              : hasNew
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-blue-50 text-[#2168b8]'
           }`}
         >
-          {order.status === 'new' ? 'Yeni' : order.status === 'preparing' ? 'Hazırlanıyor' : 'Servis Edildi'}
+          {statusLabel}
         </span>
       </div>
 
       <div className="mt-3 flex items-center justify-between">
-        <p className="m-0 font-bold text-[#131719]">{order.guestLabel}</p>
+        <p className="m-0 text-base font-black text-[#131719]">{guestLabel}</p>
         <div className="text-right">
-          <p className="m-0 font-bold text-[#131719]">{money(order.totalAmount)}</p>
-          <p className={`m-0 text-xs font-semibold ${order.paymentStatus === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
-            {order.paymentStatus === 'paid'
-              ? `Ödendi (${order.paymentMethod === 'cash' ? 'Nakit' : 'Kart'})`
-              : 'Ödenmedi'}
+          <p className="m-0 font-bold text-[#131719]">{money(totalAmount)}</p>
+          <p className={`m-0 text-xs font-semibold ${allPaid ? 'text-emerald-600' : 'text-amber-600'}`}>
+            {allPaid
+              ? `Ödendi (${paidMethod === 'cash' ? 'Nakit' : 'Kart'})`
+              : allUnpaid
+                ? 'Ödenmedi'
+                : 'Kısmen ödendi'}
           </p>
         </div>
       </div>
 
       <div className="mt-3 space-y-1.5 border-t border-[#f1f5f9] pt-3">
-        {order.items.map((item, i) => (
+        {mergedItems.map((item, i) => (
           <div key={i} className="flex items-center justify-between text-sm">
             <span className="flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-md bg-zinc-100 text-xs font-bold text-zinc-600">
@@ -251,9 +295,9 @@ function OrderCard({
         ))}
       </div>
 
-      {order.status !== 'served' && (
+      {(pendingOrders.length > 0 || unpaidOrders.length > 0) && (
         <div className="mt-3 space-y-2 border-t border-[#f1f5f9] pt-3">
-          {order.paymentStatus === 'unpaid' && !payOpen && (
+          {unpaidOrders.length > 0 && !payOpen && (
             <button
               type="button"
               onClick={() => setPayOpen(true)}
@@ -267,7 +311,7 @@ function OrderCard({
               <button
                 type="button"
                 onClick={() => {
-                  onPay(order, 'cash')
+                  unpaidOrders.forEach((o) => onPay(o, 'cash'))
                   setPayOpen(false)
                 }}
                 className="flex-1 rounded-xl bg-emerald-50 py-2.5 text-sm font-bold text-emerald-700"
@@ -277,7 +321,7 @@ function OrderCard({
               <button
                 type="button"
                 onClick={() => {
-                  onPay(order, 'card')
+                  unpaidOrders.forEach((o) => onPay(o, 'card'))
                   setPayOpen(false)
                 }}
                 className="flex-1 rounded-xl bg-blue-50 py-2.5 text-sm font-bold text-[#2168b8]"
@@ -293,24 +337,25 @@ function OrderCard({
               </button>
             </div>
           )}
-          {isNew ? (
-            <button
-              type="button"
-              onClick={() => onStatusChange(order, 'preparing')}
-              className="w-full rounded-xl py-2.5 text-sm font-bold text-white"
-              style={{ background: '#131719' }}
-            >
-              Hazırlamaya Başla
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => onStatusChange(order, 'served')}
-              className="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white"
-            >
-              ✓ Servis Edildi Olarak İşaretle
-            </button>
-          )}
+          {pendingOrders.length > 0 &&
+            (hasNew ? (
+              <button
+                type="button"
+                onClick={() => pendingOrders.forEach((o) => onStatusChange(o, 'preparing'))}
+                className="w-full rounded-xl py-2.5 text-sm font-bold text-white"
+                style={{ background: '#131719' }}
+              >
+                Hazırlamaya Başla
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => pendingOrders.forEach((o) => onStatusChange(o, 'served'))}
+                className="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white"
+              >
+                ✓ Servis Edildi Olarak İşaretle
+              </button>
+            ))}
         </div>
       )}
     </div>

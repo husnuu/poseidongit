@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ScanLine, Wine, Users, ChevronRight, LogOut } from 'lucide-react'
-import { todayStrLocal } from '@/lib/yachtCalendar'
-import { getTripsForDate } from '@/lib/crew/manifest'
+import { todayStrLocal, tomorrowStrLocal } from '@/lib/yachtCalendar'
+import { getTripsForDate, type CrewTripSummary } from '@/lib/crew/manifest'
 import CrewLogoutButton from '@/components/crew/CrewLogoutButton'
 
 export const dynamic = 'force-dynamic'
@@ -11,9 +11,65 @@ function formatDateLabel(dateStr: string): string {
   return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })
 }
 
+function TripList({ trips, emptyText }: { trips: CrewTripSummary[]; emptyText: string }) {
+  if (trips.length === 0) {
+    return (
+      <div className="rounded-2xl border border-[#f1f5f9] bg-white p-6 text-center text-sm text-zinc-500">
+        {emptyText}
+      </div>
+    )
+  }
+  return (
+    <div className="space-y-3">
+      {trips.map((t) => (
+        <div
+          key={t.tripKey}
+          className="rounded-2xl border border-[#f1f5f9] bg-white p-4 shadow-[0_2px_8px_rgba(19,23,25,0.06)]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500">
+              <Users className="h-4 w-4" aria-hidden />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[#131719]">{t.time ?? '—'}</span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                    t.departed ? 'bg-zinc-100 text-zinc-500' : 'bg-blue-50 text-[#2168b8]'
+                  }`}
+                >
+                  {t.departed ? 'Kalktı' : 'Yaklaşan'}
+                </span>
+              </div>
+              <p className="m-0 mt-0.5 truncate text-sm text-zinc-600">
+                {t.tourTitle}
+                {t.capacity != null && <span className="text-zinc-400"> · Kapasite {t.capacity}</span>}
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between border-t border-[#f1f5f9] pt-3">
+            <span className="flex items-center gap-1.5 text-sm text-zinc-500">
+              <Users className="h-3.5 w-3.5" aria-hidden />
+              {t.boardedCount}/{t.guestsTotal} bindi
+            </span>
+            <Link
+              href={`/ekip/manifest?tripKey=${encodeURIComponent(t.tripKey)}`}
+              className="flex items-center gap-1 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-bold text-[#131719]"
+            >
+              Yolcu Listesi
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default async function CrewDashboardPage() {
   const today = todayStrLocal()
-  const trips = await getTripsForDate(today)
+  const tomorrow = tomorrowStrLocal()
+  const [trips, tomorrowTrips] = await Promise.all([getTripsForDate(today), getTripsForDate(tomorrow)])
 
   const boardedTotal = trips.reduce((s, t) => s + t.boardedCount, 0)
   const guestsTotal = trips.reduce((s, t) => s + t.guestsTotal, 0)
@@ -88,54 +144,14 @@ export default async function CrewDashboardPage() {
 
       <div>
         <p className="m-0 mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">Bugünün Seferleri</p>
-        {trips.length === 0 && (
-          <div className="rounded-2xl border border-[#f1f5f9] bg-white p-6 text-center text-sm text-zinc-500">
-            Bugün için planlanmış sefer yok.
-          </div>
-        )}
-        <div className="space-y-3">
-          {trips.map((t) => (
-            <div
-              key={t.tripKey}
-              className="rounded-2xl border border-[#f1f5f9] bg-white p-4 shadow-[0_2px_8px_rgba(19,23,25,0.06)]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500">
-                  <Users className="h-4 w-4" aria-hidden />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-[#131719]">{t.time ?? '—'}</span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                        t.departed ? 'bg-zinc-100 text-zinc-500' : 'bg-blue-50 text-[#2168b8]'
-                      }`}
-                    >
-                      {t.departed ? 'Kalktı' : 'Yaklaşan'}
-                    </span>
-                  </div>
-                  <p className="m-0 mt-0.5 truncate text-sm text-zinc-600">
-                    {t.tourTitle}
-                    {t.capacity != null && <span className="text-zinc-400"> · Kapasite {t.capacity}</span>}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between border-t border-[#f1f5f9] pt-3">
-                <span className="flex items-center gap-1.5 text-sm text-zinc-500">
-                  <Users className="h-3.5 w-3.5" aria-hidden />
-                  {t.boardedCount}/{t.guestsTotal} bindi
-                </span>
-                <Link
-                  href={`/ekip/manifest?tripKey=${encodeURIComponent(t.tripKey)}`}
-                  className="flex items-center gap-1 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-bold text-[#131719]"
-                >
-                  Yolcu Listesi
-                  <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
+        <TripList trips={trips} emptyText="Bugün için planlanmış sefer yok." />
+      </div>
+
+      <div>
+        <p className="m-0 mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">
+          Yarının Seferleri · {formatDateLabel(tomorrow)}
+        </p>
+        <TripList trips={tomorrowTrips} emptyText="Yarın için planlanmış sefer yok." />
       </div>
     </div>
   )

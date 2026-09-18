@@ -206,12 +206,13 @@ export async function POST(request: NextRequest) {
   const totalPax = counts.adult + counts.child + counts.infant
 
   const sanityTour = await client.fetch<
-    (TourCapacitySource & { _id?: string }) | null
+    (TourCapacitySource & { _id?: string; quickFacts?: { startTime?: string | null } }) | null
   >(
     `*[_type == "tour" && (_id == $tourId || slug.current == $tourId)][0] {
       _id,
       baseCapacity{ ecoCapacity, premiumCapacity, firstCapacity },
-      availabilityOverrides[]{ date, eco, premium, first, note }
+      availabilityOverrides[]{ date, eco, premium, first, note },
+      quickFacts{ startTime }
     }`,
     { tourId }
   )
@@ -219,6 +220,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Tur bulunamadı' }, { status: 404 })
   }
   const firestoreTourId = sanityTour._id ?? tourId
+  // Ekip uygulamasındaki sefer gruplaması (tur+tarih+saat) web rezervasyonlarıyla aynı anahtarı
+  // kullansın diye manuel rezervasyona da turun kalkış saati yazılır.
+  const tourStartTime = sanityTour.quickFacts?.startTime?.trim() || undefined
 
   let mealPreference: { key: string; label: string } | undefined
   let mealPreferenceCountsStored: Array<{ key: string; label: string; count: number }> | undefined
@@ -299,6 +303,7 @@ export async function POST(request: NextRequest) {
     tour_id: firestoreTourId,
     tour_title: tourTitle,
     date,
+    ...(tourStartTime && { time: tourStartTime }),
     class_id: classId,
     class_name: className,
     unit_price: unitPrice,
@@ -354,11 +359,10 @@ export async function POST(request: NextRequest) {
     let tourImageUrl: string | undefined
     let pickup: string | undefined
     let logoUrl: string | undefined
-    let startTime: string | undefined
     try {
       const tourMeta = await client.fetch<{
         mainImage?: { asset?: { _ref?: string } }
-        quickFacts?: { meetingLocation?: string; startTime?: string }
+        quickFacts?: { meetingLocation?: string }
         whereSection?: { meetingPointAddress?: string }
       } | null>(tourImageAndPickupQuery, { tourId: firestoreTourId })
       if (tourMeta?.mainImage?.asset) {
@@ -368,7 +372,6 @@ export async function POST(request: NextRequest) {
         tourMeta?.whereSection?.meetingPointAddress?.trim() ||
         tourMeta?.quickFacts?.meetingLocation?.trim() ||
         undefined
-      startTime = tourMeta?.quickFacts?.startTime?.trim() || undefined
     } catch {
       // ignore
     }
@@ -394,7 +397,7 @@ export async function POST(request: NextRequest) {
       accessToken,
       tourTitle,
       date,
-      time: startTime,
+      time: tourStartTime,
       status,
       className,
       counts,

@@ -400,3 +400,67 @@ export function boardingPassPageCopy(loc: SiteLocale): BoardingPassUiCopy {
     homeCta: 'Ana sayfaya dön',
   }
 }
+
+export type PaymentLinkPageCopy = {
+  accessDeniedTitle: string
+  accessDeniedBody: string
+  homeCta: string
+  greeting: (name: string) => string
+  waitingTitle: string
+  payNowCta: string
+  processing: string
+  amountDue: string
+  alreadyPaidTitle: string
+  alreadyPaidBody: string
+  viewTicketCta: string
+  errorGeneric: string
+}
+
+export function paymentLinkPageCopy(loc: SiteLocale): PaymentLinkPageCopy {
+  if (loc === 'en') {
+    return {
+      accessDeniedTitle: 'Access denied',
+      accessDeniedBody: 'This payment link is invalid or has expired.',
+      homeCta: 'Back to home',
+      greeting: (name) => `Hi ${name}, your payment is pending`,
+      waitingTitle: 'Complete your payment',
+      payNowCta: 'Pay Now',
+      processing: 'Redirecting to secure payment…',
+      amountDue: 'Amount due',
+      alreadyPaidTitle: 'Already paid',
+      alreadyPaidBody: 'This booking has already been paid for.',
+      viewTicketCta: 'View my ticket',
+      errorGeneric: 'Payment could not be started. Please try again.',
+    }
+  }
+  if (loc === 'de') {
+    return {
+      accessDeniedTitle: 'Zugriff verweigert',
+      accessDeniedBody: 'Dieser Zahlungslink ist ungültig oder abgelaufen.',
+      homeCta: 'Zur Startseite',
+      greeting: (name) => `Hallo ${name}, Ihre Zahlung steht noch aus`,
+      waitingTitle: 'Zahlung abschließen',
+      payNowCta: 'Jetzt bezahlen',
+      processing: 'Weiterleitung zur sicheren Zahlung…',
+      amountDue: 'Fälliger Betrag',
+      alreadyPaidTitle: 'Bereits bezahlt',
+      alreadyPaidBody: 'Diese Buchung wurde bereits bezahlt.',
+      viewTicketCta: 'Mein Ticket ansehen',
+      errorGeneric: 'Zahlung konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
+    }
+  }
+  return {
+    accessDeniedTitle: 'Erişim reddedildi',
+    accessDeniedBody: 'Bu ödeme linki geçersiz veya süresi dolmuş.',
+    homeCta: 'Ana sayfaya dön',
+    greeting: (name) => `Merhaba ${name}, ödemeniz bekleniyor`,
+    waitingTitle: 'Ödemenizi tamamlayın',
+    payNowCta: 'Şimdi Öde',
+    processing: 'Güvenli ödeme sayfasına yönlendiriliyorsunuz…',
+    amountDue: 'Ödenecek tutar',
+    alreadyPaidTitle: 'Ödeme zaten yapılmış',
+    alreadyPaidBody: 'Bu rezervasyonun ödemesi zaten tamamlanmış.',
+    viewTicketCta: 'Biletimi Görüntüle',
+    errorGeneric: 'Ödeme başlatılamadı. Lütfen tekrar deneyin.',
+  }
+}

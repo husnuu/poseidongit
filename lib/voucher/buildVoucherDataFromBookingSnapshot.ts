@@ -3,7 +3,8 @@
  * E-posta ekindeki PDF ile siteden indirilen PDF aynı kaynaktan üretilir.
  */
 import { client, urlFor } from '@/lib/sanity'
-import { tourImageAndPickupQuery } from '@/lib/queries'
+import { tourImageAndPickupQuery, siteSettingsLogoQuery } from '@/lib/queries'
+import { mapImageUrlFromEmbed } from '@/lib/staticMap'
 import { getEmailBaseUrl } from '@/lib/siteUrls'
 import { normalizeBookingFlowLocale } from '@/lib/i18n/bookingFlowLocale'
 import { bookingToVoucherData } from './bookingToVoucher'
@@ -74,6 +75,16 @@ export async function buildVoucherDataFromBookingRow(
   let voucherData = bookingToVoucherData(booking, voucherUrl, flowLocale)
 
   try {
+    const logoRow = await client.fetch<{ logo?: { url?: string | null } | null } | null>(
+      siteSettingsLogoQuery
+    )
+    const logoUrl = logoRow?.logo?.url?.trim() || undefined
+    if (logoUrl) voucherData = { ...voucherData, logoUrl }
+  } catch {
+    // Logo olmadan da PDF üretilir
+  }
+
+  try {
     const tourId = typeof row.tour_id === 'string' ? row.tour_id.trim() : ''
     if (tourId) {
       const tourMeta = await client.fetch<{
@@ -82,7 +93,7 @@ export async function buildVoucherDataFromBookingRow(
         durationLabel?: string | null
         meetingPoint?: string | null
         quickFacts?: { startTime?: string | null; returnTime?: string | null }
-        whereSection?: { locationMapLink?: string | null }
+        whereSection?: { locationMapLink?: string | null; mapEmbedUrl?: string | null }
         deposit?: { enabled?: boolean; type?: string; value?: number }
         included?: string[] | null
         notIncluded?: string[] | null
@@ -110,6 +121,7 @@ export async function buildVoucherDataFromBookingRow(
         const fallbackTime = tourMeta.quickFacts?.startTime?.trim() || undefined
         const arrivalTime = tourMeta.quickFacts?.returnTime?.trim() || undefined
         const mapLink = tourMeta.whereSection?.locationMapLink?.trim() || undefined
+        const mapImageUrl = mapImageUrlFromEmbed(tourMeta.whereSection?.mapEmbedUrl)
         voucherData = {
           ...voucherData,
           ...(voucherData.time ? {} : fallbackTime ? { time: fallbackTime } : {}),
@@ -122,6 +134,7 @@ export async function buildVoucherDataFromBookingRow(
           ...(tourMeta.notIncluded?.length && { notIncluded: tourMeta.notIncluded }),
           ...(arrivalTime ? { arrivalTime } : {}),
           ...(mapLink ? { mapLink } : {}),
+          ...(mapImageUrl ? { mapImageUrl } : {}),
         }
       }
     }

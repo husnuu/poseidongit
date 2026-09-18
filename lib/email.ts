@@ -15,18 +15,21 @@ import {
   voucherPdfUrl,
   getEmailBaseUrl,
   customerTicketViewUrl,
+  paymentLinkUrlForLocale,
 } from '@/lib/siteUrls'
 import type { SiteLocale } from '@/lib/i18n/config'
 import {
   normalizeBookingFlowLocale,
   bookingEmailPremiumStrings,
   formatParticipantCountsLine,
+  paymentLinkPageCopy,
 } from '@/lib/i18n/bookingFlowLocale'
 import { VOUCHER_POLICIES } from '@/lib/i18n/bookingFlowLocale'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { client, urlFor } from '@/lib/sanity'
-import { tourImageAndPickupQuery } from '@/lib/queries'
+import { tourImageAndPickupQuery, siteSettingsLogoQuery } from '@/lib/queries'
+import { mapImageUrlFromEmbed } from '@/lib/staticMap'
 import { additionalTravelerLabels, normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
 import { computeDepositAmounts, type TourDepositConfig } from '@/lib/bookingDepositAmount'
 
@@ -124,6 +127,8 @@ export interface BookingEmailPayload {
   tourId?: string
   /** Opsiyonel: toplanma noktası harita linki (Sanity whereSection.locationMapLink). */
   mapLink?: string
+  /** Opsiyonel: toplanma noktası statik harita görseli (whereSection.mapEmbedUrl'den türetilir). */
+  mapImageUrl?: string
   /** Opsiyonel: e-postaya CID ile eklenmiş QR görselinin content-id'si (varsa biniş kartında gösterilir). */
   qrCid?: string
 }
@@ -326,16 +331,33 @@ async function enrichPayloadWithDepositAmounts(
   }
 }
 
-/** Toplanma noktası harita linkini Sanity'den getirir (whereSection.locationMapLink). */
-async function fetchTourMapLink(tourId?: string): Promise<string | undefined> {
+/** Toplanma noktası harita linki + statik harita görselini Sanity'den getirir (whereSection). */
+async function fetchTourMapInfo(
+  tourId?: string
+): Promise<{ mapLink?: string; mapImageUrl?: string }> {
   const tid = tourId?.trim()
-  if (!tid) return undefined
+  if (!tid) return {}
   try {
-    const row = await client.fetch<{ mapLink?: string | null } | null>(
-      `*[_type == "tour" && (_id == $id || slug.current == $id)][0]{ "mapLink": whereSection.locationMapLink }`,
+    const row = await client.fetch<{ mapLink?: string | null; mapEmbedUrl?: string | null } | null>(
+      `*[_type == "tour" && (_id == $id || slug.current == $id)][0]{ "mapLink": whereSection.locationMapLink, "mapEmbedUrl": whereSection.mapEmbedUrl }`,
       { id: tid }
     )
-    return row?.mapLink?.trim() || undefined
+    return {
+      mapLink: row?.mapLink?.trim() || undefined,
+      mapImageUrl: mapImageUrlFromEmbed(row?.mapEmbedUrl),
+    }
+  } catch {
+    return {}
+  }
+}
+
+/** Site logosunu Sanity siteSettings'ten getirir (e-posta üst başlığında kullanılır). */
+async function fetchSiteLogoUrl(): Promise<string | undefined> {
+  try {
+    const row = await client.fetch<{ logo?: { url?: string | null } | null } | null>(
+      siteSettingsLogoQuery
+    )
+    return row?.logo?.url?.trim() || undefined
   } catch {
     return undefined
   }
@@ -763,6 +785,108 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
 }
 
+export interface PaymentLinkEmailPayload {
+  bookingId: string
+  accessToken: string
+  tourTitle: string
+  date: string
+  time?: string | null
+  amountDue: number
+  currency: string
+  customer: { firstName: string; lastName: string; email: string }
+  siteLocale?: SiteLocale
+}
+
+/**
+ * Ödemesi tamamlanmamış (pending) veya elle oluşturulmuş bir rezervasyona ödeme linki gönderir.
+ * Müşteri linke tıklayıp ödemeyi tamamladığında mevcut NestPay callback akışı rezervasyonu
+ * otomatik olarak "ödendi" yapar (bkz. /api/payment/callback) — burada ek bir onay adımı gerekmez.
+ */
+export async function sendPaymentLinkEmail(
+  payload: PaymentLinkEmailPayload
+): Promise<{ ok: boolean; url: string; error?: string }> {
+  const loc = normalizeBookingFlowLocale(payload.siteLocale)
+  const url = paymentLinkUrlForLocale(payload.bookingId, payload.accessToken, loc)
+  const copy = paymentLinkPageCopy(loc)
+  const brandBlue = '#2168b8'
+  const secondary = '#131719'
+  const dateFormatted = formatEmailBookingDate(payload.date, loc)
+  const fullName = `${payload.customer.firstName} ${payload.customer.lastName}`.trim()
+  const greetName = payload.customer.firstName?.trim() || fullName || '—'
+
+  function fmtPrice(amount: number, currency: string) {
+    try {
+      return new Intl.NumberFormat(loc === 'tr' ? 'tr-TR' : 'en-US', {
+        style: 'currency', currency,
+        minimumFractionDigits: 0, maximumFractionDigits: 0,
+      }).format(amount)
+    } catch { return `${amount} ${currency}` }
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="${loc}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>${escapeHtml(copy.waitingTitle)}</title>
+</head>
+<body style="margin:0;padding:0;background:${EMAIL_BG_PAGE};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_BG_PAGE};">
+<tr><td align="center" style="padding:36px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;border-collapse:separate;">
+
+  <tr><td style="background:${EMAIL_SURFACE};padding:22px 28px;text-align:center;border:1px solid ${EMAIL_BORDER};border-bottom:none;border-radius:10px 10px 0 0;">
+    <p style="margin:0;font-size:20px;font-weight:800;color:${brandBlue};letter-spacing:-0.02em;">${escapeHtml(getSiteName() || 'Poseidon Booking')}</p>
+  </td></tr>
+
+  <tr><td style="background:${EMAIL_SURFACE};padding:26px 28px 8px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0;font-size:19px;font-weight:800;color:${secondary};">${escapeHtml(copy.greeting(greetName))}</p>
+    <p style="margin:8px 0 0;font-size:14px;color:${EMAIL_TEXT_BODY};">${escapeHtml(payload.tourTitle)}</p>
+    <p style="margin:2px 0 0;font-size:13px;color:${EMAIL_MUTED};">${escapeHtml(dateFormatted)}${payload.time ? ` · ${escapeHtml(payload.time)}` : ''}</p>
+  </td></tr>
+
+  <tr><td style="background:${EMAIL_SURFACE};padding:20px 28px 26px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_BORDER};border-radius:12px;">
+      <tr><td style="padding:20px;text-align:center;">
+        <p style="margin:0;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:${EMAIL_MUTED};">${escapeHtml(copy.amountDue)}</p>
+        <p style="margin:8px 0 0;font-size:28px;font-weight:800;color:${secondary};">${fmtPrice(payload.amountDue, payload.currency)}</p>
+      </td></tr>
+    </table>
+    <a href="${escapeHtml(url)}" target="_blank"
+       style="display:block;width:100%;background:${brandBlue};color:#ffffff!important;font-size:15px;font-weight:700;text-decoration:none;text-align:center;padding:15px 22px;border-radius:10px;box-sizing:border-box;margin-top:18px;">
+      ${escapeHtml(copy.payNowCta)}
+    </a>
+  </td></tr>
+
+  <tr><td style="background:#eef1f5;padding:18px 28px;border-radius:0 0 10px 10px;border:1px solid ${EMAIL_BORDER};border-top:none;">
+    <p style="margin:0;font-size:11px;color:${EMAIL_MUTED};text-align:center;line-height:1.45;">
+      &copy; ${new Date().getFullYear()} ${escapeHtml(getSiteName() || 'Poseidon')}
+    </p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+
+  const resend = getResend()
+  if (!resend) return { ok: false, url, error: 'RESEND_API_KEY tanımlı değil' }
+  const from = getFrom()
+  const subjectT = loc === 'en' ? 'Complete your payment' : loc === 'de' ? 'Zahlung abschließen' : 'Ödemenizi Tamamlayın'
+  const { error } = await resend.emails.send({
+    from,
+    to: [payload.customer.email],
+    subject: `${subjectT} – ${payload.tourTitle}`,
+    html,
+  })
+  if (error) {
+    console.error('[email] Ödeme linki e-postası gönderilemedi:', payload.bookingId, error)
+    return { ok: false, url, error: 'E-posta gönderilemedi' }
+  }
+  return { ok: true, url }
+}
+
 /**
  * Rezervasyon oluşturulduğunda müşteri ve (ADMIN_EMAIL ayarlıysa) admin(ler)e e-posta gönderir.
  * QR kod bookingUrl ile üretilir ve HTML'e base64 inline gömülür (Gmail/Outlook uyumlu).
@@ -797,9 +921,10 @@ export async function sendBookingEmails(
 
   const attachments: Array<{ filename: string; content: Buffer; contentId?: string }> = []
 
-  const mapLink = await fetchTourMapLink(
-    typeof row?.tour_id === 'string' ? String(row.tour_id).trim() : mergedPayload.tourId
-  )
+  const [{ mapLink, mapImageUrl }, siteLogoUrl] = await Promise.all([
+    fetchTourMapInfo(typeof row?.tour_id === 'string' ? String(row.tour_id).trim() : mergedPayload.tourId),
+    fetchSiteLogoUrl(),
+  ])
   let qrCid: string | undefined
   if (mergedPayload.accessToken?.trim()) {
     const qrBuffer = await generateQrPngBuffer(voucherUrlForPdf)
@@ -809,7 +934,14 @@ export async function sendBookingEmails(
     }
   }
 
-  const customerHtml = buildCustomerEmailHtml({ ...mergedPayload, bookingUrl, mapLink, qrCid })
+  const customerHtml = buildCustomerEmailHtml({
+    ...mergedPayload,
+    bookingUrl,
+    mapLink,
+    mapImageUrl,
+    qrCid,
+    logoUrl: mergedPayload.logoUrl ?? siteLogoUrl,
+  })
 
   try {
     let voucherData: VoucherData | null = row
@@ -918,7 +1050,7 @@ function buildPremiumConfirmationEmailHtml(
     : ''
   const mealCounts = mealCountsLine(p.mealPreference?.counts)
   const { paidNow, remainingAmount } = resolveEmailPaymentAmounts(p, { isPaid })
-  const showCashRemaining = paidNow > 0 && remainingAmount > 0
+  const showCashRemaining = remainingAmount > 0
 
   const fullName = `${p.customer.firstName} ${p.customer.lastName}`.trim() || '—'
   const greetName = p.customer.firstName?.trim() || fullName
@@ -943,7 +1075,10 @@ function buildPremiumConfirmationEmailHtml(
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;border-collapse:separate;">
 
   <tr><td style="background:${EMAIL_SURFACE};padding:22px 28px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};border-top:1px solid ${EMAIL_BORDER};border-radius:10px 10px 0 0;">
-    <p style="margin:0;font-size:20px;font-weight:800;color:${brandBlue};letter-spacing:-0.02em;">${escapeHtml(getSiteName() || 'Poseidon Booking')}</p>
+    ${p.logoUrl?.trim()
+      ? `<img src="${escapeHtml(p.logoUrl.trim())}" alt="${escapeHtml(getSiteName() || 'Logo')}" style="display:inline-block;max-height:44px;max-width:220px;width:auto;height:auto;" />`
+      : `<p style="margin:0;font-size:20px;font-weight:800;color:${brandBlue};letter-spacing:-0.02em;">${escapeHtml(getSiteName() || 'Poseidon Booking')}</p>`
+    }
   </td></tr>
 
   ${heroImg
@@ -969,6 +1104,9 @@ function buildPremiumConfirmationEmailHtml(
         <p style="margin:12px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${secondary};">${escapeHtml(t.date)}:</strong> ${escapeHtml(dateFormatted)}${p.time ? ` · ${escapeHtml(p.time)}` : ''}</p>
         <p style="margin:4px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${secondary};">${escapeHtml(t.reservationOwner)}:</strong> ${escapeHtml(fullName)}</p>
         <p style="margin:4px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${secondary};">${escapeHtml(t.guests)}:</strong> ${totalPax}</p>
+        <p style="margin:10px 0 0;">
+          <span style="display:inline-block;background:${brandBlue};color:#ffffff;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;padding:5px 12px;border-radius:999px;">${escapeHtml(classDisplay(p, loc))}</span>
+        </p>
         ${qrBlock}
         ${p.qrCid ? `<p style="margin:14px 0 0;font-size:12px;font-weight:700;color:${brandOrange};">${escapeHtml(t.boardingPassHint)}</p>` : ''}
       </td></tr>
@@ -978,7 +1116,18 @@ function buildPremiumConfirmationEmailHtml(
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 20px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:${brandBlue};">${escapeHtml(t.meetingPointTitle)}:</p>
     <p style="margin:0;font-size:13px;color:${EMAIL_TEXT_BODY};line-height:1.6;">${escapeHtml(pickup)}</p>
-    ${p.mapLink?.trim() ? `<p style="margin:6px 0 0;"><a href="${escapeHtml(p.mapLink.trim())}" target="_blank" style="color:${brandBlue};font-size:13px;font-weight:600;text-decoration:underline;">${escapeHtml(t.viewOnMap)}</a></p>` : ''}
+    ${p.mapImageUrl?.trim()
+      ? (() => {
+          const mapImgTag = `<img src="${escapeHtml(p.mapImageUrl.trim())}" alt="${escapeHtml(t.meetingPointTitle)}" width="524" style="display:block;width:100%;max-height:200px;object-fit:cover;" />`
+          const pin = `<div style="position:absolute;top:50%;left:50%;width:14px;height:14px;transform:translate(-50%,-50%);background:${brandOrange};border:3px solid #ffffff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.35);"></div>`
+          const inner = p.mapLink?.trim()
+            ? `<a href="${escapeHtml(p.mapLink.trim())}" target="_blank">${mapImgTag}</a>${pin}`
+            : `${mapImgTag}${pin}`
+          return `<div style="position:relative;margin:12px 0 0;border-radius:12px;overflow:hidden;border:1px solid ${EMAIL_BORDER};line-height:0;">${inner}</div>`
+        })()
+      : ''
+    }
+    ${p.mapLink?.trim() ? `<p style="margin:8px 0 0;"><a href="${escapeHtml(p.mapLink.trim())}" target="_blank" style="color:${brandBlue};font-size:13px;font-weight:600;text-decoration:underline;">${escapeHtml(t.viewOnMap)}</a></p>` : ''}
   </td></tr>
 
   ${p.time ? `<tr><td style="background:${EMAIL_SURFACE};padding:0 28px 20px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
@@ -1005,7 +1154,7 @@ function buildPremiumConfirmationEmailHtml(
       ${p.mealPreference?.label?.trim() ? detailRow(t.mealPref, p.mealPreference.label.trim()) : ''}
       ${mealCounts ? detailRow(t.mealDist, mealCounts) : ''}
       ${extraTravelersRowHtml}
-      ${paidNow > 0 ? detailRow(t.paidRow, fmtPrice(paidNow, p.currency)) : ''}
+      ${detailRow(t.paidRow, fmtPrice(paidNow, p.currency))}
       ${showCashRemaining ? detailRow(t.remainingRow, fmtPrice(remainingAmount, p.currency)) : ''}
       <tr>
         <td style="padding:14px 0 0;color:${EMAIL_MUTED};font-size:13px;font-weight:700;">${escapeHtml(t.totalRow)}</td>
@@ -1031,12 +1180,16 @@ function buildPremiumConfirmationEmailHtml(
     <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">${escapeHtml(t.contactTitle)}</p>
     <table role="presentation" cellpadding="0" cellspacing="0">
       <tr>
-        <td style="padding:0 10px 6px 0;vertical-align:middle;line-height:0;width:22px;">${emailIconSvg('phone')}</td>
-        <td style="padding:0 0 6px;vertical-align:middle;font-size:13px;color:${EMAIL_TEXT_BODY};">${escapeHtml(supportPhone)}</td>
-      </tr>
-      <tr>
-        <td style="padding:0 10px 0 0;vertical-align:middle;line-height:0;width:22px;">${emailIconSvg('mail')}</td>
-        <td style="padding:0;vertical-align:middle;font-size:13px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:${brandBlue};text-decoration:none;font-weight:500;">${escapeHtml(supportEmail)}</a></td>
+        <td style="padding:0 8px 0 0;">
+          <a href="tel:${escapeHtml(supportPhone.replace(/[^+\d]/g, ''))}" style="display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid ${EMAIL_BORDER};border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;color:${secondary};text-decoration:none;">
+            ${emailIconSvg('phone')} <span>${escapeHtml(supportPhone)}</span>
+          </a>
+        </td>
+        <td>
+          <a href="mailto:${escapeHtml(supportEmail)}" style="display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid ${EMAIL_BORDER};border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;color:${secondary};text-decoration:none;">
+            ${emailIconSvg('mail')} <span>${escapeHtml(supportEmail)}</span>
+          </a>
+        </td>
       </tr>
     </table>
   </td></tr>
@@ -1114,7 +1267,10 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
 
   const attachments: Array<{ filename: string; content: Buffer; contentId?: string }> = []
 
-  const mapLink = await fetchTourMapLink(tourIdForDeposit)
+  const [{ mapLink, mapImageUrl }, siteLogoUrl] = await Promise.all([
+    fetchTourMapInfo(tourIdForDeposit),
+    fetchSiteLogoUrl(),
+  ])
   let qrCid: string | undefined
   if (enrichedPayload.accessToken?.trim()) {
     const qrBuffer = await generateQrPngBuffer(voucherUrlForPdf)
@@ -1124,7 +1280,14 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
     }
   }
 
-  const customerHtml = buildCustomerPaidEmailHtml({ ...enrichedPayload, bookingUrl, mapLink, qrCid })
+  const customerHtml = buildCustomerPaidEmailHtml({
+    ...enrichedPayload,
+    bookingUrl,
+    mapLink,
+    mapImageUrl,
+    qrCid,
+    logoUrl: enrichedPayload.logoUrl ?? siteLogoUrl,
+  })
 
   try {
     let voucherData: VoucherData | null = row

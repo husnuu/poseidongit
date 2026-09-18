@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { rateLimitResponse } from '@/lib/rateLimit'
 import { requireCrewSession } from '@/lib/crew/crewSession'
-import { createWalkInOrder, type BarOrderItem } from '@/lib/crew/barOrders'
+import { createOrAppendWalkInOrder, type BarOrderItem } from '@/lib/crew/barOrders'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -46,12 +46,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Eksik veya geçersiz sipariş bilgisi' }, { status: 400 })
   }
 
-  const order = await createWalkInOrder({
+  const order = await createOrAppendWalkInOrder({
     tourId,
     tourTitle,
     tripDate,
     tripTime,
-    guestLabel: guestLabel || 'Walk-in Guest',
+    guestLabel: guestLabel || 'Misafir',
     items,
   })
   if (!order) {

@@ -1,14 +1,35 @@
 import Link from 'next/link'
-import { ChevronLeft, Ship, Wine, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Ship, Wine, Users } from 'lucide-react'
 import { todayStrLocal } from '@/lib/yachtCalendar'
 import { getTripsForDate } from '@/lib/crew/manifest'
 import { getPendingCountsForTrips } from '@/lib/crew/barOrders'
 
 export const dynamic = 'force-dynamic'
 
-export default async function CrewBarListPage() {
+function addDays(dateStr: string, delta: number): string {
+  const d = new Date(`${dateStr}T00:00:00`)
+  d.setDate(d.getDate() + delta)
+  return d.toISOString().slice(0, 10)
+}
+
+function formatDateLabel(dateStr: string, today: string): string {
+  if (dateStr === today) return 'Bugün'
+  if (dateStr === addDays(today, 1)) return 'Yarın'
+  if (dateStr === addDays(today, -1)) return 'Dün'
+  const d = new Date(`${dateStr}T00:00:00`)
+  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })
+}
+
+export default async function CrewBarListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>
+}) {
   const today = todayStrLocal()
-  const trips = await getTripsForDate(today)
+  const { date: rawDate } = await searchParams
+  const date = rawDate && /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : today
+
+  const trips = await getTripsForDate(date)
   const pendingByTrip = await getPendingCountsForTrips(
     trips.map((t) => ({ tourId: t.tourId, date: t.date, time: t.time }))
   )
@@ -22,9 +43,25 @@ export default async function CrewBarListPage() {
         <h1 className="m-0 text-lg font-black text-[#131719]">Aktif Bar Servisleri</h1>
       </div>
 
+      <div className="flex items-center justify-between rounded-2xl border border-[#f1f5f9] bg-white p-2">
+        <Link
+          href={`/ekip/bar?date=${addDays(date, -1)}`}
+          className="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-zinc-100"
+        >
+          <ChevronLeft className="h-4 w-4 text-[#131719]" aria-hidden />
+        </Link>
+        <span className="text-sm font-bold text-[#131719]">{formatDateLabel(date, today)}</span>
+        <Link
+          href={`/ekip/bar?date=${addDays(date, 1)}`}
+          className="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-zinc-100"
+        >
+          <ChevronRight className="h-4 w-4 text-[#131719]" aria-hidden />
+        </Link>
+      </div>
+
       {trips.length === 0 ? (
         <div className="rounded-2xl border border-[#f1f5f9] bg-white p-6 text-center text-sm text-zinc-500">
-          Bugün için sefer yok.
+          {formatDateLabel(date, today)} için sefer yok.
         </div>
       ) : (
         <div className="space-y-3">
