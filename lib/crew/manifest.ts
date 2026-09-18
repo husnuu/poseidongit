@@ -4,8 +4,24 @@
  * kendi seferi (trip) olarak ele alınır; tur adı aynı zamanda tekne/sefer adı gibi gösterilir.
  */
 import { supabase } from '@/lib/supabase'
+import { client } from '@/lib/sanity'
 import { normalizeMealPreferenceColumn, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
+
+const tourCapacityQuery = `*[_type == "tour" && (_id == $id || slug.current == $id)][0]{
+  "capacity": quickFacts.maxCapacity
+}`
+
+async function getTourCapacity(tourId: string): Promise<number | null> {
+  if (!tourId) return null
+  try {
+    const row = await client.fetch<{ capacity?: number | null } | null>(tourCapacityQuery, { id: tourId })
+    const cap = row?.capacity
+    return typeof cap === 'number' && cap > 0 ? cap : null
+  } catch {
+    return null
+  }
+}
 
 const ACTIVE_STATUSES = ['paid', 'confirmed']
 
@@ -15,6 +31,8 @@ export interface CrewTripSummary {
   tourTitle: string
   date: string
   time: string | null
+  /** Sanity tour.quickFacts.maxCapacity — gerçek tekne/tur kapasitesi (yoksa null). */
+  capacity: number | null
   bookingsCount: number
   guestsTotal: number
   boardedCount: number
@@ -29,6 +47,7 @@ export interface CrewManifestGuest {
 export interface CrewManifestBooking {
   bookingId: string
   reference: string
+  className: string
   guestCount: number
   boarded: boolean
   noShow: boolean
@@ -41,6 +60,8 @@ export interface CrewManifest {
   tourTitle: string
   date: string
   time: string | null
+  /** Sanity tour.quickFacts.maxCapacity — gerçek tekne/tur kapasitesi (yoksa null). */
+  capacity: number | null
   bookingsCount: number
   guestsTotal: number
   boardedCount: number
@@ -106,6 +127,7 @@ export async function getTripsForDate(dateStr: string): Promise<CrewTripSummary[
         tourTitle: String(row.tour_title ?? '—'),
         date: dateStr,
         time,
+        capacity: null,
         bookingsCount: 1,
         guestsTotal: guests,
         boardedCount: boarded ? guests : 0,
@@ -114,10 +136,14 @@ export async function getTripsForDate(dateStr: string): Promise<CrewTripSummary[
     }
   }
 
+  const uniqueTourIds = Array.from(new Set(Array.from(byTrip.values()).map((t) => t.tourId)))
+  const capacities = await Promise.all(uniqueTourIds.map((id) => getTourCapacity(id)))
+  const capacityByTourId = new Map(uniqueTourIds.map((id, i) => [id, capacities[i]]))
+
   const now = Date.now()
   const trips = Array.from(byTrip.values()).map((t) => {
     const dt = tripDateTime(t.date, t.time)
-    return { ...t, departed: dt != null && dt.getTime() <= now }
+    return { ...t, capacity: capacityByTourId.get(t.tourId) ?? null, departed: dt != null && dt.getTime() <= now }
   })
 
   trips.sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''))
@@ -138,7 +164,7 @@ export async function getManifestForTrip(
 
   query = time ? query.eq('time', time) : query.is('time', null)
 
-  const { data, error } = await query
+  const [{ data, error }, capacity] = await Promise.all([query, getTourCapacity(tourId)])
   if (error || !data) return null
 
   const rows = data as SupabaseBookingRow[]
@@ -182,6 +208,7 @@ export async function getManifestForTrip(
     bookings.push({
       bookingId: row.id,
       reference: (typeof row.reference === 'string' && row.reference.trim()) || row.id.slice(0, 8).toUpperCase(),
+      className: String(row.class_name ?? '').trim(),
       guestCount,
       boarded,
       noShow,
@@ -198,6 +225,7 @@ export async function getManifestForTrip(
     tourTitle: String(rows[0].tour_title ?? '—'),
     date: dateStr,
     time,
+    capacity,
     bookingsCount: bookings.length,
     guestsTotal,
     boardedCount,

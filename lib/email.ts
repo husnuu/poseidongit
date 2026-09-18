@@ -1,5 +1,7 @@
 import { Resend } from 'resend'
+import QRCode from 'qrcode'
 import { buildGoogleCalendarUrl } from '@/lib/calendar'
+import { timeMinutesBefore } from '@/lib/boardingTime'
 import { generatePremiumEticketPdf } from '@/lib/ticket/generatePremiumEticketPdf'
 import { voucherDataToPremiumEticket } from '@/lib/ticket/voucherToPremiumEticket'
 import { buildVoucherDataFromBookingRow } from '@/lib/voucher/buildVoucherDataFromBookingSnapshot'
@@ -120,6 +122,10 @@ export interface BookingEmailPayload {
   siteLocale?: SiteLocale
   /** Opsiyonel: Sanity tur _id — kapora hesabı için. */
   tourId?: string
+  /** Opsiyonel: toplanma noktası harita linki (Sanity whereSection.locationMapLink). */
+  mapLink?: string
+  /** Opsiyonel: e-postaya CID ile eklenmiş QR görselinin content-id'si (varsa biniş kartında gösterilir). */
+  qrCid?: string
 }
 
 function getResend(): Resend | null {
@@ -317,6 +323,37 @@ async function enrichPayloadWithDepositAmounts(
     return { ...payload, paidNow, tourId: tid }
   } catch {
     return { ...payload, paidNow: payload.totalPrice }
+  }
+}
+
+/** Toplanma noktası harita linkini Sanity'den getirir (whereSection.locationMapLink). */
+async function fetchTourMapLink(tourId?: string): Promise<string | undefined> {
+  const tid = tourId?.trim()
+  if (!tid) return undefined
+  try {
+    const row = await client.fetch<{ mapLink?: string | null } | null>(
+      `*[_type == "tour" && (_id == $id || slug.current == $id)][0]{ "mapLink": whereSection.locationMapLink }`,
+      { id: tid }
+    )
+    return row?.mapLink?.trim() || undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** Biniş kartı QR görselini PNG buffer olarak üretir (e-postaya CID ile eklenir). */
+async function generateQrPngBuffer(url: string): Promise<Buffer | null> {
+  try {
+    const buf = await QRCode.toBuffer(url, {
+      type: 'png',
+      width: 240,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+      color: { dark: '#000000', light: '#ffffff' },
+    })
+    return Buffer.isBuffer(buf) ? buf : Buffer.from(buf)
+  } catch {
+    return null
   }
 }
 
@@ -758,9 +795,22 @@ export async function sendBookingEmails(
   const mergedPayload: BookingEmailPayload = { ...payload, siteLocale: loc }
   const subjT = bookingEmailPremiumStrings(loc)
 
-  const customerHtml = buildCustomerEmailHtml({ ...mergedPayload, bookingUrl })
-
   const attachments: Array<{ filename: string; content: Buffer; contentId?: string }> = []
+
+  const mapLink = await fetchTourMapLink(
+    typeof row?.tour_id === 'string' ? String(row.tour_id).trim() : mergedPayload.tourId
+  )
+  let qrCid: string | undefined
+  if (mergedPayload.accessToken?.trim()) {
+    const qrBuffer = await generateQrPngBuffer(voucherUrlForPdf)
+    if (qrBuffer) {
+      qrCid = `qr-${mergedPayload.bookingId}`
+      attachments.push({ filename: 'biniş-karti-qr.png', content: qrBuffer, contentId: qrCid })
+    }
+  }
+
+  const customerHtml = buildCustomerEmailHtml({ ...mergedPayload, bookingUrl, mapLink, qrCid })
+
   try {
     let voucherData: VoucherData | null = row
       ? await buildVoucherDataFromBookingRow(mergedPayload.bookingId, row, mergedPayload.accessToken?.trim() ?? '')
@@ -825,9 +875,7 @@ function buildPremiumConfirmationEmailHtml(
   const htmlLang = loc === 'en' ? 'en' : loc === 'de' ? 'de' : 'tr'
   const isPaid = options?.isPaid !== false
   const successTitle = isPaid ? t.successTitlePaid : t.successTitlePending
-  const successSub = isPaid ? t.successSubPaid : t.successSubPending
   const dateFormatted = formatEmailBookingDate(p.date, loc)
-  const participants = formatParticipantCountsLine(p.counts, loc)
   const tourImage = p.tourImageUrl?.trim() || ''
   const pickup = p.pickup?.trim() || 'Çeşme Sahil'
   const supportPhone = process.env.SUPPORT_PHONE?.trim() || '+90 533 417 36 56'
@@ -837,8 +885,11 @@ function buildPremiumConfirmationEmailHtml(
   const viewTicketUrl = customerTicketViewUrl(p.bookingId, p.accessToken, loc)
   const heroImg = tourImage || ''
 
-  const navy = EMAIL_NAVY
+  /** Bu şablona özel marka renkleri — diğer e-posta şablonlarını (admin/iade/iletişim) etkilemez. */
+  const brandBlue = '#2168b8'
+  const brandOrange = '#fc6c4f'
   const bg = EMAIL_BG_PAGE
+  const secondary = '#131719'
 
   function fmtPrice(amount: number, currency: string) {
     try {
@@ -852,7 +903,7 @@ function buildPremiumConfirmationEmailHtml(
   const detailRow = (label: string, value: string, bold = false) =>
     `<tr>
       <td style="padding:11px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;vertical-align:top;">${escapeHtml(label)}</td>
-      <td style="padding:11px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${bold ? navy : EMAIL_TEXT_BODY};font-size:13px;font-weight:${bold ? '700' : '500'};text-align:right;vertical-align:top;">${escapeHtml(value)}</td>
+      <td style="padding:11px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${bold ? secondary : EMAIL_TEXT_BODY};font-size:13px;font-weight:${bold ? '700' : '500'};text-align:right;vertical-align:top;">${escapeHtml(value)}</td>
     </tr>`
 
   const extraList = (p.additionalTravelers ?? []).filter((x) => x.firstName?.trim() || x.lastName?.trim())
@@ -869,7 +920,15 @@ function buildPremiumConfirmationEmailHtml(
   const { paidNow, remainingAmount } = resolveEmailPaymentAmounts(p, { isPaid })
   const showCashRemaining = paidNow > 0 && remainingAmount > 0
 
-  const statusIconWrap = `<table role="presentation" cellpadding="0" cellspacing="0" style="width:48px;height:48px;"><tr><td style="width:48px;height:48px;background:#f1f5f9;border-radius:10px;border:1px solid ${EMAIL_BORDER};text-align:center;vertical-align:middle;">${isPaid ? emailIconSvg('check') : emailIconSvg('clock')}</td></tr></table>`
+  const fullName = `${p.customer.firstName} ${p.customer.lastName}`.trim() || '—'
+  const greetName = p.customer.firstName?.trim() || fullName
+  const totalPax = (p.counts.adult ?? 0) + (p.counts.child ?? 0) + (p.counts.infant ?? 0)
+  const boardingStart = timeMinutesBefore(p.time, 30)
+  const latestBoarding = timeMinutesBefore(p.time, 10)
+
+  const qrBlock = p.qrCid
+    ? `<img src="cid:${p.qrCid}" width="160" height="160" alt="QR" style="display:block;margin:16px auto 0;width:160px;height:160px;" />`
+    : ''
 
   return `<!DOCTYPE html>
 <html lang="${htmlLang}">
@@ -883,45 +942,65 @@ function buildPremiumConfirmationEmailHtml(
 <tr><td align="center" style="padding:36px 16px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;border-collapse:separate;">
 
-  <tr><td style="background:${navy};height:4px;border-radius:10px 10px 0 0;line-height:4px;font-size:0;">&nbsp;</td></tr>
-
-  <tr><td style="background:${EMAIL_SURFACE};padding:26px 28px 18px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
-    <p style="margin:0;font-size:21px;font-weight:700;color:${navy};letter-spacing:-0.02em;">${escapeHtml(getSiteName() || 'Poseidon Booking')}</p>
-    <p style="margin:6px 0 0;font-size:13px;color:${EMAIL_MUTED};line-height:1.45;">${escapeHtml(t.subheader)}</p>
+  <tr><td style="background:${EMAIL_SURFACE};padding:22px 28px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};border-top:1px solid ${EMAIL_BORDER};border-radius:10px 10px 0 0;">
+    <p style="margin:0;font-size:20px;font-weight:800;color:${brandBlue};letter-spacing:-0.02em;">${escapeHtml(getSiteName() || 'Poseidon Booking')}</p>
   </td></tr>
 
   ${heroImg
-    ? `<tr><td style="padding:0;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};"><img src="${escapeHtml(heroImg)}" alt="${escapeHtml(t.heroAlt)}" width="580" style="display:block;width:100%;max-height:200px;object-fit:cover;" /></td></tr>`
+    ? `<tr><td style="padding:0;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};"><img src="${escapeHtml(heroImg)}" alt="${escapeHtml(t.heroAlt)}" width="580" style="display:block;width:100%;max-height:220px;object-fit:cover;" /></td></tr>`
     : ''
   }
 
-  <tr><td style="background:${EMAIL_SURFACE};padding:26px 28px 0;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-      <tr>
-        <td style="width:56px;vertical-align:top;padding-right:14px;">${statusIconWrap}</td>
-        <td style="vertical-align:top;">
-          <p style="margin:0;font-size:17px;font-weight:700;color:${navy};letter-spacing:-0.02em;">${escapeHtml(successTitle)}</p>
-          <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.55;">${escapeHtml(successSub)}</p>
-        </td>
-      </tr>
+  <tr><td style="background:${brandBlue};padding:22px 28px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0;font-size:19px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;">${isPaid ? '🎉 ' : ''}${escapeHtml(successTitle)}</p>
+    <p style="margin:6px 0 0;font-size:14px;color:rgba(255,255,255,0.9);">${escapeHtml(p.tourTitle)}</p>
+  </td></tr>
+
+  <tr><td style="background:${EMAIL_SURFACE};padding:22px 28px 6px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0 0 10px;font-size:15px;font-weight:700;color:${secondary};">${escapeHtml(t.greeting(greetName))}</p>
+    <p style="margin:0;font-size:13px;color:${EMAIL_TEXT_BODY};line-height:1.65;">${escapeHtml(t.introText(p.tourTitle))}</p>
+  </td></tr>
+
+  <tr><td style="background:${EMAIL_SURFACE};padding:18px 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_BORDER};border-radius:12px;">
+      <tr><td style="padding:22px 20px;text-align:center;">
+        <p style="margin:0;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:${brandOrange};">${escapeHtml(t.boardingPassTitle)}</p>
+        <p style="margin:8px 0 0;font-size:22px;font-weight:800;color:${brandBlue};letter-spacing:0.03em;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;">#${escapeHtml(p.bookingId)}</p>
+        <p style="margin:12px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${secondary};">${escapeHtml(t.date)}:</strong> ${escapeHtml(dateFormatted)}${p.time ? ` · ${escapeHtml(p.time)}` : ''}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${secondary};">${escapeHtml(t.reservationOwner)}:</strong> ${escapeHtml(fullName)}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${secondary};">${escapeHtml(t.guests)}:</strong> ${totalPax}</p>
+        ${qrBlock}
+        ${p.qrCid ? `<p style="margin:14px 0 0;font-size:12px;font-weight:700;color:${brandOrange};">${escapeHtml(t.boardingPassHint)}</p>` : ''}
+      </td></tr>
     </table>
   </td></tr>
 
-  <tr><td style="background:${EMAIL_SURFACE};padding:18px 28px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
-    <div style="background:#f8fafc;border:1px solid ${EMAIL_BORDER};border-left:3px solid ${navy};border-radius:8px;padding:16px 18px;">
-      <p style="margin:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:${EMAIL_MUTED};">${escapeHtml(t.reservationNo)}</p>
-      <p style="margin:8px 0 0;font-size:18px;font-weight:700;color:${navy};letter-spacing:0.04em;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;">${escapeHtml(p.bookingId)}</p>
-    </div>
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 20px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:${brandBlue};">${escapeHtml(t.meetingPointTitle)}:</p>
+    <p style="margin:0;font-size:13px;color:${EMAIL_TEXT_BODY};line-height:1.6;">${escapeHtml(pickup)}</p>
+    ${p.mapLink?.trim() ? `<p style="margin:6px 0 0;"><a href="${escapeHtml(p.mapLink.trim())}" target="_blank" style="color:${brandBlue};font-size:13px;font-weight:600;text-decoration:underline;">${escapeHtml(t.viewOnMap)}</a></p>` : ''}
+  </td></tr>
+
+  ${p.time ? `<tr><td style="background:${EMAIL_SURFACE};padding:0 28px 20px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:${brandBlue};">${escapeHtml(t.boardingScheduleTitle)}:</p>
+    <p style="margin:0;font-size:13px;color:${EMAIL_TEXT_BODY};">${escapeHtml(t.boardingStarts)}: <strong style="color:${secondary};">${escapeHtml(boardingStart ?? '—')}</strong></p>
+    <p style="margin:4px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};">${escapeHtml(t.latestBoarding)}: <strong style="color:${secondary};">${escapeHtml(latestBoarding ?? '—')}</strong></p>
+    <p style="margin:4px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};">${escapeHtml(t.departureLabel)}: <strong style="color:${secondary};">${escapeHtml(p.time)}</strong></p>
+  </td></tr>` : ''}
+
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 20px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:${secondary};">${escapeHtml(t.whatToBringTitle)}:</p>
+    <p style="margin:0;font-size:13px;color:${EMAIL_TEXT_BODY};line-height:1.6;">${escapeHtml(t.whatToBringText)}</p>
+  </td></tr>
+
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:${secondary};">${escapeHtml(t.foodDrinkTitle)}:</p>
+    <p style="margin:0;font-size:13px;color:${EMAIL_TEXT_BODY};line-height:1.6;">${escapeHtml(t.foodDrinkPolicyText)}</p>
   </td></tr>
 
   <tr><td style="background:${EMAIL_SURFACE};padding:4px 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
-    <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:${navy};text-transform:uppercase;letter-spacing:0.08em;">${escapeHtml(t.detailsTitle)}</p>
+    <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:${secondary};text-transform:uppercase;letter-spacing:0.08em;">${escapeHtml(t.priceBreakdownTitle)}</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-      ${detailRow(t.tour, p.tourTitle)}
-      ${detailRow(t.date, dateFormatted)}
-      ${p.time ? detailRow(t.depTime, p.time) : ''}
-      ${detailRow(t.pickup, pickup)}
-      ${detailRow(t.guests, participants)}
       ${detailRow(t.classLabel, classDisplay(p, loc))}
       ${p.mealPreference?.label?.trim() ? detailRow(t.mealPref, p.mealPreference.label.trim()) : ''}
       ${mealCounts ? detailRow(t.mealDist, mealCounts) : ''}
@@ -930,37 +1009,22 @@ function buildPremiumConfirmationEmailHtml(
       ${showCashRemaining ? detailRow(t.remainingRow, fmtPrice(remainingAmount, p.currency)) : ''}
       <tr>
         <td style="padding:14px 0 0;color:${EMAIL_MUTED};font-size:13px;font-weight:700;">${escapeHtml(t.totalRow)}</td>
-        <td style="padding:14px 0 0;color:${navy};font-size:20px;font-weight:700;text-align:right;">${fmtPrice(p.totalPrice, p.currency)}</td>
+        <td style="padding:14px 0 0;color:${brandBlue};font-size:20px;font-weight:800;text-align:right;">${fmtPrice(p.totalPrice, p.currency)}</td>
       </tr>
     </table>
+    ${showCashRemaining ? `<p style="margin:12px 0 0;font-size:12px;color:${EMAIL_MUTED};line-height:1.5;">${escapeHtml(t.bulletCashRemaining)}</p>` : ''}
   </td></tr>
 
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
-    <a href="${escapeHtml(viewTicketUrl)}" target="_blank"
-       style="display:block;width:100%;background:${navy};color:#ffffff!important;font-size:15px;font-weight:600;text-decoration:none;text-align:center;padding:0;border-radius:10px;box-sizing:border-box;margin-bottom:10px;">
-      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-radius:10px;"><tr>
-        <td style="padding:14px 20px;text-align:center;">
-          <span style="display:inline-block;vertical-align:middle;margin-right:8px;line-height:0;">${emailIconSvg('ticketLight')}</span>
-          <span style="display:inline-block;vertical-align:middle;color:#ffffff!important;">${escapeHtml(t.viewTicketCta)}</span>
-        </td>
-      </tr></table>
-    </a>
+    <p style="margin:0 0 10px;font-size:13px;color:${EMAIL_TEXT_BODY};">${escapeHtml(t.manageIntro)}</p>
     <a href="${escapeHtml(manageUrl)}" target="_blank"
-       style="display:block;width:100%;background:${EMAIL_SURFACE};color:${navy}!important;font-size:14px;font-weight:600;text-decoration:none;text-align:center;padding:13px 22px;border-radius:10px;border:1.5px solid ${navy};box-sizing:border-box;">
+       style="display:block;width:100%;background:${brandOrange};color:#ffffff!important;font-size:15px;font-weight:700;text-decoration:none;text-align:center;padding:15px 22px;border-radius:10px;box-sizing:border-box;margin-bottom:10px;">
       ${escapeHtml(t.manageCta)}
     </a>
-  </td></tr>
-
-  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
-    <div style="background:#f8fafc;border-left:3px solid ${navy};border-radius:6px;padding:14px 16px 14px 18px;">
-      <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:${navy};">${escapeHtml(t.importantTitle)}</p>
-      <ul style="margin:0;padding:0 0 0 18px;color:${EMAIL_TEXT_BODY};font-size:13px;line-height:1.65;">
-        <li style="margin-bottom:4px;">${escapeHtml(t.bullet30)}</li>
-        <li style="margin-bottom:4px;">${escapeHtml(t.bulletTicket)}</li>
-        ${showCashRemaining ? `<li style="margin-bottom:4px;">${escapeHtml(t.bulletCashRemaining)}</li>` : ''}
-        <li style="margin-bottom:0;">${escapeHtml(t.bulletContact)}</li>
-      </ul>
-    </div>
+    <a href="${escapeHtml(viewTicketUrl)}" target="_blank"
+       style="display:block;width:100%;background:${EMAIL_SURFACE};color:${brandBlue}!important;font-size:14px;font-weight:600;text-decoration:none;text-align:center;padding:13px 22px;border-radius:10px;border:1.5px solid ${brandBlue};box-sizing:border-box;">
+      ${escapeHtml(t.viewTicketCta)}
+    </a>
   </td></tr>
 
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 26px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
@@ -972,7 +1036,7 @@ function buildPremiumConfirmationEmailHtml(
       </tr>
       <tr>
         <td style="padding:0 10px 0 0;vertical-align:middle;line-height:0;width:22px;">${emailIconSvg('mail')}</td>
-        <td style="padding:0;vertical-align:middle;font-size:13px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:${navy};text-decoration:none;font-weight:500;">${escapeHtml(supportEmail)}</a></td>
+        <td style="padding:0;vertical-align:middle;font-size:13px;"><a href="mailto:${escapeHtml(supportEmail)}" style="color:${brandBlue};text-decoration:none;font-weight:500;">${escapeHtml(supportEmail)}</a></td>
       </tr>
     </table>
   </td></tr>
@@ -1048,9 +1112,20 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
   const loc = normalizeBookingFlowLocale(enrichedPayload.siteLocale)
   const subjT = bookingEmailPremiumStrings(loc)
 
-  const customerHtml = buildCustomerPaidEmailHtml({ ...enrichedPayload, bookingUrl })
-
   const attachments: Array<{ filename: string; content: Buffer; contentId?: string }> = []
+
+  const mapLink = await fetchTourMapLink(tourIdForDeposit)
+  let qrCid: string | undefined
+  if (enrichedPayload.accessToken?.trim()) {
+    const qrBuffer = await generateQrPngBuffer(voucherUrlForPdf)
+    if (qrBuffer) {
+      qrCid = `qr-${enrichedPayload.bookingId}`
+      attachments.push({ filename: 'biniş-karti-qr.png', content: qrBuffer, contentId: qrCid })
+    }
+  }
+
+  const customerHtml = buildCustomerPaidEmailHtml({ ...enrichedPayload, bookingUrl, mapLink, qrCid })
+
   try {
     let voucherData: VoucherData | null = row
       ? await buildVoucherDataFromBookingRow(enrichedPayload.bookingId, row, enrichedPayload.accessToken?.trim() ?? '')

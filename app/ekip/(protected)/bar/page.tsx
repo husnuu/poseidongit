@@ -19,7 +19,7 @@ export default async function CrewBarListPage() {
         <Link href="/ekip" className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-zinc-100">
           <ChevronLeft className="h-5 w-5 text-[#131719]" aria-hidden />
         </Link>
-        <h1 className="m-0 text-lg font-black text-[#131719]">Active Bar Services</h1>
+        <h1 className="m-0 text-lg font-black text-[#131719]">Aktif Bar Servisleri</h1>
       </div>
 
       {trips.length === 0 ? (
@@ -42,24 +42,27 @@ export default async function CrewBarListPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="m-0 truncate font-bold text-[#131719]">{t.tourTitle}</p>
-                    <p className="m-0 mt-0.5 text-sm text-zinc-500">{t.time ?? '—'}</p>
+                    <p className="m-0 mt-0.5 text-sm text-zinc-500">
+                      {t.time ?? '—'}
+                      {t.capacity != null && <> · Kapasite {t.capacity}</>}
+                    </p>
                   </div>
                   <span
                     className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
                       t.departed ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-[#2168b8]'
                     }`}
                   >
-                    {t.departed ? 'At sea' : 'Upcoming'}
+                    {t.departed ? 'Denizde' : 'Yaklaşan'}
                   </span>
                 </div>
                 <div className="mt-3 flex items-center gap-4 border-t border-[#f1f5f9] pt-3 text-sm text-zinc-500">
                   <span className="flex items-center gap-1.5">
                     <Wine className="h-3.5 w-3.5" aria-hidden />
-                    {pending} pending
+                    {pending} bekliyor
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5" aria-hidden />
-                    {t.boardedCount} guests
+                    {t.boardedCount} misafir
                   </span>
                 </div>
               </Link>

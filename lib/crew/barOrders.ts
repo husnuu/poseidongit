@@ -133,7 +133,7 @@ export async function createWalkInOrder(input: {
       tour_title: input.tourTitle,
       trip_date: input.tripDate,
       trip_time: input.tripTime,
-      guest_label: input.guestLabel || 'Walk-in Guest',
+      guest_label: input.guestLabel || 'Misafir',
       items: input.items,
       total_amount: totalAmount,
       currency: 'TRY',

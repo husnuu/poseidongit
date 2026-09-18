@@ -201,6 +201,25 @@ const TR = {
   subjectPaid: 'Rezervasyonunuz onaylandı',
   locaPrefix: 'Loca',
   heroAlt: 'Tekne turu',
+  greeting: (name: string) => `Merhaba ${name},`,
+  introText: (tourTitle: string) =>
+    `Rezervasyonunuz için teşekkür ederiz! Sizi teknemizde ağırlamak için sabırsızlanıyoruz. ${tourTitle} için rezervasyonunuz onaylandı, tüm detayları aşağıda bulabilirsiniz.`,
+  boardingPassTitle: 'Biniş Kartı',
+  boardingPassHint: 'Biniş sırasında ekibe gösterin',
+  reservationOwner: 'Rezervasyon Sahibi',
+  meetingPointTitle: 'Toplanma Noktası',
+  viewOnMap: 'Haritada Görüntüle',
+  boardingScheduleTitle: 'Biniş & Hareket',
+  boardingStarts: 'Biniş başlar',
+  latestBoarding: 'En geç biniş',
+  departureLabel: 'Kalkış',
+  whatToBringTitle: 'Yanınıza Almanız Gerekenler',
+  whatToBringText:
+    'Yüzme kıyafetleri, güneş kremi, şapka, havlu ve yüzme molaları arasında rahat hareket edebilmeniz için hafif kıyafetler getirmenizi öneririz. Can yeleği gibi güvenlik ekipmanları tarafımızdan temin edilmektedir.',
+  foodDrinkTitle: 'Yiyecek & İçecek',
+  foodDrinkPolicyText: 'Dışarıdan yiyecek getirmeniz serbesttir; içecek getirilmesine izin verilmemektedir.',
+  priceBreakdownTitle: 'Ödeme Özeti',
+  manageIntro: 'Rezervasyonunuzu buradan yönetebilirsiniz:',
 }
 
 const EN = {
@@ -238,6 +257,25 @@ const EN = {
   subjectPaid: 'Your booking is confirmed',
   locaPrefix: 'Box',
   heroAlt: 'Boat tour',
+  greeting: (name: string) => `Hi ${name},`,
+  introText: (tourTitle: string) =>
+    `Thank you for your booking! We can't wait to welcome you aboard. Your booking for ${tourTitle} is confirmed — all the details are below.`,
+  boardingPassTitle: 'Boarding Pass',
+  boardingPassHint: 'Show this to the crew at boarding',
+  reservationOwner: 'Reservation Holder',
+  meetingPointTitle: 'Meeting Point',
+  viewOnMap: 'View on Map',
+  boardingScheduleTitle: 'Boarding & Departure',
+  boardingStarts: 'Boarding starts',
+  latestBoarding: 'Latest boarding',
+  departureLabel: 'Departure',
+  whatToBringTitle: 'What to Bring',
+  whatToBringText:
+    "Swimwear, sunscreen, a hat, a towel, and light clothing to move comfortably between swim stops. Safety equipment such as life jackets is provided on board.",
+  foodDrinkTitle: 'Food & Drinks',
+  foodDrinkPolicyText: "You're welcome to bring your own food; outside drinks are not permitted on board.",
+  priceBreakdownTitle: 'Payment Summary',
+  manageIntro: 'You can manage your booking here:',
 }
 
 const DE = {
@@ -275,6 +313,25 @@ const DE = {
   subjectPaid: 'Ihre Buchung ist bestätigt',
   locaPrefix: 'Loge',
   heroAlt: 'Bootstour',
+  greeting: (name: string) => `Hallo ${name},`,
+  introText: (tourTitle: string) =>
+    `Vielen Dank für Ihre Buchung! Wir freuen uns darauf, Sie an Bord zu begrüßen. Ihre Buchung für ${tourTitle} ist bestätigt — alle Details finden Sie unten.`,
+  boardingPassTitle: 'Bordkarte',
+  boardingPassHint: 'Beim Boarding der Crew zeigen',
+  reservationOwner: 'Buchungsinhaber',
+  meetingPointTitle: 'Treffpunkt',
+  viewOnMap: 'Auf der Karte ansehen',
+  boardingScheduleTitle: 'Boarding & Abfahrt',
+  boardingStarts: 'Boarding beginnt',
+  latestBoarding: 'Spätestes Boarding',
+  departureLabel: 'Abfahrt',
+  whatToBringTitle: 'Was Sie mitbringen sollten',
+  whatToBringText:
+    'Badebekleidung, Sonnencreme, einen Hut, ein Handtuch und leichte Kleidung, um sich zwischen den Schwimmpausen bequem zu bewegen. Sicherheitsausrüstung wie Schwimmwesten wird an Bord gestellt.',
+  foodDrinkTitle: 'Essen & Getränke',
+  foodDrinkPolicyText: 'Sie dürfen eigenes Essen mitbringen; das Mitbringen von Getränken ist nicht gestattet.',
+  priceBreakdownTitle: 'Zahlungsübersicht',
+  manageIntro: 'Sie können Ihre Buchung hier verwalten:',
 }
 
 export type BoardingPassUiCopy = {

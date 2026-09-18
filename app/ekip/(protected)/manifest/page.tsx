@@ -20,7 +20,7 @@ export default async function CrewManifestPage({
         <Link href="/ekip" className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-zinc-100">
           <ChevronLeft className="h-5 w-5 text-[#131719]" aria-hidden />
         </Link>
-        <h1 className="m-0 text-lg font-black text-[#131719]">Guest Manifest</h1>
+        <h1 className="m-0 text-lg font-black text-[#131719]">Yolcu Listesi</h1>
       </div>
 
       {!manifest ? (
@@ -34,18 +34,18 @@ export default async function CrewManifestPage({
             <div className="mt-1.5 flex items-center gap-2 text-sm text-zinc-500">
               <Ship className="h-4 w-4" aria-hidden />
               {manifest.time ?? '—'}
-              {manifest.guestsTotal > 0 && <> · Cap {manifest.guestsTotal}</>}
+              {manifest.capacity != null && <> · Kapasite {manifest.capacity}</>}
             </div>
 
             <div className="mt-4 border-t border-[#f1f5f9] pt-4">
               <span className="text-3xl font-black text-[#131719]">{manifest.boardedCount}</span>
               <span className="text-lg font-semibold text-zinc-400">/{manifest.guestsTotal}</span>
-              <p className="m-0 mt-0.5 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Boarded</p>
+              <p className="m-0 mt-0.5 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Bindi</p>
             </div>
 
             <div className="mt-4 flex items-center gap-2 border-t border-[#f1f5f9] pt-4 text-sm">
               <Users className="h-4 w-4 text-zinc-400" aria-hidden />
-              <span className="font-semibold text-[#131719]">{manifest.bookingsCount} bookings</span>
+              <span className="font-semibold text-[#131719]">{manifest.bookingsCount} rezervasyon</span>
               {manifest.mealCounts.length > 0 && (
                 <span className="truncate text-zinc-500">
                   · {manifest.mealCounts.map((m) => `${m.label} ×${m.count}`).join(' · ')}
@@ -53,7 +53,7 @@ export default async function CrewManifestPage({
               )}
             </div>
             {manifest.noShowCount > 0 && (
-              <p className="m-0 mt-2 text-sm font-semibold text-amber-700">{manifest.noShowCount} no-show</p>
+              <p className="m-0 mt-2 text-sm font-semibold text-amber-700">{manifest.noShowCount} gelmedi</p>
             )}
           </div>
 
@@ -65,7 +65,10 @@ export default async function CrewManifestPage({
               >
                 <div className="flex items-center justify-between gap-3 border-b border-[#f1f5f9] pb-3">
                   <span className="font-mono text-sm font-bold text-[#131719]">
-                    #{b.reference} <span className="font-sans font-normal text-zinc-500">{b.guestCount} guests</span>
+                    #{b.reference}{' '}
+                    <span className="font-sans font-normal text-zinc-500">
+                      {b.guestCount} misafir{b.className ? ` · ${b.className}` : ''}
+                    </span>
                   </span>
                   <span
                     className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
@@ -76,7 +79,7 @@ export default async function CrewManifestPage({
                           : 'bg-zinc-100 text-zinc-500'
                     }`}
                   >
-                    {b.boarded ? 'Boarded' : b.noShow ? 'No-show' : 'Expected'}
+                    {b.boarded ? 'Bindi' : b.noShow ? 'Gelmedi' : 'Bekleniyor'}
                   </span>
                 </div>
                 <div className="mt-3 space-y-2">

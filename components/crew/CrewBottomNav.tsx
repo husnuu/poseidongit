@@ -5,8 +5,8 @@ import { usePathname } from 'next/navigation'
 import { Home, ScanLine, Wine } from 'lucide-react'
 
 const TABS = [
-  { href: '/ekip', label: 'Home', Icon: Home, match: (p: string) => p === '/ekip' },
-  { href: '/ekip/scan', label: 'Scan', Icon: ScanLine, match: (p: string) => p.startsWith('/ekip/scan') },
+  { href: '/ekip', label: 'Ana Sayfa', Icon: Home, match: (p: string) => p === '/ekip' },
+  { href: '/ekip/scan', label: 'Tara', Icon: ScanLine, match: (p: string) => p.startsWith('/ekip/scan') },
   { href: '/ekip/bar', label: 'Bar', Icon: Wine, match: (p: string) => p.startsWith('/ekip/bar') },
 ]
 

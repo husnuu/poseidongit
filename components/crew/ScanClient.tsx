@@ -11,6 +11,7 @@ interface CheckinResult {
   reference: string
   passengerName: string
   tourTitle: string
+  className: string
   time: string | null
   guestCount: number
   boarded: boolean
@@ -107,12 +108,12 @@ export default function ScanClient() {
         <Link href="/ekip" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white">
           <ChevronLeft className="h-5 w-5" aria-hidden />
         </Link>
-        <h1 className="m-0 text-sm font-bold uppercase tracking-wide text-white">Scan Pass</h1>
+        <h1 className="m-0 text-sm font-bold uppercase tracking-wide text-white">Bilet Tara</h1>
         <span className="w-9" />
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center px-6">
-        <p className="mb-6 text-center text-sm text-zinc-400">Position the QR code within the frame to scan</p>
+        <p className="mb-6 text-center text-sm text-zinc-400">QR kodu çerçeve içine hizalayın</p>
         <div
           id={SCANNER_ELEMENT_ID}
           className="aspect-square w-full max-w-xs overflow-hidden rounded-2xl border-2 border-amber-400/80"
@@ -127,7 +128,7 @@ export default function ScanClient() {
           className="mt-8 flex items-center gap-2 rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white"
         >
           <Keyboard className="h-4 w-4" aria-hidden />
-          Enter code manually
+          Kodu manuel gir
         </button>
       </div>
 
@@ -171,24 +172,27 @@ export default function ScanClient() {
                 <CheckCircle2 className="h-6 w-6" aria-hidden />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="m-0 text-lg font-black text-[#131719]">Valid Pass</p>
-                <p className="m-0 text-sm font-semibold text-emerald-600">Booking confirmed</p>
+                <p className="m-0 text-lg font-black text-[#131719]">Geçerli Bilet</p>
+                <p className="m-0 text-sm font-semibold text-emerald-600">Rezervasyon onaylı</p>
               </div>
               <span className="shrink-0 font-mono text-sm font-bold text-zinc-400">#{result.reference}</span>
             </div>
 
             <div className="mt-5 rounded-2xl bg-zinc-50 p-4">
-              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Passenger</p>
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Yolcu</p>
               <p className="m-0 mt-0.5 text-base font-bold text-[#131719]">{result.passengerName}</p>
               <div className="mt-3 grid grid-cols-2 gap-3 border-t border-zinc-200 pt-3">
                 <div>
-                  <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Tour</p>
-                  <p className="m-0 mt-0.5 text-sm font-semibold text-[#131719]">{result.tourTitle}</p>
+                  <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Tur</p>
+                  <p className="m-0 mt-0.5 text-sm font-semibold text-[#131719]">
+                    {result.tourTitle}
+                    {result.className && <span className="text-zinc-500"> · {result.className}</span>}
+                  </p>
                 </div>
                 <div>
-                  <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Guests</p>
+                  <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Misafir</p>
                   <p className="m-0 mt-0.5 text-sm font-semibold text-[#131719]">
-                    {result.guestCount} guest{result.guestCount === 1 ? '' : 's'}
+                    {result.guestCount} misafir
                     {result.time ? ` · ${result.time}` : ''}
                   </p>
                 </div>
@@ -196,7 +200,7 @@ export default function ScanClient() {
               {result.mealCounts.length > 0 && (
                 <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
                   <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                  Meals: {result.mealCounts.map((m) => `${m.label} ×${m.count}`).join(', ')}
+                  Yemek: {result.mealCounts.map((m) => `${m.label} ×${m.count}`).join(', ')}
                 </div>
               )}
             </div>
@@ -207,7 +211,7 @@ export default function ScanClient() {
                 onClick={handleUndo}
                 className="text-sm font-semibold text-zinc-500"
               >
-                Undo
+                Geri al
               </button>
               <button
                 type="button"
@@ -215,7 +219,7 @@ export default function ScanClient() {
                 className="flex-1 rounded-xl py-3.5 text-sm font-bold text-white"
                 style={{ background: 'var(--primary, #2168b8)' }}
               >
-                Board next
+                Sıradaki yolcu
               </button>
             </div>
           </div>

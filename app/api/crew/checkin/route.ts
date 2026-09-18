@@ -97,6 +97,7 @@ export async function POST(request: Request) {
       passengerName:
         [row.customer_first_name, row.customer_last_name].filter(Boolean).join(' ').trim() || '—',
       tourTitle: String(row.tour_title ?? '—'),
+      className: String(row.class_name ?? '').trim(),
       time: row.time ?? null,
       guestCount,
       boarded: action === 'board',

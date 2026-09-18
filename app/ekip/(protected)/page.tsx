@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 function formatDateLabel(dateStr: string): string {
   const d = new Date(`${dateStr}T00:00:00`)
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })
 }
 
 export default async function CrewDashboardPage() {
@@ -23,7 +23,7 @@ export default async function CrewDashboardPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="m-0 text-2xl font-black text-[#131719]">Crew Dashboard</h1>
+        <h1 className="m-0 text-2xl font-black text-[#131719]">Ekip Paneli</h1>
         <div className="flex items-center gap-2">
           <span className="rounded-lg bg-zinc-100 px-3 py-1.5 text-sm font-semibold text-zinc-600">
             {formatDateLabel(today)}
@@ -44,8 +44,8 @@ export default async function CrewDashboardPage() {
             <ScanLine className="h-5 w-5" aria-hidden />
           </span>
           <span>
-            <span className="block text-base font-bold">Scan Ticket</span>
-            <span className="block text-sm text-white/85">Board passengers</span>
+            <span className="block text-base font-bold">Bilet Okut</span>
+            <span className="block text-sm text-white/85">Yolcu bindir</span>
           </span>
         </Link>
         <Link
@@ -56,8 +56,8 @@ export default async function CrewDashboardPage() {
             <Wine className="h-5 w-5" aria-hidden />
           </span>
           <span>
-            <span className="block text-base font-bold text-[#131719]">Bar Orders</span>
-            <span className="block text-sm text-zinc-500">Manage requests</span>
+            <span className="block text-base font-bold text-[#131719]">Bar Siparişleri</span>
+            <span className="block text-sm text-zinc-500">Siparişleri yönet</span>
           </span>
         </Link>
       </div>
@@ -65,17 +65,17 @@ export default async function CrewDashboardPage() {
       <div className="rounded-2xl border border-[#f1f5f9] bg-white p-5 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
         <div className="flex items-center gap-2 text-sm font-bold text-[#131719]">
           <Users className="h-4 w-4 text-zinc-400" aria-hidden />
-          Daily Manifest Overview
+          Günlük Yolcu Özeti
         </div>
         <div className="mt-4 flex items-end justify-between">
           <div>
             <span className="text-3xl font-black text-[#131719]">{boardedTotal}</span>
             <span className="text-lg font-semibold text-zinc-400">/{guestsTotal}</span>
-            <p className="m-0 mt-0.5 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Boarded</p>
+            <p className="m-0 mt-0.5 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Bindi</p>
           </div>
           <div className="text-right">
             <span className="text-3xl font-black text-[#131719]">{departuresCount}</span>
-            <p className="m-0 mt-0.5 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Departures</p>
+            <p className="m-0 mt-0.5 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Kalkış</p>
           </div>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-zinc-100">
@@ -87,7 +87,7 @@ export default async function CrewDashboardPage() {
       </div>
 
       <div>
-        <p className="m-0 mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">Today&apos;s Schedule</p>
+        <p className="m-0 mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">Bugünün Seferleri</p>
         {trips.length === 0 && (
           <div className="rounded-2xl border border-[#f1f5f9] bg-white p-6 text-center text-sm text-zinc-500">
             Bugün için planlanmış sefer yok.
@@ -111,22 +111,25 @@ export default async function CrewDashboardPage() {
                         t.departed ? 'bg-zinc-100 text-zinc-500' : 'bg-blue-50 text-[#2168b8]'
                       }`}
                     >
-                      {t.departed ? 'Departed' : 'Upcoming'}
+                      {t.departed ? 'Kalktı' : 'Yaklaşan'}
                     </span>
                   </div>
-                  <p className="m-0 mt-0.5 truncate text-sm text-zinc-600">{t.tourTitle}</p>
+                  <p className="m-0 mt-0.5 truncate text-sm text-zinc-600">
+                    {t.tourTitle}
+                    {t.capacity != null && <span className="text-zinc-400"> · Kapasite {t.capacity}</span>}
+                  </p>
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between border-t border-[#f1f5f9] pt-3">
                 <span className="flex items-center gap-1.5 text-sm text-zinc-500">
                   <Users className="h-3.5 w-3.5" aria-hidden />
-                  {t.boardedCount}/{t.guestsTotal} boarded
+                  {t.boardedCount}/{t.guestsTotal} bindi
                 </span>
                 <Link
                   href={`/ekip/manifest?tripKey=${encodeURIComponent(t.tripKey)}`}
                   className="flex items-center gap-1 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-bold text-[#131719]"
                 >
-                  Manifest
+                  Yolcu Listesi
                   <ChevronRight className="h-3.5 w-3.5" aria-hidden />
                 </Link>
               </div>

@@ -7,7 +7,14 @@ import {
   ChevronLeft,
   Martini,
   Beer,
+  BottleWine,
+  Cake,
+  Coffee,
   CupSoda,
+  GlassWater,
+  IceCream,
+  LeafyGreen,
+  ThermometerSnowflake,
   X,
   Plus,
   Minus,
@@ -22,12 +29,18 @@ export interface CrewMenuItem {
   imageUrl: string | null
 }
 
+/** Sanity menuItem şemasındaki tüm kategoriler (schemaTypes/menuItem.ts ile aynı). */
 const CATEGORY_TABS: { value: string; label: string; Icon: typeof Martini }[] = [
   { value: 'kokteyller', label: 'Kokteyller', Icon: Martini },
-  { value: 'mocktails', label: 'Mocktails', Icon: CupSoda },
+  { value: 'mocktails', label: 'Mocktails', Icon: GlassWater },
   { value: 'alkollu_icecekler', label: 'Bira & Şarap', Icon: Beer },
   { value: 'soft_icecekler', label: 'Soft içecek', Icon: CupSoda },
-  { value: 'siseler', label: 'Şişeler', Icon: Beer },
+  { value: 'siseler', label: 'Şişeler', Icon: BottleWine },
+  { value: 'soguk_kahveler', label: 'Soğuk kahve', Icon: ThermometerSnowflake },
+  { value: 'sicak_kahveler', label: 'Sıcak kahve', Icon: Coffee },
+  { value: 'premium_caylar', label: 'Premium çay', Icon: LeafyGreen },
+  { value: 'dondurmalar', label: 'Dondurma', Icon: IceCream },
+  { value: 'tatlilar', label: 'Tatlı', Icon: Cake },
 ]
 
 function money(amount: number): string {
@@ -106,14 +119,14 @@ export default function BarTripClient({
       <div className="rounded-2xl border border-[#f1f5f9] bg-white p-5 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
         <div className="flex items-center justify-between">
           <div>
-            <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Today&apos;s Sales</p>
+            <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">Bugünkü Satışlar</p>
             <p className="m-0 mt-0.5 text-2xl font-black text-[#131719]">{money(todaySales)}</p>
-            <p className="m-0 mt-0.5 text-xs text-zinc-500">{orders.length} Orders</p>
+            <p className="m-0 mt-0.5 text-xs text-zinc-500">{orders.length} Sipariş</p>
           </div>
           <div className="text-right">
-            <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-amber-600">Pending Collection</p>
+            <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-amber-600">Bekleyen Tahsilat</p>
             <p className="m-0 mt-0.5 text-2xl font-black text-amber-600">{money(pendingCollection)}</p>
-            <p className="m-0 mt-0.5 text-xs text-zinc-500">Unpaid</p>
+            <p className="m-0 mt-0.5 text-xs text-zinc-500">Ödenmedi</p>
           </div>
         </div>
       </div>
@@ -125,7 +138,7 @@ export default function BarTripClient({
         style={{ background: '#131719' }}
       >
         <Plus className="h-4 w-4" aria-hidden />
-        New Walk-in Order
+        Yeni Sipariş
       </button>
 
       <div className="flex rounded-xl bg-zinc-100 p-1">
@@ -134,20 +147,20 @@ export default function BarTripClient({
           onClick={() => setTab('active')}
           className={`flex-1 rounded-lg py-2 text-sm font-bold ${tab === 'active' ? 'bg-white text-[#131719] shadow-sm' : 'text-zinc-500'}`}
         >
-          Active ({activeOrders.length})
+          Aktif ({activeOrders.length})
         </button>
         <button
           type="button"
           onClick={() => setTab('served')}
           className={`flex-1 rounded-lg py-2 text-sm font-bold ${tab === 'served' ? 'bg-white text-[#131719] shadow-sm' : 'text-zinc-500'}`}
         >
-          Served ({servedOrders.length})
+          Servis Edildi ({servedOrders.length})
         </button>
       </div>
 
       {list.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-10 text-center text-sm text-zinc-500">
-          No {tab === 'active' ? 'active' : 'served'} orders at the moment.
+          Şu anda {tab === 'active' ? 'aktif' : 'servis edilmiş'} sipariş yok.
         </div>
       ) : (
         <div className="space-y-3">
@@ -196,7 +209,7 @@ function OrderCard({
           <span className="font-mono font-bold text-[#131719]">#{order.id.slice(0, 4)}</span>
           <span className="text-zinc-400">{time}</span>
           <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase text-[#2168b8]">
-            Walk-in
+            Sipariş
           </span>
         </span>
         <span
@@ -208,7 +221,7 @@ function OrderCard({
                 : 'bg-emerald-50 text-emerald-700'
           }`}
         >
-          {order.status === 'new' ? 'New' : order.status === 'preparing' ? 'Preparing' : 'Served'}
+          {order.status === 'new' ? 'Yeni' : order.status === 'preparing' ? 'Hazırlanıyor' : 'Servis Edildi'}
         </span>
       </div>
 
@@ -217,7 +230,9 @@ function OrderCard({
         <div className="text-right">
           <p className="m-0 font-bold text-[#131719]">{money(order.totalAmount)}</p>
           <p className={`m-0 text-xs font-semibold ${order.paymentStatus === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
-            {order.paymentStatus === 'paid' ? `Paid (${order.paymentMethod})` : 'Unpaid'}
+            {order.paymentStatus === 'paid'
+              ? `Ödendi (${order.paymentMethod === 'cash' ? 'Nakit' : 'Kart'})`
+              : 'Ödenmedi'}
           </p>
         </div>
       </div>
@@ -244,7 +259,7 @@ function OrderCard({
               onClick={() => setPayOpen(true)}
               className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm font-bold text-[#131719]"
             >
-              Mark as Paid...
+              Ödendi Olarak İşaretle...
             </button>
           )}
           {payOpen && (
@@ -257,7 +272,7 @@ function OrderCard({
                 }}
                 className="flex-1 rounded-xl bg-emerald-50 py-2.5 text-sm font-bold text-emerald-700"
               >
-                Cash
+                Nakit
               </button>
               <button
                 type="button"
@@ -267,7 +282,7 @@ function OrderCard({
                 }}
                 className="flex-1 rounded-xl bg-blue-50 py-2.5 text-sm font-bold text-[#2168b8]"
               >
-                Card
+                Kart
               </button>
               <button
                 type="button"
@@ -285,7 +300,7 @@ function OrderCard({
               className="w-full rounded-xl py-2.5 text-sm font-bold text-white"
               style={{ background: '#131719' }}
             >
-              Start Preparing
+              Hazırlamaya Başla
             </button>
           ) : (
             <button
@@ -293,7 +308,7 @@ function OrderCard({
               onClick={() => onStatusChange(order, 'served')}
               className="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white"
             >
-              ✓ Mark as Served
+              ✓ Servis Edildi Olarak İşaretle
             </button>
           )}
         </div>
@@ -368,7 +383,7 @@ function NewOrderSheet({
         <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-zinc-100">
           <X className="h-5 w-5 text-[#131719]" aria-hidden />
         </button>
-        <h2 className="m-0 text-base font-black text-[#131719]">New Walk-in Order</h2>
+        <h2 className="m-0 text-base font-black text-[#131719]">Yeni Sipariş</h2>
         <span className="w-9" />
       </div>
 
@@ -416,7 +431,7 @@ function NewOrderSheet({
                   onClick={() => setQty(item.id, 1)}
                   className="shrink-0 rounded-full border border-zinc-300 px-4 py-2 text-xs font-bold text-[#131719]"
                 >
-                  ADD
+                  EKLE
                 </button>
               ) : (
                 <div className="flex shrink-0 items-center gap-2">
@@ -451,7 +466,7 @@ function NewOrderSheet({
             className="flex w-full items-center justify-between rounded-xl px-5 py-3.5 text-sm font-bold text-white"
             style={{ background: '#fc6c4f' }}
           >
-            <span>{totalCount} VIEW ORDER</span>
+            <span>{totalCount} SİPARİŞİ GÖR</span>
             <span>{money(totalAmount)}</span>
           </button>
         </div>
@@ -462,7 +477,7 @@ function NewOrderSheet({
           <div className="w-full rounded-t-2xl bg-white p-6" onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-zinc-200" />
             <div className="flex items-center justify-between">
-              <h3 className="m-0 text-lg font-black text-[#131719]">Walk-in Summary</h3>
+              <h3 className="m-0 text-lg font-black text-[#131719]">Sipariş Özeti</h3>
               <button type="button" onClick={() => setSummaryOpen(false)}>
                 <X className="h-5 w-5 text-zinc-500" aria-hidden />
               </button>
@@ -478,18 +493,18 @@ function NewOrderSheet({
               ))}
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-[#f1f5f9] pt-4">
-              <span className="font-bold text-[#131719]">Total</span>
+              <span className="font-bold text-[#131719]">Toplam</span>
               <span className="text-lg font-black" style={{ color: '#fc6c4f' }}>
                 {money(totalAmount)}
               </span>
             </div>
             <label className="mt-4 block text-sm font-semibold text-zinc-600">
-              Guest name / identifier (optional)
+              Misafir adı / notu (opsiyonel)
               <input
                 type="text"
                 value={guestLabel}
                 onChange={(e) => setGuestLabel(e.target.value)}
-                placeholder="e.g. Table by bar, or John"
+                placeholder="Örn. Bar yanındaki masa, ya da Ahmet"
                 className="mt-1.5 w-full rounded-xl border border-zinc-200 px-3.5 py-3 text-sm focus:border-[#2168b8] focus:outline-none"
               />
             </label>
@@ -500,7 +515,7 @@ function NewOrderSheet({
               className="mt-5 w-full rounded-xl py-3.5 text-sm font-bold text-white disabled:opacity-60"
               style={{ background: '#131719' }}
             >
-              {submitting ? 'Creating...' : 'Create Order'}
+              {submitting ? 'Oluşturuluyor...' : 'Sipariş Oluştur'}
             </button>
           </div>
         </div>
