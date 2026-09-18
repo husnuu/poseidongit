@@ -22,6 +22,7 @@ type BookingDoc = {
   currency?: string
   status?: string
   meetingPoint?: string
+  mealCounts?: { label: string; count: number }[]
   customer?: {
     firstName?: string
     lastName?: string
@@ -65,6 +66,8 @@ export function bookingToVoucherData(
     adults: counts.adult ?? 0,
     children: counts.child ?? 0,
     babies: counts.infant ?? 0,
+
+    ...(booking.mealCounts?.length && { mealCounts: booking.mealCounts }),
 
     totalPrice: booking.totalPrice ?? 0,
     currency: booking.currency ?? 'TRY',

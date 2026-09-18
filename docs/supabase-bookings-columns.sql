@@ -71,6 +71,14 @@ alter table public.bookings
   -- Müşteri "İade Talebi Gönder" akışı: talep zamanı (admin onayını bekler)
   add column if not exists refund_requested_at timestamptz;
 
+-- Ekip uygulaması (/ekip): QR biniş kontrolü
+alter table public.bookings
+  add column if not exists checked_in_at timestamptz;
+
+comment on column public.bookings.checked_in_at is 'Ekip uygulamasında QR okutularak biniş onaylandığı an; null = henüz binmedi.';
+
+create index if not exists bookings_checked_in_at_idx on public.bookings (checked_in_at);
+
 comment on column public.bookings.selected_extras is 'Rezervasyonda seçilen ekstralar (Sanity extras[]): [{key,title,unitPrice,priceType,quantity,lineTotal}]';
 comment on column public.bookings.ui_locale is 'Site language at booking (tr|en|de) — customer emails / PDF';
 comment on column public.bookings.payment_status is 'Ödeme durumu özeti: paid | failed (status ile uyumlu olmalı)';

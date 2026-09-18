@@ -6,7 +6,7 @@ import { tourImageAndPickupQuery } from '@/lib/queries'
 import { manageBookingUrlForLocale, getSiteBaseUrl } from '@/lib/siteUrls'
 import BoardingPassTicket from '@/components/boarding-pass/BoardingPassTicket'
 import { supabase } from '@/lib/supabase'
-import { firstClassLocasFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { firstClassLocasFromRow, normalizeMealPreferenceColumn, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { boardingPassPageCopy, formatParticipantCountsLine, voucherPdfUiStrings } from '@/lib/i18n/bookingFlowLocale'
@@ -51,6 +51,7 @@ type TicketData = {
   customerName: string
   /** Supabase'te varsa (admin ödeme sonrası yazılmış olabilir). */
   paidNowStored?: number
+  mealCounts: { label: string; count: number }[]
 }
 
 async function getTicketData(bookingId: string): Promise<TicketData | null> {
@@ -62,6 +63,10 @@ async function getTicketData(bookingId: string): Promise<TicketData | null> {
   const normalizedLocas = firstClassLocasFromRow(d)
   const paidRaw = d.paid_now
   const paidNowStored = typeof paidRaw === 'number' && Number.isFinite(paidRaw) && paidRaw > 0 ? paidRaw : undefined
+  const mealPreference = normalizeMealPreferenceColumn(d.meal_preference)
+  const mealCounts = (mealPreference?.counts ?? [])
+    .filter((c) => c.count > 0)
+    .map((c) => ({ label: c.label, count: c.count }))
   return {
     bookingId: d.id,
     tourId,
@@ -82,6 +87,7 @@ async function getTicketData(bookingId: string): Promise<TicketData | null> {
     status: String(d.status ?? 'pending'),
     customerName: [d.customer_first_name, d.customer_last_name].filter(Boolean).join(' ') || '—',
     ...(paidNowStored != null && { paidNowStored }),
+    mealCounts,
   }
 }
 
@@ -90,6 +96,7 @@ type TourMeta = {
   durationLabel?: string | null
   meetingPoint?: string | null
   quickFacts?: { startTime?: string | null; returnTime?: string | null }
+  whereSection?: { locationMapLink?: string | null }
   deposit?: { enabled?: boolean; type?: string; value?: number }
 }
 
@@ -164,6 +171,10 @@ export default async function BiletPage({
     ticket.paidNowStored,
     tourMeta
   )
+  const isPaidStatus = ticket.status === 'paid' || ticket.status === 'confirmed'
+  const remainingAmount =
+    isPaidStatus && paidAmount != null ? Math.max(0, ticket.totalPrice - paidAmount) : null
+  const mapLink = tourMeta?.whereSection?.locationMapLink?.trim() || undefined
   const classDisplay =
     ticket.classId === 'first' && (ticket.firstClassLocas?.length ?? 0) > 0
       ? `${ticket.className} · ${s.locaPrefix} ${ticket.firstClassLocas!.join(', ')}`
@@ -183,12 +194,15 @@ export default async function BiletPage({
       arrivalTime={arrivalTime}
       durationLabel={durationLabel}
       meetingPoint={meetingPoint}
+      mapLink={mapLink}
       customerName={ticket.customerName}
       participants={participants}
       className={classDisplay}
       totalPrice={ticket.totalPrice}
       currency={ticket.currency}
       paidAmount={paidAmount}
+      remainingAmount={remainingAmount}
+      mealCounts={ticket.mealCounts}
       status={ticket.status}
       manageUrl={manageBookingUrlForLocale(bookingId, locale)}
       homeUrl={homeUrl}

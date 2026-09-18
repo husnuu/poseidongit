@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Ship, Printer } from 'lucide-react'
+import { Ship, Printer, MapPin, Backpack, UtensilsCrossed } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import {
   boardingPassPageCopy,
@@ -10,6 +10,7 @@ import {
   numberLocaleForBooking,
   voucherPdfUiStrings,
 } from '@/lib/i18n/bookingFlowLocale'
+import { timeMinutesBefore } from '@/lib/boardingTime'
 
 export type BoardingPassTicketProps = {
   bookingId: string
@@ -21,6 +22,7 @@ export type BoardingPassTicketProps = {
   arrivalTime?: string
   durationLabel: string | null
   meetingPoint: string
+  mapLink?: string
   customerName: string
   participants: string
   className: string
@@ -28,6 +30,9 @@ export type BoardingPassTicketProps = {
   currency: string
   /** Ödeme onaylı / kayıtlı ödenen tutar; yoksa gösterilmez. */
   paidAmount?: number | null
+  /** Kapora ödendiyse kalan (kapıda nakit) tutar. */
+  remainingAmount?: number | null
+  mealCounts?: { label: string; count: number }[]
   status: string
   manageUrl: string
   homeUrl: string
@@ -37,21 +42,6 @@ export type BoardingPassTicketProps = {
 
 const BLUE = 'var(--primary, #2168b8)'
 const BLUE_LIGHT = 'var(--primary, #2168b8)'
-
-function boardingTimeBefore(time: string | undefined): string | null {
-  if (!time?.trim()) return null
-  const m = time.trim().match(/^(\d{1,2})\s*:\s*(\d{2})/)
-  if (!m) return null
-  let h = parseInt(m[1], 10)
-  let min = parseInt(m[2], 10)
-  min -= 30
-  if (min < 0) {
-    min += 60
-    h -= 1
-  }
-  if (h < 0) h += 24
-  return `${h.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`
-}
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
@@ -70,12 +60,15 @@ export default function BoardingPassTicket({
   arrivalTime,
   durationLabel,
   meetingPoint,
+  mapLink,
   customerName,
   participants,
   className,
   totalPrice,
   currency,
   paidAmount,
+  remainingAmount,
+  mealCounts,
   status: _status,
   manageUrl,
   homeUrl,
@@ -91,8 +84,11 @@ export default function BoardingPassTicket({
   const totalPriceLabel = `${totalPrice.toLocaleString(nloc)} ${currency}`
   const paidAmountLabel =
     paidAmount != null && paidAmount > 0 ? `${paidAmount.toLocaleString(nloc)} ${currency}` : null
+  const remainingAmountLabel =
+    remainingAmount != null && remainingAmount > 0 ? `${remainingAmount.toLocaleString(nloc)} ${currency}` : null
   const depTime = time?.trim() || '—'
-  const boardingTime = boardingTimeBefore(time) ?? depTime
+  const boardingTime = timeMinutesBefore(time, 30) ?? depTime
+  const latestBoardingTime = timeMinutesBefore(time, 10)
   const arr = arrivalTime?.trim()
 
   const scheduleLine =
@@ -238,16 +234,78 @@ export default function BoardingPassTicket({
                     <p className="mt-1 text-lg font-bold text-emerald-800 print:text-lg">{paidAmountLabel}</p>
                   </div>
                 ) : null}
+                {remainingAmountLabel ? (
+                  <div>
+                    <Label>{s.remaining}</Label>
+                    <p className="mt-1 text-lg font-bold text-amber-700 print:text-lg">{remainingAmountLabel}</p>
+                  </div>
+                ) : null}
               </div>
               <div className="max-w-md sm:text-right print:max-w-[50%] print:text-right">
                 <Label>{s.meeting}</Label>
                 <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-800 print:text-sm print:leading-snug">
                   {meetingPoint}
                 </p>
+                {mapLink ? (
+                  <a
+                    href={mapLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-block text-sm font-semibold underline print:no-underline"
+                    style={{ color: BLUE }}
+                  >
+                    {s.viewOnMap}
+                  </a>
+                ) : null}
               </div>
             </div>
+            {mealCounts && mealCounts.length > 0 ? (
+              <div className="mt-4 border-t border-slate-200 pt-4">
+                <Label>{s.mealLabel}</Label>
+                <p className="mt-1 text-sm font-semibold text-slate-800">
+                  {mealCounts.map((m) => `${m.label} × ${m.count}`).join(', ')}
+                </p>
+              </div>
+            ) : null}
           </footer>
         </article>
+
+        {/* —— Ek bilgiler: biniş saatleri, getirmeniz gerekenler, yiyecek & içecek —— */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-[#f1f5f9] bg-white p-4 text-center shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+            <Label>{s.boardingStarts}</Label>
+            <p className="mt-1 text-base font-bold text-slate-900">{boardingTime}</p>
+          </div>
+          <div className="rounded-2xl border border-[#f1f5f9] bg-white p-4 text-center shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+            <Label>{s.latestBoarding}</Label>
+            <p className="mt-1 text-base font-bold text-slate-900">{latestBoardingTime ?? '—'}</p>
+          </div>
+          <div className="rounded-2xl border border-[#f1f5f9] bg-white p-4 text-center shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+            <Label>{s.departure}</Label>
+            <p className="mt-1 text-base font-bold text-slate-900">{depTime}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-[#f1f5f9] bg-white p-5 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+            <Backpack className="h-4 w-4" aria-hidden />
+          </div>
+          <div>
+            <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">{s.whatToBringTitle}</p>
+            <p className="m-0 mt-1 text-sm font-medium text-slate-800">{s.whatToBringText}</p>
+            <p className="m-0 mt-2 text-sm text-slate-500">{s.equipmentProvidedText}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-[#f1f5f9] bg-white p-5 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+            <UtensilsCrossed className="h-4 w-4" aria-hidden />
+          </div>
+          <div>
+            <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">{s.foodDrinkTitle}</p>
+            <p className="m-0 mt-1 text-sm font-medium text-slate-800">{s.foodDrinkPolicyText}</p>
+          </div>
+        </div>
 
         {/* Aksiyonlar — yazdırmada gizli */}
         <div className="mt-6 flex flex-col gap-3 print:hidden sm:flex-row sm:justify-center">

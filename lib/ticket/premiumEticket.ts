@@ -20,6 +20,8 @@ export const premiumEticketPayloadSchema = z.object({
   contactWebsite: z.string().url().optional(),
   tourTitle: z.string().max(200).optional(),
   meetingPoint: z.string().max(300).optional(),
+  mapLink: z.string().url().optional(),
+  mealCounts: z.array(z.object({ label: z.string().max(80), count: z.number().int().min(1) })).optional(),
   brandName: z.string().max(80).optional(),
   logoUrl: z.string().url().optional(),
   /** tr | en — etiketler ve sayı formatı */

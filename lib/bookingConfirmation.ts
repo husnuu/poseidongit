@@ -14,6 +14,7 @@ import { withLocalePath } from '@/lib/i18n/paths'
 import { getSiteBaseUrl } from '@/lib/siteUrls'
 import { formatTicketDate } from '@/lib/voucher/formatTicketDate'
 import { buildWhatsAppHref } from '@/lib/buildWhatsAppHref'
+import { timeMinutesBefore } from '@/lib/boardingTime'
 import type { SiteLocale } from '@/lib/i18n/config'
 
 /** ui_locale sütunundan sadece desteklenen dilleri kabul eder; diğerleri (veya boş) TR'ye düşer. */
@@ -42,17 +43,20 @@ export interface BookingConfirmationData {
   dateFormatted: string
   dateRaw: string
   time?: string
-  boardingTime?: string
-  arrivalTime?: string
+  boardingStartTime?: string
+  latestBoardingTime?: string
   meetingPoint: string
   mapLink?: string
   className: string
   counts: { adult: number; child: number; infant: number }
   totalPax: number
   guests: BookingConfirmationGuest[]
+  mealCounts: { label: string; count: number }[]
   totalPrice: number
   paidAmount: number | null
   remainingAtDoor: number
+  /** true: kapora online ödendi, kalan tutar turdan sonra/gün nakit alınacak (tamamı ödenmiş değil). */
+  hasDepositRemaining: boolean
   currency: string
   paidAt: string | null
   customerFirstName: string
@@ -68,7 +72,6 @@ export interface BookingConfirmationData {
   cancelDeadlineLabel: string | null
   googleCalendarUrl: string | null
   icsUrl: string | null
-  notIncluded: string[]
   whatsappHref: string | null
 }
 
@@ -77,23 +80,6 @@ type TourMeta = {
   quickFacts?: { meetingLocation?: string | null; startTime?: string | null; returnTime?: string | null } | null
   whereSection?: { meetingPointAddress?: string | null; locationMapLink?: string | null } | null
   deposit?: { enabled?: boolean; type?: string; value?: number } | null
-  notIncluded?: string[] | null
-}
-
-/** Bilet sayfasındaki ile aynı kural: kalkıştan 30 dk önce biniş saati. */
-function boardingTimeBefore(time: string | undefined): string | undefined {
-  if (!time?.trim()) return undefined
-  const m = time.trim().match(/^(\d{1,2})\s*:\s*(\d{2})/)
-  if (!m) return undefined
-  let h = parseInt(m[1], 10)
-  let min = parseInt(m[2], 10)
-  min -= 30
-  if (min < 0) {
-    min += 60
-    h -= 1
-  }
-  if (h < 0) h += 24
-  return `${h.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`
 }
 
 function resolvePaidAmount(
@@ -174,7 +160,6 @@ export async function getBookingConfirmationData(
   const dateRaw = String(row.date ?? '')
   const time = row.time != null ? String(row.time).trim() || undefined : undefined
   const displayTime = time || tourMeta?.quickFacts?.startTime?.trim() || undefined
-  const arrivalTime = tourMeta?.quickFacts?.returnTime?.trim() || undefined
   const meetingPoint =
     tourMeta?.meetingPoint?.trim() ||
     tourMeta?.whereSection?.meetingPointAddress?.trim() ||
@@ -202,6 +187,9 @@ export async function getBookingConfirmationData(
       isPrimary: false,
     })),
   ]
+  const mealCounts = (mealPreference?.counts ?? [])
+    .filter((c) => c.count > 0)
+    .map((c) => ({ label: c.label, count: c.count }))
 
   const paidNowRaw = row.paid_now
   const paidNowStored =
@@ -210,6 +198,7 @@ export async function getBookingConfirmationData(
   const remainingAtDoor = isPendingCash
     ? totalPrice
     : Math.max(0, totalPrice - Number(row.paid_now ?? 0))
+  const hasDepositRemaining = isPaid && remainingAtDoor > 0
 
   const accessToken = typeof row.access_token === 'string' ? row.access_token.trim() : ''
   const currency = String(row.currency ?? 'TRY')
@@ -263,17 +252,19 @@ export async function getBookingConfirmationData(
     dateFormatted: formatTicketDate(dateRaw, locale),
     dateRaw,
     time: displayTime,
-    boardingTime: boardingTimeBefore(displayTime),
-    arrivalTime,
+    boardingStartTime: timeMinutesBefore(displayTime, 30),
+    latestBoardingTime: timeMinutesBefore(displayTime, 10),
     meetingPoint,
     mapLink,
     className: String(row.class_name ?? ''),
     counts,
     totalPax,
     guests,
+    mealCounts,
     totalPrice,
     paidAmount,
     remainingAtDoor,
+    hasDepositRemaining,
     currency,
     paidAt: row.paid_at ? String(row.paid_at) : null,
     customerFirstName,
@@ -289,7 +280,6 @@ export async function getBookingConfirmationData(
     cancelDeadlineLabel: canCancel ? deadlineLabel : null,
     googleCalendarUrl,
     icsUrl,
-    notIncluded: Array.isArray(tourMeta?.notIncluded) ? tourMeta!.notIncluded!.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : [],
     whatsappHref: await resolveWhatsappHref(reference),
   }
 }

@@ -45,6 +45,10 @@ export interface VoucherData {
   included?: string[]
   /** Dahil olmayanlar (tur içeriği) */
   notIncluded?: string[]
+  /** Toplanma noktası harita linki (Sanity whereSection.locationMapLink) */
+  mapLink?: string
+  /** Yemek tercihi dağılımı (örn. Balık × 2, Tavuk × 1) */
+  mealCounts?: { label: string; count: number }[]
 
   /** Policies (kısa metin) */
   cancellationPolicy: string

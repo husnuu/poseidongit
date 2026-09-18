@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   applyGtagConsent,
@@ -41,6 +42,7 @@ type Props = {
 const SHOW_DELAY_MS = 3500
 
 export default function CookieConsentBanner({ policyHref }: Props) {
+  const pathname = usePathname()
   const [ready, setReady] = useState(false)
   const [showBanner, setShowBanner] = useState(false)
   const [visible, setVisible] = useState(false)
@@ -96,6 +98,7 @@ export default function CookieConsentBanner({ policyHref }: Props) {
     setSettingsOpen(true)
   }, [])
 
+  if (pathname?.startsWith('/ekip')) return null
   if (!ready || !showBanner) return null
 
   return (

@@ -17,7 +17,11 @@ export interface BookingConfirmationUi {
   guestLabel: string
   tourLabel: string
   guestCountLabel: (n: number) => string
+  mealLabel: string
   paidBadge: string
+  depositPaidBadge: string
+  remainingCashLabel: string
+  remainingCashNote: string
   cashDueBadge: string
   pendingBadge: string
   addToCalendar: string
@@ -39,11 +43,13 @@ export interface BookingConfirmationUi {
   boatBarDesc: string
   boatBarCta: string
   whereTitle: string
-  boardingTimeLabel: string
-  returnTimeLabel: string
+  boardingStartLabel: string
+  latestBoardingLabel: string
   departureTimeLabel: string
   viewOnMap: string
-  goodToKnowTitle: string
+  whatToBringTitle: string
+  whatToBringText: string
+  equipmentProvidedText: string
   foodDrinkTitle: string
   foodDrinkPolicyText: string
   needHelpTitle: string
@@ -76,7 +82,11 @@ const TR: BookingConfirmationUi = {
   guestLabel: 'Misafir',
   tourLabel: 'Tur',
   guestCountLabel: (n) => `${n} Misafir`,
+  mealLabel: 'Yemek',
   paidBadge: 'Ödeme tamamlandı',
+  depositPaidBadge: 'Kapora ödendi',
+  remainingCashLabel: 'Kalan tutar (nakit)',
+  remainingCashNote: 'Kalan ödeme tur günü nakit olarak alınmaktadır.',
   cashDueBadge: 'Kapıda nakit ödenecek',
   pendingBadge: 'Ödeme bekleniyor',
   addToCalendar: 'Takvime Ekle',
@@ -99,11 +109,14 @@ const TR: BookingConfirmationUi = {
   boatBarDesc: 'Kokteyller, soğuk içecekler ve daha fazlası',
   boatBarCta: 'Bar menüsünü gör',
   whereTitle: 'Toplanma noktası',
-  boardingTimeLabel: 'Biniş saati',
-  returnTimeLabel: 'Dönüş saati',
-  departureTimeLabel: 'Hareket saati',
+  boardingStartLabel: 'Biniş başlar',
+  latestBoardingLabel: 'En geç biniş',
+  departureTimeLabel: 'Kalkış',
   viewOnMap: 'Haritada görüntüle',
-  goodToKnowTitle: 'Bilmeniz gerekenler',
+  whatToBringTitle: 'Getirmeniz gerekenler',
+  whatToBringText:
+    'Yüzme kıyafetleri, güneş kremi, şapka, havlu ve yüzme molaları arasında rahat hareket edebilmeniz için hafif kıyafetler getirmenizi öneririz.',
+  equipmentProvidedText: 'Can yeleği gibi güvenlik ekipmanları tarafımızdan temin edilmektedir.',
   foodDrinkTitle: 'Yiyecek & İçecek',
   foodDrinkPolicyText: 'Dışarıdan yiyecek getirmeniz serbesttir; içecek getirilmesine izin verilmemektedir.',
   needHelpTitle: 'Sorunuz mu var?',
@@ -136,7 +149,11 @@ const EN: BookingConfirmationUi = {
   guestLabel: 'Guest',
   tourLabel: 'Tour',
   guestCountLabel: (n) => `${n} Guests`,
+  mealLabel: 'Meal',
   paidBadge: 'Payment completed',
+  depositPaidBadge: 'Deposit paid',
+  remainingCashLabel: 'Remaining (cash)',
+  remainingCashNote: 'The remaining balance is paid in cash on the day of the tour.',
   cashDueBadge: 'Cash due on board',
   pendingBadge: 'Payment pending',
   addToCalendar: 'Add to Calendar',
@@ -159,11 +176,14 @@ const EN: BookingConfirmationUi = {
   boatBarDesc: 'Cocktails, cold drinks and more',
   boatBarCta: 'View bar menu',
   whereTitle: 'Meeting point',
-  boardingTimeLabel: 'Boarding time',
-  returnTimeLabel: 'Return time',
-  departureTimeLabel: 'Departure time',
+  boardingStartLabel: 'Boarding starts',
+  latestBoardingLabel: 'Latest boarding',
+  departureTimeLabel: 'Departure',
   viewOnMap: 'View on map',
-  goodToKnowTitle: 'Good to know',
+  whatToBringTitle: 'What to bring',
+  whatToBringText:
+    "Swimwear, sunscreen, a hat, a towel, and light clothing to move comfortably between swim stops.",
+  equipmentProvidedText: 'Safety equipment such as life jackets is provided on board.',
   foodDrinkTitle: 'Food & Drinks',
   foodDrinkPolicyText: "You're welcome to bring your own food; outside drinks are not permitted on board.",
   needHelpTitle: 'Need help?',

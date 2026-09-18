@@ -9,7 +9,7 @@ const DEJAVU_BOLD_URL = 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/tt
 // —— Palette: temiz beyaz boarding pass ——
 const WHITE   = rgb(1, 1, 1)
 const OFF_WHITE = rgb(0.97, 0.975, 0.985)
-const NAVY    = rgb(0.09, 0.20, 0.42)        // #172066
+const NAVY    = rgb(33 / 255, 104 / 255, 184 / 255)   // #2168b8 (site brand blue)
 const CORAL   = rgb(0.988, 0.424, 0.310)     // #fc6c4f
 const SLATE   = rgb(0.28, 0.33, 0.40)        // #48545f
 const MUTED   = rgb(0.56, 0.61, 0.67)        // #8f9caa
@@ -80,14 +80,28 @@ function labels(locale: 'tr' | 'en') {
     return: 'Dönüş', meeting: 'Buluşma noktası', guests: 'Misafir',
     class: 'Sınıf', payment: 'ÖDEME ÖZETI', total: 'Toplam', paid: 'Ödenen',
     remaining: 'Kalan', reservation: 'REZERVASYON NO', scan: 'QR kodu biniş noktasında gösterin',
-    contact: 'İletişim',
+    contact: 'İletişim', viewOnMap: 'Haritada görüntüle',
+    whatToBringTitle: 'Getirmeniz gerekenler',
+    whatToBringText:
+      'Yüzme kıyafetleri, güneş kremi, şapka, havlu ve yüzme molaları arasında rahat hareket edebilmeniz için hafif kıyafetler getirmenizi öneririz.',
+    equipmentProvidedText: 'Can yeleği gibi güvenlik ekipmanları tarafımızdan temin edilmektedir.',
+    foodDrinkTitle: 'Yiyecek & İçecek',
+    foodDrinkPolicyText: 'Dışarıdan yiyecek getirmeniz serbesttir; içecek getirilmesine izin verilmemektedir.',
+    mealLabel: 'Yemek tercihleri',
   }
   return {
     ebilet: 'E-TICKET', from: 'DEPARTURE', boarding: 'Boarding', departure: 'Departs',
     return: 'Returns', meeting: 'Meeting point', guests: 'Guests',
     class: 'Class', payment: 'PAYMENT', total: 'Total', paid: 'Paid',
     remaining: 'Due', reservation: 'RESERVATION NO', scan: 'Show QR code at boarding',
-    contact: 'Contact',
+    contact: 'Contact', viewOnMap: 'View on map',
+    whatToBringTitle: 'What to bring',
+    whatToBringText:
+      'Swimwear, sunscreen, a hat, a towel, and light clothing to move comfortably between swim stops.',
+    equipmentProvidedText: 'Safety equipment such as life jackets is provided on board.',
+    foodDrinkTitle: 'Food & Drinks',
+    foodDrinkPolicyText: "You're welcome to bring your own food; outside drinks are not permitted on board.",
+    mealLabel: 'Meal preferences',
   }
 }
 
@@ -306,6 +320,70 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
 
   // Alt turuncu bar
   page.drawRectangle({ x: 0, y: 0, width: W, height: 6, color: CORAL })
+
+  // —— Sayfa 2: Getirmeniz gerekenler / Yiyecek & içecek / yemek dağılımı / harita ——
+  const page2 = doc.addPage([595, 842])
+  const topH2 = 56
+  page2.drawRectangle({ x: 0, y: H - topH2, width: W, height: topH2, color: NAVY })
+  page2.drawText(brand.toUpperCase(), { x: padX, y: H - topH2 + 20, size: 13, font: bold, color: WHITE })
+  page2.drawRectangle({ x: 0, y: H - topH2 - 4, width: W, height: 4, color: CORAL })
+
+  let y2 = H - topH2 - 36
+
+  // Getirmeniz gerekenler
+  page2.drawText(L.whatToBringTitle.toUpperCase(), { x: padX, y: y2, size: 11, font: bold, color: NAVY })
+  y2 -= 20
+  page2.drawText(L.whatToBringText, {
+    x: padX, y: y2, size: 10, font, color: SLATE, maxWidth: cardW, lineHeight: 14,
+  })
+  y2 -= 46
+  page2.drawText(L.equipmentProvidedText, {
+    x: padX, y: y2, size: 10, font, color: MUTED, maxWidth: cardW, lineHeight: 14,
+  })
+  y2 -= 40
+
+  hLine(page2, padX, y2, cardW)
+  y2 -= 26
+
+  // Yiyecek & İçecek
+  page2.drawText(L.foodDrinkTitle.toUpperCase(), { x: padX, y: y2, size: 11, font: bold, color: NAVY })
+  y2 -= 20
+  page2.drawText(L.foodDrinkPolicyText, {
+    x: padX, y: y2, size: 10, font, color: SLATE, maxWidth: cardW, lineHeight: 14,
+  })
+  y2 -= 40
+
+  // Yemek tercihleri (varsa)
+  if (payload.mealCounts?.length) {
+    hLine(page2, padX, y2, cardW)
+    y2 -= 26
+    page2.drawText(L.mealLabel.toUpperCase(), { x: padX, y: y2, size: 11, font: bold, color: NAVY })
+    y2 -= 20
+    const mealLine = payload.mealCounts.map((m) => `${m.label} × ${m.count}`).join('   ·   ')
+    page2.drawText(mealLine, { x: padX, y: y2, size: 10, font: bold, color: SLATE, maxWidth: cardW, lineHeight: 14 })
+    y2 -= 36
+  }
+
+  // Toplanma noktası + harita linki (varsa)
+  if (payload.meetingPoint?.trim() || payload.mapLink) {
+    hLine(page2, padX, y2, cardW)
+    y2 -= 26
+    page2.drawText(L.meeting.toUpperCase(), { x: padX, y: y2, size: 11, font: bold, color: NAVY })
+    y2 -= 20
+    if (payload.meetingPoint?.trim()) {
+      page2.drawText(payload.meetingPoint.trim(), {
+        x: padX, y: y2, size: 10, font, color: SLATE, maxWidth: cardW, lineHeight: 14,
+      })
+      y2 -= 30
+    }
+    if (payload.mapLink) {
+      page2.drawText(`${L.viewOnMap}: ${payload.mapLink}`, {
+        x: padX, y: y2, size: 9, font, color: NAVY, maxWidth: cardW, lineHeight: 13,
+      })
+    }
+  }
+
+  page2.drawRectangle({ x: 0, y: 0, width: W, height: 6, color: CORAL })
 
   return doc.save()
 }

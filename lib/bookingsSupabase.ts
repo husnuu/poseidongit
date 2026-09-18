@@ -95,6 +95,7 @@ export type SupabaseBookingRow = {
   paid_now?: number | null
   /** Rezervasyon sırasında seçilen site dili (tr | en | de). */
   ui_locale?: string | null
+  checked_in_at?: string | null
   created_at?: string | null
   /** NestPay callback: paid | failed */
   payment_status?: string | null

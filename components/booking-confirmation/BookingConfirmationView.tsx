@@ -13,6 +13,7 @@ import {
   Clock,
   Wine,
   UtensilsCrossed,
+  Backpack,
   MessageCircle,
   CheckCircle2,
   AlertCircle,
@@ -201,24 +202,48 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
                 {ui.guestCountLabel(data.totalPax)}
                 {data.className ? ` · ${data.className}` : ''}
               </p>
+              {data.mealCounts.length > 0 && (
+                <p className="m-0 mt-0.5 text-zinc-500">
+                  {ui.mealLabel}: {data.mealCounts.map((m) => `${m.label} × ${m.count}`).join(', ')}
+                </p>
+              )}
             </div>
           </div>
 
           {!cancelled && (
-            <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#f1f5f9] pt-4">
-              <p className="m-0 text-xl font-black text-[#131719]">{money(data.totalPrice, data.currency)}</p>
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide ${
-                  data.isPaid
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : data.isPendingCash
-                      ? 'bg-amber-50 text-amber-700'
-                      : 'bg-zinc-100 text-zinc-600'
-                }`}
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
-                {data.isPaid ? ui.paidBadge : data.isPendingCash ? ui.cashDueBadge : ui.pendingBadge}
-              </span>
+            <div className="mt-5 border-t border-[#f1f5f9] pt-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="m-0 text-xl font-black text-[#131719]">{money(data.totalPrice, data.currency)}</p>
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide ${
+                    data.isPaid && !data.hasDepositRemaining
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : data.isPaid && data.hasDepositRemaining
+                        ? 'bg-blue-50 text-[#2168b8]'
+                        : data.isPendingCash
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-zinc-100 text-zinc-600'
+                  }`}
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+                  {data.isPaid && !data.hasDepositRemaining
+                    ? ui.paidBadge
+                    : data.isPaid && data.hasDepositRemaining
+                      ? ui.depositPaidBadge
+                      : data.isPendingCash
+                        ? ui.cashDueBadge
+                        : ui.pendingBadge}
+                </span>
+              </div>
+              {data.isPaid && data.hasDepositRemaining && (
+                <>
+                  <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+                    <p className="m-0 font-semibold text-zinc-600">{ui.remainingCashLabel}</p>
+                    <p className="m-0 font-bold text-[#131719]">{money(data.remainingAtDoor, data.currency)}</p>
+                  </div>
+                  <p className="m-0 mt-1.5 text-xs text-zinc-500">{ui.remainingCashNote}</p>
+                </>
+              )}
             </div>
           )}
 
@@ -375,21 +400,21 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
               <div>
                 <p className="m-0 flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
                   <Clock className="h-3 w-3" aria-hidden />
-                  {ui.boardingTimeLabel}
+                  {ui.boardingStartLabel}
                 </p>
-                <p className="m-0 mt-1 font-bold text-[#131719]">{data.boardingTime ?? '—'}</p>
+                <p className="m-0 mt-1 font-bold text-[#131719]">{data.boardingStartTime ?? '—'}</p>
+              </div>
+              <div>
+                <p className="m-0 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+                  {ui.latestBoardingLabel}
+                </p>
+                <p className="m-0 mt-1 font-bold text-[#131719]">{data.latestBoardingTime ?? '—'}</p>
               </div>
               <div>
                 <p className="m-0 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
                   {ui.departureTimeLabel}
                 </p>
                 <p className="m-0 mt-1 font-bold text-[#131719]">{data.time ?? '—'}</p>
-              </div>
-              <div>
-                <p className="m-0 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
-                  {ui.returnTimeLabel}
-                </p>
-                <p className="m-0 mt-1 font-bold text-[#131719]">{data.arrivalTime ?? '—'}</p>
               </div>
             </div>
           </div>
@@ -408,17 +433,17 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
           </div>
         )}
 
-        {/* Bilmeniz gerekenler */}
-        {!cancelled && data.notIncluded.length > 0 && (
-          <div className="mt-4 rounded-2xl border border-[#f1f5f9] bg-white p-5 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
-            <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">{ui.goodToKnowTitle}</p>
-            <ul className="m-0 mt-2 list-none space-y-1.5 p-0">
-              {data.notIncluded.map((line, i) => (
-                <li key={i} className="text-sm text-zinc-600">
-                  {line}
-                </li>
-              ))}
-            </ul>
+        {/* Getirmeniz gerekenler */}
+        {!cancelled && !data.isYachtDeposit && (
+          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-[#f1f5f9] bg-white p-5 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500">
+              <Backpack className="h-4 w-4" aria-hidden />
+            </div>
+            <div>
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-zinc-500">{ui.whatToBringTitle}</p>
+              <p className="m-0 mt-1 text-sm font-medium text-[#131719]">{ui.whatToBringText}</p>
+              <p className="m-0 mt-2 text-sm text-zinc-500">{ui.equipmentProvidedText}</p>
+            </div>
           </div>
         )}
 

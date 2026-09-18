@@ -13,6 +13,8 @@ export type RateLimitBucket =
   | 'voucherPdf'
   | 'qr'
   | 'ticketPdf'
+  | 'crewLogin'
+  | 'crewAction'
 
 type UpstashWindow = '15 m' | '10 m' | '1 h'
 
@@ -33,6 +35,8 @@ const UPSTASH_WINDOWS: Record<RateLimitBucket, { max: number; window: UpstashWin
   qr: { max: 90, window: '10 m' },
   // Genel PDF üretim endpoint'i için koruma.
   ticketPdf: { max: 25, window: '10 m' },
+  crewLogin: { max: 15, window: '15 m' },
+  crewAction: { max: 300, window: '10 m' },
 }
 
 /** Bellek yedekleri (Upstash yok veya hata): sabit pencere, ms. */
@@ -47,6 +51,8 @@ const MEMORY_MS: Record<RateLimitBucket, { max: number; windowMs: number }> = {
   voucherPdf: { max: 40, windowMs: 10 * 60 * 1000 },
   qr: { max: 90, windowMs: 10 * 60 * 1000 },
   ticketPdf: { max: 25, windowMs: 10 * 60 * 1000 },
+  crewLogin: { max: 15, windowMs: 15 * 60 * 1000 },
+  crewAction: { max: 300, windowMs: 10 * 60 * 1000 },
 }
 
 function createRedis(): Redis | null {

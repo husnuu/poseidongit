@@ -8,7 +8,7 @@ import { getEmailBaseUrl } from '@/lib/siteUrls'
 import { normalizeBookingFlowLocale } from '@/lib/i18n/bookingFlowLocale'
 import { bookingToVoucherData } from './bookingToVoucher'
 import type { VoucherData } from './types'
-import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { normalizeMealPreferenceColumn, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 
 function voucherAccessUrl(bookingId: string, token: string): string {
   const base = getEmailBaseUrl().replace(/\/$/, '')
@@ -28,6 +28,10 @@ export async function buildVoucherDataFromBookingRow(
   const paidRaw = row.paid_now
   const paidNow =
     typeof paidRaw === 'number' && Number.isFinite(paidRaw) && paidRaw > 0 ? paidRaw : undefined
+  const mealPreference = normalizeMealPreferenceColumn(row.meal_preference)
+  const mealCounts = (mealPreference?.counts ?? [])
+    .filter((c) => c.count > 0)
+    .map((c) => ({ label: c.label, count: c.count }))
   const booking = {
     id: bookingId,
     tourId: row.tour_id ?? undefined,
@@ -48,6 +52,7 @@ export async function buildVoucherDataFromBookingRow(
     currency: row.currency ?? 'TRY',
     status: row.status ?? 'pending',
     meetingPoint: typeof row.meeting_point === 'string' ? row.meeting_point : undefined,
+    ...(mealCounts.length > 0 && { mealCounts }),
     customer: {
       firstName: row.customer_first_name ?? '',
       lastName: row.customer_last_name ?? '',
@@ -77,6 +82,7 @@ export async function buildVoucherDataFromBookingRow(
         durationLabel?: string | null
         meetingPoint?: string | null
         quickFacts?: { startTime?: string | null; returnTime?: string | null }
+        whereSection?: { locationMapLink?: string | null }
         deposit?: { enabled?: boolean; type?: string; value?: number }
         included?: string[] | null
         notIncluded?: string[] | null
@@ -103,6 +109,7 @@ export async function buildVoucherDataFromBookingRow(
         }
         const fallbackTime = tourMeta.quickFacts?.startTime?.trim() || undefined
         const arrivalTime = tourMeta.quickFacts?.returnTime?.trim() || undefined
+        const mapLink = tourMeta.whereSection?.locationMapLink?.trim() || undefined
         voucherData = {
           ...voucherData,
           ...(voucherData.time ? {} : fallbackTime ? { time: fallbackTime } : {}),
@@ -114,6 +121,7 @@ export async function buildVoucherDataFromBookingRow(
           ...(tourMeta.included?.length && { included: tourMeta.included }),
           ...(tourMeta.notIncluded?.length && { notIncluded: tourMeta.notIncluded }),
           ...(arrivalTime ? { arrivalTime } : {}),
+          ...(mapLink ? { mapLink } : {}),
         }
       }
     }

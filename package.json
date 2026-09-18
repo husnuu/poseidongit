@@ -38,6 +38,7 @@
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "fast-xml-parser": "^5.7.2",
+    "html5-qrcode": "^2.3.8",
     "https-proxy-agent": "^8.0.0",
     "jose": "^6.2.1",
     "jspdf": "^4.2.0",

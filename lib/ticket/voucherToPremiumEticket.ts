@@ -83,6 +83,8 @@ export function voucherDataToPremiumEticket(
     contactWebsite: data.website,
     tourTitle: data.tourTitle !== '—' ? data.tourTitle : undefined,
     meetingPoint: data.meetingPickup !== '—' ? data.meetingPickup : undefined,
+    ...(data.mapLink ? { mapLink: data.mapLink } : {}),
+    ...(data.mealCounts?.length ? { mealCounts: data.mealCounts } : {}),
     brandName: process.env.NEXT_PUBLIC_SITE_NAME?.trim(),
     logoUrl: data.logoUrl,
     locale: L,
