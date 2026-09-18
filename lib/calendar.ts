@@ -81,6 +81,22 @@ function formatGoogleCalendarUtc(d: Date): string {
 }
 
 /**
+ * Booking timezone'a göre etkinlik başlangıç/bitiş anını UTC Date olarak döner.
+ * Google Calendar linki ve .ics üretimi (lib/icsCalendar.ts) tarafından paylaşılır.
+ */
+export function computeEventUtcRange(
+  dateStr: string,
+  timeStr: string | undefined,
+  durationHours: number,
+  timeZone?: string
+): { startUtc: Date; endUtc: Date } {
+  const tz = timeZone?.trim() || DEFAULT_TIME_ZONE
+  const startUtc = localToUtc(dateStr.trim(), (timeStr ?? '00:00').trim().slice(0, 8), tz)
+  const endUtc = new Date(startUtc.getTime() + Math.max(0, durationHours) * 60 * 60 * 1000)
+  return { startUtc, endUtc }
+}
+
+/**
  * Rezervasyon bilgisiyle "Add to Google Calendar" linki üretir.
  * Tarihler booking timezone'a göre yorumlanır, linke UTC (Z) basılır.
  */
@@ -90,8 +106,7 @@ export function buildGoogleCalendarUrl(booking: GoogleCalendarBooking): string {
   const timeStr = (booking.time ?? '00:00').trim().slice(0, 8)
   const durationHours = Math.max(0, booking.durationHours ?? 2)
 
-  const startUtc = localToUtc(dateStr, timeStr, timeZone)
-  const endUtc = new Date(startUtc.getTime() + durationHours * 60 * 60 * 1000)
+  const { startUtc, endUtc } = computeEventUtcRange(dateStr, timeStr, durationHours, timeZone)
 
   const datesParam = `${formatGoogleCalendarUtc(startUtc)}/${formatGoogleCalendarUtc(endUtc)}`
   const text = booking.tourTitle

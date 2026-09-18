@@ -7,7 +7,7 @@
   font-weight: 400;
   font-size: 15px;
   line-height: 1.65;
-  color: #4b5563;
+  color: var(--text-color, #58595b);
   margin: 0;
 }
 

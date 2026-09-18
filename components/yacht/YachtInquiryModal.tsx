@@ -131,7 +131,7 @@ export default function YachtInquiryModal({
           <div className="flex items-center justify-between gap-3 px-4 py-3">
             <h2
               id="yacht-inquiry-modal-title"
-              className="text-lg font-black uppercase tracking-wide text-[#1e3a5f] m-0 truncate"
+              className="text-lg font-black uppercase tracking-wide text-[#2168b8] m-0 truncate"
               style={{ fontFamily: 'var(--font-family)' }}
             >
               Rezervasyon talebi

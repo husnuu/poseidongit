@@ -62,8 +62,7 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  color: #0f172a;
-  opacity: 0.92;
+  color: var(--primary, #2168b8);
 }
 
 .label {
@@ -71,13 +70,13 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: #718096;
+  color: var(--muted, #81848b);
 }
 
 .value {
   font-size: 16px;
   font-weight: 700;
-  color: #1a202c;
+  color: var(--secondary, #131719);
   line-height: 1.4;
   padding-left: 30px;
 }

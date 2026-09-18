@@ -20,7 +20,7 @@ export default function YachtRentalModeTabs({ value, onChange }: YachtRentalMode
         aria-selected={value === 'daily'}
         className={`flex-1 rounded-lg py-2.5 px-3 text-xs font-extrabold uppercase tracking-wide transition ${
           value === 'daily'
-            ? 'bg-white text-[#1e3a5f] shadow-sm ring-1 ring-zinc-200/80'
+            ? 'bg-white text-[#2168b8] shadow-sm ring-1 ring-zinc-200/80'
             : 'text-zinc-500 hover:text-zinc-800'
         }`}
         style={{ fontFamily: 'var(--font-family)' }}
@@ -34,7 +34,7 @@ export default function YachtRentalModeTabs({ value, onChange }: YachtRentalMode
         aria-selected={value === 'overnight'}
         className={`flex-1 rounded-lg py-2.5 px-3 text-xs font-extrabold uppercase tracking-wide transition ${
           value === 'overnight'
-            ? 'bg-white text-[#1e3a5f] shadow-sm ring-1 ring-zinc-200/80'
+            ? 'bg-white text-[#2168b8] shadow-sm ring-1 ring-zinc-200/80'
             : 'text-zinc-500 hover:text-zinc-800'
         }`}
         style={{ fontFamily: 'var(--font-family)' }}

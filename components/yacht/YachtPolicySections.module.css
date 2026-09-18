@@ -19,20 +19,19 @@
 
 .rowTitle {
   margin: 0;
-  font-family: var(--font-family), sans-serif;
-  font-weight: 900;
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-weight: 800;
   text-transform: uppercase;
   font-size: 18px;
   line-height: 1.35;
-  letter-spacing: 0.5px;
-  color: #1e3a5f;
+  color: var(--secondary, #131719);
 }
 
 .rowBody {
   min-width: 0;
   font-size: 15px;
   line-height: 1.65;
-  color: #334155;
+  color: var(--text-color, #58595b);
 }
 
 .rich :global(p) {
@@ -45,7 +44,7 @@
 
 .rich :global(strong) {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--secondary, #131719);
 }
 
 .plain {
@@ -80,7 +79,7 @@
   margin-bottom: 10px;
   font-size: 15px;
   line-height: 1.5;
-  color: #334155;
+  color: var(--text-color, #58595b);
 }
 
 .checkItem:last-child {
@@ -90,7 +89,7 @@
 .checkMark {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #64748b;
+  color: var(--primary, #2168b8);
 }
 
 @media (max-width: 720px) {

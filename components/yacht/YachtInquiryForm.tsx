@@ -176,39 +176,39 @@ export default function YachtInquiryForm({
     <>
       <Script id={DEFAULT_SCRIPT_ID} src={SCRIPT_URL} strategy="afterInteractive" />
       <div
-        className="mb-6 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm"
+        className="mb-6 overflow-hidden rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)]"
         style={{ fontFamily: 'var(--font-family)' }}
       >
-        <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50/80 to-white px-4 py-3.5">
-          <p className="m-0 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#1e3a5f]">
+        <div className="border-b border-[#f1f5f9] px-4 py-3.5">
+          <p className="m-0 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#2168b8]">
             Talep özeti
           </p>
         </div>
-        <ul className="m-0 list-none space-y-0 divide-y divide-slate-100 p-0">
+        <ul className="m-0 list-none space-y-0 divide-y divide-[#f1f5f9] p-0">
           <li className="flex items-start gap-3 px-4 py-3.5">
-            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#1e3a5f]/[0.07] text-[#1e3a5f]">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#2168b8]/[0.08] text-[#2168b8]">
               <Sailboat className="h-4 w-4" strokeWidth={2} aria-hidden />
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
               <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">Yat</p>
-              <p className="m-0 mt-0.5 text-[15px] font-bold leading-snug text-slate-900">{yachtName}</p>
+              <p className="m-0 mt-0.5 text-[15px] font-bold leading-snug text-[#131719]">{yachtName}</p>
             </div>
           </li>
           {locationLabel ? (
             <li className="flex items-start gap-3 px-4 py-3.5">
-              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500">
                 <MapPin className="h-4 w-4" strokeWidth={2} aria-hidden />
               </span>
               <div className="min-w-0 flex-1 pt-0.5">
-                <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">Konum</p>
-                <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-slate-800">
+                <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">Konum</p>
+                <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-[#131719]">
                   {locationLabel}
                 </p>
               </div>
             </li>
           ) : null}
           <li className="flex items-start gap-3 px-4 py-3.5">
-            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500">
               {rentalMode === 'daily' ? (
                 <Clock className="h-4 w-4" strokeWidth={2} aria-hidden />
               ) : (
@@ -216,21 +216,21 @@ export default function YachtInquiryForm({
               )}
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
-              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">
                 Kiralama türü
               </p>
-              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-slate-800">
+              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-[#131719]">
                 {rentalTypeLabel}
               </p>
             </div>
           </li>
           <li className="flex items-start gap-3 px-4 py-3.5">
-            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500">
               <CalendarDays className="h-4 w-4" strokeWidth={2} aria-hidden />
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
-              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">Tarih</p>
-              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-slate-800">
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">Tarih</p>
+              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-[#131719]">
                 {rentalMode === 'daily'
                   ? selectedDate
                     ? formatDateTrShort(selectedDate)
@@ -245,38 +245,38 @@ export default function YachtInquiryForm({
             </div>
           </li>
           <li className="flex items-start gap-3 px-4 py-3.5">
-            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500">
               <Clock className="h-4 w-4" strokeWidth={2} aria-hidden />
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
-              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">Süre</p>
-              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-slate-800">
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">Süre</p>
+              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-[#131719]">
                 {rentalMode === 'daily' ? '7 saat' : `${overnightNights ?? '—'} gece`}
               </p>
             </div>
           </li>
           <li className="flex items-start gap-3 px-4 py-3.5">
-            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500">
               <Users className="h-4 w-4" strokeWidth={2} aria-hidden />
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
-              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">
                 Misafir sayısı
               </p>
-              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-slate-800">
+              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-[#131719]">
                 {guestCount} kişi
               </p>
             </div>
           </li>
           <li className="flex items-start gap-3 px-4 py-3.5">
-            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-              <span className="text-xs font-black text-slate-600">₺</span>
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500">
+              <span className="text-xs font-black text-zinc-500">₺</span>
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
-              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">
                 {rentalMode === 'daily' ? 'Günlük fiyat' : 'Toplam fiyat'}
               </p>
-              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-slate-800">
+              <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-[#131719]">
                 {priceLabel}
               </p>
             </div>
@@ -338,10 +338,11 @@ export default function YachtInquiryForm({
         <button
           type="submit"
           disabled={status === 'sending' || (!!siteKey && !turnstileToken)}
-          className="w-full rounded-xl border-0 font-bold uppercase text-white text-base shadow-[0_2px_8px_rgba(15,23,42,0.1)] transition hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none hover:shadow-[0_3px_10px_rgba(15,23,42,0.12)]"
+          className="w-full rounded-xl border-0 font-bold uppercase text-white text-base transition hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none"
           style={{
             height: 56,
-            background: 'linear-gradient(180deg, #fb923c 0%, #ea580c 100%)',
+            background: '#fc6c4f',
+            boxShadow: '0 2px 10px rgba(252, 108, 79, 0.28)',
             fontFamily: 'var(--font-family)',
           }}
         >
