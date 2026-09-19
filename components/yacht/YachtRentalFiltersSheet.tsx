@@ -4,6 +4,8 @@ import { useEffect, useId } from 'react'
 import type { PriceFilterOption } from '@/lib/yachtListFilters'
 import type { CapacityFilterId, CabinFilterId } from '@/lib/yachtListFilters'
 import { getCapacityOptions, getCabinOptions } from '@/lib/yachtListFilters'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 
 const ACCENT = '#2168b8'
 const ACCENT_DARK = '#1e3a5f'
@@ -20,6 +22,7 @@ interface YachtRentalFiltersSheetProps {
   onCabinChange: (v: CabinFilterId) => void
   onApply: () => void
   onClearDraft: () => void
+  locale?: SiteLocale
 }
 
 function Pill({
@@ -67,7 +70,9 @@ export default function YachtRentalFiltersSheet({
   onCabinChange,
   onApply,
   onClearDraft,
+  locale = 'tr',
 }: YachtRentalFiltersSheetProps) {
+  const ui = getYachtUi(locale)
   const titleId = useId()
 
   useEffect(() => {
@@ -85,14 +90,14 @@ export default function YachtRentalFiltersSheet({
 
   if (!open) return null
 
-  const capacityOpts = getCapacityOptions()
-  const cabinOpts = getCabinOptions()
+  const capacityOpts = getCapacityOptions(locale)
+  const cabinOpts = getCabinOptions(locale)
 
   return (
     <div className="fixed inset-0 z-[80] flex flex-col justify-end sm:justify-center sm:p-4" role="presentation">
       <button
         type="button"
-        aria-label="Filtreleri kapat"
+        aria-label={ui.filtersCloseAria}
         className="absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity"
         onClick={onClose}
       />
@@ -111,13 +116,13 @@ export default function YachtRentalFiltersSheet({
             aria-hidden
           />
           <h2 id={titleId} className="m-0 text-lg font-black tracking-tight" style={{ color: ACCENT_DARK }}>
-            Filtreler
+            {ui.filtersTitle}
           </h2>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5">
           <section className="mb-8">
-            <h3 className="mb-3 text-sm font-black uppercase tracking-wide text-zinc-900">Günlük fiyat</h3>
+            <h3 className="mb-3 text-sm font-black uppercase tracking-wide text-zinc-900">{ui.filtersDailyPriceTitle}</h3>
             <div className="flex flex-wrap gap-2">
               {priceOptions.map((opt) => {
                 const selected =
@@ -138,7 +143,7 @@ export default function YachtRentalFiltersSheet({
           </section>
 
           <section className="mb-8">
-            <h3 className="mb-3 text-sm font-black uppercase tracking-wide text-zinc-900">Kişi kapasitesi</h3>
+            <h3 className="mb-3 text-sm font-black uppercase tracking-wide text-zinc-900">{ui.filtersCapacityTitle}</h3>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {capacityOpts.map((o) => (
                 <Pill
@@ -175,7 +180,7 @@ export default function YachtRentalFiltersSheet({
           </section>
 
           <section className="mb-2">
-            <h3 className="mb-3 text-sm font-black uppercase tracking-wide text-zinc-900">Kabin sayısı</h3>
+            <h3 className="mb-3 text-sm font-black uppercase tracking-wide text-zinc-900">{ui.filtersCabinsTitle}</h3>
             <div className="flex flex-wrap gap-2">
               {cabinOpts.map((o) => (
                 <Pill
@@ -197,7 +202,7 @@ export default function YachtRentalFiltersSheet({
               onClick={onClearDraft}
               className="flex-1 rounded-xl border-2 border-zinc-200 py-3.5 text-sm font-bold text-zinc-700 transition hover:bg-zinc-50"
             >
-              Temizle
+              {ui.filtersClearButton}
             </button>
             <button
               type="button"
@@ -205,7 +210,7 @@ export default function YachtRentalFiltersSheet({
               className="flex-1 rounded-xl py-3.5 text-sm font-bold text-white shadow-md transition hover:opacity-95"
               style={{ backgroundColor: ACCENT }}
             >
-              Uygula
+              {ui.filtersApplyButton}
             </button>
           </div>
         </div>

@@ -7,7 +7,8 @@ import YachtInquiryForm from '@/components/yacht/YachtInquiryForm'
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
 import bookingStyles from '@/components/booking/booking.module.css'
 import stickyCardStyles from '@/components/StickyBookingCard.module.css'
-import { DEFAULT_YACHT_INQUIRY_CTA } from '@/lib/yachtConversionCopy'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 import { Check, ChevronLeft } from 'lucide-react'
 import {
   isValidOvernightRange,
@@ -23,6 +24,7 @@ interface YachtInquiryModalProps {
   /** Açılışta hangi adım: 1 = takvim + misafir, 2 = form */
   initialStep: 1 | 2
   yacht: YachtRentalDocument
+  locale?: SiteLocale
   rentalMode: YachtRentalMode
   onRentalModeChange: (m: YachtRentalMode) => void
   showRentalModeTabs: boolean
@@ -44,6 +46,7 @@ export default function YachtInquiryModal({
   onClose,
   initialStep,
   yacht,
+  locale = 'tr',
   rentalMode,
   onRentalModeChange,
   showRentalModeTabs,
@@ -59,6 +62,7 @@ export default function YachtInquiryModal({
   ctaText,
   resolveDayPrice,
 }: YachtInquiryModalProps) {
+  const ui = getYachtUi(locale)
   const [step, setStep] = useState<1 | 2>(initialStep)
 
   useEffect(() => {
@@ -88,8 +92,7 @@ export default function YachtInquiryModal({
   if (!open) return null
 
   const locLabel = [yacht.locationTitle, yacht.marina].filter(Boolean).join(' · ') || null
-  const modalSubtitle =
-    step === 1 ? 'Tarih ve misafir sayısını seçin' : 'İletişim bilgilerinizi bırakın'
+  const modalSubtitle = step === 1 ? ui.step1Subtitle : ui.step2Subtitle
 
   const rangeOk =
     overnightRange.checkIn && overnightRange.checkOut
@@ -134,13 +137,13 @@ export default function YachtInquiryModal({
               className="text-lg font-black uppercase tracking-wide text-[#2168b8] m-0 truncate"
               style={{ fontFamily: 'var(--font-family)' }}
             >
-              Rezervasyon talebi
+              {ui.inquiryModalTitle}
             </h2>
             <button
               type="button"
               onClick={onClose}
               className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 shrink-0"
-              aria-label="Kapat"
+              aria-label={ui.modalCloseAria}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <path
@@ -160,7 +163,7 @@ export default function YachtInquiryModal({
             aria-valuenow={step}
             aria-valuemin={1}
             aria-valuemax={2}
-            aria-label={`Adım ${step} / 2`}
+            aria-label={ui.stepAria(step, 2)}
           >
             {[1, 2].map((s) => (
               <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -197,7 +200,7 @@ export default function YachtInquiryModal({
                 {modalSubtitle}
               </p>
               {showRentalModeTabs ? (
-                <YachtRentalModeTabs value={rentalMode} onChange={onRentalModeChange} />
+                <YachtRentalModeTabs value={rentalMode} onChange={onRentalModeChange} locale={locale} />
               ) : null}
               <YachtCalendar
                 blockedDates={blockedDates}
@@ -207,6 +210,7 @@ export default function YachtInquiryModal({
                 rangeValue={overnightRange}
                 onRangeChange={onOvernightRangeChange}
                 resolveDayPrice={resolveDayPrice}
+                locale={locale}
               />
 
               <div className="mt-6 mb-2">
@@ -214,13 +218,13 @@ export default function YachtInquiryModal({
                   className="text-sm font-semibold text-zinc-700 mb-2"
                   style={{ fontFamily: 'var(--font-family)' }}
                 >
-                  Misafir sayısı
+                  {ui.guestCountLabel}
                 </p>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     className={bookingStyles.counterBtn}
-                    aria-label="Azalt"
+                    aria-label={ui.decreaseAria}
                     disabled={guestCount <= 1}
                     onClick={() => onGuestCountChange(Math.max(1, guestCount - 1))}
                   >
@@ -230,7 +234,7 @@ export default function YachtInquiryModal({
                   <button
                     type="button"
                     className={`${bookingStyles.counterBtn} ${bookingStyles.counterBtnPlus}`}
-                    aria-label="Artır"
+                    aria-label={ui.increaseAria}
                     disabled={guestCount >= maxGuests}
                     onClick={() => onGuestCountChange(Math.min(maxGuests, guestCount + 1))}
                   >
@@ -247,10 +251,10 @@ export default function YachtInquiryModal({
               {!step1Ready ? (
                 <p className="text-xs text-zinc-500 m-0 mb-2 text-center sm:text-left">
                   {rentalMode === 'daily'
-                    ? 'Devam etmek için takvimden bir gün seçin.'
+                    ? ui.pickDayHint
                     : !rangeOk
-                      ? 'Devam etmek için giriş ve ayrılış günlerini seçin (en az 1 gece).'
-                      : 'Konaklama fiyatı için gece takviminde tüm geceler tanımlı olmalı veya konaklamalı gecelik referans fiyat girilmeli.'}
+                      ? ui.pickRangeHint
+                      : ui.overnightPriceHint}
                 </p>
               ) : null}
               <button
@@ -259,7 +263,7 @@ export default function YachtInquiryModal({
                 disabled={!step1Ready}
                 onClick={() => setStep(2)}
               >
-                Devam et
+                {ui.continueButton}
               </button>
             </div>
           </div>
@@ -272,7 +276,7 @@ export default function YachtInquiryModal({
               style={{ fontFamily: 'var(--font-family)' }}
             >
               <ChevronLeft className="w-4 h-4 shrink-0" strokeWidth={2.5} aria-hidden />
-              Tarih ve misafir
+              {ui.backToDateGuests}
             </button>
             <p
               className="text-xs font-semibold text-zinc-500 m-0 mb-4"
@@ -297,7 +301,8 @@ export default function YachtInquiryModal({
                   : null
               }
               guestCount={guestCount}
-              submitLabel={ctaText?.trim() || DEFAULT_YACHT_INQUIRY_CTA}
+              submitLabel={ctaText?.trim() || ui.defaultInquiryCta}
+              locale={locale}
             />
           </div>
         )}

@@ -228,9 +228,11 @@ export async function POST(request: NextRequest) {
     const emailLocale = normalizeBookingFlowLocale(data.ui_locale)
     const oldDateFormatted = formatTicketDate(data.date ?? '', emailLocale)
     const newDateFormatted = formatTicketDate(newDate, emailLocale)
+    const dateLabel = emailLocale === 'en' ? 'Date' : emailLocale === 'de' ? 'Datum' : 'Tarih'
+    const locaLabel = emailLocale === 'en' ? 'Loca (private booth)' : emailLocale === 'de' ? 'Loge' : 'Loca'
     const locaChangeNote =
       finalFirstClassLocas && finalFirstClassLocas.length > 0
-        ? `\nLoca: ${finalFirstClassLocas.join(', ')}`
+        ? `\n${locaLabel}: ${finalFirstClassLocas.join(', ')}`
         : ''
     if (data.customer_email) {
       await sendBookingUpdatedEmails({
@@ -243,7 +245,7 @@ export async function POST(request: NextRequest) {
           lastName: String(data.customer_last_name ?? ''),
           email: String(data.customer_email),
         },
-        changeSummary: `Tarih: ${oldDateFormatted} → ${newDateFormatted}${locaChangeNote}`,
+        changeSummary: `${dateLabel}: ${oldDateFormatted} → ${newDateFormatted}${locaChangeNote}`,
         siteLocale: emailLocale,
         accessToken: typeof data.access_token === 'string' ? data.access_token : undefined,
       })

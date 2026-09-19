@@ -1,4 +1,6 @@
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 
 export type YachtRentalMode = 'daily' | 'overnight'
 
@@ -70,9 +72,9 @@ export function isValidOvernightRange(range: OvernightRange | null): boolean {
   return overnightNights(range.checkIn, range.checkOut) >= 1
 }
 
-export function formatDateTrShort(iso: string): string {
+export function formatDateTrShort(iso: string, locale: SiteLocale = 'tr'): string {
   try {
-    return new Date(iso + 'T12:00:00').toLocaleDateString('tr-TR', {
+    return new Date(iso + 'T12:00:00').toLocaleDateString(getYachtUi(locale).dateLocale, {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -82,9 +84,9 @@ export function formatDateTrShort(iso: string): string {
   }
 }
 
-export function formatOvernightSummaryTr(range: OvernightRange): string {
+export function formatOvernightSummaryTr(range: OvernightRange, locale: SiteLocale = 'tr'): string {
   const n = overnightNights(range.checkIn, range.checkOut)
-  const a = formatDateTrShort(range.checkIn)
-  const b = formatDateTrShort(range.checkOut)
-  return `${a} – ${b} (${n} gece)`
+  const a = formatDateTrShort(range.checkIn, locale)
+  const b = formatDateTrShort(range.checkOut, locale)
+  return `${a} – ${b} (${getYachtUi(locale).summaryNights(n)})`
 }

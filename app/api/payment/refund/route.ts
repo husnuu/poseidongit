@@ -14,6 +14,7 @@ import { smartRefund, parseProcReturnCodeMessage } from '@/lib/nestpay-refund'
 import { getAdminEmail } from '@/lib/adminAuth'
 import { extractAdminSessionTokenFromRequest, verifyAdminSessionToken } from '@/lib/adminSession'
 import { sendRefundApprovedEmails } from '@/lib/email'
+import { normalizeBookingFlowLocale } from '@/lib/i18n/bookingFlowLocale'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -135,6 +136,7 @@ export async function POST(request: NextRequest) {
         amount: refundAmountRaw,
         currency: String(booking.currency ?? 'TRY'),
         refundType: (result.refundType ?? null) as 'void' | 'credit' | null,
+        siteLocale: normalizeBookingFlowLocale(booking.ui_locale),
       })
     }
 

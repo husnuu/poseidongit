@@ -13,14 +13,17 @@ import YachtAmenitiesSection from '@/components/yacht/YachtAmenitiesSection'
 import YachtPolicySections from '@/components/yacht/YachtPolicySections'
 import YachtFAQAccordion from '@/components/yacht/YachtFAQAccordion'
 import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import YachtOptionalSections from '@/components/yacht/YachtOptionalSections'
+
 /** Ağır client alt ağaçları ayrı chunk — ChunkLoadError / timeout riskini azaltır */
 const PhotoGrid = dynamic(() => import('@/components/PhotoGrid'), {
   loading: () => (
     <div
       className="w-full min-h-[300px] bg-zinc-100 motion-safe:animate-pulse"
       aria-busy
-      aria-label="Galeri yükleniyor"
+      aria-label={getYachtUi('tr').galleryLoadingAria}
     />
   ),
 })
@@ -44,12 +47,14 @@ interface YachtDetailViewProps {
 }
 
 export default function YachtDetailView({ locale, yacht, path }: YachtDetailViewProps) {
+  const ui = getYachtUi(locale)
+  const tourUi = getTourPageUi(locale)
   const images = buildYachtPhotoGridImages(yacht)
   const sidebarGallery = buildYachtSidebarGallery(yacht)
 
   const crumbs = [
-    { name: 'Ana Sayfa', url: '/' },
-    { name: 'Yat kiralama', url: '/yat-kiralama' },
+    { name: tourUi.breadcrumbHome, url: '/' },
+    { name: ui.breadcrumbYachtRental, url: '/yat-kiralama' },
   ]
   if (yacht.locationSlug && yacht.locationTitle) {
     crumbs.push({
@@ -77,26 +82,29 @@ export default function YachtDetailView({ locale, yacht, path }: YachtDetailView
               yachtType={yacht.yachtType}
               locationTitle={yacht.locationTitle}
               marina={yacht.marina}
+              locale={locale}
             />
             <YachtShortSummary text={yacht.shortDescription} />
             <YachtHighlights
               specifications={yacht.specifications}
               departurePoint={yacht.departurePoint}
               technicalSpecs={yacht.technicalSpecs}
+              locale={locale}
             />
-            <YachtRouteSection routes={yacht.routeSuggestions ?? []} />
-            <YachtDescription description={yacht.fullDescription} />
+            <YachtRouteSection routes={yacht.routeSuggestions ?? []} locale={locale} />
+            <YachtDescription description={yacht.fullDescription} locale={locale} />
             <YachtIncludedWithGallery
               included={yacht.included}
               notIncluded={yacht.notIncluded}
               gallery={sidebarGallery}
+              locale={locale}
             />
-            <YachtAmenitiesSection amenities={yacht.amenities ?? []} />
-            <YachtPolicySections yacht={yacht} />
-            <YachtFAQAccordion items={yacht.faqs ?? []} />
+            <YachtAmenitiesSection amenities={yacht.amenities ?? []} locale={locale} />
+            <YachtPolicySections yacht={yacht} locale={locale} />
+            <YachtFAQAccordion items={yacht.faqs ?? []} locale={locale} />
             <YachtOptionalSections locale={locale} yacht={yacht} />
           </main>
-          <YachtInquiryExperience yacht={yacht} />
+          <YachtInquiryExperience yacht={yacht} locale={locale} />
         </div>
       </div>
     </div>

@@ -162,9 +162,9 @@ export default function Step2ClassSelect({
 
   const paxLabel = (() => {
     const parts: string[] = []
-    if (state.counts.adult > 0) parts.push(`${state.counts.adult} yetişkin`)
-    if (state.counts.child > 0) parts.push(`${state.counts.child} çocuk`)
-    if (state.counts.baby > 0) parts.push(`${state.counts.baby} bebek`)
+    if (state.counts.adult > 0) parts.push(`${state.counts.adult} ${ui.adult}`)
+    if (state.counts.child > 0) parts.push(`${state.counts.child} ${ui.child}`)
+    if (state.counts.baby > 0) parts.push(`${state.counts.baby} ${ui.baby}`)
     return parts.join(' · ')
   })()
 
@@ -412,7 +412,7 @@ export default function Step2ClassSelect({
                           <>
                             <p className={styles.classCardPremiumPrice}>
                               {price.toLocaleString(ui.numberLocale)} ₺
-                              <span className={styles.classCardPremiumPriceSub}>/kişi</span>
+                              <span className={styles.classCardPremiumPriceSub}>{ui.perPersonSlashSuffix}</span>
                             </p>
                           </>
                         ) : (
@@ -445,7 +445,7 @@ export default function Step2ClassSelect({
                         {selected ? (
                           <>
                             <Check width={14} height={14} strokeWidth={3} aria-hidden />
-                            Seçildi
+                            {ui.selectedButtonLabel}
                           </>
                         ) : (
                           ui.selectClassButton

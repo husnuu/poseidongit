@@ -1,6 +1,8 @@
 import { Info, MapPin } from 'lucide-react'
 import { yachtTypeLabel } from '@/lib/yachtTypes'
 import YachtTypeGlyph from '@/components/yacht/YachtTypeGlyph'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 import styles from './YachtHeader.module.css'
 
 interface YachtHeaderProps {
@@ -8,6 +10,7 @@ interface YachtHeaderProps {
   yachtType?: string | null
   locationTitle?: string | null
   marina?: string | null
+  locale?: SiteLocale
 }
 
 export default function YachtHeader({
@@ -15,16 +18,18 @@ export default function YachtHeader({
   yachtType,
   locationTitle,
   marina,
+  locale = 'tr',
 }: YachtHeaderProps) {
-  const typeLabel = yachtTypeLabel(yachtType)
-  const typeUpper = typeLabel.toLocaleUpperCase('tr-TR')
+  const ui = getYachtUi(locale)
+  const typeLabel = yachtTypeLabel(yachtType, locale)
+  const typeUpper = typeLabel.toLocaleUpperCase(ui.dateLocale)
   /** EVİTA: önce liman / marina, yoksa bölge */
   const locPrimary = marina?.trim() || locationTitle?.trim() || ''
-  const locDisplay = locPrimary ? locPrimary.toLocaleUpperCase('tr-TR') : ''
+  const locDisplay = locPrimary ? locPrimary.toLocaleUpperCase(ui.dateLocale) : ''
   const locTooltip = [locationTitle, marina].filter((s) => s?.trim()).join(' · ') || undefined
   const showLocInfo = Boolean(locTooltip?.includes(' · '))
 
-  const titleDisplay = name.trim().toLocaleUpperCase('tr-TR')
+  const titleDisplay = name.trim().toLocaleUpperCase(ui.dateLocale)
 
   return (
     <header className={styles.header}>
@@ -45,7 +50,7 @@ export default function YachtHeader({
                 title={locTooltip}
                 tabIndex={0}
                 role="img"
-                aria-label={`Konum: ${locTooltip}`}
+                aria-label={ui.locationInfoAria(locTooltip)}
               >
                 <Info className={styles.infoIcon} strokeWidth={2} aria-hidden />
               </span>

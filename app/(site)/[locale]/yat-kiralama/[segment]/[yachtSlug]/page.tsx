@@ -7,6 +7,7 @@ import type { YachtRentalDocument } from '@/lib/yachtTypes'
 import YachtDetailView from '@/components/yacht/YachtDetailView'
 import { buildYachtDetailMetadata } from '@/lib/yachtMetadata'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
+import { translateYachtRentalDocument } from '@/lib/yachtTranslate'
 
 /** Root layout `headers()` kullandığı için ISR/statik ön üretim ile çakışmayı önler (prod: DYNAMIC_SERVER_USAGE). */
 export const dynamic = 'force-dynamic'
@@ -52,5 +53,6 @@ export default async function YatKiralamaLocationDetailPage({
   const yacht = await getYacht(segment, yachtSlug)
   if (!yacht) notFound()
   const path = `/yat-kiralama/${segment}/${yachtSlug}`
-  return <YachtDetailView locale={locale} yacht={yacht} path={path} />
+  const translatedYacht = await translateYachtRentalDocument(yacht, locale)
+  return <YachtDetailView locale={locale} yacht={translatedYacht} path={path} />
 }

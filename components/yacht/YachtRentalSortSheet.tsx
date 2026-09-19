@@ -12,25 +12,30 @@ import {
   X,
 } from 'lucide-react'
 import type { YachtSortMode } from '@/lib/yachtListSort'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi, type YachtUi } from '@/lib/i18n/yachtUi'
 
 const ACCENT = '#0f766e'
 const ACCENT_RING = 'rgba(15, 118, 110, 0.35)'
 
-const ROWS: { value: YachtSortMode; label: string; Icon: LucideIcon }[] = [
-  { value: 'default', label: 'Önerilen', Icon: BadgeCheck },
-  { value: 'price_asc', label: 'Fiyat: düşükten yükseğe', Icon: ArrowDownCircle },
-  { value: 'price_desc', label: 'Fiyat: yüksekten düşüğe', Icon: ArrowUpCircle },
-  { value: 'capacity_asc', label: 'Kapasite: azdan çoğa', Icon: ArrowDownNarrowWide },
-  { value: 'capacity_desc', label: 'Kapasite: çoktan aza', Icon: ArrowUpNarrowWide },
-  { value: 'cabins_asc', label: 'Kabin: azdan çoğa', Icon: BedDouble },
-  { value: 'cabins_desc', label: 'Kabin: çoktan aza', Icon: BedDouble },
-]
+function sortRows(ui: YachtUi): { value: YachtSortMode; label: string; Icon: LucideIcon }[] {
+  return [
+    { value: 'default', label: ui.sortDefault, Icon: BadgeCheck },
+    { value: 'price_asc', label: ui.sortPriceAsc, Icon: ArrowDownCircle },
+    { value: 'price_desc', label: ui.sortPriceDesc, Icon: ArrowUpCircle },
+    { value: 'capacity_asc', label: ui.sortCapacityAsc, Icon: ArrowDownNarrowWide },
+    { value: 'capacity_desc', label: ui.sortCapacityDesc, Icon: ArrowUpNarrowWide },
+    { value: 'cabins_asc', label: ui.sortCabinsAsc, Icon: BedDouble },
+    { value: 'cabins_desc', label: ui.sortCabinsDesc, Icon: BedDouble },
+  ]
+}
 
 interface YachtRentalSortSheetProps {
   open: boolean
   onClose: () => void
   value: YachtSortMode
   onChange: (mode: YachtSortMode) => void
+  locale?: SiteLocale
 }
 
 export default function YachtRentalSortSheet({
@@ -38,7 +43,10 @@ export default function YachtRentalSortSheet({
   onClose,
   value,
   onChange,
+  locale = 'tr',
 }: YachtRentalSortSheetProps) {
+  const ui = getYachtUi(locale)
+  const ROWS = sortRows(ui)
   const titleId = useId()
 
   useEffect(() => {
@@ -65,7 +73,7 @@ export default function YachtRentalSortSheet({
     <div className="fixed inset-0 z-[85] flex flex-col justify-end sm:justify-center sm:p-4" role="presentation">
       <button
         type="button"
-        aria-label="Kapat"
+        aria-label={ui.sortCloseAria}
         className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
         onClick={onClose}
       />
@@ -83,12 +91,12 @@ export default function YachtRentalSortSheet({
             type="button"
             onClick={onClose}
             className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-zinc-600 transition hover:bg-zinc-100"
-            aria-label="Kapat"
+            aria-label={ui.sortCloseAria}
           >
             <X className="h-6 w-6" strokeWidth={2} />
           </button>
           <h2 id={titleId} className="m-0 text-center text-base font-bold text-zinc-900">
-            Sıralama
+            {ui.sortTitle}
           </h2>
         </div>
 

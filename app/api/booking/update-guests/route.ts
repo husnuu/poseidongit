@@ -111,10 +111,13 @@ export async function POST(request: NextRequest) {
       throw new Error(`Supabase update-guests failed: ${updateError.message}`)
     }
 
+    const summaryLocale = normalizeBookingFlowLocale(row.ui_locale)
+    const nameLabel = summaryLocale === 'en' ? 'Full name' : summaryLocale === 'de' ? 'Name' : 'Ad Soyad'
+    const otherTravelersLabel = summaryLocale === 'en' ? 'Other travelers' : summaryLocale === 'de' ? 'Weitere Reisende' : 'Diğer yolcular'
     const changeSummary = [
-      `Ad Soyad: ${firstName} ${lastName}`,
+      `${nameLabel}: ${firstName} ${lastName}`,
       mergedTravelers.length > 0
-        ? `Diğer yolcular: ${mergedTravelers.map((t) => `${t.firstName} ${t.lastName}`).join(', ')}`
+        ? `${otherTravelersLabel}: ${mergedTravelers.map((t) => `${t.firstName} ${t.lastName}`).join(', ')}`
         : '',
     ]
       .filter(Boolean)
@@ -126,7 +129,7 @@ export async function POST(request: NextRequest) {
       time: row.time ?? undefined,
       customer: { firstName, lastName, email: row.customer_email ?? email },
       changeSummary,
-      siteLocale: normalizeBookingFlowLocale(row.ui_locale),
+      siteLocale: summaryLocale,
       accessToken: typeof row.access_token === 'string' ? row.access_token : undefined,
     })
 

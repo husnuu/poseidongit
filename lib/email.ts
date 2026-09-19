@@ -943,6 +943,12 @@ function bookingUpdatedHeadline(loc: SiteLocale): string {
   return 'Rezervasyonunuz Güncellendi'
 }
 
+function bookingUpdatedWhatChangedLabel(loc: SiteLocale): string {
+  if (loc === 'en') return 'What changed?'
+  if (loc === 'de') return 'Was hat sich geändert?'
+  return 'Ne değişti?'
+}
+
 /**
  * Rezervasyon güncellendiğinde (tarih değişikliği, misafir bilgisi düzenleme vb.)
  * hem müşteriye hem adminlere bilgilendirme e-postası gönderir.
@@ -995,7 +1001,7 @@ export async function sendBookingUpdatedEmails(payload: BookingUpdatedEmailPaylo
   <tr><td style="background:${EMAIL_SURFACE};padding:12px 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_BORDER};border-radius:12px;">
       <tr><td style="padding:18px 20px;">
-        <p style="margin:0 0 6px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">Ne değişti?</p>
+        <p style="margin:0 0 6px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">${escapeHtml(bookingUpdatedWhatChangedLabel(loc))}</p>
         <p style="margin:0;font-size:14px;font-weight:600;color:${secondary};line-height:1.6;">${changeSummaryHtml}</p>
       </td></tr>
     </table>
@@ -1359,18 +1365,18 @@ function buildPremiumConfirmationEmailHtml(
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 26px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">${escapeHtml(t.contactTitle)}</p>
     <table role="presentation" cellpadding="0" cellspacing="0">
-      <tr>
-        <td style="padding:0 8px 0 0;">
-          <a href="tel:${escapeHtml(supportPhone.replace(/[^+\d]/g, ''))}" style="display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid ${EMAIL_BORDER};border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;color:${secondary};text-decoration:none;">
-            ${emailIconSvg('phone')} <span>${escapeHtml(supportPhone)}</span>
-          </a>
-        </td>
-        <td>
-          <a href="mailto:${escapeHtml(supportEmail)}" style="display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid ${EMAIL_BORDER};border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;color:${secondary};text-decoration:none;">
-            ${emailIconSvg('mail')} <span>${escapeHtml(supportEmail)}</span>
-          </a>
-        </td>
-      </tr>
+      <tr><td style="padding:0 0 8px;">
+        <a href="tel:${escapeHtml(supportPhone.replace(/[^+\d]/g, ''))}" style="display:inline-block;white-space:nowrap;background:#f1f5f9;border:1px solid ${EMAIL_BORDER};border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;color:${secondary};text-decoration:none;">
+          <span style="display:inline-block;vertical-align:middle;">${emailIconSvg('phone')}</span>
+          <span style="display:inline-block;vertical-align:middle;margin-left:6px;">${escapeHtml(supportPhone)}</span>
+        </a>
+      </td></tr>
+      <tr><td>
+        <a href="mailto:${escapeHtml(supportEmail)}" style="display:inline-block;white-space:nowrap;background:#f1f5f9;border:1px solid ${EMAIL_BORDER};border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;color:${secondary};text-decoration:none;">
+          <span style="display:inline-block;vertical-align:middle;">${emailIconSvg('mail')}</span>
+          <span style="display:inline-block;vertical-align:middle;margin-left:6px;">${escapeHtml(supportEmail)}</span>
+        </a>
+      </td></tr>
     </table>
   </td></tr>
 
@@ -1508,27 +1514,95 @@ export type CancellationEmailOpts = {
   siteLocale?: SiteLocale
 }
 
+/** Sayısal misafir dökümü (X Yetişkin, Y Çocuk, Z Bebek) — üç dilde. */
+function guestCountsLine(counts: { adult: number; child: number; infant: number }, loc: SiteLocale): string {
+  if (loc === 'en') {
+    return `${counts.adult} Adult${counts.adult === 1 ? '' : 's'}${counts.child ? `, ${counts.child} Child${counts.child === 1 ? '' : 'ren'}` : ''}${counts.infant ? `, ${counts.infant} Infant${counts.infant === 1 ? '' : 's'}` : ''}`
+  }
+  if (loc === 'de') {
+    return `${counts.adult} Erwachsene${counts.child ? `, ${counts.child} Kind${counts.child === 1 ? '' : 'er'}` : ''}${counts.infant ? `, ${counts.infant} Kleinkind${counts.infant === 1 ? '' : 'er'}` : ''}`
+  }
+  return `${counts.adult} Yetişkin${counts.child ? `, ${counts.child} Çocuk` : ''}${counts.infant ? `, ${counts.infant} Bebek` : ''}`
+}
+
+function cancellationEmailStrings(loc: SiteLocale) {
+  if (loc === 'en') {
+    return {
+      pageTitle: 'Booking Cancelled',
+      heading: 'Your Booking Has Been Cancelled',
+      greeting: (name: string) => `Dear ${name}, your booking has been successfully cancelled.`,
+      refundInfoTitle: 'Refund Information',
+      refundWithAmount: (amount: number, currency: string) => `Your payment of ${amount} ${currency} will be refunded.`,
+      refundGeneric: 'Your payment will be refunded.',
+      refundEta: 'Your refund will be completed within 3–10 business days, depending on your bank.',
+      refundHelp: 'Please contact us for further assistance.',
+      reservationNo: 'Booking Ref.',
+      tour: 'Tour',
+      date: 'Date',
+      guests: 'Guests',
+      total: 'Total',
+      helpTitle: 'Help & Contact',
+    }
+  }
+  if (loc === 'de') {
+    return {
+      pageTitle: 'Buchung storniert',
+      heading: 'Ihre Buchung wurde storniert',
+      greeting: (name: string) => `Sehr geehrte(r) ${name}, Ihre Buchung wurde erfolgreich storniert.`,
+      refundInfoTitle: 'Rückerstattungsinformationen',
+      refundWithAmount: (amount: number, currency: string) => `Ihre Zahlung in Höhe von ${amount} ${currency} wird erstattet.`,
+      refundGeneric: 'Ihre Zahlung wird erstattet.',
+      refundEta: 'Die Rückerstattung wird je nach Bank innerhalb von 3–10 Werktagen abgeschlossen.',
+      refundHelp: 'Bitte kontaktieren Sie uns für weitere Unterstützung.',
+      reservationNo: 'Buchungsnr.',
+      tour: 'Tour',
+      date: 'Datum',
+      guests: 'Gäste',
+      total: 'Gesamt',
+      helpTitle: 'Hilfe & Kontakt',
+    }
+  }
+  return {
+    pageTitle: 'Rezervasyon İptal',
+    heading: 'Rezervasyonunuz İptal Edildi',
+    greeting: (name: string) => `Sayın ${name}, rezervasyonunuz başarıyla iptal edilmiştir.`,
+    refundInfoTitle: 'İade Bilgisi',
+    refundWithAmount: (amount: number, currency: string) => `${amount} ${currency} tutarındaki ödemeniz iade edilecektir.`,
+    refundGeneric: 'Ödemeniz iade edilecektir.',
+    refundEta: 'İade süreciniz bankanıza göre 3–10 iş günü içinde tamamlanır.',
+    refundHelp: 'Daha fazla yardım için bize ulaşın.',
+    reservationNo: 'Rezervasyon No',
+    tour: 'Tur',
+    date: 'Tarih',
+    guests: 'Misafirler',
+    total: 'Toplam',
+    helpTitle: 'Yardım ve İletişim',
+  }
+}
+
 function buildCancellationCustomerHtml(o: CancellationEmailOpts): string {
+  const loc = normalizeBookingFlowLocale(o.siteLocale)
+  const s = cancellationEmailStrings(loc)
   const siteName = getSiteName() || 'Booking'
   const supportPhone = process.env.SUPPORT_PHONE?.trim() || '+90 533 417 36 56'
   const supportEmail = process.env.SUPPORT_EMAIL?.trim() || 'turkeycesme@hotmail.com'
   const customerName = `${o.customer.firstName} ${o.customer.lastName}`.trim() || '—'
-  const dateFormatted = formatDate(o.date)
+  const dateFormatted = formatEmailBookingDate(o.date, loc)
 
   let refundLine = ''
   if (o.refundOk) {
     refundLine = `<div style="margin:0;padding:16px 18px;background:#f8fafc;border:1px solid ${EMAIL_BORDER};border-left:3px solid ${EMAIL_NAVY};border-radius:8px;">
-      <p style="margin:0;font-size:13px;font-weight:700;color:${EMAIL_NAVY};text-transform:uppercase;letter-spacing:0.06em;">İade Bilgisi</p>
+      <p style="margin:0;font-size:13px;font-weight:700;color:${EMAIL_NAVY};text-transform:uppercase;letter-spacing:0.06em;">${escapeHtml(s.refundInfoTitle)}</p>
       <p style="margin:8px 0 0;font-size:14px;color:${EMAIL_TEXT_BODY};line-height:1.55;">
-        ${o.refundAmount != null ? `${o.refundAmount} ${o.currency} tutarındaki ödemeniz iade edilecektir.` : 'Ödemeniz iade edilecektir.'}
-        İade süreciniz bankanıza göre 3–10 iş günü içinde tamamlanır.
+        ${escapeHtml(o.refundAmount != null ? s.refundWithAmount(o.refundAmount, o.currency) : s.refundGeneric)}
+        ${escapeHtml(s.refundEta)}
       </p>
     </div>`
   } else if (o.refundStatus === 'refund_failed' && o.refundErrMsg) {
     refundLine = `<div style="margin:0;padding:16px 18px;background:#fafafa;border:1px solid ${EMAIL_BORDER};border-left:3px solid #525252;border-radius:8px;">
-      <p style="margin:0;font-size:13px;font-weight:700;color:${EMAIL_NAVY};text-transform:uppercase;letter-spacing:0.06em;">İade Bilgisi</p>
+      <p style="margin:0;font-size:13px;font-weight:700;color:${EMAIL_NAVY};text-transform:uppercase;letter-spacing:0.06em;">${escapeHtml(s.refundInfoTitle)}</p>
       <p style="margin:8px 0 0;font-size:14px;color:${EMAIL_TEXT_BODY};">${escapeHtml(o.refundErrMsg)}</p>
-      <p style="margin:8px 0 0;font-size:13px;color:${EMAIL_MUTED};">Daha fazla yardım için bize ulaşın.</p>
+      <p style="margin:8px 0 0;font-size:13px;color:${EMAIL_MUTED};">${escapeHtml(s.refundHelp)}</p>
     </div>`
   }
 
@@ -1536,8 +1610,8 @@ function buildCancellationCustomerHtml(o: CancellationEmailOpts): string {
   const cancelIcon = `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:48px;height:48px;background:#f1f5f9;border-radius:10px;border:1px solid ${EMAIL_BORDER};text-align:center;vertical-align:middle;">${emailIconSvg('x')}</td></tr></table>`
 
   return `<!DOCTYPE html>
-<html lang="tr">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rezervasyon İptal</title></head>
+<html lang="${loc}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(s.pageTitle)}</title></head>
 <body style="margin:0;padding:0;background:${EMAIL_BG_PAGE};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_BG_PAGE};">
 <tr><td align="center" style="padding:36px 16px;">
@@ -1554,8 +1628,8 @@ function buildCancellationCustomerHtml(o: CancellationEmailOpts): string {
       <tr>
         <td style="width:56px;vertical-align:top;padding-right:14px;">${cancelIcon}</td>
         <td style="vertical-align:top;">
-          <p style="margin:0;font-size:17px;font-weight:700;color:${navy};">Rezervasyonunuz İptal Edildi</p>
-          <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.5;">Sayın ${escapeHtml(customerName)}, rezervasyonunuz başarıyla iptal edilmiştir.</p>
+          <p style="margin:0;font-size:17px;font-weight:700;color:${navy};">${escapeHtml(s.heading)}</p>
+          <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.5;">${escapeHtml(s.greeting(customerName))}</p>
         </td>
       </tr>
     </table>
@@ -1564,24 +1638,24 @@ function buildCancellationCustomerHtml(o: CancellationEmailOpts): string {
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;">Rezervasyon No</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;">${escapeHtml(s.reservationNo)}</td>
         <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${navy};font-size:13px;font-weight:700;text-align:right;font-family:ui-monospace,monospace;">${escapeHtml(o.bookingId)}</td>
       </tr>
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tur</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">${escapeHtml(s.tour)}</td>
         <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td>
       </tr>
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tarih</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">${escapeHtml(s.date)}</td>
         <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td>
       </tr>
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Misafirler</td>
-        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;text-align:right;">${o.counts.adult} Yetişkin${o.counts.child ? `, ${o.counts.child} Çocuk` : ''}${o.counts.infant ? `, ${o.counts.infant} Bebek` : ''}</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">${escapeHtml(s.guests)}</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;text-align:right;">${escapeHtml(guestCountsLine(o.counts, loc))}</td>
       </tr>
       <tr>
-        <td style="padding:13px 0 0;color:${EMAIL_MUTED};font-size:13px;font-weight:700;">Toplam</td>
-        <td style="padding:13px 0 0;color:${navy};font-size:18px;font-weight:700;text-align:right;">${o.totalPrice.toLocaleString('tr-TR')} ${escapeHtml(o.currency)}</td>
+        <td style="padding:13px 0 0;color:${EMAIL_MUTED};font-size:13px;font-weight:700;">${escapeHtml(s.total)}</td>
+        <td style="padding:13px 0 0;color:${navy};font-size:18px;font-weight:700;text-align:right;">${o.totalPrice.toLocaleString(loc === 'en' ? 'en-US' : loc === 'de' ? 'de-DE' : 'tr-TR')} ${escapeHtml(o.currency)}</td>
       </tr>
     </table>
   </td></tr>
@@ -1589,7 +1663,7 @@ function buildCancellationCustomerHtml(o: CancellationEmailOpts): string {
   ${refundLine ? `<tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">${refundLine}</td></tr>` : ''}
 
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 26px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
-    <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">Yardım ve İletişim</p>
+    <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">${escapeHtml(s.helpTitle)}</p>
     <table role="presentation" cellpadding="0" cellspacing="0">
       <tr>
         <td style="padding:0 10px 6px 0;vertical-align:middle;width:22px;line-height:0;">${emailIconSvg('phone')}</td>
@@ -1673,12 +1747,19 @@ export async function sendBookingCancelledEmails(opts: CancellationEmailOpts): P
   const from = getFrom()
   const siteName = getSiteName() || 'Booking'
 
+  const cancelLoc = normalizeBookingFlowLocale(opts.siteLocale)
+  const cancelSubject = cancelLoc === 'en'
+    ? `Your booking has been cancelled — ${opts.tourTitle}`
+    : cancelLoc === 'de'
+      ? `Ihre Buchung wurde storniert — ${opts.tourTitle}`
+      : `Rezervasyonunuz iptal edildi — ${opts.tourTitle}`
+
   const adminEmails = getAdminNotificationEmails()
   const [customerResult, adminResult] = await Promise.allSettled([
     resend.emails.send({
       from,
       to: [opts.customer.email],
-      subject: `Rezervasyonunuz iptal edildi — ${escapeHtml(opts.tourTitle)}`,
+      subject: cancelSubject,
       html: buildCancellationCustomerHtml(opts),
     }),
     adminEmails.length > 0
@@ -1946,17 +2027,64 @@ export type RefundRequestEmailOpts = {
   currency: string
   reason?: string | null
   manageUrl?: string | null
+  siteLocale?: SiteLocale
+}
+
+function refundRequestEmailStrings(loc: SiteLocale) {
+  if (loc === 'en') {
+    return {
+      pageTitle: 'Refund Request Received',
+      heading: 'Your Refund Request Has Been Received',
+      greeting: (name: string) => `Dear ${name}, your refund request has been forwarded to our team.`,
+      etaNote: 'It will be resolved within 24 hours.',
+      reservationNo: 'Booking Ref.',
+      tour: 'Tour',
+      date: 'Date',
+      requestedAmount: 'Requested refund',
+      reasonLabel: 'Reason',
+      helpTitle: 'Help & Contact',
+    }
+  }
+  if (loc === 'de') {
+    return {
+      pageTitle: 'Rückerstattungsantrag eingegangen',
+      heading: 'Ihr Rückerstattungsantrag ist eingegangen',
+      greeting: (name: string) => `Sehr geehrte(r) ${name}, Ihr Rückerstattungsantrag wurde an unser Team weitergeleitet.`,
+      etaNote: 'Er wird innerhalb von 24 Stunden bearbeitet.',
+      reservationNo: 'Buchungsnr.',
+      tour: 'Tour',
+      date: 'Datum',
+      requestedAmount: 'Beantragte Rückerstattung',
+      reasonLabel: 'Grund',
+      helpTitle: 'Hilfe & Kontakt',
+    }
+  }
+  return {
+    pageTitle: 'İade Talebi Alındı',
+    heading: 'İade Talebiniz Alındı',
+    greeting: (name: string) => `Sayın ${name}, iade talebiniz yöneticilerimize iletildi.`,
+    etaNote: '24 saat içinde sonuçlanacaktır.',
+    reservationNo: 'Rezervasyon No',
+    tour: 'Tur',
+    date: 'Tarih',
+    requestedAmount: 'Talep edilen iade',
+    reasonLabel: 'Talep nedeni',
+    helpTitle: 'Yardım ve İletişim',
+  }
 }
 
 function refundRequestCustomerHtml(o: RefundRequestEmailOpts): string {
+  const loc = normalizeBookingFlowLocale(o.siteLocale)
+  const s = refundRequestEmailStrings(loc)
   const siteName = getSiteName() || 'Booking'
   const supportPhone = process.env.SUPPORT_PHONE?.trim() || '+90 533 417 36 56'
   const supportEmail = process.env.SUPPORT_EMAIL?.trim() || 'turkeycesme@hotmail.com'
   const customerName = `${o.customer.firstName} ${o.customer.lastName}`.trim() || '—'
-  const dateFormatted = formatDate(o.date)
+  const dateFormatted = formatEmailBookingDate(o.date, loc)
+  const numLocale = loc === 'en' ? 'en-US' : loc === 'de' ? 'de-DE' : 'tr-TR'
   const pendingIcon = `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:48px;height:48px;background:#f1f5f9;border-radius:10px;border:1px solid ${EMAIL_BORDER};text-align:center;vertical-align:middle;">${emailIconSvg('clock')}</td></tr></table>`
   return `<!DOCTYPE html>
-<html lang="tr"><head><meta charset="utf-8"><title>İade Talebi Alındı</title></head>
+<html lang="${loc}"><head><meta charset="utf-8"><title>${escapeHtml(s.pageTitle)}</title></head>
 <body style="margin:0;padding:0;background:${EMAIL_BG_PAGE};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_BG_PAGE};"><tr><td align="center" style="padding:36px 16px;">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
@@ -1968,26 +2096,26 @@ function refundRequestCustomerHtml(o: RefundRequestEmailOpts): string {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
       <td style="width:56px;vertical-align:top;padding-right:14px;">${pendingIcon}</td>
       <td style="vertical-align:top;">
-        <p style="margin:0;font-size:17px;font-weight:700;color:${EMAIL_NAVY};">İade Talebiniz Alındı</p>
-        <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.5;">Sayın ${escapeHtml(customerName)}, iade talebiniz yöneticilerimize iletildi. <strong style="color:${EMAIL_TEXT_BODY};font-weight:600;">24 saat içinde</strong> sonuçlanacaktır.</p>
+        <p style="margin:0;font-size:17px;font-weight:700;color:${EMAIL_NAVY};">${escapeHtml(s.heading)}</p>
+        <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.5;">${escapeHtml(s.greeting(customerName))} <strong style="color:${EMAIL_TEXT_BODY};font-weight:600;">${escapeHtml(s.etaNote)}</strong></p>
       </td>
     </tr></table>
   </td></tr>
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;">Rezervasyon No</td>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;">${escapeHtml(s.reservationNo)}</td>
           <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_NAVY};font-size:13px;font-weight:700;text-align:right;font-family:ui-monospace,monospace;">${escapeHtml(o.bookingId)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tur</td>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">${escapeHtml(s.tour)}</td>
           <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tarih</td>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">${escapeHtml(s.date)}</td>
           <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td></tr>
-      <tr><td style="padding:13px 0 0;color:${EMAIL_MUTED};font-size:13px;font-weight:700;">Talep edilen iade</td>
-          <td style="padding:13px 0 0;color:${EMAIL_NAVY};font-size:18px;font-weight:700;text-align:right;">${o.amount.toLocaleString('tr-TR')} ${escapeHtml(o.currency)}</td></tr>
+      <tr><td style="padding:13px 0 0;color:${EMAIL_MUTED};font-size:13px;font-weight:700;">${escapeHtml(s.requestedAmount)}</td>
+          <td style="padding:13px 0 0;color:${EMAIL_NAVY};font-size:18px;font-weight:700;text-align:right;">${o.amount.toLocaleString(numLocale)} ${escapeHtml(o.currency)}</td></tr>
     </table>
-    ${o.reason?.trim() ? `<p style="margin:14px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${EMAIL_NAVY};">Talep nedeni:</strong> ${escapeHtml(o.reason.trim())}</p>` : ''}
+    ${o.reason?.trim() ? `<p style="margin:14px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${EMAIL_NAVY};">${escapeHtml(s.reasonLabel)}:</strong> ${escapeHtml(o.reason.trim())}</p>` : ''}
   </td></tr>
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 26px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
-    <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">Yardım ve İletişim</p>
+    <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">${escapeHtml(s.helpTitle)}</p>
     <table role="presentation" cellpadding="0" cellspacing="0">
       <tr><td style="padding:0 10px 6px 0;vertical-align:middle;width:22px;line-height:0;">${emailIconSvg('phone')}</td>
           <td style="padding:0 0 6px;vertical-align:middle;font-size:13px;color:${EMAIL_TEXT_BODY};">${escapeHtml(supportPhone)}</td></tr>
@@ -2039,11 +2167,17 @@ export async function sendRefundRequestReceivedEmails(opts: RefundRequestEmailOp
     return
   }
   const from = getFrom()
+  const refundReqLoc = normalizeBookingFlowLocale(opts.siteLocale)
+  const refundReqSubject = refundReqLoc === 'en'
+    ? `Your refund request has been received — ${opts.tourTitle}`
+    : refundReqLoc === 'de'
+      ? `Ihr Rückerstattungsantrag ist eingegangen — ${opts.tourTitle}`
+      : `İade talebiniz alındı — ${opts.tourTitle}`
   const [c, a] = await Promise.allSettled([
     resend.emails.send({
       from,
       to: [opts.customer.email],
-      subject: `İade talebiniz alındı — ${opts.tourTitle}`,
+      subject: refundReqSubject,
       html: refundRequestCustomerHtml(opts),
     }),
     getAdminNotificationEmails().length > 0
@@ -2075,19 +2209,97 @@ export type RefundDecisionEmailOpts = {
   refundType?: 'void' | 'credit' | null
   /** Reddedildiyse sebep. */
   reason?: string | null
+  siteLocale?: SiteLocale
+}
+
+function refundApprovedEmailStrings(loc: SiteLocale) {
+  if (loc === 'en') {
+    return {
+      pageTitle: 'Your Refund Has Been Approved',
+      heading: 'Your Refund Request Has Been Approved',
+      greeting: (name: string) => `Dear ${name}, your refund request has been approved and your booking has been cancelled.`,
+      speedVoid: 'The refund has been notified to your bank; the amount usually appears back on your card within a few hours.',
+      speedCredit: 'The refund has been notified to your bank; depending on your bank, it may take 3–10 business days to appear on your card.',
+      reservationNo: 'Booking Ref.',
+      tour: 'Tour',
+      date: 'Date',
+      refundAmount: 'Refund amount',
+    }
+  }
+  if (loc === 'de') {
+    return {
+      pageTitle: 'Ihre Rückerstattung wurde genehmigt',
+      heading: 'Ihr Rückerstattungsantrag wurde genehmigt',
+      greeting: (name: string) => `Sehr geehrte(r) ${name}, Ihr Rückerstattungsantrag wurde genehmigt und Ihre Buchung wurde storniert.`,
+      speedVoid: 'Die Rückerstattung wurde Ihrer Bank gemeldet; der Betrag erscheint in der Regel innerhalb weniger Stunden auf Ihrer Karte.',
+      speedCredit: 'Die Rückerstattung wurde Ihrer Bank gemeldet; je nach Bank kann es 3–10 Werktage dauern, bis der Betrag auf Ihrer Karte erscheint.',
+      reservationNo: 'Buchungsnr.',
+      tour: 'Tour',
+      date: 'Datum',
+      refundAmount: 'Erstattungsbetrag',
+    }
+  }
+  return {
+    pageTitle: 'İade Talebiniz Onaylandı',
+    heading: 'İade Talebiniz Onaylandı',
+    greeting: (name: string) => `Sayın ${name}, iade talebiniz onaylandı ve rezervasyonunuz iptal edildi.`,
+    speedVoid: 'İade bankaya bildirildi; tutar genellikle birkaç saat içinde kartınıza geri yansır.',
+    speedCredit: 'İade bankaya bildirildi; banka süreçlerine göre tutarın kartınıza yansıması 3–10 iş günü sürebilir.',
+    reservationNo: 'Rezervasyon No',
+    tour: 'Tur',
+    date: 'Tarih',
+    refundAmount: 'İade tutarı',
+  }
+}
+
+function refundRejectedEmailStrings(loc: SiteLocale) {
+  if (loc === 'en') {
+    return {
+      pageTitle: 'About Your Refund Request',
+      heading: 'Your Refund Request Has Been Declined',
+      greeting: (name: string) => `Dear ${name}, we reviewed your refund request but were unable to approve it at this time.`,
+      reasonLabel: 'Reason',
+      contactPrefix: 'For more information, please contact us:',
+      reservationNo: 'Booking Ref.',
+      tour: 'Tour',
+      date: 'Date',
+    }
+  }
+  if (loc === 'de') {
+    return {
+      pageTitle: 'Zu Ihrem Rückerstattungsantrag',
+      heading: 'Ihr Rückerstattungsantrag wurde abgelehnt',
+      greeting: (name: string) => `Sehr geehrte(r) ${name}, wir haben Ihren Rückerstattungsantrag geprüft, konnten ihn derzeit jedoch nicht genehmigen.`,
+      reasonLabel: 'Grund',
+      contactPrefix: 'Für weitere Informationen kontaktieren Sie uns bitte:',
+      reservationNo: 'Buchungsnr.',
+      tour: 'Tour',
+      date: 'Datum',
+    }
+  }
+  return {
+    pageTitle: 'İade Talebiniz Reddedildi',
+    heading: 'İade Talebiniz Reddedildi',
+    greeting: (name: string) => `Sayın ${name}, iade talebinizi inceledik ancak şu an için onaylayamadık.`,
+    reasonLabel: 'Ret nedeni',
+    contactPrefix: 'Ek bilgi için bizimle iletişime geçebilirsiniz:',
+    reservationNo: 'Rezervasyon No',
+    tour: 'Tur',
+    date: 'Tarih',
+  }
 }
 
 function refundApprovedCustomerHtml(o: RefundDecisionEmailOpts): string {
+  const loc = normalizeBookingFlowLocale(o.siteLocale)
+  const s = refundApprovedEmailStrings(loc)
   const siteName = getSiteName() || 'Booking'
   const customerName = `${o.customer.firstName} ${o.customer.lastName}`.trim() || '—'
-  const dateFormatted = formatDate(o.date)
-  const speedNote =
-    o.refundType === 'void'
-      ? 'İade bankaya bildirildi; tutar genellikle birkaç saat içinde kartınıza geri yansır.'
-      : 'İade bankaya bildirildi; banka süreçlerine göre tutarın kartınıza yansıması 3–10 iş günü sürebilir.'
+  const dateFormatted = formatEmailBookingDate(o.date, loc)
+  const numLocale = loc === 'en' ? 'en-US' : loc === 'de' ? 'de-DE' : 'tr-TR'
+  const speedNote = o.refundType === 'void' ? s.speedVoid : s.speedCredit
   const okIcon = `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:48px;height:48px;background:#f1f5f9;border-radius:10px;border:1px solid ${EMAIL_BORDER};text-align:center;vertical-align:middle;">${emailIconSvg('check')}</td></tr></table>`
   return `<!DOCTYPE html>
-<html lang="tr"><head><meta charset="utf-8"><title>İade Talebiniz Onaylandı</title></head>
+<html lang="${loc}"><head><meta charset="utf-8"><title>${escapeHtml(s.pageTitle)}</title></head>
 <body style="margin:0;padding:0;background:${EMAIL_BG_PAGE};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_BG_PAGE};"><tr><td align="center" style="padding:36px 16px;">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
@@ -2099,21 +2311,21 @@ function refundApprovedCustomerHtml(o: RefundDecisionEmailOpts): string {
     <table role="presentation" width="100%"><tr>
       <td style="width:56px;vertical-align:top;padding-right:14px;">${okIcon}</td>
       <td style="vertical-align:top;">
-        <p style="margin:0;font-size:17px;font-weight:700;color:${EMAIL_NAVY};">İade Talebiniz Onaylandı</p>
-        <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.55;">Sayın ${escapeHtml(customerName)}, iade talebiniz onaylandı ve rezervasyonunuz iptal edildi. ${escapeHtml(speedNote)}</p>
+        <p style="margin:0;font-size:17px;font-weight:700;color:${EMAIL_NAVY};">${escapeHtml(s.heading)}</p>
+        <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.55;">${escapeHtml(s.greeting(customerName))} ${escapeHtml(speedNote)}</p>
       </td>
     </tr></table>
   </td></tr>
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;">Rezervasyon No</td>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;">${escapeHtml(s.reservationNo)}</td>
           <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_NAVY};font-size:13px;font-weight:700;text-align:right;font-family:ui-monospace,monospace;">${escapeHtml(o.bookingId)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tur</td>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">${escapeHtml(s.tour)}</td>
           <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tarih</td>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">${escapeHtml(s.date)}</td>
           <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td></tr>
-      <tr><td style="padding:13px 0 0;color:${EMAIL_MUTED};font-size:13px;font-weight:700;">İade tutarı</td>
-          <td style="padding:13px 0 0;color:${EMAIL_NAVY};font-size:18px;font-weight:700;text-align:right;">${o.amount.toLocaleString('tr-TR')} ${escapeHtml(o.currency)}</td></tr>
+      <tr><td style="padding:13px 0 0;color:${EMAIL_MUTED};font-size:13px;font-weight:700;">${escapeHtml(s.refundAmount)}</td>
+          <td style="padding:13px 0 0;color:${EMAIL_NAVY};font-size:18px;font-weight:700;text-align:right;">${o.amount.toLocaleString(numLocale)} ${escapeHtml(o.currency)}</td></tr>
     </table>
   </td></tr>
   <tr><td style="background:#eef1f5;padding:18px 28px;border-radius:0 0 10px 10px;border:1px solid ${EMAIL_BORDER};border-top:none;text-align:center;">
@@ -2123,16 +2335,18 @@ function refundApprovedCustomerHtml(o: RefundDecisionEmailOpts): string {
 }
 
 function refundRejectedCustomerHtml(o: RefundDecisionEmailOpts): string {
+  const loc = normalizeBookingFlowLocale(o.siteLocale)
+  const s = refundRejectedEmailStrings(loc)
   const siteName = getSiteName() || 'Booking'
   const supportEmail = process.env.SUPPORT_EMAIL?.trim() || 'turkeycesme@hotmail.com'
   const customerName = `${o.customer.firstName} ${o.customer.lastName}`.trim() || '—'
-  const dateFormatted = formatDate(o.date)
+  const dateFormatted = formatEmailBookingDate(o.date, loc)
   const reasonBlock = o.reason?.trim()
-    ? `<p style="margin:14px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${EMAIL_NAVY};">Ret nedeni:</strong> ${escapeHtml(o.reason.trim())}</p>`
+    ? `<p style="margin:14px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${EMAIL_NAVY};">${escapeHtml(s.reasonLabel)}:</strong> ${escapeHtml(o.reason.trim())}</p>`
     : ''
   const xIcon = `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:48px;height:48px;background:#f1f5f9;border-radius:10px;border:1px solid ${EMAIL_BORDER};text-align:center;vertical-align:middle;">${emailIconSvg('x')}</td></tr></table>`
   return `<!DOCTYPE html>
-<html lang="tr"><head><meta charset="utf-8"><title>İade Talebiniz Reddedildi</title></head>
+<html lang="${loc}"><head><meta charset="utf-8"><title>${escapeHtml(s.pageTitle)}</title></head>
 <body style="margin:0;padding:0;background:${EMAIL_BG_PAGE};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_BG_PAGE};"><tr><td align="center" style="padding:36px 16px;">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
@@ -2144,22 +2358,22 @@ function refundRejectedCustomerHtml(o: RefundDecisionEmailOpts): string {
     <table role="presentation" width="100%"><tr>
       <td style="width:56px;vertical-align:top;padding-right:14px;">${xIcon}</td>
       <td style="vertical-align:top;">
-        <p style="margin:0;font-size:17px;font-weight:700;color:${EMAIL_NAVY};">İade Talebiniz Reddedildi</p>
-        <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.55;">Sayın ${escapeHtml(customerName)}, iade talebinizi inceledik ancak şu an için onaylayamadık.</p>
+        <p style="margin:0;font-size:17px;font-weight:700;color:${EMAIL_NAVY};">${escapeHtml(s.heading)}</p>
+        <p style="margin:6px 0 0;font-size:14px;color:${EMAIL_MUTED};line-height:1.55;">${escapeHtml(s.greeting(customerName))}</p>
       </td>
     </tr></table>
   </td></tr>
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;">Rezervasyon No</td>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;width:44%;">${escapeHtml(s.reservationNo)}</td>
           <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_NAVY};font-size:13px;font-weight:700;text-align:right;font-family:ui-monospace,monospace;">${escapeHtml(o.bookingId)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tur</td>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">${escapeHtml(s.tour)}</td>
           <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;font-weight:500;text-align:right;">${escapeHtml(o.tourTitle)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Tarih</td>
+      <tr><td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">${escapeHtml(s.date)}</td>
           <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_TEXT_BODY};font-size:13px;text-align:right;">${escapeHtml(dateFormatted)}${o.time ? ` · ${escapeHtml(o.time)}` : ''}</td></tr>
     </table>
     ${reasonBlock}
-    <p style="margin:14px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};">Ek bilgi için bizimle iletişime geçebilirsiniz: <a href="mailto:${escapeHtml(supportEmail)}" style="color:${EMAIL_NAVY};font-weight:600;text-decoration:underline;">${escapeHtml(supportEmail)}</a></p>
+    <p style="margin:14px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};">${escapeHtml(s.contactPrefix)} <a href="mailto:${escapeHtml(supportEmail)}" style="color:${EMAIL_NAVY};font-weight:600;text-decoration:underline;">${escapeHtml(supportEmail)}</a></p>
   </td></tr>
   <tr><td style="background:#eef1f5;padding:18px 28px;border-radius:0 0 10px 10px;border:1px solid ${EMAIL_BORDER};border-top:none;text-align:center;">
     <p style="margin:0;font-size:12px;color:${EMAIL_MUTED};">&copy; ${new Date().getFullYear()} ${escapeHtml(siteName)}</p>
@@ -2174,10 +2388,16 @@ export async function sendRefundApprovedEmails(opts: RefundDecisionEmailOpts): P
     return
   }
   const from = getFrom()
+  const approveLoc = normalizeBookingFlowLocale(opts.siteLocale)
+  const approveSubject = approveLoc === 'en'
+    ? `Your refund has been approved — ${opts.tourTitle}`
+    : approveLoc === 'de'
+      ? `Ihre Rückerstattung wurde genehmigt — ${opts.tourTitle}`
+      : `İade talebiniz onaylandı — ${opts.tourTitle}`
   const { error } = await resend.emails.send({
     from,
     to: [opts.customer.email],
-    subject: `İade talebiniz onaylandı — ${opts.tourTitle}`,
+    subject: approveSubject,
     html: refundApprovedCustomerHtml(opts),
   })
   if (error) {
@@ -2192,10 +2412,16 @@ export async function sendRefundRejectedEmails(opts: RefundDecisionEmailOpts): P
     return
   }
   const from = getFrom()
+  const rejectLoc = normalizeBookingFlowLocale(opts.siteLocale)
+  const rejectSubject = rejectLoc === 'en'
+    ? `About your refund request — ${opts.tourTitle}`
+    : rejectLoc === 'de'
+      ? `Zu Ihrem Rückerstattungsantrag — ${opts.tourTitle}`
+      : `İade talebiniz hakkında bilgi — ${opts.tourTitle}`
   const { error } = await resend.emails.send({
     from,
     to: [opts.customer.email],
-    subject: `İade talebiniz hakkında bilgi — ${opts.tourTitle}`,
+    subject: rejectSubject,
     html: refundRejectedCustomerHtml(opts),
   })
   if (error) {

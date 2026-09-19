@@ -4,16 +4,22 @@ import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import type { YachtSidebarGalleryItem } from '@/lib/yachtImages'
 import { SANITY_DISPLAY_IMAGE_PROPS } from '@/lib/sanityImage'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import lightboxStyles from '@/components/PhotoGrid.module.css'
 import styles from './YachtIncludedWithGallery.module.css'
 
 interface YachtGalleryGridProps {
   images: YachtSidebarGalleryItem[]
+  locale?: SiteLocale
 }
 
 const VISIBLE_COUNT = 6
 
-export default function YachtGalleryGrid({ images }: YachtGalleryGridProps) {
+export default function YachtGalleryGrid({ images, locale = 'tr' }: YachtGalleryGridProps) {
+  const ui = getYachtUi(locale)
+  const tourUi = getTourPageUi(locale)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
 
@@ -71,7 +77,7 @@ export default function YachtGalleryGrid({ images }: YachtGalleryGridProps) {
             type="button"
             className={`${styles.thumb} ${i === 0 ? styles.thumbFeatured : ''}`}
             onClick={() => openLightbox(i)}
-            aria-label={`${item.alt} — büyüt`}
+            aria-label={`${item.alt} — ${ui.galleryEnlargeAriaSuffix}`}
           >
             <Image
               src={item.src}
@@ -95,13 +101,13 @@ export default function YachtGalleryGrid({ images }: YachtGalleryGridProps) {
           onClick={closeLightbox}
           role="dialog"
           aria-modal="true"
-          aria-label="Fotoğraf galerisi"
+          aria-label={ui.galleryLightboxAria}
         >
           <button
             type="button"
             onClick={closeLightbox}
             className={lightboxStyles.lightboxClose}
-            aria-label="Kapat"
+            aria-label={tourUi.photoGridClose}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path
@@ -132,7 +138,7 @@ export default function YachtGalleryGrid({ images }: YachtGalleryGridProps) {
                 type="button"
                 onClick={prevImage}
                 className={`${lightboxStyles.lightboxNav} ${lightboxStyles.lightboxPrev}`}
-                aria-label="Önceki fotoğraf"
+                aria-label={tourUi.photoGridPrev}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path
@@ -148,7 +154,7 @@ export default function YachtGalleryGrid({ images }: YachtGalleryGridProps) {
                 type="button"
                 onClick={nextImage}
                 className={`${lightboxStyles.lightboxNav} ${lightboxStyles.lightboxNext}`}
-                aria-label="Sonraki fotoğraf"
+                aria-label={tourUi.photoGridNext}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path

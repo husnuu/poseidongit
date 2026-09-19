@@ -20,7 +20,9 @@ export type BookingWizardUi = {
   numberLocale: string
   firstClassLoca: FirstClassLocaUi
   rulesTitleFallback: string
+  bookingRulesToggle: string
   guestCountTitle: string
+  guestCountSuffix: string
   adult: string
   adultAge: string
   child: string
@@ -55,6 +57,8 @@ export type BookingWizardUi = {
   quotaFullThisDate: string
   lastNSpots: (n: number) => string
   selectedBadge: string
+  selectedButtonLabel: string
+  perPersonSlashSuffix: string
   adultPriceLine: (dateFormatted: string, priceFormatted: string) => string
   remainingSpots: (cap: number) => string
   insufficientCapLine: () => string
@@ -118,6 +122,9 @@ export type BookingWizardUi = {
   termsLinkText: string
   termsCheckboxLead: string
   termsCheckboxTrail: string
+  distanceSalesAgreementLinkText: string
+  distanceSalesAgreementLead: string
+  distanceSalesAgreementTrail: string
   back: string
   backAria: string
   closeAria: string
@@ -201,7 +208,9 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       selectedOfRequired: (s, r) => `${s} / ${r} loca seçildi`,
     },
     rulesTitleFallback: 'Rezervasyon Bilgileri',
+    bookingRulesToggle: 'Rezervasyon kuralları',
     guestCountTitle: 'Kişi Sayısı',
+    guestCountSuffix: 'kişi',
     adult: 'Yetişkin',
     adultAge: '11–99 yaş',
     child: 'Çocuk',
@@ -237,6 +246,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     quotaFullThisDate: 'Bu tarih için kontenjan dolmuştur',
     lastNSpots: (n) => `Son ${n} yer`,
     selectedBadge: 'SEÇİLDİ',
+    selectedButtonLabel: 'Seçildi',
+    perPersonSlashSuffix: '/kişi',
     adultPriceLine: (d, p) => `Yetişkin (${d}): ${p} ₺`,
     remainingSpots: (cap) => `Kalan: ${cap} kişi`,
     insufficientCapLine: () =>
@@ -298,6 +309,9 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     termsLinkText: 'Şartlar & Koşullar',
     termsCheckboxLead: '',
     termsCheckboxTrail: '’ı okudum ve kabul ediyorum.',
+    distanceSalesAgreementLinkText: 'Mesafeli Satış Sözleşmesi',
+    distanceSalesAgreementLead: '',
+    distanceSalesAgreementTrail: '’ni okudum ve kabul ediyorum.',
     back: 'Geri',
     backAria: 'Önceki adıma dön',
     closeAria: 'Kapat',
@@ -382,7 +396,9 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       selectedOfRequired: (s, r) => `${s} / ${r} booths selected`,
     },
     rulesTitleFallback: 'Booking information',
+    bookingRulesToggle: 'Booking rules',
     guestCountTitle: 'Number of guests',
+    guestCountSuffix: 'guests',
     adult: 'Adult',
     adultAge: 'Ages 11–99',
     child: 'Child',
@@ -418,6 +434,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     quotaFullThisDate: 'No availability left on this date',
     lastNSpots: (n) => `Only ${n} left`,
     selectedBadge: 'SELECTED',
+    selectedButtonLabel: 'Selected',
+    perPersonSlashSuffix: '/person',
     adultPriceLine: (d, p) => `Adult (${d}): ${p} ₺`,
     remainingSpots: (cap) => `${cap} spots left`,
     insufficientCapLine: () =>
@@ -479,6 +497,9 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     termsLinkText: 'Terms & Conditions',
     termsCheckboxLead: 'I have read and accept the ',
     termsCheckboxTrail: '.',
+    distanceSalesAgreementLinkText: 'Distance Sales Agreement',
+    distanceSalesAgreementLead: 'I have read and accept the ',
+    distanceSalesAgreementTrail: '.',
     back: 'Back',
     backAria: 'Go to previous step',
     closeAria: 'Close',
@@ -562,7 +583,9 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       selectedOfRequired: (s, r) => `${s} / ${r} Logen gewählt`,
     },
     rulesTitleFallback: 'Buchungsinformationen',
+    bookingRulesToggle: 'Buchungsregeln',
     guestCountTitle: 'Personenanzahl',
+    guestCountSuffix: 'Personen',
     adult: 'Erwachsene',
     adultAge: '11–99 Jahre',
     child: 'Kind',
@@ -598,6 +621,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     quotaFullThisDate: 'Für dieses Datum ist kein Kontingent mehr frei',
     lastNSpots: (n) => `Nur noch ${n} Plätze`,
     selectedBadge: 'GEWÄHLT',
+    selectedButtonLabel: 'Ausgewählt',
+    perPersonSlashSuffix: '/Person',
     adultPriceLine: (d, p) => `Erwachsene (${d}): ${p} ₺`,
     remainingSpots: (cap) => `Noch ${cap} Plätze`,
     insufficientCapLine: () =>
@@ -659,6 +684,9 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     termsLinkText: 'AGB',
     termsCheckboxLead: 'Ich habe die ',
     termsCheckboxTrail: ' gelesen und akzeptiere sie.',
+    distanceSalesAgreementLinkText: 'Fernabsatzvertrag',
+    distanceSalesAgreementLead: 'Ich habe den ',
+    distanceSalesAgreementTrail: ' gelesen und akzeptiere ihn.',
     back: 'Zurück',
     backAria: 'Zum vorherigen Schritt',
     closeAria: 'Schließen',

@@ -4,6 +4,7 @@ import { mapSanityYachtToHomeCard } from '@/lib/mapYachtListItem'
 import type { YachtRentalDocument, SanityYachtCardRow } from '@/lib/yachtTypes'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 import headingStyles from '@/components/yacht/yachtDetailHeading.module.css'
 import styles from './YachtOptionalSections.module.css'
 
@@ -13,6 +14,7 @@ interface YachtOptionalSectionsProps {
 }
 
 export default function YachtOptionalSections({ locale, yacht }: YachtOptionalSectionsProps) {
+  const ui = getYachtUi(locale)
   const hasTours = yacht.relatedTours && yacht.relatedTours.some((t) => t.slug)
   const relatedYachtCards = (yacht.relatedYachts ?? [])
     .filter((row): row is SanityYachtCardRow => row != null)
@@ -28,7 +30,7 @@ export default function YachtOptionalSections({ locale, yacht }: YachtOptionalSe
       {hasTours && (
         <section className={styles.section} aria-labelledby="yacht-tours">
           <h2 id="yacht-tours" className={headingStyles.h2}>
-            Önerilen turlar
+            {ui.relatedToursHeading}
           </h2>
           <ul className={styles.linkList}>
             {yacht.relatedTours!
@@ -47,7 +49,7 @@ export default function YachtOptionalSections({ locale, yacht }: YachtOptionalSe
       {hasYachts && (
         <section className={styles.relatedSection} aria-labelledby="yacht-related">
           <h2 id="yacht-related" className={styles.relatedHeading}>
-            Benzer yatlar
+            {ui.relatedYachtsHeading}
           </h2>
           <div className={styles.yachtGrid}>
             {relatedYachtCards.map((item) => (
@@ -60,7 +62,7 @@ export default function YachtOptionalSections({ locale, yacht }: YachtOptionalSe
       {hasTerms && (
         <section className={styles.section} aria-labelledby="yacht-terms">
           <h2 id="yacht-terms" className={headingStyles.h2}>
-            Şartlar ve notlar
+            {ui.termsNotesHeading}
           </h2>
           <p className={styles.terms}>{yacht.termsAndNotes!.trim()}</p>
         </section>

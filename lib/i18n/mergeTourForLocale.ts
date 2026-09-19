@@ -128,6 +128,28 @@ function mergeReelsSection(base: unknown, patch: unknown): unknown {
 }
 
 /**
+ * Editör `translations.en`/`translations.de` içine bu alanı elle çevirmiş mi?
+ * true dönerse runtime (makine) çeviri fallback'i bu alana UYGULANMAMALI —
+ * aksi halde zaten İngilizce/Almanca olan metin "Türkçeden çeviriliyor" sanılıp bozulur.
+ */
+export function tourFieldHasManualTranslation(
+  tour: Record<string, unknown>,
+  locale: SiteLocale,
+  field: string
+): boolean {
+  if (locale === 'tr') return true
+  const translations = tour.translations as Record<string, unknown> | undefined
+  if (!translations) return false
+  const raw = (locale === 'en' ? translations.en : translations.de) as Record<string, unknown> | undefined
+  if (!raw) return false
+  const value = raw[field]
+  if (value == null) return false
+  if (typeof value === 'string') return value.trim().length > 0
+  if (Array.isArray(value)) return value.length > 0
+  return true
+}
+
+/**
  * Applies `translations.en` or `translations.de` onto the Turkish base tour for rendering.
  */
 export function mergeTourForLocale<T extends Record<string, unknown>>(tour: T, locale: SiteLocale): T {

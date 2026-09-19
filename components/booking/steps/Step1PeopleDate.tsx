@@ -93,7 +93,7 @@ export default function Step1PeopleDate({
             aria-expanded={rulesOpen}
           >
             <Info width={13} height={13} aria-hidden />
-            Rezervasyon kuralları
+            {ui.bookingRulesToggle}
             <ChevronDown
               width={14}
               height={14}
@@ -125,7 +125,7 @@ export default function Step1PeopleDate({
           </div>
           {total > 0 && (
             <span className={styles.guestTotalBadge} aria-live="polite">
-              {total} kişi
+              {total} {ui.guestCountSuffix}
             </span>
           )}
         </div>

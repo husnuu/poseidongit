@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { PortableText } from '@portabletext/react'
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 import headingStyles from '@/components/yacht/yachtDetailHeading.module.css'
 import styles from './YachtPolicySections.module.css'
 
@@ -23,10 +25,17 @@ function CheckLine({ children }: { children: ReactNode }) {
   )
 }
 
-export default function YachtPolicySections({ yacht }: { yacht: YachtRentalDocument }) {
+export default function YachtPolicySections({
+  yacht,
+  locale = 'tr',
+}: {
+  yacht: YachtRentalDocument
+  locale?: SiteLocale
+}) {
+  const ui = getYachtUi(locale)
   const cancel = yacht.cancellationPaymentPolicies
   const cancelUrl = yacht.cancellationCheckPriceUrl?.trim()
-  const cancelLinkLabel = yacht.cancellationCheckPriceLabel?.trim() || 'Fiyatı kontrol edin'
+  const cancelLinkLabel = yacht.cancellationCheckPriceLabel?.trim() || ui.policyCancelCheckPriceDefault
   const licence = yacht.sailingLicenceRequired?.trim()
   const pets = yacht.petsPolicy?.trim()
   const methods = yacht.paymentMethodsAccepted?.filter((m) => m?.trim()) ?? []
@@ -37,7 +46,7 @@ export default function YachtPolicySections({ yacht }: { yacht: YachtRentalDocum
   if (cancel?.length) {
     blocks.push({
       key: 'cancel',
-      title: 'İptal / ödeme politikaları',
+      title: ui.policyCancelTitle,
       body: (
         <div className={styles.rich}>
           <PortableText value={cancel} />
@@ -56,7 +65,7 @@ export default function YachtPolicySections({ yacht }: { yacht: YachtRentalDocum
   if (licence) {
     blocks.push({
       key: 'licence',
-      title: 'Gerekli belge / ehliyet',
+      title: ui.policyLicenceTitle,
       body: <p className={styles.plain}>{licence}</p>,
     })
   }
@@ -64,7 +73,7 @@ export default function YachtPolicySections({ yacht }: { yacht: YachtRentalDocum
   if (pets) {
     blocks.push({
       key: 'pets',
-      title: 'Evcil hayvanlar',
+      title: ui.policyPetsTitle,
       body: <p className={styles.plain}>{pets}</p>,
     })
   }
@@ -72,7 +81,7 @@ export default function YachtPolicySections({ yacht }: { yacht: YachtRentalDocum
   if (methods.length > 0) {
     blocks.push({
       key: 'pay',
-      title: 'Charter şirketinin kabul ettiği ödeme yöntemleri',
+      title: ui.policyPaymentMethodsTitle,
       body: (
         <ul className={styles.checkList}>
           {methods.map((m) => (
@@ -86,7 +95,7 @@ export default function YachtPolicySections({ yacht }: { yacht: YachtRentalDocum
   if (marina?.length) {
     blocks.push({
       key: 'marina',
-      title: 'Marina hakkında',
+      title: ui.policyMarinaTitle,
       body: (
         <div className={styles.rich}>
           <PortableText value={marina} />

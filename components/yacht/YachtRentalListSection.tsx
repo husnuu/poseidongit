@@ -14,6 +14,7 @@ import {
   type CabinFilterId,
 } from '@/lib/yachtListFilters'
 import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 
 interface YachtRentalListSectionProps {
   yachts: YachtListCardItem[]
@@ -26,6 +27,7 @@ export default function YachtRentalListSection({
   emptyStateMessage,
   locale = 'tr',
 }: YachtRentalListSectionProps) {
+  const ui = getYachtUi(locale)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [sortSheetOpen, setSortSheetOpen] = useState(false)
 
@@ -38,7 +40,7 @@ export default function YachtRentalListSection({
   const [draftCap, setDraftCap] = useState<CapacityFilterId>('all')
   const [draftCab, setDraftCab] = useState<CabinFilterId>('all')
 
-  const priceOptions = useMemo(() => buildPriceFilterOptions(yachts), [yachts])
+  const priceOptions = useMemo(() => buildPriceFilterOptions(yachts, locale), [yachts, locale])
 
   const openFilterSheet = () => {
     setSortSheetOpen(false)
@@ -81,7 +83,7 @@ export default function YachtRentalListSection({
           style={{ fontFamily: 'var(--font-family)' }}
         >
           <p className="m-0 text-sm font-semibold text-black/60">
-            {sorted.length} yat listeleniyor
+            {ui.yachtsListedCount(sorted.length)}
           </p>
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             <button
@@ -100,7 +102,7 @@ export default function YachtRentalListSection({
                   d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
                 />
               </svg>
-              Sırala
+              {ui.sortButton}
               {appliedSort !== 'default' ? (
                 <span className="h-2 w-2 shrink-0 rounded-full bg-teal-600" aria-hidden />
               ) : null}
@@ -118,7 +120,7 @@ export default function YachtRentalListSection({
                   d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                 />
               </svg>
-              Filtreler
+              {ui.filtersButton}
               {filterActiveCount > 0 ? (
                 <span
                   className="flex h-6 min-w-[24px] items-center justify-center rounded-full px-1.5 text-xs font-black text-white"
@@ -137,7 +139,7 @@ export default function YachtRentalListSection({
           className="py-12 text-center text-black/60"
           style={{ fontFamily: 'var(--font-family)' }}
         >
-          Seçtiğiniz filtrelere uygun yat bulunamadı. Filtreleri temizleyip tekrar deneyin.
+          {ui.noResultsMessage}
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
@@ -168,6 +170,7 @@ export default function YachtRentalListSection({
         onCabinChange={setDraftCab}
         onApply={applyFilters}
         onClearDraft={clearFilterDraft}
+        locale={locale}
       />
 
       <YachtRentalSortSheet
@@ -175,6 +178,7 @@ export default function YachtRentalListSection({
         onClose={() => setSortSheetOpen(false)}
         value={appliedSort}
         onChange={setAppliedSort}
+        locale={locale}
       />
     </>
   )

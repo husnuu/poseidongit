@@ -218,7 +218,7 @@ export default function PhotoGrid({
             />
             {heroBadges && heroBadges.length > 0 ? (
               <div className={styles.mainBadgeLayer}>
-                <YachtHeroBadgeOverlay badges={heroBadges} />
+                <YachtHeroBadgeOverlay badges={heroBadges} locale={safeLocale} />
               </div>
             ) : null}
             {actionButtons}

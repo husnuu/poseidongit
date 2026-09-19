@@ -11,6 +11,7 @@ import { authorizeAdmin } from '@/lib/adminAuthServer'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { sendRefundRejectedEmails } from '@/lib/email'
+import { normalizeBookingFlowLocale } from '@/lib/i18n/bookingFlowLocale'
 import { getAdminEmail } from '@/lib/adminAuth'
 import {
   extractAdminSessionTokenFromRequest,
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
       amount: Number(data.refund_amount ?? 0),
       currency: String(data.currency ?? 'TRY'),
       reason: reason || null,
+      siteLocale: normalizeBookingFlowLocale(data.ui_locale),
     })
 
     return NextResponse.json({

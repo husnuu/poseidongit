@@ -95,7 +95,7 @@ export function buildYachtDepositCharterConfig(
     yachtName,
     yachtSlug: yacht.slug?.trim() || null,
     yachtType: yacht.yachtType?.trim() || null,
-    yachtTypeLabel: yachtTypeLabel(yacht.yachtType ?? undefined),
+    yachtTypeLabel: yachtTypeLabel(yacht.yachtType ?? undefined, locale),
     locationLabel: loc,
     coverImageUrl: yacht.mainImage?.url?.trim() || null,
     coverImageAlt: yacht.mainImage?.alt?.trim() || yachtName,

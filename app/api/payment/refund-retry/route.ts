@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { refundPayment, parseProcReturnCodeMessage } from '@/lib/nestpay-refund'
 import { sendBookingCancelledEmails } from '@/lib/email'
+import { normalizeBookingFlowLocale } from '@/lib/i18n/bookingFlowLocale'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -99,6 +100,7 @@ export async function GET(request: NextRequest) {
           refundStatus: 'refunded',
           refundAmount: amount,
           refundErrMsg: null,
+          siteLocale: normalizeBookingFlowLocale(row.ui_locale),
         })
 
         console.info(`[refund-retry] ✅ ${bookingId} iade başarılı`)

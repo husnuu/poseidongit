@@ -7,6 +7,7 @@ import { BedDouble, Calendar, MapPin, Ruler, Users } from 'lucide-react'
 import YachtTypeGlyph from '@/components/yacht/YachtTypeGlyph'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 import { yachtTypeLabel, type YachtSpecifications } from '@/lib/yachtTypes'
 import { formatYachtMobilePrice } from '@/lib/yachtFormat'
 
@@ -68,8 +69,9 @@ interface YachtCardProps {
 }
 
 export default function YachtCard({ yacht, locale = 'tr' }: YachtCardProps) {
+  const ui = getYachtUi(locale)
   const href = detailHref(yacht, locale)
-  const typeLabel = yachtTypeLabel(yacht.yachtType ?? undefined)
+  const typeLabel = yachtTypeLabel(yacht.yachtType ?? undefined, locale)
   const locLine = [yacht.locationTitle, yacht.marina].filter(Boolean).join(' · ')
   const spec = yacht.specifications
   const lengthVal = spec?.length?.trim() || null
@@ -92,7 +94,7 @@ export default function YachtCard({ yacht, locale = 'tr' }: YachtCardProps) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-zinc-400 text-sm">
-            Görsel yok
+            {ui.cardNoImage}
           </div>
         )}
         {yacht.isFeatured && (
@@ -104,7 +106,7 @@ export default function YachtCard({ yacht, locale = 'tr' }: YachtCardProps) {
               boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
             }}
           >
-            Öne çıkan
+            {ui.cardFeaturedBadge}
           </div>
         )}
       </div>
@@ -123,15 +125,15 @@ export default function YachtCard({ yacht, locale = 'tr' }: YachtCardProps) {
               <YachtTypeGlyph yachtType={yacht.yachtType} className="size-5 shrink-0" />
             </span>
             <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-black/45">Yat tipi:</span>
+              <span className="text-xs font-bold uppercase tracking-wide text-black/45">{ui.cardTypeLabel}</span>
               <span className="text-[15px] font-extrabold text-black/90 leading-snug">{typeLabel}</span>
             </div>
           </div>
-          {locLine ? <MetaLabeled icon={MapPin} label="Konum:" value={locLine} /> : null}
-          {capacityVal ? <MetaLabeled icon={Users} label="Yolcu Kapasitesi:" value={capacityVal} /> : null}
-          {yearVal ? <MetaLabeled icon={Calendar} label="Yapım Yılı:" value={yearVal} /> : null}
-          {cabinsVal ? <MetaLabeled icon={BedDouble} label="Kabin:" value={cabinsVal} /> : null}
-          {lengthVal ? <MetaLabeled icon={Ruler} label="Uzunluk:" value={lengthVal} /> : null}
+          {locLine ? <MetaLabeled icon={MapPin} label={ui.cardLocationLabel} value={locLine} /> : null}
+          {capacityVal ? <MetaLabeled icon={Users} label={ui.cardCapacityLabel} value={capacityVal} /> : null}
+          {yearVal ? <MetaLabeled icon={Calendar} label={ui.cardBuildYearLabel} value={yearVal} /> : null}
+          {cabinsVal ? <MetaLabeled icon={BedDouble} label={ui.cardCabinsLabel} value={cabinsVal} /> : null}
+          {lengthVal ? <MetaLabeled icon={Ruler} label={ui.cardLengthLabel} value={lengthVal} /> : null}
         </div>
 
         {dailyOn && yacht.priceFrom != null ? (
@@ -142,7 +144,7 @@ export default function YachtCard({ yacht, locale = 'tr' }: YachtCardProps) {
 
         <span className="hero-primary-btn-wrap tour-card-cta-shimmer yacht-card-cta-edge mt-auto w-full max-w-full rounded-xl p-[2px] flex">
           <span className="hero-primary-inner hero-btn-shine yacht-card-cta-inner w-full rounded-[10px] bg-[#1e3a8a] py-2.5 md:py-3 font-black uppercase text-white text-center text-base md:text-[17px] flex items-center justify-center overflow-hidden transition hover:brightness-110 ring-1 ring-inset ring-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)]">
-            İncele
+            {ui.cardViewButton}
           </span>
         </span>
       </div>

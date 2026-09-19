@@ -10,7 +10,8 @@ import FloatingInput from '@/components/ui/FloatingInput'
 import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
 import { CalendarDays, Check, Clock, MapPin, Moon, Sailboat, Users } from 'lucide-react'
-import { DEFAULT_YACHT_INQUIRY_CTA } from '@/lib/yachtConversionCopy'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 import {
   formatDateTrShort,
   formatOvernightSummaryTr,
@@ -20,15 +21,13 @@ import {
 const DEFAULT_SCRIPT_ID = 'cf-turnstile-script'
 const SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
 
-const schema = z.object({
-  firstName: z.string().min(1, 'Ad gerekli'),
-  lastName: z.string().min(1, 'Soyad gerekli'),
-  email: z.string().email('Geçerli e-posta girin'),
-  phone: z.string().min(7, 'Telefon gerekli'),
-  message: z.string().min(5, 'Mesaj en az 5 karakter olsun'),
-})
-
-export type YachtInquiryFormValues = z.infer<typeof schema>
+export type YachtInquiryFormValues = {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  message: string
+}
 
 interface YachtInquiryFormProps {
   yachtSlug: string
@@ -44,6 +43,7 @@ interface YachtInquiryFormProps {
   guestCount: number
   onSubmitted?: () => void
   submitLabel?: string
+  locale?: SiteLocale
 }
 
 export default function YachtInquiryForm({
@@ -59,8 +59,18 @@ export default function YachtInquiryForm({
   overnightNights,
   guestCount,
   onSubmitted,
-  submitLabel = DEFAULT_YACHT_INQUIRY_CTA,
+  submitLabel,
+  locale = 'tr',
 }: YachtInquiryFormProps) {
+  const ui = getYachtUi(locale)
+  const resolvedSubmitLabel = submitLabel ?? ui.defaultInquiryCta
+  const schema = z.object({
+    firstName: z.string().min(1, ui.validationFirstNameRequired),
+    lastName: z.string().min(1, ui.validationLastNameRequired),
+    email: z.string().email(ui.validationEmailInvalid),
+    phone: z.string().min(7, ui.validationPhoneRequired),
+    message: z.string().min(5, ui.validationMessageMin),
+  })
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || ''
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
@@ -91,17 +101,17 @@ export default function YachtInquiryForm({
 
   const onSubmit = async (data: YachtInquiryFormValues) => {
     if (siteKey && !turnstileToken) {
-      setSubmitError('Lütfen doğrulama kutusunu işaretleyin.')
+      setSubmitError(ui.turnstileRequired)
       return
     }
     if (rentalMode === 'daily') {
       if (!selectedDate) {
-        setSubmitError('Lütfen takvimden bir tarih seçin.')
+        setSubmitError(ui.selectDateRequired)
         return
       }
     } else {
       if (!overnightCheckIn || !overnightCheckOut || overnightNights == null || overnightNights < 1) {
-        setSubmitError('Lütfen geçerli bir konaklama aralığı seçin.')
+        setSubmitError(ui.selectRangeRequired)
         return
       }
     }
@@ -136,14 +146,14 @@ export default function YachtInquiryForm({
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
         setStatus('error')
-        setSubmitError(json.error ?? 'Gönderim başarısız.')
+        setSubmitError(json.error ?? ui.submitFailed)
         return
       }
       setStatus('success')
       onSubmitted?.()
     } catch {
       setStatus('error')
-      setSubmitError('Bağlantı hatası.')
+      setSubmitError(ui.connectionError)
     }
   }
 
@@ -159,7 +169,7 @@ export default function YachtInquiryForm({
           </span>
         </div>
         <p className="text-lg font-bold text-emerald-900 m-0">
-          Talebiniz alındı. En kısa sürede sizinle iletişime geçeceğiz.
+          {ui.submitSuccess}
         </p>
       </div>
     )
@@ -167,10 +177,10 @@ export default function YachtInquiryForm({
 
   const priceLabel =
     priceFrom != null
-      ? `${priceFrom.toLocaleString('tr-TR')} ${(currency ?? 'TRY').toUpperCase()}`
+      ? `${priceFrom.toLocaleString(ui.numberLocale)} ${(currency ?? 'TRY').toUpperCase()}`
       : '—'
 
-  const rentalTypeLabel = rentalMode === 'daily' ? 'Günlük kiralama' : 'Konaklamalı kiralama'
+  const rentalTypeLabel = rentalMode === 'daily' ? ui.rentalTypeDailyLabel : ui.rentalTypeOvernightLabel
 
   return (
     <>
@@ -181,7 +191,7 @@ export default function YachtInquiryForm({
       >
         <div className="border-b border-[#f1f5f9] px-4 py-3.5">
           <p className="m-0 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#2168b8]">
-            Talep özeti
+            {ui.summaryTitle}
           </p>
         </div>
         <ul className="m-0 list-none space-y-0 divide-y divide-[#f1f5f9] p-0">
@@ -190,7 +200,7 @@ export default function YachtInquiryForm({
               <Sailboat className="h-4 w-4" strokeWidth={2} aria-hidden />
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
-              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">Yat</p>
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-500">{ui.summaryYacht}</p>
               <p className="m-0 mt-0.5 text-[15px] font-bold leading-snug text-[#131719]">{yachtName}</p>
             </div>
           </li>
@@ -200,7 +210,7 @@ export default function YachtInquiryForm({
                 <MapPin className="h-4 w-4" strokeWidth={2} aria-hidden />
               </span>
               <div className="min-w-0 flex-1 pt-0.5">
-                <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">Konum</p>
+                <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">{ui.summaryLocation}</p>
                 <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-[#131719]">
                   {locationLabel}
                 </p>
@@ -217,7 +227,7 @@ export default function YachtInquiryForm({
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
               <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">
-                Kiralama türü
+                {ui.summaryRentalType}
               </p>
               <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-[#131719]">
                 {rentalTypeLabel}
@@ -229,17 +239,20 @@ export default function YachtInquiryForm({
               <CalendarDays className="h-4 w-4" strokeWidth={2} aria-hidden />
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
-              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">Tarih</p>
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">{ui.summaryDate}</p>
               <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-[#131719]">
                 {rentalMode === 'daily'
                   ? selectedDate
-                    ? formatDateTrShort(selectedDate)
+                    ? formatDateTrShort(selectedDate, locale)
                     : '—'
                   : overnightCheckIn && overnightCheckOut && overnightNights != null
-                    ? formatOvernightSummaryTr({
-                        checkIn: overnightCheckIn,
-                        checkOut: overnightCheckOut,
-                      })
+                    ? formatOvernightSummaryTr(
+                        {
+                          checkIn: overnightCheckIn,
+                          checkOut: overnightCheckOut,
+                        },
+                        locale
+                      )
                     : '—'}
               </p>
             </div>
@@ -249,9 +262,13 @@ export default function YachtInquiryForm({
               <Clock className="h-4 w-4" strokeWidth={2} aria-hidden />
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
-              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">Süre</p>
+              <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">{ui.summaryDuration}</p>
               <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-[#131719]">
-                {rentalMode === 'daily' ? '7 saat' : `${overnightNights ?? '—'} gece`}
+                {rentalMode === 'daily'
+                  ? ui.summaryDurationHours
+                  : overnightNights != null
+                    ? ui.summaryNights(overnightNights)
+                    : '—'}
               </p>
             </div>
           </li>
@@ -261,10 +278,10 @@ export default function YachtInquiryForm({
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
               <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">
-                Misafir sayısı
+                {ui.summaryGuestCount}
               </p>
               <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-[#131719]">
-                {guestCount} kişi
+                {guestCount} {ui.personSuffix}
               </p>
             </div>
           </li>
@@ -274,7 +291,7 @@ export default function YachtInquiryForm({
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
               <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted,#81848b)]">
-                {rentalMode === 'daily' ? 'Günlük fiyat' : 'Toplam fiyat'}
+                {rentalMode === 'daily' ? ui.summaryDailyPrice : ui.summaryTotalPrice}
               </p>
               <p className="m-0 mt-0.5 text-sm font-semibold leading-snug text-[#131719]">
                 {priceLabel}
@@ -287,27 +304,27 @@ export default function YachtInquiryForm({
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FloatingInput
-            label="Ad *"
+            label={ui.labelFirstName}
             autoComplete="given-name"
             error={errors.firstName?.message}
             {...register('firstName')}
           />
           <FloatingInput
-            label="Soyad *"
+            label={ui.labelLastName}
             autoComplete="family-name"
             error={errors.lastName?.message}
             {...register('lastName')}
           />
         </div>
         <FloatingInput
-          label="E-posta *"
+          label={ui.labelEmail}
           type="email"
           autoComplete="email"
           error={errors.email?.message}
           {...register('email')}
         />
         <PhoneField
-          label="Telefon *"
+          label={ui.labelPhone}
           name="phone"
           value={phone ?? ''}
           onChange={(v) => setValue('phone', v ?? '', { shouldValidate: true })}
@@ -316,7 +333,7 @@ export default function YachtInquiryForm({
           defaultCountry="TR"
         />
         <FloatingTextarea
-          label="Mesaj / özel talep *"
+          label={ui.labelMessage}
           rows={4}
           error={errors.message?.message}
           {...register('message')}
@@ -346,7 +363,7 @@ export default function YachtInquiryForm({
             fontFamily: 'var(--font-family)',
           }}
         >
-          {status === 'sending' ? 'Gönderiliyor...' : submitLabel}
+          {status === 'sending' ? ui.sending : resolvedSubmitLabel}
         </button>
 
         {submitError && (

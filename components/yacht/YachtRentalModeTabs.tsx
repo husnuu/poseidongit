@@ -1,18 +1,22 @@
 'use client'
 
 import type { YachtRentalMode } from '@/lib/yachtRentalModes'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 
 interface YachtRentalModeTabsProps {
   value: YachtRentalMode
   onChange: (mode: YachtRentalMode) => void
+  locale?: SiteLocale
 }
 
-export default function YachtRentalModeTabs({ value, onChange }: YachtRentalModeTabsProps) {
+export default function YachtRentalModeTabs({ value, onChange, locale = 'tr' }: YachtRentalModeTabsProps) {
+  const ui = getYachtUi(locale)
   return (
     <div
       className="flex rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-1 gap-1 mb-4"
       role="tablist"
-      aria-label="Kiralama türü"
+      aria-label={ui.rentalModeTabsAria}
     >
       <button
         type="button"
@@ -26,7 +30,7 @@ export default function YachtRentalModeTabs({ value, onChange }: YachtRentalMode
         style={{ fontFamily: 'var(--font-family)' }}
         onClick={() => onChange('daily')}
       >
-        Günlük
+        {ui.rentalModeDaily}
       </button>
       <button
         type="button"
@@ -40,7 +44,7 @@ export default function YachtRentalModeTabs({ value, onChange }: YachtRentalMode
         style={{ fontFamily: 'var(--font-family)' }}
         onClick={() => onChange('overnight')}
       >
-        Konaklamalı
+        {ui.rentalModeOvernight}
       </button>
     </div>
   )

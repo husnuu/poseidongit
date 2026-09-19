@@ -1,6 +1,7 @@
 'use client'
 
-import { DEFAULT_YACHT_INQUIRY_CTA } from '@/lib/yachtConversionCopy'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 import { MOBILE_BOTTOM_CTA_BAR_ID } from '@/lib/mobileBottomCtaBarId'
 import styles from '@/components/MobileStickyBookingBar.module.css'
 
@@ -11,6 +12,7 @@ interface MobileYachtInquiryBarProps {
   onOpenInquiry: () => void
   ctaText?: string
   isModalOpen: boolean
+  locale?: SiteLocale
 }
 
 export default function MobileYachtInquiryBar({
@@ -18,9 +20,12 @@ export default function MobileYachtInquiryBar({
   priceValue,
   dateSubtitle,
   onOpenInquiry,
-  ctaText = DEFAULT_YACHT_INQUIRY_CTA,
+  ctaText,
   isModalOpen,
+  locale = 'tr',
 }: MobileYachtInquiryBarProps) {
+  const ui = getYachtUi(locale)
+  const resolvedCtaText = ctaText ?? ui.defaultInquiryCta
   if (isModalOpen) return null
 
   return (
@@ -32,7 +37,7 @@ export default function MobileYachtInquiryBar({
           {dateSubtitle ? (
             <div className={styles.depositLine}>{dateSubtitle}</div>
           ) : (
-            <div className={styles.depositLine}>Takvimden seçim yapın</div>
+            <div className={styles.depositLine}>{ui.selectFromCalendarFallback}</div>
           )}
         </div>
         <div className={styles.rightBlock}>
@@ -40,9 +45,9 @@ export default function MobileYachtInquiryBar({
             type="button"
             className={styles.ctaButton}
             onClick={onOpenInquiry}
-            aria-label={ctaText}
+            aria-label={resolvedCtaText}
           >
-            {ctaText}
+            {resolvedCtaText}
           </button>
         </div>
       </div>

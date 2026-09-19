@@ -77,6 +77,7 @@ export async function generateMetadata({
 export default async function MenuPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: loc } = await params
   if (!isSiteLocale(loc)) notFound()
+  const locale = loc as SiteLocale
 
   let raw: MenuItemRaw[] = []
   try {
@@ -87,5 +88,5 @@ export default async function MenuPage({ params }: { params: Promise<{ locale: s
 
   const items = (raw ?? []).map(mapItem)
 
-  return <MenuPageClient items={items} />
+  return <MenuPageClient items={items} locale={locale} />
 }

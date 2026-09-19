@@ -4,6 +4,8 @@ import { useId, useState } from 'react'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
 import { Info } from 'lucide-react'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import headingStyles from '@/components/yacht/yachtDetailHeading.module.css'
 import styles from './YachtFAQAccordion.module.css'
 
@@ -14,9 +16,11 @@ export interface YachtFaqItem {
 
 interface YachtFAQAccordionProps {
   items: YachtFaqItem[]
+  locale?: SiteLocale
 }
 
-export default function YachtFAQAccordion({ items }: YachtFAQAccordionProps) {
+export default function YachtFAQAccordion({ items, locale = 'tr' }: YachtFAQAccordionProps) {
+  const tourUi = getTourPageUi(locale)
   const list = items.filter((x) => x.question?.trim() && x.answer?.length)
   if (list.length === 0) return null
 
@@ -30,7 +34,7 @@ export default function YachtFAQAccordion({ items }: YachtFAQAccordionProps) {
           <Info className={styles.headerIconSvg} strokeWidth={2} />
         </div>
         <h2 id={`${baseId}-faq-h`} className={`${headingStyles.h2} ${styles.faqHeading}`}>
-          Sık sorulan sorular
+          {tourUi.faqDefaultTitle}
         </h2>
       </div>
       <ul className={styles.list}>

@@ -17,6 +17,8 @@ import {
   ThermometerSnowflake,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getMenuPageUi, type MenuPageUi } from '@/lib/i18n/menuPageUi'
 import styles from './MenuPageClient.module.css'
 
 export type MenuItemCard = {
@@ -34,68 +36,39 @@ export type MenuItemCard = {
 const ICON_STROKE = 2
 
 /** Sekmede kısa etiket; kartta tam kategori metni (Sanity ile aynı). */
-const CATEGORY_TABS: {
+function categoryTabs(ui: MenuPageUi): {
   value: string | null
   tabLabel: string
   cardLabel: string | null
   Icon: LucideIcon
-}[] = [
-  { value: null, tabLabel: 'Tümü', cardLabel: null, Icon: LayoutGrid },
-  {
-    value: 'kokteyller',
-    tabLabel: 'Kokteyller',
-    cardLabel: 'Kokteyller (Margarita, Mojito vb.)',
-    Icon: Martini,
-  },
-  { value: 'mocktails', tabLabel: 'Mocktails', cardLabel: 'Mocktails', Icon: GlassWater },
-  {
-    value: 'alkollu_icecekler',
-    tabLabel: 'Bira & Şarap',
-    cardLabel: 'Alkollü içecekler',
-    Icon: Beer,
-  },
-  {
-    value: 'soft_icecekler',
-    tabLabel: 'Soft içecek',
-    cardLabel: 'Soft içecekler',
-    Icon: CupSoda,
-  },
-  { value: 'siseler', tabLabel: 'Şişeler', cardLabel: 'Şişeler', Icon: BottleWine },
-  {
-    value: 'soguk_kahveler',
-    tabLabel: 'Soğuk kahve',
-    cardLabel: 'Soğuk Kahveler',
-    Icon: ThermometerSnowflake,
-  },
-  {
-    value: 'sicak_kahveler',
-    tabLabel: 'Sıcak kahve',
-    cardLabel: 'Sıcak Kahveler',
-    Icon: Coffee,
-  },
-  {
-    value: 'premium_caylar',
-    tabLabel: 'Premium çay',
-    cardLabel: 'Premium Çaylar',
-    Icon: LeafyGreen,
-  },
-  { value: 'dondurmalar', tabLabel: 'Dondurma', cardLabel: 'Dondurmalar', Icon: IceCream },
-  { value: 'tatlilar', tabLabel: 'Tatlı', cardLabel: 'Tatlılar', Icon: Cake },
-]
-
-function categoryLabel(value: string): string {
-  return CATEGORY_TABS.find((t) => t.value === value)?.cardLabel ?? value
+}[] {
+  return [
+    { value: null, tabLabel: ui.tabAll, cardLabel: null, Icon: LayoutGrid },
+    { value: 'kokteyller', tabLabel: ui.tabCocktails, cardLabel: ui.cardCocktails, Icon: Martini },
+    { value: 'mocktails', tabLabel: ui.tabMocktails, cardLabel: ui.tabMocktails, Icon: GlassWater },
+    { value: 'alkollu_icecekler', tabLabel: ui.tabBeerWine, cardLabel: ui.cardAlcoholic, Icon: Beer },
+    { value: 'soft_icecekler', tabLabel: ui.tabSoftDrinks, cardLabel: ui.cardSoftDrinks, Icon: CupSoda },
+    { value: 'siseler', tabLabel: ui.tabBottles, cardLabel: ui.tabBottles, Icon: BottleWine },
+    { value: 'soguk_kahveler', tabLabel: ui.tabColdCoffee, cardLabel: ui.cardColdCoffee, Icon: ThermometerSnowflake },
+    { value: 'sicak_kahveler', tabLabel: ui.tabHotCoffee, cardLabel: ui.cardHotCoffee, Icon: Coffee },
+    { value: 'premium_caylar', tabLabel: ui.tabPremiumTea, cardLabel: ui.cardPremiumTea, Icon: LeafyGreen },
+    { value: 'dondurmalar', tabLabel: ui.tabIceCream, cardLabel: ui.tabIceCream, Icon: IceCream },
+    { value: 'tatlilar', tabLabel: ui.tabDesserts, cardLabel: ui.tabDesserts, Icon: Cake },
+  ]
 }
 
-function formatTry(price: number): string {
-  return new Intl.NumberFormat('tr-TR', {
+function formatPrice(price: number, numberLocale: string): string {
+  return new Intl.NumberFormat(numberLocale, {
     style: 'currency',
     currency: 'TRY',
     maximumFractionDigits: 0,
   }).format(price)
 }
 
-export default function MenuPageClient({ items }: { items: MenuItemCard[] }) {
+export default function MenuPageClient({ items, locale = 'tr' }: { items: MenuItemCard[]; locale?: SiteLocale }) {
+  const ui = getMenuPageUi(locale)
+  const CATEGORY_TABS = useMemo(() => categoryTabs(ui), [ui])
+  const categoryLabel = (value: string) => CATEGORY_TABS.find((t) => t.value === value)?.cardLabel ?? value
   const [active, setActive] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
@@ -114,18 +87,18 @@ export default function MenuPageClient({ items }: { items: MenuItemCard[] }) {
               color: 'var(--primary, #2168b8)',
             }}
           >
-            Tekne Menüsü
+            {ui.pageTitle}
           </h1>
           <p
             className="mx-auto mt-3 max-w-lg text-[15px] leading-relaxed"
             style={{ color: 'var(--text-color, #58595b)' }}
           >
-            Lüks tekne konseptine uygun içecek ve atıştırmalıklar. Kategoriye dokunarak filtreleyin.
+            {ui.pageIntro}
           </p>
         </header>
 
         <div className={styles.navScroll}>
-          <nav className={styles.nav} aria-label="Menü kategorileri">
+          <nav className={styles.nav} aria-label={ui.categoriesAriaLabel}>
             {CATEGORY_TABS.map((tab) => {
               const selected = active === tab.value
               const Icon = tab.Icon
@@ -151,7 +124,7 @@ export default function MenuPageClient({ items }: { items: MenuItemCard[] }) {
 
         {filtered.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 py-12 text-center text-sm text-zinc-500">
-            Bu kategoride henüz ürün yok.
+            {ui.emptyCategory}
           </p>
         ) : (
           <ul className="flex flex-col">
@@ -211,7 +184,7 @@ export default function MenuPageClient({ items }: { items: MenuItemCard[] }) {
                         className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
                         style={{ background: 'var(--secondary, #131719)' }}
                       >
-                        Tükendi
+                        {ui.outOfStock}
                       </span>
                     )}
                   </div>
@@ -220,7 +193,7 @@ export default function MenuPageClient({ items }: { items: MenuItemCard[] }) {
                     className="shrink-0 text-lg font-extrabold tabular-nums sm:text-xl"
                     style={{ color: 'var(--primary, #2168b8)' }}
                   >
-                    {formatTry(item.price)}
+                    {formatPrice(item.price, ui.numberLocale)}
                   </div>
                 </article>
               </li>

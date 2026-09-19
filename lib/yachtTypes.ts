@@ -1,4 +1,6 @@
 import type { PortableTextBlock } from '@portabletext/react'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 
 export type SanityYachtCardRow = {
   _id: string
@@ -145,7 +147,15 @@ export const YACHT_TYPE_LABELS: Record<string, string> = {
   other: 'Yat',
 }
 
-export function yachtTypeLabel(type?: string | null): string {
-  if (!type) return 'Yat'
-  return YACHT_TYPE_LABELS[type] ?? type
+export function yachtTypeLabel(type?: string | null, locale: SiteLocale = 'tr'): string {
+  const ui = getYachtUi(locale)
+  const labels: Record<string, string> = {
+    gulet: ui.yachtTypeGulet,
+    motoryacht: ui.yachtTypeMotoryacht,
+    sailing: ui.yachtTypeSailing,
+    catamaran: ui.yachtTypeCatamaran,
+    other: ui.yachtTypeOther,
+  }
+  if (!type) return ui.yachtTypeOther
+  return labels[type] ?? type
 }

@@ -28,8 +28,23 @@ const DEFAULT_INTRO: Record<SiteLocale, string> = {
   de: 'Wählen Sie Datum und Gästezahl, senden Sie eine Verfügbarkeitsanfrage — unser Team meldet sich zeitnah mit einem individuellen Angebot.',
 }
 
-const DEFAULT_EMPTY =
-  'Yakında yat ilanları eklenecek. Sanity Studio’dan yat kiralama içeriği ekleyebilirsiniz.'
+const DEFAULT_EMPTY: Record<SiteLocale, string> = {
+  tr: 'Yakında yat ilanları eklenecek. Sanity Studio’dan yat kiralama içeriği ekleyebilirsiniz.',
+  en: 'Yacht listings will be added soon. You can add yacht rental content from Sanity Studio.',
+  de: 'In Kürze werden Yachtangebote hinzugefügt. Sie können Yachtcharter-Inhalte über Sanity Studio hinzufügen.',
+}
+
+const DEFAULT_TITLE_TOP: Record<SiteLocale, string> = {
+  tr: 'ÖZEL',
+  en: 'PRIVATE',
+  de: 'EXKLUSIVE',
+}
+
+const DEFAULT_TITLE_BOTTOM: Record<SiteLocale, string> = {
+  tr: 'YAT KİRALAMA',
+  en: 'YACHT RENTAL',
+  de: 'YACHTCHARTER',
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   let page: YachtRentalsPageData | null = null
@@ -84,10 +99,10 @@ export default async function YatKiralamaPage({
     yachts = []
   }
 
-  const titleTop = pageData?.titleTop?.trim() || 'ÖZEL'
-  const titleBottom = pageData?.titleBottom?.trim() || 'YAT KİRALAMA'
+  const titleTop = pageData?.titleTop?.trim() || DEFAULT_TITLE_TOP[locale]
+  const titleBottom = pageData?.titleBottom?.trim() || DEFAULT_TITLE_BOTTOM[locale]
   const intro = pageData?.intro?.trim() || DEFAULT_INTRO[locale]
-  const emptyStateMessage = pageData?.emptyStateMessage?.trim() || DEFAULT_EMPTY
+  const emptyStateMessage = pageData?.emptyStateMessage?.trim() || DEFAULT_EMPTY[locale]
 
   return (
     <div className="min-h-screen bg-white">

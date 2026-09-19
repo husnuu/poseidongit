@@ -1,13 +1,8 @@
 'use client'
 
 import type { YachtInquiryCard as InquiryCardConfig } from '@/lib/yachtTypes'
-import {
-  DEFAULT_NOTE_SUBTITLE,
-  DEFAULT_NOTE_TITLE,
-  DEFAULT_STICKY_TRUST_BULLETS,
-  DEFAULT_YACHT_INQUIRY_CTA,
-  DEFAULT_YACHT_INQUIRY_TITLE,
-} from '@/lib/yachtConversionCopy'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 import styles from '@/components/StickyBookingCard.module.css'
 
 function CheckIcon() {
@@ -64,6 +59,7 @@ interface StickyInquiryCardProps {
   priceMeta?: string | null
   inquiryCard?: InquiryCardConfig | null
   onOpenInquiry: () => void
+  locale?: SiteLocale
 }
 
 /** Masaüstü yat sidebar — tur StickyBookingCard ile aynı minimal yapı; tarih/misafir modalda. */
@@ -73,15 +69,17 @@ export default function StickyInquiryCard({
   priceMeta,
   inquiryCard,
   onOpenInquiry,
+  locale = 'tr',
 }: StickyInquiryCardProps) {
-  const title = inquiryCard?.title?.trim() || DEFAULT_YACHT_INQUIRY_TITLE
-  const ctaText = inquiryCard?.ctaText?.trim() || DEFAULT_YACHT_INQUIRY_CTA
+  const ui = getYachtUi(locale)
+  const title = inquiryCard?.title?.trim() || ui.defaultInquiryTitle
+  const ctaText = inquiryCard?.ctaText?.trim() || ui.defaultInquiryCta
   const trustBadges =
     inquiryCard?.trustBadges?.length && inquiryCard.trustBadges.length > 0
       ? inquiryCard.trustBadges.slice(0, 3)
-      : DEFAULT_STICKY_TRUST_BULLETS.slice(0, 3)
-  const noteTitle = inquiryCard?.noteTitle?.trim() || DEFAULT_NOTE_TITLE
-  const noteSubtitle = inquiryCard?.noteSubtitle?.trim() || DEFAULT_NOTE_SUBTITLE
+      : ui.defaultTrustBullets.slice(0, 3)
+  const noteTitle = inquiryCard?.noteTitle?.trim() || ui.defaultNoteTitle
+  const noteSubtitle = inquiryCard?.noteSubtitle?.trim() || ui.defaultNoteSubtitle
 
   return (
     <div className={styles.sidebar}>

@@ -5,7 +5,8 @@ import StickyInquiryCard from '@/components/yacht/StickyInquiryCard'
 import MobileYachtInquiryBar from '@/components/yacht/MobileYachtInquiryBar'
 import YachtInquiryModal from '@/components/yacht/YachtInquiryModal'
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
-import { DEFAULT_YACHT_INQUIRY_CTA } from '@/lib/yachtConversionCopy'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
 import {
   blockedDatesForMode,
   effectiveOvernightAdvertisedPrice,
@@ -30,11 +31,14 @@ import {
 
 interface YachtInquiryExperienceProps {
   yacht: YachtRentalDocument
+  locale?: SiteLocale
 }
 
 const EMPTY_RANGE: YachtCalendarRange = { checkIn: null, checkOut: null }
 
-export default function YachtInquiryExperience({ yacht }: YachtInquiryExperienceProps) {
+export default function YachtInquiryExperience({ yacht, locale = 'tr' }: YachtInquiryExperienceProps) {
+  const ui = getYachtUi(locale)
+  const numberLocale = ui.numberLocale
   const availableModes = useMemo(() => effectiveYachtRentalModes(yacht), [yacht])
   const [rentalMode, setRentalMode] = useState<YachtRentalMode>(() => availableModes[0] ?? 'daily')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -91,17 +95,17 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
         const p = yachtDailyUnitPrice(yacht, selectedDate)
         if (p != null) {
           return {
-            label: 'Seçilen gün',
-            value: `${p.toLocaleString('tr-TR')} ₺`,
-            meta: formatDateTrShort(selectedDate),
+            label: ui.selectedDayLabel,
+            value: `${p.toLocaleString(numberLocale)} ₺`,
+            meta: formatDateTrShort(selectedDate, locale),
           }
         }
       }
       if (yacht.priceFrom != null) {
         return {
-          label: 'Günlük',
-          value: `${yacht.priceFrom.toLocaleString('tr-TR')} ₺`,
-          meta: '/ gün',
+          label: ui.dailyLabel,
+          value: `${yacht.priceFrom.toLocaleString(numberLocale)} ₺`,
+          meta: ui.perDaySuffix,
         }
       }
       return { value: formatYachtStickyPriceLine(yacht.priceFrom, cur) }
@@ -117,32 +121,35 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
       const t = yachtOvernightStayTotal(yacht, overnightRange.checkIn, overnightRange.checkOut)
       if (t != null) {
         return {
-          label: 'Konaklamalı toplam',
-          value: `${t.toLocaleString('tr-TR')} ₺`,
-          meta: formatOvernightSummaryTr({
-            checkIn: overnightRange.checkIn,
-            checkOut: overnightRange.checkOut,
-          }),
+          label: ui.overnightTotalLabel,
+          value: `${t.toLocaleString(numberLocale)} ₺`,
+          meta: formatOvernightSummaryTr(
+            {
+              checkIn: overnightRange.checkIn,
+              checkOut: overnightRange.checkOut,
+            },
+            locale
+          ),
         }
       }
     }
     const adv = effectiveOvernightAdvertisedPrice(yacht)
     if (adv != null) {
       return {
-        label: 'Konaklamalı',
-        value: `${adv.toLocaleString('tr-TR')} ₺`,
-        meta: '/ gece',
+        label: ui.overnightLabel,
+        value: `${adv.toLocaleString(numberLocale)} ₺`,
+        meta: ui.perNightSuffix,
       }
     }
     return splitYachtOvernightStickyLine(formatYachtOvernightStickyPriceLine(adv, cur))
-  }, [yacht, rentalMode, selectedDate, overnightRange.checkIn, overnightRange.checkOut])
+  }, [yacht, rentalMode, selectedDate, overnightRange.checkIn, overnightRange.checkOut, locale, numberLocale, ui])
 
   const stickyPrice = sidebarPrice
 
   const mobileDateSubtitle = useMemo(() => {
     if (rentalMode === 'daily') {
       if (!selectedDate) return null
-      return formatDateTrShort(selectedDate)
+      return formatDateTrShort(selectedDate, locale)
     }
     if (
       overnightRange.checkIn &&
@@ -152,10 +159,13 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
         checkOut: overnightRange.checkOut,
       })
     ) {
-      return formatOvernightSummaryTr({
-        checkIn: overnightRange.checkIn,
-        checkOut: overnightRange.checkOut,
-      })
+      return formatOvernightSummaryTr(
+        {
+          checkIn: overnightRange.checkIn,
+          checkOut: overnightRange.checkOut,
+        },
+        locale
+      )
     }
     return null
   }, [rentalMode, selectedDate, overnightRange.checkIn, overnightRange.checkOut])
@@ -184,14 +194,13 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
     setModalOpen(true)
   }, [selectionComplete])
 
-  const ctaText = yacht.inquiryCard?.ctaText?.trim() || DEFAULT_YACHT_INQUIRY_CTA
+  const ctaText = yacht.inquiryCard?.ctaText?.trim() || ui.defaultInquiryCta
 
   if (!canInquire) {
     return (
       <aside className="w-full max-w-md mx-auto lg:mx-0 lg:flex-shrink-0 lg:w-[360px]">
         <div className="rounded-xl border border-amber-200 bg-amber-50/90 p-5 text-sm font-semibold text-amber-950">
-          Bu yat için günlük veya konaklamalı talep seçenekleri kapalı. Lütfen içerik yönetiminden en az bir
-          modu açın.
+          {ui.modesClosedWarning}
         </div>
       </aside>
     )
@@ -206,6 +215,7 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
           priceMeta={stickyPrice.meta ?? null}
           inquiryCard={yacht.inquiryCard}
           onOpenInquiry={openModalFromDesktop}
+          locale={locale}
         />
       </aside>
 
@@ -216,6 +226,7 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
         onOpenInquiry={openModalFromMobile}
         ctaText={ctaText}
         isModalOpen={modalOpen}
+        locale={locale}
       />
 
       <YachtInquiryModal
@@ -223,6 +234,7 @@ export default function YachtInquiryExperience({ yacht }: YachtInquiryExperience
         onClose={() => setModalOpen(false)}
         initialStep={modalInitialStep}
         yacht={yacht}
+        locale={locale}
         rentalMode={rentalMode}
         onRentalModeChange={setMode}
         showRentalModeTabs={showModeTabs}

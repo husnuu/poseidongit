@@ -8,6 +8,7 @@ import { mapBookingRowToApi, type SupabaseBookingRow } from '@/lib/bookingsSupab
 import { runBookingPaidEmailSideEffects } from '@/lib/services/bookingPaidEmailSideEffects'
 import { smartRefund, parseProcReturnCodeMessage } from '@/lib/nestpay-refund'
 import { sendBookingCancelledEmails } from '@/lib/email'
+import { normalizeBookingFlowLocale } from '@/lib/i18n/bookingFlowLocale'
 import { getAdminEmail } from '@/lib/adminAuth'
 import { extractAdminSessionTokenFromRequest, verifyAdminSessionToken } from '@/lib/adminSession'
 
@@ -275,6 +276,7 @@ export async function PATCH(request: NextRequest) {
           ? (data.paid_now != null && Number(data.paid_now) > 0 ? Number(data.paid_now) : Number(data.total_price ?? 0))
           : null,
         refundErrMsg: refundAttempted && !refundOk ? refundErrMsg : null,
+        siteLocale: normalizeBookingFlowLocale(data.ui_locale),
       })
     }
 

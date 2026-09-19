@@ -356,6 +356,7 @@ export default function Step3CustomerInfo({
             aria-describedby="terms-desc-step3"
           />
           <span id="terms-desc-step3" className={styles.termsText}>
+            {ui.distanceSalesAgreementLead}
             <a
               href={termsHref}
               target="_blank"
@@ -363,9 +364,9 @@ export default function Step3CustomerInfo({
               className={styles.termsLink}
               onClick={(e) => e.stopPropagation()}
             >
-              Mesafeli Satış Sözleşmesi
+              {ui.distanceSalesAgreementLinkText}
             </a>
-            {`'ni okudum ve kabul ediyorum.`}
+            {ui.distanceSalesAgreementTrail}
           </span>
         </label>
       </div>

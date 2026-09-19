@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { smartRefund, parseProcReturnCodeMessage } from '@/lib/nestpay-refund'
 import { sendBookingCancelledEmails } from '@/lib/email'
+import { normalizeBookingFlowLocale } from '@/lib/i18n/bookingFlowLocale'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -184,6 +185,7 @@ export async function POST(request: NextRequest) {
       refundStatus: isPaidOnline ? refundStatus : null,
       refundAmount: isPaidOnline && refundOk ? (data.paid_now != null && Number(data.paid_now) > 0 ? Number(data.paid_now) : Number(data.total_price ?? 0)) : null,
       refundErrMsg: isPaidOnline && !refundOk ? refundErrMsg : null,
+      siteLocale: normalizeBookingFlowLocale(data.ui_locale),
     })
 
     if (isPaidOnline && refundOk) {

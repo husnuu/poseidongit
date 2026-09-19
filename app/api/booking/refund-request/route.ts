@@ -13,6 +13,7 @@ import { rateLimitResponse } from '@/lib/rateLimit'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { sendRefundRequestReceivedEmails } from '@/lib/email'
+import { normalizeBookingFlowLocale } from '@/lib/i18n/bookingFlowLocale'
 import {
   computeRefundEligibility,
   refundEligibilityMessage,
@@ -152,6 +153,7 @@ export async function POST(request: NextRequest) {
       currency: String(data.currency ?? 'TRY'),
       reason: reason || null,
       manageUrl,
+      siteLocale: normalizeBookingFlowLocale(data.ui_locale),
     })
 
     return NextResponse.json({

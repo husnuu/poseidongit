@@ -15,6 +15,8 @@ import { buildYachtDetailMetadata } from '@/lib/yachtMetadata'
 import listStyles from '../../turlar/page.module.css'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
+import { getYachtUi } from '@/lib/i18n/yachtUi'
+import { translateYachtRentalDocument } from '@/lib/yachtTranslate'
 
 /** Root layout `headers()` ile uyum (prod: DYNAMIC_SERVER_USAGE). */
 export const dynamic = 'force-dynamic'
@@ -105,11 +107,13 @@ export default async function YatKiralamaSegmentPage({
       yacht.locationSlug && yacht.slug
         ? `/yat-kiralama/${yacht.locationSlug}/${yacht.slug}`
         : `/yat-kiralama/${segment}`
-    return <YachtDetailView locale={locale} yacht={yacht} path={path} />
+    const translatedYacht = await translateYachtRentalDocument(yacht, locale)
+    return <YachtDetailView locale={locale} yacht={translatedYacht} path={path} />
   }
 
   const location = await getLocationBySlug(segment)
   if (location?.slug) {
+    const ui = getYachtUi(locale)
     let yachts = mapSanityYachtRowsToHomeCards([])
     try {
       const raw = await getYachtsByLocation(segment)
@@ -125,7 +129,7 @@ export default async function YatKiralamaSegmentPage({
             <header className="mb-12">
               <h1 id="loc-yachts-heading" className={listStyles.heading}>
                 <span className={listStyles.headingLine1}>{location.title}</span>
-                <span className={listStyles.headingLine2}>YAT KİRALAMA</span>
+                <span className={listStyles.headingLine2}>{ui.locationHeadingSuffix}</span>
               </h1>
               {location.intro?.trim() && (
                 <p
@@ -138,7 +142,7 @@ export default async function YatKiralamaSegmentPage({
             </header>
             <YachtRentalListSection
               yachts={yachts}
-              emptyStateMessage="Bu lokasyon için henüz yat eklenmemiş."
+              emptyStateMessage={ui.locationEmptyStateMessage}
               locale={locale}
             />
           </div>

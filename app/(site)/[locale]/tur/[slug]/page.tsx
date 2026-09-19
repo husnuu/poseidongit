@@ -7,7 +7,8 @@ import { client, urlFor } from '@/lib/sanity'
 import { tourGalleryHeroImageUrl } from '@/lib/sanityImage'
 import { tourByLocaleSlugQuery, tourSlugRowsForLocalesQuery, siteFooterQuery } from '@/lib/queries'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
-import { mergeTourForLocale } from '@/lib/i18n/mergeTourForLocale'
+import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
+import { translateText, translatePortableTextBlocks } from '@/lib/i18n/runtimeTranslate'
 import { withLocalePath } from '@/lib/i18n/paths'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
@@ -273,7 +274,32 @@ const getTour = cache(async function getTour(
     locale,
   })
   if (!raw) return null
-  return mergeTourForLocale(raw as unknown as Record<string, unknown>, locale) as unknown as Tour
+  const rawRecord = raw as unknown as Record<string, unknown>
+  const merged = mergeTourForLocale(rawRecord, locale) as unknown as Tour
+
+  // Editör manuel çeviri girmemişse (translations.en/de boşsa), anlık makine
+  // çevirisiyle Türkçe içeriği doldur — Sanity'e hiçbir şey yazılmaz.
+  if (locale !== 'tr') {
+    const [description, faqs, shortDescription] = await Promise.all([
+      tourFieldHasManualTranslation(rawRecord, locale, 'description')
+        ? merged.description
+        : translatePortableTextBlocks(merged.description, locale),
+      tourFieldHasManualTranslation(rawRecord, locale, 'faqs')
+        ? merged.faqs
+        : Promise.all(
+            (merged.faqs ?? []).map(async (faq) => ({
+              question: await translateText(faq.question, locale),
+              answer: await translateText(faq.answer, locale),
+            }))
+          ),
+      tourFieldHasManualTranslation(rawRecord, locale, 'shortDescription')
+        ? merged.shortDescription
+        : translateText(merged.shortDescription, locale),
+    ])
+    return { ...merged, description, faqs, shortDescription }
+  }
+
+  return merged
 })
 
 function parseMetaKeywords(raw: string | null | undefined): string[] | undefined {
