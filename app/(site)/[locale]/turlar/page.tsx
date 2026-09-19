@@ -11,12 +11,55 @@ import { getBaseUrl, getSiteName } from '@/lib/seo'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
-import { mergeTourForLocale } from '@/lib/i18n/mergeTourForLocale'
+import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
 import { mergeHomePageLocale } from '@/lib/i18n/mergeHomePageLocale'
+import { translateText } from '@/lib/i18n/runtimeTranslate'
 
 export const dynamic = 'force-dynamic'
 
 const siteName = getSiteName()
+
+const DEFAULT_TITLE_TOP: Record<SiteLocale, string> = {
+  tr: 'EN POPÜLER',
+  en: 'MOST POPULAR',
+  de: 'AM BELIEBTESTEN',
+}
+
+const DEFAULT_TITLE_BOTTOM: Record<SiteLocale, string> = {
+  tr: 'TURLAR',
+  en: 'TOURS',
+  de: 'TOUREN',
+}
+
+const EMPTY_TOURS_MESSAGE: Record<SiteLocale, string> = {
+  tr: 'Henüz tur eklenmemiş.',
+  en: 'No tours have been added yet.',
+  de: 'Es wurden noch keine Touren hinzugefügt.',
+}
+
+const META_TITLE: Record<SiteLocale, string> = {
+  tr: siteName ? `Tekne Turları | ${siteName}` : 'Tekne Turları | Turlar ve Fiyatlar',
+  en: siteName ? `Boat Tours | ${siteName}` : 'Boat Tours | Tours and Prices',
+  de: siteName ? `Bootstouren | ${siteName}` : 'Bootstouren | Touren und Preise',
+}
+
+const META_DESCRIPTION: Record<SiteLocale, string> = {
+  tr: 'Tekne turu seçenekleri: adalar ve koylar turu, BBQ turları, günlük turlar. Fiyatlar ve rezervasyon.',
+  en: 'Boat tour options: islands and bays tour, BBQ tours, daily tours. Prices and booking.',
+  de: 'Bootstour-Optionen: Insel- und Buchtentour, BBQ-Touren, Tagestouren. Preise und Buchung.',
+}
+
+const OG_META_TITLE: Record<SiteLocale, string> = {
+  tr: siteName ? `Tekne Turları | ${siteName}` : 'Tekne Turları',
+  en: siteName ? `Boat Tours | ${siteName}` : 'Boat Tours',
+  de: siteName ? `Bootstouren | ${siteName}` : 'Bootstouren',
+}
+
+const OG_META_DESCRIPTION: Record<SiteLocale, string> = {
+  tr: 'Tekne turları ve deneyimler. Rezervasyon.',
+  en: 'Boat tours and experiences. Book now.',
+  de: 'Bootstouren und Erlebnisse. Jetzt buchen.',
+}
 
 export async function generateMetadata({
   params,
@@ -27,13 +70,12 @@ export async function generateMetadata({
   const locale = isSiteLocale(loc) ? (loc as SiteLocale) : 'tr'
   const canonical = `${getBaseUrl()}${withLocalePath(locale, '/turlar')}`
   return {
-    title: siteName ? `Tekne Turları | ${siteName}` : 'Tekne Turları | Turlar ve Fiyatlar',
-    description:
-      'Tekne turu seçenekleri: adalar ve koylar turu, BBQ turları, günlük turlar. Fiyatlar ve rezervasyon.',
+    title: META_TITLE[locale],
+    description: META_DESCRIPTION[locale],
     alternates: { canonical },
     openGraph: {
-      title: siteName ? `Tekne Turları | ${siteName}` : 'Tekne Turları',
-      description: 'Tekne turları ve deneyimler. Rezervasyon.',
+      title: OG_META_TITLE[locale],
+      description: OG_META_DESCRIPTION[locale],
       url: canonical,
     },
   }
@@ -103,27 +145,33 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
     ])
     pageData = page ?? null
     const raw = Array.isArray(toursData) ? toursData : []
-    const mapped = raw.map((t) => {
-      const merged = mergeTourForLocale(t as unknown as Record<string, unknown>, locale) as unknown as TourListRaw & {
-        quickFacts?: { durationText?: string | null; meetingLocation?: string | null }
-      }
-      const qf = merged.quickFacts
-      return {
-        _id: merged._id,
-        title: merged.title,
-        slug: merged.slug,
-        shortDescription: merged.shortDescription,
-        rating: merged.rating,
-        reviewCount: merged.reviewCount,
-        reviewsUrl: merged.reviewsUrl ?? null,
-        isPopular: merged.isPopular,
-        departureLabel: qf?.meetingLocation?.trim() || merged.departureLabel,
-        durationLabel: qf?.durationText?.trim() || merged.durationLabel,
-        priceFrom: merged.priceFrom,
-        coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
-        coverImageAlt: merged.mainImage?.alt ?? null,
-      }
-    })
+    const mapped = await Promise.all(
+      raw.map(async (t) => {
+        const rawItem = t as unknown as Record<string, unknown>
+        const merged = mergeTourForLocale(rawItem, locale) as unknown as TourListRaw & {
+          quickFacts?: { durationText?: string | null; meetingLocation?: string | null }
+        }
+        const qf = merged.quickFacts
+        const shortDescription = tourFieldHasManualTranslation(rawItem, locale, 'shortDescription')
+          ? merged.shortDescription
+          : await translateText(merged.shortDescription, locale)
+        return {
+          _id: merged._id,
+          title: merged.title,
+          slug: merged.slug,
+          shortDescription,
+          rating: merged.rating,
+          reviewCount: merged.reviewCount,
+          reviewsUrl: merged.reviewsUrl ?? null,
+          isPopular: merged.isPopular,
+          departureLabel: qf?.meetingLocation?.trim() || merged.departureLabel,
+          durationLabel: qf?.durationText?.trim() || merged.durationLabel,
+          priceFrom: merged.priceFrom,
+          coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
+          coverImageAlt: merged.mainImage?.alt ?? null,
+        }
+      })
+    )
     const homeMerged = mergeHomePageLocale(homeOrderRaw, locale)
     const popularOrder = popularTourIdsFromMergedHome(homeMerged as Record<string, unknown> | null)
     tours = sortToursLikeHomepage(mapped, popularOrder, locale)
@@ -131,8 +179,12 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
     tours = []
   }
 
-  const titleTop = pageData?.titleTop?.trim() || 'EN POPÜLER'
-  const titleBottom = pageData?.titleBottom?.trim() || 'TURLAR'
+  const titleTop = pageData?.titleTop?.trim()
+    ? await translateText(pageData.titleTop, locale)
+    : DEFAULT_TITLE_TOP[locale]
+  const titleBottom = pageData?.titleBottom?.trim()
+    ? await translateText(pageData.titleBottom, locale)
+    : DEFAULT_TITLE_BOTTOM[locale]
 
   return (
     <div className="min-h-screen bg-white">
@@ -152,7 +204,7 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
           </div>
 
           {tours.length === 0 && (
-            <p className="text-center text-black/60 py-12">Henüz tur eklenmemiş.</p>
+            <p className="text-center text-black/60 py-12">{EMPTY_TOURS_MESSAGE[locale]}</p>
           )}
         </div>
       </section>

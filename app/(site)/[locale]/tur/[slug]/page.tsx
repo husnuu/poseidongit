@@ -8,7 +8,13 @@ import { tourGalleryHeroImageUrl } from '@/lib/sanityImage'
 import { tourByLocaleSlugQuery, tourSlugRowsForLocalesQuery, siteFooterQuery } from '@/lib/queries'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
 import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
-import { translateText, translatePortableTextBlocks } from '@/lib/i18n/runtimeTranslate'
+import {
+  translateText,
+  translatePortableTextBlocks,
+  translateTextArray,
+  translateFields,
+  translateArrayFields,
+} from '@/lib/i18n/runtimeTranslate'
 import { withLocalePath } from '@/lib/i18n/paths'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
@@ -280,23 +286,111 @@ const getTour = cache(async function getTour(
   // Editör manuel çeviri girmemişse (translations.en/de boşsa), anlık makine
   // çevirisiyle Türkçe içeriği doldur — Sanity'e hiçbir şey yazılmaz.
   if (locale !== 'tr') {
-    const [description, faqs, shortDescription] = await Promise.all([
-      tourFieldHasManualTranslation(rawRecord, locale, 'description')
-        ? merged.description
-        : translatePortableTextBlocks(merged.description, locale),
-      tourFieldHasManualTranslation(rawRecord, locale, 'faqs')
+    const has = (field: string) => tourFieldHasManualTranslation(rawRecord, locale, field)
+
+    const [
+      description,
+      faqs,
+      shortDescription,
+      highlights,
+      tourDetails,
+      itinerary,
+      included,
+      notIncluded,
+      host,
+      whyYouWillLove,
+      ticketClasses,
+      extras,
+      bookingCard,
+      pickupPoints,
+      foodMenu,
+      reelsSection,
+      reviewsSection,
+    ] = await Promise.all([
+      has('description') ? merged.description : translatePortableTextBlocks(merged.description, locale),
+      has('faqs')
         ? merged.faqs
+        : translateArrayFields(merged.faqs, ['question', 'answer'], locale),
+      has('shortDescription') ? merged.shortDescription : translateText(merged.shortDescription, locale),
+      has('highlights')
+        ? merged.highlights
+        : translateArrayFields(merged.highlights, ['title', 'description'], locale),
+      has('tourDetails')
+        ? merged.tourDetails
+        : translateArrayFields(merged.tourDetails, ['label', 'value'], locale),
+      has('itinerary')
+        ? merged.itinerary
+        : translateArrayFields(merged.itinerary, ['title', 'description', 'tag'], locale),
+      has('included') ? merged.included : translateTextArray(merged.included, locale),
+      has('notIncluded') ? merged.notIncluded : translateTextArray(merged.notIncluded, locale),
+      has('host') ? merged.host : translateFields(merged.host, ['title', 'note'], locale),
+      has('whyYouWillLove')
+        ? merged.whyYouWillLove
+        : translateFields(merged.whyYouWillLove, ['title', 'text'], locale),
+      has('ticketClasses')
+        ? merged.ticketClasses
         : Promise.all(
-            (merged.faqs ?? []).map(async (faq) => ({
-              question: await translateText(faq.question, locale),
-              answer: await translateText(faq.answer, locale),
+            (merged.ticketClasses ?? []).map(async (tc) => ({
+              ...tc,
+              label: await translateText(tc.label, locale),
+              description: tc.description ? await translateText(tc.description, locale) : tc.description,
+              bullets: tc.bullets ? await translateTextArray(tc.bullets, locale) : tc.bullets,
             }))
           ),
-      tourFieldHasManualTranslation(rawRecord, locale, 'shortDescription')
-        ? merged.shortDescription
-        : translateText(merged.shortDescription, locale),
+      has('extras') ? merged.extras : translateArrayFields(merged.extras, ['title', 'description'], locale),
+      has('bookingCard')
+        ? merged.bookingCard
+        : (async () => {
+            const bc = await translateFields(merged.bookingCard, ['fromText', 'ctaText', 'urgencyText'], locale)
+            if (!bc) return bc
+            return { ...bc, trustBadges: await translateTextArray(bc.trustBadges, locale) }
+          })(),
+      has('pickupPoints')
+        ? merged.pickupPoints
+        : translateArrayFields(merged.pickupPoints, ['description'], locale),
+      has('foodMenu')
+        ? merged.foodMenu
+        : (async () => {
+            const fm = await translateFields(merged.foodMenu, ['sectionTitle', 'intro'], locale)
+            if (!fm) return fm
+            return { ...fm, items: await translateArrayFields(fm.items, ['title', 'excerpt'], locale) }
+          })(),
+      has('reelsSection')
+        ? merged.reelsSection
+        : (async () => {
+            const rs = await translateFields(merged.reelsSection, ['sectionTitle'], locale)
+            if (!rs) return rs
+            return { ...rs, items: await translateArrayFields(rs.items, ['caption'], locale) }
+          })(),
+      has('reviewsSection')
+        ? merged.reviewsSection
+        : (async () => {
+            const rv = merged.reviewsSection
+            if (!rv) return rv
+            return { ...rv, items: await translateArrayFields(rv.items, ['description'], locale) }
+          })(),
     ])
-    return { ...merged, description, faqs, shortDescription }
+
+    return {
+      ...merged,
+      description,
+      faqs: faqs ?? undefined,
+      shortDescription,
+      highlights: highlights ?? undefined,
+      tourDetails: tourDetails ?? undefined,
+      itinerary: itinerary ?? undefined,
+      included: included ?? undefined,
+      notIncluded: notIncluded ?? undefined,
+      host: host ?? undefined,
+      whyYouWillLove: whyYouWillLove ?? undefined,
+      ticketClasses: ticketClasses ?? undefined,
+      extras: extras ?? undefined,
+      bookingCard: (bookingCard ?? undefined) as Tour['bookingCard'],
+      pickupPoints: pickupPoints ?? undefined,
+      foodMenu: foodMenu ?? undefined,
+      reelsSection: reelsSection ?? undefined,
+      reviewsSection: (reviewsSection ?? undefined) as Tour['reviewsSection'],
+    }
   }
 
   return merged

@@ -7,6 +7,7 @@ import { getBaseUrl, getSiteName } from '@/lib/seo'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
+import { translateText } from '@/lib/i18n/runtimeTranslate'
 
 export const revalidate = 60
 
@@ -24,13 +25,17 @@ type MenuItemRaw = {
   } | null
 }
 
-function mapItem(raw: MenuItemRaw): MenuItemCard {
+async function mapItem(raw: MenuItemRaw, locale: SiteLocale): Promise<MenuItemCard> {
+  const [title, description] = await Promise.all([
+    translateText(raw.title, locale),
+    raw.description ? translateText(raw.description, locale) : Promise.resolve(raw.description ?? null),
+  ])
   return {
     _id: raw._id,
-    title: raw.title,
+    title: title || raw.title,
     category: raw.category,
     price: raw.price,
-    description: raw.description,
+    description,
     inStock: raw.inStock !== false,
     imageUrl: safeSanityImageUrl(raw.image, (b) =>
       b.width(720).height(540).fit('crop').auto('format'),
@@ -86,7 +91,7 @@ export default async function MenuPage({ params }: { params: Promise<{ locale: s
     raw = []
   }
 
-  const items = (raw ?? []).map(mapItem)
+  const items = await Promise.all((raw ?? []).map((r) => mapItem(r, locale)))
 
   return <MenuPageClient items={items} locale={locale} />
 }

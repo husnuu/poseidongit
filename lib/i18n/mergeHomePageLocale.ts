@@ -20,6 +20,30 @@ function mergeArrayItemsByIndex(
 }
 
 /**
+ * Editör bir anasayfa bölümünün (ör. "aboutTeaser") belirli bir alanını
+ * (ör. "heading") pageTranslations.en/de içine elle çevirmiş mi?
+ * true dönerse runtime çeviri o alana UYGULANMAMALI.
+ */
+export function homeFieldHasManualTranslation(
+  data: Record<string, unknown> | null | undefined,
+  locale: SiteLocale,
+  section: string,
+  field: string
+): boolean {
+  if (locale === 'tr' || !data) return true
+  const pt = data.pageTranslations as { en?: Record<string, unknown>; de?: Record<string, unknown> } | undefined
+  if (!pt) return false
+  const patch = locale === 'en' ? pt.en : pt.de
+  const sec = patch?.[section] as Record<string, unknown> | undefined
+  if (!sec) return false
+  const value = sec[field]
+  if (value == null) return false
+  if (typeof value === 'string') return value.trim().length > 0
+  if (Array.isArray(value)) return value.length > 0
+  return true
+}
+
+/**
  * Applies `pageTranslations.en` or `pageTranslations.de` onto fetched home page data.
  * Mutates a shallow clone; safe for server components.
  */

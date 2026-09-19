@@ -13,6 +13,36 @@ const CACHE_TTL_SECONDS = 60 * 60 * 24 * 30 // 30 gün
 const DEEPL_TARGET_LANG: Record<SiteLocale, string> = { tr: 'TR', en: 'EN-GB', de: 'DE' }
 const MYMEMORY_TARGET_LANG: Record<SiteLocale, string> = { tr: 'tr', en: 'en', de: 'de' }
 
+/**
+ * Marka/şirket adları gibi asla çevrilmemesi gereken özel isimler.
+ * Örn. "Hantal Turizm" gibi bir acente adının içindeki "Hantal" kelimesi,
+ * sıradan Türkçe bir sıfat olduğu için makine çevirisi yanlışlıkla
+ * "Bulky Tourism" gibi bir şeye çevirebilir — bu listedeki terimler
+ * çeviriye gönderilmeden önce korumaya alınır, çeviri sonrası aynen geri konur.
+ */
+const PROTECTED_TERMS = ['Hantal Turizm', 'Poseidon']
+
+function protectTerms(text: string): { protectedText: string; restore: (s: string) => string } {
+  const present = PROTECTED_TERMS.filter((term) => text.includes(term))
+  if (present.length === 0) {
+    return { protectedText: text, restore: (s) => s }
+  }
+  let protectedText = text
+  present.forEach((term, i) => {
+    const token = `XPROTECTEDTERM${i}X`
+    protectedText = protectedText.split(term).join(token)
+  })
+  const restore = (s: string): string => {
+    let out = s
+    present.forEach((term, i) => {
+      const token = `XPROTECTEDTERM${i}X`
+      out = out.split(token).join(term)
+    })
+    return out
+  }
+  return { protectedText, restore }
+}
+
 /** MyMemory anonim kullanımda ~500 byte/istek sınırı var; uzun metinleri cümle sınırından böleriz. */
 const MYMEMORY_CHUNK_MAX_CHARS = 450
 
@@ -88,10 +118,13 @@ async function translateWithMyMemory(text: string, target: SiteLocale): Promise<
 export async function translateText(text: string | null | undefined, target: SiteLocale): Promise<string> {
   const trimmed = text?.trim()
   if (!trimmed || target === 'tr') return text ?? ''
+  const { protectedText, restore } = protectTerms(trimmed)
   try {
     const apiKey = process.env.DEEPL_API_KEY?.trim()
-    if (apiKey) return await translateWithDeepL(trimmed, target, apiKey)
-    return await translateWithMyMemory(trimmed, target)
+    const translated = apiKey
+      ? await translateWithDeepL(protectedText, target, apiKey)
+      : await translateWithMyMemory(protectedText, target)
+    return restore(translated)
   } catch (err) {
     console.error('[runtimeTranslate] translateText failed, orijinal metin kullanılıyor:', err)
     return text ?? ''
@@ -106,6 +139,39 @@ export async function translateTextArray(
   if (!items?.length || target === 'tr') return (items ?? []).filter((x): x is string => !!x)
   const results = await Promise.all(items.map((item) => translateText(item, target)))
   return results
+}
+
+/**
+ * Bir nesnenin belirtilen string alanlarını çevirir (whitelist) — icon/key/slug/href gibi
+ * teknik alanlara asla dokunmaz, sadece açıkça verilen `fields` listesindekilere.
+ */
+export async function translateFields<T extends object>(
+  obj: T | null | undefined,
+  fields: (keyof T)[],
+  target: SiteLocale
+): Promise<T | null | undefined> {
+  if (!obj || target === 'tr') return obj
+  const rec = obj as Record<string, unknown>
+  const entries = await Promise.all(
+    fields.map(async (f) => {
+      const v = rec[f as string]
+      if (typeof v !== 'string' || !v.trim()) return [f as string, v] as const
+      return [f as string, await translateText(v, target)] as const
+    })
+  )
+  const patch = Object.fromEntries(entries)
+  return { ...obj, ...patch }
+}
+
+/** translateFields'ın dizi (array) versiyonu — her eleman için aynı alan listesi çevrilir. */
+export async function translateArrayFields<T extends object>(
+  arr: T[] | null | undefined,
+  fields: (keyof T)[],
+  target: SiteLocale
+): Promise<T[] | null | undefined> {
+  if (!arr?.length || target === 'tr') return arr
+  const results = await Promise.all(arr.map((item) => translateFields<T>(item, fields, target)))
+  return results.filter((x): x is NonNullable<typeof x> => x != null) as T[]
 }
 
 /** Sanity PortableText blok dizisini, sadece metin span'lerini çevirerek döndürür (mark/stil korunur). */

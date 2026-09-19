@@ -1,4 +1,5 @@
 import type { SiteLocale } from './config'
+import { translateText } from './runtimeTranslate'
 
 /** Header / footer menü satırları (label + labelEn + labelDe) */
 export function pickNavLabel(
@@ -33,6 +34,25 @@ export function pickLocalizedString(
   if (locale === 'en' && en?.trim()) return en.trim()
   if (locale === 'de' && de?.trim()) return de.trim()
   return b
+}
+
+/**
+ * pickLocalizedString'in anlık-çeviri fallback'li hâli: editör en/de alanını
+ * doldurmamışsa, Türkçe tabanı elle yazmak yerine makine çevirisiyle doldurur.
+ */
+export async function pickLocalizedStringTranslated(
+  base: string | null | undefined,
+  en: string | null | undefined,
+  de: string | null | undefined,
+  locale: SiteLocale,
+  fallback = ''
+): Promise<string> {
+  if (locale === 'en' && en?.trim()) return en.trim()
+  if (locale === 'de' && de?.trim()) return de.trim()
+  const b = base?.trim()
+  if (!b) return fallback
+  if (locale === 'tr') return b
+  return translateText(b, locale)
 }
 
 export function pickOptionalLinkLabel(

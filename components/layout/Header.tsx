@@ -5,6 +5,7 @@ import type { SiteLocale } from '@/lib/i18n/config'
 import { headerNavWithHelpCenter } from '@/lib/i18n/headerNavWithHelpCenter'
 import type { AnnouncementBarData } from './announcementBarTypes'
 import HeaderClient from './HeaderClient'
+import { translateText } from '@/lib/i18n/runtimeTranslate'
 
 interface SiteSettings {
   siteName?: string
@@ -48,9 +49,35 @@ export default async function Header({ locale }: { locale: SiteLocale }) {
         />
       )
     }
-    const bar = settings.announcementBar ?? null
+    let bar = settings.announcementBar ?? null
+    if (bar?.enabled && bar.text?.trim() && locale !== 'tr') {
+      const needsEn = locale === 'en' && !bar.textEn?.trim()
+      const needsDe = locale === 'de' && !bar.textDe?.trim()
+      if (needsEn || needsDe) {
+        const translated = await translateText(bar.text, locale)
+        bar = {
+          ...bar,
+          ...(needsEn ? { textEn: translated } : {}),
+          ...(needsDe ? { textDe: translated } : {}),
+        }
+      }
+    }
+    let cta = settings.cta ?? null
+    if (cta?.text?.trim() && locale !== 'tr') {
+      const needsEn = locale === 'en' && !cta.textEn?.trim()
+      const needsDe = locale === 'de' && !cta.textDe?.trim()
+      if (needsEn || needsDe) {
+        const translated = await translateText(cta.text, locale)
+        cta = {
+          ...cta,
+          ...(needsEn ? { textEn: translated } : {}),
+          ...(needsDe ? { textDe: translated } : {}),
+        }
+      }
+    }
     const settingsWithHelp = {
       ...settings,
+      ...(cta ? { cta } : {}),
       headerNav: headerNavWithHelpCenter(settings.headerNav),
     }
     return <HeaderClient locale={locale} settings={settingsWithHelp} announcementBar={bar} />

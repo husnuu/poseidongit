@@ -49,19 +49,29 @@ import { notFound } from 'next/navigation'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
-import { mergeTourForLocale } from '@/lib/i18n/mergeTourForLocale'
+import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
-import { mergeHomePageLocale, mergeHomePageSeoForLocale } from '@/lib/i18n/mergeHomePageLocale'
+import { mergeHomePageLocale, mergeHomePageSeoForLocale, homeFieldHasManualTranslation } from '@/lib/i18n/mergeHomePageLocale'
 import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
+import {
+  translateText,
+  translateTextArray,
+  translatePortableTextBlocks,
+} from '@/lib/i18n/runtimeTranslate'
 
 export const dynamic = 'force-dynamic'
 
 const siteName = getSiteName()
-const defaultHomeTitle = siteName
-  ? `Tekne Turu | Adalar ve Koylar – ${siteName}`
-  : 'Tekne Turu | Adalar ve Koylar'
-const defaultHomeDescription =
-  'Tekne turu rezervasyonu. Adalar ve koylar turu, BBQ turları, günlük turlar. Online rezervasyon.'
+const DEFAULT_HOME_TITLE: Record<SiteLocale, string> = {
+  tr: siteName ? `Tekne Turu | Adalar ve Koylar – ${siteName}` : 'Tekne Turu | Adalar ve Koylar',
+  en: siteName ? `Boat Tour | Islands and Bays – ${siteName}` : 'Boat Tour | Islands and Bays',
+  de: siteName ? `Bootstour | Inseln und Buchten – ${siteName}` : 'Bootstour | Inseln und Buchten',
+}
+const DEFAULT_HOME_DESCRIPTION: Record<SiteLocale, string> = {
+  tr: 'Tekne turu rezervasyonu. Adalar ve koylar turu, BBQ turları, günlük turlar. Online rezervasyon.',
+  en: 'Boat tour booking. Islands and bays tour, BBQ tours, daily tours. Book online.',
+  de: 'Bootstour-Buchung. Insel- und Buchtentour, BBQ-Touren, Tagestouren. Online buchen.',
+}
 
 const OG_LOCALE: Record<SiteLocale, string> = {
   tr: 'tr_TR',
@@ -127,11 +137,11 @@ export async function generateMetadata({
       locale
     ) as HomePageSeoPayload | null | undefined
 
-    const rawMetaTitle = seo?.metaTitle?.trim() ?? defaultHomeTitle
+    const rawMetaTitle = seo?.metaTitle?.trim() ?? DEFAULT_HOME_TITLE[locale]
     const pageTitle =
       rawMetaTitle.includes('|') ? rawMetaTitle : siteName ? `${rawMetaTitle} | ${siteName}` : rawMetaTitle
 
-    const rawDescription = seo?.metaDescription?.trim() ?? defaultHomeDescription
+    const rawDescription = seo?.metaDescription?.trim() ?? DEFAULT_HOME_DESCRIPTION[locale]
     const description = rawDescription.slice(0, 165)
 
     const ogTitle = (seo?.ogTitle?.trim() || pageTitle).slice(0, 90)
@@ -141,10 +151,11 @@ export async function generateMetadata({
     const ogFromHero = safeSanityImageUrl(row?.heroOgFallback ?? undefined, ogPipe)
     const ogImageUrl = ogFromSeo ?? ogFromHero
 
+    const homeLabel = locale === 'en' ? 'Home' : locale === 'de' ? 'Startseite' : 'Ana sayfa'
     const ogImageAlt =
       seo?.ogImage?.alt?.trim() ||
       row?.heroOgFallback?.alt?.trim() ||
-      (siteName ? `${siteName} — ana sayfa` : 'Ana sayfa')
+      (siteName ? `${siteName} — ${homeLabel.toLowerCase()}` : homeLabel)
 
     const keywords = parseMetaKeywords(seo?.metaKeywords)
 
@@ -185,8 +196,8 @@ export async function generateMetadata({
     }
   } catch {
     return {
-      title: defaultHomeTitle,
-      description: defaultHomeDescription,
+      title: DEFAULT_HOME_TITLE[locale],
+      description: DEFAULT_HOME_DESCRIPTION[locale],
       alternates: {
         canonical: canonicalBase,
         languages: alternateLanguageAbsoluteUrls('/'),
@@ -195,14 +206,14 @@ export async function generateMetadata({
         type: 'website',
         locale: OG_LOCALE[locale],
         ...(siteName ? { siteName } : {}),
-        title: siteName ? `Tekne Turu | ${siteName}` : 'Tekne Turu',
-        description: 'Tekne turu ve koy turları. Rezervasyon.',
+        title: DEFAULT_HOME_TITLE[locale],
+        description: DEFAULT_HOME_DESCRIPTION[locale],
         url: canonicalBase,
       },
       twitter: {
         card: 'summary_large_image',
-        title: siteName ? `Tekne Turu | ${siteName}` : 'Tekne Turu',
-        description: 'Tekne turu ve koy turları. Rezervasyon.',
+        title: DEFAULT_HOME_TITLE[locale],
+        description: DEFAULT_HOME_DESCRIPTION[locale],
       },
     }
   }
@@ -335,19 +346,31 @@ function localizeHero(hero: HeroData | null, locale: SiteLocale): HeroData | nul
   }
 }
 
-function localizeAboutTeaser(d: AboutTeaserData | null, locale: SiteLocale): AboutTeaserData | null {
+async function localizeAboutTeaser(
+  d: AboutTeaserData | null,
+  locale: SiteLocale,
+  rawHomeData: Record<string, unknown> | null | undefined
+): Promise<AboutTeaserData | null> {
   if (!d) return null
+  const heading = homeFieldHasManualTranslation(rawHomeData, locale, 'aboutTeaser', 'heading')
+    ? d.heading
+    : await translateText(d.heading, locale)
+  const body = homeFieldHasManualTranslation(rawHomeData, locale, 'aboutTeaser', 'body')
+    ? d.body
+    : await translatePortableTextBlocks(d.body, locale)
   return {
     ...d,
+    heading,
+    body,
     primaryCta: localizeCta(d.primaryCta, locale) ?? d.primaryCta,
     secondaryCta: localizeCta(d.secondaryCta, locale) ?? d.secondaryCta,
   }
 }
 
-function mapPopularYachtsSection(
+async function mapPopularYachtsSection(
   raw: PopularYachtsSectionRaw | null,
   locale: SiteLocale,
-): PopularYachtsSectionData | null {
+): Promise<PopularYachtsSectionData | null> {
   if (!raw || raw.enabled === false) return null
   type YachtRef = NonNullable<PopularYachtsSectionRaw['items']>[number]
   const list = (raw.items ?? []).filter(
@@ -359,39 +382,42 @@ function mapPopularYachtsSection(
       Boolean(y.name?.trim())
   )
   if (!list.length) return null
-  const items: HomePopularYachtCardData[] = list.map((y) => {
-    const spec = y.specifications
-    const specifications =
-      spec == null
-        ? undefined
-        : {
-            length: spec.length ?? undefined,
-            cabins: spec.cabins ?? undefined,
-            capacity: spec.capacity ?? undefined,
-            buildYear: spec.buildYear ?? undefined,
-          }
-    return {
-    _id: y._id,
-    name: (y.name ?? '').trim(),
-    slug: y.slug ?? null,
-    locationTitle: y.locationTitle ?? null,
-    locationSlug: y.locationSlug ?? null,
-    coverImageUrl: y.mainImage?.asset ? urlFor(y.mainImage.asset).width(900).height(720).url() : null,
-    coverImageAlt: y.mainImage?.alt ?? null,
-    yachtType: y.yachtType ?? null,
-    badges: y.badges ?? null,
-    included: y.included ?? null,
-    specifications,
-    sailingLicenceRequired: y.sailingLicenceRequired ?? null,
-    isFeatured: y.isFeatured ?? null,
-    priceFrom: y.priceFrom ?? null,
-    overnightTotalPrice: y.overnightTotalPrice ?? null,
-    overnightNightPricing: y.overnightNightPricing ?? null,
-    currency: y.currency ?? null,
-    dailyRentalEnabled: y.dailyRentalEnabled ?? null,
-    overnightRentalEnabled: y.overnightRentalEnabled ?? null,
-  }
-  })
+  const items: HomePopularYachtCardData[] = await Promise.all(
+    list.map(async (y) => {
+      const spec = y.specifications
+      const specifications =
+        spec == null
+          ? undefined
+          : {
+              length: spec.length ?? undefined,
+              cabins: spec.cabins ?? undefined,
+              capacity: spec.capacity ?? undefined,
+              buildYear: spec.buildYear ?? undefined,
+            }
+      const badges = await translateTextArray(y.badges, locale)
+      return {
+        _id: y._id,
+        name: (y.name ?? '').trim(),
+        slug: y.slug ?? null,
+        locationTitle: y.locationTitle ?? null,
+        locationSlug: y.locationSlug ?? null,
+        coverImageUrl: y.mainImage?.asset ? urlFor(y.mainImage.asset).width(900).height(720).url() : null,
+        coverImageAlt: y.mainImage?.alt ?? null,
+        yachtType: y.yachtType ?? null,
+        badges: badges.length ? badges : null,
+        included: y.included ?? null,
+        specifications,
+        sailingLicenceRequired: y.sailingLicenceRequired ?? null,
+        isFeatured: y.isFeatured ?? null,
+        priceFrom: y.priceFrom ?? null,
+        overnightTotalPrice: y.overnightTotalPrice ?? null,
+        overnightNightPricing: y.overnightNightPricing ?? null,
+        currency: y.currency ?? null,
+        dailyRentalEnabled: y.dailyRentalEnabled ?? null,
+        overnightRentalEnabled: y.overnightRentalEnabled ?? null,
+      }
+    })
+  )
   return {
     enabled: true,
     title: raw.title,
@@ -401,51 +427,63 @@ function mapPopularYachtsSection(
   }
 }
 
-function mapPopularToursToCardItems(
+async function mapPopularToursToCardItems(
   raw: PopularToursSectionRaw | null,
   locale: SiteLocale
-): PopularToursSectionData | null {
+): Promise<PopularToursSectionData | null> {
   if (!raw || !raw.items?.length) return raw as PopularToursSectionData | null
-  const items: TourListItem[] = raw.items.map((t) => {
-    const merged = mergeTourForLocale(t as unknown as Record<string, unknown>, locale) as unknown as (typeof raw.items)[number] & {
-      quickFacts?: { durationText?: string | null; meetingLocation?: string | null }
-    }
-    const qf = merged.quickFacts
-    const durationLabel = qf?.durationText?.trim() || merged.durationLabel
-    const departureLabel = qf?.meetingLocation?.trim() || merged.departureLabel
-    return {
-      _id: merged._id,
-      title: merged.title,
-      slug: merged.slug,
-      shortDescription: merged.shortDescription,
-      durationLabel,
-      departureLabel,
-      priceFrom: merged.priceFrom,
-      rating: merged.rating,
-      reviewCount: merged.reviewCount,
-      reviewsUrl: merged.reviewsUrl ?? null,
-      isPopular: merged.isPopular ?? false,
-      coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
-      coverImageAlt: merged.mainImage?.alt ?? null,
-    }
-  })
+  const items: TourListItem[] = await Promise.all(
+    raw.items.map(async (t) => {
+      const rawItem = t as unknown as Record<string, unknown>
+      const merged = mergeTourForLocale(rawItem, locale) as unknown as (typeof raw.items)[number] & {
+        quickFacts?: { durationText?: string | null; meetingLocation?: string | null }
+      }
+      const qf = merged.quickFacts
+      const durationLabel = qf?.durationText?.trim() || merged.durationLabel
+      const departureLabel = qf?.meetingLocation?.trim() || merged.departureLabel
+      const shortDescription = tourFieldHasManualTranslation(rawItem, locale, 'shortDescription')
+        ? merged.shortDescription
+        : await translateText(merged.shortDescription, locale)
+      return {
+        _id: merged._id,
+        title: merged.title,
+        slug: merged.slug,
+        shortDescription,
+        durationLabel,
+        departureLabel,
+        priceFrom: merged.priceFrom,
+        rating: merged.rating,
+        reviewCount: merged.reviewCount,
+        reviewsUrl: merged.reviewsUrl ?? null,
+        isPopular: merged.isPopular ?? false,
+        coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
+        coverImageAlt: merged.mainImage?.alt ?? null,
+      }
+    })
+  )
   return { ...raw, items }
 }
 
-function mapBlogSection(raw: BlogSectionRaw | null, locale: SiteLocale): BlogSectionData | null {
+async function mapBlogSection(raw: BlogSectionRaw | null, locale: SiteLocale): Promise<BlogSectionData | null> {
   if (!raw || !raw.posts?.length) return raw as BlogSectionData | null
-  const posts = raw.posts.map((p) => {
-    const merged = mergeBlogForLocale(p as unknown as Record<string, unknown>, locale) as unknown as (typeof raw.posts)[number]
-    return {
-      _id: merged._id,
-      title: merged.title,
-      slug: merged.slug,
-      excerpt: merged.excerpt,
-      publishDate: merged.publishDate,
-      coverImageUrl: merged.coverImage?.asset ? urlFor(merged.coverImage.asset).width(800).height(600).url() : null,
-      coverImageAlt: merged.coverImage?.alt ?? null,
-    }
-  })
+  const posts = await Promise.all(
+    raw.posts.map(async (p) => {
+      const rawPost = p as unknown as Record<string, unknown>
+      const merged = mergeBlogForLocale(rawPost, locale) as unknown as (typeof raw.posts)[number]
+      const excerpt = tourFieldHasManualTranslation(rawPost, locale, 'excerpt')
+        ? merged.excerpt
+        : await translateText(merged.excerpt, locale)
+      return {
+        _id: merged._id,
+        title: merged.title,
+        slug: merged.slug,
+        excerpt,
+        publishDate: merged.publishDate,
+        coverImageUrl: merged.coverImage?.asset ? urlFor(merged.coverImage.asset).width(800).height(600).url() : null,
+        coverImageAlt: merged.coverImage?.alt ?? null,
+      }
+    })
+  )
   return { ...raw, posts }
 }
 
@@ -510,12 +548,16 @@ function resolveHomeClassesSection(
   }
 }
 
-function mapRouteSection(raw: RouteSectionRaw | null): {
+async function mapRouteSection(
+  raw: RouteSectionRaw | null,
+  locale: SiteLocale,
+  rawHomeData: Record<string, unknown> | null | undefined
+): Promise<{
   heading: string
   description: string
   ctaButton: RouteSectionRaw['ctaButton']
   locations: RouteSectionLocation[]
-} | null {
+} | null> {
   if (!raw || !raw.enabled || !raw.heading) return null
   const locations: RouteSectionLocation[] = (raw.locations ?? []).slice(0, 4).map((loc) => ({
     name: loc.name ?? '',
@@ -523,9 +565,15 @@ function mapRouteSection(raw: RouteSectionRaw | null): {
     imageUrl: loc.image?.asset ? urlFor(loc.image.asset).width(600).height(800).url() : null,
     alt: loc.image?.alt ?? null,
   }))
+  const heading = homeFieldHasManualTranslation(rawHomeData, locale, 'routeSection', 'heading')
+    ? raw.heading
+    : await translateText(raw.heading, locale)
+  const description = homeFieldHasManualTranslation(rawHomeData, locale, 'routeSection', 'description')
+    ? (raw.description ?? '')
+    : await translateText(raw.description, locale)
   return {
-    heading: raw.heading,
-    description: raw.description ?? '',
+    heading,
+    description,
     ctaButton: raw.ctaButton ?? null,
     locations,
   }
@@ -612,7 +660,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   let popularYachtsSection: PopularYachtsSectionData | null = null
   let aboutTeaser: AboutTeaserData | null = null
   let blogSection: BlogSectionData | null = null
-  let routeSection: ReturnType<typeof mapRouteSection> = null
+  let routeSection: Awaited<ReturnType<typeof mapRouteSection>> = null
   let instagramSection: InstagramSectionData | null = null
   let loyaltyBanner: { imageUrl?: string | null; imageAlt?: string | null; href?: string | null } | null = null
   let travelAgencyImageOverrides: TravelAgencyStructuredDataImageOverrides = {}
@@ -626,21 +674,50 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       settings: settingsRow,
       hero: heroRow,
     })
-    data = mergeHomePageLocale(raw as unknown as Record<string, unknown>, locale) as HomePageHeroResult
+    const rawHomeRecord = raw as unknown as Record<string, unknown>
+    data = mergeHomePageLocale(rawHomeRecord, locale) as HomePageHeroResult
     hero = localizeHero(data?.hero ?? null, locale)
     featureBar = data?.featureBar ?? null
-    popularToursSection = mapPopularToursToCardItems(data?.popularToursSection ?? null, locale)
-    classesSection = resolveHomeClassesSection(data?.classesSection ?? null, data?.classesAutoFromTour ?? null)
-    popularYachtsSection = mapPopularYachtsSection(data?.popularYachtsSection ?? null, locale)
-    aboutTeaser = localizeAboutTeaser(data?.aboutTeaser ?? null, locale)
-    const blogMapped = mapBlogSection(data?.blogSection ?? null, locale)
+    popularToursSection = await mapPopularToursToCardItems(data?.popularToursSection ?? null, locale)
+    const classesResolved = resolveHomeClassesSection(data?.classesSection ?? null, data?.classesAutoFromTour ?? null)
+    if (classesResolved && locale !== 'tr') {
+      const heading = homeFieldHasManualTranslation(rawHomeRecord, locale, 'classesSection', 'heading')
+        ? classesResolved.heading
+        : await translateText(classesResolved.heading, locale)
+      const subtitle = homeFieldHasManualTranslation(rawHomeRecord, locale, 'classesSection', 'subtitle')
+        ? classesResolved.subtitle
+        : await translateText(classesResolved.subtitle, locale)
+      const items = homeFieldHasManualTranslation(rawHomeRecord, locale, 'classesSection', 'items')
+        ? classesResolved.items
+        : await Promise.all(
+            (classesResolved.items ?? []).map(async (item) => ({
+              ...item,
+              label: await translateText(item.label, locale),
+              description: item.description ? await translateText(item.description, locale) : item.description,
+              badge: item.badge ? await translateText(item.badge, locale) : item.badge,
+              bullets: item.bullets ? await translateTextArray(item.bullets, locale) : item.bullets,
+            }))
+          )
+      classesSection = { ...classesResolved, heading, subtitle, items }
+    } else {
+      classesSection = classesResolved
+    }
+    popularYachtsSection = await mapPopularYachtsSection(data?.popularYachtsSection ?? null, locale)
+    aboutTeaser = await localizeAboutTeaser(data?.aboutTeaser ?? null, locale, rawHomeRecord)
+    const blogMapped = await mapBlogSection(data?.blogSection ?? null, locale)
     blogSection = blogMapped
       ? {
           ...blogMapped,
+          heading: homeFieldHasManualTranslation(rawHomeRecord, locale, 'blogSection', 'heading')
+            ? blogMapped.heading
+            : await translateText(blogMapped.heading, locale),
+          subtitle: homeFieldHasManualTranslation(rawHomeRecord, locale, 'blogSection', 'subtitle')
+            ? blogMapped.subtitle
+            : await translateText(blogMapped.subtitle, locale),
           ctaButton: localizeCta(blogMapped.ctaButton, locale) ?? blogMapped.ctaButton,
         }
       : null
-    const routeMapped = mapRouteSection(data?.routeSection ?? null)
+    const routeMapped = await mapRouteSection(data?.routeSection ?? null, locale, rawHomeRecord)
     routeSection = routeMapped
       ? {
           ...routeMapped,
@@ -666,7 +743,18 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   let homeReviews: HomeReviewsSectionData | null = null
   try {
     const reviewRows = await client.fetch<HomeReviewsTourRow[]>(homeReviewsQuery, {}, { useCdn: false })
-    homeReviews = flattenHomeReviews(reviewRows)
+    const flattened = flattenHomeReviews(reviewRows)
+    if (flattened && locale !== 'tr') {
+      const items = await Promise.all(
+        flattened.items.map(async (it) => ({
+          ...it,
+          description: await translateText(it.description, locale),
+        }))
+      )
+      homeReviews = { ...flattened, items }
+    } else {
+      homeReviews = flattened
+    }
   } catch {
     homeReviews = null
   }
@@ -682,16 +770,23 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       faqData?.sections?.flatMap((s) => s.items ?? []).filter((it): it is { question: string; answer: string } => !!(it?.question && it?.answer)) ?? []
     // Sanity'de henüz yeterli/tam Türkçe içerik yoksa bileşenin kendi varsayılan
     // listesi (kullanıcının verdiği güncel SSS metinleri) gösterilir.
-    homeFaqItems = flattened.length >= 4 ? flattened.slice(0, 7) : null
+    const picked = flattened.length >= 4 ? flattened.slice(0, 7) : null
+    homeFaqItems =
+      picked && locale !== 'tr'
+        ? await Promise.all(
+            picked.map(async (it) => ({
+              question: await translateText(it.question, locale),
+              answer: await translateText(it.answer, locale),
+            }))
+          )
+        : picked
   } catch {
     homeFaqItems = null
   }
 
   const organizationSchema = buildOrganizationSchema()
   const websiteSchema = buildWebSiteSchema({
-    description:
-      data?.seo?.metaDescription?.trim() ||
-      'Çeşme tekne turu ve koy turları. Adalar ve koylar tekne turu rezervasyonu.',
+    description: data?.seo?.metaDescription?.trim() || DEFAULT_HOME_DESCRIPTION[locale],
   })
   let travelAgencySchema: Record<string, unknown>
   try {
@@ -700,10 +795,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     travelAgencySchema = {
       '@context': 'https://schema.org',
       '@type': 'TravelAgency',
-      name: getSiteName() || 'Çeşme tekne turu',
+      name: getSiteName() || (locale === 'en' ? 'Çeşme boat tour' : locale === 'de' ? 'Çeşme Bootstour' : 'Çeşme tekne turu'),
       url: getBaseUrl(),
     }
   }
+
+  const loyaltyProgramLabel = locale === 'en' ? 'Loyalty Program' : locale === 'de' ? 'Treueprogramm' : 'Sadakat Programı'
 
   return (
     <div className="min-h-screen bg-white">
@@ -732,7 +829,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <a href={loyaltyBanner.href} className="block w-full overflow-hidden rounded-xl">
               <Image
                 src={loyaltyBanner.imageUrl!}
-                alt={loyaltyBanner.imageAlt || 'Sadakat Programı'}
+                alt={loyaltyBanner.imageAlt || loyaltyProgramLabel}
                 width={1280}
                 height={400}
                 className="h-auto w-full"
@@ -743,7 +840,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <div className="w-full overflow-hidden rounded-xl">
               <Image
                 src={loyaltyBanner.imageUrl!}
-                alt={loyaltyBanner.imageAlt || 'Sadakat Programı'}
+                alt={loyaltyBanner.imageAlt || loyaltyProgramLabel}
                 width={1280}
                 height={400}
                 className="h-auto w-full"

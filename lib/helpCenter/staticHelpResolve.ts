@@ -7,6 +7,7 @@ import type {
   HelpCenterPageDoc,
 } from '@/lib/sanity/types/helpCenter'
 import { STATIC_HELP_CATEGORIES, STATIC_HELP_PAGE } from './staticHelpData'
+import { translateText, translatePortableTextBlocks } from '@/lib/i18n/runtimeTranslate'
 
 /** İçerik güncellendiğinde (isteğe bağlı) tarih */
 const STATIC_UPDATED_AT = '2026-05-01T12:00:00.000Z'
@@ -42,100 +43,143 @@ function articleShortDescription(answer: string): string {
   return excerpt(answer, 180)
 }
 
-export function getStaticHelpCenterPage(_locale: SiteLocale): HelpCenterPageDoc {
+export async function getStaticHelpCenterPage(locale: SiteLocale): Promise<HelpCenterPageDoc> {
+  const [heroEyebrow, title, shortDescription, seoTitle, seoDescription] = await Promise.all([
+    translateText(STATIC_HELP_PAGE.heroEyebrow, locale),
+    translateText(STATIC_HELP_PAGE.title, locale),
+    translateText(STATIC_HELP_PAGE.shortDescription, locale),
+    translateText(STATIC_HELP_PAGE.seoTitle, locale),
+    translateText(STATIC_HELP_PAGE.seoDescription, locale),
+  ])
   return {
-    heroEyebrow: STATIC_HELP_PAGE.heroEyebrow,
-    title: STATIC_HELP_PAGE.title,
-    shortDescription: STATIC_HELP_PAGE.shortDescription,
-    seoTitle: STATIC_HELP_PAGE.seoTitle,
-    seoDescription: STATIC_HELP_PAGE.seoDescription,
+    heroEyebrow,
+    title,
+    shortDescription,
+    seoTitle,
+    seoDescription,
     heroImage: null,
     pageTranslations: null,
   }
 }
 
-export function getStaticHelpCategoriesWithArticles(_locale: SiteLocale): HelpCategoryWithArticles[] {
-  return STATIC_HELP_CATEGORIES.map((cat) => ({
-    _id: `static-cat-${cat.slug}`,
-    title: cat.title,
-    slug: cat.slug,
-    shortDescription: cat.shortDescription,
-    iconName: cat.iconName,
-    isFeatured: cat.isFeatured,
-    order: cat.order,
-    translations: null,
-    articles: cat.articles.map((a, idx) => ({
-      _id: `static-art-${cat.slug}-${a.slug}`,
-      title: a.title,
-      slug: a.slug,
-      shortDescription: articleShortDescription(a.answer),
-      order: (idx + 1) * 10,
-      translations: null,
-    })),
-  }))
+export async function getStaticHelpCategoriesWithArticles(locale: SiteLocale): Promise<HelpCategoryWithArticles[]> {
+  return Promise.all(
+    STATIC_HELP_CATEGORIES.map(async (cat) => {
+      const [title, shortDescription] = await Promise.all([
+        translateText(cat.title, locale),
+        translateText(cat.shortDescription, locale),
+      ])
+      const articles = await Promise.all(
+        cat.articles.map(async (a, idx) => ({
+          _id: `static-art-${cat.slug}-${a.slug}`,
+          title: await translateText(a.title, locale),
+          slug: a.slug,
+          shortDescription: await translateText(articleShortDescription(a.answer), locale),
+          order: (idx + 1) * 10,
+          translations: null,
+        }))
+      )
+      return {
+        _id: `static-cat-${cat.slug}`,
+        title,
+        slug: cat.slug,
+        shortDescription,
+        iconName: cat.iconName,
+        isFeatured: cat.isFeatured,
+        order: cat.order,
+        translations: null,
+        articles,
+      }
+    })
+  )
 }
 
-export function getStaticHelpCategoryPage(
+export async function getStaticHelpCategoryPage(
   categorySlug: string,
-  _locale: SiteLocale,
-): HelpCategoryPageDoc | null {
+  locale: SiteLocale,
+): Promise<HelpCategoryPageDoc | null> {
   const cat = STATIC_HELP_CATEGORIES.find((c) => c.slug === categorySlug)
   if (!cat) return null
+  const [title, shortDescription] = await Promise.all([
+    translateText(cat.title, locale),
+    translateText(cat.shortDescription, locale),
+  ])
+  const articles = await Promise.all(
+    cat.articles.map(async (a, idx) => ({
+      _id: `static-art-${cat.slug}-${a.slug}`,
+      title: await translateText(a.title, locale),
+      slug: a.slug,
+      shortDescription: await translateText(articleShortDescription(a.answer), locale),
+      order: (idx + 1) * 10,
+      translations: null,
+    }))
+  )
   return {
     _id: `static-cat-${cat.slug}`,
-    title: cat.title,
+    title,
     slug: cat.slug,
-    shortDescription: cat.shortDescription,
+    shortDescription,
     iconName: cat.iconName,
     translations: null,
     audience: null,
-    articles: cat.articles.map((a, idx) => ({
-      _id: `static-art-${cat.slug}-${a.slug}`,
-      title: a.title,
-      slug: a.slug,
-      shortDescription: articleShortDescription(a.answer),
-      order: (idx + 1) * 10,
-      translations: null,
-    })),
+    articles,
   }
 }
 
-export function getStaticHelpArticleDetail(
+export async function getStaticHelpArticleDetail(
   categorySlug: string,
   articleSlug: string,
-  _locale: SiteLocale,
-): HelpArticleDetail | null {
+  locale: SiteLocale,
+): Promise<HelpArticleDetail | null> {
   const cat = STATIC_HELP_CATEGORIES.find((c) => c.slug === categorySlug)
   if (!cat) return null
   const art = cat.articles.find((a) => a.slug === articleSlug)
   if (!art) return null
 
   const others = cat.articles.filter((a) => a.slug !== articleSlug).slice(0, 3)
-  const relatedArticles = others.map((r) => ({
-    _id: `static-art-${cat.slug}-${r.slug}`,
-    title: r.title,
-    slug: r.slug,
-    isPublished: true as const,
-    categorySlug: cat.slug,
-    category: { slug: cat.slug, translations: null },
-    translations: null,
-  }))
+  const relatedArticles = await Promise.all(
+    others.map(async (r) => ({
+      _id: `static-art-${cat.slug}-${r.slug}`,
+      title: await translateText(r.title, locale),
+      slug: r.slug,
+      isPublished: true as const,
+      categorySlug: cat.slug,
+      category: { slug: cat.slug, translations: null },
+      translations: null,
+    }))
+  )
 
   const shortDesc = articleShortDescription(art.answer)
+  const [
+    title,
+    shortDescription,
+    body,
+    seoDescription,
+    catTitle,
+    catShortDescription,
+  ] = await Promise.all([
+    translateText(art.title, locale),
+    translateText(shortDesc, locale),
+    translatePortableTextBlocks(answerToPortableBlocks(art.answer), locale),
+    translateText(excerpt(art.answer, 155), locale),
+    translateText(cat.title, locale),
+    translateText(cat.shortDescription, locale),
+  ])
+
   return {
     _id: `static-art-${cat.slug}-${art.slug}`,
-    title: art.title,
+    title,
     slug: art.slug,
-    shortDescription: shortDesc,
-    body: answerToPortableBlocks(art.answer),
-    seoTitle: `${art.title} | Poseidon Çeşme`,
-    seoDescription: excerpt(art.answer, 155),
+    shortDescription,
+    body: body ?? answerToPortableBlocks(art.answer),
+    seoTitle: `${title} | Poseidon Çeşme`,
+    seoDescription,
     order: null,
     translations: null,
     category: {
-      title: cat.title,
+      title: catTitle,
       slug: cat.slug,
-      shortDescription: cat.shortDescription,
+      shortDescription: catShortDescription,
       translations: null,
     },
     audience: null,

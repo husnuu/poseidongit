@@ -14,6 +14,7 @@ import {
   legalLinksFallback,
   NUMBER_LOCALE,
   pickLocalizedString,
+  pickLocalizedStringTranslated,
   pickOptionalLinkLabel,
 } from '@/lib/i18n/localizedLabels'
 import { exploreLinksWithHelpCenter } from '@/lib/i18n/headerNavWithHelpCenter'
@@ -173,17 +174,23 @@ function locHref(locale: SiteLocale, href: string | null | undefined): string {
   return localizeNavHref(locale, href)
 }
 
-function mergeFooterLegal(raw: SiteFooterLegalRaw | null | undefined, locale: SiteLocale): FooterLegalData | null {
+async function mergeFooterLegal(raw: SiteFooterLegalRaw | null | undefined, locale: SiteLocale): Promise<FooterLegalData | null> {
   if (!raw) return null
-  const pick = (b: string | null | undefined, e: string | null | undefined, d: string | null | undefined) => {
-    const v = pickLocalizedString(b, e, d, locale, '').trim()
+  const pick = async (b: string | null | undefined, e: string | null | undefined, d: string | null | undefined) => {
+    const v = (await pickLocalizedStringTranslated(b, e, d, locale, '')).trim()
     return v || b?.trim() || null
   }
+  const [copyrightText, companyLine1, companyLine2, secure3dLabel] = await Promise.all([
+    pick(raw.copyrightText, raw.copyrightTextEn, raw.copyrightTextDe),
+    pick(raw.companyLine1, raw.companyLine1En, raw.companyLine1De),
+    pick(raw.companyLine2, raw.companyLine2En, raw.companyLine2De),
+    pick(raw.secure3dLabel, raw.secure3dLabelEn, raw.secure3dLabelDe),
+  ])
   return {
-    copyrightText: pick(raw.copyrightText, raw.copyrightTextEn, raw.copyrightTextDe),
-    companyLine1: pick(raw.companyLine1, raw.companyLine1En, raw.companyLine1De),
-    companyLine2: pick(raw.companyLine2, raw.companyLine2En, raw.companyLine2De),
-    secure3dLabel: pick(raw.secure3dLabel, raw.secure3dLabelEn, raw.secure3dLabelDe),
+    copyrightText,
+    companyLine1,
+    companyLine2,
+    secure3dLabel,
     paymentLogos: raw.paymentLogos ?? null,
   }
 }
@@ -211,50 +218,48 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
   const ratingValue = topRated?.ratingValue ?? 5
   const ratingMax = topRated?.ratingMax ?? 5
   const reviewCount = topRated?.reviewCount ?? 0
-  const topRatedLabel = pickLocalizedString(
-    topRated?.label,
-    topRated?.labelEn,
-    topRated?.labelDe,
-    locale,
-    'TOP RATED'
-  )
+  const openingValueFallback: Record<SiteLocale, string> = {
+    tr: 'Pazartesi - Cuma: 09:00 - 17:00',
+    en: 'Monday - Friday: 09:00 - 17:00',
+    de: 'Montag - Freitag: 09:00 - 17:00',
+  }
+  const [topRatedLabel, chatTitle, openingTitle, openingValue, exploreTitle] = await Promise.all([
+    pickLocalizedStringTranslated(topRated?.label, topRated?.labelEn, topRated?.labelDe, locale, 'TOP RATED'),
+    pickLocalizedStringTranslated(
+      data?.contact?.chatTitle,
+      data?.contact?.chatTitleEn,
+      data?.contact?.chatTitleDe,
+      locale,
+      'Chat With Our Team'
+    ),
+    pickLocalizedStringTranslated(
+      data?.contact?.openingTitle,
+      data?.contact?.openingTitleEn,
+      data?.contact?.openingTitleDe,
+      locale,
+      'Opening Hours'
+    ),
+    pickLocalizedStringTranslated(
+      data?.contact?.openingValue,
+      data?.contact?.openingValueEn,
+      data?.contact?.openingValueDe,
+      locale,
+      openingValueFallback[locale]
+    ),
+    pickLocalizedStringTranslated(
+      data?.explore?.title,
+      data?.explore?.titleEn,
+      data?.explore?.titleDe,
+      locale,
+      locale === 'de' ? 'Entdecken' : locale === 'en' ? 'Explore' : 'Keşfet'
+    ),
+  ])
 
   const contact = data?.contact ?? {}
   const email = contact?.email ?? undefined
   const phone = contact?.phone ?? undefined
   const addressLines = contact?.addressLines ?? []
   const addressText = addressLines.filter(Boolean).join(', ') || undefined
-  const chatTitle = pickLocalizedString(
-    contact?.chatTitle,
-    contact?.chatTitleEn,
-    contact?.chatTitleDe,
-    locale,
-    'Chat With Our Team'
-  )
-  const openingTitle = pickLocalizedString(
-    contact?.openingTitle,
-    contact?.openingTitleEn,
-    contact?.openingTitleDe,
-    locale,
-    'Opening Hours'
-  )
-  const openingValue = pickLocalizedString(
-    contact?.openingValue,
-    contact?.openingValueEn,
-    contact?.openingValueDe,
-    locale,
-    'Pazartesi - Cuma: 09:00 - 17:00'
-  )
-
-  const exploreDefaultTitle =
-    locale === 'de' ? 'Entdecken' : locale === 'en' ? 'Explore' : 'Keşfet'
-  const exploreTitle = pickLocalizedString(
-    data?.explore?.title,
-    data?.explore?.titleEn,
-    data?.explore?.titleDe,
-    locale,
-    exploreDefaultTitle
-  )
 
   const exploreFromCms = (data?.explore?.links ?? []).filter((l) => l?.label && l?.href)
   const exploreLinksRaw =
@@ -271,7 +276,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
     data?.social?.items?.filter((i) => i?.enabled !== false && i?.href) ?? []
 
   const showBragSection = data?.brag?.enabled !== false
-  const bragTitle = pickLocalizedString(
+  const bragTitle = await pickLocalizedStringTranslated(
     data?.brag?.title,
     data?.brag?.titleEn,
     data?.brag?.titleDe,
@@ -282,14 +287,16 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
   const hasBragImages = bragBadges.some((b) => b?.image?.asset || b?.imageUrl)
   const awardAlts = awardFallbackAlts(locale)
   const awardImages = hasBragImages
-    ? bragBadges.map((b) => ({
-        src:
-          safeSanityImageUrl(b?.image?.asset ?? null, (img) => img.width(80).height(80)) ??
-          b?.imageUrl ??
-          '',
-        alt: pickLocalizedString(b?.alt, b?.altEn, b?.altDe, locale, 'Badge'),
-        href: b?.href,
-      }))
+    ? await Promise.all(
+        bragBadges.map(async (b) => ({
+          src:
+            safeSanityImageUrl(b?.image?.asset ?? null, (img) => img.width(80).height(80)) ??
+            b?.imageUrl ??
+            '',
+          alt: await pickLocalizedStringTranslated(b?.alt, b?.altEn, b?.altDe, locale, 'Badge'),
+          href: b?.href,
+        }))
+      )
     : AWARD_IMAGES_FALLBACK_PATHS.map((src, i) => ({
         src,
         alt: awardAlts[i] ?? `Award ${i + 1}`,
@@ -306,7 +313,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
         }))
       : legalLinksFallback(locale)
 
-  const footerLegalMerged = mergeFooterLegal(data?.footerLegal ?? null, locale)
+  const footerLegalMerged = await mergeFooterLegal(data?.footerLegal ?? null, locale)
 
   return (
     <footer
