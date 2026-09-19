@@ -1,5 +1,7 @@
 /** Yat müsaitlik takvimi — tur rezervasyon mantığından bağımsız, sadece ay grid’i */
 
+import { todayStrIstanbul, tomorrowStrIstanbul } from '@/lib/istanbulTime'
+
 function pad2(n: number) {
   return n < 10 ? `0${n}` : String(n)
 }
@@ -22,13 +24,11 @@ export function buildYachtCalendarDaysForMonth(year: number, month: number): Yac
   return days
 }
 
+/** "Bugün" İstanbul takvimine göre hesaplanır (sunucu UTC'de çalışsa da). */
 export function todayStrLocal(): string {
-  const t = new Date()
-  return toYachtDateStr(t.getFullYear(), t.getMonth() + 1, t.getDate())
+  return todayStrIstanbul()
 }
 
 export function tomorrowStrLocal(): string {
-  const t = new Date()
-  t.setDate(t.getDate() + 1)
-  return toYachtDateStr(t.getFullYear(), t.getMonth() + 1, t.getDate())
+  return tomorrowStrIstanbul()
 }

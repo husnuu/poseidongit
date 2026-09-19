@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   PartyPopper,
@@ -19,8 +20,11 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import type { BookingConfirmationData } from '@/lib/bookingConfirmation'
+import { additionalTravelerSlotCount } from '@/lib/bookingAdditionalTravelers'
 import { getBookingConfirmationUi } from './bookingConfirmationUi'
 import BoardingPassModal from './BoardingPassModal'
+import ChangeDateInline from './ChangeDateInline'
+import EditGuestInfoInline from './EditGuestInfoInline'
 
 function money(amount: number, currency: string): string {
   const symbol = currency === 'TRY' ? '₺' : currency
@@ -85,6 +89,7 @@ function StatusOnlyCard({
 
 export default function BookingConfirmationView({ data }: { data: BookingConfirmationData }) {
   const ui = getBookingConfirmationUi(data.locale)
+  const router = useRouter()
   const [cancelled, setCancelled] = useState(data.isCancelled)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [cancelling, setCancelling] = useState(false)
@@ -92,6 +97,9 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
   const [cancelResultMsg, setCancelResultMsg] = useState<string | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [boardingPassOpen, setBoardingPassOpen] = useState(false)
+  const [changeDateOpen, setChangeDateOpen] = useState(false)
+  const [editInfoOpen, setEditInfoOpen] = useState(false)
+  const [updateNotice, setUpdateNotice] = useState<string | null>(null)
 
   if (data.isFailed) {
     return (
@@ -289,13 +297,19 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
                 )}
               </div>
 
-              <Link
-                href={data.manageUrl}
-                className="flex w-full flex-col items-center gap-1.5 rounded-xl border border-zinc-200 px-2 py-3 text-center text-xs font-semibold text-[#131719] hover:bg-zinc-50"
+              <button
+                type="button"
+                onClick={() => {
+                  setEditInfoOpen(false)
+                  setChangeDateOpen((v) => !v)
+                }}
+                className={`flex w-full flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-center text-xs font-semibold hover:bg-zinc-50 ${
+                  changeDateOpen ? 'border-[#2168b8] bg-blue-50 text-[#2168b8]' : 'border-zinc-200 text-[#131719]'
+                }`}
               >
                 <CalendarClock className="h-[18px] w-[18px]" aria-hidden />
                 {ui.changeDate}
-              </Link>
+              </button>
 
               {data.canCancel ? (
                 <button
@@ -315,6 +329,33 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
             </div>
           )}
         </div>
+
+        {updateNotice && (
+          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700" role="status">
+            {updateNotice}
+          </div>
+        )}
+
+        {changeDateOpen && !cancelled && (
+          <ChangeDateInline
+            bookingId={data.bookingId}
+            email={data.customerEmail}
+            tourId={data.tourId}
+            classId={data.classId}
+            className={data.className}
+            currentDate={data.dateRaw}
+            currentFirstClassLocas={data.firstClassLocas}
+            totalPax={data.totalPax}
+            refundStatus={data.refundStatus}
+            locale={data.locale}
+            onCancel={() => setChangeDateOpen(false)}
+            onSuccess={() => {
+              setChangeDateOpen(false)
+              setUpdateNotice('Rezervasyon tarihiniz güncellendi.')
+              router.refresh()
+            }}
+          />
+        )}
 
         {/* İptal politikası */}
         {!cancelled && !data.isYachtDeposit && (
@@ -350,13 +391,39 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
                 </li>
               ))}
             </ul>
-            <Link
-              href={data.manageUrl}
-              className="mt-4 inline-block text-sm font-semibold text-[#2168b8] hover:underline"
+            <button
+              type="button"
+              onClick={() => {
+                setChangeDateOpen(false)
+                setEditInfoOpen((v) => !v)
+              }}
+              className="mt-4 text-sm font-semibold text-[#2168b8] hover:underline"
             >
               {ui.editInfoLink}
-            </Link>
+            </button>
           </div>
+        )}
+
+        {editInfoOpen && !cancelled && (
+          <EditGuestInfoInline
+            bookingId={data.bookingId}
+            email={data.customerEmail}
+            primaryFirstName={data.guests[0]?.firstName ?? ''}
+            primaryLastName={data.guests[0]?.lastName ?? ''}
+            additionalTravelers={Array.from(
+              { length: additionalTravelerSlotCount(data.counts) },
+              (_, i) => ({
+                firstName: data.guests[i + 1]?.firstName ?? '',
+                lastName: data.guests[i + 1]?.lastName ?? '',
+              })
+            )}
+            onCancel={() => setEditInfoOpen(false)}
+            onSuccess={() => {
+              setEditInfoOpen(false)
+              setUpdateNotice('Misafir bilgileri güncellendi.')
+              router.refresh()
+            }}
+          />
         )}
 
         {/* Tekne barı */}

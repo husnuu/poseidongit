@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
-import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
+import { computeBookableCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
 import { authorizeAdmin } from '@/lib/adminAuthServer'
 import { supabase } from '@/lib/supabase'
 import { firstClassLocasFromRow, paxCountFromRow, BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-      const capacityByClass = computeCapacityForDate(sanityTour, dateStr)
+      const capacityByClass = computeBookableCapacityForDate(sanityTour, dateStr)
       const bookedByClass = bookedByDateAndClass[dateStr] ?? {}
 
       let totalCapacity = 0

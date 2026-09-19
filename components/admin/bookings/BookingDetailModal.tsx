@@ -145,23 +145,23 @@ export default function BookingDetailModal({
   return (
     <>
       <div
-        className="fixed inset-0 z-40 bg-zinc-900/30"
+        className="fixed inset-0 z-40 bg-[#131719]/45 backdrop-blur-[2px]"
         aria-hidden
         onClick={onClose}
       />
       <div
-        className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-zinc-200 bg-white shadow-xl sm:w-full"
+        className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_20px_60px_rgba(19,23,25,0.18)] sm:w-full"
         role="dialog"
         aria-modal
         aria-label="Rezervasyon detayı"
       >
         <div className="max-h-[85vh] overflow-y-auto sm:max-h-[90vh]">
-          <div className="sticky top-0 flex items-center justify-between border-b border-zinc-200 bg-white px-3 py-3 sm:px-4">
-            <h3 className="text-base font-semibold text-zinc-900 sm:text-lg">Rezervasyon Detayı</h3>
+          <div className="sticky top-0 flex items-center justify-between border-b border-[#f1f5f9] bg-white px-4 py-3.5 sm:px-5">
+            <h3 className="text-base font-black text-[#131719] sm:text-lg">Rezervasyon Detayı</h3>
             <button
               type="button"
               onClick={onClose}
-              className="min-h-[44px] min-w-[44px] rounded-lg p-2 text-zinc-500 hover:bg-zinc-100"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100"
               aria-label="Kapat"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -170,9 +170,9 @@ export default function BookingDetailModal({
             </button>
           </div>
 
-          <div className="p-4 space-y-4">
+          <div className="space-y-4 p-4 sm:p-5">
             <div className="flex gap-4">
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
+              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-zinc-100">
                 {booking.tourCoverImageUrl ? (
                   <img
                     src={booking.tourCoverImageUrl}
@@ -180,7 +180,7 @@ export default function BookingDetailModal({
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-zinc-400">
+                  <div className="flex h-full w-full items-center justify-center text-zinc-300">
                     <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
                     </svg>
@@ -188,32 +188,32 @@ export default function BookingDetailModal({
                 )}
               </div>
               <div>
-                <h4 className="font-semibold text-zinc-900">{booking.tourTitle}</h4>
-                <p className="text-sm text-zinc-600">{booking.date}{booking.time ? ` · ${booking.time}` : ''}</p>
-                <p className="text-sm text-zinc-600">
+                <h4 className="font-black text-[#131719]">{booking.tourTitle}</h4>
+                <p className="text-sm text-zinc-500">{booking.date}{booking.time ? ` · ${booking.time}` : ''}</p>
+                <p className="text-sm text-zinc-500">
                   {booking.className}
                   {booking.firstClassLocas?.length ? ` · Loca ${booking.firstClassLocas.join(', ')}` : booking.firstClassLoca ? ` · Loca ${booking.firstClassLoca}` : ''}
                 </p>
               </div>
             </div>
 
-            <div className="rounded-lg bg-zinc-50 p-3">
-              <p className="text-xs font-medium uppercase text-zinc-500">Rezervasyonu yapan</p>
-              <p className="font-medium text-zinc-900">{booking.customer.firstName} {booking.customer.lastName}</p>
-              <p className="text-sm text-zinc-600">{booking.customer.email}</p>
+            <div className="rounded-xl bg-zinc-50 p-3.5">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">Rezervasyonu yapan</p>
+              <p className="font-bold text-[#131719]">{booking.customer.firstName} {booking.customer.lastName}</p>
+              <p className="text-sm text-zinc-500">{booking.customer.email}</p>
               {booking.customer.phone && (
-                <p className="text-sm text-zinc-600">{booking.customer.phone}</p>
+                <p className="text-sm text-zinc-500">{booking.customer.phone}</p>
               )}
             </div>
 
             {(booking.mealPreference?.label?.trim() || mealCounts.length > 0) && (
-              <div className="rounded-lg border border-amber-100 bg-amber-50/80 p-3">
-                <p className="text-xs font-medium uppercase text-amber-800/90">Yemek tercihi</p>
+              <div className="rounded-xl border border-amber-100 bg-amber-50/80 p-3.5">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-amber-700">Yemek tercihi</p>
                 {booking.mealPreference?.label?.trim() ? (
-                  <p className="mt-1 text-sm font-medium text-zinc-900">{booking.mealPreference.label.trim()}</p>
+                  <p className="mt-1 text-sm font-bold text-[#131719]">{booking.mealPreference.label.trim()}</p>
                 ) : null}
                 {mealCounts.length > 0 && (
-                  <p className="mt-1 text-xs text-zinc-600">
+                  <p className="mt-1 text-xs text-zinc-500">
                     Dağılım:{' '}
                     {mealCounts
                       .map((x) => `${x.label} (${x.count})`)
@@ -224,15 +224,15 @@ export default function BookingDetailModal({
             )}
 
             {extraTravelers.length > 0 && (
-              <div className="rounded-lg border border-zinc-100 bg-white p-3">
-                <p className="text-xs font-medium uppercase text-zinc-500">Diğer yolcular</p>
-                <ul className="mt-2 space-y-1.5 text-sm text-zinc-800">
+              <div className="rounded-xl border border-[#f1f5f9] bg-white p-3.5">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">Diğer yolcular</p>
+                <ul className="mt-2 space-y-1.5 text-sm text-zinc-700">
                   {extraTravelers.map((t, i) => (
                     <li key={`${t.firstName}-${t.lastName}-${i}`}>
-                      <span className="text-zinc-500">{extraLabels[i] ?? `Yolcu ${i + 2}`}: </span>
-                      <span className="font-medium">{t.firstName} {t.lastName}</span>
+                      <span className="text-zinc-400">{extraLabels[i] ?? `Yolcu ${i + 2}`}: </span>
+                      <span className="font-bold text-[#131719]">{t.firstName} {t.lastName}</span>
                       {t.mealPreference?.label?.trim() ? (
-                        <span className="text-zinc-500"> · Yemek: {t.mealPreference.label.trim()}</span>
+                        <span className="text-zinc-400"> · Yemek: {t.mealPreference.label.trim()}</span>
                       ) : null}
                     </li>
                   ))}
@@ -241,28 +241,28 @@ export default function BookingDetailModal({
             )}
 
             <div>
-              <p className="text-xs font-medium uppercase text-zinc-500">Katılımcılar</p>
+              <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">Katılımcılar</p>
               <div className="mt-1 text-sm text-zinc-700">
                 {booking.counts.adult > 0 && <span>{booking.counts.adult} Yetişkin</span>}
                 {booking.counts.child > 0 && <span className="ml-2">{booking.counts.child} Çocuk</span>}
                 {booking.counts.infant > 0 && <span className="ml-2">{booking.counts.infant} Bebek</span>}
-                <span className="ml-2 text-zinc-500">Toplam {totalPax} kişi</span>
+                <span className="ml-2 text-zinc-400">Toplam {totalPax} kişi</span>
               </div>
             </div>
 
             {(booking.selectedExtras?.length ?? 0) > 0 && (
-              <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-3">
-                <p className="text-xs font-medium uppercase text-blue-800/90">Ekstralar</p>
-                <ul className="mt-2 space-y-1.5 text-sm text-zinc-800">
+              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3.5">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-[#2168b8]">Ekstralar</p>
+                <ul className="mt-2 space-y-1.5 text-sm text-zinc-700">
                   {booking.selectedExtras!.map((extra) => (
                     <li key={extra.key} className="flex items-start justify-between gap-3">
                       <span>
-                        <span className="font-medium">{extra.title}</span>
+                        <span className="font-bold text-[#131719]">{extra.title}</span>
                         {extra.note && (
-                          <span className="block text-xs text-zinc-500">{extra.note}</span>
+                          <span className="block text-xs text-zinc-400">{extra.note}</span>
                         )}
                       </span>
-                      <span className="shrink-0 font-medium text-zinc-900">
+                      <span className="shrink-0 font-bold text-[#131719]">
                         {extra.lineTotal.toLocaleString('tr-TR')} ₺
                       </span>
                     </li>
@@ -273,15 +273,15 @@ export default function BookingDetailModal({
 
             <div className="flex justify-between text-sm">
               <span className="text-zinc-500">Birim fiyat</span>
-              <span className="text-zinc-900">
+              <span className="text-[#131719]">
                 {booking.totalPrice > 0
                   ? `${(booking.unitPrice ?? booking.totalPrice / (totalPax || 1)).toLocaleString('tr-TR')} ${booking.currency}`
                   : 'Fiyat belirtilmedi'}
               </span>
             </div>
-            <div className="flex justify-between font-medium">
-              <span className="text-zinc-700">Toplam</span>
-              <span className="text-zinc-900">
+            <div className="flex justify-between font-bold">
+              <span className="text-zinc-600">Toplam</span>
+              <span className="text-[#131719]">
                 {booking.totalPrice > 0 ? `${booking.totalPrice.toLocaleString('tr-TR')} ${booking.currency}` : 'Fiyat belirtilmedi'}
               </span>
             </div>
@@ -292,7 +292,7 @@ export default function BookingDetailModal({
                 value={booking.status}
                 onChange={(e) => onStatusChange(booking.id, e.target.value as BookingStatus)}
                 disabled={updating}
-                className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm disabled:opacity-60"
+                className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm font-semibold text-[#131719] focus:border-[#2168b8] focus:outline-none disabled:opacity-60"
               >
                 <option value="pending">Beklemede</option>
                 <option value="paid">Ödendi</option>
@@ -309,9 +309,9 @@ export default function BookingDetailModal({
               booking.paidAt ||
               booking.paymentLastError ||
               booking.paymentVerificationStatus) && (
-              <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-3 text-sm">
-                <p className="text-xs font-medium uppercase text-emerald-900/80">Ödeme (NestPay)</p>
-                <dl className="mt-2 space-y-1 text-zinc-800">
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3.5 text-sm">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">Ödeme (NestPay)</p>
+                <dl className="mt-2 space-y-1 text-zinc-700">
                   {booking.paymentStatus ? (
                     <div className="flex justify-between gap-2">
                       <dt className="text-zinc-500">payment_status</dt>
@@ -360,9 +360,9 @@ export default function BookingDetailModal({
 
             {/* İade bilgisi */}
             {booking.refundStatus && (
-              <div className={`rounded-lg border p-3 text-sm ${booking.refundStatus === 'refund_failed' ? 'border-rose-200 bg-rose-50/60' : 'border-teal-100 bg-teal-50/60'}`}>
-                <p className={`text-xs font-medium uppercase mb-2 ${booking.refundStatus === 'refund_failed' ? 'text-rose-900/80' : 'text-teal-900/80'}`}>İade / İptal</p>
-                <dl className="space-y-1 text-zinc-800">
+              <div className={`rounded-xl border p-3.5 text-sm ${booking.refundStatus === 'refund_failed' ? 'border-rose-200 bg-rose-50/60' : 'border-blue-100 bg-blue-50/60'}`}>
+                <p className={`mb-2 text-[11px] font-bold uppercase tracking-wide ${booking.refundStatus === 'refund_failed' ? 'text-rose-700' : 'text-[#2168b8]'}`}>İade / İptal</p>
+                <dl className="space-y-1 text-zinc-700">
                   <div className="flex justify-between gap-2">
                     <dt className="text-zinc-500">Durum</dt>
                     <dd className="font-medium">{REFUND_STATUS_LABELS[booking.refundStatus] ?? booking.refundStatus}</dd>
@@ -428,23 +428,23 @@ export default function BookingDetailModal({
               <button
                 type="button"
                 onClick={() => { setShowRefundPanel(true); setRefundMsg(null) }}
-                className="w-full rounded-lg border-2 border-orange-400 bg-orange-50 px-3 py-2.5 text-sm font-semibold text-orange-800 hover:bg-orange-100"
+                className="w-full rounded-xl border-2 border-orange-300 bg-orange-50 px-3 py-2.5 text-sm font-bold text-orange-700 hover:bg-orange-100"
               >
                 {booking.refundStatus === 'refund_failed' ? 'İadeyi Tekrar Dene' : 'İade Et'}
               </button>
             )}
 
             {refundMsg && (
-              <div className={`rounded-lg px-3 py-2 text-sm ${refundMsg.ok ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+              <div className={`rounded-xl px-3 py-2 text-sm font-semibold ${refundMsg.ok ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-rose-200 bg-rose-50 text-rose-700'}`}>
                 {refundMsg.text}
               </div>
             )}
 
             {showRefundPanel && (
-              <div className="rounded-lg border-2 border-orange-300 bg-orange-50 p-4 space-y-3">
-                <p className="text-sm font-semibold text-orange-900">İade İşlemi</p>
+              <div className="space-y-3 rounded-xl border-2 border-orange-200 bg-orange-50 p-4">
+                <p className="text-sm font-bold text-orange-800">İade İşlemi</p>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-700 mb-1">
+                  <label className="mb-1 block text-xs font-semibold text-zinc-600">
                     İade tutarı ({booking.currency}) — tam: {booking.totalPrice.toLocaleString('tr-TR')}
                   </label>
                   <input
@@ -454,17 +454,17 @@ export default function BookingDetailModal({
                     step="0.01"
                     value={refundAmount}
                     onChange={(e) => setRefundAmount(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-[#2168b8] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-700 mb-1">Sebep (isteğe bağlı)</label>
+                  <label className="mb-1 block text-xs font-semibold text-zinc-600">Sebep (isteğe bağlı)</label>
                   <input
                     type="text"
                     value={refundReason}
                     onChange={(e) => setRefundReason(e.target.value)}
                     placeholder="Müşteri talebi, hizmet iptali..."
-                    className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-[#2168b8] focus:outline-none"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -472,14 +472,14 @@ export default function BookingDetailModal({
                     type="button"
                     onClick={handleRefundSubmit}
                     disabled={refunding}
-                    className="flex-1 rounded-lg bg-orange-600 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
+                    className="flex-1 rounded-xl bg-orange-600 px-3 py-2 text-sm font-bold text-white hover:bg-orange-700 disabled:opacity-50"
                   >
                     {refunding ? 'İade yapılıyor…' : 'İadeyi Onayla'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowRefundPanel(false)}
-                    className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                    className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50"
                   >
                     İptal
                   </button>
@@ -489,28 +489,28 @@ export default function BookingDetailModal({
 
             <div className="text-sm">
               <span className="text-zinc-500">Kaynak: </span>
-              <span className="text-zinc-900">
+              <span className="font-semibold text-[#131719]">
                 {booking.source === 'manual'
                   ? `Manuel · ${MANUAL_SOURCE_LABELS[booking.manualSource ?? ''] ?? booking.manualSource ?? 'Manuel'}`
                   : (MANUAL_SOURCE_LABELS.web ?? 'Web')}
               </span>
               {booking.createdByAdmin && (
-                <span className="ml-2 text-zinc-500">(Admin tarafından oluşturuldu)</span>
+                <span className="ml-2 text-zinc-400">(Admin tarafından oluşturuldu)</span>
               )}
             </div>
 
             {booking.createdAt && (
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-400">
                 Oluşturulma: {new Date(booking.createdAt).toLocaleString('tr-TR')}
               </p>
             )}
 
-            <div className="flex flex-wrap gap-2 border-t border-zinc-200 pt-4">
+            <div className="flex flex-wrap gap-2 border-t border-[#f1f5f9] pt-4">
               <a
                 href={getVoucherPdfUrl(booking.id, booking.accessToken)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                className="inline-flex rounded-xl bg-[#131719] px-3.5 py-2 text-sm font-bold text-white hover:opacity-90"
               >
                 PDF Bilet İndir
               </a>
@@ -518,7 +518,7 @@ export default function BookingDetailModal({
                 href={getManageUrl(booking.id)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                className="inline-flex rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50"
               >
                 Rezervasyonu Yönet
               </a>
@@ -527,30 +527,30 @@ export default function BookingDetailModal({
                   type="button"
                   onClick={handleSendPaymentLink}
                   disabled={sendingLink}
-                  className="inline-flex rounded-lg bg-[#2168b8] px-3 py-2 text-sm font-medium text-white hover:bg-[#1b5697] disabled:opacity-60"
+                  className="inline-flex rounded-xl bg-[#2168b8] px-3.5 py-2 text-sm font-bold text-white hover:bg-[#1b5697] disabled:opacity-60"
                 >
                   {sendingLink ? 'Gönderiliyor…' : 'Ödeme Linki Gönder'}
                 </button>
               )}
             </div>
             {linkResult && (
-              <p className={`text-sm ${linkResult.ok ? 'text-emerald-700' : 'text-rose-700'}`}>{linkResult.text}</p>
+              <p className={`text-sm font-semibold ${linkResult.ok ? 'text-emerald-700' : 'text-rose-700'}`}>{linkResult.text}</p>
             )}
 
-            <div className="border-t border-zinc-200 pt-4">
-              <label className="block text-sm font-medium text-zinc-700">Admin notu</label>
+            <div className="border-t border-[#f1f5f9] pt-4">
+              <label className="block text-sm font-bold text-[#131719]">Admin notu</label>
               <textarea
                 value={adminNote}
                 onChange={(e) => setAdminNote(e.target.value)}
                 rows={2}
-                className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
+                className="mt-1.5 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm text-[#131719] focus:border-[#2168b8] focus:outline-none"
                 placeholder="İç not..."
               />
               <button
                 type="button"
                 onClick={handleSaveNote}
                 disabled={savingNote}
-                className="mt-2 rounded-lg bg-zinc-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-600 disabled:opacity-50"
+                className="mt-2 rounded-xl bg-[#131719] px-3.5 py-1.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-50"
               >
                 {savingNote ? 'Kaydediliyor…' : 'Notu kaydet'}
               </button>

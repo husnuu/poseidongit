@@ -3,6 +3,10 @@
     {
       "path": "/api/payment/refund-retry",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/reports/daily-manifest",
+      "schedule": "0 6 * * *"
     }
   ]
 }

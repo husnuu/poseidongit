@@ -6,7 +6,7 @@
 import { supabase } from '@/lib/supabase'
 import { client } from '@/lib/sanity'
 import { tourImageAndPickupQuery, siteSettingsWhatsappQuery } from '@/lib/queries'
-import { normalizeMealPreferenceColumn, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { normalizeMealPreferenceColumn, firstClassLocasFromRow, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
 import { isYachtDepositBooking } from '@/lib/yachtDepositBooking'
 import { buildGoogleCalendarUrl } from '@/lib/calendar'
@@ -25,6 +25,8 @@ export function confirmationLocaleFromBooking(uiLocale: string | null | undefine
 
 export interface BookingConfirmationGuest {
   name: string
+  firstName: string
+  lastName: string
   mealLabel?: string
   isPrimary: boolean
 }
@@ -39,6 +41,10 @@ export interface BookingConfirmationData {
   isFailed: boolean
   isCancelled: boolean
   reference: string
+  tourId: string
+  classId: string
+  firstClassLocas: string[]
+  refundStatus: string | null
   tourTitle: string
   dateFormatted: string
   dateRaw: string
@@ -180,9 +186,17 @@ export async function getBookingConfirmationData(
   const additionalTravelers = normalizeAdditionalTravelersFromStorage(row.additional_travelers)
 
   const guests: BookingConfirmationGuest[] = [
-    { name: customerName, mealLabel: mealPreference?.label, isPrimary: true },
+    {
+      name: customerName,
+      firstName: String(row.customer_first_name ?? '').trim(),
+      lastName: String(row.customer_last_name ?? '').trim(),
+      mealLabel: mealPreference?.label,
+      isPrimary: true,
+    },
     ...additionalTravelers.map((t) => ({
       name: [t.firstName, t.lastName].filter(Boolean).join(' ').trim() || '—',
+      firstName: t.firstName ?? '',
+      lastName: t.lastName ?? '',
       mealLabel: t.mealPreference?.label,
       isPrimary: false,
     })),
@@ -248,6 +262,10 @@ export async function getBookingConfirmationData(
     isFailed,
     isCancelled,
     reference,
+    tourId,
+    classId: String(row.class_id ?? ''),
+    firstClassLocas: firstClassLocasFromRow(row),
+    refundStatus: row.refund_status ? String(row.refund_status).trim() : null,
     tourTitle: String(row.tour_title ?? '—'),
     dateFormatted: formatTicketDate(dateRaw, locale),
     dateRaw,

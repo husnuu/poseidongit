@@ -33,9 +33,9 @@ export default function FooterLegal({ data, inline, regionAriaLabel = 'Legal and
   const content = (
     <>
       {hasText && (
-        <div className="max-w-[1000px] space-y-1 leading-7 text-white/80">
+        <div className="max-w-[1000px] space-y-1 text-sm font-medium leading-7 text-white/80">
           {data.copyrightText && (
-            <p className="text-white">{data.copyrightText}</p>
+            <p className="font-semibold text-white">{data.copyrightText}</p>
           )}
           {data.companyLine1 && <p>{data.companyLine1}</p>}
           {data.companyLine2 && <p>{data.companyLine2}</p>}
@@ -43,7 +43,7 @@ export default function FooterLegal({ data, inline, regionAriaLabel = 'Legal and
       )}
 
       {hasSecureLabel && (
-        <p className={`flex items-center gap-2 font-semibold text-white ${hasText ? 'mt-4' : 'mt-0'}`}>
+        <p className={`flex items-center gap-2 text-sm font-semibold text-white ${hasText ? 'mt-4' : 'mt-0'}`}>
           <Lock className="h-5 w-5 flex-shrink-0" aria-hidden />
           {data.secure3dLabel}
         </p>

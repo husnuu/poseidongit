@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { client } from '@/lib/sanity'
 import { tourImageAndPickupQuery, siteSettingsQuery } from '@/lib/queries'
-import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
+import { computeBookableCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
 import { sendBookingPaidEmails, sendManualBookingAdminNotification } from '@/lib/email'
 import { getBaseUrl } from '@/lib/seo'
 import { urlFor } from '@/lib/sanity'
@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
     mealPreference = mealResolve.stored
   }
 
-  const capacityByClass = computeCapacityForDate(sanityTour, date)
+  const capacityByClass = computeBookableCapacityForDate(sanityTour, date)
   const { data: snapshotRows, error: snapshotError } = await supabase
     .from('bookings')
     .select('id, class_id, adult_count, child_count, infant_count')

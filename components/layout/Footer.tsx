@@ -312,7 +312,8 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
     <footer
       className="text-white/90 print:hidden"
       style={{
-        background: 'linear-gradient(to right, #1e3a5f 0%, #1e4976 35%, #2563eb 70%, #38bdf8 100%)',
+        background: 'linear-gradient(115deg, #131719 0%, #16305a 45%, #2168b8 100%)',
+        fontFamily: 'var(--font-family)',
       }}
     >
       <div className="mx-auto w-full max-w-[1600px] px-4 py-14 sm:px-6 md:px-8 md:py-20 lg:px-10 xl:px-12">
@@ -336,25 +337,25 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                     className={`${headerStyles.logoImage} ${headerStyles.logoImageOnDark}`}
                   />
                 ) : (
-                  <span className="text-2xl font-bold text-white">{brandName}</span>
+                  <span className="text-2xl font-black tracking-tight text-white">{brandName}</span>
                 )}
               </div>
             </Link>
             {showTopRated && (
               <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-medium text-white">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-white">
                   {topRatedLabel}
                 </span>
-                <span className="inline-flex items-center gap-2 text-base text-white/90">
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-white/90">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
                   ))}
-                  <span className="font-semibold text-white">
+                  <span className="font-bold text-white">
                     {ratingValue} / {ratingMax}
                   </span>
                 </span>
                 {reviewCount > 0 && (
-                  <span className="flex items-center gap-1.5 text-base text-white/80">
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-white/80">
                     <GoogleModern
                       aria-label="Google"
                       className="h-[18px] w-[18px] flex-shrink-0 text-white/90"
@@ -362,7 +363,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                     {f.reviews(reviewCount.toLocaleString(numLoc))}
                   </span>
                 )}
-                <span className="flex items-center gap-1.5 text-base text-white/80">
+                <span className="flex items-center gap-1.5 text-sm font-medium text-white/80">
                   <InstagramModern
                     aria-label="Instagram"
                     className="h-[18px] w-[18px] flex-shrink-0 text-white/90"
@@ -376,14 +377,14 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                 {email && (
                   <a
                     href={`mailto:${email}`}
-                    className="flex items-start gap-3 text-base text-white/90 hover:text-white transition-colors"
+                    className="flex items-start gap-3 text-sm font-medium text-white/90 hover:text-white transition-colors"
                   >
                     <Mail className="mt-0.5 h-5 w-5 flex-shrink-0" />
                     <span>{email}</span>
                   </a>
                 )}
                 {addressText && (
-                  <div className="flex items-start gap-3 text-base text-white/90">
+                  <div className="flex items-start gap-3 text-sm font-medium text-white/90">
                     <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0" />
                     <span>{addressText}</span>
                   </div>
@@ -393,13 +394,13 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                 {phone && (
                   <a
                     href={`tel:${phone.replace(/\s/g, '')}`}
-                    className="flex items-center gap-3 text-base text-white/90 hover:text-white transition-colors"
+                    className="flex items-center gap-3 text-sm font-medium text-white/90 hover:text-white transition-colors"
                   >
                     <Phone className="h-5 w-5 flex-shrink-0" />
                     <span className="whitespace-nowrap">{chatTitle}</span>
                   </a>
                 )}
-                <div className="flex items-start gap-3 text-base text-white/90">
+                <div className="flex items-start gap-3 text-sm font-medium text-white/90">
                   <span className="text-white/70">{openingTitle}:</span>
                   <span>{openingValue}</span>
                 </div>
@@ -417,7 +418,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-12 w-12 items-center justify-center rounded-md bg-white text-[#D07A2B] transition-opacity hover:opacity-90"
+                      className="flex h-12 w-12 items-center justify-center rounded-md bg-white text-[#fc6c4f] transition-opacity hover:opacity-90"
                       aria-label={item?.platform ?? 'Social'}
                     >
                       <Icon className="h-6 w-6" />
@@ -429,7 +430,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
           </div>
 
           <div className={showBragSection ? 'lg:pl-16 xl:pl-24' : ''}>
-            <h3 className="mb-6 text-xl font-bold uppercase tracking-wide text-white md:text-2xl">
+            <h3 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
               {exploreTitle}
             </h3>
             <ul className="space-y-4">
@@ -437,7 +438,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                 <li key={index}>
                   <Link
                     href={locHref(locale, item.href || '#')}
-                    className="text-base text-white/90 transition-colors hover:text-white hover:underline"
+                    className="text-sm font-medium text-white/90 transition-colors hover:text-white hover:underline"
                     target={item.openInNewTab ? '_blank' : undefined}
                     rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
                   >
@@ -450,7 +451,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
 
           {showBragSection ? (
             <div>
-              <h3 className="mb-6 text-xl font-bold uppercase tracking-wide text-white md:text-2xl">
+              <h3 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
                 {bragTitle}
               </h3>
               <div className="grid grid-cols-2 gap-5">
@@ -494,7 +495,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
               <FooterLegal data={footerLegalMerged} inline regionAriaLabel={f.legalRegion} />
             )}
             <div
-              className={`flex flex-wrap gap-x-12 gap-y-4 text-xs text-white/80 ${data?.footerLegal ? 'justify-center md:justify-end' : 'justify-center'}`}
+              className={`flex flex-wrap gap-x-12 gap-y-4 text-xs font-semibold text-white/80 ${data?.footerLegal ? 'justify-center md:justify-end' : 'justify-center'}`}
             >
               {legalLinks.map((item, index) => (
                 <Link
@@ -509,7 +510,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
           </div>
 
           {data?.craftedBy?.name && (
-            <div className="mt-6 border-t border-white/20 pt-6 text-center text-sm text-white/70">
+            <div className="mt-6 border-t border-white/20 pt-6 text-center text-sm font-medium text-white/70">
               {f.craftedByPrefix}{' '}
               {data.craftedBy.linkedInUrl ? (
                 <a

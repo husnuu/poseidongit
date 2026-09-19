@@ -65,7 +65,7 @@ export default function AdminBookingMonthCalendar({
   const isBiletci = variant === 'biletci'
   const cellBase = isBiletci
     ? 'relative flex w-full flex-col items-center justify-center rounded-xl border text-center font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fc6c4f] focus-visible:ring-offset-2 disabled:cursor-not-allowed'
-    : 'relative flex w-full flex-col items-center justify-center rounded-xl border text-center font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed'
+    : 'relative flex w-full flex-col items-center justify-center rounded-xl border text-center font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2168b8] focus-visible:ring-offset-2 disabled:cursor-not-allowed'
   const cellSize = isBiletci
     ? 'min-h-[44px] sm:min-h-[48px] py-1.5 text-sm sm:text-base'
     : 'min-h-[40px] py-1 text-sm'
@@ -84,7 +84,7 @@ export default function AdminBookingMonthCalendar({
       className={
         isBiletci
           ? 'overflow-hidden rounded-2xl border border-zinc-100 bg-white p-3 shadow-sm sm:p-4'
-          : 'rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4'
+          : 'rounded-2xl border border-[#f1f5f9] bg-white p-3 shadow-[0_2px_8px_rgba(19,23,25,0.06)] sm:p-4'
       }
     >
       <div className="mb-3 flex items-center justify-between gap-2 sm:mb-4">
@@ -98,7 +98,7 @@ export default function AdminBookingMonthCalendar({
           <ChevronLeft className="h-5 w-5" strokeWidth={2} />
         </button>
         <div className="min-w-0 flex-1 text-center">
-          <p className="truncate text-sm font-bold text-slate-900 sm:text-base">{monthTitle}</p>
+          <p className={`truncate text-sm font-black sm:text-base ${isBiletci ? 'text-slate-900' : 'text-[#131719]'}`}>{monthTitle}</p>
           {isBiletci && (
             <p className="mt-0.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">Tarih seçin</p>
           )}
@@ -110,7 +110,7 @@ export default function AdminBookingMonthCalendar({
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm transition ${
             isBiletci
               ? 'hover:border-[#fc6c4f]/40 hover:bg-[#fff0ed] disabled:opacity-40'
-              : 'hover:border-teal-300 hover:bg-teal-50/50 hover:text-teal-900 disabled:opacity-40'
+              : 'hover:border-blue-200 hover:bg-blue-50/50 hover:text-[#2168b8] disabled:opacity-40'
           } disabled:pointer-events-none`}
           aria-label="Sonraki ay"
         >
@@ -122,7 +122,7 @@ export default function AdminBookingMonthCalendar({
         {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((w) => (
           <div
             key={w}
-            className="py-1 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:text-xs"
+            className={`py-1 text-center text-[10px] font-bold uppercase tracking-wide sm:text-xs ${isBiletci ? 'text-slate-500' : 'text-zinc-400'}`}
           >
             {w}
           </div>
@@ -146,26 +146,26 @@ export default function AdminBookingMonthCalendar({
                 isSelected
                   ? isBiletci
                     ? 'border-[#fc6c4f] bg-[#fc6c4f] text-white shadow-md shadow-[#fc6c4f]/25'
-                    : 'border-teal-600 bg-teal-600 text-white shadow-md shadow-teal-600/25'
+                    : 'border-[#2168b8] bg-[#2168b8] text-white shadow-md shadow-[#2168b8]/25'
                   : isPast
                     ? isBiletci
                       ? 'border-transparent bg-zinc-50 text-zinc-300'
-                      : 'border-transparent bg-slate-50/50 text-slate-300'
+                      : 'border-transparent bg-zinc-50/50 text-zinc-300'
                     : isBiletci
                       ? 'border-zinc-100 bg-white text-zinc-800 hover:border-[#fc6c4f]/30 hover:bg-[#fff0ed]'
-                      : 'border-slate-100 bg-white text-slate-800 hover:border-teal-200 hover:bg-teal-50/60'
+                      : 'border-[#f1f5f9] bg-white text-[#131719] hover:border-blue-200 hover:bg-blue-50/60'
               } ${
                 isToday && !isSelected
                   ? isBiletci
                     ? 'ring-2 ring-[#fc6c4f] ring-offset-1'
-                    : 'ring-2 ring-teal-400 ring-offset-1'
+                    : 'ring-2 ring-[#2168b8] ring-offset-1'
                   : ''
               }`}
             >
               <span className="tabular-nums">{dayNum}</span>
               {isToday && !isSelected && (
                 <span
-                  className={`absolute bottom-1 h-1 w-1 rounded-full ${isBiletci ? 'bg-[#fc6c4f]' : 'bg-teal-500'}`}
+                  className={`absolute bottom-1 h-1 w-1 rounded-full ${isBiletci ? 'bg-[#fc6c4f]' : 'bg-[#2168b8]'}`}
                   aria-hidden
                 />
               )}
@@ -175,9 +175,9 @@ export default function AdminBookingMonthCalendar({
       </div>
 
       {value && (
-        <p className="mt-3 text-center text-xs font-medium text-slate-600 sm:text-sm">
+        <p className={`mt-3 text-center text-xs font-semibold sm:text-sm ${isBiletci ? 'text-slate-600' : 'text-zinc-500'}`}>
           Seçili:{' '}
-          <time dateTime={value} className="text-slate-900">
+          <time dateTime={value} className={isBiletci ? 'text-slate-900' : 'font-bold text-[#131719]'}>
             {new Date(value + 'T12:00:00').toLocaleDateString('tr-TR', {
               weekday: 'long',
               day: 'numeric',

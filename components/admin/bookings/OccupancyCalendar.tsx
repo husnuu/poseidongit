@@ -96,15 +96,15 @@ export default function OccupancyCalendar({
   }, [])
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm sm:p-4">
-      <h2 className="mb-3 text-base font-semibold text-zinc-900 sm:mb-4 sm:text-lg">Kapasite ve Doluluk Takvimi</h2>
+    <div className="rounded-2xl border border-[#f1f5f9] bg-white p-3 shadow-[0_2px_8px_rgba(19,23,25,0.06)] sm:p-4">
+      <h2 className="mb-3 text-base font-black text-[#131719] sm:mb-4 sm:text-lg">Kapasite ve Doluluk Takvimi</h2>
       <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-          <label className="text-sm font-medium text-zinc-600">Tur</label>
+          <label className="text-sm font-bold text-zinc-500">Tur</label>
           <select
             value={tourId}
             onChange={(e) => onTourIdChange(e.target.value)}
-            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 sm:min-w-[160px]"
+            className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-[#131719] focus:border-[#2168b8] focus:outline-none sm:min-w-[160px]"
           >
             <option value="">Tur seçin</option>
             {tours.map((t) => (
@@ -115,11 +115,11 @@ export default function OccupancyCalendar({
           </select>
         </div>
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-          <label className="text-sm font-medium text-zinc-600">Sınıf</label>
+          <label className="text-sm font-bold text-zinc-500">Sınıf</label>
           <select
             value={classFilter}
             onChange={(e) => onClassFilterChange(e.target.value)}
-            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 sm:min-w-[90px]"
+            className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-[#131719] focus:border-[#2168b8] focus:outline-none sm:min-w-[90px]"
           >
             {CLASS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -129,11 +129,11 @@ export default function OccupancyCalendar({
           </select>
         </div>
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-          <label className="text-sm font-medium text-zinc-600">Ay</label>
+          <label className="text-sm font-bold text-zinc-500">Ay</label>
           <select
             value={month}
             onChange={(e) => onMonthChange(e.target.value)}
-            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 sm:min-w-[140px]"
+            className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-[#131719] focus:border-[#2168b8] focus:outline-none sm:min-w-[140px]"
           >
             {monthOptions.map((o) => (
               <option key={o.value} value={o.value}>
@@ -145,25 +145,25 @@ export default function OccupancyCalendar({
       </div>
 
       {loading ? (
-        <div className="flex h-64 items-center justify-center text-zinc-500">Yükleniyor…</div>
+        <div className="flex h-64 items-center justify-center text-zinc-400">Yükleniyor…</div>
       ) : !tourId ? (
-        <div className="flex h-64 items-center justify-center rounded-lg bg-zinc-50 text-zinc-500">
+        <div className="flex h-64 items-center justify-center rounded-xl bg-zinc-50 text-zinc-400">
           Tur seçin
         </div>
       ) : occupancyError ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-6 text-amber-800">
-          <p className="text-sm font-medium">Doluluk verisi alınamadı</p>
+        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-800">
+          <p className="text-sm font-bold">Doluluk verisi alınamadı</p>
           <p className="text-xs text-amber-700">{occupancyError}</p>
-          <p className="text-xs text-zinc-500">Turun Sanity’de kapasite tanımlı olduğundan emin olun.</p>
+          <p className="text-xs text-zinc-400">Turun Sanity’de kapasite tanımlı olduğundan emin olun.</p>
         </div>
       ) : (
         <>
-          <p className="mb-2 text-xs text-zinc-500">
+          <p className="mb-2 text-xs text-zinc-400">
             Gösterilen: {classFilter === 'all' ? 'Tüm sınıflar (toplam)' : `${CLASS_OPTIONS.find((o) => o.value === classFilter)?.label ?? classFilter} sınıfı`}
           </p>
           <div className="grid grid-cols-7 gap-0.5 text-center sm:gap-1">
             {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((w) => (
-              <div key={w} className="py-0.5 text-[10px] font-medium text-zinc-500 sm:py-1 sm:text-xs">
+              <div key={w} className="py-0.5 text-[10px] font-bold text-zinc-400 sm:py-1 sm:text-xs">
                 {w}
               </div>
             ))}
@@ -181,21 +181,21 @@ export default function OccupancyCalendar({
                   key={date}
                   type="button"
                   onClick={() => data && onDayClick(data)}
-                  className={`min-h-[52px] rounded border p-1 text-left transition hover:ring-2 hover:ring-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:min-h-[80px] sm:rounded-lg sm:p-1.5 ${
-                    data ? 'cursor-pointer border-zinc-200 bg-zinc-50/50' : 'cursor-default border-transparent'
-                  } ${isToday ? 'ring-2 ring-indigo-400' : ''}`}
+                  className={`min-h-[52px] rounded-lg border p-1 text-left transition hover:ring-2 hover:ring-blue-200 focus:outline-none focus:ring-2 focus:ring-[#2168b8] sm:min-h-[80px] sm:rounded-xl sm:p-1.5 ${
+                    data ? 'cursor-pointer border-[#f1f5f9] bg-zinc-50/50' : 'cursor-default border-transparent'
+                  } ${isToday ? 'ring-2 ring-blue-300' : ''}`}
                 >
                   {data ? (
                     <>
-                      <div className="text-xs font-medium text-zinc-700">
+                      <div className="text-xs font-bold text-[#131719]">
                         {dayNum} {new Date(date + 'T12:00:00').toLocaleDateString('tr-TR', { month: 'short' })}
                       </div>
                       {hasCapacity ? (
                         <>
-                          <div className="mt-0.5 text-xs text-zinc-600">
+                          <div className="mt-0.5 text-xs text-zinc-500">
                             Dolu: {data.booked} · Kalan: {data.remaining}
                           </div>
-                          <div className={`mt-0.5 rounded px-1 py-0.5 text-xs font-medium ${percentColor(data.percent)}`}>
+                          <div className={`mt-0.5 rounded-full px-1.5 py-0.5 text-xs font-bold ${percentColor(data.percent)}`}>
                             %{data.percent}
                             {data.percent >= 100 ? ' DOLU' : ''}
                           </div>

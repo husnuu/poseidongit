@@ -12,10 +12,18 @@ const STATUS_LABELS: Record<BookingStatus, string> = {
 }
 
 const STATUS_BADGE_CLASS: Record<BookingStatus, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  paid: 'bg-emerald-100 text-emerald-800',
-  failed: 'bg-rose-100 text-rose-800',
-  cancelled: 'bg-red-100 text-red-800',
+  pending: 'bg-amber-50 text-amber-700',
+  paid: 'bg-emerald-50 text-emerald-700',
+  failed: 'bg-rose-50 text-rose-700',
+  cancelled: 'bg-red-50 text-red-700',
+}
+
+function StatusBadge({ status }: { status: BookingStatus }) {
+  return (
+    <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${STATUS_BADGE_CLASS[status]}`}>
+      {STATUS_LABELS[status]}
+    </span>
+  )
 }
 
 function SourceBadge({ source, manualSource }: { source?: string; manualSource?: string | null }) {
@@ -23,9 +31,9 @@ function SourceBadge({ source, manualSource }: { source?: string; manualSource?:
   const label = isManual
     ? (MANUAL_SOURCE_LABELS[manualSource ?? ''] ?? manualSource ?? 'Manuel')
     : (MANUAL_SOURCE_LABELS.web ?? 'Web')
-  const bg = isManual ? 'bg-indigo-100 text-indigo-800' : 'bg-zinc-100 text-zinc-700'
+  const bg = isManual ? 'bg-orange-50 text-[#fc6c4f]' : 'bg-zinc-100 text-zinc-600'
   return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${bg}`}>
+    <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${bg}`}>
       {label}
     </span>
   )
@@ -54,10 +62,29 @@ function ParticipantsBreakdown({ counts }: { counts: { adult: number; child: num
   const total = counts.adult + counts.child + counts.infant
   return (
     <div className="text-zinc-700">
-      <span className="font-medium">{total} kişi</span>
+      <span className="font-bold text-[#131719]">{total} kişi</span>
       {parts.length > 0 && (
-        <div className="text-xs text-zinc-500 mt-0.5">
+        <div className="mt-0.5 text-xs text-zinc-400">
           {parts.join(' · ')}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const STATUS_SELECT_CLASS =
+  'rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-[#131719] focus:border-[#2168b8] focus:outline-none disabled:opacity-60'
+
+function ThumbImage({ url }: { url?: string | null }) {
+  return (
+    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-zinc-100">
+      {url ? (
+        <img src={url} alt="" className="h-full w-full object-cover" width={56} height={56} />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-zinc-300">
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
+          </svg>
         </div>
       )}
     </div>
@@ -71,7 +98,6 @@ export default function BookingsTable({
   onSort,
   onDetail,
   onStatusChange,
-  onCopyLink,
   updatingId,
   getManageUrl,
   getVoucherPdfUrl,
@@ -127,11 +153,11 @@ export default function BookingsTable({
     keyName: SortKey
     className?: string
   }) => (
-    <th className={`sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-600 ${className}`}>
+    <th className={`sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-zinc-500 ${className}`}>
       <button
         type="button"
         onClick={() => onSort(keyName)}
-        className="hover:text-indigo-600 focus:outline-none"
+        className="hover:text-[#2168b8] focus:outline-none"
       >
         {label}
         {sortKey === keyName && (
@@ -144,40 +170,28 @@ export default function BookingsTable({
   return (
     <>
       {/* Mobil: kart listesi */}
-      <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-3 shadow-sm md:hidden">
+      <div className="space-y-3 rounded-2xl border border-[#f1f5f9] bg-white p-3 shadow-[0_2px_8px_rgba(19,23,25,0.06)] md:hidden">
         {sorted.map((b) => (
           <div
             key={b.id}
-            className="rounded-lg border border-zinc-100 bg-zinc-50/50 p-3"
+            className="rounded-xl border border-[#f1f5f9] bg-zinc-50/50 p-3"
           >
             <div className="flex gap-3">
-              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-zinc-200">
-                {b.tourCoverImageUrl ? (
-                  <img src={b.tourCoverImageUrl} alt="" className="h-full w-full object-cover" width={56} height={56} />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-zinc-400">
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
-                    </svg>
-                  </div>
-                )}
-              </div>
+              <ThumbImage url={b.tourCoverImageUrl} />
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-zinc-900 truncate">{b.tourTitle}</p>
-                <p className="text-xs text-zinc-600">{b.date}{b.className ? ` · Sınıf: ${b.className}${(b.firstClassLocas?.length ? ` (${b.firstClassLocas.join(', ')})` : b.firstClassLoca ? ` (${b.firstClassLoca})` : '')}` : ''}</p>
-                <p className="mt-0.5 text-sm text-zinc-800">
+                <p className="truncate font-bold text-[#131719]">{b.tourTitle}</p>
+                <p className="text-xs text-zinc-500">{b.date}{b.className ? ` · Sınıf: ${b.className}${(b.firstClassLocas?.length ? ` (${b.firstClassLocas.join(', ')})` : b.firstClassLoca ? ` (${b.firstClassLoca})` : '')}` : ''}</p>
+                <p className="mt-0.5 text-sm text-zinc-700">
                   {b.customer.firstName} {b.customer.lastName}
                   {b.customer.phone ? ` · ${b.customer.phone}` : ''}
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[b.status]}`}>
-                    {STATUS_LABELS[b.status]}
-                  </span>
-                  <span className="text-xs text-zinc-500">
+                  <StatusBadge status={b.status} />
+                  <span className="text-xs font-semibold text-zinc-500">
                     {b.totalPrice > 0 ? `${b.totalPrice.toLocaleString('tr-TR')} ${b.currency}` : ''}
                   </span>
                   {(b.selectedExtras?.length ?? 0) > 0 && (
-                    <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                    <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#2168b8]">
                       +{b.selectedExtras!.length} ekstra
                     </span>
                   )}
@@ -186,7 +200,7 @@ export default function BookingsTable({
                   <button
                     type="button"
                     onClick={() => onDetail(b)}
-                    className="rounded bg-indigo-100 px-2.5 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-200"
+                    className="rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-bold text-[#2168b8] hover:bg-blue-100"
                   >
                     Detay
                   </button>
@@ -194,7 +208,7 @@ export default function BookingsTable({
                     href={getVoucherPdfUrl(b.id, b.accessToken)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200"
+                    className="rounded-lg bg-zinc-100 px-2.5 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-200"
                   >
                     PDF
                   </a>
@@ -202,7 +216,7 @@ export default function BookingsTable({
                     value={b.status}
                     onChange={(e) => onStatusChange(b.id, e.target.value as BookingStatus)}
                     disabled={updatingId === b.id}
-                    className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-800 disabled:opacity-60"
+                    className={STATUS_SELECT_CLASS}
                   >
                     <option value="pending">Beklemede</option>
                     <option value="paid">Ödendi</option>
@@ -214,14 +228,14 @@ export default function BookingsTable({
                       type="button"
                       onClick={() => onStatusChange(b.id, 'cancelled')}
                       disabled={updatingId === b.id}
-                      className="rounded bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50"
+                      className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50"
                     >
                       İptal
                     </button>
                   )}
                 </div>
                 {(b.nestpayAuthCode || b.nestpayHostRefNum || b.nestpayTransId || b.paidAt) && (
-                  <p className="mt-1 text-[11px] text-zinc-500 font-mono truncate" title={`${b.nestpayTransId ?? ''}`}>
+                  <p className="mt-1 truncate font-mono text-[11px] text-zinc-400" title={`${b.nestpayTransId ?? ''}`}>
                     {b.paidAt ? `Ödeme: ${new Date(b.paidAt).toLocaleString('tr-TR')} · ` : ''}
                     {b.nestpayAuthCode ? `Auth ${b.nestpayAuthCode}` : ''}
                     {b.nestpayHostRefNum ? ` · HostRef ${b.nestpayHostRefNum}` : ''}
@@ -234,36 +248,36 @@ export default function BookingsTable({
       </div>
 
       {/* Masaüstü: tablo */}
-      <div className="hidden overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm md:block">
+      <div className="hidden overflow-x-auto rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)] md:block">
       <table className="w-full min-w-[1000px] text-left text-sm">
         <thead>
-          <tr className="border-b border-zinc-200">
-            <th className="sticky top-0 z-10 w-[56px] bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-600">
+          <tr className="border-b border-[#f1f5f9]">
+            <th className="sticky top-0 z-10 w-[56px] bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Görsel
             </th>
             <Th label="Tur" keyName="tourTitle" />
             <Th label="Tarih" keyName="date" />
-            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Müşteri
             </th>
-            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Telefon
             </th>
-            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Katılımcılar
             </th>
-            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Sınıf
             </th>
-            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Kaynak
             </th>
             <Th label="Toplam" keyName="totalPrice" />
-            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Durum
             </th>
             <Th label="Oluşturulma" keyName="createdAt" />
-            <th className="sticky top-0 z-10 w-[140px] bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            <th className="sticky top-0 z-10 w-[150px] bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               İşlemler
             </th>
           </tr>
@@ -272,42 +286,26 @@ export default function BookingsTable({
           {sorted.map((b) => (
             <tr
               key={b.id}
-              className="border-b border-zinc-100 transition-colors hover:bg-zinc-50/80"
+              className="border-b border-[#f1f5f9] transition-colors hover:bg-zinc-50/80"
             >
               <td className="px-4 py-3">
-                <div className="h-14 w-14 overflow-hidden rounded-lg bg-zinc-100">
-                  {b.tourCoverImageUrl ? (
-                    <img
-                      src={b.tourCoverImageUrl}
-                      alt=""
-                      className="h-full w-full object-cover"
-                      width={56}
-                      height={56}
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-zinc-400">
-                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
+                <ThumbImage url={b.tourCoverImageUrl} />
               </td>
               <td className="px-4 py-3">
-                <span className="font-medium text-zinc-900">{b.tourTitle}</span>
+                <span className="font-bold text-[#131719]">{b.tourTitle}</span>
               </td>
-              <td className="px-4 py-3 text-zinc-700">{b.date}</td>
-              <td className="px-4 py-3 text-zinc-900">
+              <td className="px-4 py-3 text-zinc-600">{b.date}</td>
+              <td className="px-4 py-3 font-semibold text-[#131719]">
                 {b.customer.firstName} {b.customer.lastName}
               </td>
-              <td className="px-4 py-3 text-zinc-600">{b.customer.phone || '—'}</td>
+              <td className="px-4 py-3 text-zinc-500">{b.customer.phone || '—'}</td>
               <td className="px-4 py-3">
                 <ParticipantsBreakdown counts={b.counts} />
               </td>
               <td className="px-4 py-3 text-zinc-600">
                 {b.className}{(b.firstClassLocas?.length ? ` · ${b.firstClassLocas.join(', ')}` : b.firstClassLoca ? ` · ${b.firstClassLoca}` : '')}
                 {(b.selectedExtras?.length ?? 0) > 0 && (
-                  <span className="ml-1.5 inline-flex rounded-full bg-blue-100 px-1.5 py-0.5 text-[11px] font-medium text-blue-700">
+                  <span className="ml-1.5 inline-flex rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-[#2168b8]">
                     +{b.selectedExtras!.length}
                   </span>
                 )}
@@ -315,19 +313,17 @@ export default function BookingsTable({
               <td className="px-4 py-3">
                 <SourceBadge source={b.source} manualSource={b.manualSource} />
               </td>
-              <td className="px-4 py-3 font-medium text-zinc-900">
+              <td className="px-4 py-3 font-bold text-[#131719]">
                 {b.totalPrice > 0 ? `${b.totalPrice.toLocaleString('tr-TR')} ${b.currency}` : 'Fiyat belirtilmedi'}
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[b.status]}`}>
-                    {STATUS_LABELS[b.status]}
-                  </span>
+                  <StatusBadge status={b.status} />
                   <select
                     value={b.status}
                     onChange={(e) => onStatusChange(b.id, e.target.value as BookingStatus)}
                     disabled={updatingId === b.id}
-                    className="min-w-[100px] rounded border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-800 disabled:opacity-60"
+                    className={`min-w-[100px] ${STATUS_SELECT_CLASS}`}
                   >
                     <option value="pending">Beklemede</option>
                     <option value="paid">Ödendi</option>
@@ -339,7 +335,7 @@ export default function BookingsTable({
                   )}
                 </div>
               </td>
-              <td className="px-4 py-3 text-zinc-500 text-xs">
+              <td className="px-4 py-3 text-xs text-zinc-400">
                 {b.createdAt ? new Date(b.createdAt).toLocaleString('tr-TR') : '—'}
               </td>
               <td className="px-4 py-3">
@@ -347,7 +343,7 @@ export default function BookingsTable({
                   <button
                     type="button"
                     onClick={() => onDetail(b)}
-                    className="rounded bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-200"
+                    className="rounded-lg bg-blue-50 px-2 py-1 text-xs font-bold text-[#2168b8] hover:bg-blue-100"
                   >
                     Detay
                   </button>
@@ -355,14 +351,14 @@ export default function BookingsTable({
                     href={getVoucherPdfUrl(b.id, b.accessToken)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200"
+                    className="rounded-lg bg-zinc-100 px-2 py-1 text-xs font-bold text-zinc-600 hover:bg-zinc-200"
                   >
                     PDF
                   </a>
                   <button
                     type="button"
                     onClick={() => handleCopy(b)}
-                    className="rounded bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200"
+                    className="rounded-lg bg-zinc-100 px-2 py-1 text-xs font-bold text-zinc-600 hover:bg-zinc-200"
                   >
                     {copiedId === b.id ? 'Kopyalandı' : 'Link'}
                   </button>
@@ -371,7 +367,7 @@ export default function BookingsTable({
                       type="button"
                       onClick={() => onStatusChange(b.id, 'cancelled')}
                       disabled={updatingId === b.id}
-                      className="rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50"
+                      className="rounded-lg bg-red-50 px-2 py-1 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50"
                     >
                       İptal
                     </button>

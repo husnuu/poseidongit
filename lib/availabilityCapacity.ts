@@ -4,6 +4,11 @@
  * Override for the date takes precedence over baseCapacity.
  */
 
+import { isTodayPastCutoffIstanbul } from '@/lib/istanbulTime'
+
+/** Saat 11:00'den (İstanbul) sonra o günün turları yeni rezervasyona kapanır. */
+const TODAY_AVAILABILITY_CUTOFF_HOUR = 11
+
 export type TourCapacitySource = {
   baseCapacity?: {
     ecoCapacity?: number
@@ -43,4 +48,22 @@ export function computeCapacityForDate(
     result[k] = Math.max(0, Number(capacity) || 0)
   }
   return result
+}
+
+/**
+ * Yeni rezervasyon/gün değişikliği kontrolü için: `computeCapacityForDate` ile aynı,
+ * ancak istenen tarih İstanbul saatiyle bugünse ve saat 11:00'i geçtiyse tüm sınıflar
+ * için kapasiteyi 0 döner (o günün turları yeni rezervasyona kapanmış sayılır).
+ * Raporlama/takvim gibi "gerçek kapasiteyi" göstermesi gereken yerlerde bunun yerine
+ * `computeCapacityForDate` kullanın.
+ */
+export function computeBookableCapacityForDate(
+  tour: TourCapacitySource | null | undefined,
+  dateStr: string
+): Record<string, number> {
+  const capacity = computeCapacityForDate(tour, dateStr)
+  if (!isTodayPastCutoffIstanbul(dateStr, TODAY_AVAILABILITY_CUTOFF_HOUR)) return capacity
+  const closed: Record<string, number> = {}
+  for (const k of Object.keys(capacity)) closed[k] = 0
+  return closed
 }

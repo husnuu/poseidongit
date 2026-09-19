@@ -3,9 +3,12 @@ import { isDateBeforeEarliestBookable } from '@/lib/booking/bookingWindow'
 import { rateLimitResponse } from '@/lib/rateLimit'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
-import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
+import { computeBookableCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
 import { supabase } from '@/lib/supabase'
 import { firstClassLocasFromRow, paxCountFromRow, BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
+import { sendBookingUpdatedEmails } from '@/lib/email'
+import { normalizeBookingFlowLocale } from '@/lib/i18n/bookingFlowLocale'
+import { formatTicketDate } from '@/lib/voucher/formatTicketDate'
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
 const LOCA_REGEX = /^L(10|[1-9])$/
@@ -116,7 +119,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Tur bilgisi bulunamadı' }, { status: 404 })
     }
 
-    const capacityByClass = computeCapacityForDate(sanityTour, newDate)
+    const capacityByClass = computeBookableCapacityForDate(sanityTour, newDate)
     const classKey = normalizeClassKey(classId)
     const capacity = capacityByClass[classKey] ?? 0
 
@@ -220,6 +223,30 @@ export async function POST(request: NextRequest) {
       .eq('id', bookingId)
     if (updateError) {
       throw new Error(`Supabase booking change-date update failed: ${updateError.message}`)
+    }
+
+    const emailLocale = normalizeBookingFlowLocale(data.ui_locale)
+    const oldDateFormatted = formatTicketDate(data.date ?? '', emailLocale)
+    const newDateFormatted = formatTicketDate(newDate, emailLocale)
+    const locaChangeNote =
+      finalFirstClassLocas && finalFirstClassLocas.length > 0
+        ? `\nLoca: ${finalFirstClassLocas.join(', ')}`
+        : ''
+    if (data.customer_email) {
+      await sendBookingUpdatedEmails({
+        bookingId,
+        tourTitle: String(data.tour_title ?? ''),
+        date: newDate,
+        time: data.time ?? undefined,
+        customer: {
+          firstName: String(data.customer_first_name ?? ''),
+          lastName: String(data.customer_last_name ?? ''),
+          email: String(data.customer_email),
+        },
+        changeSummary: `Tarih: ${oldDateFormatted} → ${newDateFormatted}${locaChangeNote}`,
+        siteLocale: emailLocale,
+        accessToken: typeof data.access_token === 'string' ? data.access_token : undefined,
+      })
     }
 
     return NextResponse.json({

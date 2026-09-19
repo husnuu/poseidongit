@@ -72,7 +72,7 @@ export default function RouteSection({
             </h2>
             {description && (
               <p
-                className="mx-auto mt-4 max-w-[480px] text-base leading-relaxed md:text-lg"
+                className="mx-auto mt-4 max-w-[480px] text-base font-normal leading-relaxed md:text-lg"
                 style={{ color: 'var(--text-color)' }}
               >
                 {description}

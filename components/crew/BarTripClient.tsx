@@ -67,7 +67,7 @@ export default function BarTripClient({
   void _tripKey
   const [orders, setOrders] = useState<BarOrder[]>(initialOrders)
   const [tab, setTab] = useState<'active' | 'served'>('active')
-  const [newOrderOpen, setNewOrderOpen] = useState(false)
+  const [orderSheet, setOrderSheet] = useState<{ lockedGuestLabel?: string } | null>(null)
 
   const todaySales = orders.filter((o) => o.paymentStatus === 'paid').reduce((s, o) => s + o.totalAmount, 0)
   const pendingCollection = orders
@@ -102,7 +102,7 @@ export default function BarTripClient({
 
   const handleCreated = (order: BarOrder) => {
     setOrders((prev) => (prev.some((o) => o.id === order.id) ? prev.map((o) => (o.id === order.id ? order : o)) : [...prev, order]))
-    setNewOrderOpen(false)
+    setOrderSheet(null)
   }
 
   const list = tab === 'active' ? activeOrders : servedOrders
@@ -150,12 +150,12 @@ export default function BarTripClient({
 
       <button
         type="button"
-        onClick={() => setNewOrderOpen(true)}
+        onClick={() => setOrderSheet({})}
         className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold text-white"
         style={{ background: '#131719' }}
       >
         <Plus className="h-4 w-4" aria-hidden />
-        Yeni Sipariş
+        Yeni Adisyon Aç
       </button>
 
       <div className="flex rounded-xl bg-zinc-100 p-1">
@@ -182,19 +182,27 @@ export default function BarTripClient({
       ) : (
         <div className="space-y-3">
           {tabs.map((t) => (
-            <GuestTabCard key={t.guestLabel} guestLabel={t.guestLabel} orders={t.orders} onStatusChange={handleStatusChange} onPay={handlePay} />
+            <GuestTabCard
+              key={t.guestLabel}
+              guestLabel={t.guestLabel}
+              orders={t.orders}
+              onStatusChange={handleStatusChange}
+              onPay={handlePay}
+              onAddItems={() => setOrderSheet({ lockedGuestLabel: t.guestLabel })}
+            />
           ))}
         </div>
       )}
 
-      {newOrderOpen && (
+      {orderSheet && (
         <NewOrderSheet
           tourId={tourId}
           tourTitle={tourTitle}
           tripDate={tripDate}
           tripTime={tripTime}
           menu={menu}
-          onClose={() => setNewOrderOpen(false)}
+          lockedGuestLabel={orderSheet.lockedGuestLabel}
+          onClose={() => setOrderSheet(null)}
           onCreated={handleCreated}
         />
       )}
@@ -208,11 +216,13 @@ function GuestTabCard({
   orders,
   onStatusChange,
   onPay,
+  onAddItems,
 }: {
   guestLabel: string
   orders: BarOrder[]
   onStatusChange: (order: BarOrder, action: 'preparing' | 'served') => void
   onPay: (order: BarOrder, method: 'cash' | 'card') => void
+  onAddItems: () => void
 }) {
   const [payOpen, setPayOpen] = useState(false)
   const firstTime = new Date(orders[0].createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
@@ -295,6 +305,17 @@ function GuestTabCard({
         ))}
       </div>
 
+      <div className="mt-3 border-t border-[#f1f5f9] pt-3">
+        <button
+          type="button"
+          onClick={onAddItems}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-300 py-2.5 text-sm font-bold text-[#2168b8] hover:bg-blue-50/50"
+        >
+          <Plus className="h-3.5 w-3.5" aria-hidden />
+          Adisyona Ürün Ekle
+        </button>
+      </div>
+
       {(pendingOrders.length > 0 || unpaidOrders.length > 0) && (
         <div className="mt-3 space-y-2 border-t border-[#f1f5f9] pt-3">
           {unpaidOrders.length > 0 && !payOpen && (
@@ -368,6 +389,7 @@ function NewOrderSheet({
   tripDate,
   tripTime,
   menu,
+  lockedGuestLabel,
   onClose,
   onCreated,
 }: {
@@ -376,14 +398,16 @@ function NewOrderSheet({
   tripDate: string
   tripTime: string | null
   menu: CrewMenuItem[]
+  lockedGuestLabel?: string
   onClose: () => void
   onCreated: (order: BarOrder) => void
 }) {
   const [category, setCategory] = useState(CATEGORY_TABS[0]?.value ?? '')
   const [qtys, setQtys] = useState<Record<string, number>>({})
   const [summaryOpen, setSummaryOpen] = useState(false)
-  const [guestLabel, setGuestLabel] = useState('')
+  const [guestLabel, setGuestLabel] = useState(lockedGuestLabel ?? '')
   const [submitting, setSubmitting] = useState(false)
+  const isAppendMode = !!lockedGuestLabel
 
   const availableCategories = useMemo(
     () => CATEGORY_TABS.filter((c) => menu.some((m) => m.category === c.value)),
@@ -428,7 +452,7 @@ function NewOrderSheet({
         <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-zinc-100">
           <X className="h-5 w-5 text-[#131719]" aria-hidden />
         </button>
-        <h2 className="m-0 text-base font-black text-[#131719]">Yeni Sipariş</h2>
+        <h2 className="m-0 text-base font-black text-[#131719]">{isAppendMode ? `${lockedGuestLabel} — Ürün Ekle` : 'Yeni Adisyon'}</h2>
         <span className="w-9" />
       </div>
 
@@ -543,16 +567,22 @@ function NewOrderSheet({
                 {money(totalAmount)}
               </span>
             </div>
-            <label className="mt-4 block text-sm font-semibold text-zinc-600">
-              Misafir adı / notu (opsiyonel)
-              <input
-                type="text"
-                value={guestLabel}
-                onChange={(e) => setGuestLabel(e.target.value)}
-                placeholder="Örn. Bar yanındaki masa, ya da Ahmet"
-                className="mt-1.5 w-full rounded-xl border border-zinc-200 px-3.5 py-3 text-sm focus:border-[#2168b8] focus:outline-none"
-              />
-            </label>
+            {isAppendMode ? (
+              <div className="mt-4 rounded-xl bg-blue-50 px-3.5 py-3 text-sm font-bold text-[#2168b8]">
+                Adisyon: {lockedGuestLabel}
+              </div>
+            ) : (
+              <label className="mt-4 block text-sm font-semibold text-zinc-600">
+                Misafir adı / notu (opsiyonel)
+                <input
+                  type="text"
+                  value={guestLabel}
+                  onChange={(e) => setGuestLabel(e.target.value)}
+                  placeholder="Örn. Bar yanındaki masa, ya da Ahmet"
+                  className="mt-1.5 w-full rounded-xl border border-zinc-200 px-3.5 py-3 text-sm focus:border-[#2168b8] focus:outline-none"
+                />
+              </label>
+            )}
             <button
               type="button"
               onClick={handleCreate}
@@ -560,7 +590,7 @@ function NewOrderSheet({
               className="mt-5 w-full rounded-xl py-3.5 text-sm font-bold text-white disabled:opacity-60"
               style={{ background: '#131719' }}
             >
-              {submitting ? 'Oluşturuluyor...' : 'Sipariş Oluştur'}
+              {submitting ? 'Oluşturuluyor...' : isAppendMode ? 'Adisyona Ekle' : 'Adisyon Oluştur'}
             </button>
           </div>
         </div>

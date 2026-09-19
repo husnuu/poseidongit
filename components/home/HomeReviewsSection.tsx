@@ -159,7 +159,7 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
           <div className="mt-4 flex justify-center">
             <StarRow value={avgRating} />
           </div>
-          <p className="mt-2 text-base font-medium" style={{ color: 'var(--secondary, #131719)' }}>
+          <p className="mx-auto mt-2 max-w-2xl text-base font-normal leading-relaxed md:text-lg" style={{ color: 'var(--secondary, #131719)' }}>
             {SUBTEXT[locale](totalCount.toLocaleString(numLocale), avgRating.toFixed(1))}
           </p>
           {googleReviewsUrl && (

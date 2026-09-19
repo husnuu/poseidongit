@@ -140,7 +140,7 @@ export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionP
         <div className="mt-8 flex justify-center md:mt-10">
           <Link
             href={faqHref}
-            className="inline-flex min-h-[48px] items-center gap-2 rounded-full border-2 bg-white px-8 py-2.5 text-sm font-bold uppercase tracking-wide transition hover:bg-[var(--primary)]/[0.06]"
+            className="inline-flex min-h-[48px] items-center gap-2 rounded-lg border-2 bg-white px-8 py-2.5 text-sm font-bold uppercase tracking-wide shadow-sm transition hover:bg-[var(--primary)]/[0.06]"
             style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
           >
             {VIEW_ALL_LABEL[locale]}

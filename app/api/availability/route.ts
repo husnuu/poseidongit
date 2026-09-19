@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { rateLimitResponse } from '@/lib/rateLimit'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
-import { computeCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
+import { computeBookableCapacityForDate, type TourCapacitySource } from '@/lib/availabilityCapacity'
 import type { Availability } from '@/types/availability'
 import { supabase } from '@/lib/supabase'
 import {
@@ -124,7 +124,7 @@ async function handleSingleDate(
     const normalizedTourId = canonicalTourId(sanityTour._id ?? tourId)
     const acceptedTourIds = buildAcceptedTourIds(tourId, tourSlug, sanityTour._id, normalizedTourId)
 
-    const capacityByClass = computeCapacityForDate(sanityTour, dateParam)
+    const capacityByClass = computeBookableCapacityForDate(sanityTour, dateParam)
     const { data: snapshotRows, error: snapshotError } = await supabase
       .from('bookings')
       .select('id,tour_id,date,status,class_id,adult_count,child_count,infant_count')

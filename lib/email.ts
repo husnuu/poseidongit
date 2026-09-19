@@ -2,12 +2,6 @@ import { Resend } from 'resend'
 import QRCode from 'qrcode'
 import { buildGoogleCalendarUrl } from '@/lib/calendar'
 import { timeMinutesBefore } from '@/lib/boardingTime'
-import { generatePremiumEticketPdf } from '@/lib/ticket/generatePremiumEticketPdf'
-import { voucherDataToPremiumEticket } from '@/lib/ticket/voucherToPremiumEticket'
-import { buildVoucherDataFromBookingRow } from '@/lib/voucher/buildVoucherDataFromBookingSnapshot'
-import { formatTicketDate } from '@/lib/voucher/formatTicketDate'
-import type { VoucherData } from '@/lib/voucher/types'
-import { DEFAULT_POLICIES, DEFAULT_CONTACT } from '@/lib/voucher/types'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
 import {
   manageBookingUrl,
@@ -24,7 +18,6 @@ import {
   formatParticipantCountsLine,
   paymentLinkPageCopy,
 } from '@/lib/i18n/bookingFlowLocale'
-import { VOUCHER_POLICIES } from '@/lib/i18n/bookingFlowLocale'
 import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { client, urlFor } from '@/lib/sanity'
@@ -32,6 +25,7 @@ import { tourImageAndPickupQuery, siteSettingsLogoQuery } from '@/lib/queries'
 import { mapImageUrlFromEmbed } from '@/lib/staticMap'
 import { additionalTravelerLabels, normalizeAdditionalTravelersFromStorage } from '@/lib/bookingAdditionalTravelers'
 import { computeDepositAmounts, type TourDepositConfig } from '@/lib/bookingDepositAmount'
+import { getDailyManifestReport, type DailyManifestTrip } from '@/lib/reports/dailyManifest'
 
 const DEFAULT_FROM = (() => {
   const n = process.env.NEXT_PUBLIC_SITE_NAME || 'Çeşme Poseidon Booking'
@@ -255,6 +249,12 @@ function classDisplay(p: BookingEmailPayload, loc: SiteLocale): string {
   return locas ? `${p.className?.trim() || '—'} · ${t.locaPrefix} ${locas}` : (p.className?.trim() || '—')
 }
 
+/** E-postada gösterilecek kısa rezervasyon kodu — UUID'nin ilk (tire öncesi) bölümü. */
+function shortReservationCode(bookingId: string): string {
+  const t = bookingId.trim()
+  return (t.split('-')[0] || t).toUpperCase()
+}
+
 function formatAdditionalTravelersHtml(p: BookingEmailPayload, loc: SiteLocale): string {
   const list = (p.additionalTravelers ?? []).filter((t) => (t.firstName?.trim() || t.lastName?.trim()))
   if (list.length === 0) return ''
@@ -376,92 +376,6 @@ async function generateQrPngBuffer(url: string): Promise<Buffer | null> {
     return Buffer.isBuffer(buf) ? buf : Buffer.from(buf)
   } catch {
     return null
-  }
-}
-
-/** BookingEmailPayload + voucherUrl ile e-posta ekinde gönderilecek PDF için VoucherData üretir. */
-function payloadToVoucherData(payload: BookingEmailPayload, voucherUrl: string): VoucherData {
-  const loc = normalizeBookingFlowLocale(payload.siteLocale)
-  const pol = VOUCHER_POLICIES[loc]
-  const website = getEmailBaseUrl().replace(/\/$/, '') || DEFAULT_CONTACT.website
-  return {
-    referenceNumber: payload.bookingId,
-    bookingUrl: voucherUrl,
-    tourTitle: payload.tourTitle,
-    date: formatTicketDate(payload.date, loc),
-    time: payload.time,
-    meetingPickup: payload.pickup?.trim() || '—',
-    status: payload.status?.trim() || undefined,
-    language: pol.languageLabel,
-    className: payload.className?.trim() || undefined,
-    firstClassLoca: (payload.firstClassLocas?.length ? payload.firstClassLocas.join(', ') : payload.firstClassLoca?.trim()) || undefined,
-    customerName: `${payload.customer.firstName} ${payload.customer.lastName}`.trim() || '—',
-    customerEmail: payload.customer.email || '—',
-    customerPhone: payload.customer.phone || '—',
-    adults: payload.counts.adult ?? 0,
-    children: payload.counts.child ?? 0,
-    babies: payload.counts.infant ?? 0,
-    totalPrice: payload.totalPrice,
-    currency: payload.currency,
-    paidNow: payload.paidNow,
-    remainingAmount: undefined,
-    cancellationPolicy: pol.cancellationPolicy,
-    voucherNotice: pol.voucherNotice,
-    supportEmail: process.env.SUPPORT_EMAIL?.trim() || DEFAULT_CONTACT.supportEmail,
-    website,
-    copyrightYear: new Date().getFullYear(),
-    logoUrl: payload.logoUrl?.trim() || undefined,
-  }
-}
-
-/** VoucherData'yı Sanity tur verisiyle zenginleştirir (kapora, dahil/dahil değil, süre, görseller). */
-async function enrichVoucherDataWithTour(data: VoucherData, tourId: string): Promise<VoucherData> {
-  try {
-    const tourMeta = await client.fetch<{
-      mainImage?: { asset?: { _ref?: string } }
-      gallery?: { _ref?: string }[]
-      durationLabel?: string | null
-      meetingPoint?: string | null
-      quickFacts?: { startTime?: string | null; returnTime?: string | null }
-      deposit?: { enabled?: boolean; type?: string; value?: number }
-      included?: string[] | null
-      notIncluded?: string[] | null
-    } | null>(tourImageAndPickupQuery, { tourId })
-    if (!tourMeta) return data
-    const tourImageUrl = tourMeta.mainImage?.asset
-      ? urlFor(tourMeta.mainImage.asset).width(600).height(320).url()
-      : undefined
-    const galleryRefs = (tourMeta.gallery ?? []).filter((a: { _ref?: string }) => a?._ref).slice(0, 3)
-    const tourGalleryUrls = galleryRefs.length > 0
-      ? galleryRefs.map((assetRef: { _ref?: string }) =>
-          urlFor(assetRef).width(500).height(340).format('jpg').url()
-        )
-      : tourMeta.mainImage?.asset
-        ? [urlFor(tourMeta.mainImage.asset).width(500).height(340).format('jpg').url()]
-        : undefined
-    let depositAmount: number | undefined
-    if (tourMeta.deposit?.enabled && tourMeta.deposit?.value != null && data.totalPrice > 0) {
-      depositAmount =
-        tourMeta.deposit.type === 'fixed'
-          ? tourMeta.deposit.value
-          : Math.round((tourMeta.deposit.value / 100) * data.totalPrice)
-    }
-    const fallbackTime = tourMeta.quickFacts?.startTime?.trim() || undefined
-    const arrivalTime = tourMeta.quickFacts?.returnTime?.trim() || undefined
-    return {
-      ...data,
-      ...(tourImageUrl && { tourImageUrl }),
-      ...(tourGalleryUrls?.length && { tourGalleryUrls }),
-      ...(tourMeta.meetingPoint && { meetingPickup: tourMeta.meetingPoint }),
-      ...(tourMeta.durationLabel && { durationLabel: tourMeta.durationLabel }),
-      ...(depositAmount != null && { depositAmount }),
-      ...(tourMeta.included?.length && { included: tourMeta.included }),
-      ...(tourMeta.notIncluded?.length && { notIncluded: tourMeta.notIncluded }),
-      ...(data.time ? {} : fallbackTime ? { time: fallbackTime } : {}),
-      ...(arrivalTime ? { arrivalTime } : {}),
-    }
-  } catch {
-    return data
   }
 }
 
@@ -777,6 +691,130 @@ export async function sendManualBookingAdminNotification(
   })
 }
 
+const CLASS_ROW_LABEL: Record<'eco' | 'premium' | 'first', string> = {
+  eco: 'Eco',
+  premium: 'Premium',
+  first: 'First Class',
+}
+
+function buildDailyManifestTripHtml(trip: DailyManifestTrip): string {
+  const navy = EMAIL_NAVY
+  const occupancyPct = trip.totalCapacity > 0 ? Math.round((trip.totalBooked / trip.totalCapacity) * 100) : 0
+
+  const classRows = (['eco', 'premium', 'first'] as const)
+    .filter((k) => trip.byClass[k].capacity > 0 || trip.byClass[k].booked > 0)
+    .map(
+      (k) => `<tr>
+        <td style="padding:6px 0;color:${EMAIL_MUTED};font-size:12px;">${escapeHtml(CLASS_ROW_LABEL[k])}</td>
+        <td style="padding:6px 0;color:${navy};font-size:12px;font-weight:700;text-align:right;">${trip.byClass[k].booked} / ${trip.byClass[k].capacity}</td>
+      </tr>`
+    )
+    .join('')
+
+  const bookingRows = trip.bookings
+    .map((b) => {
+      const names = b.passengers
+        .map((p) => escapeHtml(p.name) + (p.mealLabel ? ` <span style="color:${EMAIL_MUTED};">(${escapeHtml(p.mealLabel)})</span>` : ''))
+        .join(', ')
+      const extrasLine = b.extras.length
+        ? `<p style="margin:4px 0 0;font-size:12px;color:${EMAIL_MUTED};"><strong style="color:${navy};">Ekstra:</strong> ${escapeHtml(b.extras.map((e) => `${e.title} × ${e.quantity}`).join(', '))}</p>`
+        : ''
+      const noteLine = b.customerNote
+        ? `<p style="margin:4px 0 0;font-size:12px;color:#92400e;background:#fffbeb;border-left:2px solid #d97706;padding:4px 8px;border-radius:4px;"><strong>Not:</strong> ${escapeHtml(b.customerNote)}</p>`
+        : ''
+      return `<div style="padding:10px 0;border-top:1px solid ${EMAIL_BORDER};">
+        <div style="display:flex;justify-content:space-between;gap:8px;">
+          <span style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;font-weight:700;color:${navy};">#${escapeHtml(b.reference)}</span>
+          <span style="font-size:12px;font-weight:700;color:${navy};">${escapeHtml(b.className)} · ${b.guestCount} kişi</span>
+        </div>
+        <p style="margin:4px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};">${names}</p>
+        ${extrasLine}
+        ${noteLine}
+      </div>`
+    })
+    .join('')
+
+  return `<tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <div style="border:1px solid ${EMAIL_BORDER};border-radius:10px;padding:16px 18px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div>
+          <p style="margin:0;font-size:15px;font-weight:700;color:${navy};">${escapeHtml(trip.tourTitle)}</p>
+          <p style="margin:2px 0 0;font-size:12px;color:${EMAIL_MUTED};">${trip.time ? escapeHtml(trip.time) : 'Saat belirtilmemiş'}</p>
+        </div>
+        <span style="flex-shrink:0;font-size:12px;font-weight:700;color:${navy};background:#f8fafc;border:1px solid ${EMAIL_BORDER};border-radius:999px;padding:4px 10px;">
+          ${trip.totalBooked} / ${trip.totalCapacity} (%${occupancyPct})
+        </span>
+      </div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;">
+        ${classRows}
+      </table>
+      ${bookingRows}
+    </div>
+  </td></tr>`
+}
+
+/**
+ * Her sabah (cron ile) o günün tüm seferlerini — sınıf bazlı doluluk, yolcu listesi,
+ * yemek tercihleri, özel istek ve ekstralarla birlikte — adminlere e-posta olarak gönderir.
+ * O gün hiç aktif rezervasyon yoksa e-posta gönderilmez.
+ */
+export async function sendDailyAdminManifestEmail(dateStr: string): Promise<{ sent: boolean; tripCount: number }> {
+  const report = await getDailyManifestReport(dateStr)
+  if (report.trips.length === 0) return { sent: false, tripCount: 0 }
+
+  const resend = getResend()
+  if (!resend) {
+    console.warn('[email] Günlük yolcu listesi gönderilmedi: RESEND_API_KEY tanımlı değil.')
+    return { sent: false, tripCount: report.trips.length }
+  }
+
+  const navy = EMAIL_NAVY
+  const dateFormatted = formatDate(dateStr)
+  const totalGuests = report.trips.reduce((s, t) => s + t.totalBooked, 0)
+
+  const html = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Günlük Yolcu Listesi</title>
+</head>
+<body style="margin:0;padding:0;background:${EMAIL_BG_PAGE};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_BG_PAGE};">
+<tr><td align="center" style="padding:36px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;border-collapse:separate;">
+
+  <tr><td style="background:${navy};height:4px;border-radius:10px 10px 0 0;line-height:4px;font-size:0;">&nbsp;</td></tr>
+
+  <tr><td style="background:${EMAIL_SURFACE};padding:26px 28px 8px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0;font-size:20px;font-weight:800;color:${navy};letter-spacing:-0.02em;">Günlük Yolcu Listesi</p>
+    <p style="margin:6px 0 0;font-size:13px;color:${EMAIL_MUTED};">${escapeHtml(dateFormatted)} · ${report.trips.length} sefer · ${totalGuests} yolcu</p>
+  </td></tr>
+
+  <tr><td style="background:${EMAIL_SURFACE};padding:16px 28px 4px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">&nbsp;</td></tr>
+
+  ${report.trips.map(buildDailyManifestTripHtml).join('')}
+
+  <tr><td style="background:#eef1f5;padding:18px 28px;border-radius:0 0 10px 10px;border:1px solid ${EMAIL_BORDER};border-top:none;">
+    <p style="margin:0;font-size:11px;color:${EMAIL_MUTED};text-align:center;line-height:1.45;">Bu e-posta her sabah otomatik olarak gönderilmiştir.</p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+
+  await sendToAdminRecipients(resend, {
+    from: getFrom(),
+    subject: `Günlük Yolcu Listesi – ${dateFormatted} (${report.trips.length} sefer, ${totalGuests} yolcu)`,
+    html,
+    logContext: dateStr,
+  })
+
+  return { sent: true, tripCount: report.trips.length }
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -887,6 +925,166 @@ export async function sendPaymentLinkEmail(
   return { ok: true, url }
 }
 
+export interface BookingUpdatedEmailPayload {
+  bookingId: string
+  tourTitle: string
+  date: string
+  time?: string | null
+  customer: { firstName: string; lastName: string; email: string }
+  /** Neyin değiştiğine dair kısa, okunabilir özet — örn. "Tarih: 17 Eylül 2026 → 20 Eylül 2026". */
+  changeSummary: string
+  siteLocale?: SiteLocale
+  accessToken?: string
+}
+
+function bookingUpdatedHeadline(loc: SiteLocale): string {
+  if (loc === 'en') return 'Your booking has been updated'
+  if (loc === 'de') return 'Ihre Buchung wurde aktualisiert'
+  return 'Rezervasyonunuz Güncellendi'
+}
+
+/**
+ * Rezervasyon güncellendiğinde (tarih değişikliği, misafir bilgisi düzenleme vb.)
+ * hem müşteriye hem adminlere bilgilendirme e-postası gönderir.
+ */
+export async function sendBookingUpdatedEmails(payload: BookingUpdatedEmailPayload): Promise<void> {
+  const resend = getResend()
+  if (!resend) {
+    console.warn('[email] Güncelleme e-postası gönderilmedi: RESEND_API_KEY tanımlı değil.')
+    return
+  }
+  const from = getFrom()
+  const loc = normalizeBookingFlowLocale(payload.siteLocale)
+  const t = bookingEmailPremiumStrings(loc)
+  const brandBlue = '#2168b8'
+  const secondary = '#131719'
+  const dateFormatted = formatEmailBookingDate(payload.date, loc)
+  const fullName = `${payload.customer.firstName} ${payload.customer.lastName}`.trim()
+  const greetName = payload.customer.firstName?.trim() || fullName || '—'
+  const manageUrl = manageBookingUrlForLocale(payload.bookingId, loc)
+  const viewTicketUrl = customerTicketViewUrl(payload.bookingId, payload.accessToken, loc)
+  const headline = bookingUpdatedHeadline(loc)
+  const changeSummaryHtml = escapeHtml(payload.changeSummary).replace(/\n/g, '<br>')
+
+  const customerHtml = `<!DOCTYPE html>
+<html lang="${loc}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>${escapeHtml(headline)}</title>
+</head>
+<body style="margin:0;padding:0;background:${EMAIL_BG_PAGE};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_BG_PAGE};">
+<tr><td align="center" style="padding:36px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;border-collapse:separate;">
+
+  <tr><td style="background:${EMAIL_SURFACE};padding:22px 28px;text-align:center;border:1px solid ${EMAIL_BORDER};border-bottom:none;border-radius:10px 10px 0 0;">
+    <p style="margin:0;font-size:20px;font-weight:800;color:${brandBlue};letter-spacing:-0.02em;">${escapeHtml(getSiteName() || 'Poseidon Booking')}</p>
+  </td></tr>
+
+  <tr><td style="background:${brandBlue};padding:22px 28px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0;font-size:19px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;">${escapeHtml(headline)}</p>
+    <p style="margin:6px 0 0;font-size:14px;color:rgba(255,255,255,0.9);">${escapeHtml(payload.tourTitle)}</p>
+  </td></tr>
+
+  <tr><td style="background:${EMAIL_SURFACE};padding:22px 28px 8px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0;font-size:15px;font-weight:700;color:${secondary};">${escapeHtml(t.greeting(greetName))}</p>
+    <p style="margin:8px 0 0;font-size:13px;color:${EMAIL_MUTED};">${escapeHtml(dateFormatted)}${payload.time ? ` · ${escapeHtml(payload.time)}` : ''}</p>
+  </td></tr>
+
+  <tr><td style="background:${EMAIL_SURFACE};padding:12px 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_BORDER};border-radius:12px;">
+      <tr><td style="padding:18px 20px;">
+        <p style="margin:0 0 6px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">Ne değişti?</p>
+        <p style="margin:0;font-size:14px;font-weight:600;color:${secondary};line-height:1.6;">${changeSummaryHtml}</p>
+      </td></tr>
+    </table>
+    <p style="margin:14px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};">${escapeHtml(t.manageIntro)}</p>
+    <a href="${escapeHtml(manageUrl)}" target="_blank"
+       style="display:block;width:100%;background:${brandBlue};color:#ffffff!important;font-size:15px;font-weight:700;text-decoration:none;text-align:center;padding:15px 22px;border-radius:10px;box-sizing:border-box;margin-top:10px;">
+      ${escapeHtml(t.manageCta)}
+    </a>
+    <a href="${escapeHtml(viewTicketUrl)}" target="_blank"
+       style="display:block;width:100%;background:${EMAIL_SURFACE};color:${brandBlue}!important;font-size:14px;font-weight:600;text-decoration:none;text-align:center;padding:13px 22px;border-radius:10px;border:1.5px solid ${brandBlue};box-sizing:border-box;margin-top:10px;">
+      ${escapeHtml(t.viewTicketCta)}
+    </a>
+  </td></tr>
+
+  <tr><td style="background:#eef1f5;padding:18px 28px;border-radius:0 0 10px 10px;border:1px solid ${EMAIL_BORDER};border-top:none;">
+    <p style="margin:0;font-size:11px;color:${EMAIL_MUTED};text-align:center;line-height:1.45;">
+      &copy; ${new Date().getFullYear()} ${escapeHtml(getSiteName() || 'Poseidon')}
+    </p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+
+  const adminHtml = `<!DOCTYPE html>
+<html lang="tr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Rezervasyon Güncellendi</title></head>
+<body style="margin:0;padding:0;background:${EMAIL_BG_PAGE};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_BG_PAGE};">
+<tr><td align="center" style="padding:36px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;border-collapse:separate;">
+  <tr><td style="background:${EMAIL_NAVY};height:4px;border-radius:10px 10px 0 0;line-height:4px;font-size:0;">&nbsp;</td></tr>
+  <tr><td style="background:${EMAIL_SURFACE};padding:26px 28px 8px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <p style="margin:0;font-size:20px;font-weight:800;color:${EMAIL_NAVY};letter-spacing:-0.02em;">Rezervasyon Güncellendi</p>
+    <p style="margin:6px 0 0;font-size:13px;color:${EMAIL_MUTED};">${escapeHtml(payload.tourTitle)} · ${escapeHtml(dateFormatted)}${payload.time ? ` · ${escapeHtml(payload.time)}` : ''}</p>
+  </td></tr>
+  <tr><td style="background:${EMAIL_SURFACE};padding:18px 28px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <div style="background:#f8fafc;border:1px solid ${EMAIL_BORDER};border-left:3px solid ${EMAIL_NAVY};border-radius:8px;padding:16px 18px;">
+      <p style="margin:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:${EMAIL_MUTED};">Rezervasyon No</p>
+      <p style="margin:6px 0 0;font-size:16px;font-weight:700;color:${EMAIL_NAVY};font-family:ui-monospace,SFMono-Regular,Consolas,monospace;">${escapeHtml(payload.bookingId)}</p>
+      <p style="margin:12px 0 0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:${EMAIL_MUTED};">Ne değişti?</p>
+      <p style="margin:6px 0 0;font-size:14px;font-weight:600;color:${secondary};line-height:1.6;">${changeSummaryHtml}</p>
+    </div>
+  </td></tr>
+  <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${EMAIL_MUTED};font-size:13px;">Müşteri</td>
+        <td style="padding:10px 0;border-bottom:1px solid ${EMAIL_BORDER};color:${secondary};font-size:13px;font-weight:600;text-align:right;">${escapeHtml(fullName || '—')}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 0;color:${EMAIL_MUTED};font-size:13px;">E-posta</td>
+        <td style="padding:10px 0;color:${secondary};font-size:13px;font-weight:600;text-align:right;">${escapeHtml(payload.customer.email)}</td>
+      </tr>
+    </table>
+  </td></tr>
+  <tr><td style="background:#eef1f5;padding:18px 28px;border-radius:0 0 10px 10px;border:1px solid ${EMAIL_BORDER};border-top:none;">
+    <p style="margin:0;font-size:11px;color:${EMAIL_MUTED};text-align:center;">Bu e-posta otomatik olarak gönderilmiştir.</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+
+  const [customerResult] = await Promise.allSettled([
+    resend.emails.send({
+      from,
+      to: [payload.customer.email],
+      subject: `${headline} – ${payload.tourTitle}`,
+      html: customerHtml,
+    }),
+  ])
+  if (customerResult.status === 'fulfilled' && customerResult.value.error) {
+    console.error('[email] Güncelleme müşteri e-postası gönderilemedi:', payload.bookingId, customerResult.value.error)
+  } else if (customerResult.status === 'rejected') {
+    console.error('[email] Güncelleme müşteri e-postası gönderilemedi:', payload.bookingId, customerResult.reason)
+  }
+
+  await sendToAdminRecipients(resend, {
+    from,
+    subject: `Rezervasyon güncellendi: ${payload.tourTitle} – ${payload.date}`,
+    html: adminHtml,
+    logContext: payload.bookingId,
+  })
+}
+
 /**
  * Rezervasyon oluşturulduğunda müşteri ve (ADMIN_EMAIL ayarlıysa) admin(ler)e e-posta gönderir.
  * QR kod bookingUrl ile üretilir ve HTML'e base64 inline gömülür (Gmail/Outlook uyumlu).
@@ -942,33 +1140,6 @@ export async function sendBookingEmails(
     qrCid,
     logoUrl: mergedPayload.logoUrl ?? siteLogoUrl,
   })
-
-  try {
-    let voucherData: VoucherData | null = row
-      ? await buildVoucherDataFromBookingRow(mergedPayload.bookingId, row, mergedPayload.accessToken?.trim() ?? '')
-      : null
-    if (!voucherData) {
-      voucherData = payloadToVoucherData(mergedPayload, voucherUrlForPdf)
-      try {
-        const tourId = typeof row?.tour_id === 'string' ? String(row.tour_id).trim() : ''
-        if (tourId) voucherData = await enrichVoucherDataWithTour(voucherData, tourId)
-      } catch {
-        // Tur verisi olmadan PDF üretilir
-      }
-    }
-    const pdfBytes = await generatePremiumEticketPdf(voucherDataToPremiumEticket(voucherData, loc))
-    const pdfName = `${getSiteName() || 'Bilet'}-E-Bilet-${mergedPayload.bookingId}.pdf`.replace(
-      /[^a-zA-Z0-9._-]/g,
-      '_'
-    )
-    attachments.push({
-      filename: pdfName,
-      content: Buffer.from(pdfBytes),
-    })
-    console.info('[email] Premium (koyu tema) PDF bilet eklendi:', mergedPayload.bookingId, pdfName)
-  } catch (e) {
-    console.warn('[email] PDF bilet eklenemedi:', e)
-  }
 
   const { error: customerError } = await resend.emails.send({
     from,
@@ -1082,14 +1253,23 @@ function buildPremiumConfirmationEmailHtml(
   </td></tr>
 
   ${heroImg
-    ? `<tr><td style="padding:0;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};"><img src="${escapeHtml(heroImg)}" alt="${escapeHtml(t.heroAlt)}" width="580" style="display:block;width:100%;max-height:220px;object-fit:cover;" /></td></tr>`
-    : ''
+    ? `<tr><td style="padding:0;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};background-color:${brandBlue};background-image:url('${escapeHtml(heroImg)}');background-size:cover;background-position:center;" background="${escapeHtml(heroImg)}">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr><td height="220" style="height:220px;padding:0;" valign="bottom">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr><td style="background:linear-gradient(to top, rgba(12,16,20,0.82) 0%, rgba(12,16,20,0.35) 60%, rgba(12,16,20,0) 100%);padding:70px 28px 20px;">
+                <p style="margin:0;font-size:21px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;text-shadow:0 1px 3px rgba(0,0,0,0.4);">${isPaid ? '🎉 ' : ''}${escapeHtml(successTitle)}</p>
+                <p style="margin:6px 0 0;font-size:14px;color:rgba(255,255,255,0.92);text-shadow:0 1px 3px rgba(0,0,0,0.4);">${escapeHtml(p.tourTitle)}</p>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </td></tr>`
+    : `<tr><td style="background:${brandBlue};padding:22px 28px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
+        <p style="margin:0;font-size:19px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;">${isPaid ? '🎉 ' : ''}${escapeHtml(successTitle)}</p>
+        <p style="margin:6px 0 0;font-size:14px;color:rgba(255,255,255,0.9);">${escapeHtml(p.tourTitle)}</p>
+      </td></tr>`
   }
-
-  <tr><td style="background:${brandBlue};padding:22px 28px;text-align:center;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
-    <p style="margin:0;font-size:19px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;">${isPaid ? '🎉 ' : ''}${escapeHtml(successTitle)}</p>
-    <p style="margin:6px 0 0;font-size:14px;color:rgba(255,255,255,0.9);">${escapeHtml(p.tourTitle)}</p>
-  </td></tr>
 
   <tr><td style="background:${EMAIL_SURFACE};padding:22px 28px 6px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <p style="margin:0 0 10px;font-size:15px;font-weight:700;color:${secondary};">${escapeHtml(t.greeting(greetName))}</p>
@@ -1100,7 +1280,7 @@ function buildPremiumConfirmationEmailHtml(
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_BORDER};border-radius:12px;">
       <tr><td style="padding:22px 20px;text-align:center;">
         <p style="margin:0;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:${brandOrange};">${escapeHtml(t.boardingPassTitle)}</p>
-        <p style="margin:8px 0 0;font-size:22px;font-weight:800;color:${brandBlue};letter-spacing:0.03em;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;">#${escapeHtml(p.bookingId)}</p>
+        <p style="margin:8px 0 0;font-size:22px;font-weight:800;color:${brandBlue};letter-spacing:0.03em;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;">#${escapeHtml(shortReservationCode(p.bookingId))}</p>
         <p style="margin:12px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${secondary};">${escapeHtml(t.date)}:</strong> ${escapeHtml(dateFormatted)}${p.time ? ` · ${escapeHtml(p.time)}` : ''}</p>
         <p style="margin:4px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${secondary};">${escapeHtml(t.reservationOwner)}:</strong> ${escapeHtml(fullName)}</p>
         <p style="margin:4px 0 0;font-size:13px;color:${EMAIL_TEXT_BODY};"><strong style="color:${secondary};">${escapeHtml(t.guests)}:</strong> ${totalPax}</p>
@@ -1288,33 +1468,6 @@ export async function sendBookingPaidEmails(payload: BookingEmailPayload): Promi
     qrCid,
     logoUrl: enrichedPayload.logoUrl ?? siteLogoUrl,
   })
-
-  try {
-    let voucherData: VoucherData | null = row
-      ? await buildVoucherDataFromBookingRow(enrichedPayload.bookingId, row, enrichedPayload.accessToken?.trim() ?? '')
-      : null
-    if (!voucherData) {
-      voucherData = payloadToVoucherData(enrichedPayload, voucherUrlForPdf)
-      try {
-        const tourId = tourIdForDeposit ?? ''
-        if (tourId) voucherData = await enrichVoucherDataWithTour(voucherData, tourId)
-      } catch {
-        // Tur verisi olmadan PDF üretilir
-      }
-    }
-    const pdfBytes = await generatePremiumEticketPdf(voucherDataToPremiumEticket(voucherData, loc))
-    const pdfName = `${getSiteName() || 'Bilet'}-E-Bilet-${enrichedPayload.bookingId}.pdf`.replace(
-      /[^a-zA-Z0-9._-]/g,
-      '_'
-    )
-    attachments.push({
-      filename: pdfName,
-      content: Buffer.from(pdfBytes),
-    })
-    console.info('[email] Premium (koyu tema) PDF bilet eklendi:', enrichedPayload.bookingId, pdfName)
-  } catch (e) {
-    console.warn('[email] PDF bilet eklenemedi:', e)
-  }
 
   const { error: customerError } = await resend.emails.send({
     from,
