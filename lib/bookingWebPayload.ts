@@ -75,6 +75,7 @@ const bookingWebJsonSchema = z.object({
   firstClassLoca: z.union([z.string(), z.undefined(), z.null()]).optional(),
   selectedExtraKeys: z.array(z.unknown()).optional(),
   extraNotes: z.unknown().optional(),
+  extraQuantities: z.unknown().optional(),
   customer: customerSchema,
   additionalTravelers: z.unknown().optional(),
   infantGenders: z.unknown().optional(),
@@ -198,6 +199,18 @@ export function parseBookingWebPayload(body: unknown): ParseWebBookingResult {
     }
   }
 
+  const totalPaxForExtras = v.counts.adult + v.counts.child + v.counts.infant
+  const extraQuantities: Record<string, number> = {}
+  if (v.extraQuantities && typeof v.extraQuantities === 'object' && !Array.isArray(v.extraQuantities)) {
+    for (const key of selectedExtraKeys) {
+      const raw = (v.extraQuantities as Record<string, unknown>)[key]
+      const n = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : NaN
+      if (Number.isFinite(n) && n > 0 && totalPaxForExtras > 0) {
+        extraQuantities[key] = Math.min(totalPaxForExtras, Math.max(1, Math.round(n)))
+      }
+    }
+  }
+
   const payload: BookingCreatePayload = {
     uiLocale,
     tourId: v.tourId,
@@ -211,6 +224,7 @@ export function parseBookingWebPayload(body: unknown): ParseWebBookingResult {
     ...(firstClassLocas && firstClassLocas.length > 0 && { firstClassLocas }),
     ...(selectedExtraKeys.length > 0 && { selectedExtraKeys }),
     ...(Object.keys(extraNotes).length > 0 && { extraNotes }),
+    ...(Object.keys(extraQuantities).length > 0 && { extraQuantities }),
     customer: {
       firstName: v.customer.firstName,
       lastName: v.customer.lastName,

@@ -48,6 +48,10 @@ export type BookingWizardUi = {
   extrasDoneButton: string
   extrasSkipButton: string
   extrasSummaryNone: string
+  selectLocaFirstHint: string
+  extraQuantityLabel: string
+  decreaseAria: string
+  increaseAria: string
   extrasSummarySelected: (n: number) => string
   bungalowTwoPersonOdd: string
   statusFull: string
@@ -236,6 +240,10 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     extrasDoneButton: 'Tamam',
     extrasSkipButton: 'Ekstra İstemiyorum',
     extrasSummaryNone: 'Ekstraları görmek için dokunun',
+    selectLocaFirstHint: 'Önce localarınızı seçin',
+    extraQuantityLabel: 'Kaç kişi için?',
+    decreaseAria: 'Azalt',
+    increaseAria: 'Artır',
     extrasSummarySelected: (n) => `${n} ekstra seçildi`,
     bungalowTwoPersonOdd:
       'Bu alandaki bungalov yataklarımız 2 kişiliktir. Tek sayılı kişi ile rezervasyon verilmemektedir.',
@@ -424,6 +432,10 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     extrasDoneButton: 'Done',
     extrasSkipButton: 'No extras, thanks',
     extrasSummaryNone: 'Tap to see extras',
+    selectLocaFirstHint: 'Select your booths first',
+    extraQuantityLabel: 'For how many people?',
+    decreaseAria: 'Decrease',
+    increaseAria: 'Increase',
     extrasSummarySelected: (n) => `${n} extra${n === 1 ? '' : 's'} selected`,
     bungalowTwoPersonOdd:
       'Booth beds in this area are for two guests. Bookings with an odd number of guests are not available.',
@@ -611,6 +623,10 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     extrasDoneButton: 'Fertig',
     extrasSkipButton: 'Keine Extras',
     extrasSummaryNone: 'Zum Anzeigen der Extras tippen',
+    selectLocaFirstHint: 'Wählen Sie zuerst Ihre Logen',
+    extraQuantityLabel: 'Für wie viele Personen?',
+    decreaseAria: 'Verringern',
+    increaseAria: 'Erhöhen',
     extrasSummarySelected: (n) => `${n} Extra${n === 1 ? '' : 's'} ausgewählt`,
     bungalowTwoPersonOdd:
       'Die Kabinenbetten in diesem Bereich sind für zwei Personen. Buchungen mit ungerader Personenzahl sind nicht möglich.',

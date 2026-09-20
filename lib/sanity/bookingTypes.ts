@@ -272,6 +272,11 @@ export interface BookingWizardState {
   selectedExtraKeys: string[]
   /** requiresNote açık ekstralar için girilen serbest metin (key → metin). */
   extraNotes: Record<string, string>
+  /**
+   * Kişi başı fiyatlanan ekstralar için seçilen kişi sayısı (key → adet, 1..totalPax).
+   * Belirtilmeyen anahtarlar için varsayılan: totalPax (herkes için).
+   */
+  extraQuantities?: Record<string, number>
   /** First Class seçildiğinde seçilen localar (L1–L10). Her loca 2 kişilik; N kişi → N/2 loca. */
   firstClassLocas?: string[] | null
   /** Seçilen toplanma / alım noktası (Sanity pickupPoints varsa müşteri seçer). */
@@ -307,6 +312,7 @@ export const DEFAULT_BOOKING_STATE: Omit<BookingWizardState, 'tourSlug'> = {
   selectedClassKey: null,
   selectedExtraKeys: [],
   extraNotes: {},
+  extraQuantities: {},
   firstClassLocas: [],
   customer: { firstName: '', lastName: '', email: '', phoneCountryCode: '90', phone: '', note: '', gender: '' },
   additionalTravelers: [],

@@ -53,7 +53,8 @@ async function computePrices(
   classId: string,
   counts: { adult: number; child: number; infant: number },
   selectedExtraKeys: string[],
-  extraNotes: Record<string, string>
+  extraNotes: Record<string, string>,
+  extraQuantities: Record<string, number>
 ): Promise<{
   unitPrice: number
   totalPrice: number
@@ -73,7 +74,8 @@ async function computePrices(
       classId,
       { adult: counts.adult, child: counts.child, baby: counts.infant },
       selectedExtraKeys,
-      extraNotes
+      extraNotes,
+      extraQuantities
     )
     const totalPax = counts.adult + counts.child + counts.infant
     const cashPaymentEnabled = Boolean(tour?.cashPaymentEnabled)
@@ -127,7 +129,8 @@ export async function POST(request: Request) {
       payload.classId,
       payload.counts,
       payload.selectedExtraKeys ?? [],
-      payload.extraNotes ?? {}
+      payload.extraNotes ?? {},
+      payload.extraQuantities ?? {}
     )
     // Kalkış saati: istekte varsa onu kullan, yoksa turun quickFacts.startTime (voucher/bilet sayfasında gösterilir)
     let timeToSave: string | undefined = payload.time?.trim() || undefined

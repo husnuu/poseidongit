@@ -93,6 +93,10 @@ export default function Step2ClassSelect({
   }
 
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
+  const isSelectedClassFirst = Boolean(state.selectedClassKey && isFirstClassKey(tour, state.selectedClassKey))
+  const requiredFirstClassLocas = isSelectedClassFirst ? Math.ceil(totalPax / 2) : 0
+  const hasRequiredFirstClassLocas =
+    !isSelectedClassFirst || (state.firstClassLocas?.length ?? 0) === requiredFirstClassLocas
 
   useEffect(() => {
     const total = state.counts.adult + state.counts.child + state.counts.baby
@@ -137,7 +141,8 @@ export default function Step2ClassSelect({
       state.selectedClassKey,
       state.counts,
       state.selectedExtraKeys,
-      state.extraNotes
+      state.extraNotes,
+      state.extraQuantities
     )
     onPricingComputed(summary)
   }, [
@@ -149,6 +154,7 @@ export default function Step2ClassSelect({
     state.counts.baby,
     state.selectedExtraKeys,
     state.extraNotes,
+    state.extraQuantities,
     onPricingComputed,
   ])
 
@@ -237,8 +243,10 @@ export default function Step2ClassSelect({
                       selectedClassKey: cls.key,
                       ...(isFirst ? {} : { firstClassLocas: [] }),
                     })
-                    if (!isFirst && !hasExtras) advance()
-                    else if (hasExtras) setExtrasModalOpen(true)
+                    if (isFirst) {
+                      // First Class: koltuk seçimi tamamlanana kadar ekstra modalı açılmaz.
+                    } else if (!hasExtras) advance()
+                    else setExtrasModalOpen(true)
                   }
                 }}
                 onKeyDown={(e) => {
@@ -249,8 +257,10 @@ export default function Step2ClassSelect({
                       selectedClassKey: cls.key,
                       ...(isFirst ? {} : { firstClassLocas: [] }),
                     })
-                    if (!isFirst && !hasExtras) advance()
-                    else if (hasExtras) setExtrasModalOpen(true)
+                    if (isFirst) {
+                      // First Class: koltuk seçimi tamamlanana kadar ekstra modalı açılmaz.
+                    } else if (!hasExtras) advance()
+                    else setExtrasModalOpen(true)
                   }
                 }}
                 tabIndex={available ? 0 : undefined}
@@ -432,8 +442,10 @@ export default function Step2ClassSelect({
                               selectedClassKey: cls.key,
                               ...(isFirst ? {} : { firstClassLocas: [] }),
                             })
-                            if (!isFirst && !hasExtras) advance()
-                            else if (hasExtras) setExtrasModalOpen(true)
+                            if (isFirst) {
+                              // First Class: koltuk seçimi tamamlanana kadar ekstra modalı açılmaz.
+                            } else if (!hasExtras) advance()
+                            else setExtrasModalOpen(true)
                           }
                         }}
                         aria-label={
@@ -545,7 +557,10 @@ export default function Step2ClassSelect({
           <button
             type="button"
             className={styles.extrasTrigger}
-            onClick={() => setExtrasModalOpen(true)}
+            onClick={() => hasRequiredFirstClassLocas && setExtrasModalOpen(true)}
+            disabled={!hasRequiredFirstClassLocas}
+            aria-disabled={!hasRequiredFirstClassLocas}
+            style={!hasRequiredFirstClassLocas ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
           >
             <span className={styles.extrasTriggerIcon} aria-hidden>
               <Sparkles width={18} height={18} />
@@ -553,9 +568,11 @@ export default function Step2ClassSelect({
             <span className={styles.extrasTriggerBody}>
               <span className={styles.extrasTriggerTitle}>{ui.extrasTitle}</span>
               <span className={styles.extrasTriggerSubtitle}>
-                {selectedExtraKeys.length > 0
-                  ? ui.extrasSummarySelected(selectedExtraKeys.length)
-                  : ui.extrasSummaryNone}
+                {!hasRequiredFirstClassLocas
+                  ? ui.selectLocaFirstHint
+                  : selectedExtraKeys.length > 0
+                    ? ui.extrasSummarySelected(selectedExtraKeys.length)
+                    : ui.extrasSummaryNone}
               </span>
             </span>
             <ChevronRight width={18} height={18} className={styles.extrasTriggerChevron} aria-hidden />

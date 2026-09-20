@@ -131,7 +131,8 @@ export default function BookingWizardModal({
       state.selectedClassKey,
       state.counts,
       state.selectedExtraKeys,
-      state.extraNotes
+      state.extraNotes,
+      state.extraQuantities
     )
     setState((prev) => {
       if (summary && prev.pricingSummary?.total === summary.total && prev.pricingSummary?.currency === summary.currency) return prev
@@ -146,6 +147,7 @@ export default function BookingWizardModal({
     state.counts.baby,
     state.selectedExtraKeys,
     state.extraNotes,
+    state.extraQuantities,
   ])
 
   const handleClose = useCallback(() => {
@@ -285,6 +287,9 @@ export default function BookingWizardModal({
             ...((state.selectedExtraKeys?.length ?? 0) > 0 && {
               selectedExtraKeys: state.selectedExtraKeys,
               ...(state.extraNotes && Object.keys(state.extraNotes).length > 0 && { extraNotes: state.extraNotes }),
+              ...(state.extraQuantities && Object.keys(state.extraQuantities).length > 0 && {
+                extraQuantities: state.extraQuantities,
+              }),
             }),
             customer: {
               firstName: state.customer.firstName?.trim() ?? '',

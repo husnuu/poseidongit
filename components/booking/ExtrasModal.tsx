@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { createPortal } from 'react-dom'
-import { Check, X, Sparkles } from 'lucide-react'
+import { Check, X, Sparkles, Minus, Plus } from 'lucide-react'
 import type { BookingWizardState, ExtraForBooking } from '@/lib/sanity/bookingTypes'
 import { resolveExtraNoteConfig } from '@/lib/sanity/bookingPricing'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
@@ -33,6 +33,8 @@ export default function ExtrasModal({
   const [portalEl, setPortalEl] = useState<HTMLElement | null>(null)
   const selectedExtraKeys = state.selectedExtraKeys ?? []
   const extraNotes = state.extraNotes ?? {}
+  const extraQuantities = state.extraQuantities ?? {}
+  const totalPax = state.counts.adult + state.counts.child + state.counts.baby
 
   useEffect(() => {
     const el = document.createElement('div')
@@ -61,10 +63,22 @@ export default function ExtrasModal({
   if (!portalEl) return null
 
   const handleToggle = (key: string) => {
-    const next = selectedExtraKeys.includes(key)
+    const isSelected = selectedExtraKeys.includes(key)
+    const next = isSelected
       ? selectedExtraKeys.filter((k) => k !== key)
       : [...selectedExtraKeys, key]
-    onUpdate({ selectedExtraKeys: next })
+    if (isSelected) {
+      const { [key]: _removed, ...restQuantities } = extraQuantities
+      onUpdate({ selectedExtraKeys: next, extraQuantities: restQuantities })
+    } else {
+      // Varsayılan: tüm misafirler için (kişi başı ekstralarda kullanıcı sonra azaltabilir).
+      onUpdate({ selectedExtraKeys: next, extraQuantities: { ...extraQuantities, [key]: totalPax } })
+    }
+  }
+
+  const handleQuantityChange = (key: string, quantity: number) => {
+    const clamped = Math.min(totalPax, Math.max(1, quantity))
+    onUpdate({ extraQuantities: { ...extraQuantities, [key]: clamped } })
   }
 
   const handleNoteChange = (key: string, value: string) => {
@@ -72,7 +86,7 @@ export default function ExtrasModal({
   }
 
   const handleSkip = () => {
-    onUpdate({ selectedExtraKeys: [], extraNotes: {} })
+    onUpdate({ selectedExtraKeys: [], extraNotes: {}, extraQuantities: {} })
     onSkip()
   }
 
@@ -162,6 +176,39 @@ export default function ExtrasModal({
                       {selected && <Check width={14} height={14} strokeWidth={3} />}
                     </span>
                   </button>
+
+                  {selected && extra.priceType === 'perPerson' && totalPax > 1 && (() => {
+                    const qty = Math.min(totalPax, Math.max(1, extraQuantities[extra.key] ?? totalPax))
+                    return (
+                      <div className={styles.extraNoteWrap}>
+                        <label className={styles.extraNoteLabel}>{ui.extraQuantityLabel}</label>
+                        <div className={styles.extraQuantityRow}>
+                          <button
+                            type="button"
+                            className={styles.counterBtn}
+                            onClick={() => handleQuantityChange(extra.key, qty - 1)}
+                            disabled={qty <= 1}
+                            aria-label={ui.decreaseAria}
+                          >
+                            <Minus width={14} height={14} strokeWidth={3} />
+                          </button>
+                          <span className={styles.counterValue}>{qty}</span>
+                          <button
+                            type="button"
+                            className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
+                            onClick={() => handleQuantityChange(extra.key, qty + 1)}
+                            disabled={qty >= totalPax}
+                            aria-label={ui.increaseAria}
+                          >
+                            <Plus width={14} height={14} strokeWidth={3} />
+                          </button>
+                          <span className={styles.extraQuantityTotal}>
+                            {(extra.price * qty).toLocaleString(ui.numberLocale)} ₺
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })()}
 
                   {selected && requiresNote && (
                     <div className={styles.extraNoteWrap}>

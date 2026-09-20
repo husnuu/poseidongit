@@ -331,7 +331,8 @@ export function computeExtrasBreakdown(
   tour: TourForBooking | null,
   selectedExtraKeys: string[] | undefined,
   totalPax: number,
-  extraNotes?: Record<string, string>
+  extraNotes?: Record<string, string>,
+  extraQuantities?: Record<string, number>
 ): { breakdown: ExtraLineItem[]; extrasTotal: number } {
   const keys = new Set((selectedExtraKeys ?? []).filter(Boolean))
   const breakdown: ExtraLineItem[] = []
@@ -341,7 +342,13 @@ export function computeExtrasBreakdown(
     const unitPrice = Number(extra.price)
     if (!Number.isFinite(unitPrice) || unitPrice < 0) continue
     const priceType: 'perPerson' | 'total' = extra.priceType === 'perPerson' ? 'perPerson' : 'total'
-    const quantity = priceType === 'perPerson' ? totalPax : 1
+    let quantity = priceType === 'perPerson' ? totalPax : 1
+    if (priceType === 'perPerson') {
+      const requested = extraQuantities?.[extra.key]
+      if (Number.isFinite(requested) && (requested as number) > 0) {
+        quantity = Math.min(totalPax, Math.max(1, Math.round(requested as number)))
+      }
+    }
     const { requiresNote } = resolveExtraNoteConfig(extra)
     const note = requiresNote ? extraNotes?.[extra.key]?.trim() || undefined : undefined
     breakdown.push({
@@ -364,7 +371,8 @@ export function computePricingForSelection(
   classKey: string | null,
   counts: { adult: number; child: number; baby: number },
   selectedExtraKeys?: string[],
-  extraNotes?: Record<string, string>
+  extraNotes?: Record<string, string>,
+  extraQuantities?: Record<string, number>
 ): PricingSummary | null {
   if (!tour || !dateStr || !classKey) return null
   const cls = tour.ticketClasses?.find((c) => c.key === classKey)
@@ -394,7 +402,8 @@ export function computePricingForSelection(
     tour,
     selectedExtraKeys,
     totalPax,
-    extraNotes
+    extraNotes,
+    extraQuantities
   )
   const total = classTotal + extrasTotal
   if (tour.cashPaymentEnabled) {

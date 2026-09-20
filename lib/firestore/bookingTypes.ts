@@ -79,6 +79,8 @@ export interface BookingCreatePayload {
   selectedExtraKeys?: string[]
   /** requiresNote açık ekstralar için girilen serbest metin (key → metin). */
   extraNotes?: Record<string, string>
+  /** Kişi başı fiyatlanan ekstralar için seçilen kişi sayısı (key → adet). Yoksa: tüm kişiler. */
+  extraQuantities?: Record<string, number>
   customer: {
     firstName: string
     lastName: string
