@@ -325,7 +325,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
     >
       <div className="mx-auto w-full max-w-[1600px] px-4 py-14 sm:px-6 md:px-8 md:py-20 lg:px-10 xl:px-12">
         <div
-          className={`grid gap-14 lg:gap-x-24 xl:gap-x-32 ${showBragSection ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}
+          className={`grid gap-14 lg:gap-x-24 xl:gap-x-32 lg:grid-cols-3`}
         >
           <div className="space-y-7">
             <Link
@@ -494,6 +494,16 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
               </div>
             </div>
           ) : null}
+          <div>
+            <div className="flex flex-col items-start gap-6">
+              <a href="https://www.tursab.org.tr" target="_blank" rel="noopener noreferrer" aria-label="TÜRSAB">
+                <Image src="/memberships/tursab.png" alt="TÜRSAB" width={200} height={50} className="h-11 w-auto object-contain brightness-0 invert" />
+              </a>
+              <a href="https://www.denizticaretodasi.org.tr" target="_blank" rel="noopener noreferrer" aria-label="İMEAK Deniz Ticaret Odası">
+                <Image src="/memberships/imeak-deniz-ticaret-odasi.png" alt="İMEAK Deniz Ticaret Odası" width={396} height={80} className="h-12 w-auto object-contain brightness-0 invert" />
+              </a>
+            </div>
+          </div>
         </div>
 
         <div className="mt-14 border-t border-white/20 pt-8">

@@ -9,6 +9,7 @@
   justify-content: flex-start;
   background: rgba(0, 0, 0, 0.5);
   overflow: auto;
+  overscroll-behavior: contain;
   padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px)
     env(safe-area-inset-left, 0px);
   animation: bookingFadeIn 0.2s ease-out;
@@ -2760,6 +2761,7 @@
 .wizardModalContent {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0 0 32px;
   background: #fff;
 }
@@ -3064,6 +3066,7 @@
 /* ── Ekstralar popup ── */
 .extrasOverlay {
   display: none;
+  overscroll-behavior: contain;
   position: fixed;
   inset: 0;
   z-index: 10000;

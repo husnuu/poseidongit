@@ -122,6 +122,14 @@ export default function Step2ClassSelect({
     onUpdate,
   ])
 
+  // First Class: gerekli loca sayısına ulaşılınca ekstra penceresini otomatik aç (yalnızca eksikken → tamamlanma geçişinde).
+  const prevLocaCompleteRef = useRef(false)
+  useEffect(() => {
+    const complete = isSelectedClassFirst && requiredFirstClassLocas > 0 && hasRequiredFirstClassLocas
+    if (complete && !prevLocaCompleteRef.current && hasExtras) setExtrasModalOpen(true)
+    prevLocaCompleteRef.current = complete
+  }, [isSelectedClassFirst, requiredFirstClassLocas, hasRequiredFirstClassLocas, hasExtras])
+
   useEffect(() => {
     if (!state.selectedClassKey || !isFirstClassKey(tour, state.selectedClassKey)) return
     const t = setTimeout(() => {
