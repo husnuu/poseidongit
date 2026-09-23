@@ -6,6 +6,7 @@ import { headerNavWithHelpCenter } from '@/lib/i18n/headerNavWithHelpCenter'
 import type { AnnouncementBarData } from './announcementBarTypes'
 import HeaderClient from './HeaderClient'
 import { translateText } from '@/lib/i18n/runtimeTranslate'
+import { translateNavLabelText } from '@/lib/i18n/localizedLabels'
 
 interface SiteSettings {
   siteName?: string
@@ -75,10 +76,26 @@ export default async function Header({ locale }: { locale: SiteLocale }) {
         }
       }
     }
+    let headerNav = settings.headerNav
+    if (headerNav?.length && locale !== 'tr') {
+      headerNav = await Promise.all(
+        headerNav.map(async (item) => {
+          const needsEn = locale === 'en' && !item.labelEn?.trim()
+          const needsDe = locale === 'de' && !item.labelDe?.trim()
+          if (!item.label?.trim() || (!needsEn && !needsDe)) return item
+          const translated = await translateNavLabelText(item.label, locale)
+          return {
+            ...item,
+            ...(needsEn ? { labelEn: translated } : {}),
+            ...(needsDe ? { labelDe: translated } : {}),
+          }
+        })
+      )
+    }
     const settingsWithHelp = {
       ...settings,
       ...(cta ? { cta } : {}),
-      headerNav: headerNavWithHelpCenter(settings.headerNav),
+      headerNav: headerNavWithHelpCenter(headerNav),
     }
     return <HeaderClient locale={locale} settings={settingsWithHelp} announcementBar={bar} />
   } catch {

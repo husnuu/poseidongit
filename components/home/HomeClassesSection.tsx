@@ -18,6 +18,12 @@ type Props = {
   locale: SiteLocale
 }
 
+function defaultHeadingFallback(locale: SiteLocale): string {
+  if (locale === 'en') return 'Ticket classes'
+  if (locale === 'de') return 'Ticketklassen'
+  return 'BİLET SINIFLARI'
+}
+
 export default function HomeClassesSection({ data, locale }: Props) {
   const sectionRef = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
@@ -40,7 +46,7 @@ export default function HomeClassesSection({ data, locale }: Props) {
   if (items.length === 0) return null
 
   const localeUpper = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
-  const titleUpper = (data.heading?.trim() || 'BİLET SINIFLARI')
+  const titleUpper = (data.heading?.trim() || defaultHeadingFallback(locale))
     .trim()
     .toLocaleUpperCase(localeUpper)
 

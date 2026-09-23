@@ -49,6 +49,8 @@ const DE_FIRST_IN: Record<string, string> = {
   buchung: 'rezervasyon',
   ticket: 'bilet',
   kontakt: 'contact',
+  yachtkaution: 'yat-kapora',
+  speisekarte: 'menu',
 }
 
 /** Kök domain (locale yok) için İngilizce kısayollar → kanonik */

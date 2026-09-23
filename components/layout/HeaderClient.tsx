@@ -171,7 +171,10 @@ function LanguageDropdown({
   const ref = useRef<HTMLDivElement>(null)
   const aria = headerAria(locale)
 
-  const list = languages.length > 0 ? languages : DEFAULT_HEADER_LANGUAGES
+  // Almanca artık tam destekleniyor — CMS'te "yakında" işaretli kalmış olsa bile kilidi kaldır.
+  const list = (languages.length > 0 ? languages : DEFAULT_HEADER_LANGUAGES).map((item) =>
+    item.code.toLowerCase() === 'de' ? { ...item, comingSoon: false } : item
+  )
   const current = locale
   const currentItem = list.find((item) => item.code.toLowerCase() === current) ?? list[0]
 

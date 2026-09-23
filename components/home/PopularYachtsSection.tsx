@@ -20,6 +20,18 @@ type PopularYachtsSectionProps = {
   locale?: SiteLocale
 }
 
+function defaultTitleFallback(locale: SiteLocale): string {
+  if (locale === 'en') return 'Our most popular yachts'
+  if (locale === 'de') return 'Unsere beliebtesten Yachten'
+  return 'En popüler tekneler'
+}
+
+function defaultCtaLabel(locale: SiteLocale): string {
+  if (locale === 'en') return 'See all yachts'
+  if (locale === 'de') return 'Alle Boote ansehen'
+  return 'Tüm tekneleri gör'
+}
+
 export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYachtsSectionProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -75,8 +87,8 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
   if (!data?.enabled || !data?.items?.length) return null
 
   const { title, subtitle, items, ctaButton } = data
-  const titleUpper = (title || 'En popüler tekneler').toUpperCase().trim()
-  const ctaLabel = ctaButton?.label?.trim() || 'Tüm tekneleri gör'
+  const titleUpper = (title || defaultTitleFallback(locale)).toUpperCase().trim()
+  const ctaLabel = ctaButton?.label?.trim() || defaultCtaLabel(locale)
   const ctaHref = ctaButton?.href?.trim()
     ? ctaButton.href
     : withLocalePath(locale, '/yat-kiralama')

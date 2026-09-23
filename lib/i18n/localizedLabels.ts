@@ -55,6 +55,49 @@ export async function pickLocalizedStringTranslated(
   return translateText(b, locale)
 }
 
+/**
+ * Menü/nav gibi kısa, tekrar eden etiketler bağlamsız makine çevirisinde
+ * yanlış anlama (örn. "Koylar" → "Fächer") riskine açık; bilinen etiketler
+ * için elle doğrulanmış çeviri kullanılır, tanınmayanlar MT'ye düşer.
+ */
+const NAV_LABEL_OVERRIDES: Record<string, { en: string; de: string }> = {
+  'anasayfa': { en: 'Home', de: 'Startseite' },
+  'ana sayfa': { en: 'Home', de: 'Startseite' },
+  'turlar': { en: 'Tours', de: 'Touren' },
+  'tur': { en: 'Tour', de: 'Tour' },
+  'yatlar': { en: 'Yachts', de: 'Yachten' },
+  'yat kiralama': { en: 'Yacht rental', de: 'Yachtcharter' },
+  'hakkımızda': { en: 'About us', de: 'Über uns' },
+  'koylar': { en: 'Bays', de: 'Buchten' },
+  'sınıflar': { en: 'Classes', de: 'Klassen' },
+  'blog': { en: 'Blog', de: 'Blog' },
+  'menü': { en: 'Menu', de: 'Speisekarte' },
+  'yardım merkezi': { en: 'Help Center', de: 'Hilfezentrum' },
+  'i̇letişim': { en: 'Contact', de: 'Kontakt' },
+  'iletişim': { en: 'Contact', de: 'Kontakt' },
+  'şartlar ve koşullar': { en: 'Terms and Conditions', de: 'Allgemeine Geschäftsbedingungen' },
+  'gizlilik politikası': { en: 'Privacy Policy', de: 'Datenschutzrichtlinie' },
+  'iptal ve iade politikası': { en: 'Cancellation and Refund Policy', de: 'Storno- und Rückerstattungsrichtlinie' },
+  'iptal ve i̇ade': { en: 'Cancellation and Refund', de: 'Storno und Rückerstattung' },
+  'iptal ve iade': { en: 'Cancellation and Refund', de: 'Storno und Rückerstattung' },
+  'güvenlik politikası': { en: 'Security Policy', de: 'Sicherheitsrichtlinie' },
+  'çerez politikası': { en: 'Cookie Policy', de: 'Cookie-Richtlinie' },
+  'mesafeli satış sözleşmesi': { en: 'Distance Sales Agreement', de: 'Fernabsatzvertrag' },
+}
+
+function normalizeNavKey(label: string): string {
+  return label.trim().toLocaleLowerCase('tr-TR')
+}
+
+/** Nav/footer etiketi çevirisi: önce elle doğrulanmış sözlük, yoksa anlık makine çevirisi. */
+export async function translateNavLabelText(label: string | null | undefined, locale: SiteLocale): Promise<string> {
+  const trimmed = label?.trim()
+  if (!trimmed || locale === 'tr') return trimmed ?? ''
+  const override = NAV_LABEL_OVERRIDES[normalizeNavKey(trimmed)]
+  if (override) return locale === 'de' ? override.de : override.en
+  return translateText(trimmed, locale)
+}
+
 export function pickOptionalLinkLabel(
   item: { label?: string | null; labelEn?: string | null; labelDe?: string | null },
   locale: SiteLocale

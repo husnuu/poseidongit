@@ -8,6 +8,8 @@ import YachtRentalListSection from '@/components/yacht/YachtRentalListSection'
 import listStyles from '../turlar/page.module.css'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
+import { translateText } from '@/lib/i18n/runtimeTranslate'
 
 export const revalidate = 3600
 
@@ -46,7 +48,25 @@ const DEFAULT_TITLE_BOTTOM: Record<SiteLocale, string> = {
   de: 'YACHTCHARTER',
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+const DEFAULT_SEO_TITLE: Record<SiteLocale, string> = {
+  tr: siteName ? `Yat Kiralama | ${siteName}` : 'Yat kiralama | Özel charter',
+  en: siteName ? `Yacht Rental | ${siteName}` : 'Yacht rental | Private charter',
+  de: siteName ? `Yachtcharter | ${siteName}` : 'Yachtcharter | Privatcharter',
+}
+
+const DEFAULT_SEO_DESCRIPTION: Record<SiteLocale, string> = {
+  tr: 'Özel yat ve gulet kiralama. Günlük charter, kaptanlı seçenekler. Müsaitlik talebi ile teklif alın.',
+  en: 'Private yacht and gulet rental. Daily charters, skippered options available. Request a quote via our availability form.',
+  de: 'Private Yacht- und Gulet-Vermietung. Tagescharter, Optionen mit Skipper. Angebot per Verfügbarkeitsanfrage erhalten.',
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale: loc } = await params
+  const locale = (isSiteLocale(loc) ? loc : 'tr') as SiteLocale
   let page: YachtRentalsPageData | null = null
   try {
     page = await client.fetch<YachtRentalsPageData | null>(
@@ -58,21 +78,28 @@ export async function generateMetadata(): Promise<Metadata> {
     page = null
   }
 
-  const title =
-    page?.seo?.title?.trim() ||
-    (siteName ? `Yat kiralama | ${siteName}` : 'Yat kiralama | Özel charter')
-  const description =
-    page?.seo?.description?.trim() ||
-    'Özel yat ve gulet kiralama. Günlük charter, kaptanlı seçenekler. Müsaitlik talebi ile teklif alın.'
+  const rawTitle = page?.seo?.title?.trim()
+  const rawDescription = page?.seo?.description?.trim()
+  const [translatedTitle, translatedDescription] =
+    locale === 'tr'
+      ? [rawTitle, rawDescription]
+      : await Promise.all([
+          rawTitle ? translateText(rawTitle, locale) : Promise.resolve(undefined),
+          rawDescription ? translateText(rawDescription, locale) : Promise.resolve(undefined),
+        ])
+
+  const title = translatedTitle?.trim() || DEFAULT_SEO_TITLE[locale]
+  const description = translatedDescription?.trim() || DEFAULT_SEO_DESCRIPTION[locale]
+  const canonical = `${getBaseUrl()}${withLocalePath(locale, '/yat-kiralama')}`
 
   return {
     title,
     description,
-    alternates: { canonical: `${getBaseUrl()}/yat-kiralama` },
+    alternates: { canonical },
     openGraph: {
       title,
       description,
-      url: `${getBaseUrl()}/yat-kiralama`,
+      url: canonical,
     },
   }
 }
@@ -99,10 +126,22 @@ export default async function YatKiralamaPage({
     yachts = []
   }
 
-  const titleTop = pageData?.titleTop?.trim() || DEFAULT_TITLE_TOP[locale]
-  const titleBottom = pageData?.titleBottom?.trim() || DEFAULT_TITLE_BOTTOM[locale]
-  const intro = pageData?.intro?.trim() || DEFAULT_INTRO[locale]
-  const emptyStateMessage = pageData?.emptyStateMessage?.trim() || DEFAULT_EMPTY[locale]
+  const [titleTop, titleBottom, intro, emptyStateMessage] =
+    locale === 'tr'
+      ? [
+          pageData?.titleTop?.trim() || DEFAULT_TITLE_TOP[locale],
+          pageData?.titleBottom?.trim() || DEFAULT_TITLE_BOTTOM[locale],
+          pageData?.intro?.trim() || DEFAULT_INTRO[locale],
+          pageData?.emptyStateMessage?.trim() || DEFAULT_EMPTY[locale],
+        ]
+      : await Promise.all([
+          pageData?.titleTop?.trim() ? translateText(pageData.titleTop, locale) : DEFAULT_TITLE_TOP[locale],
+          pageData?.titleBottom?.trim() ? translateText(pageData.titleBottom, locale) : DEFAULT_TITLE_BOTTOM[locale],
+          pageData?.intro?.trim() ? translateText(pageData.intro, locale) : DEFAULT_INTRO[locale],
+          pageData?.emptyStateMessage?.trim()
+            ? translateText(pageData.emptyStateMessage, locale)
+            : DEFAULT_EMPTY[locale],
+        ])
 
   return (
     <div className="min-h-screen bg-white">

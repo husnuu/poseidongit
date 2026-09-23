@@ -65,6 +65,46 @@ export function mergeAboutPageLocale<T extends Record<string, unknown>>(data: T 
   return out as T
 }
 
+/**
+ * Editör `pageTranslations.en`/`.de` içine bu alanı elle çevirmiş mi?
+ * true dönerse runtime (makine) çeviri fallback'i bu alana UYGULANMAMALI.
+ */
+export function aboutFieldHasManualTranslation(
+  data: Record<string, unknown>,
+  locale: SiteLocale,
+  field: string
+): boolean {
+  if (locale === 'tr') return true
+  const pt = data.pageTranslations as { en?: Record<string, unknown>; de?: Record<string, unknown> } | undefined
+  if (!pt) return false
+  const patch = locale === 'en' ? pt.en : pt.de
+  if (!patch || typeof patch !== 'object') return false
+  const value = (patch as Record<string, unknown>)[field]
+  if (value == null) return false
+  if (typeof value === 'string') return value.trim().length > 0
+  if (Array.isArray(value)) return value.length > 0
+  return true
+}
+
+/** Filodaki bir tekne için editör elle isim/açıklama çevirisi girmiş mi? */
+export function aboutBoatFieldHasManualTranslation(
+  data: Record<string, unknown>,
+  locale: SiteLocale,
+  index: number,
+  field: 'name' | 'description'
+): boolean {
+  if (locale === 'tr') return true
+  const pt = data.pageTranslations as { en?: Record<string, unknown>; de?: Record<string, unknown> } | undefined
+  if (!pt) return false
+  const patch = locale === 'en' ? pt.en : pt.de
+  const boatsPatch = patch?.boats
+  if (!Array.isArray(boatsPatch)) return false
+  const boatPatch = boatsPatch[index] as Record<string, unknown> | undefined
+  if (!boatPatch) return false
+  const value = boatPatch[field]
+  return typeof value === 'string' && value.trim().length > 0
+}
+
 export function mergeAboutPageSeoForLocale(
   seo: Record<string, unknown> | null | undefined,
   pageTranslations: { en?: Record<string, unknown>; de?: Record<string, unknown> } | null | undefined,

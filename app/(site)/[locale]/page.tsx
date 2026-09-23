@@ -137,11 +137,29 @@ export async function generateMetadata({
       locale
     ) as HomePageSeoPayload | null | undefined
 
-    const rawMetaTitle = seo?.metaTitle?.trim() ?? DEFAULT_HOME_TITLE[locale]
+    // Editör pageTranslations.en/.de.seo'ya elle çeviri girmemişse anlık çeviriyle doldur.
+    const patchSeo = (locale === 'en' ? row?.pageTranslations?.en?.seo : row?.pageTranslations?.de?.seo) as
+      | { metaTitle?: string; metaDescription?: string }
+      | undefined
+    const hasManualMetaTitle = !!patchSeo?.metaTitle?.trim()
+    const hasManualMetaDescription = !!patchSeo?.metaDescription?.trim()
+    const [translatedMetaTitle, translatedMetaDescription] =
+      locale === 'tr'
+        ? [seo?.metaTitle, seo?.metaDescription]
+        : await Promise.all([
+            !hasManualMetaTitle && seo?.metaTitle?.trim()
+              ? translateText(seo.metaTitle, locale)
+              : seo?.metaTitle,
+            !hasManualMetaDescription && seo?.metaDescription?.trim()
+              ? translateText(seo.metaDescription, locale)
+              : seo?.metaDescription,
+          ])
+
+    const rawMetaTitle = translatedMetaTitle?.trim() || DEFAULT_HOME_TITLE[locale]
     const pageTitle =
       rawMetaTitle.includes('|') ? rawMetaTitle : siteName ? `${rawMetaTitle} | ${siteName}` : rawMetaTitle
 
-    const rawDescription = seo?.metaDescription?.trim() ?? DEFAULT_HOME_DESCRIPTION[locale]
+    const rawDescription = translatedMetaDescription?.trim() || DEFAULT_HOME_DESCRIPTION[locale]
     const description = rawDescription.slice(0, 165)
 
     const ogTitle = (seo?.ogTitle?.trim() || pageTitle).slice(0, 90)
@@ -329,20 +347,57 @@ function localizeCta(
   return { ...c, href: withLocalePath(locale, h) }
 }
 
-function localizeHero(hero: HeroData | null, locale: SiteLocale): HeroData | null {
+async function localizeHero(
+  hero: HeroData | null,
+  locale: SiteLocale,
+  rawHomeData: Record<string, unknown> | null | undefined
+): Promise<HeroData | null> {
   if (!hero) return null
-  const mapHeroCta = (c: HeroData['primaryCta']): HeroData['primaryCta'] => {
+  const mapHeroCta = async (
+    c: HeroData['primaryCta'],
+    field: 'primaryCta' | 'secondaryCta'
+  ): Promise<HeroData['primaryCta']> => {
     if (!c) return c
     const next = localizeCta(c, locale) ?? c
+    const label = homeFieldHasManualTranslation(rawHomeData, locale, 'hero', field)
+      ? next.label
+      : await translateText(next.label, locale)
     return {
-      label: next.label ?? undefined,
+      label: label || next.label || undefined,
       href: next.href ?? undefined,
     }
   }
+  if (locale === 'tr') {
+    const [primaryCta, secondaryCta] = await Promise.all([
+      mapHeroCta(hero.primaryCta, 'primaryCta'),
+      mapHeroCta(hero.secondaryCta, 'secondaryCta'),
+    ])
+    return { ...hero, primaryCta, secondaryCta }
+  }
+  const [eyebrow, topBadgeText, heading, subheading, primaryCta, secondaryCta] = await Promise.all([
+    homeFieldHasManualTranslation(rawHomeData, locale, 'hero', 'eyebrow')
+      ? hero.eyebrow
+      : translateText(hero.eyebrow, locale),
+    homeFieldHasManualTranslation(rawHomeData, locale, 'hero', 'topBadgeText')
+      ? hero.topBadgeText
+      : translateText(hero.topBadgeText, locale),
+    homeFieldHasManualTranslation(rawHomeData, locale, 'hero', 'heading')
+      ? hero.heading
+      : translateText(hero.heading, locale),
+    homeFieldHasManualTranslation(rawHomeData, locale, 'hero', 'subheading')
+      ? hero.subheading
+      : translateText(hero.subheading, locale),
+    mapHeroCta(hero.primaryCta, 'primaryCta'),
+    mapHeroCta(hero.secondaryCta, 'secondaryCta'),
+  ])
   return {
     ...hero,
-    primaryCta: mapHeroCta(hero.primaryCta),
-    secondaryCta: mapHeroCta(hero.secondaryCta),
+    eyebrow: eyebrow || hero.eyebrow,
+    topBadgeText: topBadgeText || hero.topBadgeText,
+    heading: heading || hero.heading,
+    subheading: subheading || hero.subheading,
+    primaryCta,
+    secondaryCta,
   }
 }
 
@@ -358,12 +413,27 @@ async function localizeAboutTeaser(
   const body = homeFieldHasManualTranslation(rawHomeData, locale, 'aboutTeaser', 'body')
     ? d.body
     : await translatePortableTextBlocks(d.body, locale)
+  const mapCta = async (
+    c: AboutTeaserData['primaryCta'],
+    field: 'primaryCta' | 'secondaryCta'
+  ): Promise<AboutTeaserData['primaryCta']> => {
+    const next = localizeCta(c, locale) ?? c
+    if (!next) return next
+    const label = homeFieldHasManualTranslation(rawHomeData, locale, 'aboutTeaser', field)
+      ? next.label
+      : await translateText(next.label, locale)
+    return { ...next, label: label || next.label }
+  }
+  const [primaryCta, secondaryCta] = await Promise.all([
+    mapCta(d.primaryCta, 'primaryCta'),
+    mapCta(d.secondaryCta, 'secondaryCta'),
+  ])
   return {
     ...d,
     heading,
     body,
-    primaryCta: localizeCta(d.primaryCta, locale) ?? d.primaryCta,
-    secondaryCta: localizeCta(d.secondaryCta, locale) ?? d.secondaryCta,
+    primaryCta,
+    secondaryCta,
   }
 }
 
@@ -394,18 +464,24 @@ async function mapPopularYachtsSection(
               capacity: spec.capacity ?? undefined,
               buildYear: spec.buildYear ?? undefined,
             }
-      const badges = await translateTextArray(y.badges, locale)
+      const [badges, locationTitle, included] = await Promise.all([
+        translateTextArray(y.badges, locale),
+        translateText(y.locationTitle, locale),
+        translateTextArray(y.included, locale),
+      ])
       return {
         _id: y._id,
         name: (y.name ?? '').trim(),
         slug: y.slug ?? null,
-        locationTitle: y.locationTitle ?? null,
+        locationTitle: locationTitle || y.locationTitle || null,
         locationSlug: y.locationSlug ?? null,
         coverImageUrl: y.mainImage?.asset ? urlFor(y.mainImage.asset).width(900).height(720).url() : null,
         coverImageAlt: y.mainImage?.alt ?? null,
+        // yachtType teknik bir enum anahtarı (gulet/motoryacht/sailing/…) — ikon seçiminde
+        // kullanılıyor, ekranda gösterilmiyor; çevrilirse değer bozulup ikon eşleşmesi kırılır.
         yachtType: y.yachtType ?? null,
         badges: badges.length ? badges : null,
-        included: y.included ?? null,
+        included: included.length ? included : (y.included ?? null),
         specifications,
         sailingLicenceRequired: y.sailingLicenceRequired ?? null,
         isFeatured: y.isFeatured ?? null,
@@ -418,11 +494,15 @@ async function mapPopularYachtsSection(
       }
     })
   )
+  const ctaNext = localizeCta(raw.ctaButton, locale) ?? raw.ctaButton ?? null
+  const ctaButton = ctaNext
+    ? { ...ctaNext, label: (await translateText(ctaNext.label, locale)) || ctaNext.label }
+    : ctaNext
   return {
     enabled: true,
     title: raw.title,
     subtitle: raw.subtitle,
-    ctaButton: localizeCta(raw.ctaButton, locale) ?? raw.ctaButton ?? null,
+    ctaButton,
     items,
   }
 }
@@ -439,18 +519,25 @@ async function mapPopularToursToCardItems(
         quickFacts?: { durationText?: string | null; meetingLocation?: string | null }
       }
       const qf = merged.quickFacts
-      const durationLabel = qf?.durationText?.trim() || merged.durationLabel
-      const departureLabel = qf?.meetingLocation?.trim() || merged.departureLabel
-      const shortDescription = tourFieldHasManualTranslation(rawItem, locale, 'shortDescription')
-        ? merged.shortDescription
-        : await translateText(merged.shortDescription, locale)
+      const durationLabelRaw = qf?.durationText?.trim() || merged.durationLabel
+      const departureLabelRaw = qf?.meetingLocation?.trim() || merged.departureLabel
+      const [shortDescription, title, durationLabel, departureLabel] = await Promise.all([
+        tourFieldHasManualTranslation(rawItem, locale, 'shortDescription')
+          ? merged.shortDescription
+          : translateText(merged.shortDescription, locale),
+        tourFieldHasManualTranslation(rawItem, locale, 'title')
+          ? merged.title
+          : translateText(merged.title, locale),
+        translateText(durationLabelRaw, locale),
+        translateText(departureLabelRaw, locale),
+      ])
       return {
         _id: merged._id,
-        title: merged.title,
+        title: title || merged.title,
         slug: merged.slug,
         shortDescription,
-        durationLabel,
-        departureLabel,
+        durationLabel: durationLabel || durationLabelRaw,
+        departureLabel: departureLabel || departureLabelRaw,
         priceFrom: merged.priceFrom,
         rating: merged.rating,
         reviewCount: merged.reviewCount,
@@ -559,12 +646,20 @@ async function mapRouteSection(
   locations: RouteSectionLocation[]
 } | null> {
   if (!raw || !raw.enabled || !raw.heading) return null
-  const locations: RouteSectionLocation[] = (raw.locations ?? []).slice(0, 4).map((loc) => ({
-    name: loc.name ?? '',
-    location: loc.location ?? '',
-    imageUrl: loc.image?.asset ? urlFor(loc.image.asset).width(600).height(800).url() : null,
-    alt: loc.image?.alt ?? null,
-  }))
+  const locations: RouteSectionLocation[] = await Promise.all(
+    (raw.locations ?? []).slice(0, 4).map(async (loc) => {
+      const [name, location] = await Promise.all([
+        translateText(loc.name, locale),
+        translateText(loc.location, locale),
+      ])
+      return {
+        name: name || loc.name || '',
+        location: location || loc.location || '',
+        imageUrl: loc.image?.asset ? urlFor(loc.image.asset).width(600).height(800).url() : null,
+        alt: loc.image?.alt ?? null,
+      }
+    })
+  )
   const heading = homeFieldHasManualTranslation(rawHomeData, locale, 'routeSection', 'heading')
     ? raw.heading
     : await translateText(raw.heading, locale)
@@ -676,9 +771,41 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     })
     const rawHomeRecord = raw as unknown as Record<string, unknown>
     data = mergeHomePageLocale(rawHomeRecord, locale) as HomePageHeroResult
-    hero = localizeHero(data?.hero ?? null, locale)
-    featureBar = data?.featureBar ?? null
-    popularToursSection = await mapPopularToursToCardItems(data?.popularToursSection ?? null, locale)
+    hero = await localizeHero(data?.hero ?? null, locale, rawHomeRecord)
+    const rawFeatureBar = data?.featureBar ?? null
+    featureBar =
+      rawFeatureBar && locale !== 'tr'
+        ? await Promise.all(
+            rawFeatureBar.map(async (item, index) => {
+              const patchArr = (rawHomeRecord?.pageTranslations as Record<string, unknown> | undefined)?.[locale] as
+                | Record<string, unknown>
+                | undefined
+              const patchItem = Array.isArray(patchArr?.featureBar)
+                ? (patchArr!.featureBar as unknown[])[index]
+                : undefined
+              const hasManual = !!patchItem
+              return hasManual
+                ? item
+                : {
+                    ...item,
+                    title: await translateText(item.title, locale),
+                    description: item.description ? await translateText(item.description, locale) : item.description,
+                  }
+            })
+          )
+        : rawFeatureBar
+    const popularToursMapped = await mapPopularToursToCardItems(data?.popularToursSection ?? null, locale)
+    popularToursSection = popularToursMapped
+      ? {
+          ...popularToursMapped,
+          title: homeFieldHasManualTranslation(rawHomeRecord, locale, 'popularToursSection', 'title')
+            ? popularToursMapped.title
+            : await translateText(popularToursMapped.title, locale),
+          subtitle: homeFieldHasManualTranslation(rawHomeRecord, locale, 'popularToursSection', 'subtitle')
+            ? popularToursMapped.subtitle
+            : await translateText(popularToursMapped.subtitle, locale),
+        }
+      : null
     const classesResolved = resolveHomeClassesSection(data?.classesSection ?? null, data?.classesAutoFromTour ?? null)
     if (classesResolved && locale !== 'tr') {
       const heading = homeFieldHasManualTranslation(rawHomeRecord, locale, 'classesSection', 'heading')
@@ -702,28 +829,48 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     } else {
       classesSection = classesResolved
     }
-    popularYachtsSection = await mapPopularYachtsSection(data?.popularYachtsSection ?? null, locale)
+    const popularYachtsMapped = await mapPopularYachtsSection(data?.popularYachtsSection ?? null, locale)
+    popularYachtsSection = popularYachtsMapped
+      ? {
+          ...popularYachtsMapped,
+          title: homeFieldHasManualTranslation(rawHomeRecord, locale, 'popularYachtsSection', 'title')
+            ? popularYachtsMapped.title
+            : await translateText(popularYachtsMapped.title, locale),
+          subtitle: homeFieldHasManualTranslation(rawHomeRecord, locale, 'popularYachtsSection', 'subtitle')
+            ? popularYachtsMapped.subtitle
+            : await translateText(popularYachtsMapped.subtitle, locale),
+        }
+      : null
     aboutTeaser = await localizeAboutTeaser(data?.aboutTeaser ?? null, locale, rawHomeRecord)
     const blogMapped = await mapBlogSection(data?.blogSection ?? null, locale)
-    blogSection = blogMapped
-      ? {
-          ...blogMapped,
-          heading: homeFieldHasManualTranslation(rawHomeRecord, locale, 'blogSection', 'heading')
-            ? blogMapped.heading
-            : await translateText(blogMapped.heading, locale),
-          subtitle: homeFieldHasManualTranslation(rawHomeRecord, locale, 'blogSection', 'subtitle')
-            ? blogMapped.subtitle
-            : await translateText(blogMapped.subtitle, locale),
-          ctaButton: localizeCta(blogMapped.ctaButton, locale) ?? blogMapped.ctaButton,
-        }
-      : null
+    if (blogMapped) {
+      const blogCtaNext = localizeCta(blogMapped.ctaButton, locale) ?? blogMapped.ctaButton
+      const blogCtaButton = blogCtaNext
+        ? { ...blogCtaNext, label: (await translateText(blogCtaNext.label, locale)) || blogCtaNext.label }
+        : blogCtaNext
+      blogSection = {
+        ...blogMapped,
+        heading: homeFieldHasManualTranslation(rawHomeRecord, locale, 'blogSection', 'heading')
+          ? blogMapped.heading
+          : await translateText(blogMapped.heading, locale),
+        subtitle: homeFieldHasManualTranslation(rawHomeRecord, locale, 'blogSection', 'subtitle')
+          ? blogMapped.subtitle
+          : await translateText(blogMapped.subtitle, locale),
+        ctaButton: blogCtaButton,
+      }
+    } else {
+      blogSection = null
+    }
     const routeMapped = await mapRouteSection(data?.routeSection ?? null, locale, rawHomeRecord)
-    routeSection = routeMapped
-      ? {
-          ...routeMapped,
-          ctaButton: localizeCta(routeMapped.ctaButton, locale) ?? routeMapped.ctaButton,
-        }
-      : null
+    if (routeMapped) {
+      const routeCtaNext = localizeCta(routeMapped.ctaButton, locale) ?? routeMapped.ctaButton
+      const routeCtaButton = routeCtaNext
+        ? { ...routeCtaNext, label: (await translateText(routeCtaNext.label, locale)) || routeCtaNext.label }
+        : routeCtaNext
+      routeSection = { ...routeMapped, ctaButton: routeCtaButton }
+    } else {
+      routeSection = null
+    }
     instagramSection = data?.instagramSection ?? null
     const lb = (data as Record<string, unknown>)?.loyaltyBanner as { enabled?: boolean; imageUrl?: string; imageAlt?: string; href?: string } | null
     loyaltyBanner = lb?.enabled && lb?.imageUrl ? lb : null

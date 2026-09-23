@@ -16,6 +16,7 @@ import {
   pickLocalizedString,
   pickLocalizedStringTranslated,
   pickOptionalLinkLabel,
+  translateNavLabelText,
 } from '@/lib/i18n/localizedLabels'
 import { exploreLinksWithHelpCenter } from '@/lib/i18n/headerNavWithHelpCenter'
 import FooterLegal from '@/components/layout/FooterLegal'
@@ -264,11 +265,16 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
   const exploreFromCms = (data?.explore?.links ?? []).filter((l) => l?.label && l?.href)
   const exploreLinksRaw =
     exploreFromCms.length > 0
-      ? exploreFromCms.map((l) => ({
-          href: l.href as string,
-          label: pickOptionalLinkLabel(l, locale),
-          openInNewTab: l.openInNewTab === true,
-        }))
+      ? await Promise.all(
+          exploreFromCms.map(async (l) => ({
+            href: l.href as string,
+            label:
+              (locale === 'en' && l.labelEn?.trim()) || (locale === 'de' && l.labelDe?.trim())
+                ? pickOptionalLinkLabel(l, locale)
+                : await translateNavLabelText(l.label, locale),
+            openInNewTab: l.openInNewTab === true,
+          }))
+        )
       : exploreLinksFallback(locale)
   const exploreLinks = exploreLinksWithHelpCenter(locale, exploreLinksRaw)
 
@@ -307,10 +313,15 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
     data?.legalLinks?.items?.filter((l) => l?.enabled !== false && l?.label && l?.href) ?? []
   const legalLinks =
     legalFromCms.length > 0
-      ? legalFromCms.map((l) => ({
-          href: l.href as string,
-          label: pickOptionalLinkLabel(l, locale),
-        }))
+      ? await Promise.all(
+          legalFromCms.map(async (l) => ({
+            href: l.href as string,
+            label:
+              (locale === 'en' && l.labelEn?.trim()) || (locale === 'de' && l.labelDe?.trim())
+                ? pickOptionalLinkLabel(l, locale)
+                : await translateNavLabelText(l.label, locale),
+          }))
+        )
       : legalLinksFallback(locale)
 
   const footerLegalMerged = await mergeFooterLegal(data?.footerLegal ?? null, locale)

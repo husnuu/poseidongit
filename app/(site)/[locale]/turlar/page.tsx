@@ -155,17 +155,26 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
         const shortDescription = tourFieldHasManualTranslation(rawItem, locale, 'shortDescription')
           ? merged.shortDescription
           : await translateText(merged.shortDescription, locale)
+        const title = tourFieldHasManualTranslation(rawItem, locale, 'title')
+          ? merged.title
+          : await translateText(merged.title, locale)
+        const departureLabelRaw = qf?.meetingLocation?.trim() || merged.departureLabel
+        const durationLabelRaw = qf?.durationText?.trim() || merged.durationLabel
+        const [departureLabel, durationLabel] = await Promise.all([
+          translateText(departureLabelRaw, locale),
+          translateText(durationLabelRaw, locale),
+        ])
         return {
           _id: merged._id,
-          title: merged.title,
+          title: title || merged.title,
           slug: merged.slug,
           shortDescription,
           rating: merged.rating,
           reviewCount: merged.reviewCount,
           reviewsUrl: merged.reviewsUrl ?? null,
           isPopular: merged.isPopular,
-          departureLabel: qf?.meetingLocation?.trim() || merged.departureLabel,
-          durationLabel: qf?.durationText?.trim() || merged.durationLabel,
+          departureLabel: departureLabel || departureLabelRaw,
+          durationLabel: durationLabel || durationLabelRaw,
           priceFrom: merged.priceFrom,
           coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
           coverImageAlt: merged.mainImage?.alt ?? null,

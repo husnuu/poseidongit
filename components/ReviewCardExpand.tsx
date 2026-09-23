@@ -6,9 +6,16 @@ import styles from './ReviewsSection.module.css'
 interface ReviewCardExpandProps {
   text: string
   maxChars?: number
+  readMoreLabel?: string
+  showLessLabel?: string
 }
 
-export default function ReviewCardExpand({ text, maxChars = 130 }: ReviewCardExpandProps) {
+export default function ReviewCardExpand({
+  text,
+  maxChars = 130,
+  readMoreLabel = 'Devamını oku',
+  showLessLabel = 'Daha az',
+}: ReviewCardExpandProps) {
   const [expanded, setExpanded] = useState(false)
   // Array.from iterates over Unicode code points (not UTF-16 units),
   // preventing surrogate pairs (e.g. emoji) from being split in half.
@@ -26,7 +33,7 @@ export default function ReviewCardExpand({ text, maxChars = 130 }: ReviewCardExp
           onClick={() => setExpanded((p) => !p)}
           aria-expanded={expanded}
         >
-          {expanded ? 'Daha az' : 'Devamını oku'}
+          {expanded ? showLessLabel : readMoreLabel}
         </button>
       )}
     </p>

@@ -287,8 +287,19 @@ const getTour = cache(async function getTour(
   // çevirisiyle Türkçe içeriği doldur — Sanity'e hiçbir şey yazılmaz.
   if (locale !== 'tr') {
     const has = (field: string) => tourFieldHasManualTranslation(rawRecord, locale, field)
+    const rawTranslationsPatch = rawRecord.translations as Record<string, unknown> | undefined
+    const rawLocalePatch = (locale === 'en' ? rawTranslationsPatch?.en : rawTranslationsPatch?.de) as
+      | Record<string, unknown>
+      | undefined
+    const rawSeoPatch = rawLocalePatch?.seo as { metaTitle?: string; metaDescription?: string } | undefined
+    const hasManualSeoTitle = !!rawSeoPatch?.metaTitle?.trim()
+    const hasManualSeoDescription = !!rawSeoPatch?.metaDescription?.trim()
 
     const [
+      title,
+      seoMetaTitle,
+      seoMetaDescription,
+      quickFacts,
       description,
       faqs,
       shortDescription,
@@ -306,7 +317,32 @@ const getTour = cache(async function getTour(
       foodMenu,
       reelsSection,
       reviewsSection,
+      whereSection,
     ] = await Promise.all([
+      has('title') ? merged.title : translateText(merged.title, locale),
+      hasManualSeoTitle ? merged.seo?.metaTitle : translateText(merged.seo?.metaTitle, locale),
+      hasManualSeoDescription ? merged.seo?.metaDescription : translateText(merged.seo?.metaDescription, locale),
+      has('quickFacts')
+        ? merged.quickFacts
+        : (async () => {
+            const qf = merged.quickFacts
+            if (!qf) return qf
+            const [durationText, availabilityText, meetingLocation, language, groupType] = await Promise.all([
+              translateText(qf.durationText, locale),
+              translateText(qf.availabilityText, locale),
+              translateText(qf.meetingLocation, locale),
+              translateText(qf.language, locale),
+              translateText(qf.groupType, locale),
+            ])
+            return {
+              ...qf,
+              durationText: durationText || qf.durationText,
+              availabilityText: availabilityText || qf.availabilityText,
+              meetingLocation: meetingLocation || qf.meetingLocation,
+              language: language || qf.language,
+              groupType: groupType || qf.groupType,
+            }
+          })(),
       has('description') ? merged.description : translatePortableTextBlocks(merged.description, locale),
       has('faqs')
         ? merged.faqs
@@ -334,7 +370,16 @@ const getTour = cache(async function getTour(
               ...tc,
               label: await translateText(tc.label, locale),
               description: tc.description ? await translateText(tc.description, locale) : tc.description,
+              badge: tc.badge ? await translateText(tc.badge, locale) : tc.badge,
               bullets: tc.bullets ? await translateTextArray(tc.bullets, locale) : tc.bullets,
+              pricesByAge: tc.pricesByAge
+                ? await Promise.all(
+                    tc.pricesByAge.map(async (pa) => ({
+                      ...pa,
+                      ageLabel: (await translateText(pa.ageLabel, locale)) || pa.ageLabel,
+                    }))
+                  )
+                : tc.pricesByAge,
             }))
           ),
       has('extras') ? merged.extras : translateArrayFields(merged.extras, ['title', 'description'], locale),
@@ -369,10 +414,22 @@ const getTour = cache(async function getTour(
             if (!rv) return rv
             return { ...rv, items: await translateArrayFields(rv.items, ['description'], locale) }
           })(),
+      has('whereSection')
+        ? merged.whereSection
+        : translateFields(merged.whereSection, ['heading', 'meetingPointLabel', 'openInMapsLabel'], locale),
     ])
 
     return {
       ...merged,
+      title: title || merged.title,
+      seo: merged.seo
+        ? {
+            ...merged.seo,
+            metaTitle: seoMetaTitle || merged.seo.metaTitle,
+            metaDescription: seoMetaDescription || merged.seo.metaDescription,
+          }
+        : merged.seo,
+      quickFacts: quickFacts ?? merged.quickFacts,
       description,
       faqs: faqs ?? undefined,
       shortDescription,
@@ -390,6 +447,7 @@ const getTour = cache(async function getTour(
       foodMenu: foodMenu ?? undefined,
       reelsSection: reelsSection ?? undefined,
       reviewsSection: (reviewsSection ?? undefined) as Tour['reviewsSection'],
+      whereSection: whereSection ?? undefined,
     }
   }
 

@@ -18,6 +18,8 @@ type ReviewsListProps = {
   items: ReviewListItem[]
   verifiedGuestLabel: string
   loadMoreLabel: string
+  readMoreLabel?: string
+  showLessLabel?: string
   pageSize?: number
 }
 
@@ -76,6 +78,8 @@ export default function ReviewsList({
   items,
   verifiedGuestLabel,
   loadMoreLabel,
+  readMoreLabel,
+  showLessLabel,
   pageSize = 5,
 }: ReviewsListProps) {
   const [visibleCount, setVisibleCount] = useState(pageSize)
@@ -119,7 +123,11 @@ export default function ReviewsList({
                 <span className={styles.metaRow}>
                   {it.dateLabel ? `${it.dateLabel} · ${verifiedGuestLabel}` : verifiedGuestLabel}
                 </span>
-                <ReviewCardExpand text={it.description} />
+                <ReviewCardExpand
+                  text={it.description}
+                  readMoreLabel={readMoreLabel}
+                  showLessLabel={showLessLabel}
+                />
               </div>
             </div>
           )

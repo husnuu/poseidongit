@@ -59,6 +59,18 @@ function loadMoreLabel(locale: TourPageUi['locale']): string {
   return 'Daha fazla yorum göster'
 }
 
+function readMoreLabel(locale: TourPageUi['locale']): string {
+  if (locale === 'en') return 'Read more'
+  if (locale === 'de') return 'Weiterlesen'
+  return 'Devamını oku'
+}
+
+function showLessLabel(locale: TourPageUi['locale']): string {
+  if (locale === 'en') return 'Show less'
+  if (locale === 'de') return 'Weniger anzeigen'
+  return 'Daha az'
+}
+
 export default function ReviewsSection({
   tourUi: tourUiProp,
   reviewsSection,
@@ -96,6 +108,8 @@ export default function ReviewsSection({
         items={listItems}
         verifiedGuestLabel={verifiedGuestLabel(tourUi.locale)}
         loadMoreLabel={loadMoreLabel(tourUi.locale)}
+        readMoreLabel={readMoreLabel(tourUi.locale)}
+        showLessLabel={showLessLabel(tourUi.locale)}
       />
     </section>
   )

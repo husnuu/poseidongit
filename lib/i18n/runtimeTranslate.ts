@@ -1,4 +1,5 @@
 import type { SiteLocale } from './config'
+import { DE_TRANSLATION_MEMORY, EN_TRANSLATION_MEMORY } from './translationMemory'
 
 /**
  * Anlık (runtime) makine çevirisi — Sanity'e hiçbir çeviri yazılmaz.
@@ -14,29 +15,59 @@ const DEEPL_TARGET_LANG: Record<SiteLocale, string> = { tr: 'TR', en: 'EN-GB', d
 const MYMEMORY_TARGET_LANG: Record<SiteLocale, string> = { tr: 'tr', en: 'en', de: 'de' }
 
 /**
+ * MyMemory anonim kotası günde ~5.000 kelime; istekte bir iletişim e-postası
+ * (`de=` parametresi) gönderilirse kota günde ~50.000 kelimeye çıkıyor (MyMemory'nin
+ * kendi belgelediği, kayıt gerektirmeyen bir davranış). Kullanıcının kişisel e-postası
+ * DEĞİL, sitenin zaten herkese açık destek adresi kullanılır (diğer yerlerde de
+ * SUPPORT_EMAIL fallback'i olarak kullanılıyor, bkz. lib/email.ts).
+ */
+const MYMEMORY_CONTACT_EMAIL = process.env.SUPPORT_EMAIL?.trim() || 'turkeycesme@hotmail.com'
+
+/**
  * Marka/şirket adları gibi asla çevrilmemesi gereken özel isimler.
  * Örn. "Hantal Turizm" gibi bir acente adının içindeki "Hantal" kelimesi,
  * sıradan Türkçe bir sıfat olduğu için makine çevirisi yanlışlıkla
  * "Bulky Tourism" gibi bir şeye çevirebilir — bu listedeki terimler
  * çeviriye gönderilmeden önce korumaya alınır, çeviri sonrası aynen geri konur.
  */
-const PROTECTED_TERMS = ['Hantal Turizm', 'Poseidon']
+const PROTECTED_TERMS = [
+  'Hantal Turizm',
+  'Poseidon',
+  // Yer adları — çeviri motoru bunları sıradan Türkçe kelime sanıp yanlış çevirebilir
+  // (örn. "Çeşme" = fountain/well demek, ama burada bir ilçe adı).
+  'Çeşme',
+  'İzmir',
+  'Alaçatı',
+  'Ilıca',
+  'Boyalık',
+  'Dalyan',
+]
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
 
 function protectTerms(text: string): { protectedText: string; restore: (s: string) => string } {
-  const present = PROTECTED_TERMS.filter((term) => text.includes(term))
-  if (present.length === 0) {
+  // Büyük/küçük harf farkını yok say (ör. CMS'te "HANTAL Turizm" olabilir) ama
+  // metindeki GERÇEK yazımı koru — geri koyarken orijinal harfleri kullan.
+  const foundOriginals: string[] = []
+  let protectedText = text
+  PROTECTED_TERMS.forEach((term) => {
+    const re = new RegExp(escapeRegExp(term), 'gi')
+    protectedText = protectedText.replace(re, (match) => {
+      const token = `XPROTECTEDTERM${foundOriginals.length}X`
+      foundOriginals.push(match)
+      return token
+    })
+  })
+  if (foundOriginals.length === 0) {
     return { protectedText: text, restore: (s) => s }
   }
-  let protectedText = text
-  present.forEach((term, i) => {
-    const token = `XPROTECTEDTERM${i}X`
-    protectedText = protectedText.split(term).join(token)
-  })
   const restore = (s: string): string => {
     let out = s
-    present.forEach((term, i) => {
+    foundOriginals.forEach((original, i) => {
       const token = `XPROTECTEDTERM${i}X`
-      out = out.split(token).join(term)
+      out = out.split(token).join(original)
     })
     return out
   }
@@ -94,14 +125,98 @@ async function translateWithDeepL(text: string, target: SiteLocale, apiKey: stri
   return json?.translations?.[0]?.text?.trim() || text
 }
 
-async function translateChunkWithMyMemory(chunk: string, target: SiteLocale): Promise<string> {
+/**
+ * MyMemory anonim kullanımda kısa sürede ÇOK istek atılırsa 429 (Too Many Requests)
+ * döner. Bir sayfada onlarca/yüzlerce alan çevrilebildiğinden, isteği TAMAMEN
+ * tek sıraya koymak (bir bitmeden diğeri başlamaz) sayfayı çok yavaşlatıyordu —
+ * yüzlerce alan × ~350ms sırayla beklemek onlarca saniye sürüyordu. Bunun yerine
+ * küçük bir EŞ ZAMANLILIK HAVUZU kullanıyoruz: aynı anda en fazla birkaç istek
+ * ağa gider, geri kalanı sıraya girer. Bu, MyMemory'yi anlık patlatmadan
+ * (rate-limit'e takılmadan) sayfa yüklemesini kat kat hızlandırır.
+ */
+const MYMEMORY_MAX_CONCURRENT = 4
+let myMemoryActiveCount = 0
+const myMemoryWaitQueue: Array<() => void> = []
+
+function acquireMyMemorySlot(): Promise<void> {
+  if (myMemoryActiveCount < MYMEMORY_MAX_CONCURRENT) {
+    myMemoryActiveCount++
+    return Promise.resolve()
+  }
+  return new Promise((resolve) => {
+    myMemoryWaitQueue.push(() => {
+      myMemoryActiveCount++
+      resolve()
+    })
+  })
+}
+
+function releaseMyMemorySlot(): void {
+  myMemoryActiveCount--
+  const next = myMemoryWaitQueue.shift()
+  if (next) next()
+}
+
+async function runSerialized<T>(task: () => Promise<T>): Promise<T> {
+  await acquireMyMemorySlot()
+  try {
+    return await task()
+  } finally {
+    releaseMyMemorySlot()
+  }
+}
+
+/**
+ * MyMemory günlük kotası tamamen bittiğinde HTTP 429 ile birlikte gövdede
+ * "YOU USED ALL AVAILABLE FREE TRANSLATIONS FOR TODAY" uyarısı döner — bu,
+ * birkaç saniye sonra tekrar denenecek geçici bir rate-limit değil, SAATLER
+ * sürecek bir durumdur (MyMemory günde bir kez sıfırlanıyor). Bunu bir kez
+ * tespit edince süreç genelinde uzun bir süre hiç istek atmayı bırakıyoruz.
+ */
+let myMemoryQuotaExhaustedUntil = 0
+const MYMEMORY_QUOTA_BACKOFF_MS = 6 * 60 * 60 * 1000 // 6 saat (günlük kota saatler sürer, dakikalarla değil)
+
+/** Ağa hiç gidilmeden (kota zaten bilindiği için) anında düşülen hata — kuyruk bekleme süresi eklemez. */
+class MyMemoryQuotaKnownExhaustedError extends Error {
+  constructor() {
+    super('MyMemory 429 (kota biliniyor — ağa gidilmedi)')
+    this.name = 'MyMemoryQuotaKnownExhaustedError'
+  }
+}
+
+async function fetchMyMemoryChunk(chunk: string, target: SiteLocale, attempt = 0): Promise<string> {
+  if (Date.now() < myMemoryQuotaExhaustedUntil) {
+    throw new MyMemoryQuotaKnownExhaustedError()
+  }
   const langpair = `tr|${MYMEMORY_TARGET_LANG[target]}`
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=${langpair}`
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=${langpair}&de=${encodeURIComponent(MYMEMORY_CONTACT_EMAIL)}`
   const res = await fetch(url, { next: { revalidate: CACHE_TTL_SECONDS } })
+  if (res.status === 429) {
+    const bodyText = await res.text().catch(() => '')
+    const isDailyQuota = /ALL AVAILABLE FREE TRANSLATIONS/i.test(bodyText)
+    if (isDailyQuota) {
+      myMemoryQuotaExhaustedUntil = Date.now() + MYMEMORY_QUOTA_BACKOFF_MS
+      throw new Error('MyMemory 429 (günlük kota bitti)')
+    }
+    if (attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)))
+      return fetchMyMemoryChunk(chunk, target, attempt + 1)
+    }
+    throw new Error('MyMemory 429')
+  }
   if (!res.ok) throw new Error(`MyMemory ${res.status}`)
   const json = (await res.json()) as { responseData?: { translatedText?: string }; responseStatus?: number }
   const translated = json?.responseData?.translatedText
   return typeof translated === 'string' && translated.trim() ? translated : chunk
+}
+
+async function translateChunkWithMyMemory(chunk: string, target: SiteLocale): Promise<string> {
+  // Kota tükenmişse kuyruğa hiç girmeden anında hata ver — gereksiz bekleme
+  // eklenmesin (zaten ağa gitmiyoruz, aralık koymanın bir anlamı yok).
+  if (Date.now() < myMemoryQuotaExhaustedUntil) {
+    throw new MyMemoryQuotaKnownExhaustedError()
+  }
+  return runSerialized(() => fetchMyMemoryChunk(chunk, target))
 }
 
 async function translateWithMyMemory(text: string, target: SiteLocale): Promise<string> {
@@ -114,19 +229,52 @@ async function translateWithMyMemory(text: string, target: SiteLocale): Promise<
   return translated.join(' ')
 }
 
+/**
+ * Süreç içi (in-memory) başarılı çeviri önbelleği. Next.js'in fetch veri
+ * önbelleği `dynamic = 'force-dynamic'` olan sayfalarda güvenilir şekilde
+ * devreye girmeyebiliyor — bu Map, aynı metin/dil ikilisi için ikinci
+ * çağrının kesinlikle ağa gitmemesini garanti eder (sunucu süreci ayakta
+ * olduğu sürece). Sadece BAŞARILI sonuçlar önbelleklenir; bir hata/kota
+ * durumu önbelleklenmez, böylece kota açılınca otomatik iyileşir.
+ */
+const translationResultCache = new Map<string, string>()
+
 /** Tek bir metni hedef dile çevirir. target === 'tr' ise veya metin boşsa dokunmadan döner. */
 export async function translateText(text: string | null | undefined, target: SiteLocale): Promise<string> {
   const trimmed = text?.trim()
   if (!trimmed || target === 'tr') return text ?? ''
+  // Elle yazılmış çeviri sözlüğü — bulunursa dış API'ye hiç gidilmez.
+  if (target === 'de') {
+    const memorized = DE_TRANSLATION_MEMORY[trimmed]
+    if (memorized) return memorized
+  }
+  if (target === 'en') {
+    const memorized = EN_TRANSLATION_MEMORY[trimmed]
+    if (memorized) return memorized
+  }
+  const cacheKey = `${target}\u0000${trimmed}`
+  const cached = translationResultCache.get(cacheKey)
+  if (cached !== undefined) return cached
   const { protectedText, restore } = protectTerms(trimmed)
   try {
     const apiKey = process.env.DEEPL_API_KEY?.trim()
     const translated = apiKey
       ? await translateWithDeepL(protectedText, target, apiKey)
       : await translateWithMyMemory(protectedText, target)
-    return restore(translated)
+    const result = restore(translated)
+    translationResultCache.set(cacheKey, result)
+    return result
   } catch (err) {
-    console.error('[runtimeTranslate] translateText failed, orijinal metin kullanılıyor:', err)
+    // MyMemory'nin günlük/kısa süreli kota sınırı (429) beklenen, zaten yeniden
+    // denenmiş bir durum — bunu console.error olarak basmak Next.js dev overlay'inde
+    // sanki sayfa çökmüş gibi görünmesine yol açıyor. Sadece uyarı olarak logla;
+    // gerçek/beklenmeyen hatalar (ağ, 5xx vb.) yine error olarak kalsın.
+    const isRateLimited = err instanceof Error && /\b429\b/.test(err.message)
+    if (isRateLimited) {
+      console.warn('[runtimeTranslate] MyMemory kota sınırına takıldı, orijinal metin kullanılıyor.')
+    } else {
+      console.error('[runtimeTranslate] translateText failed, orijinal metin kullanılıyor:', err)
+    }
     return text ?? ''
   }
 }

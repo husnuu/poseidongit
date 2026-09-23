@@ -9,8 +9,14 @@ import { notFound } from 'next/navigation'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
-import { mergeAboutPageLocale, mergeAboutPageSeoForLocale } from '@/lib/i18n/mergeAboutPageLocale'
+import {
+  aboutBoatFieldHasManualTranslation,
+  aboutFieldHasManualTranslation,
+  mergeAboutPageLocale,
+  mergeAboutPageSeoForLocale,
+} from '@/lib/i18n/mergeAboutPageLocale'
 import { getAboutPageUiStrings } from '@/lib/i18n/strings/aboutPage'
+import { translatePortableTextBlocks, translateText } from '@/lib/i18n/runtimeTranslate'
 
 export const dynamic = 'force-dynamic'
 
@@ -105,9 +111,26 @@ export async function generateMetadata({
       row?.pageTranslations,
       locale,
     )
-    const titleBase = merged.metaTitle?.trim() || ui.metaTitleFallback
+    // Editör pageTranslations.en/.de.seo'ya elle çeviri girmemişse anlık çeviriyle doldur.
+    const patchSeo = (locale === 'en' ? row?.pageTranslations?.en?.seo : row?.pageTranslations?.de?.seo) as
+      | { metaTitle?: string; metaDescription?: string }
+      | undefined
+    const hasManualTitle = !!patchSeo?.metaTitle?.trim()
+    const hasManualDescription = !!patchSeo?.metaDescription?.trim()
+    const [translatedTitle, translatedDescription] =
+      locale === 'tr'
+        ? [merged.metaTitle, merged.metaDescription]
+        : await Promise.all([
+            !hasManualTitle && merged.metaTitle?.trim()
+              ? translateText(merged.metaTitle, locale)
+              : merged.metaTitle,
+            !hasManualDescription && merged.metaDescription?.trim()
+              ? translateText(merged.metaDescription, locale)
+              : merged.metaDescription,
+          ])
+    const titleBase = translatedTitle?.trim() || ui.metaTitleFallback
     const description =
-      merged.metaDescription?.trim()?.slice(0, 160) || ui.metaDescriptionFallback
+      translatedDescription?.trim()?.slice(0, 160) || ui.metaDescriptionFallback
     const title =
       titleBase.includes('|') || !siteName ? titleBase : `${titleBase} | ${siteName}`
     return {
@@ -131,14 +154,81 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
   const ui = getAboutPageUiStrings(locale)
 
   let raw: AboutPageData | null = null
+  let rawFetched: Record<string, unknown> | null = null
   try {
     const fetched = await client.fetch<AboutPageData | null>(aboutPageQuery, {}, { useCdn: false })
+    rawFetched = fetched as unknown as Record<string, unknown>
     raw = mergeAboutPageLocale(fetched as unknown as Record<string, unknown>, locale) as AboutPageData | null
   } catch {
     raw = null
   }
 
-  const data = raw
+  let data = raw
+
+  // Editör pageTranslations.en/.de'ye elle çeviri girmemişse, anlık makine
+  // çevirisiyle doldur (aksi halde Almanca/İngilizce sayfa Türkçe kalır).
+  if (data && rawFetched && locale !== 'tr') {
+    const rawForTranslation = rawFetched
+    const [
+      titleTop,
+      titleBottom,
+      sectionTitle,
+      sectionSubtitle,
+      timelineTitle,
+      timelineDescription,
+      intro,
+      sectionBody,
+      boats,
+    ] = await Promise.all([
+      aboutFieldHasManualTranslation(rawForTranslation, locale, 'titleTop')
+        ? data.titleTop
+        : translateText(data.titleTop, locale),
+      aboutFieldHasManualTranslation(rawForTranslation, locale, 'titleBottom')
+        ? data.titleBottom
+        : translateText(data.titleBottom, locale),
+      aboutFieldHasManualTranslation(rawForTranslation, locale, 'sectionTitle')
+        ? data.sectionTitle
+        : translateText(data.sectionTitle, locale),
+      aboutFieldHasManualTranslation(rawForTranslation, locale, 'sectionSubtitle')
+        ? data.sectionSubtitle
+        : translateText(data.sectionSubtitle, locale),
+      aboutFieldHasManualTranslation(rawForTranslation, locale, 'timelineTitle')
+        ? data.timelineTitle
+        : translateText(data.timelineTitle, locale),
+      aboutFieldHasManualTranslation(rawForTranslation, locale, 'timelineDescription')
+        ? data.timelineDescription
+        : translateText(data.timelineDescription, locale),
+      aboutFieldHasManualTranslation(rawForTranslation, locale, 'intro')
+        ? data.intro
+        : translatePortableTextBlocks(data.intro, locale),
+      aboutFieldHasManualTranslation(rawForTranslation, locale, 'sectionBody')
+        ? data.sectionBody
+        : translatePortableTextBlocks(data.sectionBody, locale),
+      Promise.all(
+        (data.boats ?? []).map(async (b, i) => ({
+          ...b,
+          name: aboutBoatFieldHasManualTranslation(rawForTranslation, locale, i, 'name')
+            ? b.name
+            : await translateText(b.name, locale),
+          description: aboutBoatFieldHasManualTranslation(rawForTranslation, locale, i, 'description')
+            ? b.description
+            : await translateText(b.description, locale),
+        }))
+      ),
+    ])
+    data = {
+      ...data,
+      titleTop: titleTop || data.titleTop,
+      titleBottom: titleBottom || data.titleBottom,
+      sectionTitle: sectionTitle || data.sectionTitle,
+      sectionSubtitle: sectionSubtitle || data.sectionSubtitle,
+      timelineTitle: timelineTitle || data.timelineTitle,
+      timelineDescription: timelineDescription || data.timelineDescription,
+      intro: intro ?? data.intro,
+      sectionBody: sectionBody ?? data.sectionBody,
+      boats,
+    }
+  }
 
   if (!data) {
     return (
