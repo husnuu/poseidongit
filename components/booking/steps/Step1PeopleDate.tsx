@@ -1,12 +1,23 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Star, Users, CalendarDays, ChevronDown, Info } from 'lucide-react'
+import { Star, ChevronDown, ChevronLeft, ChevronRight, Info, ArrowRight } from 'lucide-react'
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
 import { getEarliestBookableDateStr, todayStrLocal } from '@/lib/booking/bookingWindow'
 import { buildCalendarDaysForMonth, getFirstAvailableYearMonth } from '@/lib/sanity/bookingPricing'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
+import ReservationTicket, { formatTicketDateLabel, BOAT_NAME } from '../ReservationTicket'
 import styles from '../booking.module.css'
+
+/** Referans site ile birebir: bu iki başlık ikon yerine büyük/koyu düz metin
+    ("Kaç kişi katılacak?", "Bir tarih seçin") — paylaşılan i18n anahtarları
+    (ui.guestCountTitle/selectDateTitle) adım göstergesinde de kullanıldığı için
+    onlara dokunmuyoruz, sadece bu sayfaya özel yerel metin kullanıyoruz. */
+const STEP1_HEADINGS: Record<string, { people: string; date: string }> = {
+  tr: { people: 'Kaç kişi katılacak?', date: 'Bir tarih seçin' },
+  en: { people: 'How many guests?', date: 'Pick a date' },
+  de: { people: 'Wie viele Gäste?', date: 'Datum auswählen' },
+}
 
 interface Step1PeopleDateProps {
   tour: TourForBooking
@@ -45,6 +56,8 @@ export default function Step1PeopleDate({
   const rules = tour.bookingRules
   const showRules = rules?.show !== false && (rules?.bullets?.length ?? 0) > 0
   const [rulesOpen, setRulesOpen] = useState(false)
+  /** Referans site ile birebir: tarih seçilince takvim kapanır, "‹ [tarih]" satırına tıklayınca yeniden açılır. */
+  const [showCalendar, setShowCalendar] = useState(!state.selectedDate)
 
   const firstAvailable = useMemo(() => getFirstAvailableYearMonth(tour), [tour])
   const [viewYear, setViewYear] = useState(() => firstAvailable.year)
@@ -58,15 +71,17 @@ export default function Step1PeopleDate({
     () => buildCalendarDaysForMonth(tour, viewYear, viewMonth),
     [tour, viewYear, viewMonth]
   )
-  const monthLabel = useMemo(() => {
-    const d = new Date(viewYear, viewMonth - 1, 1)
-    return d.toLocaleDateString(ui.numberLocale, { month: 'long', year: 'numeric' })
-  }, [viewYear, viewMonth, ui.numberLocale])
-
   const selectedDateLabel = useMemo(() => {
     if (!state.selectedDate) return null
     const d = new Date(state.selectedDate + 'T00:00:00')
     return d.toLocaleDateString(ui.numberLocale, { day: 'numeric', month: 'short', year: 'numeric' })
+  }, [state.selectedDate, ui.numberLocale])
+
+  /** Kapanmış takvim satırında gösterilen tam tarih ("30 Eylül 2026" gibi). */
+  const selectedDateLabelLong = useMemo(() => {
+    if (!state.selectedDate) return null
+    const d = new Date(state.selectedDate + 'T00:00:00')
+    return d.toLocaleDateString(ui.numberLocale, { day: 'numeric', month: 'long', year: 'numeric' })
   }, [state.selectedDate, ui.numberLocale])
 
   const weekdays = ui.weekdaysShort
@@ -79,6 +94,40 @@ export default function Step1PeopleDate({
       .map((d) => d.minPrice!)
     return prices.length === 0 ? null : Math.min(...prices)
   }, [calendar, minBookableStr])
+
+  const heading = STEP1_HEADINGS[ui.locale] ?? STEP1_HEADINGS.tr
+  const monthNameOnly = useMemo(
+    () => new Date(viewYear, viewMonth - 1, 1).toLocaleDateString(ui.numberLocale, { month: 'long' }),
+    [viewYear, viewMonth, ui.numberLocale]
+  )
+
+  /** Ay/yıl etiketine tıklayınca gerçek bir seçim listesi (native select) açılsın diye. */
+  const monthOptions = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) => ({
+        value: i + 1,
+        label: new Date(2000, i, 1).toLocaleDateString(ui.numberLocale, { month: 'long' }),
+      })),
+    [ui.numberLocale]
+  )
+  const yearOptions = useMemo(
+    () => [firstAvailable.year, firstAvailable.year + 1, firstAvailable.year + 2],
+    [firstAvailable.year]
+  )
+
+  const dateWithWeekday = useMemo(
+    () => (state.selectedDate ? formatTicketDateLabel(state.selectedDate, ui) : null),
+    [state.selectedDate, ui]
+  )
+
+  const goToPrevMonth = () => {
+    if (viewMonth === 1) { setViewMonth(12); setViewYear((y) => y - 1) }
+    else setViewMonth((m) => m - 1)
+  }
+  const goToNextMonth = () => {
+    if (viewMonth === 12) { setViewMonth(1); setViewYear((y) => y + 1) }
+    else setViewMonth((m) => m + 1)
+  }
 
   return (
     <div className={styles.stepContent}>
@@ -118,16 +167,8 @@ export default function Step1PeopleDate({
 
       {/* ── Kişi Sayısı ── */}
       <div className={styles.sectionFlat}>
-        <div className={styles.sectionHeader}>
-          <div className={styles.sectionHeaderLeft}>
-            <Users width={18} height={18} className={styles.sectionIcon} aria-hidden />
-            <h3 className={styles.sectionTitle}>{ui.guestCountTitle}</h3>
-          </div>
-          {total > 0 && (
-            <span className={styles.guestTotalBadge} aria-live="polite">
-              {total} {ui.guestCountSuffix}
-            </span>
-          )}
+        <div className={styles.sectionHeaderPlain}>
+          <h3 className={styles.sectionTitlePlain}>{heading.people}</h3>
         </div>
 
         <div className={styles.counterList}>
@@ -216,89 +257,155 @@ export default function Step1PeopleDate({
 
       {/* ── Tarih Seçimi ── */}
       <div className={styles.sectionFlat}>
-        <div className={styles.sectionHeader}>
-          <div className={styles.sectionHeaderLeft}>
-            <CalendarDays width={18} height={18} className={styles.sectionIcon} aria-hidden />
-            <h3 className={styles.sectionTitle}>{ui.selectDateTitle}</h3>
-          </div>
-          {selectedDateLabel && (
+        <div className={styles.sectionHeaderPlain}>
+          <h3 className={styles.sectionTitlePlain}>{heading.date}</h3>
+          {selectedDateLabel && showCalendar && (
             <span className={styles.selectedDateChip} aria-live="polite">
               {selectedDateLabel}
             </span>
           )}
         </div>
 
-        {/* Ay navigasyon */}
-        <div className={styles.calendarMonthHeader}>
+        {!showCalendar && selectedDateLabelLong ? (
+          /* Referans site ile birebir: seçili tarih tıklanabilir tek satır, takvimi yeniden açar */
           <button
             type="button"
-            className={styles.calendarNavBtn}
-            aria-label={ui.prevMonthAria}
-            disabled={isViewingFirstAvailableMonth}
-            onClick={() => {
-              if (viewMonth === 1) { setViewMonth(12); setViewYear((y) => y - 1) }
-              else setViewMonth((m) => m - 1)
-            }}
-          >‹</button>
-          <span className={styles.calendarMonthLabel}>{monthLabel}</span>
-          <button
-            type="button"
-            className={styles.calendarNavBtn}
-            aria-label={ui.nextMonthAria}
-            onClick={() => {
-              if (viewMonth === 12) { setViewMonth(1); setViewYear((y) => y + 1) }
-              else setViewMonth((m) => m + 1)
-            }}
-          >›</button>
-        </div>
-
-        {/* Takvim grid */}
-        <div className={styles.calendarWrap}>
-          <div className={styles.calendarGrid}>
-            {weekdays.map((wd) => (
-              <div key={wd} className={styles.weekday} aria-hidden>{wd}</div>
-            ))}
-            {Array.from({ length: gridStart }, (_, i) => (
-              <div key={`empty-${i}`} aria-hidden />
-            ))}
-            {calendar.map((day) => {
-              const dayNum = parseInt(day.date.slice(8), 10)
-              const selected = state.selectedDate === day.date
-              const available = day.isAvailable && day.date >= minBookableStr
-              const isToday = day.date === todayStr
-              const showPrice = available && day.minPrice != null
-              const showStar = available && minPriceInMonth != null && day.minPrice === minPriceInMonth
-              return (
+            className={styles.selectedDateBar}
+            onClick={() => setShowCalendar(true)}
+          >
+            <ChevronLeft width={20} height={20} aria-hidden />
+            {selectedDateLabelLong}
+          </button>
+        ) : (
+          <>
+            {/* Ay navigasyon — referans site ile birebir: "Ay › Yıl ›" etiketleri solda,
+                yuvarlak ‹ › ok butonları sağda. Etiketler artık gerçek bir açılır
+                listeye (native select) tıklanabilir bir kapak — istediğin ay/yılı
+                doğrudan seçebilirsin. */}
+            <div className={styles.calendarMonthHeader}>
+              <div className={styles.calendarMonthYearLabels}>
+                <div className={styles.calendarMonthYearWrap}>
+                  <select
+                    className={styles.calendarMonthYearSelect}
+                    value={viewMonth}
+                    onChange={(e) => setViewMonth(Number(e.target.value))}
+                    aria-label={ui.selectMonthAria}
+                  >
+                    {monthOptions.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                  <span className={styles.calendarMonthYearItem} aria-hidden>
+                    {monthNameOnly}
+                    <ChevronRight width={15} height={15} aria-hidden />
+                  </span>
+                </div>
+                <div className={styles.calendarMonthYearWrap}>
+                  <select
+                    className={styles.calendarMonthYearSelect}
+                    value={viewYear}
+                    onChange={(e) => setViewYear(Number(e.target.value))}
+                    aria-label={ui.selectYearAria}
+                  >
+                    {yearOptions.map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                  <span className={styles.calendarMonthYearItem} aria-hidden>
+                    {viewYear}
+                    <ChevronRight width={15} height={15} aria-hidden />
+                  </span>
+                </div>
+              </div>
+              <div className={styles.calendarNavBtnGroup}>
                 <button
-                  key={day.date}
                   type="button"
-                  className={`${styles.dayCell} ${selected ? styles.dayCellSelected : ''} ${!available ? styles.dayCellDisabled : ''}`}
-                  onClick={() => available && onUpdate({ selectedDate: day.date })}
-                  disabled={!available}
-                  aria-label={ui.calendarDayAria(
-                    dayNum,
-                    day.date,
-                    showPrice && day.minPrice != null ? `, ${day.minPrice} TL` : ''
-                  )}
-                  aria-pressed={selected}
-                  style={isToday && !selected ? { borderColor: '#fc6c4f', color: '#fc6c4f' } : undefined}
-                >
-                  {showStar && (
-                    <span className={styles.dayCellStar} aria-hidden>
-                      <Star className={styles.dayCellStarIcon} fill="currentColor" aria-hidden />
-                    </span>
-                  )}
-                  <span className={styles.dayNum}>{dayNum}</span>
-                  {showPrice && (
-                    <span className={styles.dayPrice}>
-                      {day.minPrice!.toLocaleString(ui.numberLocale)} ₺
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+                  className={styles.calendarNavBtn}
+                  aria-label={ui.prevMonthAria}
+                  disabled={isViewingFirstAvailableMonth}
+                  onClick={goToPrevMonth}
+                ><ChevronLeft width={17} height={17} aria-hidden /></button>
+                <button
+                  type="button"
+                  className={styles.calendarNavBtn}
+                  aria-label={ui.nextMonthAria}
+                  onClick={goToNextMonth}
+                ><ChevronRight width={17} height={17} aria-hidden /></button>
+              </div>
+            </div>
+
+            {/* Takvim grid */}
+            <div className={styles.calendarWrap}>
+              <div className={styles.calendarGrid}>
+                {weekdays.map((wd) => (
+                  <div key={wd} className={styles.weekday} aria-hidden>{wd}</div>
+                ))}
+                {Array.from({ length: gridStart }, (_, i) => (
+                  <div key={`empty-${i}`} aria-hidden />
+                ))}
+                {calendar.map((day) => {
+                  const dayNum = parseInt(day.date.slice(8), 10)
+                  const selected = state.selectedDate === day.date
+                  const available = day.isAvailable && day.date >= minBookableStr
+                  const isToday = day.date === todayStr
+                  const showPrice = day.minPrice != null
+                  const showStar = available && minPriceInMonth != null && day.minPrice === minPriceInMonth
+                  return (
+                    <button
+                      key={day.date}
+                      type="button"
+                      className={`${styles.dayCell} ${selected ? styles.dayCellSelected : ''} ${!available ? styles.dayCellDisabled : ''}`}
+                      onClick={() => {
+                        if (!available) return
+                        onUpdate({ selectedDate: day.date })
+                        setShowCalendar(false)
+                      }}
+                      disabled={!available}
+                      aria-label={ui.calendarDayAria(
+                        dayNum,
+                        day.date,
+                        showPrice && day.minPrice != null ? `, ${day.minPrice} TL` : ''
+                      )}
+                      aria-pressed={selected}
+                      style={isToday && !selected ? { borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' } : undefined}
+                    >
+                      {showStar && (
+                        <span className={styles.dayCellStar} aria-hidden>
+                          <Star className={styles.dayCellStarIcon} fill="currentColor" aria-hidden />
+                        </span>
+                      )}
+                      <span className={styles.dayNum}>{dayNum}</span>
+                      {showPrice && (
+                        <span className={`${styles.dayPrice} ${!available ? styles.dayPriceStrike : ''}`}>
+                          {day.minPrice!.toLocaleString(ui.numberLocale)} ₺
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Rezervasyon Özeti (bilet) — referans site ile birebir, sınıf seçilmeden
+          toplam ücret hesaplanamadığı için o alan yer tutucu olarak kalır. */}
+      <div className={styles.sectionFlat}>
+        <div className={styles.sectionHeaderPlain}>
+          <h3 className={styles.sectionTitlePlain}>{ui.summaryTitle}</h3>
         </div>
+        <ReservationTicket
+          ui={ui}
+          tourTitle={tour.title ?? ''}
+          durationText={tour.quickFacts?.durationText}
+          hostName={BOAT_NAME}
+          meetingLocation={tour.quickFacts?.meetingLocation}
+          guestLines={[{ label: String(total) }]}
+          dateLabel={dateWithWeekday}
+          timeLabel={tour.quickFacts?.startTime}
+          totalValue={null}
+        />
       </div>
 
       {/* CTA */}
@@ -312,6 +419,7 @@ export default function Step1PeopleDate({
             aria-label={ctaLabel}
           >
             {ctaLabel}
+            <ArrowRight width={16} height={16} aria-hidden />
           </button>
         </div>
       </div>

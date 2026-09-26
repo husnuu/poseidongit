@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 import { Inter } from 'next/font/google'
 import { headers } from 'next/headers'
+import { dinNextLtPro } from './fonts/din-next-lt-pro'
 import './globals.css'
 import ChunkLoadErrorHandler from '@/components/ChunkLoadErrorHandler'
 import CookieConsentBannerRoot from '@/components/CookieConsentBannerRoot'
@@ -100,7 +101,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang={htmlLang} className={inter.variable}>
+    <html lang={htmlLang} className={`${inter.variable} ${dinNextLtPro.variable}`}>
       <head>
         <GoogleTagManager />
       </head>

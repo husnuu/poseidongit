@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Check, ChevronLeft, ChevronRight, Users, CalendarDays, Ticket, Sparkles } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Users, CalendarDays, Ticket, Sparkles, ArrowRight } from 'lucide-react'
 import ExtrasModal from '../ExtrasModal'
 import type {
   TourForBooking,
@@ -610,21 +610,22 @@ export default function Step2ClassSelect({
         <div className={styles.stepActionsRow}>
           <button
             type="button"
-            className={styles.stepBtnBack}
-            onClick={onBack}
-            aria-label={ui.backAria}
-          >
-            <ChevronLeft width={16} height={16} aria-hidden />
-            {ui.back}
-          </button>
-          <button
-            type="button"
             className={styles.stepBtnPrimary}
             onClick={onNext}
             disabled={ctaDisabled}
             aria-label={ctaLabel}
           >
             {ctaLabel}
+            <ArrowRight width={16} height={16} aria-hidden />
+          </button>
+          <button
+            type="button"
+            className={styles.stepBtnBack}
+            onClick={onBack}
+            aria-label={ui.backAria}
+          >
+            <ChevronLeft width={16} height={16} aria-hidden />
+            {ui.back}
           </button>
         </div>
       </div>

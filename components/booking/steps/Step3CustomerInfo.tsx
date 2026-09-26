@@ -1,10 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
-import { urlFor } from '@/lib/sanity'
-import { CalendarDays, Ticket, Users, ChevronLeft, User } from 'lucide-react'
+import { User, ChevronLeft, ArrowRight } from 'lucide-react'
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
+import ReservationTicket, { formatTicketDateLabel, BOAT_NAME } from '../ReservationTicket'
 import FloatingInput from '@/components/ui/FloatingInput'
 import AdditionalTravelersFields from './AdditionalTravelersFields'
 import PassengerGenderFields from './PassengerGenderFields'
@@ -16,6 +15,13 @@ import PhoneField from '@/components/ui/PhoneField'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import { useBookingPassengerValidation } from '../hooks/useBookingPassengerValidation'
 import styles from '../booking.module.css'
+
+/** Referans site ile birebir: "Alerjiler ve özel istekler" alt başlığı. */
+const ALLERGIES_HEADING: Record<string, string> = {
+  tr: 'Alerjiler ve özel istekler',
+  en: 'Allergies and special requests',
+  de: 'Allergien und besondere Wünsche',
+}
 
 interface Step3CustomerInfoProps {
   tour: TourForBooking
@@ -78,28 +84,57 @@ export default function Step3CustomerInfo({
   }, [hasPickupPoints, defaultMeetingPoint, onUpdate])
 
   const totalPax = state.counts.adult + state.counts.child + state.counts.baby
-  const dateStr = state.selectedDate
-    ? new Date(state.selectedDate + 'T00:00:00').toLocaleDateString(ui.numberLocale, {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
-    : '—'
+  /** Biletteki sağ sütun için hafta günü dahil uzun tarih, örn. "Pazar, 27 Eylül 2026". */
+  const dateWithWeekday = state.selectedDate ? formatTicketDateLabel(state.selectedDate, ui) : null
   const totalPrice = state.pricingSummary?.total ?? 0
-  const selectedClassLabel =
-    tour.ticketClasses?.find((c) => c.key === state.selectedClassKey)?.label ?? '—'
-
-  const tourImageUrl = tour.mainImage?.asset
-    ? urlFor(tour.mainImage.asset).width(600).height(340).quality(90).fit('crop').url()
-    : tour.mainImage?.url
-      ? `${tour.mainImage.url}?w=600&h=340&fit=crop&q=90`
-      : null
 
   const defaultPickupForAddress = tour.pickupPoints?.find((p) => p.isDefault) ?? tour.pickupPoints?.[0]
   const tourAddress =
+    tour.quickFacts?.meetingLocation?.trim() ||
     defaultPickupForAddress?.address?.trim() ||
     defaultPickupForAddress?.name?.trim() ||
     null
+
+  const ageLabelFor = (ageKey: string) =>
+    ageKey === 'adult' ? ui.adult : ageKey === 'child' ? ui.child : ui.baby
+
+  /** Biletteki "Misafir: N × birim fiyat" satırları — fiyat sınıf seçildiği için burada gerçek. */
+  const guestLines = (() => {
+    const active = (state.pricingSummary?.unitPrices ?? []).filter((u) => u.count > 0)
+    if (active.length === 0) return [{ label: ui.peopleCount(totalPax) }]
+    return active.map((u) => ({
+      label: `${u.count} ${ageLabelFor(u.ageKey)}`,
+      unitPriceText: `${u.unitPrice.toLocaleString(ui.numberLocale)} ₺`,
+    }))
+  })()
+
+  /** Ekstralar + kapora/kalan satırları — hepsi artık ayrı kart değil, biletin
+      "yırtık" alt kısmında tek parça olarak gösteriliyor. */
+  const ticketBreakdownRows = (() => {
+    const p = state.pricingSummary
+    if (!p) return []
+    const rows: { label: string; value: string; emphasis?: boolean }[] = (p.extras ?? []).map((e) => ({
+      label: e.note ? `${e.title} · ${e.note}` : e.title,
+      value: `${e.lineTotal.toLocaleString(ui.numberLocale)} ₺`,
+    }))
+    if (p.cashPaymentEnabled) {
+      rows.push({ label: ui.payRemainingAtDoorLabel, value: `${p.remainingAmount.toLocaleString(ui.numberLocale)} ₺` })
+      return rows
+    }
+    rows.push({
+      label: ui.payDepositNowLabel(p.depositPercent),
+      value: `${p.depositAmount.toLocaleString(ui.numberLocale)} ₺`,
+      emphasis: true,
+    })
+    if (p.remainingAmount > 0) {
+      rows.push({
+        label: ui.payRemainingAtDoorLabel,
+        value: `${p.remainingAmount.toLocaleString(ui.numberLocale)} ₺`,
+        emphasis: false,
+      })
+    }
+    return rows
+  })()
 
   const handlePayClick = () => {
     if (!attemptSubmit()) return
@@ -113,106 +148,22 @@ export default function Step3CustomerInfo({
     <div className={styles.stepContent} style={{ fontFamily: 'var(--font-family)' }}>
 
       <div className={styles.sectionFlat}>
-        <div className={styles.sectionHeader}>
-          <div className={styles.sectionHeaderLeft}>
-            <CalendarDays width={18} height={18} className={styles.sectionIcon} aria-hidden />
-            <h3 className={styles.sectionTitle}>{ui.summaryTitle}</h3>
-          </div>
+        <div className={styles.sectionHeaderPlain}>
+          <h3 className={styles.sectionTitlePlain}>{ui.summaryTitle}</h3>
         </div>
 
-        {tourImageUrl && (
-          <Image
-            src={tourImageUrl}
-            alt={tour.title ?? ''}
-            width={600}
-            height={340}
-            className={styles.summaryTourImage}
-          />
-        )}
-
-        <p className={styles.summaryTourName}>{tour.title}</p>
-        {tourAddress && <p className={styles.summaryTourAddr}>{tourAddress}</p>}
-
-        <div className={styles.summaryMetaRow}>
-          <span className={styles.summaryMetaChip}>
-            <CalendarDays width={12} height={12} aria-hidden />
-            {dateStr}
-          </span>
-          <span className={styles.summaryMetaChip}>
-            <Ticket width={12} height={12} aria-hidden />
-            {selectedClassLabel}
-          </span>
-          <span className={styles.summaryMetaChip}>
-            <Users width={12} height={12} aria-hidden />
-            {ui.peopleCount(totalPax)}
-          </span>
-        </div>
-
-        <div className={styles.summaryPriceBlock}>
-          {(state.pricingSummary?.unitPrices ?? []).map((u) => {
-            if (u.count === 0) return null
-            const label =
-              u.ageKey === 'adult' ? ui.adult : u.ageKey === 'child' ? ui.child : ui.baby
-            return (
-              <div key={u.ageKey} className={styles.summaryPriceRow}>
-                <span className={styles.summaryPriceLbl}>
-                  {label} × {u.count}
-                </span>
-                <span className={styles.summaryPriceVal}>
-                  {u.subtotal.toLocaleString(ui.numberLocale)} ₺
-                </span>
-              </div>
-            )
-          })}
-          {(state.pricingSummary?.extras ?? []).map((e) => (
-            <div key={e.key} className={styles.summaryPriceRow}>
-              <span className={styles.summaryPriceLbl}>
-                {e.title}
-                {e.note && <span style={{ opacity: 0.7 }}> · {e.note}</span>}
-              </span>
-              <span className={styles.summaryPriceVal}>
-                {e.lineTotal.toLocaleString(ui.numberLocale)} ₺
-              </span>
-            </div>
-          ))}
-          <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowTotal}`}>
-            <span className={styles.summaryPriceLbl}>{ui.totalLabel}</span>
-            <span className={styles.summaryPriceVal}>
-              {totalPrice.toLocaleString(ui.numberLocale)} ₺
-            </span>
-          </div>
-          {state.pricingSummary && (
-            <>
-              {state.pricingSummary.cashPaymentEnabled ? (
-                <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowRemaining}`}>
-                  <span className={styles.summaryPriceLbl}>{ui.payRemainingAtDoorLabel}</span>
-                  <span className={styles.summaryPriceVal}>
-                    {state.pricingSummary.remainingAmount.toLocaleString(ui.numberLocale)} ₺
-                  </span>
-                </div>
-              ) : (
-                <>
-                  <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowDeposit}`}>
-                    <span className={styles.summaryPriceLbl}>
-                      {ui.payDepositNowLabel(state.pricingSummary.depositPercent)}
-                    </span>
-                    <span className={styles.summaryPriceVal}>
-                      {state.pricingSummary.depositAmount.toLocaleString(ui.numberLocale)} ₺
-                    </span>
-                  </div>
-                  {state.pricingSummary.remainingAmount > 0 && (
-                    <div className={`${styles.summaryPriceRow} ${styles.summaryPriceRowRemaining}`}>
-                      <span className={styles.summaryPriceLbl}>{ui.payRemainingAtDoorLabel}</span>
-                      <span className={styles.summaryPriceVal}>
-                        {state.pricingSummary.remainingAmount.toLocaleString(ui.numberLocale)} ₺
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          )}
-        </div>
+        <ReservationTicket
+          ui={ui}
+          tourTitle={tour.title ?? ''}
+          durationText={tour.quickFacts?.durationText}
+          hostName={BOAT_NAME}
+          meetingLocation={tourAddress}
+          guestLines={guestLines}
+          dateLabel={dateWithWeekday}
+          timeLabel={tour.quickFacts?.startTime}
+          totalValue={state.pricingSummary ? totalPrice : null}
+          breakdownRows={ticketBreakdownRows}
+        />
       </div>
 
       <div className={styles.sectionFlat}>
@@ -325,6 +276,12 @@ export default function Step3CustomerInfo({
           </div>
         )}
 
+        <div className={styles.sectionHeaderPlain} style={{ marginTop: 20 }}>
+          <h4 className={styles.sectionTitlePlain} style={{ fontSize: 16 }}>
+            {ALLERGIES_HEADING[ui.locale] ?? ALLERGIES_HEADING.tr}
+          </h4>
+        </div>
+
         <div className={`${styles.formField} ${styles.optionalFieldWrap}`}>
           <FloatingTextarea
             id="booking-note"
@@ -375,21 +332,22 @@ export default function Step3CustomerInfo({
         <div className={styles.stepActionsRow}>
           <button
             type="button"
-            className={styles.stepBtnBack}
-            onClick={onBack}
-            aria-label={ui.backAria}
-          >
-            <ChevronLeft width={16} height={16} aria-hidden />
-            {ui.back}
-          </button>
-          <button
-            type="button"
             className={styles.stepBtnPrimary}
             onClick={handlePayClick}
             disabled={payDisabled}
             aria-label={ctaLabel}
           >
             {ctaLabel}
+            <ArrowRight width={16} height={16} aria-hidden />
+          </button>
+          <button
+            type="button"
+            className={styles.stepBtnBack}
+            onClick={onBack}
+            aria-label={ui.backAria}
+          >
+            <ChevronLeft width={16} height={16} aria-hidden />
+            {ui.back}
           </button>
         </div>
       </div>

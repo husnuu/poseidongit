@@ -66,7 +66,10 @@ export default function FeatureBar({ items }: FeatureBarProps) {
                   />
                 </div>
                 <div className="min-w-0" style={{ fontFamily: 'var(--font-family)' }}>
-                  <div className="font-black uppercase text-base md:text-lg leading-tight tracking-wide">
+                  <div
+                    className="font-black uppercase text-base md:text-lg leading-tight tracking-wide"
+                    style={{ WebkitTextStroke: '0.8px currentColor' }}
+                  >
                     {item.title}
                   </div>
                   {item.description && (

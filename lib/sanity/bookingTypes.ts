@@ -194,6 +194,12 @@ export interface TourQuickFactsForBooking {
   maxCapacity?: number
 }
 
+export interface TourHostForBooking {
+  name?: string
+  /** Ünvan (örn. "Kaptan") — varsa isimle birlikte gösterilir. */
+  title?: string
+}
+
 export interface TourForBooking {
   _id?: string
   title: string
@@ -206,6 +212,8 @@ export interface TourForBooking {
   /** Sanity: nakit / kapıda ödeme — online NestPay atlanır. */
   cashPaymentEnabled?: boolean
   quickFacts?: TourQuickFactsForBooking
+  /** Tur kaptanı/host — gerçek veri varsa biletin "Tekneniz" satırında gösterilir. */
+  host?: TourHostForBooking
   highlights?: TourHighlightForBooking[]
   bookingRules?: BookingRules
   baseCapacity?: BaseCapacity

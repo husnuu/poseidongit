@@ -89,7 +89,7 @@ export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionP
       <div className="mx-auto max-w-[900px] px-4">
         <h2
           id="home-faq-heading"
-          className="mb-8 text-center text-[26px] font-black uppercase leading-[1.15] sm:text-[30px] md:mb-10 md:text-[34px]"
+          className="mb-8 text-center text-[32px] font-black uppercase leading-[1.15] sm:text-[36px] md:mb-10 md:text-[40px]"
           style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--primary, #2168b8)' }}
         >
           {HEADING[locale]}

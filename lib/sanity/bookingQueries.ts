@@ -26,6 +26,7 @@ export const tourForBookingProjection = `{
     groupType,
     maxCapacity
   },
+  host{ name, title },
   highlights[]{ icon, title, description },
   foodMenu{
     enabled,

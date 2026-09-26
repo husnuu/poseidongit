@@ -71,6 +71,8 @@ interface QuickFacts {
   durationText?: string
   availabilityText?: string
   meetingLocation?: string
+  startTime?: string
+  returnTime?: string
   language?: string
   groupType?: string
   maxCapacity?: number

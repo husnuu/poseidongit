@@ -72,7 +72,7 @@ export default function HomeClassesSection({ data, locale }: Props) {
           )}
           <h2
             id="home-classes-heading"
-            className="text-[26px] font-black uppercase leading-[1.15] mb-5 sm:text-[30px] md:text-[34px] lg:text-[38px]"
+            className="text-[32px] font-black uppercase leading-[1.15] mb-5 sm:text-[36px] md:text-[40px] lg:text-[44px]"
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
               fontWeight: 900,

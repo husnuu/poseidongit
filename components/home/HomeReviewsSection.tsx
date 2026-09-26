@@ -12,6 +12,8 @@ export type HomeReviewItem = {
   name: string
   dateLabel?: string | null
   description: string
+  /** Çeviri öncesi orijinal (Türkçe) metin — sadece gerçekten çevrilmişse dolu. */
+  originalDescription?: string | null
   rating: number
   avatarUrl?: string | null
   avatarLqip?: string | null
@@ -48,6 +50,24 @@ const GOOGLE_LABEL: Record<SiteLocale, (count: string) => string> = {
   tr: (count) => `Google Yorumları (+${count})`,
   en: (count) => `Google Reviews (+${count})`,
   de: (count) => `Google-Bewertungen (+${count})`,
+}
+
+const TRANSLATED_FROM_LABEL: Record<SiteLocale, string> = {
+  tr: '',
+  en: 'Translated from Turkish',
+  de: 'Aus dem Türkischen übersetzt',
+}
+
+const SHOW_ORIGINAL_LABEL: Record<SiteLocale, string> = {
+  tr: '',
+  en: 'Show original',
+  de: 'Original anzeigen',
+}
+
+const SHOW_TRANSLATION_LABEL: Record<SiteLocale, string> = {
+  tr: '',
+  en: 'Show translation',
+  de: 'Übersetzung anzeigen',
 }
 
 const VERIFIED_LABEL: Record<SiteLocale, string> = {
@@ -90,14 +110,16 @@ function GoogleMark({ size = 18 }: { size?: number }) {
   )
 }
 
-function StarRow({ value }: { value: number }) {
+function StarRow({ value, size = 'sm' }: { value: number; size?: 'sm' | 'lg' }) {
   const filled = Math.max(0, Math.min(5, Math.round(value)))
+  const starClass = size === 'lg' ? 'h-7 w-7 sm:h-8 sm:w-8' : 'h-4 w-4'
+  const gapClass = size === 'lg' ? 'gap-1' : 'gap-0.5'
   return (
-    <span className="inline-flex items-center gap-0.5" aria-label={`${filled} / 5`}>
+    <span className={`inline-flex items-center ${gapClass}`} aria-label={`${filled} / 5`}>
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
-          className="h-4 w-4"
+          className={starClass}
           fill={i < filled ? '#f5a623' : 'none'}
           stroke={i < filled ? '#f5a623' : '#d4d4d8'}
           strokeWidth={2}
@@ -111,6 +133,16 @@ function StarRow({ value }: { value: number }) {
 export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeDot, setActiveDot] = useState(0)
+  const [revealedOriginal, setRevealedOriginal] = useState<ReadonlySet<string>>(() => new Set())
+
+  const toggleOriginal = (id: string) => {
+    setRevealedOriginal((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   if (!data?.enabled || !data.items?.length) return null
 
@@ -151,13 +183,13 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
         <header className="mb-8 text-center">
           <h2
             id="home-reviews-heading"
-            className="text-[26px] font-black uppercase leading-[1.15] sm:text-[30px] md:text-[34px] lg:text-[38px]"
+            className="text-[32px] font-black uppercase leading-[1.15] sm:text-[36px] md:text-[40px] lg:text-[44px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--secondary, #131719)' }}
           >
             {HEADING[locale]}
           </h2>
           <div className="mt-4 flex justify-center">
-            <StarRow value={avgRating} />
+            <StarRow value={avgRating} size="lg" />
           </div>
           <p className="mx-auto mt-2 max-w-2xl text-base font-normal leading-relaxed md:text-lg" style={{ color: 'var(--secondary, #131719)' }}>
             {SUBTEXT[locale](totalCount.toLocaleString(numLocale), avgRating.toFixed(1))}
@@ -188,10 +220,12 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
               const initial = (review.name || '?').trim().charAt(0).toUpperCase()
               const tourHref = withLocalePath(locale, `/tur/${review.tourSlug}`)
               const palette = avatarPalette(review.name || 'A')
+              const isRevealed = revealedOriginal.has(review.id)
+              const shownDescription = isRevealed && review.originalDescription ? review.originalDescription : review.description
               return (
                 <div
                   key={review.id}
-                  className="w-[min(85vw,340px)] shrink-0 snap-start rounded-2xl border-l-4 p-5 shadow-sm sm:w-[300px]"
+                  className="flex w-[min(88vw,360px)] shrink-0 snap-start flex-col rounded-2xl border-l-4 p-6 shadow-sm sm:w-[320px]"
                   style={{ borderLeftColor: 'var(--primary, #2168b8)', background: '#fdf8f0' }}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -206,13 +240,24 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                   </div>
 
                   <p
-                    className="mt-4 line-clamp-4 text-sm italic leading-relaxed"
+                    className="mt-5 line-clamp-5 text-sm italic leading-relaxed"
                     style={{ color: 'var(--secondary, #131719)' }}
                   >
-                    “{review.description}”
+                    “{shownDescription}”
                   </p>
 
-                  <div className="mt-4 flex items-center gap-3 border-t pt-4" style={{ borderColor: 'rgba(19,23,25,0.08)' }}>
+                  {review.originalDescription && (
+                    <button
+                      type="button"
+                      onClick={() => toggleOriginal(review.id)}
+                      className="mt-2 text-xs font-medium underline decoration-dotted underline-offset-2 transition hover:opacity-70"
+                      style={{ color: 'var(--muted, #81848b)' }}
+                    >
+                      {TRANSLATED_FROM_LABEL[locale]} · {isRevealed ? SHOW_TRANSLATION_LABEL[locale] : SHOW_ORIGINAL_LABEL[locale]}
+                    </button>
+                  )}
+
+                  <div className="mt-auto flex items-center gap-3 border-t pt-5" style={{ borderColor: 'rgba(19,23,25,0.08)' }}>
                     {review.avatarUrl ? (
                       <Image
                         src={review.avatarUrl}
@@ -233,12 +278,12 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                       </span>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold" style={{ color: 'var(--secondary, #131719)' }}>
+                      <p className="truncate text-sm font-bold uppercase tracking-wide" style={{ color: 'var(--secondary, #131719)' }}>
                         {review.name}
                       </p>
                       <Link
                         href={tourHref}
-                        className="truncate text-xs no-underline hover:underline"
+                        className="block truncate text-xs no-underline hover:underline"
                         style={{ color: 'var(--muted, #81848b)' }}
                       >
                         {review.tourTitle}

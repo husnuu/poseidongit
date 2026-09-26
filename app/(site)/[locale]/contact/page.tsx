@@ -21,6 +21,11 @@ export const dynamic = 'force-dynamic'
 const CONTACT_HEADING_CLASS =
   'text-[32px] font-extrabold uppercase leading-[1.15] mb-6 sm:text-[36px] md:text-[40px] lg:text-[44px]'
 
+// Ana başlık (İletişim) dışındaki bölüm başlıkları (Konum, Popüler Turlar) için
+// daha ölçülü bir boyut — referans sitedeki alt başlık stiline uygun.
+const CONTACT_SUBHEADING_CLASS =
+  'text-[20px] font-extrabold uppercase leading-[1.2] mb-6 sm:text-[22px] md:text-[24px]'
+
 type ContactPageData = {
   title?: string | null
   metaTitle?: string | null
@@ -216,7 +221,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
           <section className="mt-16" aria-labelledby="contact-location-heading">
             <h2
               id="contact-location-heading"
-              className={CONTACT_HEADING_CLASS}
+              className={CONTACT_SUBHEADING_CLASS}
               style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--primary, #2168b8)' }}
             >
               {toHeadingUpper(
@@ -238,7 +243,11 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         )}
 
         <div className="mt-16">
-          <PopularToursSection data={popularToursSectionData} locale={locale} />
+          <PopularToursSection
+            data={popularToursSectionData}
+            locale={locale}
+            headingClassName={CONTACT_SUBHEADING_CLASS}
+          />
         </div>
       </div>
     </main>

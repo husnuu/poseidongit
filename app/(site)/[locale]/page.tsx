@@ -893,10 +893,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     const flattened = flattenHomeReviews(reviewRows)
     if (flattened && locale !== 'tr') {
       const items = await Promise.all(
-        flattened.items.map(async (it) => ({
-          ...it,
-          description: await translateText(it.description, locale),
-        }))
+        flattened.items.map(async (it) => {
+          const translated = await translateText(it.description, locale)
+          const hasRealTranslation = Boolean(translated) && translated !== it.description
+          return {
+            ...it,
+            description: translated || it.description,
+            originalDescription: hasRealTranslation ? it.description : null,
+          }
+        })
       )
       homeReviews = { ...flattened, items }
     } else {

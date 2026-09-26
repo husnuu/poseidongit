@@ -392,3 +392,68 @@
     --about-bg: #dff4fc;
   }
 }
+
+/* Site geneli (müşteri tarafı — admin/login/biletci hariç): rezervasyon sihirbazında
+   kullandığımız DIN Next LT Pro fontu artık TÜM sayfalarda (ana sayfa, tur/tur listesi,
+   yatlar, blog, hakkımızda, koylar, iletişim, SSS vb.) kullanılıyor. Kapsam
+   app/(site)/layout.tsx'teki sarmalayıcıya uygulanıyor; böylece Header/Footer dahil
+   her şey aynı fontu kullanıp bütünlük korunuyor.
+   DIN Next LT Pro'nun sadece Regular (400) ağırlığı yüklü; tarayıcı font-weight 500/600
+   için sentetik kalınlaştırma UYGULAMIYOR (400 ile birebir aynı görünüyor), 700 ve
+   üzerinde ise sentetik kalın devreye giriyor ama Inter'in gerçek bold'undan daha ince
+   kalıyor. Bu yüzden Tailwind'in font-medium/font-semibold sınıflarını 700'e yükseltip,
+   tüm ağırlıkları hafif bir text-stroke ile telafi ediyoruz — böylece başlıklar/etiketler
+   fontu Inter'deyken göründüğü kalınlıkta kalır, sayfanın hiyerarşisi/uyumu bozulmaz. */
+.siteFontScope {
+  /* NOT: fallback kendi kendine "var(--font-family)" referansı VERMEMELİ — tarayıcı
+     bunu bir cycle sayıp tüm değeri geçersiz kılıyor ve sessizce miras alınan Inter'e
+     geri dönüyor; bu yüzden somut font yığınını burada elle yazıyoruz. */
+  --font-family: var(--font-din-next, "Inter", ui-sans-serif, system-ui, sans-serif);
+  --font-family-title: var(--font-din-next, var(--font-family));
+  font-family: var(--font-family);
+  /* Normal (400) ağırlıktaki gövde metni de Inter'e göre biraz ince kaldığından
+     genel bir taban kalınlaştırma uyguluyoruz; aşağıdaki font-weight sınıfları
+     için tanımlı daha güçlü stroke değerleri, kendi üzerlerinde tanımlı olduğu
+     için bunun üzerine yazar (miras alınana göre öncelik kazanır). */
+  -webkit-text-stroke: 0.15px currentColor;
+}
+.siteFontScope .font-medium,
+.siteFontScope .font-semibold {
+  font-weight: 700;
+  -webkit-text-stroke: 0.25px currentColor;
+}
+.siteFontScope .font-bold,
+.siteFontScope .font-extrabold {
+  -webkit-text-stroke: 0.4px currentColor;
+}
+.siteFontScope .font-black {
+  /* Ana sayfadaki büyük bölüm başlıkları (hero ve öne çıkanlar hariç — onlar kendi
+     satır-içi stroke değerlerini kullanıyor, bkz. HeroBanner/FeatureBar) bu sınıfı
+     kullanıyor; kullanıcı isteğiyle belirgin şekilde kalınlaştırıldı. */
+  -webkit-text-stroke: 0.7px currentColor;
+}
+
+/* Genel revizyon: kullanıcı geri bildirimi — font değişince içerikler küçük/ince
+   kaldı. Tailwind'in en sık kullanılan küçük/orta metin boyutlarını burada bir
+   basamak büyütüyoruz (yalnızca .siteFontScope kapsamında — rezervasyon
+   sihirbazının kendi, ayrı ayarlanmış boyutlarına dokunmuyor). */
+.siteFontScope .text-xs {
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+}
+.siteFontScope .text-sm {
+  font-size: 0.9375rem;
+  line-height: 1.375rem;
+}
+.siteFontScope .text-base {
+  font-size: 1.0625rem;
+  line-height: 1.625rem;
+}
+.siteFontScope .text-lg {
+  font-size: 1.1875rem;
+  line-height: 1.75rem;
+}
+.siteFontScope .text-xl {
+  font-size: 1.3125rem;
+  line-height: 1.875rem;
+}

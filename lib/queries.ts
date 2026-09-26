@@ -86,6 +86,8 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
     durationText,
     availabilityText,
     meetingLocation,
+    startTime,
+    returnTime,
     language,
     groupType,
     maxCapacity
@@ -388,6 +390,8 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
     durationText,
     availabilityText,
     meetingLocation,
+    startTime,
+    returnTime,
     language,
     groupType,
     maxCapacity

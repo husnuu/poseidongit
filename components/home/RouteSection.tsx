@@ -61,7 +61,7 @@ export default function RouteSection({
           <div className="flex flex-col items-center text-center lg:items-center lg:text-center">
             <h2
               id="route-section-heading"
-              className="text-[26px] font-black uppercase leading-[1.15] sm:text-[30px] md:text-[34px] lg:text-[38px]"
+              className="text-[32px] font-black uppercase leading-[1.15] sm:text-[36px] md:text-[40px] lg:text-[44px]"
               style={{
                 fontFamily: 'var(--font-family-title, var(--font-family))',
                 fontWeight: 900,

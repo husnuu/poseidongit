@@ -107,7 +107,7 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
         <header className="mb-10 text-center md:mb-12">
           <h2
             id="popular-yachts-heading"
-            className="text-[26px] font-black uppercase leading-[1.15] mb-3 sm:text-[30px] md:text-[34px] lg:text-[38px]"
+            className="text-[32px] font-black uppercase leading-[1.15] mb-3 sm:text-[36px] md:text-[40px] lg:text-[44px]"
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
               fontWeight: 900,

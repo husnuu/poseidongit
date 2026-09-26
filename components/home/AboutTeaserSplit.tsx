@@ -103,7 +103,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
           {heading && (
             <h2
               id="about-teaser-heading"
-              className="text-center font-black uppercase text-[26px] leading-[1.15] sm:text-[30px] md:text-[34px] lg:text-[38px] mb-4"
+              className="text-center font-black uppercase text-[32px] leading-[1.15] sm:text-[36px] md:text-[40px] lg:text-[44px] mb-4"
               style={{
                 fontFamily: 'var(--font-family-title, var(--font-family))',
                 fontWeight: 900,

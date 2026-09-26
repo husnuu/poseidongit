@@ -15,9 +15,14 @@ export type PopularToursSectionData = {
 type PopularToursSectionProps = {
   data: PopularToursSectionData | null
   locale?: SiteLocale
+  /** Başlık boyutunu geçersiz kılmak için (varsayılan: ana sayfadaki büyük başlık). */
+  headingClassName?: string
 }
 
-export default function PopularToursSection({ data, locale = 'tr' }: PopularToursSectionProps) {
+const DEFAULT_HEADING_CLASS =
+  'text-[36px] font-black uppercase leading-[1.15] mb-6 sm:text-[42px] md:text-[46px] lg:text-[52px]'
+
+export default function PopularToursSection({ data, locale = 'tr', headingClassName }: PopularToursSectionProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -62,7 +67,7 @@ export default function PopularToursSection({ data, locale = 'tr' }: PopularTour
           )}
           <h2
             id="popular-tours-heading"
-            className="text-[30px] font-black uppercase leading-[1.15] mb-6 sm:text-[36px] md:text-[40px] lg:text-[46px]"
+            className={headingClassName ?? DEFAULT_HEADING_CLASS}
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
               fontWeight: 900,

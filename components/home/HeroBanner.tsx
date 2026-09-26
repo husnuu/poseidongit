@@ -133,8 +133,14 @@ export default function HeroBanner({
               </p>
             )}
             <h1
-              className="max-w-[98%] text-[36px] font-black uppercase leading-[1.25] text-white sm:text-[42px] md:text-[52px] lg:max-w-[96%] lg:text-[64px]"
-              style={{ fontFamily: 'var(--font-family)', fontWeight: 900, textShadow: '0 6px 12px rgba(0, 0, 0, .16)', marginBottom: '0.5em' }}
+              className="max-w-[98%] text-[40px] font-black uppercase leading-[1.2] text-white sm:text-[46px] md:text-[58px] lg:max-w-[96%] lg:text-[72px]"
+              style={{
+                fontFamily: 'var(--font-family)',
+                fontWeight: 900,
+                WebkitTextStroke: '1px currentColor',
+                textShadow: '0 6px 12px rgba(0, 0, 0, .16)',
+                marginBottom: '0.5em',
+              }}
             >
               {line1}
               <br />

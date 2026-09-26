@@ -103,6 +103,7 @@
   justify-content: center;
   font-size: 12px;
   font-weight: 700;
+  -webkit-text-stroke: 0.4px currentColor;
   background: #fff;
   color: #94a3b8;
   border: 1.5px solid #CBD5E1;
@@ -110,10 +111,10 @@
 }
 
 .stepCircleActive {
-  background: #fc6c4f;
+  background: var(--primary, #2168b8);
   color: #fff;
-  border-color: #fc6c4f;
-  box-shadow: 0 2px 8px rgba(252, 108, 79, 0.35);
+  border-color: var(--primary, #2168b8);
+  box-shadow: 0 2px 8px rgba(33, 104, 184, 0.35);
 }
 
 .stepCircleDone {
@@ -123,8 +124,8 @@
 }
 
 .stepCircleDone svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
 .connector {
@@ -777,11 +778,11 @@
 }
 
 .counterBtn {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  border: 1.5px solid #CBD5E1;
-  background: #fff;
+  border: none;
+  background: #F1F5F9;
   color: #334155;
   font-size: 20px;
   font-weight: 400;
@@ -794,23 +795,27 @@
   transition: all 0.15s ease;
 }
 
-.counterBtn:hover:not(:disabled) {
-  border-color: #0A1628;
-  background: #0A1628;
-  color: #fff;
+/* Sadece gerçek fare/hover destekleyen cihazlarda — dokunmatikte tıklama
+   sonrası rengin "yapışık" kalmasını (stuck hover) önler. */
+@media (hover: hover) and (pointer: fine) {
+  .counterBtn:hover:not(:disabled) {
+    background: #0A1628;
+    color: #fff;
+  }
 }
 
-/* Artı butonu – eksi ile aynı outline stili */
+/* Artı butonu – eksi ile aynı nötr dolgu stili */
 .counterBtnPlus {
-  background: #fff;
-  border-color: #0A1628;
-  color: #0A1628;
+  background: #F1F5F9;
+  border: none;
+  color: #334155;
 }
 
-.counterBtnPlus:hover:not(:disabled) {
-  background: #0A1628;
-  border-color: #0A1628;
-  color: #fff;
+@media (hover: hover) and (pointer: fine) {
+  .counterBtnPlus:hover:not(:disabled) {
+    background: #0A1628;
+    color: #fff;
+  }
 }
 
 .counterBtn:disabled {
@@ -835,6 +840,64 @@
   margin-bottom: 12px;
 }
 
+/* Referans site ile birebir: "Ay ›  Yıl ›" etiketleri solda */
+.calendarMonthYearLabels {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Görünen etiketin sarmalayıcısı — gerçek tıklama hedefi üstüne bindirilen
+   görünmez <select>, altındaki span sadece dekoratif (pointer-events:none). */
+.calendarMonthYearWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .calendarMonthYearWrap:hover {
+    background: #F0F4FA;
+  }
+}
+
+.calendarMonthYearSelect {
+  position: absolute;
+  inset: -4px -2px;
+  opacity: 0;
+  width: calc(100% + 4px);
+  height: calc(100% + 8px);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.calendarMonthYearItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 16px;
+  font-weight: 700;
+  -webkit-text-stroke: 0.3px currentColor;
+  color: var(--secondary, #131719);
+  font-family: var(--font-family-title, var(--font-family));
+  text-transform: capitalize;
+  padding: 4px 2px;
+  pointer-events: none;
+}
+
+.calendarMonthYearItem svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.calendarNavBtnGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .calendarMonthLabel {
   font-size: 15px;
   font-weight: 600;
@@ -846,7 +909,7 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: none;
+  border: 1.5px solid #E2E8F0;
   background: transparent;
   color: #475569;
   cursor: pointer;
@@ -857,7 +920,7 @@
   font-weight: 500;
   line-height: 1;
   padding: 0;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   flex-shrink: 0;
 }
 
@@ -972,8 +1035,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: 12px;
+  font-size: 19px;
   cursor: pointer;
   border: 1.5px solid transparent;
   background: transparent;
@@ -982,15 +1045,15 @@
 }
 
 .dayCell:hover:not(.dayCellDisabled) {
-  background: #FFF0ED;
-  border-color: #fc6c4f;
+  background: #EFF6FF;
+  border-color: var(--primary, #2168b8);
 }
 
 .dayCellSelected {
-  background: #fc6c4f !important;
-  border-color: #fc6c4f !important;
+  background: var(--primary, #2168b8) !important;
+  border-color: var(--primary, #2168b8) !important;
   color: #fff !important;
-  border-radius: 10px !important;
+  border-radius: 12px !important;
 }
 
 .dayCellSelected .dayPrice {
@@ -998,8 +1061,8 @@
 }
 
 .dayCellInRange {
-  background: rgba(252, 108, 79, 0.08);
-  color: #fc6c4f;
+  background: rgba(33, 104, 184, 0.08);
+  color: var(--primary, #2168b8);
 }
 
 .dayCellDisabled {
@@ -1026,7 +1089,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fc6c4f;
+  color: #f5a623;
 }
 
 .dayCellStarIcon {
@@ -1047,6 +1110,38 @@
   margin-top: 2px;
   line-height: 1.1;
   letter-spacing: -0.01em;
+}
+
+/* Satışa kapalı/geçmiş günlerde referans sitedeki gibi üstü çizili fiyat */
+.dayPriceStrike {
+  color: #cbd5e1;
+  text-decoration: line-through;
+}
+
+/* Referans site ile birebir: tarih seçilince takvim kapanır, bu tek satır kalır */
+.selectedDateBar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  padding: 4px 0;
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--secondary, #131719);
+  cursor: pointer;
+  font-family: var(--font-family-title, var(--font-family));
+  transition: color 0.15s;
+}
+
+.selectedDateBar svg {
+  color: var(--primary, #2168b8);
+  flex-shrink: 0;
+}
+
+.selectedDateBar:hover {
+  color: var(--primary, #2168b8);
 }
 
 @media (max-width: 480px) {
@@ -1859,6 +1954,338 @@
   margin-top: 4px;
 }
 
+/* Rezervasyon "bilet" kartı — referans siteki bilet kesiği ile birebir:
+   dikey kesik/delikli ayraçla ikiye bölünmüş gövde (solda tur/lojistik bilgisi,
+   sağda saat + tarih + toplam ücret), fotoğraf yok (referansta da yok). */
+/* Referanstaki gibi arkada üst üste duran bilet dilimleri hissi:
+   sarmalayıcı pozisyonlu, iki dekoratif katman + ana kart en üstte. */
+.reservationTicketStackWrap {
+  position: relative;
+  margin-top: 4px;
+  /* Gölge burada: .reservationTicket'e overflow:hidden koyunca (çentikleri
+     kesmek için) kendi box-shadow'unu da kesmesin diye sarmalayıcıya taşındı. */
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border-radius: 18px;
+}
+
+/* Ortak çentik konumu — hem ana biletin hem arkadaki dilimin deliği bu
+   x-yüzdesinde (ayracın dinamik flex konumuna yaklaşık denk gelen sabit
+   bir değer). Gerçek kesik/delik: mask ile arka planı GERÇEKTEN kesiyoruz,
+   düz beyaz daire ÇİZMİYORUZ — böylece arkadaki katman/sayfa görünür. */
+.reservationTicketStackLayer {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #E5E9F0;
+  border-radius: 18px;
+  /* Hafif gri ton bilerek: ön kartın deliğinden gerçekten "arkası görünüyor"
+     hissi olsun diye — beyaz üstüne beyaz delik hiç fark edilmiyordu.
+     Delik kenarında da aynı gölge halkası. */
+  background:
+    radial-gradient(circle 22px at 55% 0%, transparent 17px, rgba(15, 23, 42, 0.14) 18px, transparent 22px),
+    radial-gradient(circle 22px at 55% 100%, transparent 17px, rgba(15, 23, 42, 0.14) 18px, transparent 22px),
+    #F4F6F9;
+  z-index: 1;
+  overflow: hidden;
+  -webkit-mask-image:
+    radial-gradient(circle 18px at 55% 0%, transparent 99%, #000 100%),
+    radial-gradient(circle 18px at 55% 100%, transparent 99%, #000 100%);
+  -webkit-mask-composite: source-in, source-in;
+  mask-image:
+    radial-gradient(circle 18px at 55% 0%, transparent 99%, #000 100%),
+    radial-gradient(circle 18px at 55% 100%, transparent 99%, #000 100%);
+  mask-composite: intersect, intersect;
+  /* Negatif (saat yönünün tersi) döndürme referanstaki gibi sağ-üst ve
+     sol-alt köşelerden taşan "yelpaze" görünümünü veriyor. */
+  transform: rotate(-2.5deg);
+}
+
+.reservationTicket {
+  position: relative;
+  z-index: 2;
+  border: 1px solid #E5E9F0;
+  border-radius: 18px;
+  /* Arka plan artık burada değil — kartın deliği gerçekten kesik görünsün
+     diye .reservationTicketBodyBg'e taşındı. */
+  overflow: hidden;
+  /* Dış çerçevenin (bu kartın kendi border'ı) üstteki/alttaki çentik
+     noktasında düz devam edip "birleşmemesi" için — çentiğin olduğu yerde
+     KENDİ border'ımızı da gerçekten kesiyoruz (bodyBg'deki delikle aynı
+     konum/yarıçap). bodyBg — dolayısıyla bu maskenin 0%/100%'ü — HER ZAMAN
+     kartın (kapora/ekstra dökümü olsa da olmasa da) gerçek üst/alt kenarına
+     denk gelir, o yüzden koşulsuz iki delik de burada güvenle açılabilir. */
+  -webkit-mask-image:
+    radial-gradient(circle 18px at 55% 0%, transparent 99%, #000 100%),
+    radial-gradient(circle 18px at 55% 100%, transparent 99%, #000 100%);
+  -webkit-mask-composite: source-in, source-in;
+  mask-image:
+    radial-gradient(circle 18px at 55% 0%, transparent 99%, #000 100%),
+    radial-gradient(circle 18px at 55% 100%, transparent 99%, #000 100%);
+  mask-composite: intersect, intersect;
+}
+
+/* bodyBg + bodyContent (stub + varsa yırtık ayraç + kapora/kalan dökümü)
+   aynı grid hücresinde üst üste — bg katmanı içeriğin gerçek (değişken)
+   TOPLAM yüksekliğine otomatik uyuyor. Böylece çentik/yırtılma noktası
+   HER ZAMAN kartın gerçek alt kenarında olur — kapora/ekstra dökümü
+   eklenip kart uzasa bile "ortada" kalmaz. */
+.reservationTicketBodyCell {
+  display: grid;
+}
+
+.reservationTicketBodyCell > * {
+  grid-area: 1 / 1;
+}
+
+.reservationTicketBodyBg {
+  /* Beyaz zemin + delik kenarında hafif gölge halkası (gerçek yırtık/kesik
+     derinliği hissi) — mask sadece şeffaflığı, bu background ise rengi/gölgeyi
+     kontrol ediyor. Bu katman .reservationTicketBodyCell ile aynı grid
+     hücresinde olduğundan içeriğin (stub + varsa kapora/kalan dökümü)
+     TOPLAM yüksekliğine otomatik uyuyor — delikler her zaman gerçek üst/alt
+     kenarda kalır. */
+  background:
+    radial-gradient(circle 22px at 55% 0%, transparent 17px, rgba(15, 23, 42, 0.14) 18px, transparent 22px),
+    radial-gradient(circle 22px at 55% 100%, transparent 17px, rgba(15, 23, 42, 0.14) 18px, transparent 22px),
+    #fff;
+  -webkit-mask-image:
+    radial-gradient(circle 18px at 55% 0%, transparent 99%, #000 100%),
+    radial-gradient(circle 18px at 55% 100%, transparent 99%, #000 100%);
+  -webkit-mask-composite: source-in, source-in;
+  mask-image:
+    radial-gradient(circle 18px at 55% 0%, transparent 99%, #000 100%),
+    radial-gradient(circle 18px at 55% 100%, transparent 99%, #000 100%);
+  mask-composite: intersect, intersect;
+}
+
+.reservationTicketStub {
+  display: flex;
+  align-items: stretch;
+  position: relative;
+  padding: 18px 16px;
+  gap: 14px;
+}
+
+.reservationTicketStubLeft {
+  flex: 1.3;
+  min-width: 0;
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.reservationTicketStubRight {
+  flex: 1;
+  min-width: 0;
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.ticketInfoGroup {
+  margin-top: 12px;
+  /* Her satır arasında (süre / tekneniz / hareket noktası / misafir)
+     birbirinin AYNISI boşluk — daha yakın/sıkı aralıklı. */
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ticketInfoLine {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--secondary, #131719);
+  margin: 0;
+  font-family: var(--font-family);
+  line-height: 1.4;
+}
+
+.ticketInfoLineBold {
+  font-size: 14px;
+  font-weight: 700;
+  -webkit-text-stroke: 0.3px currentColor;
+  color: var(--secondary, #131719);
+  margin: 0;
+  font-family: var(--font-family);
+  line-height: 1.4;
+}
+
+.ticketInfoLabel {
+  color: #64748B;
+  font-weight: 400;
+}
+
+.ticketInfoLink {
+  color: var(--primary, #2168b8);
+  font-weight: 700;
+  -webkit-text-stroke: 0.25px currentColor;
+}
+
+.ticketTimeLabel {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary, #2168b8);
+  margin: 0;
+  font-family: var(--font-family-title, var(--font-family));
+  line-height: 1.2;
+  -webkit-text-stroke: 0.5px currentColor;
+}
+
+.ticketDateLabel {
+  font-size: 14px;
+  font-weight: 700;
+  -webkit-text-stroke: 0.3px currentColor;
+  color: var(--primary, #2168b8);
+  margin: 4px 0 0;
+  font-family: var(--font-family);
+  line-height: 1.35;
+}
+
+.ticketTotalWrap {
+  margin-top: 0;
+}
+
+/* Tarih/saat/fiyat henüz belli değilken referanstaki gibi gri iskelet kutu */
+.ticketSkeletonBox {
+  display: inline-block;
+  background: #E5E7EB;
+  border-radius: 6px;
+}
+
+.ticketTotalLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #94A3B8;
+  margin-bottom: 2px;
+  font-family: var(--font-family);
+}
+
+.ticketTotalValue {
+  display: block;
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--secondary, #131719);
+  font-family: var(--font-family-title, var(--font-family));
+  -webkit-text-stroke: 0.5px currentColor;
+}
+
+/* Dikey kesik çizgi + üstte/altta bilet çentikleri + ortada döndürülmüş
+   "Buradan yırtın" etiketi — referans siteki bilet ile birebir. */
+.reservationTicketDivider {
+  position: relative;
+  width: 0;
+  border-left: 2px dashed #D7E1EC;
+  flex-shrink: 0;
+  /* Çizgi tam üstteki yuvarlak kesiğin bittiği yerde başlasın — kesiğin
+     gölge halkası ~22px yarıçapta; stub'ın kendi 18px dolgusuna ek olarak
+     burada da boşluk bırakıyoruz ki çizgi kesiğe kadar/dışına taşıp üst
+     kenarla birleşmesin. Alt boşluk da varsayılan: kapora/ekstra dökümü
+     YOKSA stub'ın altı kartın gerçek alt kenarı demektir, orada da bir
+     çentik vardır — bu yüzden varsayılan olarak alta da aynı boşluğu
+     bırakıyoruz. */
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Kapora/ekstra dökümü VARSA: stub'ın altı artık kartın gerçek alt kenarı
+   değil (çentik en alta taşındı) — çizgi burada durmasın, kesintisiz olarak
+   .reservationTicketBreakdownRows'daki devamına bağlansın. */
+.reservationTicketDividerConnected {
+  margin-bottom: 0;
+}
+
+/* Bilet çentiği — düzgün, pürüzsüz tam yuvarlak delik (kart kenarında
+   overflow:hidden ile yarısı kesiliyor, gerçek bir "ısırık" gibi görünüyor). */
+/* Dikeyde döndürülmüş "Buradan yırtın" etiketi, ayracın tam ortasında */
+.reservationTicketTearLabel {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #B9C3D1;
+  white-space: nowrap;
+  background: #fff;
+  padding: 6px 0;
+}
+
+/* Bilet kartının ALTINDA ayrı bir kart olarak duran gerçek fiyat dökümü
+   (referans sitede yok — yaş bazlı fiyatlandırmamız için şeffaflık amacıyla eklendi). */
+.reservationTicketBreakdownCard {
+  margin-top: 12px;
+}
+
+/* "Buradan yırtın" hattının bittiği yerde gerçek bir yırtık/pürüzlü kâğıt
+   kenarı hissi — dişli üçgenler açık gri renkle "kopmuş" gibi görünüyor. */
+/* Kullanıcı geri bildirimiyle: burada ayrı bir gri/yırtık doku istenmedi —
+   bilet tek parça, kesintisiz görünsün diye sade bir ince çizgi yeterli. */
+.reservationTicketTornEdge {
+  height: 0;
+  border-top: 1px solid #F1F5F9;
+  background: #fff;
+}
+
+.reservationTicketBreakdownRows {
+  position: relative;
+  padding: 10px 16px 16px;
+  background: #fff;
+}
+
+/* Yırtık/kesik çizgi biletin üst (bilgi) kısmında bitmesin — stub'daki
+   çizginin devamı olarak kesintisiz (üstte boşluksuz, orada artık çentik
+   yok) kapora/kalan dökümü boyunca aşağı insin; kartın GERÇEK alt kenarındaki
+   (artık en altta olan) çentiğe değmeden hemen önce dursun. */
+.reservationTicketBreakdownRows::before {
+  content: '';
+  position: absolute;
+  left: 55%;
+  top: 0;
+  bottom: 26px;
+  border-left: 2px dashed #D7E1EC;
+}
+
+.ticketBreakdownRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #F1F5F9;
+  font-family: var(--font-family);
+}
+
+.ticketBreakdownRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.ticketBreakdownLabel {
+  font-size: 13px;
+  color: #64748B;
+}
+
+.ticketBreakdownValue {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--secondary, #131719);
+}
+
+.ticketBreakdownRowEmphasis .ticketBreakdownLabel {
+  color: #fc6c4f;
+  font-weight: 500;
+}
+
+.ticketBreakdownRowEmphasis .ticketBreakdownValue {
+  color: #fc6c4f;
+  font-size: 17px;
+}
+
 .summaryPriceRow {
   display: flex;
   justify-content: space-between;
@@ -1981,12 +2408,15 @@
 
 /* Tur adı ve adresi */
 .summaryTourName {
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 700;
+  text-transform: uppercase;
   color: var(--primary, #2168b8);
-  margin: 0 0 4px;
-  font-family: var(--font-family);
-  line-height: 1.3;
+  margin: 0;
+  font-family: var(--font-family-title, var(--font-family));
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  -webkit-text-stroke: 0.65px currentColor;
 }
 
 .summaryTourAddr {
@@ -2150,12 +2580,24 @@
   color: #fc6c4f;
 }
 
-/* Bölüm başlığı satırı (flat layout için) */
+/* Bölüm başlığı satırı (flat layout için) — referanstaki gibi başlığın
+   altında küçük mavi bir vurgu çizgisi (grid: 2. satıra otomatik düşen sözde eleman). */
 .sectionHeader {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
+}
+
+.sectionHeader::after {
+  content: '';
+  grid-column: 1 / -1;
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--primary, #2168b8);
+  margin-top: 8px;
 }
 
 .sectionHeaderLeft {
@@ -2179,6 +2621,40 @@
   letter-spacing: -0.01em;
 }
 
+/* Referans site ile birebir: ikonsuz, büyük/koyu düz başlık
+   (1. adım ve bilet başlığı için — "Kaç kişi katılacak?" tarzı). */
+.sectionHeaderPlain {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sectionHeaderPlain::after {
+  content: '';
+  grid-column: 1 / -1;
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--primary, #2168b8);
+  margin-top: 10px;
+}
+
+.sectionTitlePlain {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--secondary, #131719);
+  margin: 0;
+  font-family: var(--font-family-title, var(--font-family));
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  /* Tek ağırlıklı (Regular) fontta tarayıcının sahte kalınlaştırması 700'de
+     tavan yapıyor (800/900 fark etmiyor) — ekstra ince kontur ile daha da
+     kalınlaştırıyoruz. Firefox bunu yok sayar, sorun değil (700 kalır). */
+  -webkit-text-stroke: 0.5px currentColor;
+}
+
 /* CTA alanı (flat sayfada) */
 .ctaSection {
   padding: 16px 16px 12px;
@@ -2197,65 +2673,83 @@
 
 .stepActionsRow {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 12px;
-  justify-content: stretch;
-  flex-wrap: wrap;
 }
 
 .stepActionsRowFull {
   width: 100%;
 }
 
+/* Referans site ile birebir: birincil buton üstte tam genişlik,
+   "Geri" düz bir metin linki olarak altında ortalanmış duruyor. */
 .stepBtnBack {
   font-family: var(--font-family);
-  padding: 11px 14px;
+  padding: 6px 8px;
   font-size: 14px;
   font-weight: 600;
-  border-radius: 12px;
-  border: 1px solid #E2E8F0;
-  background: #fff;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
   color: #64748B;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  transition: color 0.2s;
   box-shadow: none;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   white-space: nowrap;
+  margin: 0 auto;
 }
 
 .stepBtnBack:hover {
-  background: #FFF0ED;
-  border-color: #fc6c4f;
-  color: #fc6c4f;
+  color: var(--primary, #2168b8);
+  background: transparent;
 }
 
 .stepBtnPrimary {
   font-family: var(--font-family);
-  padding: 12px 22px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 14px 22px;
+  font-size: 15px;
+  font-weight: 700;
+  /* Referans --button-transform: uppercase */
+  text-transform: uppercase;
   border-radius: 12px;
   border: none;
-  background: #fc6c4f;
+  background: linear-gradient(to right, var(--primary, #2168b8) 0%, #4f8dc7 51%, var(--primary, #2168b8) 100%);
+  background-size: 200% auto;
   color: #fff;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s, box-shadow 0.2s, opacity 0.2s;
+  transition: background-position 0.4s ease, transform 0.1s, box-shadow 0.2s, opacity 0.2s;
   letter-spacing: 0.01em;
-  box-shadow: 0 2px 10px rgba(252, 108, 79, 0.28);
-  flex: 1;
+  box-shadow: 0 2px 10px rgba(33, 104, 184, 0.32);
+  width: 100%;
   min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.stepBtnPrimary svg {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.stepBtnPrimary:hover:not(:disabled) svg {
+  transform: translateX(2px);
 }
 
 .stepBtnPrimary:hover:not(:disabled) {
-  background: #f85a3a;
-  box-shadow: 0 4px 14px rgba(252, 108, 79, 0.38);
+  background-position: right center;
+  box-shadow: 0 4px 14px rgba(33, 104, 184, 0.4);
   transform: translateY(-1px);
 }
 
 .stepBtnPrimary:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(252, 108, 79, 0.3);
+  box-shadow: 0 2px 8px rgba(33, 104, 184, 0.32);
 }
 
 .stepBtnPrimary:disabled {
@@ -2265,31 +2759,6 @@
   box-shadow: none;
   transform: none;
   opacity: 1;
-}
-
-@media (min-width: 640px) {
-  .stepActionsRow {
-    justify-content: flex-end;
-  }
-  .stepActionsRow .stepBtnBack { min-width: 100px; flex: 0 0 auto; }
-  .stepActionsRow .stepBtnPrimary { min-width: 200px; }
-}
-
-@media (max-width: 639px) {
-  .stepActionsRow {
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-  }
-  .stepActionsRow .stepBtnBack {
-    flex: 0 0 auto;
-    padding: 11px 12px;
-    min-width: 0;
-  }
-  .stepActionsRow .stepBtnPrimary {
-    flex: 1;
-    min-width: 0;
-  }
 }
 
 /* Adım üstü: Geri butonu */
@@ -2385,11 +2854,11 @@
   box-shadow: none;
 }
 
-/* Class card grid (premium step 2) */
+/* Class card grid (premium step 2) — referans istekle daha yakın aralık */
 .classCardGrid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: 12px;
 }
 
 @media (min-width: 640px) {
@@ -2436,8 +2905,8 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 8px;
+  padding-top: 10px;
   border-top: 1px solid #F1F5F9;
 }
 
@@ -2494,7 +2963,7 @@
 .classCardPremiumDesc {
   font-size: 13px;
   color: #64748B;
-  margin: 0 0 10px 0;
+  margin: 0 0 6px 0;
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -2503,7 +2972,7 @@
 }
 
 .classCardPremiumBullets {
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   padding: 0;
   list-style: none;
   font-size: 13px;
@@ -2564,19 +3033,6 @@
   font-family: var(--font-family);
 }
 
-/* Class card grid: tek sütun */
-.classCardGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
-}
-
-@media (min-width: 640px) {
-  .classCardGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 /* Wizard modal header – sade lacivert */
 .wizardModalHeader {
   position: relative;
@@ -2584,18 +3040,20 @@
   align-items: center;
   justify-content: center;
   padding: 16px 20px;
-  background: var(--primary, #2168b8);
+  background: #fff;
   border-bottom: none;
   flex-shrink: 0;
 }
 
 .wizardModalTitle {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #fff;
+  letter-spacing: 0.01em;
+  color: var(--secondary, #131719);
   margin: 0;
+  font-family: var(--font-family-title, var(--font-family));
+  -webkit-text-stroke: 0.7px currentColor;
 }
 
 .wizardModalHeaderPage {
@@ -2617,14 +3075,14 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
+  color: #94a3b8;
 }
 
 .pageTourTitle {
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: #fff;
+  color: var(--secondary, #131719);
   text-align: center;
   line-height: 1.3;
   max-width: 100%;
@@ -2643,12 +3101,16 @@
 }
 
 .wizardModalHeader .closeBtn {
-  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #F1F5F9;
+  color: #475569;
 }
 
 .wizardModalHeader .closeBtn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: #E2E8F0;
+  color: #131719;
 }
 
 .wizardModalStepArea {
@@ -2657,15 +3119,17 @@
   border-bottom: 1px solid #e8edf3;
 }
 
+/* Referans site bu metni görsel olarak göstermiyor — sadece ekran okuyucular için tutuyoruz. */
 .wizardStepProgressMeta {
-  margin: 0 0 12px;
-  text-align: center;
-  font-family: var(--font-family);
-  font-size: 11px;
-  font-weight: 600;
-  color: #94a3b8;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .wizardStepper {
@@ -2693,9 +3157,9 @@
 }
 
 .wizardStepColumn .stepCircle {
-  width: 32px;
-  height: 32px;
-  font-size: 13px;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
 }
 
 .wizardStepLabel {
@@ -2713,6 +3177,7 @@
   font-family: var(--font-family);
   font-size: 11px;
   font-weight: 700;
+  -webkit-text-stroke: 0.25px currentColor;
   color: var(--primary, #2168b8);
   text-align: center;
   line-height: 1.35;
@@ -2767,6 +3232,22 @@
 }
 
 .wizardModalPane {
+  /* Referans site ile birebir: DIN Next LT Pro orada SADECE başlıklarda değil,
+     TÜM metinlerde (gövde yazısı, etiketler, butonlar, inputlar) kullanılıyor.
+     Bu yüzden --font-family'nin kendisini rezervasyon sihirbazı kapsamında
+     değiştiriyoruz — sitenin geri kalanı hâlâ Inter ile devam ediyor.
+     Sadece Regular (400) yüklü olduğundan kalın ağırlıklar tarayıcının
+     sentetik/faux bold'uyla render olur (gerçek Bold/Black dosyası eklenirse
+     app/fonts/din-next-lt-pro/index.ts'e ilave edilip burada otomatik devreye girer).
+     NOT: buradaki fallback ASLA "var(--font-family)" gibi kendi kendine referans
+     VERMEMELİ — tarayıcı bunu bir döngü (cycle) sayıp tüm değeri geçersiz kılıyor
+     ve sessizce Inter'e (miras alınan değere) geri düşüyor; bu yüzden somut font
+     yığınını burada elle yazıyoruz. */
+  --font-family: var(--font-din-next, "Inter", ui-sans-serif, system-ui, sans-serif);
+  --font-family-title: var(--font-din-next, var(--font-family));
+  /* Kendi font-family ÖZELLİĞİNİ de burada uyguluyoruz ki kendi CSS'i olmayan
+     (FloatingInput/PhoneField gibi) çıplak input elemanları da miras alsın. */
+  font-family: var(--font-family);
   width: 100%;
   max-width: min(820px, 100vw);
   min-height: 100%;
@@ -2974,7 +3455,7 @@
 .extraPrice {
   font-family: var(--font-family), sans-serif;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--primary, #2168b8);
   white-space: nowrap;
 }
@@ -3065,6 +3546,14 @@
 
 /* ── Ekstralar popup ── */
 .extrasOverlay {
+  /* Bu modal ayrı bir portalda (document.body altında) render olduğu için
+     .wizardModalPane'in font kapsamının dışında kalıyor — burada tekrar
+     tanımlıyoruz ki ekstralar da aynı DIN Next fontunu kullansın.
+     NOT: fallback kendi kendine "var(--font-family)" referansı VERMEMELİ —
+     bu bir cycle sayılıp değeri geçersiz kılıyor (bkz. .wizardModalPane). */
+  --font-family: var(--font-din-next, "Inter", ui-sans-serif, system-ui, sans-serif);
+  --font-family-title: var(--font-din-next, var(--font-family));
+  font-family: var(--font-family);
   display: none;
   overscroll-behavior: contain;
   position: fixed;
@@ -3131,7 +3620,8 @@
 .extrasSheetTitle {
   font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 700;
+  -webkit-text-stroke: 0.4px currentColor;
   text-transform: uppercase;
   color: var(--secondary, #131719);
   margin: 0;
