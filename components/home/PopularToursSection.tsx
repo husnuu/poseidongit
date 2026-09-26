@@ -28,7 +28,7 @@ export default function PopularToursSection({ data, locale = 'tr' }: PopularTour
       ([entry]) => {
         if (entry.isIntersecting) setVisible(true)
       },
-      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+      { threshold: 0.08, rootMargin: '0px 0px 150px 0px' }
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -43,10 +43,10 @@ export default function PopularToursSection({ data, locale = 'tr' }: PopularTour
   return (
     <section
       ref={sectionRef}
-      className="w-full transition-all duration-700 ease-out pt-14 pb-5 md:pt-20 md:pb-6"
+      className="w-full transition-all duration-300 ease-out pt-14 pb-5 md:pt-20 md:pb-6"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(20px)',
+        transform: visible ? 'translateY(0)' : 'translateY(10px)',
       }}
       aria-labelledby="popular-tours-heading"
     >
@@ -77,11 +77,11 @@ export default function PopularToursSection({ data, locale = 'tr' }: PopularTour
           {items.map((tour, index) => (
             <div
               key={tour._id}
-              className="transition-all duration-500 ease-out"
+              className="transition-all duration-300 ease-out"
               style={{
                 opacity: visible ? 1 : 0,
-                transform: visible ? 'translateY(0)' : 'translateY(20px)',
-                transitionDelay: visible ? `${index * 100}ms` : '0ms',
+                transform: visible ? 'translateY(0)' : 'translateY(10px)',
+                transitionDelay: visible ? `${Math.min(index, 8) * 60}ms` : '0ms',
               }}
             >
               <TourCard tour={tour} locale={locale} />

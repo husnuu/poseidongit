@@ -12,21 +12,49 @@
 }
 .hero-primary-btn-wrap {
   position: relative;
-  overflow: hidden;
-  border-radius: inherit;
-}
-.hero-primary-btn-wrap::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  background: conic-gradient(from var(--hero-angle), transparent 50deg, rgba(255,255,255,.95) 70deg 110deg, transparent 130deg);
-  animation: hero-shimmer-move 2.5s linear infinite;
-  z-index: 0;
+  /* Tailwind'in `rounded-xl` sınıfıyla (0.75rem) aynı değer — burada "inherit"
+     KULLANMIYORUZ, çünkü aynı etiket üzerindeki Tailwind sınıfıyla çakışıp
+     köşeleri kareye çeviriyordu (bkz. önceki hata). Sabit değer = tek doğru
+     kaynak, `.hero-primary-glow`'un `inherit`'i buradan güvenle okur. */
+  border-radius: 0.75rem;
 }
 .hero-primary-btn-wrap .hero-primary-inner {
   position: relative;
   z-index: 1;
+}
+/*
+ * Butonun kenarını saran, dönen renkli bir "glow" halkası — DOM'a ekstra
+ * katman koymadan, tek bir elemanın arka planını maskeleyerek sadece kenar
+ * kalınlığı kadar bir halka bırakıyoruz (iç kısım şeffaf/maskelenmiş).
+ * Böylece köşe yarıçapı sorunu yaşanmaz (mask her zaman gerçek şekli takip
+ * eder) ve halka, butonun kendi kenarının TAM ÜZERİNDE oturur.
+ */
+.hero-primary-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 2px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--hero-angle),
+    #ffd875,
+    #fa7e1e,
+    #d62976,
+    #962fbf,
+    #4f5bd5,
+    #ffd875
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: hero-shimmer-move 3s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-primary-glow {
+    animation: none;
+    --hero-angle: 55deg;
+  }
 }
 @keyframes hero-shimmer-move {
   to {

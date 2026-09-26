@@ -54,7 +54,7 @@ export default function BlogSection({
       ([entry]) => {
         if (entry.isIntersecting) setVisible(true)
       },
-      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' },
+      { threshold: 0.08, rootMargin: '0px 0px 150px 0px' },
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -77,10 +77,10 @@ export default function BlogSection({
   return (
     <section
       ref={sectionRef}
-      className="w-full bg-zinc-50/60 pt-14 pb-6 transition-all duration-700 ease-out md:pt-20 md:pb-8"
+      className="w-full bg-zinc-50/60 pt-14 pb-6 transition-all duration-300 ease-out md:pt-20 md:pb-8"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(20px)',
+        transform: visible ? 'translateY(0)' : 'translateY(10px)',
       }}
       aria-labelledby="blog-section-heading"
     >
@@ -121,7 +121,7 @@ export default function BlogSection({
                 className="w-[min(86vw,300px)] shrink-0 snap-start sm:w-[280px] md:w-[300px]"
                 style={{
                   opacity: visible ? 1 : 0,
-                  transform: visible ? 'translateY(0)' : 'translateY(16px)',
+                  transform: visible ? 'translateY(0)' : 'translateY(8px)',
                   transitionDelay: visible ? `${Math.min(index, 6) * 60}ms` : '0ms',
                   transitionProperty: 'opacity, transform',
                   transitionDuration: '500ms',

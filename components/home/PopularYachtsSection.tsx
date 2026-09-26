@@ -56,7 +56,7 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
       ([entry]) => {
         if (entry.isIntersecting) setVisible(true)
       },
-      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+      { threshold: 0.08, rootMargin: '0px 0px 150px 0px' }
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -96,10 +96,10 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
   return (
     <section
       ref={sectionRef}
-      className="w-full transition-all duration-700 ease-out pt-14 pb-12 md:pt-20 md:pb-16 bg-zinc-50/60"
+      className="w-full transition-all duration-300 ease-out pt-14 pb-12 md:pt-20 md:pb-16 bg-zinc-50/60"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(20px)',
+        transform: visible ? 'translateY(0)' : 'translateY(10px)',
       }}
       aria-labelledby="popular-yachts-heading"
     >
@@ -140,7 +140,7 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
                 className="w-[min(88vw,320px)] shrink-0 snap-start sm:w-[300px] md:w-[320px]"
                 style={{
                   opacity: visible ? 1 : 0,
-                  transform: visible ? 'translateY(0)' : 'translateY(16px)',
+                  transform: visible ? 'translateY(0)' : 'translateY(8px)',
                   transitionDelay: visible ? `${Math.min(index, 8) * 60}ms` : '0ms',
                   transitionProperty: 'opacity, transform',
                   transitionDuration: '500ms',

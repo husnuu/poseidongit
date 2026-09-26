@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useState } from 'react'
 import { MOBILE_BOTTOM_CTA_BAR_ID } from '@/lib/mobileBottomCtaBarId'
+import { COOKIE_CONSENT_BANNER_ID } from '@/lib/cookieBannerId'
 import styles from './WhatsAppFloatButton.module.css'
 
 function WhatsAppGlyph({ className }: { className?: string }) {
@@ -20,11 +21,17 @@ function isMobileViewport() {
   return typeof window !== 'undefined' && window.innerWidth <= 1023
 }
 
-function isBottomBarVisible(): boolean {
-  const el = document.getElementById(MOBILE_BOTTOM_CTA_BAR_ID)
+function isElementVisible(id: string): boolean {
+  const el = document.getElementById(id)
   if (!el) return false
   const st = window.getComputedStyle(el)
-  if (st.display === 'none' || st.visibility === 'hidden' || Number(st.opacity) === 0) {
+  // Not: opacity'e bakmıyoruz — çerez bannerı gibi `transition: opacity` ile
+  // açılan öğelerde, tam bu satırın çalıştığı an (mutation gözlemcisi class
+  // değişimini yakaladığı an) opacity animasyonu henüz 0'dan başlamış oluyor;
+  // CSS geçişleri kendileri birer DOM mutasyonu SAYILMADIĞINDAN gözlemci bir
+  // daha tetiklenmiyor ve sonuç kalıcı olarak yanlış kalıyordu. `pointer-events`
+  // aynı class değişiminde ANINDA (geçişsiz) değiştiği için güvenilir sinyal.
+  if (st.display === 'none' || st.visibility === 'hidden' || st.pointerEvents === 'none') {
     return false
   }
   const rect = el.getBoundingClientRect()
@@ -34,14 +41,19 @@ function isBottomBarVisible(): boolean {
 export default function WhatsAppFloatButton({ href }: Props) {
   /** Mobilde alt şerit yoksa true — buton ekranın dibine yaklaşır */
   const [relaxBottom, setRelaxBottom] = useState(false)
+  /** Çerez bannerı açıkken mobilde WhatsApp butonu "Kabul Et" gibi butonların
+   * üzerine binebiliyordu — banner görünürken buton tamamen gizlenir. */
+  const [hideForCookieBanner, setHideForCookieBanner] = useState(false)
 
   useLayoutEffect(() => {
     const sync = () => {
       if (!isMobileViewport()) {
         setRelaxBottom(false)
+        setHideForCookieBanner(false)
         return
       }
-      setRelaxBottom(!isBottomBarVisible())
+      setRelaxBottom(!isElementVisible(MOBILE_BOTTOM_CTA_BAR_ID))
+      setHideForCookieBanner(isElementVisible(COOKIE_CONSENT_BANNER_ID))
     }
 
     sync()
@@ -55,6 +67,8 @@ export default function WhatsAppFloatButton({ href }: Props) {
       mo.disconnect()
     }
   }, [])
+
+  if (hideForCookieBanner) return null
 
   return (
     <a

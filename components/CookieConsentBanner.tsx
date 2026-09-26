@@ -9,6 +9,7 @@ import {
   saveConsent,
   type CookieConsentPreferences,
 } from '@/lib/cookieConsent'
+import { COOKIE_CONSENT_BANNER_ID } from '@/lib/cookieBannerId'
 import styles from './CookieConsentBanner.module.css'
 
 function Toggle({
@@ -165,6 +166,7 @@ export default function CookieConsentBanner({ policyHref }: Props) {
       ) : null}
 
       <div
+        id={COOKIE_CONSENT_BANNER_ID}
         className={`${styles.banner} ${visible ? styles.bannerVisible : ''}`}
         role="region"
         aria-label="Çerez tercihleri"

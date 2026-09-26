@@ -35,7 +35,7 @@ export default function HomeClassesSection({ data, locale }: Props) {
       ([entry]) => {
         if (entry.isIntersecting) setVisible(true)
       },
-      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+      { threshold: 0.08, rootMargin: '0px 0px 150px 0px' }
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -53,10 +53,10 @@ export default function HomeClassesSection({ data, locale }: Props) {
   return (
     <section
       ref={sectionRef}
-      className="w-full transition-all duration-700 ease-out pt-8 pb-6 md:pt-10 md:pb-8"
+      className="w-full transition-all duration-300 ease-out pt-8 pb-6 md:pt-10 md:pb-8"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(20px)',
+        transform: visible ? 'translateY(0)' : 'translateY(10px)',
       }}
       aria-labelledby="home-classes-heading"
     >

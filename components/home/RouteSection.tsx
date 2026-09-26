@@ -35,7 +35,7 @@ export default function RouteSection({
       ([entry]) => {
         if (entry.isIntersecting) setVisible(true)
       },
-      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+      { threshold: 0.08, rootMargin: '0px 0px 150px 0px' }
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -52,8 +52,8 @@ export default function RouteSection({
       aria-labelledby="route-section-heading"
     >
       <div
-        className={`mx-auto max-w-7xl px-6 pt-6 pb-14 transition-all duration-700 ease-out md:pt-8 md:pb-16 ${
-          visible ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
+        className={`mx-auto max-w-7xl px-6 pt-6 pb-14 transition-all duration-300 ease-out md:pt-8 md:pb-16 ${
+          visible ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
         }`}
       >
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-14">

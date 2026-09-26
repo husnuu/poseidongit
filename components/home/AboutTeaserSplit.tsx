@@ -58,7 +58,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
       ([entry]) => {
         if (entry.isIntersecting) setVisible(true)
       },
-      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+      { threshold: 0.12, rootMargin: '0px 0px 150px 0px' }
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -94,10 +94,10 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
         {/* Metin - sağda */}
         <div
           ref={contentRef}
-          className="order-2 w-full text-left transition-all duration-700 ease-out"
+          className="order-2 w-full text-left transition-all duration-300 ease-out"
           style={{
             opacity: visible ? 1 : 0,
-            transform: visible ? 'translateY(0)' : 'translateY(16px)',
+            transform: visible ? 'translateY(0)' : 'translateY(8px)',
           }}
         >
           {heading && (

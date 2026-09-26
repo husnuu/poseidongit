@@ -42,7 +42,19 @@ export function TourGalleryHero({
 }: TourGalleryHeroProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
-  const [loadedCount, setLoadedCount] = useState(0)
+  // Her karo kendi yüklenme durumunu takip eder — önceden TEK bir ortak sayaç
+  // kullanılıyordu, bu yüzden zaten yüklenmiş olan hero fotoğrafı bile diğer
+  // 4 küçük fotoğrafın hepsi yüklenene kadar iskelet (skeleton) kutusunun
+  // arkasında bulanık/gizli kalıyordu ("uzun süre bulanık placeholder").
+  const [loadedIndices, setLoadedIndices] = useState<ReadonlySet<number>>(() => new Set())
+  const markLoaded = useCallback((index: number) => {
+    setLoadedIndices((prev) => {
+      if (prev.has(index)) return prev
+      const next = new Set(prev)
+      next.add(index)
+      return next
+    })
+  }, [])
   const total = images.length
   const remainingCount = total > TOTAL_VISIBLE ? total - TOTAL_VISIBLE : 0
   const viewAllLabel =
@@ -87,7 +99,7 @@ export function TourGalleryHero({
 
   const heroImage = images[HERO_INDEX]
   const gridImages = GRID_INDICES.map((_, i) => getGridImage(images, i))
-  const showSkeleton = loadedCount < Math.min(TOTAL_VISIBLE, total)
+  const heroLoaded = loadedIndices.has(HERO_INDEX)
 
   return (
     <>
@@ -105,7 +117,7 @@ export function TourGalleryHero({
             onKeyDown={(e) => e.key === 'Enter' && openLightbox(HERO_INDEX)}
             aria-label="Galeriyi aç"
           >
-            {showSkeleton && (
+            {!heroLoaded && (
               <SkeletonTile className="absolute inset-0 rounded-none" />
             )}
             <Image
@@ -116,7 +128,7 @@ export function TourGalleryHero({
               sizes="62vw"
               placeholder={heroImage.blurDataURL ? 'blur' : 'empty'}
               blurDataURL={heroImage.blurDataURL ?? undefined}
-              onLoad={() => setLoadedCount((c) => c + 1)}
+              onLoad={() => markLoaded(HERO_INDEX)}
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 pointer-events-none" />
           </div>
@@ -141,7 +153,7 @@ export function TourGalleryHero({
                   }
                   aria-label="Galeriyi aç"
                 >
-                  {showSkeleton && (
+                  {!loadedIndices.has(GRID_INDICES[i]) && (
                     <SkeletonTile className="absolute inset-0 rounded-none" />
                   )}
                   <Image
@@ -152,7 +164,7 @@ export function TourGalleryHero({
                     sizes="(max-width: 1024px) 19vw, 38vw"
                     placeholder={img.blurDataURL ? 'blur' : 'empty'}
                     blurDataURL={img.blurDataURL ?? undefined}
-                    onLoad={() => setLoadedCount((c) => c + 1)}
+                    onLoad={() => markLoaded(GRID_INDICES[i])}
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 pointer-events-none" />
                   {/* Overlay button on bottom-right tile (last) - secondary button style */}
@@ -183,7 +195,7 @@ export function TourGalleryHero({
 
         {/* Mobile: single large image + overlay button */}
         <div className="md:hidden relative w-full aspect-[4/3] rounded-none overflow-hidden bg-zinc-200 dark:bg-zinc-800">
-          <SkeletonTile className="absolute inset-0 rounded-none" />
+          {!heroLoaded && <SkeletonTile className="absolute inset-0 rounded-none" />}
           <Image
             src={heroImage.src}
             alt={heroImage.alt}
@@ -192,7 +204,7 @@ export function TourGalleryHero({
             sizes="100vw"
             placeholder={heroImage.blurDataURL ? 'blur' : 'empty'}
             blurDataURL={heroImage.blurDataURL ?? undefined}
-            onLoad={() => setLoadedCount((c) => c + 1)}
+            onLoad={() => markLoaded(HERO_INDEX)}
             priority
           />
           <button

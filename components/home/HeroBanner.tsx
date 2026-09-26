@@ -148,10 +148,11 @@ export default function HeroBanner({
           </div>
           {/* CTA: birincil gradyanlı mavi + ince beyaz parıltı kenarlığı, ikincil beyaz — mobilde tam genişlik */}
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <span className="hero-primary-btn-wrap inline-flex h-14 w-full flex-shrink-0 items-center justify-center rounded-xl p-[2px] sm:w-[240px]">
+            <span className="hero-primary-btn-wrap inline-flex h-14 w-full flex-shrink-0 items-center justify-center rounded-xl sm:w-[240px]">
+              <span className="hero-primary-glow" aria-hidden="true" />
               <Link
                 href={primaryHref}
-                className="hero-primary-inner hero-btn-shine flex h-full w-full items-center justify-center rounded-[10px] text-white no-underline transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+                className="hero-primary-inner hero-btn-shine flex h-full w-full items-center justify-center rounded-xl text-white no-underline transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
                 style={{
                   fontFamily: 'var(--font-family)',
                   fontWeight: 700,

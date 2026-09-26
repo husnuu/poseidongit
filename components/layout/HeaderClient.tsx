@@ -509,7 +509,7 @@ export default function HeaderClient({
                     alt={settings.siteName || 'Logo'}
                     width={220}
                     height={55}
-                    className={`${styles.logoImage} ${scrolled ? styles.logoImageOnDark : ''}`}
+                    className={styles.logoImage}
                     priority
                   />
                 ) : (
