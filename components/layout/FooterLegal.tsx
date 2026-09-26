@@ -43,8 +43,10 @@ export default function FooterLegal({ data, inline, regionAriaLabel = 'Legal and
       )}
 
       {hasSecureLabel && (
-        <p className={`flex items-center gap-2 text-sm font-semibold text-white ${hasText ? 'mt-4' : 'mt-0'}`}>
-          <Lock className="h-5 w-5 flex-shrink-0" aria-hidden />
+        <p
+          className={`inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white ${hasText ? 'mt-4' : 'mt-0'}`}
+        >
+          <Lock className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
           {data.secure3dLabel}
         </p>
       )}

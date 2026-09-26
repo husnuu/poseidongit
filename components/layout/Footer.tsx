@@ -30,6 +30,7 @@ import {
   Mail,
   MapPin,
   Star,
+  ExternalLink,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -361,32 +362,26 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
             </Link>
             {showTopRated && (
               <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-white">
+                <div className="inline-flex items-center gap-3 rounded-xl bg-white/10 px-4 py-3">
+                  <GoogleModern aria-hidden className="h-7 w-7 flex-shrink-0" />
+                  <div className="leading-tight">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xl font-black text-white">{ratingValue}</span>
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
+                        ))}
+                      </div>
+                    </div>
+                    {reviewCount > 0 && (
+                      <span className="text-xs font-medium text-white/70">
+                        {f.reviews(reviewCount.toLocaleString(numLoc))}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white">
                   {topRatedLabel}
-                </span>
-                <span className="inline-flex items-center gap-2 text-sm font-medium text-white/90">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
-                  ))}
-                  <span className="font-bold text-white">
-                    {ratingValue} / {ratingMax}
-                  </span>
-                </span>
-                {reviewCount > 0 && (
-                  <span className="flex items-center gap-1.5 text-sm font-medium text-white/80">
-                    <GoogleModern
-                      aria-label="Google"
-                      className="h-[18px] w-[18px] flex-shrink-0 text-white/90"
-                    />
-                    {f.reviews(reviewCount.toLocaleString(numLoc))}
-                  </span>
-                )}
-                <span className="flex items-center gap-1.5 text-sm font-medium text-white/80">
-                  <InstagramModern
-                    aria-label="Instagram"
-                    className="h-[18px] w-[18px] flex-shrink-0 text-white/90"
-                  />
-                  21k takipçi
                 </span>
               </div>
             )}
@@ -436,10 +431,10 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-12 w-12 items-center justify-center rounded-md bg-white text-[#fc6c4f] transition-opacity hover:opacity-90"
+                      className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
                       aria-label={item?.platform ?? 'Social'}
                     >
-                      <Icon className="h-6 w-6" />
+                      <Icon className="h-5 w-5" />
                     </a>
                   )
                 })}
@@ -506,12 +501,50 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
             </div>
           ) : null}
           <div>
-            <div className="flex flex-col items-start gap-6">
-              <a href="https://www.tursab.org.tr" target="_blank" rel="noopener noreferrer" aria-label="TÜRSAB">
-                <Image src="/memberships/tursab.png" alt="TÜRSAB" width={200} height={50} className="h-11 w-auto object-contain brightness-0 invert" />
+            <div className="grid grid-cols-2 gap-4">
+              <a
+                href="https://www.tursab.org.tr"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="TÜRSAB"
+                className="group relative flex flex-col items-center justify-center gap-3 rounded-xl bg-white/10 p-5 text-center transition-colors hover:bg-white/15"
+              >
+                <ExternalLink
+                  aria-hidden
+                  className="absolute right-3 top-3 h-3.5 w-3.5 text-white/40 transition-colors group-hover:text-white/70"
+                />
+                <Image
+                  src="/memberships/tursab.png"
+                  alt="TÜRSAB"
+                  width={200}
+                  height={50}
+                  className="h-10 w-auto object-contain brightness-0 invert"
+                />
+                <span className="text-xs font-semibold uppercase leading-snug tracking-wide text-white/80">
+                  TÜRSAB Üyesi
+                </span>
               </a>
-              <a href="https://www.denizticaretodasi.org.tr" target="_blank" rel="noopener noreferrer" aria-label="İMEAK Deniz Ticaret Odası">
-                <Image src="/memberships/imeak-deniz-ticaret-odasi.png" alt="İMEAK Deniz Ticaret Odası" width={396} height={80} className="h-12 w-auto object-contain brightness-0 invert" />
+              <a
+                href="https://www.denizticaretodasi.org.tr"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="İMEAK Deniz Ticaret Odası"
+                className="group relative flex flex-col items-center justify-center gap-3 rounded-xl bg-white/10 p-5 text-center transition-colors hover:bg-white/15"
+              >
+                <ExternalLink
+                  aria-hidden
+                  className="absolute right-3 top-3 h-3.5 w-3.5 text-white/40 transition-colors group-hover:text-white/70"
+                />
+                <Image
+                  src="/memberships/imeak-deniz-ticaret-odasi.png"
+                  alt="İMEAK Deniz Ticaret Odası"
+                  width={396}
+                  height={80}
+                  className="h-9 w-auto object-contain brightness-0 invert"
+                />
+                <span className="text-xs font-semibold uppercase leading-snug tracking-wide text-white/80">
+                  Deniz Ticaret Odası Üyesi
+                </span>
               </a>
             </div>
           </div>
