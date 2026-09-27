@@ -14,7 +14,7 @@
   font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-weight: 800;
   font-size: 19px;
-  -webkit-text-stroke: 0.6px currentColor;
+  -webkit-text-stroke: 0.85px currentColor;
   line-height: 1.25;
   text-transform: uppercase;
   color: var(--secondary, #131719);

@@ -1441,6 +1441,7 @@
   margin: 0 0 2px 0;
   font-family: var(--font-family);
   letter-spacing: -0.02em;
+  -webkit-text-stroke: 0.5px currentColor;
 }
 
 .paymentSummarySubtitle {
@@ -2614,11 +2615,15 @@
 
 .sectionTitle {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--primary, #2168b8);
   margin: 0;
   font-family: var(--font-family);
   letter-spacing: -0.01em;
+  /* Tek ağırlıklı fontta 600 sentetik kalınlaştırma tetiklemiyor (400 ile
+     aynı görünüyor) — 700 + hafif kontur ile "ara başlıklar" daha dikkat
+     çekici/belirgin olsun diye. */
+  -webkit-text-stroke: 0.35px currentColor;
 }
 
 /* Referans site ile birebir: ikonsuz, büyük/koyu düz başlık
@@ -2652,7 +2657,7 @@
   /* Tek ağırlıklı (Regular) fontta tarayıcının sahte kalınlaştırması 700'de
      tavan yapıyor (800/900 fark etmiyor) — ekstra ince kontur ile daha da
      kalınlaştırıyoruz. Firefox bunu yok sayar, sorun değil (700 kalır). */
-  -webkit-text-stroke: 0.5px currentColor;
+  -webkit-text-stroke: 0.65px currentColor;
 }
 
 /* CTA alanı (flat sayfada) */

@@ -53,6 +53,10 @@
     color: var(--secondary, #131719);
     white-space: nowrap;
     letter-spacing: -0.5px;
+    /* Tek ağırlıklı (Regular) fontta 800 sentetik kalınlaştırma 700'de tavan
+       yapıyor — CTA'nın yanında daha dikkat çeksin diye kontur ile
+       belirgin şekilde kalınlaştırıyoruz. */
+    -webkit-text-stroke: 0.75px currentColor;
   }
 
   .priceValueSmall {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import Image from 'next/image'
 import YachtHeroBadgeOverlay from '@/components/yacht/YachtHeroBadgeOverlay'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -9,7 +9,7 @@ import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import { useWishlist } from '@/lib/wishlist/WishlistContext'
 import styles from './PhotoGrid.module.css'
 import { SANITY_DISPLAY_IMAGE_PROPS } from '@/lib/sanityImage'
-import { Camera, Facebook, Heart, Link2, Mail, MessageCircle, Send, Share2, Twitter, X as XIcon } from 'lucide-react'
+import { Camera, Image as ImageIcon, Facebook, Heart, Link2, Mail, MessageCircle, Send, Share2, Twitter, X as XIcon } from 'lucide-react'
 
 export interface PhotoGridImage {
   src: string
@@ -89,18 +89,25 @@ export default function PhotoGrid({
   const [shareOpen, setShareOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const { isSaved, toggle } = useWishlist()
+  const mobileScrollRef = useRef<HTMLDivElement>(null)
+  const [activeMobileIndex, setActiveMobileIndex] = useState(0)
 
-  const { mainImage, secondImage, rightImages, hasMainImage } = useMemo(() => {
+  const { mainImage, rightImages, hasMainImage } = useMemo(() => {
     const main = images[0]
-    const second = images[1]
     const right = images.slice(1, 5)
     return {
       mainImage: main,
-      secondImage: second,
       rightImages: right,
       hasMainImage: !!main?.src,
     }
   }, [images])
+
+  const handleMobileScroll = () => {
+    const el = mobileScrollRef.current
+    if (!el || images.length <= 1) return
+    const idx = Math.round(el.scrollLeft / el.clientWidth)
+    setActiveMobileIndex(Math.max(0, Math.min(images.length - 1, idx)))
+  }
 
   const wishlistId = tourId || tourSlug || null
   const saved = wishlistId ? isSaved(wishlistId) : false
@@ -166,7 +173,7 @@ export default function PhotoGrid({
   if (!hasMainImage) return null
 
   const actionButtons = (
-    <div className={styles.actionButtons}>
+    <>
       <button
         type="button"
         className={styles.actionBtn}
@@ -189,15 +196,16 @@ export default function PhotoGrid({
           <Heart className={styles.actionIcon} strokeWidth={2} fill={saved ? 'currentColor' : 'none'} aria-hidden />
         </button>
       )}
-    </div>
+    </>
   )
 
   return (
     <>
       <div className={styles.wrapper}>
         <div className={styles.wrapperInner}>
-        <div className={styles.grid}>
-          {/* First image - main (desktop: left big, mobile: top full width) */}
+        {/* DESKTOP: sol tarafta tek büyük görsel + sağda 2x2 küçük görsel — referans
+            siteki gibi paylaş/favori/tümünü-gör hepsi sağ-alt karoda tek satırda. */}
+        <div className={styles.desktopGrid}>
           <div
             className={styles.main}
             onClick={() => openLightbox(0)}
@@ -213,7 +221,7 @@ export default function PhotoGrid({
               className={styles.gridImage}
               placeholder={mainImage.blurDataURL ? 'blur' : 'empty'}
               blurDataURL={mainImage.blurDataURL ?? undefined}
-              sizes="(max-width: 768px) 100vw, 50vw"
+              sizes="50vw"
               {...SANITY_DISPLAY_IMAGE_PROPS}
             />
             {heroBadges && heroBadges.length > 0 ? (
@@ -221,46 +229,8 @@ export default function PhotoGrid({
                 <YachtHeroBadgeOverlay badges={heroBadges} locale={safeLocale} />
               </div>
             ) : null}
-            {actionButtons}
           </div>
 
-          {/* Second image - mobile: stacked below with button; desktop: part of grid (first thumb) */}
-          {secondImage?.src && (
-            <div
-              className={`${styles.thumb} ${styles.second}`}
-              onClick={() => openLightbox(1)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && openLightbox(1)}
-              aria-label={tourUi.photoGridOpenGallery}
-            >
-              <Image
-                src={secondImage.src}
-                alt={`${tourTitle} - 2`}
-                fill
-                className={styles.gridImage}
-                placeholder={secondImage.blurDataURL ? 'blur' : 'empty'}
-                blurDataURL={secondImage.blurDataURL ?? undefined}
-                sizes="(max-width: 768px) 100vw, 25vw"
-                {...SANITY_DISPLAY_IMAGE_PROPS}
-              />
-              {images.length > 2 && (
-                <button
-                  type="button"
-                  className={styles.viewAllButton}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    openLightbox(0)
-                  }}
-                >
-                  <Camera className={styles.viewAllIcon} strokeWidth={2} aria-hidden />
-                  {tourUi.photoGridMobileSeeAllWithCount(images.length)}
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Desktop: right 4 thumbs in 2x2 (hidden on mobile) */}
           {rightImages.map((image, index) => {
             const isBottomRight = index === 3
             const hasImage = !!image?.src
@@ -268,7 +238,7 @@ export default function PhotoGrid({
             return (
               <div
                 key={`thumb-${index}`}
-                className={`${styles.thumb} ${styles.desktopOnly}`}
+                className={styles.thumb}
                 onClick={() => openLightbox(index + 1)}
                 role="button"
                 tabIndex={0}
@@ -288,23 +258,91 @@ export default function PhotoGrid({
                   {...SANITY_DISPLAY_IMAGE_PROPS}
                 />
                 {isBottomRight && (
-                  <button
-                    type="button"
-                    className={styles.viewAllButton}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      openLightbox(0)
-                    }}
-                  >
-                    <Camera className={styles.viewAllIcon} strokeWidth={2} aria-hidden />
-                    {images.length > 5
-                      ? tourUi.photoGridSeeAllWithExtra(images.length - 5)
-                      : tourUi.photoGridSeeAll}
-                  </button>
+                  <div className={styles.desktopControls}>
+                    {actionButtons}
+                    <button
+                      type="button"
+                      className={styles.viewAllButton}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        openLightbox(0)
+                      }}
+                    >
+                      <Camera className={styles.viewAllIcon} strokeWidth={2} aria-hidden />
+                      {images.length > 5
+                        ? tourUi.photoGridSeeAllWithExtra(images.length - 5)
+                        : tourUi.photoGridSeeAll}
+                    </button>
+                  </div>
                 )}
               </div>
             )
           })}
+        </div>
+
+        {/* MOBİL: tüm fotoğraflar arasında kaydırmalı (swipe) tek şerit + altta nokta
+            göstergesi, sağ-üstte paylaş/favori, sağ-altta kompakt fotoğraf sayacı
+            (referans siteki gibi — "TÜM FOTOĞRAFLARI GÖR" yazısı yerine sade rakam). */}
+        <div className={styles.mobileCarouselWrap}>
+          <div
+            ref={mobileScrollRef}
+            onScroll={handleMobileScroll}
+            className={styles.mobileCarousel}
+          >
+            {images.map((image, index) => (
+              <div
+                key={`mobile-${index}`}
+                className={styles.mobileSlide}
+                onClick={() => openLightbox(index)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && openLightbox(index)}
+                aria-label={tourUi.photoGridOpenGallery}
+              >
+                <Image
+                  src={image.src}
+                  alt={`${tourTitle} - ${index + 1}`}
+                  fill
+                  className={styles.gridImage}
+                  placeholder={image.blurDataURL ? 'blur' : 'empty'}
+                  blurDataURL={image.blurDataURL ?? undefined}
+                  sizes="100vw"
+                  priority={index === 0}
+                  {...SANITY_DISPLAY_IMAGE_PROPS}
+                />
+                {index === 0 && heroBadges && heroBadges.length > 0 ? (
+                  <div className={styles.mainBadgeLayer}>
+                    <YachtHeroBadgeOverlay badges={heroBadges} locale={safeLocale} />
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          <div className={styles.mobileActionButtons}>{actionButtons}</div>
+          {images.length > 1 && (
+            <button
+              type="button"
+              className={styles.mobileCountBadge}
+              onClick={(e) => {
+                e.stopPropagation()
+                openLightbox(activeMobileIndex)
+              }}
+              aria-label={tourUi.photoGridMobileSeeAllWithCount(images.length)}
+            >
+              <ImageIcon className={styles.mobileCountIcon} strokeWidth={2} aria-hidden />
+              {images.length}
+            </button>
+          )}
+          {images.length > 1 && (
+            <div className={styles.mobileDots} aria-hidden>
+              {images.map((_, i) => (
+                <span
+                  key={i}
+                  className={`${styles.dot} ${i === activeMobileIndex ? styles.dotActive : ''}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
         </div>
       </div>

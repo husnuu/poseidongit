@@ -1429,3 +1429,23 @@ export const footerPopularToursQuery = `*[_type == "homePage"][0]{
     translations
   }
 }`
+
+/**
+ * Tur detay sayfası altındaki "Diğer Turlarımız" bölümü — mevcut turu hariç
+ * tutarak en fazla 3 tur getirir (popüler olanlar önce).
+ */
+export const otherToursForTourPageQuery = `*[_type == "tour" && slug.current != $excludeSlug && defined(slug.current)] | order(isPopular desc, _createdAt desc) [0...3] {
+  _id,
+  title,
+  "slug": slug.current,
+  shortDescription,
+  "durationLabel": quickFacts.durationText,
+  "departureLabel": quickFacts.meetingLocation,
+  "priceFrom": ticketClasses[0].pricesByAge[0].price,
+  rating,
+  reviewCount,
+  reviewsUrl,
+  isPopular,
+  mainImage{ asset, alt },
+  translations
+}`

@@ -4,8 +4,15 @@ import Image from 'next/image'
 import type { PortableTextBlock } from '@portabletext/react'
 import type { Metadata } from 'next'
 import { client, urlFor } from '@/lib/sanity'
-import { tourGalleryHeroImageUrl } from '@/lib/sanityImage'
-import { tourByLocaleSlugQuery, tourSlugRowsForLocalesQuery, siteFooterQuery } from '@/lib/queries'
+import { tourGalleryHeroImageUrl, tourCoverImageUrl } from '@/lib/sanityImage'
+import {
+  tourByLocaleSlugQuery,
+  tourSlugRowsForLocalesQuery,
+  siteFooterQuery,
+  otherToursForTourPageQuery,
+} from '@/lib/queries'
+import OtherToursSection from '@/components/OtherToursSection'
+import type { TourListItem } from '@/components/tours/TourCard'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
 import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
 import {
@@ -548,6 +555,59 @@ function buildGalleryHeroImages(tour: Tour, tourUi: ReturnType<typeof getTourPag
   })).filter((row) => row.src.length > 0)
 }
 
+type OtherTourRaw = {
+  _id: string
+  title?: string | null
+  slug?: string | null
+  shortDescription?: string | null
+  durationLabel?: string | null
+  departureLabel?: string | null
+  priceFrom?: number | null
+  rating?: number | null
+  reviewCount?: number | null
+  reviewsUrl?: string | null
+  isPopular?: boolean | null
+  mainImage?: { asset?: { _ref: string }; alt?: string | null } | null
+  translations?: unknown
+}
+
+/** Tur detay sayfasının altındaki "Diğer Turlarımız" bölümü için — ana sayfadaki
+    popüler turlar bölümüyle aynı şekilde yerelleştirir (elle çeviri varsa o,
+    yoksa anlık çeviri). */
+async function mapOtherTours(raw: OtherTourRaw[], locale: SiteLocale): Promise<TourListItem[]> {
+  return Promise.all(
+    raw.map(async (t) => {
+      const rawItem = t as unknown as Record<string, unknown>
+      const merged = mergeTourForLocale(rawItem, locale) as unknown as OtherTourRaw
+      const [title, shortDescription, durationLabel, departureLabel] = await Promise.all([
+        tourFieldHasManualTranslation(rawItem, locale, 'title')
+          ? merged.title
+          : translateText(merged.title, locale),
+        tourFieldHasManualTranslation(rawItem, locale, 'shortDescription')
+          ? merged.shortDescription
+          : translateText(merged.shortDescription, locale),
+        translateText(merged.durationLabel, locale),
+        translateText(merged.departureLabel, locale),
+      ])
+      return {
+        _id: merged._id,
+        title: title || merged.title || '',
+        slug: merged.slug ?? null,
+        shortDescription: shortDescription ?? null,
+        durationLabel: durationLabel || merged.durationLabel || null,
+        departureLabel: departureLabel || merged.departureLabel || null,
+        priceFrom: merged.priceFrom ?? null,
+        rating: merged.rating ?? null,
+        reviewCount: merged.reviewCount ?? null,
+        reviewsUrl: merged.reviewsUrl ?? null,
+        isPopular: merged.isPopular ?? false,
+        coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
+        coverImageAlt: merged.mainImage?.alt ?? null,
+      }
+    })
+  )
+}
+
 function buildItineraryTimelineItems(tour: Tour): ItineraryTimelineItem[] {
   if (!tour.itinerary?.length) return []
   return tour.itinerary
@@ -605,6 +665,18 @@ export default async function TourPage({
     whatsappUrl = buildWhatsAppLink(footer?.contact?.chatValue ?? null)
   } catch {
     whatsappUrl = null
+  }
+
+  let otherTours: TourListItem[] = []
+  try {
+    const otherToursRaw = await client.fetch<OtherTourRaw[]>(
+      otherToursForTourPageQuery,
+      { excludeSlug: slug },
+      { useCdn: false }
+    )
+    otherTours = await mapOtherTours(otherToursRaw ?? [], locale)
+  } catch {
+    otherTours = []
   }
 
   const videoEmbedUrl = tour.tourVideo ? getVideoEmbedUrl(tour.tourVideo) : null
@@ -788,6 +860,8 @@ export default async function TourPage({
             locale={locale}
           />
         </div>
+
+        <OtherToursSection items={otherTours} locale={locale} />
       </div>
     </div>
   )

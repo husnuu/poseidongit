@@ -11,14 +11,21 @@
   width: 100%;
 }
 
-/* Grid: left half = 1 big image, right half = 4 squares, no gaps */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-template-rows: 300px 300px;
-  height: 600px;
-  gap: 0;
-  width: 100%;
+/* Desktop grid: left half = 1 big image, right half = 4 squares, no gaps.
+   Mobil altta ayrı bir kaydırmalı (swipe) şerit kullanıyor — bkz. .mobileCarouselWrap. */
+.desktopGrid {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .desktopGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 300px 300px;
+    height: 600px;
+    gap: 0;
+    width: 100%;
+  }
 }
 
 .main {
@@ -58,20 +65,20 @@
   height: 100%;
 }
 
-/* Desktop: hide second as standalone (it's in grid as first thumb) */
-.second {
-  display: none;
-}
-
-.desktopOnly {
-  display: block;
-}
-
-/* View All button - sağ altta: beyaz pill, kamera ikonu + metin */
-.viewAllButton {
+/* Sağ-alt karo: paylaş + favori + tümünü-gör hepsi tek satırda birlikte
+   (referans siteyle birebir — önceden paylaş/favori ana görselde ayrı duruyordu). */
+.desktopControls {
   position: absolute;
-  right: 40px;
-  bottom: 40px;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 20;
+}
+
+/* View All button - beyaz pill, kamera ikonu + metin */
+.viewAllButton {
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -88,7 +95,8 @@
   text-transform: uppercase;
   border: none;
   cursor: pointer;
-  z-index: 20;
+  flex-shrink: 0;
+  white-space: nowrap;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -104,16 +112,6 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }
 
-/* Paylaş + Favori: ana görselin sağ üstünde iki beyaz kare buton */
-.actionButtons {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  display: flex;
-  gap: 12px;
-  z-index: 25;
-}
-
 .actionBtn {
   display: inline-flex;
   align-items: center;
@@ -125,6 +123,7 @@
   border: none;
   cursor: pointer;
   color: var(--primary, #2168b8);
+  flex-shrink: 0;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
@@ -141,6 +140,128 @@
 .actionIcon {
   width: 24px;
   height: 24px;
+}
+
+/* MOBİL: kaydırmalı (swipe) tek şerit — tüm fotoğraflar sırayla, referans siteki gibi */
+.mobileCarouselWrap {
+  display: block;
+  position: relative;
+  width: 100%;
+}
+
+@media (min-width: 769px) {
+  .mobileCarouselWrap {
+    display: none;
+  }
+}
+
+.mobileCarousel {
+  display: flex;
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobileCarousel::-webkit-scrollbar {
+  display: none;
+}
+
+.mobileSlide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  min-height: 200px;
+  scroll-snap-align: start;
+  cursor: pointer;
+}
+
+.mobileActionButtons {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 25;
+}
+
+.mobileActionButtons .actionBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.mobileActionButtons .actionIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.mobileCountBadge {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  color: var(--primary, #2168b8);
+  font-family: var(--font-family), sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  z-index: 20;
+  cursor: pointer;
+  -webkit-text-stroke: 0.3px currentColor;
+}
+
+.mobileCountIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--primary, #2168b8);
+}
+
+/* Nokta göstergesi: referans siteki gibi fotoğrafın ÜZERİNDE (overlay), altta
+   ekstra boşluk bırakmıyor ki başlık fotoğrafa yakın dursun. */
+.mobileDots {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  max-width: 78%;
+  z-index: 20;
+  pointer-events: none;
+}
+
+@media (min-width: 769px) {
+  .mobileDots {
+    display: none;
+  }
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.dotActive {
+  width: 16px;
+  background: #fff;
 }
 
 /* Paylaşım penceresi */
@@ -379,83 +500,6 @@
 @media (max-width: 768px) {
   .wrapper {
     padding: 0;
-  }
-
-  .grid {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    gap: 0;
-  }
-
-  .main {
-    grid-column: unset;
-    grid-row: unset;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 9;
-    min-height: 200px;
-  }
-
-  .thumb {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 9;
-    min-height: 200px;
-  }
-
-  .desktopOnly {
-    display: none !important;
-  }
-
-  .second {
-    display: block !important;
-  }
-
-  .viewAllButton {
-    right: 12px;
-    bottom: 12px;
-    background: #fff;
-    color: var(--primary, #2168b8);
-    padding: 10px 16px;
-    border-radius: 10px;
-    font-weight: 700;
-    font-size: 13px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-    height: auto;
-    line-height: 1.2;
-    gap: 8px;
-  }
-
-  .viewAllIcon {
-    width: 16px;
-    height: 16px;
-  }
-
-  .viewAllButton:hover {
-    background: #fff;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-  }
-
-  .viewAllButton:active {
-    transform: scale(0.98);
-  }
-
-  .actionButtons {
-    top: 12px;
-    right: 12px;
-    gap: 8px;
-  }
-
-  .actionBtn {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-  }
-
-  .actionIcon {
-    width: 20px;
-    height: 20px;
   }
 
   /* Lightbox: kenarlardaki 4rem padding küçük ekranı öldürüyordu; görsel alanı büyüt */
