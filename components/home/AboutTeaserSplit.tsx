@@ -125,7 +125,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                   {primaryPath ? (
                     <Link
                       href={primaryPath}
-                      className="inline-flex h-[50px] items-center justify-center rounded-lg px-8 text-[15px] font-bold uppercase text-white transition hover:brightness-110"
+                      className="inline-flex h-[50px] items-center justify-center rounded-lg px-8 text-[15px] font-bold uppercase text-white transition duration-200 hover:scale-105 hover:brightness-110"
                       style={{ fontFamily: 'var(--font-family)', background: 'var(--primary, #2168b8)' }}
                     >
                       {primaryCta.label}
@@ -135,7 +135,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                       href={primaryCta.href || '#'}
                       target={primaryCta.href?.startsWith('http') ? '_blank' : undefined}
                       rel={primaryCta.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="inline-flex h-[50px] items-center justify-center rounded-lg px-8 text-[15px] font-bold uppercase text-white transition hover:brightness-110"
+                      className="inline-flex h-[50px] items-center justify-center rounded-lg px-8 text-[15px] font-bold uppercase text-white transition duration-200 hover:scale-105 hover:brightness-110"
                       style={{ fontFamily: 'var(--font-family)', background: 'var(--primary, #2168b8)' }}
                     >
                       {primaryCta.label}
@@ -148,7 +148,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                   {secondaryPath ? (
                     <Link
                       href={secondaryPath}
-                      className="inline-flex h-[50px] items-center justify-center rounded-lg border-2 bg-white px-8 text-[15px] font-bold uppercase transition hover:bg-[var(--primary)]/[0.06]"
+                      className="inline-flex h-[50px] items-center justify-center rounded-lg border-2 bg-white px-8 text-[15px] font-bold uppercase transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06]"
                       style={{ fontFamily: 'var(--font-family)', borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
                     >
                       {secondaryCta.label}
@@ -158,7 +158,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
                       href={secondaryCta.href || '#'}
                       target={secondaryCta.href?.startsWith('http') ? '_blank' : undefined}
                       rel={secondaryCta.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="inline-flex h-[50px] items-center justify-center rounded-lg border-2 bg-white px-8 text-[15px] font-bold uppercase transition hover:bg-[var(--primary)]/[0.06]"
+                      className="inline-flex h-[50px] items-center justify-center rounded-lg border-2 bg-white px-8 text-[15px] font-bold uppercase transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06]"
                       style={{ fontFamily: 'var(--font-family)', borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
                     >
                       {secondaryCta.label}

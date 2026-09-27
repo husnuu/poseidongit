@@ -1,21 +1,30 @@
-/* Başlık renkleri: anasayfa Popüler Turlar (PopularToursSection) ile aynı */
+/* Başlık renkleri: anasayfa Popüler Turlar (PopularToursSection) ile aynı.
+   Tek satırda kalması için satır satır değil, aynı satırda yan yana diziyoruz;
+   mobilde sığması için taban punto biraz düşürüldü, sm ve üzeri değişmedi.
+   Stroke de mobilde masaüstündeki kadar kalın olunca küçük puntoda orantısız
+   kalın görünüyordu — mobilde inceltip, biraz da punto büyütüyoruz. */
 .heading {
   font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-weight: 900;
   line-height: 1.15;
   text-transform: uppercase;
   margin: 0;
-  font-size: 1.875rem;
-  -webkit-text-stroke: 1.3px currentColor;
+  font-size: 1.5rem;
+  -webkit-text-stroke: 1px currentColor;
   display: flex;
-  flex-direction: column;
-  gap: 0.1em;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  justify-content: center;
+  white-space: nowrap;
+  gap: 0.3em;
   letter-spacing: 0;
 }
 
 @media (min-width: 640px) {
   .heading {
     font-size: 2.25rem;
+    -webkit-text-stroke: 1.5px currentColor;
   }
 }
 

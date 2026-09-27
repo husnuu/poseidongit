@@ -132,6 +132,7 @@
 .desktopNavLink {
   font-family: var(--font-family), 'Inter', system-ui, -apple-system, sans-serif;
   font-weight: 700;
+  -webkit-text-stroke: 0.4px currentColor;
   font-size: 15px;
   line-height: 22px;
   text-transform: uppercase;
@@ -836,6 +837,7 @@
 .mobileMenuLink {
   font-family: var(--font-family), 'Inter', system-ui, -apple-system, sans-serif;
   font-weight: 800;
+  -webkit-text-stroke: 0.6px currentColor;
   font-size: clamp(32px, 8vw, 40px);
   line-height: 1.2;
   text-transform: uppercase;

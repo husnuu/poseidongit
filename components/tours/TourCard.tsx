@@ -244,7 +244,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
 
   const ctaInner = (
     <span
-      className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-5 py-2.5 text-center text-[14px] font-bold uppercase tracking-wide text-white transition hover:brightness-110 sm:text-[15px]"
+      className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-5 py-2.5 text-center text-[14px] font-bold uppercase tracking-wide text-white transition duration-200 hover:scale-105 hover:brightness-110 sm:text-[15px]"
       style={{ background: 'var(--primary, #2168b8)' }}
     >
       {tourUi.tourCardViewTour}

@@ -40,7 +40,7 @@ function Pill({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
+      className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${
         fullWidth ? 'w-full text-left' : 'shrink-0 text-left'
       } ${
         selected
@@ -115,14 +115,14 @@ export default function YachtRentalFiltersSheet({
             className="mb-2 h-1 w-10 rounded-full bg-zinc-300"
             aria-hidden
           />
-          <h2 id={titleId} className="m-0 text-lg font-black tracking-tight" style={{ color: ACCENT_DARK }}>
+          <h2 id={titleId} className="m-0 text-lg font-bold tracking-tight" style={{ color: ACCENT_DARK }}>
             {ui.filtersTitle}
           </h2>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5">
           <section className="mb-8">
-            <h3 className="mb-3 text-sm font-black uppercase tracking-wide text-zinc-900">{ui.filtersDailyPriceTitle}</h3>
+            <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-zinc-900">{ui.filtersDailyPriceTitle}</h3>
             <div className="flex flex-wrap gap-2">
               {priceOptions.map((opt) => {
                 const selected =
@@ -143,7 +143,7 @@ export default function YachtRentalFiltersSheet({
           </section>
 
           <section className="mb-8">
-            <h3 className="mb-3 text-sm font-black uppercase tracking-wide text-zinc-900">{ui.filtersCapacityTitle}</h3>
+            <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-zinc-900">{ui.filtersCapacityTitle}</h3>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {capacityOpts.map((o) => (
                 <Pill
@@ -180,7 +180,7 @@ export default function YachtRentalFiltersSheet({
           </section>
 
           <section className="mb-2">
-            <h3 className="mb-3 text-sm font-black uppercase tracking-wide text-zinc-900">{ui.filtersCabinsTitle}</h3>
+            <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-zinc-900">{ui.filtersCabinsTitle}</h3>
             <div className="flex flex-wrap gap-2">
               {cabinOpts.map((o) => (
                 <Pill
@@ -200,14 +200,14 @@ export default function YachtRentalFiltersSheet({
             <button
               type="button"
               onClick={onClearDraft}
-              className="flex-1 rounded-xl border-2 border-zinc-200 py-3.5 text-sm font-bold text-zinc-700 transition hover:bg-zinc-50"
+              className="flex-1 rounded-xl border-2 border-zinc-200 py-3.5 text-sm font-bold text-zinc-700 transition duration-200 hover:scale-[1.03] hover:bg-zinc-50"
             >
               {ui.filtersClearButton}
             </button>
             <button
               type="button"
               onClick={onApply}
-              className="flex-1 rounded-xl py-3.5 text-sm font-bold text-white shadow-md transition hover:opacity-95"
+              className="flex-1 rounded-xl py-3.5 text-sm font-bold text-white shadow-md transition duration-200 hover:scale-[1.03] hover:opacity-95"
               style={{ backgroundColor: ACCENT }}
             >
               {ui.filtersApplyButton}

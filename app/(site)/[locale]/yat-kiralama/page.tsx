@@ -147,13 +147,13 @@ export default async function YatKiralamaPage({
     <div className="min-h-screen bg-white">
       <section className="w-full py-14 md:py-20" aria-labelledby="yachts-heading">
         <div className="mx-auto max-w-[1200px] px-4">
-          <header className="mb-12">
+          <header className="mb-12 text-center">
             <h1 id="yachts-heading" className={listStyles.heading}>
               {titleTop && <span className={listStyles.headingLine1}>{titleTop}</span>}
               {titleBottom && <span className={listStyles.headingLine2}>{titleBottom}</span>}
             </h1>
             <p
-              className="mt-6 max-w-2xl whitespace-pre-wrap text-base leading-relaxed text-zinc-600 sm:text-[17px] sm:leading-[1.65]"
+              className="mx-auto mt-6 max-w-2xl whitespace-pre-wrap text-base leading-relaxed text-zinc-600 sm:text-[17px] sm:leading-[1.65]"
               style={{ fontFamily: 'var(--font-family)' }}
             >
               {intro}

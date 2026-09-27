@@ -147,7 +147,7 @@ export default function BlogSection({
         <div className="mt-8 flex justify-center md:mt-10">
           <Link
             href={seeAllHref}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-lg border-2 px-8 py-2.5 text-xs font-bold uppercase tracking-wide transition hover:bg-[var(--primary)]/[0.06]"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-lg border-2 px-8 py-2.5 text-xs font-bold uppercase tracking-wide transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06]"
             style={{ background: '#fff', color: 'var(--primary, #2168b8)', borderColor: 'var(--primary, #2168b8)' }}
           >
             {seeAllLabel}

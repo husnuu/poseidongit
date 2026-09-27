@@ -15,8 +15,8 @@ import type { YachtSortMode } from '@/lib/yachtListSort'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getYachtUi, type YachtUi } from '@/lib/i18n/yachtUi'
 
-const ACCENT = '#0f766e'
-const ACCENT_RING = 'rgba(15, 118, 110, 0.35)'
+const ACCENT = '#2168b8'
+const ACCENT_RING = 'rgba(33, 104, 184, 0.35)'
 
 function sortRows(ui: YachtUi): { value: YachtSortMode; label: string; Icon: LucideIcon }[] {
   return [
@@ -112,7 +112,7 @@ export default function YachtRentalSortSheet({
                 >
                   <span
                     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-                      selected ? 'bg-teal-50 text-teal-700' : 'bg-zinc-100 text-zinc-600'
+                      selected ? 'bg-blue-50 text-[#2168b8]' : 'bg-zinc-100 text-zinc-600'
                     }`}
                     aria-hidden
                   >

@@ -28,23 +28,31 @@
   }
 }
 
+/* Başlık gerçek içerikte uzun bir cümle olabildiği için (CMS'ten geliyor)
+   satır satır zorla bölmek yerine tek bir akışta (row + wrap) diziyoruz:
+   kısa başlıklar tek satırda kalır, uzun olanlar ekranın dışına taşmadan
+   doğal kelime sınırından sarar. Mobilde taban punto biraz düşürüldü. */
 .heroH1 {
   font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-weight: 900;
-  -webkit-text-stroke: 1px currentColor;
-  line-height: 1.15;
+  -webkit-text-stroke: 0.85px currentColor;
+  line-height: 1.2;
   text-transform: uppercase;
   margin: 0 0 1.5rem;
-  font-size: 2rem;
+  font-size: 1.5rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.1em;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.3em;
   letter-spacing: 0;
 }
 
 @media (min-width: 640px) {
   .heroH1 {
     font-size: 2.25rem;
+    -webkit-text-stroke: 1.2px currentColor;
   }
 }
 
@@ -71,7 +79,8 @@
   line-height: 1.62;
   color: var(--text-color);
   max-width: 900px;
-  margin: 0;
+  margin: 0 auto;
+  text-align: center;
 }
 
 @media (min-width: 768px) {

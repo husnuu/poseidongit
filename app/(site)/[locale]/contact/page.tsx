@@ -19,7 +19,7 @@ import { getContactPageUiStrings, mergeContactUiFromSanity } from '@/lib/i18n/st
 export const dynamic = 'force-dynamic'
 
 const CONTACT_HEADING_CLASS =
-  'text-[32px] font-extrabold uppercase leading-[1.15] mb-6 sm:text-[36px] md:text-[40px] lg:text-[44px]'
+  'text-[35px] font-extrabold uppercase leading-[1.15] mb-6 sm:text-[36px] md:text-[40px] lg:text-[44px]'
 
 // Ana başlık (İletişim) dışındaki bölüm başlıkları (Konum, Popüler Turlar) için
 // daha ölçülü bir boyut — referans sitedeki alt başlık stiline uygun.
@@ -159,28 +159,28 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-[1400px] px-4 py-12 sm:py-16">
-        <header className="mb-12">
-          <h1
-            className={CONTACT_HEADING_CLASS}
-            style={{
-              fontFamily: 'var(--font-family-title, var(--font-family))',
-              color: 'var(--primary, #2168b8)',
-              WebkitTextStroke: '1px currentColor',
-            }}
+      {/* Bembeyaz zemin, ortalanmış başlık + alt metin. */}
+      <div className="w-full px-4 pb-6 pt-16 text-center sm:pb-8 sm:pt-20">
+        <h1
+          className={`${CONTACT_HEADING_CLASS} whitespace-nowrap pageHeroTitleStroke`}
+          style={{
+            fontFamily: 'var(--font-family-title, var(--font-family))',
+            color: 'var(--primary, #2168b8)',
+          }}
+        >
+          {toHeadingUpper(title || ui.defaultTitle)}
+        </h1>
+        {intro.length > 0 && (
+          <div
+            className="mx-auto max-w-2xl text-base leading-relaxed space-y-4"
+            style={{ fontFamily: 'var(--font-family)', color: '#475569' }}
           >
-            {toHeadingUpper(title || ui.defaultTitle)}
-          </h1>
-          {intro.length > 0 && (
-            <div
-              className="max-w-4xl text-base leading-relaxed space-y-4"
-              style={{ fontFamily: 'var(--font-family)', color: 'var(--text-color, #58595b)' }}
-            >
-              <PortableText value={intro} />
-            </div>
-          )}
-        </header>
+            <PortableText value={intro} />
+          </div>
+        )}
+      </div>
 
+      <div className="mx-auto max-w-[1400px] px-4 pb-12 pt-0 sm:pb-16 sm:pt-0">
         <div className="grid grid-cols-1 lg:grid-cols-[2.5fr_1fr] gap-10 lg:gap-12 w-full max-w-[1400px] mx-auto">
           <section className="min-w-0" aria-labelledby="form-heading">
             <h2 id="form-heading" className="sr-only">
@@ -199,11 +199,13 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                 rowHours: ui.rowHours,
                 rowAddress: ui.rowAddress,
                 rowPhone: ui.rowPhone,
+                rowWhatsapp: ui.rowWhatsapp,
                 rowFriends: ui.rowFriends,
                 rowInspired: ui.rowInspired,
                 ariaEmailSend: ui.ariaEmailSend,
                 ariaOpenMaps: ui.ariaOpenMaps,
                 ariaCall: ui.ariaCall,
+                ariaWhatsapp: ui.ariaWhatsapp,
                 ariaYoutube: ui.ariaYoutube,
                 ariaInstagram: ui.ariaInstagram,
               }}
@@ -212,6 +214,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                 businessHours: data?.businessHours ?? null,
                 address: data?.officeAddress ?? null,
                 phone: data?.phone ?? null,
+                whatsapp: data?.whatsapp ?? null,
                 youtubeUrl: data?.youtubeUrl ?? null,
                 youtubeLabel: data?.youtubeLabel ?? null,
                 instagramUrl: data?.instagramUrl ?? null,
@@ -226,7 +229,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
             <h2
               id="contact-location-heading"
               className={CONTACT_SUBHEADING_CLASS}
-              style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--primary, #2168b8)' }}
+              style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--secondary, #131719)' }}
             >
               {toHeadingUpper(
                 data.locationTitle?.trim() ||
@@ -251,6 +254,10 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
             data={popularToursSectionData}
             locale={locale}
             headingClassName={CONTACT_SUBHEADING_CLASS}
+            headingAlign="left"
+            headingColor="var(--secondary, #131719)"
+            sectionBgClassName="bg-white"
+            hideViewAllButton
           />
         </div>
       </div>

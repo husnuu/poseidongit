@@ -142,7 +142,7 @@ export default function YachtCard({ yacht, locale = 'tr' }: YachtCardProps) {
           </p>
         ) : null}
 
-        <span className="hero-primary-btn-wrap tour-card-cta-shimmer yacht-card-cta-edge mt-auto w-full max-w-full rounded-xl p-[2px] flex">
+        <span className="hero-primary-btn-wrap tour-card-cta-shimmer yacht-card-cta-edge mt-auto w-full max-w-full rounded-xl p-[2px] flex transition duration-200 hover:scale-105">
           <span className="hero-primary-inner hero-btn-shine yacht-card-cta-inner w-full rounded-[10px] bg-[#1e3a8a] py-2.5 md:py-3 font-black uppercase text-white text-center text-base md:text-[17px] flex items-center justify-center overflow-hidden transition hover:brightness-110 ring-1 ring-inset ring-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)]">
             {ui.cardViewButton}
           </span>
