@@ -127,7 +127,7 @@ export default function HeroBanner({
       {/* Metin + CTA: CTA alta sabit; başlık mobilde translate ile yukarı */}
       <div className="absolute bottom-0 left-0 right-0 z-10 flex items-end">
         <div className="w-full max-w-full pl-5 pr-5 py-8 sm:max-w-[min(1000px,65vw)] sm:pr-6 md:pl-10 md:pr-16 md:py-16">
-          <div className="relative -translate-y-12 sm:-translate-y-8 md:translate-y-0">
+          <div className="relative -translate-y-24 sm:-translate-y-8 md:translate-y-0">
             {hero.eyebrow && (
               <p
                 className="mb-2 text-xs uppercase tracking-widest text-white/80"
@@ -167,6 +167,7 @@ export default function HeroBanner({
                 style={{
                   fontFamily: 'var(--font-family)',
                   fontWeight: 700,
+                  WebkitTextStroke: '0.5px currentColor',
                   fontSize: '18px',
                   textTransform: 'uppercase',
                   background: 'linear-gradient(to right, var(--primary, #2168b8) 0%, #4f8dc7 51%, var(--primary, #2168b8) 100%)',
