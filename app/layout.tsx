@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
-import { Inter } from 'next/font/google'
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import { headers } from 'next/headers'
-import { dinNextLtPro } from './fonts/din-next-lt-pro'
 import './globals.css'
 import ChunkLoadErrorHandler from '@/components/ChunkLoadErrorHandler'
 import CookieConsentBannerRoot from '@/components/CookieConsentBannerRoot'
@@ -16,6 +15,16 @@ const inter = Inter({
   weight: ['400', '700', '900'],
   display: 'swap',
   variable: '--font-inter',
+})
+
+/** Site geneli (müşteri tarafı) ana font — DIN Next LT Pro'nun yerini aldı.
+ * DIN Next'in tersine gerçek 200-800 arası ayrı ağırlıklara sahip, bu yüzden
+ * .siteFontScope'taki font-weight/text-stroke telafileri artık gerekmiyor. */
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-jakarta',
 })
 import { getBaseUrl, getSiteName } from '@/lib/seo'
 import { client, urlFor } from '@/lib/sanity'
@@ -101,7 +110,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang={htmlLang} className={`${inter.variable} ${dinNextLtPro.variable}`}>
+    <html lang={htmlLang} className={`${inter.variable} ${plusJakartaSans.variable}`}>
       <head>
         <GoogleTagManager />
       </head>

@@ -3254,8 +3254,8 @@
      VERMEMELİ — tarayıcı bunu bir döngü (cycle) sayıp tüm değeri geçersiz kılıyor
      ve sessizce Inter'e (miras alınan değere) geri düşüyor; bu yüzden somut font
      yığınını burada elle yazıyoruz. */
-  --font-family: var(--font-din-next, "Inter", ui-sans-serif, system-ui, sans-serif);
-  --font-family-title: var(--font-din-next, var(--font-family));
+  --font-family: var(--font-jakarta, "Inter", ui-sans-serif, system-ui, sans-serif);
+  --font-family-title: var(--font-jakarta, var(--font-family));
   /* Kendi font-family ÖZELLİĞİNİ de burada uyguluyoruz ki kendi CSS'i olmayan
      (FloatingInput/PhoneField gibi) çıplak input elemanları da miras alsın. */
   font-family: var(--font-family);
@@ -3581,8 +3581,8 @@
      tanımlıyoruz ki ekstralar da aynı DIN Next fontunu kullansın.
      NOT: fallback kendi kendine "var(--font-family)" referansı VERMEMELİ —
      bu bir cycle sayılıp değeri geçersiz kılıyor (bkz. .wizardModalPane). */
-  --font-family: var(--font-din-next, "Inter", ui-sans-serif, system-ui, sans-serif);
-  --font-family-title: var(--font-din-next, var(--font-family));
+  --font-family: var(--font-jakarta, "Inter", ui-sans-serif, system-ui, sans-serif);
+  --font-family-title: var(--font-jakarta, var(--font-family));
   font-family: var(--font-family);
   display: none;
   overscroll-behavior: contain;
