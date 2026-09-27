@@ -14,6 +14,7 @@ export default function CovesHero({ title, description }: CovesHeroProps) {
           style={{
             fontFamily: 'var(--font-family-title, var(--font-family))',
             color: 'var(--primary, #2168b8)',
+            WebkitTextStroke: '1px currentColor',
           }}
         >
           {titleUpper}

@@ -67,6 +67,7 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
               color: 'var(--primary, #2168b8)',
+              WebkitTextStroke: '1px currentColor',
             }}
           >
             {title}

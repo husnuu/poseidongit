@@ -32,7 +32,7 @@ type FeatureBarProps = {
 }
 
 // Referans: ~48px ince çizgili (line-art) ikonlar
-const ICON_SIZE = 40
+const ICON_SIZE = 36
 
 const FEATURE_BAR_BG = {
   backgroundColor: 'var(--primary, #2168b8)',
@@ -46,12 +46,12 @@ export default function FeatureBar({ items }: FeatureBarProps) {
 
   return (
     <section
-      className="relative w-full min-w-0 text-white py-14"
+      className="relative w-full min-w-0 text-white py-12"
       style={FEATURE_BAR_BG}
       aria-label="Özellikler"
     >
       <div className="mx-auto max-w-[1200px] min-w-0 px-4">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2 md:gap-10 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
           {displayItems.map((item, index) => {
             const IconComponent = iconMap[item.icon] ?? Bolt
             return (
@@ -68,13 +68,13 @@ export default function FeatureBar({ items }: FeatureBarProps) {
                 </div>
                 <div className="min-w-0" style={{ fontFamily: 'var(--font-family)' }}>
                   <div
-                    className="font-black uppercase text-[20px] leading-tight tracking-wide"
+                    className="font-black uppercase text-[18px] leading-tight tracking-wide"
                     style={{ WebkitTextStroke: '1.1px currentColor' }}
                   >
                     {item.title}
                   </div>
                   {item.description && (
-                    <div className="mt-1.5 text-[16px] leading-snug opacity-90">
+                    <div className="mt-1.5 text-[15px] leading-snug opacity-90">
                       {item.description}
                     </div>
                   )}

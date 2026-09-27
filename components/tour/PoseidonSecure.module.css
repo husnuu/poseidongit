@@ -44,6 +44,7 @@
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.5px;
+  -webkit-text-stroke: 0.6px currentColor;
 }
 
 .logoBold {

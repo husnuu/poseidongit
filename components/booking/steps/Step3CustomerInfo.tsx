@@ -16,11 +16,11 @@ import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import { useBookingPassengerValidation } from '../hooks/useBookingPassengerValidation'
 import styles from '../booking.module.css'
 
-/** Referans site ile birebir: "Alerjiler ve özel istekler" alt başlığı. */
-const ALLERGIES_HEADING: Record<string, string> = {
-  tr: 'Alerjiler ve özel istekler',
-  en: 'Allergies and special requests',
-  de: 'Allergien und besondere Wünsche',
+/** Kullanıcı isteğiyle sadeleştirildi: sadece "Özel istekler" (alerji ibaresi kaldırıldı). */
+const SPECIAL_REQUESTS_HEADING: Record<string, string> = {
+  tr: 'Özel istekler',
+  en: 'Special requests',
+  de: 'Besondere Wünsche',
 }
 
 interface Step3CustomerInfoProps {
@@ -278,7 +278,7 @@ export default function Step3CustomerInfo({
 
         <div className={styles.sectionHeaderPlain} style={{ marginTop: 20 }}>
           <h4 className={styles.sectionTitlePlain} style={{ fontSize: 16 }}>
-            {ALLERGIES_HEADING[ui.locale] ?? ALLERGIES_HEADING.tr}
+            {SPECIAL_REQUESTS_HEADING[ui.locale] ?? SPECIAL_REQUESTS_HEADING.tr}
           </h4>
         </div>
 

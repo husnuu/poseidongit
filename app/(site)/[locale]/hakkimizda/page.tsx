@@ -287,6 +287,7 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
                   style={{
                     fontFamily: 'var(--font-family-title, var(--font-family))',
                     color: 'var(--primary, #2168b8)',
+                    WebkitTextStroke: '1px currentColor',
                   }}
                 >
                   {titleTopUpper}

@@ -163,7 +163,11 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         <header className="mb-12">
           <h1
             className={CONTACT_HEADING_CLASS}
-            style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--primary, #2168b8)' }}
+            style={{
+              fontFamily: 'var(--font-family-title, var(--font-family))',
+              color: 'var(--primary, #2168b8)',
+              WebkitTextStroke: '1px currentColor',
+            }}
           >
             {toHeadingUpper(title || ui.defaultTitle)}
           </h1>
