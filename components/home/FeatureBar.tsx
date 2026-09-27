@@ -31,7 +31,8 @@ type FeatureBarProps = {
   items: FeatureBarItem[]
 }
 
-const ICON_SIZE = 32
+// Referans: ~48px ince çizgili (line-art) ikonlar
+const ICON_SIZE = 40
 
 const FEATURE_BAR_BG = {
   backgroundColor: 'var(--primary, #2168b8)',
@@ -45,35 +46,35 @@ export default function FeatureBar({ items }: FeatureBarProps) {
 
   return (
     <section
-      className="relative w-full min-w-0 text-white py-12"
+      className="relative w-full min-w-0 text-white py-14"
       style={FEATURE_BAR_BG}
       aria-label="Özellikler"
     >
       <div className="mx-auto max-w-[1200px] min-w-0 px-4">
-        <div className="grid gap-8 md:gap-10 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2 md:gap-10 lg:grid-cols-4">
           {displayItems.map((item, index) => {
             const IconComponent = iconMap[item.icon] ?? Bolt
             return (
-              <div key={index} className="flex min-w-0 items-center gap-4">
+              <div key={index} className="flex min-w-0 items-start gap-4">
                 <div
                   className="flex-shrink-0 transition-transform duration-200 hover:scale-110"
                   aria-hidden
                 >
                   <IconComponent
                     size={ICON_SIZE}
-                    strokeWidth={2}
+                    strokeWidth={1.6}
                     className="stroke-white"
                   />
                 </div>
                 <div className="min-w-0" style={{ fontFamily: 'var(--font-family)' }}>
                   <div
-                    className="font-black uppercase text-base md:text-lg leading-tight tracking-wide"
-                    style={{ WebkitTextStroke: '0.8px currentColor' }}
+                    className="font-black uppercase text-[20px] leading-tight tracking-wide"
+                    style={{ WebkitTextStroke: '1.1px currentColor' }}
                   >
                     {item.title}
                   </div>
                   {item.description && (
-                    <div className="text-sm md:text-base font-medium mt-0.5 opacity-90">
+                    <div className="mt-1.5 text-[16px] leading-snug opacity-90">
                       {item.description}
                     </div>
                   )}

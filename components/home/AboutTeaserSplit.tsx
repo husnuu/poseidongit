@@ -103,7 +103,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
           {heading && (
             <h2
               id="about-teaser-heading"
-              className="text-center font-black uppercase text-[32px] leading-[1.15] sm:text-[36px] md:text-[40px] lg:text-[44px] mb-4"
+              className="text-center font-black uppercase text-[28px] leading-[1.15] sm:text-[32px] md:text-[36px] lg:text-[40px] mb-4"
               style={{
                 fontFamily: 'var(--font-family-title, var(--font-family))',
                 fontWeight: 900,
@@ -119,7 +119,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
             </div>
           )}
           {(primaryCta?.label || secondaryCta?.label) && (
-            <div className="mt-8 flex flex-wrap items-center gap-4">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               {primaryCta?.label && (
                 <>
                   {primaryPath ? (

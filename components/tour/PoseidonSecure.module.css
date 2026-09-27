@@ -40,7 +40,7 @@
 }
 
 .logoText {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.5px;
@@ -55,7 +55,7 @@
 }
 
 .description {
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.7;
   color: var(--text-color, #58595b);
   margin: 0;
@@ -117,10 +117,10 @@
   }
 
   .logoText {
-    font-size: 24px;
+    font-size: 28px;
   }
 
   .description {
-    font-size: 14px;
+    font-size: 16px;
   }
 }

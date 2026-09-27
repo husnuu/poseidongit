@@ -88,7 +88,7 @@ export default function BlogSection({
         <header className="mb-8 text-center md:mb-10">
           <h2
             id="blog-section-heading"
-            className="mb-4 text-[32px] font-black uppercase leading-[1.15] sm:text-[36px] md:mb-3 md:text-[40px] lg:text-[44px]"
+            className="mb-4 text-[28px] font-black uppercase leading-[1.15] sm:text-[32px] md:mb-3 md:text-[36px] lg:text-[40px]"
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
               fontWeight: 900,

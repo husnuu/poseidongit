@@ -63,7 +63,7 @@ export default function HeroBanner({
 
   return (
     <section
-      className={`relative w-full min-h-[440px] h-[65vh] md:min-h-[520px] md:h-[72vh] overflow-hidden ${!hasImage ? 'bg-[var(--secondary)]' : ''}`}
+      className={`relative w-full min-h-[560px] h-[74vh] md:min-h-[520px] md:h-[72vh] overflow-hidden ${!hasImage ? 'bg-[var(--secondary)]' : ''}`}
       aria-label="Hero"
     >
       {/* Görsel: mobil ve desktop ayrı (responsive), Next/Image fill + priority */}
@@ -104,16 +104,17 @@ export default function HeroBanner({
 
       {/* Overlay: metin okunabilir olsun */}
       <div
-        className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-black/20"
+        className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-black/5"
         aria-hidden
       />
 
       {(hero.topBadgeText?.trim() || hero.heroBadgeEnabled) && (
         <div className="pointer-events-none absolute left-0 top-[12px] z-10 md:top-[24px]">
           <span
-            className="relative inline-flex items-center py-2 pl-5 pr-8 text-xs font-bold tracking-wide text-white backdrop-blur-sm md:py-2.5 md:pl-10 md:pr-10 md:text-sm"
+            className="relative inline-flex items-center py-2 pl-5 pr-8 text-xs tracking-wide text-white backdrop-blur-sm md:py-2.5 md:pl-10 md:pr-10 md:text-sm"
             style={{
               fontFamily: 'var(--font-family)',
+              fontWeight: 500,
               background: 'rgba(33, 104, 184, 0.72)',
               clipPath: 'polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%)',
             }}
@@ -128,23 +129,27 @@ export default function HeroBanner({
         <div className="w-full max-w-full pl-5 pr-5 py-8 sm:max-w-[min(1000px,65vw)] sm:pr-6 md:pl-10 md:pr-16 md:py-16">
           <div className="relative -translate-y-12 sm:-translate-y-8 md:translate-y-0">
             {hero.eyebrow && (
-              <p className="mb-2 text-xs font-medium uppercase tracking-widest text-white/80">
+              <p
+                className="mb-2 text-xs uppercase tracking-widest text-white/80"
+                style={{ fontWeight: 500 }}
+              >
                 {hero.eyebrow}
               </p>
             )}
             <h1
-              className="max-w-[98%] text-[40px] font-black uppercase leading-[1.2] text-white sm:text-[46px] md:text-[58px] lg:max-w-[96%] lg:text-[72px]"
+              className="max-w-[98%] text-[46px] font-black uppercase leading-[1.12] text-white sm:text-[50px] md:text-[58px] md:leading-[1.2] lg:max-w-[96%] lg:text-[72px]"
               style={{
                 fontFamily: 'var(--font-family)',
                 fontWeight: 900,
-                WebkitTextStroke: '1px currentColor',
-                textShadow: '0 6px 12px rgba(0, 0, 0, .16)',
+                WebkitTextStroke: '1.4px currentColor',
+                // Referans sitenin kendi hero gölgesi (iki katmanlı, yumuşak)
+                textShadow: '0 12px 24px rgba(0, 0, 0, .45), 0 6px 18px rgba(17, 24, 39, .25)',
                 marginBottom: '0.5em',
               }}
             >
               {line1}
               <br />
-              {line2 || '\u00A0'}
+              {line2 || ' '}
             </h1>
             {hero.subheading && (
               <p className="mt-4 max-w-[540px] text-base text-white/85 md:text-lg">
@@ -154,15 +159,15 @@ export default function HeroBanner({
           </div>
           {/* CTA: birincil gradyanlı mavi + ince beyaz parıltı kenarlığı, ikincil beyaz — mobilde tam genişlik */}
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <span className="hero-primary-btn-wrap inline-flex h-14 w-full flex-shrink-0 items-center justify-center rounded-xl sm:w-[240px]">
+            <span className="hero-primary-btn-wrap inline-flex h-14 w-full flex-shrink-0 items-center justify-center rounded-lg sm:h-16 sm:w-[260px]">
               <span className="hero-primary-glow" aria-hidden="true" />
               <Link
                 href={primaryHref}
-                className="hero-primary-inner hero-btn-shine flex h-full w-full items-center justify-center rounded-xl text-white no-underline transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+                className="hero-primary-inner hero-btn-shine flex h-full w-full items-center justify-center rounded-lg text-white no-underline transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
                 style={{
                   fontFamily: 'var(--font-family)',
                   fontWeight: 700,
-                  fontSize: '17px',
+                  fontSize: '18px',
                   textTransform: 'uppercase',
                   background: 'linear-gradient(to right, var(--primary, #2168b8) 0%, #4f8dc7 51%, var(--primary, #2168b8) 100%)',
                 }}
@@ -172,7 +177,7 @@ export default function HeroBanner({
             </span>
             <Link
               href={secondaryHref}
-              className="flex h-14 w-full items-center justify-center rounded-xl bg-white no-underline transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent sm:w-[240px]"
+              className="flex h-14 w-full items-center justify-center rounded-lg bg-white no-underline transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent sm:h-16 sm:w-[260px]"
               style={{
                 fontFamily: 'var(--font-family)',
                 fontWeight: 700,

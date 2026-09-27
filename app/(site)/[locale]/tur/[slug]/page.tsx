@@ -35,7 +35,6 @@ import type { TourForBooking } from '@/lib/sanity/bookingTypes'
 import ReviewsSection from '@/components/ReviewsSection'
 import WhereSection, { type WhereSectionData } from '@/components/tour/WhereSection'
 import TourReelsRail from '@/components/tour/TourReelsRail'
-import PoseidonSecure from '@/components/tour/PoseidonSecure'
 import JsonLd from '@/components/seo/JsonLd'
 import {
   buildBreadcrumbSchema,
@@ -700,8 +699,6 @@ export default async function TourPage({
         />
 
         <ItineraryTimeline items={itineraryTimelineItems} sectionTitle={tourUi.itineraryTitle} locale={locale} />
-
-        <PoseidonSecure locale={locale} layout="contained" />
 
         {reelsSlides.length > 0 ? (
           <TourReelsRail slides={reelsSlides} locale={locale} />

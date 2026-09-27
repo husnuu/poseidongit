@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ChevronRight, Star } from 'lucide-react'
+import { Star } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 
@@ -112,16 +112,17 @@ function GoogleMark({ size = 18 }: { size?: number }) {
 
 function StarRow({ value, size = 'sm' }: { value: number; size?: 'sm' | 'lg' }) {
   const filled = Math.max(0, Math.min(5, Math.round(value)))
-  const starClass = size === 'lg' ? 'h-7 w-7 sm:h-8 sm:w-8' : 'h-4 w-4'
-  const gapClass = size === 'lg' ? 'gap-1' : 'gap-0.5'
+  // Referanstaki üst yıldız sırası ~24px/yıldız, sıkı aralıklı
+  const starClass = size === 'lg' ? 'h-6 w-6 sm:h-[26px] sm:w-[26px]' : 'h-4 w-4'
+  const gapClass = size === 'lg' ? 'gap-0.5' : 'gap-0.5'
   return (
     <span className={`inline-flex items-center ${gapClass}`} aria-label={`${filled} / 5`}>
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
           className={starClass}
-          fill={i < filled ? '#f5a623' : 'none'}
-          stroke={i < filled ? '#f5a623' : '#d4d4d8'}
+          fill={i < filled ? '#eaaa45' : 'none'}
+          stroke={i < filled ? '#eaaa45' : '#d4d4d8'}
           strokeWidth={2}
           aria-hidden
         />
@@ -176,14 +177,15 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
   return (
     <section
       className="w-full py-16 md:py-20"
-      style={{ background: 'linear-gradient(135deg, #6ee7ca 0%, #34e0a1 100%)' }}
+      // Referans siteden birebir örneklenen yatay gradyan: solda nane yeşili, sağda turkuaz
+      style={{ background: 'linear-gradient(to right, #7afbc9 0%, #6de8e8 100%)' }}
       aria-labelledby="home-reviews-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">
-        <header className="mb-8 text-center">
+        <header className="mb-10 text-center">
           <h2
             id="home-reviews-heading"
-            className="text-[32px] font-black uppercase leading-[1.15] sm:text-[36px] md:text-[40px] lg:text-[44px]"
+            className="text-[28px] font-black uppercase leading-[1.15] sm:text-[32px] md:text-[36px] lg:text-[40px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--secondary, #131719)' }}
           >
             {HEADING[locale]}
@@ -191,7 +193,7 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
           <div className="mt-4 flex justify-center">
             <StarRow value={avgRating} size="lg" />
           </div>
-          <p className="mx-auto mt-2 max-w-2xl text-base font-normal leading-relaxed md:text-lg" style={{ color: 'var(--secondary, #131719)' }}>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-base font-normal leading-relaxed md:text-lg" style={{ color: 'var(--secondary, #131719)' }}>
             {SUBTEXT[locale](totalCount.toLocaleString(numLocale), avgRating.toFixed(1))}
           </p>
           {googleReviewsUrl && (
@@ -200,10 +202,12 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                 href={googleReviewsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border-2 bg-white px-6 py-2.5 text-sm font-bold uppercase tracking-wide shadow-sm transition hover:bg-[var(--primary)]/[0.06]"
-                style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
+                // Referans: şeffaf zemin (gradyan görünür), 2px #366deb çerçeve, aynı mavi
+                // büyük harf metin, küçük köşe yuvarlaklığı — beyaz "hap" değil.
+                className="inline-flex items-center gap-2.5 rounded-lg border-2 bg-transparent px-6 py-2.5 text-[15px] font-bold uppercase tracking-wide transition hover:bg-white/25"
+                style={{ borderColor: '#366deb', color: '#366deb' }}
               >
-                <GoogleMark />
+                <GoogleMark size={21} />
                 {GOOGLE_LABEL[locale](totalCount.toLocaleString(numLocale))}
               </a>
             </div>
@@ -225,52 +229,56 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
               return (
                 <div
                   key={review.id}
-                  className="flex w-[min(88vw,360px)] shrink-0 snap-start flex-col rounded-2xl border-l-4 p-6 shadow-sm sm:w-[320px]"
-                  style={{ borderLeftColor: 'var(--primary, #2168b8)', background: '#fdf8f0' }}
+                  // Referans: ~360px genişlik, ~400px yükseklik, krem zemin, kalın mavi sol kenar;
+                  // alıntı üst satır ile alt (isim) bloğu arasında dikeyde ortalanır.
+                  className="flex min-h-[400px] w-[78vw] max-w-[360px] shrink-0 snap-start flex-col rounded-2xl border-l-[5px] p-7 shadow-sm sm:w-[360px]"
+                  style={{ borderLeftColor: '#5384ed', background: '#fefaf1' }}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <StarRow value={review.rating} />
                     <span
-                      className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-semibold"
-                      style={{ color: 'var(--secondary, #131719)' }}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold"
+                      style={{ color: 'var(--primary, #2168b8)' }}
                     >
                       <VerifiedMark />
                       {VERIFIED_LABEL[locale]}
                     </span>
                   </div>
 
-                  <p
-                    className="mt-5 line-clamp-5 text-sm italic leading-relaxed"
-                    style={{ color: 'var(--secondary, #131719)' }}
-                  >
-                    “{shownDescription}”
-                  </p>
-
-                  {review.originalDescription && (
-                    <button
-                      type="button"
-                      onClick={() => toggleOriginal(review.id)}
-                      className="mt-2 text-xs font-medium underline decoration-dotted underline-offset-2 transition hover:opacity-70"
-                      style={{ color: 'var(--muted, #81848b)' }}
+                  <div className="flex flex-1 flex-col justify-center py-6">
+                    <p
+                      className="line-clamp-6 text-[17px] italic leading-relaxed"
+                      style={{ color: 'var(--text-color, #58595b)' }}
                     >
-                      {TRANSLATED_FROM_LABEL[locale]} · {isRevealed ? SHOW_TRANSLATION_LABEL[locale] : SHOW_ORIGINAL_LABEL[locale]}
-                    </button>
-                  )}
+                      “{shownDescription}”
+                    </p>
 
-                  <div className="mt-auto flex items-center gap-3 border-t pt-5" style={{ borderColor: 'rgba(19,23,25,0.08)' }}>
+                    {review.originalDescription && (
+                      <button
+                        type="button"
+                        onClick={() => toggleOriginal(review.id)}
+                        className="mt-2 self-start text-xs font-medium underline decoration-dotted underline-offset-2 transition hover:opacity-70"
+                        style={{ color: 'var(--muted, #81848b)' }}
+                      >
+                        {TRANSLATED_FROM_LABEL[locale]} · {isRevealed ? SHOW_TRANSLATION_LABEL[locale] : SHOW_ORIGINAL_LABEL[locale]}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="mt-auto flex items-center gap-4">
                     {review.avatarUrl ? (
                       <Image
                         src={review.avatarUrl}
                         alt={review.name}
-                        width={40}
-                        height={40}
-                        className="h-10 w-10 shrink-0 rounded-full object-cover"
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 shrink-0 rounded-full object-cover"
                         placeholder={review.avatarLqip ? 'blur' : 'empty'}
                         blurDataURL={review.avatarLqip ?? undefined}
                       />
                     ) : (
                       <span
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold"
                         style={{ background: palette.bg, color: palette.fg }}
                         aria-hidden
                       >
@@ -278,18 +286,17 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                       </span>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold uppercase tracking-wide" style={{ color: 'var(--secondary, #131719)' }}>
+                      <p className="truncate text-[17px] font-bold uppercase tracking-wide" style={{ color: 'var(--secondary, #131719)' }}>
                         {review.name}
                       </p>
                       <Link
                         href={tourHref}
-                        className="block truncate text-xs no-underline hover:underline"
+                        className="block truncate text-[13px] no-underline hover:underline"
                         style={{ color: 'var(--muted, #81848b)' }}
                       >
                         {review.tourTitle}
                       </Link>
                     </div>
-                    <ChevronRight className="h-4 w-4 shrink-0" style={{ color: 'var(--muted, #81848b)' }} aria-hidden />
                   </div>
                 </div>
               )
@@ -310,7 +317,7 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                 className="h-2 rounded-full transition-all duration-300"
                 style={{
                   width: i === activeDot ? 22 : 8,
-                  background: i === activeDot ? 'var(--primary, #2168b8)' : 'rgba(255,255,255,0.6)',
+                  background: i === activeDot ? 'rgba(19,23,25,0.55)' : 'rgba(255,255,255,0.6)',
                 }}
               />
             ))}

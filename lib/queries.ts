@@ -1414,3 +1414,18 @@ export const menuItemsQuery = `*[_type == "menuItem"] | order(category asc, titl
     alt
   }
 }`
+
+/**
+ * Footer "En Popüler Turlarımız" sütunu: ana sayfadaki popüler turlar
+ * bölümüyle AYNI seçki (Sanity'de editörün sıraladığı liste) — sadece
+ * başlık/slug/çeviri; ayrı bir veri kaynağı uydurulmuyor.
+ */
+export const footerPopularToursQuery = `*[_type == "homePage"][0]{
+  "enabled": popularToursSection.enabled,
+  "items": popularToursSection.items[]->{
+    _id,
+    title,
+    "slug": slug.current,
+    translations
+  }
+}`

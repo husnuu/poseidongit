@@ -441,7 +441,7 @@ export default function HeaderClient({
   const announcementInnerClass =
     'mx-auto flex max-w-7xl items-center justify-center gap-2.5 px-4 py-2.5 text-center sm:px-6'
   const announcementTextClass =
-    'text-sm font-medium leading-snug text-white sm:text-[15px] [&_a]:underline'
+    'text-sm leading-snug text-white sm:text-[15px] [&_a]:underline'
 
   const ctaLabel = pickCtaText(settings.cta, locale)
   const ctaHrefRaw = settings.cta?.href?.trim()
@@ -456,7 +456,9 @@ export default function HeaderClient({
       {AnnouncementIcon ? (
         <AnnouncementIcon className="h-4 w-4 shrink-0 text-white/95" strokeWidth={2} aria-hidden />
       ) : null}
-      <span className={announcementTextClass}>{announcementText}</span>
+      <span className={announcementTextClass} style={{ fontWeight: 500 }}>
+        {announcementText}
+      </span>
     </>
   )
 

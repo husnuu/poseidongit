@@ -33,9 +33,9 @@ export default function FooterLegal({ data, inline, regionAriaLabel = 'Legal and
   const content = (
     <>
       {hasText && (
-        <div className="max-w-[1000px] space-y-1 text-sm font-medium leading-7 text-white/80">
+        <div className="max-w-[1000px] space-y-1 text-sm font-medium leading-7 text-[#97a3b6]">
           {data.copyrightText && (
-            <p className="font-semibold text-white">{data.copyrightText}</p>
+            <p className="font-semibold text-[#a4a7ae]">{data.copyrightText}</p>
           )}
           {data.companyLine1 && <p>{data.companyLine1}</p>}
           {data.companyLine2 && <p>{data.companyLine2}</p>}
@@ -44,7 +44,7 @@ export default function FooterLegal({ data, inline, regionAriaLabel = 'Legal and
 
       {hasSecureLabel && (
         <p
-          className={`inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white ${hasText ? 'mt-4' : 'mt-0'}`}
+          className={`inline-flex items-center gap-2 rounded-full border border-[#20293a] bg-[#192031] px-4 py-2 text-xs font-semibold text-[#97a3b6] ${hasText ? 'mt-4' : 'mt-0'}`}
         >
           <Lock className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
           {data.secure3dLabel}
@@ -88,7 +88,7 @@ export default function FooterLegal({ data, inline, regionAriaLabel = 'Legal and
 
   return (
     <section
-      className="border-t border-white/10 bg-gradient-to-b from-[#2d3b4f] to-[#1f2a3a] py-10 md:py-12"
+      className="border-t border-[#20293a] bg-[#101729] py-10 md:py-12"
       aria-label={regionAriaLabel}
     >
       <div className="mx-auto max-w-6xl px-6">{content}</div>

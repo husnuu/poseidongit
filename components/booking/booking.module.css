@@ -3385,6 +3385,25 @@
   }
 }
 
+/* Desktop: referans siteki gibi ekranı kaplamayan, ortalanmış, ~600px genişliğinde
+   yuvarlak köşeli bir diyalog — içerik kendi içinde kayar. Mobil/tablet (< 960px)
+   tam ekran davranışı olduğu gibi kalıyor. */
+@media (min-width: 960px) {
+  .modalOverlay {
+    justify-content: center;
+    padding: 44px 16px;
+  }
+
+  .modalOverlay .wizardModalPane {
+    max-width: 600px;
+    min-height: 0;
+    max-height: calc(100dvh - 88px);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  }
+}
+
 /* ── Ekstralar (menü sayfasıyla aynı görsel dil) ── */
 .extrasList {
   display: flex;
