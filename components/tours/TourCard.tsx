@@ -101,9 +101,9 @@ export type TourListItem = {
   isPopular?: boolean | null
 }
 
-function formatPriceFrom(price: number | null | undefined): string {
+function formatPriceFrom(price: number | null | undefined, numberLocale: string): string {
   if (price == null) return ''
-  return `${price} ₺`
+  return `${price.toLocaleString(numberLocale)} ₺`
 }
 
 const PER_PERSON_LABEL: Record<SiteLocale, string> = {
@@ -140,7 +140,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
       type: 'tour',
       title: titlePlain,
       imageUrl: tour.coverImageUrl,
-      priceLabel: tour.priceFrom != null ? formatPriceFrom(tour.priceFrom) : null,
+      priceLabel: tour.priceFrom != null ? formatPriceFrom(tour.priceFrom, tourUi.numberLocale) : null,
       href: href ?? '#',
     })
   }
@@ -251,7 +251,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
     </span>
   )
 
-  const priceFormatted = tour.priceFrom != null ? formatPriceFrom(tour.priceFrom) : ''
+  const priceFormatted = tour.priceFrom != null ? formatPriceFrom(tour.priceFrom, tourUi.numberLocale) : ''
   const priceBlock =
     tour.priceFrom != null ? (
       <p className="leading-tight" aria-label={tourUi.tourCardPerPersonFrom(priceFormatted)}>
