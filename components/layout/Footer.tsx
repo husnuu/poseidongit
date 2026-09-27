@@ -476,7 +476,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-11 w-11 items-center justify-center rounded-full bg-[#192031] text-white transition-colors hover:bg-[#20293a]"
+                      className="flex h-11 w-11 items-center justify-center rounded-full bg-[#192031] text-white transition-all duration-200 hover:scale-110 hover:bg-[#20293a]"
                       aria-label={item?.platform ?? 'Social'}
                     >
                       <Icon className="h-5 w-5" />

@@ -203,9 +203,9 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                 target="_blank"
                 rel="noopener noreferrer"
                 // Referans: şeffaf zemin (gradyan görünür), 2px #366deb çerçeve, aynı mavi
-                // büyük harf metin, küçük köşe yuvarlaklığı — beyaz "hap" değil.
-                className="inline-flex items-center gap-2.5 rounded-lg border-2 bg-transparent px-6 py-2.5 text-[15px] font-bold uppercase tracking-wide transition hover:bg-white/25"
-                style={{ borderColor: '#366deb', color: '#366deb' }}
+                // büyük harf metin, küçük köşe yuvarlaklığı — beyaz "hap" değil. Üstüne
+                // gelince dolgu maviye dönüyor + hafif büyüme efekti.
+                className="inline-flex items-center gap-2.5 rounded-lg border-2 border-[#366deb] bg-transparent px-6 py-2.5 text-[15px] font-bold uppercase tracking-wide text-[#366deb] transition duration-200 hover:scale-105 hover:bg-[#366deb] hover:text-white"
               >
                 <GoogleMark size={21} />
                 {GOOGLE_LABEL[locale](totalCount.toLocaleString(numLocale))}

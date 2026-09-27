@@ -392,6 +392,33 @@
     --poseidon-secure-bg: #dff4fc;
     --about-bg: #dff4fc;
   }
+
+  /* Site geneli metin seçim (highlight) rengi: menü, telefon numaraları, footer
+     dahil her yerde fare ile metin seçildiğinde aynı mavi vurgu çıksın (referans
+     sitedeki gibi). Metnin kendi rengini koruyoruz, sadece arka planı vurguluyoruz. */
+  ::selection {
+    background-color: rgba(var(--primary-rgb, 33, 104, 184), 0.28);
+    color: inherit;
+  }
+
+  ::-moz-selection {
+    background-color: rgba(var(--primary-rgb, 33, 104, 184), 0.28);
+    color: inherit;
+  }
+}
+
+/* Sayfa ana başlıkları (İletişim, Koylar, Yardım Merkezi, Hakkımızda...) için
+   duyarlı kontur kalınlığı: aynı stroke değeri mobildeki küçük puntoda
+   masaüstündekinden orantısız kalın görünüyordu — mobilde inceltip 640px
+   üzerinde masaüstündeki kalın değere geri dönüyoruz. */
+.pageHeroTitleStroke {
+  -webkit-text-stroke: 0.65px currentColor;
+}
+
+@media (min-width: 640px) {
+  .pageHeroTitleStroke {
+    -webkit-text-stroke: 1.2px currentColor;
+  }
 }
 
 /* Site geneli (müşteri tarafı — admin/login/biletci hariç): rezervasyon sihirbazında

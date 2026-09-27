@@ -25,12 +25,29 @@ type PopularToursSectionProps = {
   locale?: SiteLocale
   /** Başlık boyutunu geçersiz kılmak için (varsayılan: ana sayfadaki büyük başlık). */
   headingClassName?: string
+  /** Başlık hizası (varsayılan: 'center', ana sayfadaki gibi). İletişim sayfasında
+      diğer bölüm başlıklarıyla tutarlı olması için 'left' kullanılıyor. */
+  headingAlign?: 'center' | 'left'
+  /** Başlık rengi (varsayılan: site mavisi). */
+  headingColor?: string
+  /** Bölümün arka plan sınıfı (varsayılan: ana sayfadaki nane yeşili). */
+  sectionBgClassName?: string
+  /** Alttaki "Tüm Turları Görüntüle" butonunu gizlemek için (İletişim sayfasında kullanılıyor). */
+  hideViewAllButton?: boolean
 }
 
 const DEFAULT_HEADING_CLASS =
   'text-[30px] font-black uppercase leading-[1.15] mb-6 sm:text-[36px] md:text-[40px] lg:text-[44px]'
 
-export default function PopularToursSection({ data, locale = 'tr', headingClassName }: PopularToursSectionProps) {
+export default function PopularToursSection({
+  data,
+  locale = 'tr',
+  headingClassName,
+  headingAlign = 'center',
+  headingColor,
+  sectionBgClassName,
+  hideViewAllButton = false,
+}: PopularToursSectionProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
@@ -71,7 +88,7 @@ export default function PopularToursSection({ data, locale = 'tr', headingClassN
     <section
       ref={sectionRef}
       // Referans: bölümün kendi açık nane zemini (rgb 234,251,247) + altta "Tüm turları görüntüle"
-      className="w-full bg-[#eafbf7] transition-all duration-300 ease-out pt-14 pb-12 md:pt-20 md:pb-16"
+      className={`w-full ${sectionBgClassName ?? 'bg-[#eafbf7]'} transition-all duration-300 ease-out pt-14 pb-12 md:pt-20 md:pb-16`}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(10px)',
@@ -79,14 +96,14 @@ export default function PopularToursSection({ data, locale = 'tr', headingClassN
       aria-labelledby="popular-tours-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">
-        <header className="mb-6 text-center md:mb-12">
+        <header className={`mb-6 md:mb-12 ${headingAlign === 'left' ? 'text-left' : 'text-center'}`}>
           <h2
             id="popular-tours-heading"
             className={headingClassName ?? DEFAULT_HEADING_CLASS}
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
               fontWeight: 900,
-              color: 'var(--primary, #2168b8)',
+              color: headingColor ?? 'var(--primary, #2168b8)',
             }}
           >
             {titleUpper}
@@ -138,15 +155,17 @@ export default function PopularToursSection({ data, locale = 'tr', headingClassN
         </div>
 
         {/* Referans siteki gibi bölümün altında çerçeveli "Tüm turları görüntüle" */}
-        <div className="mt-8 flex justify-center md:mt-12">
-          <Link
-            href={withLocalePath(locale, '/turlar')}
-            className="inline-flex h-14 w-auto min-w-[220px] items-center justify-center rounded-lg border-2 bg-transparent px-8 text-[17px] font-bold uppercase tracking-wide no-underline transition hover:bg-[var(--primary)]/[0.06] sm:h-16 sm:w-[260px] sm:px-0"
-            style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
-          >
-            {VIEW_ALL_LABEL[locale]}
-          </Link>
-        </div>
+        {!hideViewAllButton && (
+          <div className="mt-8 flex justify-center md:mt-12">
+            <Link
+              href={withLocalePath(locale, '/turlar')}
+              className="inline-flex h-14 w-auto min-w-[220px] items-center justify-center rounded-lg border-2 bg-transparent px-8 text-[17px] font-bold uppercase tracking-wide no-underline transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:h-16 sm:w-[260px] sm:px-0"
+              style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
+            >
+              {VIEW_ALL_LABEL[locale]}
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   )

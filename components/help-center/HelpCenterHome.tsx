@@ -63,11 +63,10 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
       <section className="w-full pb-8 pt-12 md:pb-10 md:pt-16">
         <div className="mx-auto max-w-3xl px-4 text-center">
           <h1
-            className="text-[32px] font-extrabold uppercase leading-[1.15] sm:text-[40px] md:text-[46px]"
+            className="text-[35px] font-extrabold uppercase leading-[1.15] sm:text-[40px] md:text-[46px] whitespace-nowrap pageHeroTitleStroke"
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
               color: 'var(--primary, #2168b8)',
-              WebkitTextStroke: '1px currentColor',
             }}
           >
             {title}
@@ -119,7 +118,7 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
               <button
                 type="button"
                 onClick={() => setActiveCategory('all')}
-                className="shrink-0 whitespace-nowrap rounded-lg border-2 px-5 py-2.5 text-sm font-bold uppercase tracking-wide transition"
+                className="shrink-0 whitespace-nowrap rounded-lg border-2 px-5 py-2.5 text-sm font-bold uppercase tracking-wide transition duration-200 hover:scale-105"
                 style={
                   activeCategory === 'all'
                     ? { background: 'var(--primary, #2168b8)', borderColor: 'var(--primary, #2168b8)', color: '#fff' }
@@ -133,7 +132,7 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
                   key={c._id}
                   type="button"
                   onClick={() => setActiveCategory(c._id)}
-                  className="shrink-0 whitespace-nowrap rounded-lg border-2 px-5 py-2.5 text-sm font-bold uppercase tracking-wide transition"
+                  className="shrink-0 whitespace-nowrap rounded-lg border-2 px-5 py-2.5 text-sm font-bold uppercase tracking-wide transition duration-200 hover:scale-105"
                   style={
                     activeCategory === c._id
                       ? { background: 'var(--primary, #2168b8)', borderColor: 'var(--primary, #2168b8)', color: '#fff' }
@@ -170,7 +169,7 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
                     className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
                   >
                     <span
-                      className="text-[15px] font-bold sm:text-base"
+                      className="text-[15px] font-semibold sm:text-base"
                       style={{ color: 'var(--secondary, #131719)' }}
                     >
                       {a.title ?? ui.articleFallbackTitle}

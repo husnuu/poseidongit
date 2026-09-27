@@ -92,7 +92,7 @@ export default function YachtRentalListSection({
                 setFilterSheetOpen(false)
                 setSortSheetOpen(true)
               }}
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full border-2 bg-white px-5 py-2.5 text-sm font-black uppercase tracking-wide shadow-sm transition hover:bg-[var(--primary)]/[0.06] sm:flex-initial"
+              className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-lg border-2 bg-white px-5 py-2.5 text-sm font-normal uppercase tracking-wide shadow-sm transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:flex-initial"
               style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
@@ -104,13 +104,13 @@ export default function YachtRentalListSection({
               </svg>
               {ui.sortButton}
               {appliedSort !== 'default' ? (
-                <span className="h-2 w-2 shrink-0 rounded-full bg-teal-600" aria-hidden />
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: 'var(--primary, #2168b8)' }} aria-hidden />
               ) : null}
             </button>
             <button
               type="button"
               onClick={openFilterSheet}
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full border-2 bg-white px-5 py-2.5 text-sm font-black uppercase tracking-wide shadow-sm transition hover:bg-[var(--primary)]/[0.06] sm:flex-initial"
+              className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-lg border-2 bg-white px-5 py-2.5 text-sm font-normal uppercase tracking-wide shadow-sm transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:flex-initial"
               style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
@@ -123,7 +123,7 @@ export default function YachtRentalListSection({
               {ui.filtersButton}
               {filterActiveCount > 0 ? (
                 <span
-                  className="flex h-6 min-w-[24px] items-center justify-center rounded-full px-1.5 text-xs font-black text-white"
+                  className="flex h-6 min-w-[24px] items-center justify-center rounded-full px-1.5 text-xs font-bold text-white"
                   style={{ background: 'var(--primary, #2168b8)' }}
                 >
                   {filterActiveCount}
