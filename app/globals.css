@@ -421,16 +421,12 @@
   }
 }
 
-/* Site geneli (müşteri tarafı — admin/login/biletci hariç): Plus Jakarta Sans,
-   DIN Next LT Pro'nun yerini aldı. Kapsam app/(site)/layout.tsx'teki
-   sarmalayıcıya uygulanıyor; böylece Header/Footer dahil her şey aynı fontu
-   kullanıp bütünlük korunuyor.
-   DIN Next LT Pro'nun tersine Plus Jakarta Sans gerçek 200-800 arası ayrı
-   ağırlıklara sahip (font-weight 500/600/700/800 hepsi görsel olarak farklı
-   kalınlıkta render oluyor) — bu yüzden DIN Next döneminde eklediğimiz
-   font-weight zorlaması ve -webkit-text-stroke telafileri artık gerekmiyor,
-   kaldırıldı. (900 ağırlık için font dosyası yok; tarayıcı en yakın 800'e
-   düşürüyor, bu da başlıklar için zaten yeterince kalın.) */
+/* Site geneli (müşteri tarafı — admin/login/biletci hariç): Plus Jakarta Sans.
+   Kapsam app/(site)/layout.tsx'teki sarmalayıcıya uygulanıyor; böylece
+   Header/Footer dahil her şey aynı fontu kullanıp bütünlük korunuyor.
+   Gerçek 200-800 arası ayrı ağırlıklara sahip — bu yüzden DIN Next döneminde
+   eklediğimiz font-weight zorlaması ve -webkit-text-stroke telafileri
+   gerekmiyor. */
 .siteFontScope {
   /* NOT: fallback kendi kendine "var(--font-family)" referansı VERMEMELİ — tarayıcı
      bunu bir cycle sayıp tüm değeri geçersiz kılıyor ve sessizce miras alınan Inter'e
