@@ -78,22 +78,6 @@ export default function RouteSection({
                 {description}
               </p>
             )}
-            {ctaButton?.label && (
-              <p className="mt-8 md:mt-10">
-                <Link
-                  href={ctaButton.href || '#'}
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg border-2 px-8 py-3 text-sm font-bold uppercase tracking-wide shadow-sm transition duration-200 outline-none ring-offset-2 hover:scale-105 hover:bg-[var(--primary)]/[0.06] focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
-                  style={{
-                    fontFamily: 'var(--font-family)',
-                    borderColor: 'var(--primary, #2168b8)',
-                    color: 'var(--primary, #2168b8)',
-                    background: '#fff',
-                  }}
-                >
-                  {ctaButton.label}
-                </Link>
-              </p>
-            )}
           </div>
 
           {/* Sağ: Foto grid - dikey kartlar tam yükseklik (row-span-2) */}
@@ -260,6 +244,23 @@ export default function RouteSection({
             </div>
           )}
         </div>
+
+        {ctaButton?.label && (
+          <p className="mt-8 text-center md:mt-10">
+            <Link
+              href={ctaButton.href || '#'}
+              className="inline-flex min-h-[48px] items-center justify-center rounded-lg border-2 px-8 py-3 text-sm font-bold uppercase tracking-wide shadow-sm transition duration-200 outline-none ring-offset-2 hover:scale-105 hover:bg-[var(--primary)]/[0.06] focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+              style={{
+                fontFamily: 'var(--font-family)',
+                borderColor: 'var(--primary, #2168b8)',
+                color: 'var(--primary, #2168b8)',
+                background: '#fff',
+              }}
+            >
+              {ctaButton.label}
+            </Link>
+          </p>
+        )}
       </div>
     </section>
   )
