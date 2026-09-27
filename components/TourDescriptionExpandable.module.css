@@ -69,8 +69,8 @@
 .content {
   font-family: var(--font-family), sans-serif;
   font-weight: 400;
-  font-size: 16px;
-  line-height: 24px;
+  font-size: 17px;
+  line-height: 26px;
   color: var(--secondary, #000);
   box-sizing: border-box;
 }
@@ -121,7 +121,7 @@
   margin: 4px 0 18px;
   font-family: var(--font-family), sans-serif;
   font-weight: 400;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.75;
   color: var(--text-color, #58595b);
   flex: 1;
@@ -331,12 +331,12 @@
   }
 
   .content {
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1.7;
   }
 
   .paragraphRow {
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.7;
     margin-bottom: 10px;
   }

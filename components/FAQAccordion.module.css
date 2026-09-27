@@ -62,7 +62,7 @@
 .accordionItemTitle {
   font-family: var(--font-family), sans-serif;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.4;
   color: var(--secondary, #131719);
 }
@@ -87,7 +87,7 @@
   margin: 0;
   font-family: var(--font-family), sans-serif;
   font-weight: 400;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.65;
   color: var(--text-color, #58595b);
 }
@@ -233,7 +233,7 @@
   }
 
   .accordionItemTitle {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .accordionItemContent {
@@ -241,7 +241,7 @@
   }
 
   .accordionItemParagraph {
-    font-size: 14px;
+    font-size: 15px;
     word-break: break-word;
   }
 

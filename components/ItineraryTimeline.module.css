@@ -126,7 +126,7 @@
 .itemTitle {
   font-family: var(--font-family), sans-serif;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.5;
   color: var(--secondary, #131719);
   margin: 0 0 6px;
@@ -136,7 +136,7 @@
 .itemDesc {
   font-family: var(--font-family), sans-serif;
   font-weight: 400;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.75;
   color: var(--text-color, #58595b);
   margin: 0;
@@ -184,13 +184,13 @@
   }
 
   .itemTitle {
-    font-size: 14px !important;
+    font-size: 16px !important;
     line-height: 1.5 !important;
     margin: 0 0 5px !important;
   }
 
   .itemDesc {
-    font-size: 14px !important;
+    font-size: 15px !important;
     line-height: 1.75 !important;
     word-break: break-word;
   }

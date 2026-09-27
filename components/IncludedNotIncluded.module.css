@@ -70,7 +70,7 @@
 
 .text {
   font-family: var(--font-family), sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.55;
   color: #1e293b;
   font-weight: 400;
@@ -102,6 +102,6 @@
   }
 
   .text {
-    font-size: 15px;
+    font-size: 16px;
   }
 }
