@@ -163,9 +163,9 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
           aria-label={`${reviewsLine} — ${tourUi.tourCardGoogleReviewsTitle}`}
         >
           <StarIcon className="h-4 w-4 text-[#f5a623]" />
-          {rating > 0 && <span className="text-[15px] font-bold text-[#131719]">{rating.toFixed(1)}</span>}
+          {rating > 0 && <span className="text-[14px] font-bold text-[#131719]">{rating.toFixed(1)}</span>}
           {tour.reviewCount != null && tour.reviewCount > 0 && (
-            <span className="text-[13px] font-medium" style={{ color: ICON_MUTED }}>
+            <span className="text-[12px] font-medium" style={{ color: ICON_MUTED }}>
               ({tour.reviewCount})
             </span>
           )}
@@ -173,9 +173,9 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
       ) : (
         <span className="mt-0.5 flex shrink-0 items-center gap-1">
           <StarIcon className="h-4 w-4 text-[#f5a623]" />
-          {rating > 0 && <span className="text-[15px] font-bold text-[#131719]">{rating.toFixed(1)}</span>}
+          {rating > 0 && <span className="text-[14px] font-bold text-[#131719]">{rating.toFixed(1)}</span>}
           {tour.reviewCount != null && tour.reviewCount > 0 && (
-            <span className="text-[13px] font-medium" style={{ color: ICON_MUTED }}>
+            <span className="text-[12px] font-medium" style={{ color: ICON_MUTED }}>
               ({tour.reviewCount})
             </span>
           )}
@@ -201,7 +201,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
       )}
       {tour.isPopular && (
         <div
-          className="absolute left-3 top-3 z-10 rounded-md px-3 py-1 text-[12px] font-bold uppercase tracking-wide text-[#1a1a1a] shadow-sm"
+          className="absolute left-3 top-3 z-10 rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[#1a1a1a] shadow-sm"
           style={{ background: '#ffc736' }}
         >
           {tourUi.tourCardPopularBadge}
@@ -220,9 +220,9 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
   )
 
   const metaRows = (tour.departureLabel || tour.durationLabel) && (
-    <div className="mt-3 space-y-2">
+    <div className="mt-2.5 space-y-1.5">
       {tour.durationLabel && (
-        <div className={`${styles.metaRow} flex items-center gap-2 text-[15px] leading-snug`} style={{ color: ICON_MUTED }}>
+        <div className={`${styles.metaRow} flex items-center gap-2 text-[14px] leading-snug`} style={{ color: ICON_MUTED }}>
           <ClockIcon className="size-4 shrink-0" />
           <span>
             {tourUi.tourCardDurationPrefix}
@@ -231,7 +231,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
         </div>
       )}
       {tour.departureLabel && (
-        <div className={`${styles.metaRow} flex items-center gap-2 text-[15px] leading-snug`} style={{ color: ICON_MUTED }}>
+        <div className={`${styles.metaRow} flex items-center gap-2 text-[14px] leading-snug`} style={{ color: ICON_MUTED }}>
           <PinIcon className="size-4 shrink-0" />
           <span>
             {tourUi.tourCardDeparturePrefix}
@@ -244,7 +244,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
 
   const ctaInner = (
     <span
-      className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-5 py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white transition hover:brightness-110 sm:text-[15px]"
+      className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-center text-[13px] font-bold uppercase tracking-wide text-white transition hover:brightness-110 sm:text-[14px]"
       style={{ background: 'var(--primary, #2168b8)' }}
     >
       {tourUi.tourCardViewTour}
@@ -255,10 +255,10 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
   const priceBlock =
     tour.priceFrom != null ? (
       <p className="leading-tight" aria-label={tourUi.tourCardPerPersonFrom(priceFormatted)}>
-        <span className="block whitespace-nowrap text-[26px] font-extrabold tabular-nums tracking-tight text-[#131719] sm:text-[32px]">
+        <span className="block whitespace-nowrap text-[24px] font-extrabold tabular-nums tracking-tight text-[#131719] sm:text-[28px]">
           {priceFormatted}
         </span>
-        <span className="mt-0.5 block text-[12px] font-semibold uppercase tracking-wide" style={{ color: ICON_MUTED }}>
+        <span className="mt-0.5 block text-[11px] font-semibold uppercase tracking-wide" style={{ color: ICON_MUTED }}>
           {PER_PERSON_LABEL[locale]}
         </span>
       </p>
@@ -284,7 +284,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
             <div className="px-5 pt-5 sm:px-6">
               {titleRow}
               {tour.shortDescription && (
-                <p className={`${styles.description} mt-1.5 line-clamp-2 text-[15px] leading-relaxed text-zinc-500`}>
+                <p className={`${styles.description} mt-1.5 line-clamp-2 text-[14px] leading-relaxed text-zinc-500`}>
                   {tour.shortDescription}
                 </p>
               )}
@@ -310,7 +310,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
             <div className="px-5 pt-5 sm:px-6">
               {titleRow}
               {tour.shortDescription && (
-                <p className={`${styles.description} mt-1.5 line-clamp-2 text-[15px] leading-relaxed text-zinc-500`}>
+                <p className={`${styles.description} mt-1.5 line-clamp-2 text-[14px] leading-relaxed text-zinc-500`}>
                   {tour.shortDescription}
                 </p>
               )}

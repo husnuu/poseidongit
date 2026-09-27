@@ -28,7 +28,7 @@ type PopularToursSectionProps = {
 }
 
 const DEFAULT_HEADING_CLASS =
-  'text-[32px] font-black uppercase leading-[1.15] mb-6 sm:text-[38px] md:text-[42px] lg:text-[46px]'
+  'text-[30px] font-black uppercase leading-[1.15] mb-6 sm:text-[36px] md:text-[40px] lg:text-[44px]'
 
 export default function PopularToursSection({ data, locale = 'tr', headingClassName }: PopularToursSectionProps) {
   const sectionRef = useRef<HTMLElement>(null)

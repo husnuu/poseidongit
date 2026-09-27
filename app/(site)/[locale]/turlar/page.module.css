@@ -5,7 +5,8 @@
   line-height: 1.15;
   text-transform: uppercase;
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.875rem;
+  -webkit-text-stroke: 1.1px currentColor;
   display: flex;
   flex-direction: column;
   gap: 0.1em;
