@@ -10,8 +10,8 @@
 .faqTitleSection {
   font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-weight: 800;
-  font-size: 20px;
-  -webkit-text-stroke: 0.85px currentColor;
+  font-size: 17px;
+  -webkit-text-stroke: 0.5px currentColor;
   line-height: 1.25;
   text-transform: uppercase;
   color: var(--secondary, #131719);
@@ -23,7 +23,7 @@
 @media (min-width: 640px) {
   .faqTitle,
   .faqTitleSection {
-    font-size: 24px;
+    font-size: 21px;
   }
 }
 
@@ -62,7 +62,7 @@
 .accordionItemTitle {
   font-family: var(--font-family), sans-serif;
   font-weight: 700;
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.4;
   color: var(--secondary, #131719);
 }
@@ -87,8 +87,8 @@
   margin: 0;
   font-family: var(--font-family), sans-serif;
   font-weight: 400;
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--text-color, #58595b);
 }
 
@@ -233,7 +233,7 @@
   }
 
   .accordionItemTitle {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .accordionItemContent {
@@ -241,7 +241,7 @@
   }
 
   .accordionItemParagraph {
-    font-size: 15px;
+    font-size: 13px;
     word-break: break-word;
   }
 

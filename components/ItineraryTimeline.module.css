@@ -6,8 +6,8 @@
 .sectionTitle {
   font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-weight: 800;
-  font-size: 19px;
-  -webkit-text-stroke: 0.85px currentColor;
+  font-size: 17px;
+  -webkit-text-stroke: 0.5px currentColor;
   line-height: 1.25;
   text-transform: uppercase;
   color: var(--secondary, #131719);
@@ -16,7 +16,7 @@
 
 @media (min-width: 640px) {
   .sectionTitle {
-    font-size: 24px;
+    font-size: 21px;
   }
 }
 
@@ -126,7 +126,7 @@
 .itemTitle {
   font-family: var(--font-family), sans-serif;
   font-weight: 700;
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.5;
   color: var(--secondary, #131719);
   margin: 0 0 6px;
@@ -136,8 +136,8 @@
 .itemDesc {
   font-family: var(--font-family), sans-serif;
   font-weight: 400;
-  font-size: 16px;
-  line-height: 1.75;
+  font-size: 14px;
+  line-height: 1.7;
   color: var(--text-color, #58595b);
   margin: 0;
 }
@@ -151,7 +151,7 @@
   }
 
   .sectionTitle {
-    font-size: 20px !important;
+    font-size: 18px !important;
     line-height: 1.4 !important;
     margin-bottom: 28px !important;
   }
@@ -184,14 +184,14 @@
   }
 
   .itemTitle {
-    font-size: 16px !important;
+    font-size: 14px !important;
     line-height: 1.5 !important;
     margin: 0 0 5px !important;
   }
 
   .itemDesc {
-    font-size: 15px !important;
-    line-height: 1.75 !important;
+    font-size: 13px !important;
+    line-height: 1.7 !important;
     word-break: break-word;
   }
 

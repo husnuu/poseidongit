@@ -37,7 +37,7 @@ type PopularToursSectionProps = {
 }
 
 const DEFAULT_HEADING_CLASS =
-  'text-[30px] font-black uppercase leading-[1.15] mb-6 sm:text-[36px] md:text-[40px] lg:text-[44px]'
+  'text-[26px] font-black uppercase leading-[1.15] mb-6 sm:text-[30px] md:text-[34px] lg:text-[37px]'
 
 export default function PopularToursSection({
   data,
@@ -159,7 +159,7 @@ export default function PopularToursSection({
           <div className="mt-8 flex justify-center md:mt-12">
             <Link
               href={withLocalePath(locale, '/turlar')}
-              className="inline-flex h-14 w-auto min-w-[220px] items-center justify-center rounded-lg border-2 bg-transparent px-8 text-[17px] font-bold uppercase tracking-wide no-underline transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:h-16 sm:w-[260px] sm:px-0"
+              className="inline-flex h-11 w-auto min-w-[180px] items-center justify-center rounded-lg border-2 bg-transparent px-6 text-[13px] font-bold uppercase tracking-wide no-underline transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:h-12 sm:w-[210px] sm:px-0"
               style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
             >
               {VIEW_ALL_LABEL[locale]}

@@ -44,12 +44,12 @@ export default function OtherToursSection({ items, locale = 'tr' }: OtherToursSe
     >
       <h2
         id="other-tours-heading"
-        className="mb-6 text-[19px] font-extrabold uppercase leading-[1.25] sm:mb-10 sm:text-[24px]"
+        className="mb-6 text-[17px] font-extrabold uppercase leading-[1.25] sm:mb-10 sm:text-[21px]"
         style={{
           fontFamily: 'var(--font-family-title, var(--font-family))',
           fontWeight: 800,
           color: 'var(--secondary, #131719)',
-          WebkitTextStroke: '0.85px currentColor',
+          WebkitTextStroke: '0.5px currentColor',
         }}
       >
         {HEADING[locale]}

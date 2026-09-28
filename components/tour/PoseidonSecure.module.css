@@ -37,14 +37,16 @@
 .shieldIcon {
   color: var(--primary, #2168b8);
   flex-shrink: 0;
+  width: 29px;
+  height: 29px;
 }
 
 .logoText {
-  font-size: 32px;
+  font-size: 29px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.5px;
-  -webkit-text-stroke: 0.6px currentColor;
+  -webkit-text-stroke: 0.45px currentColor;
 }
 
 .logoBold {
@@ -57,7 +59,7 @@
 
 .description {
   font-size: 17px;
-  line-height: 1.7;
+  line-height: 1.6;
   color: var(--text-color, #58595b);
   margin: 0;
 }
@@ -117,11 +119,18 @@
     border-radius: 10px;
   }
 
+  .shieldIcon {
+    width: 19px;
+    height: 19px;
+  }
+
   .logoText {
-    font-size: 28px;
+    font-size: 19px;
+    -webkit-text-stroke: 0.25px currentColor;
   }
 
   .description {
-    font-size: 16px;
+    font-size: 13px;
+    line-height: 1.55;
   }
 }

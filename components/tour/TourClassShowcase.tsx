@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
+import { Check } from 'lucide-react'
 import { urlFor } from '@/lib/sanity'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
@@ -303,7 +304,7 @@ export default function TourClassShowcase({ classes, locale, defaultKey, heading
                     .filter(Boolean)
                     .map((bullet, idx) => (
                       <li key={idx} className={styles.bulletItem}>
-                        <span className={styles.bulletDot} aria-hidden />
+                        <Check className={styles.bulletCheck} strokeWidth={2.5} aria-hidden />
                         <span>{bullet}</span>
                       </li>
                     ))}

@@ -1,0 +1,21 @@
+/* Tur listesi kartıyla (TourCard) aynı font yığını — site genelinde tutarlılık için. */
+.title {
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-weight: 700;
+  -webkit-text-stroke: 0.3px currentColor;
+  line-height: 1.3;
+  color: var(--secondary, #131719);
+  margin: 0;
+  font-size: 1rem;
+}
+
+@media (min-width: 640px) {
+  .title {
+    font-size: 1.0625rem;
+  }
+}
+
+.description,
+.metaRow {
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+}

@@ -137,11 +137,11 @@ export default function HeroBanner({
               </p>
             )}
             <h1
-              className="max-w-[98%] text-[46px] font-black uppercase leading-[1.12] text-white [text-shadow:none] sm:text-[50px] md:text-[58px] md:leading-[1.2] md:[text-shadow:0_12px_24px_rgba(0,0,0,0.45),0_6px_18px_rgba(17,24,39,0.25)] lg:max-w-[96%] lg:text-[72px]"
+              className="max-w-[98%] text-[40px] font-black uppercase leading-[1.12] text-white [text-shadow:none] sm:text-[44px] md:text-[50px] md:leading-[1.2] md:[text-shadow:0_12px_24px_rgba(0,0,0,0.45),0_6px_18px_rgba(17,24,39,0.25)] lg:max-w-[96%] lg:text-[62px]"
               style={{
                 fontFamily: 'var(--font-family)',
                 fontWeight: 900,
-                WebkitTextStroke: '1.7px currentColor',
+                WebkitTextStroke: '0.6px currentColor',
                 // Gölge className'de: mobilde YOK (telefonda koyu hale/leke yapıyordu —
                 // yazı bembeyaz kalsın), md+ 'da referans sitenin yumuşak gölgesi.
                 marginBottom: '0.5em',

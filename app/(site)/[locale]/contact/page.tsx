@@ -19,7 +19,7 @@ import { getContactPageUiStrings, mergeContactUiFromSanity } from '@/lib/i18n/st
 export const dynamic = 'force-dynamic'
 
 const CONTACT_HEADING_CLASS =
-  'text-[35px] font-extrabold uppercase leading-[1.15] mb-6 sm:text-[36px] md:text-[40px] lg:text-[44px]'
+  'text-[29px] font-extrabold uppercase leading-[1.15] mb-6 sm:text-[31px] md:text-[35px] lg:text-[39px]'
 
 // Ana başlık (İletişim) dışındaki bölüm başlıkları (Konum, Popüler Turlar) için
 // daha ölçülü bir boyut — referans sitedeki alt başlık stiline uygun.

@@ -55,6 +55,10 @@ export default defineConfig({
               .title('Tekne menüsü')
               .id('menuItem-list')
               .child(S.documentTypeList('menuItem').title('Menü ürünleri')),
+            S.listItem()
+              .title('Feribot Hatları')
+              .id('ferryRoute-list')
+              .child(S.documentTypeList('ferryRoute').title('Feribot Hatları')),
             ...S.documentTypeListItems().filter(
               (item) =>
                 ![
@@ -68,6 +72,7 @@ export default defineConfig({
                   'helpCategory',
                   'helpArticle',
                   'menuItem',
+                  'ferryRoute',
                 ].includes(item.getId() ?? '')
             ),
           ]),

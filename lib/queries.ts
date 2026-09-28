@@ -1449,3 +1449,64 @@ export const otherToursForTourPageQuery = `*[_type == "tour" && slug.current != 
   mainImage{ asset, alt },
   translations
 }`
+
+/** Feribot hattı detay sayfası (örn. /feribot/cesme-sakiz) */
+export const ferryRouteQuery = `*[_type == "ferryRoute" && slug.current == $slug][0]{
+  _id,
+  title,
+  cardDescription,
+  "slug": slug.current,
+  isActive,
+  seo,
+  mainImage{
+    asset,
+    "url": asset->url,
+    "metadata": asset->metadata { lqip, dimensions }
+  },
+  gallery[]{
+    asset,
+    "url": asset->url,
+    "metadata": asset->metadata { lqip, dimensions },
+    alt
+  },
+  durationLabel,
+  routeLabel,
+  departurePort,
+  arrivalPort,
+  currency,
+  ageTiers,
+  cashNote,
+  extraFees,
+  bookingBullets,
+  ctaButtonLabel,
+  whatsappMessage,
+  aboutTitle,
+  aboutBody,
+  video,
+  knowBeforeYouGoTitle,
+  knowBeforeYouGo,
+  included,
+  notIncluded,
+  faqs,
+  translations
+}`
+
+/** Feribot biletleri listeleme sayfası (/feribot) — tüm yayındaki hatlar, kart görünümü için. */
+export const ferryRoutesListQuery = `*[_type == "ferryRoute" && isActive != false] | order(order asc, title asc){
+  _id,
+  title,
+  cardDescription,
+  "slug": slug.current,
+  mainImage{
+    asset,
+    "url": asset->url,
+    "metadata": asset->metadata { lqip, dimensions }
+  },
+  durationLabel,
+  routeLabel,
+  departurePort,
+  arrivalPort,
+  currency,
+  ageTiers,
+  translations
+}`

@@ -696,9 +696,22 @@ type HomeReviewsTourRow = {
   } | null
 }
 
-/** Tüm turlardaki yorumları tek listede toplar (anasayfa "Misafirlerimizin Kaleminden" bölümü). */
-function flattenHomeReviews(rows: HomeReviewsTourRow[] | null | undefined): HomeReviewsSectionData | null {
+/** Tüm turlardaki yorumları tek listede toplar (anasayfa "Misafirlerimizin Kaleminden" bölümü).
+ * İlk sırada gösterilen yorumlar en popüler tur(lar)dan gelsin diye, satırlar önce
+ * "En Popüler Turlarımız" sıralamasına göre (1. sıradaki tur en önde), kalanlar ise
+ * kendi orijinal sırasında dizilir. */
+function flattenHomeReviews(
+  rows: HomeReviewsTourRow[] | null | undefined,
+  popularOrder: string[] = [],
+): HomeReviewsSectionData | null {
   if (!rows || rows.length === 0) return null
+
+  const popularIndex = new Map(popularOrder.map((id, i) => [id, i]))
+  const sortedRows = [...rows].sort((a, b) => {
+    const ai = popularIndex.has(a._id) ? popularIndex.get(a._id)! : Infinity
+    const bi = popularIndex.has(b._id) ? popularIndex.get(b._id)! : Infinity
+    return ai - bi
+  })
 
   const items: HomeReviewItem[] = []
   let ratingSum = 0
@@ -706,7 +719,7 @@ function flattenHomeReviews(rows: HomeReviewsTourRow[] | null | undefined): Home
   let totalCount = 0
   let googleReviewsUrl: string | null = null
 
-  for (const row of rows) {
+  for (const row of sortedRows) {
     if (!row.slug || !row.title) continue
     if (!googleReviewsUrl && row.reviewsUrl) googleReviewsUrl = row.reviewsUrl
     if (typeof row.reviewsSection?.reviewCount === 'number') totalCount += row.reviewsSection.reviewCount
@@ -890,7 +903,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   let homeReviews: HomeReviewsSectionData | null = null
   try {
     const reviewRows = await client.fetch<HomeReviewsTourRow[]>(homeReviewsQuery, {}, { useCdn: false })
-    const flattened = flattenHomeReviews(reviewRows)
+    const popularOrder = (popularToursSection?.items ?? []).map((t) => t._id).filter(Boolean)
+    const flattened = flattenHomeReviews(reviewRows, popularOrder)
     if (flattened && locale !== 'tr') {
       const items = await Promise.all(
         flattened.items.map(async (it) => {

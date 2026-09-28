@@ -22,7 +22,7 @@ export default function PoseidonSecure({
       <div className={shellClass}>
         <div className={innerClass}>
           <div className={styles.logoRow}>
-            <ShieldCheck size={32} strokeWidth={2} className={styles.shieldIcon} aria-hidden />
+            <ShieldCheck size={19} strokeWidth={2} className={styles.shieldIcon} aria-hidden />
             <span className={styles.logoText}>
               <span className={styles.logoBold}>Poseidon</span>
               <span className={styles.logoAccent}>Secure</span>

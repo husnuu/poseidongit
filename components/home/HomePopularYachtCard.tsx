@@ -132,7 +132,7 @@ export default function HomePopularYachtCard({
         <span className="block text-[11px] font-semibold uppercase tracking-wide" style={{ color: ICON_MUTED }}>
           {FROM_LABEL[locale]}
         </span>
-        <span className="block whitespace-nowrap text-xl font-extrabold tabular-nums tracking-tight text-[#131719] sm:text-2xl">
+        <span className="block whitespace-nowrap text-lg font-extrabold tabular-nums tracking-tight text-[#131719] sm:text-xl">
           {yacht.priceFrom.toLocaleString('tr-TR')} ₺
         </span>
         <span className="mt-0.5 block text-[11px] font-semibold uppercase tracking-wide" style={{ color: ICON_MUTED }}>
@@ -144,7 +144,7 @@ export default function HomePopularYachtCard({
         <span className="block text-[11px] font-semibold uppercase tracking-wide" style={{ color: ICON_MUTED }}>
           {OVERNIGHT_LABEL[locale]}
         </span>
-        <span className="block whitespace-nowrap text-xl font-extrabold tabular-nums tracking-tight text-[#131719] sm:text-2xl">
+        <span className="block whitespace-nowrap text-lg font-extrabold tabular-nums tracking-tight text-[#131719] sm:text-xl">
           {overnightLine}
         </span>
       </p>

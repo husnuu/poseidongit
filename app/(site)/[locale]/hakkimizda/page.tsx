@@ -283,7 +283,7 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
             <>
               {data.titleTop?.trim() && (
                 <h1
-                  className="text-[35px] font-extrabold uppercase leading-[1.15] sm:text-[40px] md:text-[46px] whitespace-nowrap pageHeroTitleStroke"
+                  className="text-[29px] font-extrabold uppercase leading-[1.15] sm:text-[33px] md:text-[37px] whitespace-nowrap pageHeroTitleStroke"
                   style={{
                     fontFamily: 'var(--font-family-title, var(--font-family))',
                     color: 'var(--primary, #2168b8)',

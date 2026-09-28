@@ -10,6 +10,8 @@ import contactPageLocaleOverlay from './contactPageLocaleOverlay'
 import cove from './cove'
 import coveTranslation from './coveTranslation'
 import faqPage from './faqPage'
+import ferryRoute from './ferryRoute'
+import ferryRouteTranslation from './ferryRouteTranslation'
 import helpArticle from './helpArticle'
 import helpArticleTranslation from './helpArticleTranslation'
 import helpAudience from './helpAudience'
@@ -50,6 +52,8 @@ export const schemaTypes = [
   covesPage,
   covesPageLocaleOverlay,
   faqPage,
+  ferryRoute,
+  ferryRouteTranslation,
   helpArticleTranslation,
   helpArticle,
   helpAudience,

@@ -129,7 +129,14 @@
   gap: 32px;
 }
 
+.desktopNavList > li {
+  position: relative;
+}
+
 .desktopNavLink {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 4px;
   font-family: var(--font-family), 'Inter', system-ui, -apple-system, sans-serif;
   font-weight: 700;
   -webkit-text-stroke: 0.4px currentColor;
@@ -139,12 +146,40 @@
   color: var(--primary, #2168b8);
   text-decoration: none;
   letter-spacing: 0.5px;
-  transition: opacity 0.2s ease, text-decoration 0.2s ease;
+  transition: opacity 0.2s ease;
+}
+
+/* Aktif/üzerine gelinen menüde belirgin alt çizgi — referans site ile birebir. */
+.desktopNavLink::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--primary, #2168b8);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.2s ease;
 }
 
 .desktopNavLink:hover {
-  opacity: 0.8;
-  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.desktopNavLink:hover::after,
+.desktopNavLinkActive::after {
+  transform: scaleX(1);
+}
+
+/* Menü ile dil seçici arasında ince dikey ayraç — referans site ile birebir. */
+.headerDivider {
+  display: block;
+  width: 1px;
+  height: 24px;
+  flex-shrink: 0;
+  background: rgba(19, 23, 25, 0.14);
 }
 
 .headerCtaWrap {
@@ -880,6 +915,10 @@
   }
 
   .desktopNav {
+    display: none;
+  }
+
+  .headerDivider {
     display: none;
   }
 

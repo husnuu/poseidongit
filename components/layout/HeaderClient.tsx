@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -370,6 +370,40 @@ function isMailtoOrTel(href: string): boolean {
   return /^mailto:|^tel:/i.test(href)
 }
 
+/** /en/foo, /de/foo, /tr/foo → /foo (ve sondaki "/" kırpılır). */
+function normalizeNavPath(path: string): string {
+  let p = path.trim()
+  if (!p.startsWith('/')) return p.toLowerCase()
+  for (const pref of ['/en', '/de', '/tr'] as const) {
+    if (p === pref) {
+      p = '/'
+      break
+    }
+    if (p.startsWith(`${pref}/`)) {
+      p = p.slice(pref.length) || '/'
+      break
+    }
+  }
+  p = p.split('?')[0] ?? p
+  if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1)
+  return p.toLowerCase()
+}
+
+/** Detay sayfalarının (örn. /tur/[slug]) tekil kök segmenti, listeleme sayfasının
+    (/turlar) çoğul segmentinden farklı olduğu tek durum — menüde aktif göstermek için. */
+const NAV_ROOT_ALIASES: Record<string, string> = { '/tur': '/turlar' }
+
+/** Geçerli sayfa bu menü öğesine mi ait? (tam eşleşme veya alt sayfa — /feribot/xyz → /feribot gibi) */
+function isNavItemActive(currentPath: string, itemHref: string): boolean {
+  if (isExternalHttpUrl(itemHref) || isMailtoOrTel(itemHref)) return false
+  const current = normalizeNavPath(currentPath)
+  const item = normalizeNavPath(itemHref)
+  if (item === '/') return current === '/'
+  if (current === item || current.startsWith(`${item}/`)) return true
+  const currentRoot = `/${current.split('/')[1] ?? ''}`
+  return NAV_ROOT_ALIASES[currentRoot] === item
+}
+
 export default function HeaderClient({
   locale,
   settings,
@@ -383,6 +417,7 @@ export default function HeaderClient({
   const announcementRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLElement>(null)
   const aria = headerAria(locale)
+  const pathname = usePathname()
   const { items: wishlistItems, remove: removeFromWishlist } = useWishlist()
 
   const announcementText =
@@ -524,13 +559,20 @@ export default function HeaderClient({
           <div className={styles.headerRight}>
             <nav className={styles.desktopNav} aria-label={aria.mainNav}>
               <ul className={styles.desktopNavList}>
-                {(settings.headerNav || []).map((item, i) => (
-                  <li key={i}>
-                    <Link href={localizeNavHref(locale, item.href)} className={styles.desktopNavLink}>
-                      {pickNavLabel(item, locale)}
-                    </Link>
-                  </li>
-                ))}
+                {(settings.headerNav || []).map((item, i) => {
+                  const active = isNavItemActive(pathname ?? '/', item.href)
+                  return (
+                    <li key={i}>
+                      <Link
+                        href={localizeNavHref(locale, item.href)}
+                        className={`${styles.desktopNavLink} ${active ? styles.desktopNavLinkActive : ''}`}
+                        aria-current={active ? 'page' : undefined}
+                      >
+                        {pickNavLabel(item, locale)}
+                      </Link>
+                    </li>
+                  )
+                })}
               </ul>
             </nav>
             {showCta && ctaHref && (
@@ -540,6 +582,7 @@ export default function HeaderClient({
                 </Link>
               </div>
             )}
+            <span className={styles.headerDivider} aria-hidden="true" />
             <LanguageDropdown
               locale={locale}
               ariaLabel={aria.selectLanguage}

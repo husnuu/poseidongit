@@ -185,7 +185,7 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
         <header className="mb-10 text-center">
           <h2
             id="home-reviews-heading"
-            className="text-[26px] font-black uppercase leading-[1.15] sm:text-[30px] md:text-[34px] lg:text-[38px]"
+            className="text-[24px] font-black uppercase leading-[1.15] sm:text-[27px] md:text-[30px] lg:text-[33px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--secondary, #131719)' }}
           >
             {HEADING[locale]}

@@ -19,8 +19,8 @@
 .title {
   font-family: var(--font-family-title), var(--font-family), sans-serif;
   font-weight: 900;
-  font-size: 22px;
-  -webkit-text-stroke: 0.6px currentColor;
+  font-size: 19px;
+  -webkit-text-stroke: 0.35px currentColor;
   line-height: 1.3;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -46,9 +46,9 @@
 }
 
 .priceValue {
-  font-size: 36px;
+  font-size: 30px;
   font-weight: 800;
-  -webkit-text-stroke: 0.7px currentColor;
+  -webkit-text-stroke: 0.4px currentColor;
   line-height: 1.15;
   color: var(--secondary, #131719);
   letter-spacing: -0.5px;

@@ -39,7 +39,7 @@
   line-height: 1.2;
   text-transform: uppercase;
   margin: 0 0 1.5rem;
-  font-size: 1.5rem;
+  font-size: 1.625rem;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -51,20 +51,20 @@
 
 @media (min-width: 640px) {
   .heroH1 {
-    font-size: 2.25rem;
-    -webkit-text-stroke: 1.2px currentColor;
+    font-size: 1.875rem;
+    -webkit-text-stroke: 0.95px currentColor;
   }
 }
 
 @media (min-width: 768px) {
   .heroH1 {
-    font-size: 2.5rem;
+    font-size: 2.125rem;
   }
 }
 
 @media (min-width: 1024px) {
   .heroH1 {
-    font-size: 2.75rem;
+    font-size: 2.375rem;
   }
 }
 

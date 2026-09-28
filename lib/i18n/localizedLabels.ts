@@ -208,6 +208,7 @@ export function exploreLinksFallback(
   const m: Record<SiteLocale, Array<{ label: string; href: string; openInNewTab?: boolean }>> = {
     tr: [
       { label: 'Turlar', href: '/turlar' },
+      { label: 'Yatlar', href: '/yat-kiralama' },
       { label: 'Koylar', href: '/koylar' },
       { label: 'Hakkımızda', href: '/hakkimizda' },
       { label: 'Blog', href: '/blog' },
@@ -215,6 +216,7 @@ export function exploreLinksFallback(
     ],
     en: [
       { label: 'Tours', href: '/turlar' },
+      { label: 'Yachts', href: '/yat-kiralama' },
       { label: 'Bays', href: '/koylar' },
       { label: 'About us', href: '/hakkimizda' },
       { label: 'Blog', href: '/blog' },
@@ -222,6 +224,7 @@ export function exploreLinksFallback(
     ],
     de: [
       { label: 'Touren', href: '/turlar' },
+      { label: 'Yachten', href: '/yat-kiralama' },
       { label: 'Buchten', href: '/koylar' },
       { label: 'Über uns', href: '/hakkimizda' },
       { label: 'Blog', href: '/blog' },

@@ -1,0 +1,58 @@
+/* /turlar listeleme sayfasıyla aynı başlık deseni: tek satır, tek renk (primary). */
+.heading {
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-weight: 900;
+  line-height: 1.15;
+  text-transform: uppercase;
+  margin: 0;
+  font-size: 1.5rem;
+  -webkit-text-stroke: 1px currentColor;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  justify-content: center;
+  white-space: nowrap;
+  gap: 0.3em;
+  letter-spacing: 0;
+}
+
+@media (min-width: 640px) {
+  .heading {
+    font-size: 1.875rem;
+    -webkit-text-stroke: 1.15px currentColor;
+  }
+}
+
+@media (min-width: 768px) {
+  .heading {
+    font-size: 2.125rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .heading {
+    font-size: 2.375rem;
+  }
+}
+
+.headingLine1,
+.headingLine2 {
+  color: var(--primary, #2168b8);
+}
+
+.subtitle {
+  font-family: var(--font-family);
+  color: #64748b;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  max-width: 640px;
+  margin: 0.75rem auto 0;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .subtitle {
+    font-size: 1rem;
+  }
+}

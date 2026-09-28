@@ -44,7 +44,7 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
         <header className="mb-10 text-center">
           <h2
             id="instagram-section-heading"
-            className="text-[26px] font-black leading-[1.15] mb-3 sm:text-[30px] md:text-[34px] lg:text-[38px]"
+            className="text-[24px] font-black leading-[1.15] mb-3 sm:text-[27px] md:text-[30px] lg:text-[33px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900, color: 'var(--primary, #2168b8)' }}
           >
             {displayHeading}
@@ -99,9 +99,11 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
             href={instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border-2 px-8 py-2.5 text-xs font-bold uppercase tracking-wide transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06]"
-            style={{ background: '#fff', color: 'var(--primary, #2168b8)', borderColor: 'var(--primary, #2168b8)' }}
+            // Üstüne gelince Instagram'ın kendi gradyan renklerine geçiyor (Google
+            // Yorumları butonundaki dolu-renk hover deseniyle aynı mantık).
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border-2 border-[#2168b8] bg-white px-8 py-2.5 text-xs font-bold uppercase tracking-wide text-[#2168b8] transition duration-200 hover:scale-105 hover:border-transparent hover:bg-[linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)] hover:text-white"
           >
+            <Instagram className="h-4 w-4" strokeWidth={2} />
             {ctaText || 'Bizi takip et'}
           </Link>
         </div>

@@ -32,7 +32,7 @@ type FeatureBarProps = {
 }
 
 // Referans: ~48px ince çizgili (line-art) ikonlar
-const ICON_SIZE = 36
+const ICON_SIZE = 30
 
 const FEATURE_BAR_BG = {
   backgroundColor: 'var(--primary, #2168b8)',
@@ -68,13 +68,13 @@ export default function FeatureBar({ items }: FeatureBarProps) {
                 </div>
                 <div className="min-w-0" style={{ fontFamily: 'var(--font-family)' }}>
                   <div
-                    className="font-black uppercase text-[18px] leading-tight tracking-wide"
-                    style={{ WebkitTextStroke: '1.1px currentColor' }}
+                    className="font-black uppercase text-[16px] leading-tight tracking-wide"
+                    style={{ WebkitTextStroke: '0.7px currentColor' }}
                   >
                     {item.title}
                   </div>
                   {item.description && (
-                    <div className="mt-1.5 text-[15px] leading-snug opacity-90">
+                    <div className="mt-1.5 text-[14px] leading-snug opacity-90">
                       {item.description}
                     </div>
                   )}

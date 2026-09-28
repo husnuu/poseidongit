@@ -56,12 +56,12 @@ export default function RouteSection({
           visible ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
         }`}
       >
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-14">
-          {/* Sol: Başlık, Açıklama, CTA */}
-          <div className="flex flex-col items-center text-center lg:items-center lg:text-center">
+        <div className="flex flex-col items-center text-center">
+          {/* Başlık (+ varsa açıklama) — artık fotoğrafların üstünde, tam genişlikte ortalanmış */}
+          <div className="mb-10 md:mb-14">
             <h2
               id="route-section-heading"
-              className="text-[26px] font-black uppercase leading-[1.15] sm:text-[30px] md:text-[34px] lg:text-[38px]"
+              className="text-[24px] font-black uppercase leading-[1.15] sm:text-[27px] md:text-[30px] lg:text-[33px]"
               style={{
                 fontFamily: 'var(--font-family-title, var(--font-family))',
                 fontWeight: 900,
@@ -80,9 +80,9 @@ export default function RouteSection({
             )}
           </div>
 
-          {/* Sağ: Foto grid - dikey kartlar tam yükseklik (row-span-2) */}
+          {/* Foto grid — mobilde 2x2, masaüstünde standart (dikey olmayan) 4'lü kart satırı */}
           {hasAnyLocations && (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:grid-rows-[1fr_1fr]">
+            <div className="w-full">
               {/* Mobil: 2 sütun grid */}
               <div className="grid grid-cols-2 gap-3 sm:hidden">
                 {displayLocations.map((loc, index) => (
@@ -118,129 +118,40 @@ export default function RouteSection({
                 ))}
               </div>
 
-              {/* Desktop: 1 dikey | 2 kare | 1 dikey */}
-              <>
-                {displayLocations[0] && (
+              {/* Masaüstü: standart, yatay oranlı 4'lü kart satırı (dikey kolaj değil) */}
+              <div className="hidden sm:grid sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
+                {displayLocations.map((loc, index) => (
                   <div
-                    className="relative hidden h-full min-h-0 overflow-hidden rounded-2xl transition-transform duration-300 hover:scale-[1.04] sm:col-start-1 sm:row-span-2 sm:row-start-1 sm:block"
+                    key={index}
+                    className="relative aspect-[4/3] overflow-hidden rounded-2xl transition-transform duration-300 hover:scale-[1.03]"
                     style={{
-                      transitionDelay: visible ? '0ms' : '0ms',
+                      transitionDelay: visible ? `${index * 100}ms` : '0ms',
                     }}
                   >
-                    {displayLocations[0].imageUrl && (
+                    {loc.imageUrl && (
                       <>
                         <Image
-                          src={displayLocations[0].imageUrl}
-                          alt={displayLocations[0].alt || displayLocations[0].name}
+                          src={loc.imageUrl}
+                          alt={loc.alt || loc.name}
                           fill
                           className="object-cover"
-                          sizes="(max-width: 640px) 100vw, 25vw"
+                          sizes="(max-width: 1024px) 50vw, 25vw"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                         <div className="absolute bottom-0 left-0 right-0 p-4">
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-white/90">
                             <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                            {displayLocations[0].location}
+                            {loc.location}
                           </span>
                           <div className="mt-0.5 font-bold text-white">
-                            {displayLocations[0].name}
+                            {loc.name}
                           </div>
                         </div>
                       </>
                     )}
                   </div>
-                )}
-                {displayLocations[1] && (
-                  <div
-                    className="relative hidden aspect-square overflow-hidden rounded-2xl transition-transform duration-300 hover:scale-[1.04] sm:col-start-2 sm:row-start-1 sm:block"
-                    style={{
-                      transitionDelay: visible ? '100ms' : '0ms',
-                    }}
-                  >
-                    {displayLocations[1].imageUrl && (
-                      <>
-                        <Image
-                          src={displayLocations[1].imageUrl}
-                          alt={displayLocations[1].alt || displayLocations[1].name}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 640px) 100vw, 25vw"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                        <div className="absolute bottom-0 left-0 right-0 p-4">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-white/90">
-                            <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                            {displayLocations[1].location}
-                          </span>
-                          <div className="mt-0.5 font-bold text-white">
-                            {displayLocations[1].name}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-                {displayLocations[2] && (
-                  <div
-                    className="relative hidden aspect-square overflow-hidden rounded-2xl transition-transform duration-300 hover:scale-[1.04] sm:col-start-2 sm:row-start-2 sm:block sm:aspect-square"
-                    style={{
-                      transitionDelay: visible ? '200ms' : '0ms',
-                    }}
-                  >
-                    {displayLocations[2].imageUrl && (
-                      <>
-                        <Image
-                          src={displayLocations[2].imageUrl}
-                          alt={displayLocations[2].alt || displayLocations[2].name}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 640px) 100vw, 25vw"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                        <div className="absolute bottom-0 left-0 right-0 p-4">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-white/90">
-                            <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                            {displayLocations[2].location}
-                          </span>
-                          <div className="mt-0.5 font-bold text-white">
-                            {displayLocations[2].name}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-                {displayLocations[3] && (
-                  <div
-                    className="relative hidden h-full min-h-0 overflow-hidden rounded-2xl transition-transform duration-300 hover:scale-[1.04] sm:col-start-3 sm:row-span-2 sm:row-start-1 sm:block"
-                    style={{
-                      transitionDelay: visible ? '300ms' : '0ms',
-                    }}
-                  >
-                    {displayLocations[3].imageUrl && (
-                      <>
-                        <Image
-                          src={displayLocations[3].imageUrl}
-                          alt={displayLocations[3].alt || displayLocations[3].name}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 640px) 100vw, 25vw"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                        <div className="absolute bottom-0 left-0 right-0 p-4">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-white/90">
-                            <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                            {displayLocations[3].location}
-                          </span>
-                          <div className="mt-0.5 font-bold text-white">
-                            {displayLocations[3].name}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-              </>
+                ))}
+              </div>
             </div>
           )}
         </div>

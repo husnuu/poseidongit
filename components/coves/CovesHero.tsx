@@ -10,7 +10,7 @@ export default function CovesHero({ title, description }: CovesHeroProps) {
     <header className="mb-10 text-center md:mb-12">
       {titleUpper && (
         <h1
-          className="text-[35px] font-extrabold uppercase leading-[1.15] mb-6 sm:text-[36px] md:text-[40px] lg:text-[44px] whitespace-nowrap pageHeroTitleStroke"
+          className="text-[29px] font-extrabold uppercase leading-[1.15] mb-6 sm:text-[31px] md:text-[35px] lg:text-[39px] whitespace-nowrap pageHeroTitleStroke"
           style={{
             fontFamily: 'var(--font-family-title, var(--font-family))',
             color: 'var(--primary, #2168b8)',

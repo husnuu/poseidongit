@@ -8,10 +8,10 @@
   font-weight: 900;
   line-height: 1.18;
   text-transform: uppercase;
-  font-size: 1.5rem;
+  font-size: 1.375rem;
   margin: 0 0 18px 0;
   letter-spacing: 0.02em;
-  -webkit-text-stroke: 0.065em currentColor;
+  -webkit-text-stroke: 0.04em currentColor;
 }
 
 .titlePrimary {
@@ -19,10 +19,10 @@
   display: block;
 }
 
-@media (min-width: 640px)  { .title { font-size: 1.75rem; margin-bottom: 22px; } }
-@media (min-width: 768px)  { .title { font-size: 1.875rem; } }
-@media (min-width: 1024px) { .title { font-size: 2.125rem; margin-bottom: 24px; -webkit-text-stroke: 0.075em currentColor; } }
-@media (min-width: 1300px) { .title { font-size: 2.375rem; } }
+@media (min-width: 640px)  { .title { font-size: 1.5rem; margin-bottom: 22px; } }
+@media (min-width: 768px)  { .title { font-size: 1.625rem; } }
+@media (min-width: 1024px) { .title { font-size: 1.875rem; margin-bottom: 24px; -webkit-text-stroke: 0.05em currentColor; } }
+@media (min-width: 1300px) { .title { font-size: 2rem; } }
 
 /* ── Meta blok ── */
 .metaBlock {
