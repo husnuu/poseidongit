@@ -130,14 +130,14 @@ export default function HeroBanner({
           <div className="relative -translate-y-24 sm:-translate-y-8 md:translate-y-0">
             {hero.eyebrow && (
               <p
-                className="mb-2 text-xs uppercase tracking-widest text-white/80"
+                className="hero-reveal hero-reveal-1 mb-2 text-xs uppercase tracking-widest text-white/80"
                 style={{ fontWeight: 500 }}
               >
                 {hero.eyebrow}
               </p>
             )}
             <h1
-              className="max-w-[98%] text-[40px] font-black uppercase leading-[1.12] text-white [text-shadow:none] sm:text-[44px] md:text-[50px] md:leading-[1.2] md:[text-shadow:0_12px_24px_rgba(0,0,0,0.45),0_6px_18px_rgba(17,24,39,0.25)] lg:max-w-[96%] lg:text-[62px]"
+              className="hero-reveal hero-reveal-2 max-w-[98%] text-[40px] font-black uppercase leading-[1.12] text-white [text-shadow:none] sm:text-[44px] md:text-[50px] md:leading-[1.2] md:[text-shadow:0_12px_24px_rgba(0,0,0,0.45),0_6px_18px_rgba(17,24,39,0.25)] lg:max-w-[96%] lg:text-[62px]"
               style={{
                 fontFamily: 'var(--font-family)',
                 fontWeight: 900,
@@ -152,13 +152,13 @@ export default function HeroBanner({
               {line2 || ' '}
             </h1>
             {hero.subheading && (
-              <p className="mt-4 max-w-[540px] text-base text-white/85 md:text-lg">
+              <p className="hero-reveal hero-reveal-3 mt-4 max-w-[540px] text-base text-white/85 md:text-lg">
                 {hero.subheading}
               </p>
             )}
           </div>
           {/* CTA: birincil gradyanlı mavi + ince beyaz parıltı kenarlığı, ikincil beyaz — mobilde tam genişlik */}
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="hero-reveal hero-reveal-4 mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <span className="hero-primary-btn-wrap inline-flex h-14 w-full flex-shrink-0 items-center justify-center rounded-lg transition duration-200 hover:scale-105 sm:h-16 sm:w-[260px]">
               <span className="hero-primary-glow" aria-hidden="true" />
               <Link

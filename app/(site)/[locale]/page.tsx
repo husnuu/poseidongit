@@ -32,6 +32,7 @@ import type { InstagramSectionData } from '@/components/home/InstagramSection'
 import type { RouteSectionLocation } from '@/components/home/RouteSection'
 import type { TourListItem } from '@/components/tours/TourCard'
 import JsonLd from '@/components/seo/JsonLd'
+import ScrollReveal from '@/components/ui/ScrollReveal'
 import {
   buildOrganizationSchema,
   buildWebSiteSchema,
@@ -974,20 +975,36 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <JsonLd data={websiteSchema} />
       <JsonLd data={travelAgencySchema} />
       <HeroBanner hero={hero} locale={locale} />
-      {featureBar && featureBar.length > 0 && <FeatureBar items={featureBar} />}
-      <PopularToursSection data={popularToursSection} locale={locale} />
-      <HomeClassesSection data={classesSection} locale={locale} />
-      <PoseidonSecure locale={locale} />
-      {routeSection && (
-        <RouteSection
-          heading={routeSection.heading}
-          description={routeSection.description}
-          ctaButton={routeSection.ctaButton}
-          locations={routeSection.locations}
-        />
+      {featureBar && featureBar.length > 0 && (
+        <ScrollReveal>
+          <FeatureBar items={featureBar} />
+        </ScrollReveal>
       )}
-      <HomeReviewsSection data={homeReviews} locale={locale} />
-      <AboutTeaserSplit data={aboutTeaser} />
+      <ScrollReveal>
+        <PopularToursSection data={popularToursSection} locale={locale} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <HomeClassesSection data={classesSection} locale={locale} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <PoseidonSecure locale={locale} />
+      </ScrollReveal>
+      {routeSection && (
+        <ScrollReveal>
+          <RouteSection
+            heading={routeSection.heading}
+            description={routeSection.description}
+            ctaButton={routeSection.ctaButton}
+            locations={routeSection.locations}
+          />
+        </ScrollReveal>
+      )}
+      <ScrollReveal>
+        <HomeReviewsSection data={homeReviews} locale={locale} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <AboutTeaserSplit data={aboutTeaser} />
+      </ScrollReveal>
 
       {loyaltyBanner && (
         <div className="mx-auto mb-3 mt-8 max-w-2xl px-4 lg:hidden">
@@ -1017,10 +1034,18 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       )}
 
-      <PopularYachtsSection data={popularYachtsSection} locale={locale} />
-      <HomeFaqSection items={homeFaqItems} locale={locale} />
-      <BlogSection data={blogSection} locale={locale} noImageLabel={blogUi.noCoverImage} />
-      <InstagramSection data={instagramSection} />
+      <ScrollReveal>
+        <PopularYachtsSection data={popularYachtsSection} locale={locale} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <HomeFaqSection items={homeFaqItems} locale={locale} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <BlogSection data={blogSection} locale={locale} noImageLabel={blogUi.noCoverImage} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <InstagramSection data={instagramSection} />
+      </ScrollReveal>
     </div>
   )
 }

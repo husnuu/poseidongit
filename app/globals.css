@@ -63,6 +63,67 @@
   }
 }
 
+/* Hero'daki başlık/alt başlık/butonlar sayfa açılışında sırayla (kademeli
+   gecikmeyle) yukarıdan belirir — .hero-reveal-N sınıfları sırayı verir. */
+@keyframes hero-reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-reveal {
+  opacity: 0;
+  animation: hero-reveal-up 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-reveal-1 {
+  animation-delay: 0.05s;
+}
+.hero-reveal-2 {
+  animation-delay: 0.18s;
+}
+.hero-reveal-3 {
+  animation-delay: 0.32s;
+}
+.hero-reveal-4 {
+  animation-delay: 0.46s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Sayfa kaydırıldıkça anasayfa bölümlerinin (IntersectionObserver ile
+   tetiklenen) yumuşak belirme efekti — bkz. components/ui/ScrollReveal.tsx. */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.scroll-reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 /* Tur kartı CTA: kenarda yavaş, hafif beyaz gezinti; dış gölge nötr (renkli halo yok) */
 .tour-card-cta-shimmer.hero-primary-btn-wrap::before {
   inset: -1px;

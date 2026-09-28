@@ -253,6 +253,12 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
   const heroLogoUrl = hasHeroLogo && data.heroLogo?.asset ? urlFor(data.heroLogo.asset).width(900).quality(90).url() : null
   const heroLogoAlt = (data.heroLogo?.alt?.trim() || ui.metaTitleFallback).slice(0, 200)
 
+  // Fotoğraflı hero arka planı: filodaki ilk teknenin gerçek fotoğrafı (uydurma görsel yok) —
+  // yoksa eski düz zeminli hero'ya geri düşer.
+  const heroPhotoAsset = boats[0]?.image?.asset ?? null
+  const heroPhotoUrl = heroPhotoAsset ? urlFor(heroPhotoAsset).width(1920).height(1000).quality(85).url() : null
+  const heroPhotoAlt = boats[0]?.imageAlt || heroLogoAlt
+
   const localeTag = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
   const toHeadingUpper = (s: string) => s.trim().toLocaleUpperCase(localeTag)
 
@@ -261,57 +267,117 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
 
   return (
     <div className="min-h-screen bg-white">
-      <section className="w-full pb-8 pt-12 md:pb-10 md:pt-16">
-        <div className="mx-auto max-w-3xl px-4 text-center">
-          {hasHeroLogo && heroLogoUrl ? (
-            <>
-              <h1 className="sr-only">{ui.metaTitleFallback}</h1>
-              <div className="flex justify-center px-2 py-2 md:py-4">
-                <div className="relative h-[72px] w-[min(100%,420px)] sm:h-[88px] md:h-[104px] md:w-[min(100%,520px)]">
-                  <Image
-                    src={heroLogoUrl}
-                    alt={heroLogoAlt}
-                    fill
-                    className="object-contain object-center"
-                    sizes="(max-width: 768px) 100vw, 520px"
-                    priority
-                  />
-                </div>
+      {heroPhotoUrl ? (
+        <section className="relative w-full overflow-hidden bg-[var(--secondary,#131719)]">
+          <div className="relative h-[320px] w-full sm:h-[400px] md:h-[460px]">
+            <Image
+              src={heroPhotoUrl}
+              alt={heroPhotoAlt}
+              fill
+              priority
+              className="object-cover object-center"
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" aria-hidden />
+            <div className="absolute inset-0 flex items-center justify-center px-4">
+              <div className="text-center">
+                {hasHeroLogo && heroLogoUrl ? (
+                  <>
+                    <h1 className="sr-only">{ui.metaTitleFallback}</h1>
+                    <div className="relative mx-auto h-[64px] w-[min(90vw,420px)] sm:h-[84px] md:h-[100px] md:w-[min(80vw,520px)]">
+                      <Image
+                        src={heroLogoUrl}
+                        alt={heroLogoAlt}
+                        fill
+                        className="object-contain object-center brightness-0 invert"
+                        sizes="(max-width: 768px) 90vw, 520px"
+                        priority
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {data.titleTop?.trim() && (
+                      <h1
+                        className="text-[29px] font-extrabold uppercase leading-[1.15] text-white sm:text-[36px] md:text-[44px] pageHeroTitleStroke"
+                        style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
+                      >
+                        {titleTopUpper}
+                      </h1>
+                    )}
+                    {data.titleBottom?.trim() && (
+                      <p
+                        className="mt-3 text-base font-bold uppercase tracking-wide text-white/90 sm:text-lg md:text-xl"
+                        style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
+                      >
+                        {data.titleBottom}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
-            </>
-          ) : (
-            <>
-              {data.titleTop?.trim() && (
-                <h1
-                  className="text-[29px] font-extrabold uppercase leading-[1.15] sm:text-[33px] md:text-[37px] whitespace-nowrap pageHeroTitleStroke"
-                  style={{
-                    fontFamily: 'var(--font-family-title, var(--font-family))',
-                    color: 'var(--primary, #2168b8)',
-                  }}
-                >
-                  {titleTopUpper}
-                </h1>
-              )}
-              {data.titleBottom?.trim() && (
-                <p
-                  className="mt-4 text-lg font-bold uppercase tracking-wide sm:text-xl md:text-2xl"
-                  style={{
-                    fontFamily: 'var(--font-family-title, var(--font-family))',
-                    color: 'var(--secondary, #131719)',
-                  }}
-                >
-                  {data.titleBottom}
-                </p>
-              )}
-            </>
-          )}
-          {data.intro && data.intro.length > 0 && (
-            <div className="mx-auto mt-6 max-w-xl text-left">
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="w-full pb-8 pt-12 md:pb-10 md:pt-16">
+          <div className="mx-auto max-w-3xl px-4 text-center">
+            {hasHeroLogo && heroLogoUrl ? (
+              <>
+                <h1 className="sr-only">{ui.metaTitleFallback}</h1>
+                <div className="flex justify-center px-2 py-2 md:py-4">
+                  <div className="relative h-[72px] w-[min(100%,420px)] sm:h-[88px] md:h-[104px] md:w-[min(100%,520px)]">
+                    <Image
+                      src={heroLogoUrl}
+                      alt={heroLogoAlt}
+                      fill
+                      className="object-contain object-center"
+                      sizes="(max-width: 768px) 100vw, 520px"
+                      priority
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {data.titleTop?.trim() && (
+                  <h1
+                    className="text-[29px] font-extrabold uppercase leading-[1.15] sm:text-[33px] md:text-[37px] whitespace-nowrap pageHeroTitleStroke"
+                    style={{
+                      fontFamily: 'var(--font-family-title, var(--font-family))',
+                      color: 'var(--primary, #2168b8)',
+                    }}
+                  >
+                    {titleTopUpper}
+                  </h1>
+                )}
+                {data.titleBottom?.trim() && (
+                  <p
+                    className="mt-4 text-lg font-bold uppercase tracking-wide sm:text-xl md:text-2xl"
+                    style={{
+                      fontFamily: 'var(--font-family-title, var(--font-family))',
+                      color: 'var(--secondary, #131719)',
+                    }}
+                  >
+                    {data.titleBottom}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
+      {data.intro && data.intro.length > 0 && (
+        <section className="w-full pb-4 pt-12 md:pt-16">
+          <div className="mx-auto max-w-2xl px-4 text-center">
+            <div className="mx-auto mb-6 h-1 w-12 rounded-full" style={{ background: 'var(--primary, #2168b8)' }} aria-hidden />
+            <div className="text-left">
               <PortableText value={data.intro} components={defaultBlockComponents} />
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {(data.sectionTitle || data.sectionBody?.length) && (
         <section className="w-full py-12 md:py-16">
@@ -339,95 +405,83 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
       )}
 
       {(data.timelineTitle || data.timelineDescription || boats.length > 0) && (
-        <section className="w-full py-12 md:py-20">
-          <div className="mx-auto max-w-[1400px] px-4">
-            {data.timelineTitle && (
-              <h2
-                className="text-[24px] md:text-[30px] font-extrabold uppercase mb-3 leading-[1.15]"
-                style={{ fontFamily: 'var(--font-family-title)', color: 'var(--primary, #2168b8)' }}
-              >
-                {timelineTitleUpper}
-              </h2>
-            )}
-            {data.timelineDescription && (
-              <p
-                className="text-base md:text-lg leading-relaxed mb-12 max-w-2xl"
-                style={{ color: 'var(--text-color, #58595b)' }}
-              >
-                {data.timelineDescription}
-              </p>
-            )}
+        <section className="w-full bg-[#f8fafc] py-14 md:py-20">
+          <div className="mx-auto max-w-[1300px] px-4">
+            <header className="mx-auto mb-12 max-w-2xl text-center">
+              {data.timelineTitle && (
+                <h2
+                  className="text-[24px] md:text-[30px] font-extrabold uppercase leading-[1.15]"
+                  style={{ fontFamily: 'var(--font-family-title)', color: 'var(--primary, #2168b8)' }}
+                >
+                  {timelineTitleUpper}
+                </h2>
+              )}
+              <div
+                className="mx-auto mt-3 h-[5px] w-10 rounded-full"
+                style={{ background: 'var(--primary, #2168b8)' }}
+                aria-hidden
+              />
+              {data.timelineDescription && (
+                <p
+                  className="mt-4 text-base leading-relaxed md:text-lg"
+                  style={{ color: 'var(--text-color, #58595b)' }}
+                >
+                  {data.timelineDescription}
+                </p>
+              )}
+            </header>
 
             {boats.length > 0 && (
-              <div className="mt-10 flex flex-col gap-0">
-                {boats.map((boat, index) => {
-                  const reverse = index % 2 === 1
-                  return (
-                    <article
-                      key={`${boat.year}-${boat.name}-${index}`}
-                      className="grid grid-cols-1 md:grid-cols-2 gap-0 w-full overflow-hidden"
-                    >
-                      <div
-                        className={`w-full h-[260px] md:h-[340px] lg:h-[380px] bg-neutral-200 overflow-hidden ${
-                          reverse ? 'md:order-2' : 'md:order-1'
-                        }`}
-                      >
-                        {boat.imageUrl ? (
-                          <div className="relative w-full h-full">
-                            <Image
-                              src={boat.imageUrl}
-                              alt={boat.imageAlt || ''}
-                              fill
-                              className="w-full h-full object-cover"
-                              sizes="(max-width: 768px) 100vw, 50vw"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-full h-full bg-neutral-300 flex items-center justify-center text-neutral-500 text-sm">
-                            {ui.noImage}
-                          </div>
-                        )}
-                      </div>
-
-                      <div
-                        className={`bg-[#f3f4f6] flex flex-col items-center justify-center text-center px-8 py-10 min-h-[200px] md:min-h-[260px] ${
-                          reverse ? 'md:order-1' : 'md:order-2'
-                        }`}
-                      >
-                        <h3
-                          className="text-base md:text-lg tracking-[0.2em] uppercase font-extrabold"
-                          style={{
-                            fontFamily: 'var(--font-family-title, var(--font-family))',
-                            color: 'var(--primary, #2168b8)',
-                          }}
-                        >
-                          {boat.name}
-                        </h3>
-                        {boat.year && (
-                          <p
-                            className="mt-1 text-xs md:text-sm font-semibold uppercase tracking-[0.14em]"
-                            style={{ fontFamily: 'var(--font-family)', color: 'var(--muted, #81848b)' }}
-                          >
-                            {boat.year}
-                          </p>
-                        )}
-                        <div
-                          className="mt-3 h-px w-16"
-                          style={{ background: 'rgba(var(--primary-rgb, 33, 104, 184), 0.3)' }}
-                          aria-hidden
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-4">
+                {boats.map((boat, index) => (
+                  <article
+                    key={`${boat.year}-${boat.name}-${index}`}
+                    className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#eef1f4] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.14)]"
+                  >
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100">
+                      {boat.imageUrl ? (
+                        <Image
+                          src={boat.imageUrl}
+                          alt={boat.imageAlt || ''}
+                          fill
+                          className="object-cover transition-transform duration-500 hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         />
-                        {boat.description?.trim() && (
-                          <p
-                            className="mt-4 text-sm md:text-base leading-relaxed max-w-md"
-                            style={{ fontFamily: 'var(--font-family)', color: 'var(--text-color, #58595b)' }}
-                          >
-                            {boat.description}
-                          </p>
-                        )}
-                      </div>
-                    </article>
-                  )
-                })}
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-sm text-zinc-400">
+                          {ui.noImage}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-1 flex-col px-5 py-5 sm:px-6">
+                      <h3
+                        className="text-[16px] font-extrabold uppercase tracking-wide"
+                        style={{
+                          fontFamily: 'var(--font-family-title, var(--font-family))',
+                          color: 'var(--secondary, #131719)',
+                        }}
+                      >
+                        {boat.name}
+                      </h3>
+                      {boat.year && (
+                        <p
+                          className="mt-0.5 text-xs font-semibold uppercase tracking-wide"
+                          style={{ fontFamily: 'var(--font-family)', color: 'var(--muted, #81848b)' }}
+                        >
+                          {boat.year}
+                        </p>
+                      )}
+                      {boat.description?.trim() && (
+                        <p
+                          className="mt-3 text-sm leading-relaxed"
+                          style={{ fontFamily: 'var(--font-family)', color: 'var(--text-color, #58595b)' }}
+                        >
+                          {boat.description}
+                        </p>
+                      )}
+                    </div>
+                  </article>
+                ))}
               </div>
             )}
           </div>

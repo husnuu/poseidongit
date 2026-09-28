@@ -1,7 +1,7 @@
 import { client, urlFor } from '@/lib/sanity'
 import { covesPageQuery, covesListQuery } from '@/lib/queries'
 import CovesHero from '@/components/coves/CovesHero'
-import CoveRow from '@/components/coves/CoveRow'
+import CoveCard from '@/components/coves/CoveCard'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -126,22 +126,20 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
       <div className="mx-auto max-w-[1400px] px-4 py-12 sm:py-16">
         <CovesHero title={title} description={description} />
 
-        <div className="mt-10">
-          {items.map((cove, index) => (
-            <CoveRow
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
+          {items.map((cove) => (
+            <CoveCard
               key={cove._id}
-              reverse={index % 2 === 1}
               title={cove.title ?? ui.defaultCoveTitle}
               description={cove.description}
               imageUrl={
                 cove.image?.asset
-                  ? urlFor(cove.image.asset).width(1200).height(800).url()
+                  ? urlFor(cove.image.asset).width(900).height(675).url()
                   : null
               }
               alt={cove.image?.alt}
-              slug={cove.slug}
+              locationTag={cove.locationTag}
               noImageLabel={ui.noImage}
-              detailHint={ui.detailHint}
             />
           ))}
         </div>
