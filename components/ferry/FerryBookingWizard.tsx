@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useId, useMemo, useState } from 'react'
-import { X, Minus, Plus, ChevronLeft, ChevronRight, Info, Check } from 'lucide-react'
+import { X, Minus, Plus, ChevronLeft, ChevronRight, Info, Check, Calendar as CalendarIcon } from 'lucide-react'
 import PhoneField from '@/components/ui/PhoneField'
 import NationalitySelect from './NationalitySelect'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -42,6 +42,22 @@ const TRIP_TYPE_LABELS: Record<SiteLocale, Record<FerryTripType, string>> = {
   en: { oneway: 'One Way', sameday: 'Same-Day Round Trip', diffday: 'Different-Day Round Trip' },
   de: { oneway: 'Einfache Fahrt', sameday: 'Hin- und Rückfahrt (gleicher Tag)', diffday: 'Hin- und Rückfahrt (anderer Tag)' },
 }
+
+const DATE_PLACEHOLDER: Record<SiteLocale, string> = {
+  tr: 'Tarih seçin',
+  en: 'Select date',
+  de: 'Datum wählen',
+}
+
+const SAME_DAY_RETURN_HINT: Record<SiteLocale, string> = {
+  tr: 'Gidiş ile aynı gün',
+  en: 'Same day as departure',
+  de: 'Am selben Tag wie die Hinfahrt',
+}
+
+const DEPARTURE_LABEL: Record<SiteLocale, string> = { tr: 'Gidiş', en: 'Departure', de: 'Hinfahrt' }
+const RETURN_LABEL: Record<SiteLocale, string> = { tr: 'Dönüş', en: 'Return', de: 'Rückfahrt' }
+const DATE_LABEL_SINGLE: Record<SiteLocale, string> = { tr: 'Tarih', en: 'Date', de: 'Datum' }
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10)
@@ -130,7 +146,10 @@ function MiniCalendar({ label, value, onChange, minIso, locale }: MiniCalendarPr
   const initial = parseIsoParts(value) ?? minParts
   const [viewYear, setViewYear] = useState(initial.y)
   const [viewMonth, setViewMonth] = useState(initial.m)
-  const [expanded, setExpanded] = useState(!value)
+  // Referans site ile birebir: takvim başta her zaman kapalı — önce ikon + etiketli
+  // bir "buton" gösterilir, tıklanınca takvim açılır (tarih seçiliyken de aynı buton,
+  // sadece içeriği seçilen tarihe döner).
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     const p = parseIsoParts(value)
@@ -166,13 +185,19 @@ function MiniCalendar({ label, value, onChange, minIso, locale }: MiniCalendarPr
     } else setViewMonth((m) => m + 1)
   }
 
-  if (!expanded && value) {
+  if (!expanded) {
     return (
       <div className={styles.calendarSection}>
-        {label && <span className={styles.calendarLabel}>{label}</span>}
-        <button type="button" className={styles.selectedDateBar} onClick={() => setExpanded(true)}>
-          <ChevronLeft size={18} strokeWidth={2} aria-hidden />
-          {formatDateDisplayLong(value, locale)}
+        <button type="button" className={styles.dateTrigger} onClick={() => setExpanded(true)}>
+          <span className={styles.dateTriggerIcon}>
+            <CalendarIcon size={18} strokeWidth={2} aria-hidden />
+          </span>
+          <span className={styles.dateTriggerText}>
+            {label && <span className={styles.dateTriggerLabel}>{label}</span>}
+            <span className={value ? styles.dateTriggerValue : `${styles.dateTriggerValue} ${styles.dateTriggerPlaceholder}`}>
+              {value ? formatDateDisplayLong(value, locale) : DATE_PLACEHOLDER[locale] ?? DATE_PLACEHOLDER.tr}
+            </span>
+          </span>
         </button>
       </div>
     )
@@ -584,7 +609,7 @@ export default function FerryBookingWizard({
 
               <div className={styles.sectionHeaderPlain}><h3 className={styles.sectionTitlePlain}>Tarih</h3></div>
               <MiniCalendar
-                label={tripType === 'diffday' ? 'Gidiş' : ''}
+                label={tripType === 'diffday' ? (DEPARTURE_LABEL[locale] ?? DEPARTURE_LABEL.tr) : (DATE_LABEL_SINGLE[locale] ?? DATE_LABEL_SINGLE.tr)}
                 value={departureDate}
                 onChange={(iso) => {
                   setDepartureDate(iso)
@@ -596,12 +621,29 @@ export default function FerryBookingWizard({
               {tripType === 'diffday' && (
                 <div className={styles.calendarSecond}>
                   <MiniCalendar
-                    label="Dönüş"
+                    label={RETURN_LABEL[locale] ?? RETURN_LABEL.tr}
                     value={returnDate}
                     onChange={setReturnDate}
                     minIso={departureDate || todayIso()}
                     locale={locale}
                   />
+                </div>
+              )}
+              {tripType === 'sameday' && (
+                <div className={styles.calendarSecond}>
+                  <div className={styles.calendarSection}>
+                    <div className={`${styles.dateTrigger} ${styles.dateTriggerDisabled}`}>
+                      <span className={styles.dateTriggerIcon}>
+                        <CalendarIcon size={18} strokeWidth={2} aria-hidden />
+                      </span>
+                      <span className={styles.dateTriggerText}>
+                        <span className={styles.dateTriggerLabel}>{RETURN_LABEL[locale] ?? RETURN_LABEL.tr}</span>
+                        <span className={`${styles.dateTriggerValue} ${styles.dateTriggerPlaceholder}`}>
+                          {SAME_DAY_RETURN_HINT[locale] ?? SAME_DAY_RETURN_HINT.tr}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
 

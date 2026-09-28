@@ -90,7 +90,7 @@ export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionP
         <h2
           id="home-faq-heading"
           className="mb-8 text-center text-[24px] font-black uppercase leading-[1.15] sm:text-[27px] md:mb-10 md:text-[30px]"
-          style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--primary, #2168b8)' }}
+          style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--primary, #2168b8)', WebkitTextStroke: '0.4px currentColor' }}
         >
           {HEADING[locale]}
         </h2>
@@ -101,7 +101,9 @@ export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionP
             return (
               <div
                 key={index}
-                className="overflow-hidden rounded-2xl border border-[#f1f5f9] bg-white shadow-sm"
+                className={`group overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-200 hover:shadow-md ${
+                  isOpen ? 'border-[var(--primary,#2168b8)]/30' : 'border-[#f1f5f9] hover:border-[var(--primary,#2168b8)]/20'
+                }`}
               >
                 <button
                   type="button"
@@ -110,8 +112,9 @@ export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionP
                   className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
                 >
                   <span
-                    className="text-[15px] font-semibold sm:text-base"
-                    style={{ color: 'var(--secondary, #131719)' }}
+                    className={`text-[15px] font-semibold transition-colors duration-200 sm:text-base ${
+                      isOpen ? 'text-[var(--primary,#2168b8)]' : 'text-[var(--secondary,#131719)] group-hover:text-[var(--primary,#2168b8)]'
+                    }`}
                   >
                     {item.question}
                   </span>

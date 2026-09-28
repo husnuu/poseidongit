@@ -51,7 +51,7 @@ export default function FerryRouteCard({ route, locale = 'tr' }: FerryRouteCardP
           src={route.coverImageUrl}
           alt={route.coverImageAlt || titlePlain}
           fill
-          className="object-cover"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           {...SANITY_DISPLAY_IMAGE_PROPS}
         />
@@ -111,7 +111,7 @@ export default function FerryRouteCard({ route, locale = 'tr' }: FerryRouteCardP
   )
 
   return (
-    <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-shadow duration-300 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.12)]">
+    <article className="group flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.12)]">
       {href ? (
         <>
           <Link

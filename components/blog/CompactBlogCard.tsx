@@ -46,7 +46,7 @@ export default function CompactBlogCard({
   const dateLabel = formatDate(post.publishDate, locale)
 
   return (
-    <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-shadow duration-300 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.12)]">
+    <article className="group flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.14)]">
       <Link
         href={href}
         className="flex min-h-0 flex-1 flex-col rounded-2xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#2168b8]"
@@ -57,7 +57,7 @@ export default function CompactBlogCard({
               src={post.coverImageUrl}
               alt={post.coverImageAlt || post.title || 'Blog'}
               fill
-              className="object-cover"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes={imageSizes}
             />
           ) : (
@@ -71,8 +71,8 @@ export default function CompactBlogCard({
             </p>
           )}
           <h3
-            className="mt-1.5 line-clamp-3 text-base font-bold leading-snug"
-            style={{ fontFamily: 'var(--font-family)', color: 'var(--secondary, #131719)' }}
+            className="mt-1.5 line-clamp-3 text-base font-bold leading-snug text-[var(--secondary,#131719)] transition-colors duration-200 group-hover:text-[var(--primary,#2168b8)]"
+            style={{ fontFamily: 'var(--font-family)' }}
           >
             {post.title}
           </h3>
@@ -84,12 +84,9 @@ export default function CompactBlogCard({
               {post.excerpt}
             </p>
           )}
-          <span
-            className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-bold uppercase tracking-wide"
-            style={{ color: 'var(--secondary, #131719)' }}
-          >
+          <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-bold uppercase tracking-wide text-[var(--secondary,#131719)] transition-colors duration-200 group-hover:text-[var(--primary,#2168b8)]">
             {READ_MORE_LABEL[locale]}
-            <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" strokeWidth={2} aria-hidden />
           </span>
         </div>
       </Link>

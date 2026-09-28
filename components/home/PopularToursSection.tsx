@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import TourCard from '@/components/tours/TourCard'
 import type { TourListItem } from '@/components/tours/TourCard'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -50,6 +51,7 @@ export default function PopularToursSection({
 }: PopularToursSectionProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const desktopScrollRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
 
@@ -78,6 +80,14 @@ export default function PopularToursSection({
     setActiveIndex(Math.max(0, Math.min(itemCount - 1, idx)))
   }
 
+  const scrollDesktop = (dir: 1 | -1) => {
+    const el = desktopScrollRef.current
+    if (!el) return
+    const card = el.children[0] as HTMLElement | undefined
+    const amount = card ? card.offsetWidth + 32 : el.clientWidth * 0.8
+    el.scrollBy({ left: amount * dir, behavior: 'smooth' })
+  }
+
   if (!data?.enabled || !data?.items?.length) return null
 
   const { title, items } = data
@@ -103,6 +113,7 @@ export default function PopularToursSection({
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
               fontWeight: 900,
+              WebkitTextStroke: '0.4px currentColor',
               color: headingColor ?? 'var(--primary, #2168b8)',
             }}
           >
@@ -138,20 +149,49 @@ export default function PopularToursSection({
           )}
         </div>
 
-        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {items.map((tour, index) => (
-            <div
-              key={tour._id}
-              className="transition-all duration-300 ease-out"
-              style={{
-                opacity: visible ? 1 : 0,
-                transform: visible ? 'translateY(0)' : 'translateY(10px)',
-                transitionDelay: visible ? `${Math.min(index, 8) * 60}ms` : '0ms',
-              }}
-            >
-              <TourCard tour={tour} locale={locale} />
-            </div>
-          ))}
+        {/* MASAÜSTÜ: tek satır, yana kaydırmalı şerit (referans siteki gibi) — grid yok, taşan kartlar sağa doğru kayar. */}
+        <div className="relative hidden md:block">
+          <div
+            ref={desktopScrollRef}
+            className="flex snap-x snap-mandatory gap-8 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {items.map((tour, index) => (
+              <div
+                key={tour._id}
+                className="w-[320px] flex-shrink-0 snap-start transition-all duration-300 ease-out lg:w-[350px]"
+                style={{
+                  opacity: visible ? 1 : 0,
+                  transform: visible ? 'translateY(0)' : 'translateY(10px)',
+                  transitionDelay: visible ? `${Math.min(index, 8) * 60}ms` : '0ms',
+                }}
+              >
+                <TourCard tour={tour} locale={locale} />
+              </div>
+            ))}
+          </div>
+
+          {items.length > 3 && (
+            <>
+              <button
+                type="button"
+                onClick={() => scrollDesktop(-1)}
+                aria-label="Önceki turlar"
+                className="absolute left-0 top-[38%] z-10 hidden h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-md transition duration-200 hover:scale-110 hover:bg-zinc-50 lg:flex"
+                style={{ color: 'var(--primary, #2168b8)' }}
+              >
+                <ChevronLeft className="h-6 w-6" strokeWidth={2} aria-hidden />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollDesktop(1)}
+                aria-label="Sonraki turlar"
+                className="absolute right-0 top-[38%] z-10 hidden h-11 w-11 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-md transition duration-200 hover:scale-110 hover:bg-zinc-50 lg:flex"
+                style={{ color: 'var(--primary, #2168b8)' }}
+              >
+                <ChevronRight className="h-6 w-6" strokeWidth={2} aria-hidden />
+              </button>
+            </>
+          )}
         </div>
 
         {/* Referans siteki gibi bölümün altında çerçeveli "Tüm turları görüntüle" */}

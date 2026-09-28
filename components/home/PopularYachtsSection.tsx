@@ -111,6 +111,7 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
               fontWeight: 900,
+              WebkitTextStroke: '0.4px currentColor',
               color: 'var(--primary, #2168b8)',
             }}
           >

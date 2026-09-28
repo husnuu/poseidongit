@@ -76,6 +76,7 @@ export default function HomeClassesSection({ data, locale }: Props) {
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
               fontWeight: 900,
+              WebkitTextStroke: '0.4px currentColor',
               color: 'var(--primary, #2168b8)',
             }}
           >

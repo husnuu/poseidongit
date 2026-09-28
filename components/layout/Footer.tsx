@@ -33,6 +33,8 @@ import {
   MapPin,
   Star,
   ExternalLink,
+  ChevronRight,
+  Heart,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -154,6 +156,16 @@ const SOCIAL_ICONS: Record<string, LucideIcon | typeof InstagramModern> = {
   tiktok: Youtube,
   x: Youtube,
   linkedin: Youtube,
+}
+
+/** Üstüne gelince ikonun kendi marka rengine dönmesi için (referans site ile birebir). */
+const SOCIAL_HOVER_CLASS: Record<string, string> = {
+  instagram: 'hover:bg-gradient-to-br hover:from-[#feda75] hover:via-[#d62976] hover:to-[#4f5bd5]',
+  youtube: 'hover:bg-[#FF0000]',
+  facebook: 'hover:bg-[#1877F2]',
+  tiktok: 'hover:bg-black',
+  x: 'hover:bg-black',
+  linkedin: 'hover:bg-[#0A66C2]',
 }
 
 async function getFooterData(): Promise<SiteFooterData | null> {
@@ -470,16 +482,20 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                   const platform = (item?.platform ?? '').toLowerCase()
                   const Icon = SOCIAL_ICONS[platform] ?? InstagramModern
                   const href = item?.href ?? '#'
+                  const label = item?.platform ? item.platform.charAt(0).toUpperCase() + item.platform.slice(1) : 'Social'
                   return (
                     <a
                       key={`${platform}-${index}`}
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-11 w-11 items-center justify-center rounded-full bg-[#192031] text-white transition-all duration-200 hover:scale-110 hover:bg-[#20293a]"
-                      aria-label={item?.platform ?? 'Social'}
+                      className={`group relative flex h-11 w-11 items-center justify-center rounded-full bg-[#192031] text-white transition-all duration-200 hover:scale-110 ${SOCIAL_HOVER_CLASS[platform] ?? 'hover:bg-[#20293a]'}`}
+                      aria-label={label}
                     >
                       <Icon className="h-5 w-5" />
+                      <span className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#0c1220] px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-md transition-all duration-200 group-hover:opacity-100">
+                        {label}
+                      </span>
                     </a>
                   )
                 })}
@@ -497,9 +513,13 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                   <li key={item.href}>
                     <Link
                       href={locHref(locale, item.href)}
-                      className="text-sm font-medium text-[#97a3b6] transition-colors hover:text-white hover:underline"
+                      className="group inline-flex items-center gap-1.5 text-sm font-medium text-[#97a3b6] transition-colors duration-200 hover:text-white"
                     >
-                      {item.label}
+                      <ChevronRight
+                        className="h-3.5 w-3.5 flex-shrink-0 -translate-x-2 text-[var(--primary,#2168b8)] opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+                        aria-hidden
+                      />
+                      <span className="transition-transform duration-200 group-hover:translate-x-0.5">{item.label}</span>
                     </Link>
                   </li>
                 ))}
@@ -516,11 +536,15 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                 <li key={index}>
                   <Link
                     href={locHref(locale, item.href || '#')}
-                    className="text-sm font-medium text-[#97a3b6] transition-colors hover:text-white hover:underline"
+                    className="group inline-flex items-center gap-1.5 text-sm font-medium text-[#97a3b6] transition-colors duration-200 hover:text-white"
                     target={item.openInNewTab ? '_blank' : undefined}
                     rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
                   >
-                    {item.label}
+                    <ChevronRight
+                      className="h-3.5 w-3.5 flex-shrink-0 -translate-x-2 text-[var(--primary,#2168b8)] opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+                      aria-hidden
+                    />
+                    <span className="transition-transform duration-200 group-hover:translate-x-0.5">{item.label}</span>
                   </Link>
                 </li>
               ))}
@@ -652,6 +676,12 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
               )}
             </div>
           )}
+
+          <div className="mt-6 flex items-center justify-center gap-1.5 text-xs font-medium text-[#5c6473]">
+            <span>Made with</span>
+            <Heart className="h-3.5 w-3.5 fill-current text-rose-500" aria-hidden />
+            <span>in İyidere, Rize</span>
+          </div>
         </div>
       </div>
     </footer>

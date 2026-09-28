@@ -2131,13 +2131,13 @@
 }
 
 .ticketTimeLabel {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--primary, #2168b8);
   margin: 0;
   font-family: var(--font-family-title, var(--font-family));
   line-height: 1.2;
-  -webkit-text-stroke: 0.5px currentColor;
+  -webkit-text-stroke: 0.4px currentColor;
 }
 
 .ticketDateLabel {
@@ -2172,11 +2172,11 @@
 
 .ticketTotalValue {
   display: block;
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--secondary, #131719);
   font-family: var(--font-family-title, var(--font-family));
-  -webkit-text-stroke: 0.5px currentColor;
+  -webkit-text-stroke: 0.4px currentColor;
 }
 
 /* Dikey kesik çizgi + üstte/altta bilet çentikleri + ortada döndürülmüş
@@ -2414,7 +2414,7 @@
 
 /* Tur adı ve adresi */
 .summaryTourName {
-  font-size: 19px;
+  font-size: 16px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--primary, #2168b8);
@@ -2422,7 +2422,7 @@
   font-family: var(--font-family-title, var(--font-family));
   line-height: 1.25;
   letter-spacing: -0.01em;
-  -webkit-text-stroke: 0.65px currentColor;
+  -webkit-text-stroke: 0.5px currentColor;
 }
 
 .summaryTourAddr {
@@ -2652,7 +2652,7 @@
 }
 
 .sectionTitlePlain {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--secondary, #131719);
   margin: 0;
@@ -2662,7 +2662,7 @@
   /* Tek ağırlıklı (Regular) fontta tarayıcının sahte kalınlaştırması 700'de
      tavan yapıyor (800/900 fark etmiyor) — ekstra ince kontur ile daha da
      kalınlaştırıyoruz. Firefox bunu yok sayar, sorun değil (700 kalır). */
-  -webkit-text-stroke: 0.65px currentColor;
+  -webkit-text-stroke: 0.55px currentColor;
 }
 
 /* CTA alanı (flat sayfada) */
