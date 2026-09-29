@@ -1,15 +1,20 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin } from 'lucide-react'
+import { MapPin, Plus, X } from 'lucide-react'
+import modalStyles from './CoveModal.module.css'
 
 export type RouteSectionLocation = {
   name: string
   location: string
   imageUrl: string | null
   alt: string | null
+  /** /koylar'daki eşleşen koy dokümanının açıklaması — sadece gerçekten
+   * yazılmışsa dolu gelir; doluysa kart tıklanabilir olup popup açar. */
+  description?: string | null
 }
 
 export type RouteSectionProps = {
@@ -17,6 +22,99 @@ export type RouteSectionProps = {
   description: string
   ctaButton?: { label?: string | null; href?: string | null } | null
   locations: RouteSectionLocation[]
+  locale?: 'tr' | 'en' | 'de'
+}
+
+const CLOSE_LABEL: Record<string, string> = {
+  tr: 'Kapat',
+  en: 'Close',
+  de: 'Schließen',
+}
+
+const DISCOVER_LABEL: Record<string, string> = {
+  tr: 'Keşfet',
+  en: 'Discover',
+  de: 'Entdecken',
+}
+
+function LocationCard({
+  loc,
+  index,
+  visible,
+  aspectClass,
+  sizes,
+  onOpen,
+  locale,
+}: {
+  loc: RouteSectionLocation
+  index: number
+  visible: boolean
+  aspectClass: string
+  sizes: string
+  onOpen: () => void
+  locale: string
+}) {
+  const hasDescription = Boolean(loc.description?.trim())
+  const discoverLabel = DISCOVER_LABEL[locale] ?? DISCOVER_LABEL.tr
+  const content = (
+    <>
+      {loc.imageUrl && (
+        <>
+          <Image
+            src={loc.imageUrl}
+            alt={loc.alt || loc.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
+            sizes={sizes}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+          {/* Tıklanabilirlik ipucu: her zaman görünen küçük rozet (dokunmatikte
+              hover olmadığı için şart), masaüstünde üstüne gelince "Keşfet"
+              etiketi belirir — footer linklerindeki kayan chevron ile aynı dil. */}
+          {hasDescription && (
+            <span className="absolute right-3 top-3 z-[1] flex items-center gap-1.5 rounded-full bg-white/90 py-1.5 pl-1.5 pr-1.5 text-[var(--primary,#2168b8)] shadow-md backdrop-blur-sm transition-all duration-300 group-hover:pr-3">
+              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--primary,#2168b8)] text-white transition-transform duration-300 group-hover:rotate-90">
+                <Plus className="h-3 w-3" strokeWidth={3} aria-hidden />
+              </span>
+              <span className="max-w-0 overflow-hidden whitespace-nowrap text-xs font-bold opacity-0 transition-all duration-300 group-hover:max-w-[90px] group-hover:opacity-100">
+                {discoverLabel}
+              </span>
+            </span>
+          )}
+
+          <div className="absolute bottom-0 left-0 right-0 p-4 text-left">
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-white/90">
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+              {loc.location}
+            </span>
+            <div className="mt-0.5 font-bold text-white">{loc.name}</div>
+          </div>
+        </>
+      )}
+    </>
+  )
+  const sharedClassName = `group relative ${aspectClass} overflow-hidden rounded-2xl transition-transform duration-300 hover:scale-[1.04]`
+  const sharedStyle = { transitionDelay: visible ? `${index * 100}ms` : '0ms' }
+
+  if (hasDescription) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className={`${sharedClassName} cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2`}
+        style={sharedStyle}
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <div className={sharedClassName} style={sharedStyle}>
+      {content}
+    </div>
+  )
 }
 
 export default function RouteSection({
@@ -24,9 +122,12 @@ export default function RouteSection({
   description,
   ctaButton,
   locations,
+  locale = 'tr',
 }: RouteSectionProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
     const el = sectionRef.current
@@ -41,9 +142,84 @@ export default function RouteSection({
     return () => observer.disconnect()
   }, [])
 
+  useEffect(() => {
+    const el = document.createElement('div')
+    el.id = 'cove-modal-portal'
+    document.body.appendChild(el)
+    setPortalEl(el)
+    return () => {
+      if (el.parentNode) el.parentNode.removeChild(el)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (openIndex === null) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenIndex(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [openIndex])
+
   const displayLocations = locations.slice(0, 4)
   const hasAnyLocations = displayLocations.length > 0
   const titleText = heading.trim()
+  const openLoc = openIndex !== null ? displayLocations[openIndex] : null
+
+  const modal =
+    portalEl && openLoc
+      ? createPortal(
+          <div
+            className={`${modalStyles.overlay} ${modalStyles.overlayVisible}`}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setOpenIndex(null)
+            }}
+            role="dialog"
+            aria-modal
+            aria-label={openLoc.name}
+          >
+            <div className={modalStyles.sheet}>
+              <div className={modalStyles.media}>
+                <div className={modalStyles.sheetHandle} aria-hidden />
+                {openLoc.imageUrl && (
+                  <Image
+                    src={openLoc.imageUrl}
+                    alt={openLoc.alt || openLoc.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, 520px"
+                  />
+                )}
+                <div className={modalStyles.mediaGradient} aria-hidden />
+                <button
+                  type="button"
+                  className={modalStyles.closeBtn}
+                  onClick={() => setOpenIndex(null)}
+                  aria-label={CLOSE_LABEL[locale] ?? CLOSE_LABEL.tr}
+                >
+                  <X className="h-5 w-5" aria-hidden />
+                </button>
+              </div>
+              <div className={modalStyles.body}>
+                <p className={modalStyles.locationTag}>
+                  <MapPin className="h-3.5 w-3.5" aria-hidden />
+                  {openLoc.location}
+                </p>
+                <h3 className={modalStyles.title}>{openLoc.name}</h3>
+                {openLoc.description && (
+                  <p className={modalStyles.description}>{openLoc.description}</p>
+                )}
+              </div>
+            </div>
+          </div>,
+          portalEl
+        )
+      : null
 
   return (
     <section
@@ -87,70 +263,32 @@ export default function RouteSection({
               {/* Mobil: 2 sütun grid */}
               <div className="grid grid-cols-2 gap-3 sm:hidden">
                 {displayLocations.map((loc, index) => (
-                  <div
+                  <LocationCard
                     key={index}
-                    className="relative aspect-[3/4] overflow-hidden rounded-2xl transition-transform duration-300 hover:scale-[1.04]"
-                    style={{
-                      transitionDelay: visible ? `${index * 100}ms` : '0ms',
-                    }}
-                  >
-                    {loc.imageUrl && (
-                      <>
-                        <Image
-                          src={loc.imageUrl}
-                          alt={loc.alt || loc.name}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 640px) 50vw, 33vw"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                        <div className="absolute bottom-0 left-0 right-0 p-4">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-white/90">
-                            <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                            {loc.location}
-                          </span>
-                          <div className="mt-0.5 font-bold text-white">
-                            {loc.name}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                    loc={loc}
+                    index={index}
+                    visible={visible}
+                    aspectClass="aspect-[3/4]"
+                    sizes="(max-width: 640px) 50vw, 33vw"
+                    onOpen={() => setOpenIndex(index)}
+                    locale={locale}
+                  />
                 ))}
               </div>
 
               {/* Masaüstü: standart, yatay oranlı 4'lü kart satırı (dikey kolaj değil) */}
               <div className="hidden sm:grid sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
                 {displayLocations.map((loc, index) => (
-                  <div
+                  <LocationCard
                     key={index}
-                    className="relative aspect-[4/3] overflow-hidden rounded-2xl transition-transform duration-300 hover:scale-[1.03]"
-                    style={{
-                      transitionDelay: visible ? `${index * 100}ms` : '0ms',
-                    }}
-                  >
-                    {loc.imageUrl && (
-                      <>
-                        <Image
-                          src={loc.imageUrl}
-                          alt={loc.alt || loc.name}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 1024px) 50vw, 25vw"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                        <div className="absolute bottom-0 left-0 right-0 p-4">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-white/90">
-                            <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                            {loc.location}
-                          </span>
-                          <div className="mt-0.5 font-bold text-white">
-                            {loc.name}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                    loc={loc}
+                    index={index}
+                    visible={visible}
+                    aspectClass="aspect-[4/3]"
+                    sizes="(max-width: 1024px) 50vw, 25vw"
+                    onOpen={() => setOpenIndex(index)}
+                    locale={locale}
+                  />
                 ))}
               </div>
             </div>
@@ -174,6 +312,8 @@ export default function RouteSection({
           </p>
         )}
       </div>
+
+      {modal}
     </section>
   )
 }

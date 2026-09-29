@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { User, ChevronLeft, ArrowRight } from 'lucide-react'
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
-import ReservationTicket, { formatTicketDateLabel, BOAT_NAME } from '../ReservationTicket'
+import ReservationTicket, { formatTicketDateLabel, boatNameForTour } from '../ReservationTicket'
 import FloatingInput from '@/components/ui/FloatingInput'
 import AdditionalTravelersFields from './AdditionalTravelersFields'
 import PassengerGenderFields from './PassengerGenderFields'
@@ -156,7 +156,7 @@ export default function Step3CustomerInfo({
           ui={ui}
           tourTitle={tour.title ?? ''}
           durationText={tour.quickFacts?.durationText}
-          hostName={BOAT_NAME}
+          hostName={boatNameForTour(tour.slug)}
           meetingLocation={tourAddress}
           guestLines={guestLines}
           dateLabel={dateWithWeekday}

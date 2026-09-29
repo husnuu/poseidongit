@@ -1,6 +1,7 @@
 import { client, safeSanityImageUrl, urlFor } from '@/lib/sanity'
 import { tourCoverImageUrl } from '@/lib/sanityImage'
 import {
+  covesListQuery,
   faqPageQuery,
   homePageHeroImageUrlsQuery,
   homePageHeroQuery,
@@ -52,6 +53,7 @@ import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
+import { mergeCoveForLocale } from '@/lib/i18n/mergeCoveForLocale'
 import { mergeHomePageLocale, mergeHomePageSeoForLocale, homeFieldHasManualTranslation } from '@/lib/i18n/mergeHomePageLocale'
 import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
 import {
@@ -319,6 +321,17 @@ type RouteSectionRaw = {
     location?: string | null
     image?: { asset?: { _ref: string }; alt?: string | null } | null
   }> | null
+}
+
+/** /koylar sayfasındaki gerçek koy dokümanları — anasayfanın "Rotamız" bölümündeki
+ * el ile eklenen lokasyon adına (isim eşleşmesiyle) gerçek açıklama metnini
+ * bağlamak için kullanılır (uydurma açıklama yazılmaz; eşleşme yoksa boş kalır). */
+type CoveListRow = {
+  _id: string
+  title?: string | null
+  slug?: string | null
+  description?: string | null
+  translations?: unknown
 }
 
 type HomePageHeroResult = {
@@ -639,7 +652,8 @@ function resolveHomeClassesSection(
 async function mapRouteSection(
   raw: RouteSectionRaw | null,
   locale: SiteLocale,
-  rawHomeData: Record<string, unknown> | null | undefined
+  rawHomeData: Record<string, unknown> | null | undefined,
+  coveRows: CoveListRow[] = []
 ): Promise<{
   heading: string
   description: string
@@ -647,17 +661,45 @@ async function mapRouteSection(
   locations: RouteSectionLocation[]
 } | null> {
   if (!raw || !raw.enabled || !raw.heading) return null
+  // Parantez içi ek açıklamaları yok sayarak eşleştir (örn. "Mavi Koy" ile
+  // Sanity'deki "Mavi Koy (Akvaryum)" aynı yer — parantez sadece açıklayıcı ek).
+  const normalize = (s: string | null | undefined) =>
+    (s ?? '')
+      .trim()
+      .toLocaleLowerCase('tr')
+      .replace(/\s*\([^)]*\)\s*/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
   const locations: RouteSectionLocation[] = await Promise.all(
     (raw.locations ?? []).slice(0, 4).map(async (loc) => {
       const [name, location] = await Promise.all([
         translateText(loc.name, locale),
         translateText(loc.location, locale),
       ])
+      // İsim eşleşmesiyle /koylar'daki gerçek koy dokümanını bul — açıklama
+      // metni SADECE gerçekten Sanity'de yazılmışsa gösterilir, uydurulmaz.
+      const matchedCoveRaw = coveRows.find((c) => normalize(c.title) === normalize(loc.name))
+      let description: string | null = null
+      if (matchedCoveRaw) {
+        const merged = mergeCoveForLocale(
+          matchedCoveRaw as unknown as Record<string, unknown>,
+          locale
+        ) as unknown as CoveListRow
+        const rawDescription = matchedCoveRaw.description?.trim() || null
+        const mergedDescription = merged.description?.trim() || null
+        description =
+          locale === 'tr' || mergedDescription !== rawDescription
+            ? mergedDescription
+            : rawDescription
+              ? await translateText(rawDescription, locale)
+              : null
+      }
       return {
         name: name || loc.name || '',
         location: location || loc.location || '',
         imageUrl: loc.image?.asset ? urlFor(loc.image.asset).width(600).height(800).url() : null,
         alt: loc.image?.alt ?? null,
+        description,
       }
     })
   )
@@ -774,10 +816,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   let loyaltyBanner: { imageUrl?: string | null; imageAlt?: string | null; href?: string | null } | null = null
   let travelAgencyImageOverrides: TravelAgencyStructuredDataImageOverrides = {}
   try {
-    const [raw, settingsRow, heroRow] = await Promise.all([
+    const [raw, settingsRow, heroRow, coveRows] = await Promise.all([
       client.fetch<HomePageHeroResult>(homePageHeroQuery, {}, { useCdn: false }),
       client.fetch(siteSettingsTravelAgencyImagesQuery, {}, { useCdn: false }),
       client.fetch(homePageHeroImageUrlsQuery, {}, { useCdn: false }),
+      client.fetch<CoveListRow[]>(covesListQuery, {}, { useCdn: false }).catch(() => []),
     ])
     travelAgencyImageOverrides = travelAgencyImageOverridesFromSanity({
       settings: settingsRow,
@@ -875,7 +918,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     } else {
       blogSection = null
     }
-    const routeMapped = await mapRouteSection(data?.routeSection ?? null, locale, rawHomeRecord)
+    const routeMapped = await mapRouteSection(
+      data?.routeSection ?? null,
+      locale,
+      rawHomeRecord,
+      Array.isArray(coveRows) ? coveRows : []
+    )
     if (routeMapped) {
       const routeCtaNext = localizeCta(routeMapped.ctaButton, locale) ?? routeMapped.ctaButton
       const routeCtaButton = routeCtaNext
@@ -1003,6 +1051,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             description={routeSection.description}
             ctaButton={routeSection.ctaButton}
             locations={routeSection.locations}
+            locale={locale}
           />
         </ScrollReveal>
       )}

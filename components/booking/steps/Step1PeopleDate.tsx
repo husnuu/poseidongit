@@ -6,7 +6,7 @@ import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTyp
 import { getEarliestBookableDateStr, todayStrLocal } from '@/lib/booking/bookingWindow'
 import { buildCalendarDaysForMonth, getFirstAvailableYearMonth } from '@/lib/sanity/bookingPricing'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
-import ReservationTicket, { formatTicketDateLabel, BOAT_NAME } from '../ReservationTicket'
+import ReservationTicket, { formatTicketDateLabel, boatNameForTour } from '../ReservationTicket'
 import styles from '../booking.module.css'
 
 /** Referans site ile birebir: bu iki başlık ikon yerine büyük/koyu düz metin
@@ -399,7 +399,7 @@ export default function Step1PeopleDate({
           ui={ui}
           tourTitle={tour.title ?? ''}
           durationText={tour.quickFacts?.durationText}
-          hostName={BOAT_NAME}
+          hostName={boatNameForTour(tour.slug)}
           meetingLocation={tour.quickFacts?.meetingLocation}
           guestLines={[{ label: String(total) }]}
           dateLabel={dateWithWeekday}
