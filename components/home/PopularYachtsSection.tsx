@@ -107,7 +107,7 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
         <header className="mb-10 text-center md:mb-12">
           <h2
             id="popular-yachts-heading"
-            className="text-[24px] font-black uppercase leading-[1.15] mb-3 sm:text-[27px] md:text-[30px] lg:text-[33px]"
+            className="text-[28px] font-black uppercase leading-[1.15] mb-3 sm:text-[32px] md:text-[36px] lg:text-[40px]"
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
               fontWeight: 900,
@@ -119,7 +119,7 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
           </h2>
           {subtitle ? (
             <p
-              className="mx-auto max-w-3xl text-base font-normal leading-relaxed md:text-lg"
+              className="mx-auto max-w-3xl text-sm font-normal leading-relaxed md:text-base"
               style={{ color: 'var(--text-color)' }}
             >
               {subtitle}

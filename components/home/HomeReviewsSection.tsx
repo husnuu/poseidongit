@@ -84,7 +84,7 @@ const CLOSE_LABEL: Record<SiteLocale, string> = {
   de: 'Schließen',
 }
 
-/** İsimden deterministik pastel avatar rengi (referans siteyle aynı görünüm). */
+/** İsimden deterministik pastel avatar rengi (kart üzerinde — referans siteyle aynı görünüm). */
 function avatarPalette(name: string): { bg: string; fg: string } {
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 360
@@ -93,6 +93,14 @@ function avatarPalette(name: string): { bg: string; fg: string } {
     bg: `linear-gradient(135deg, hsl(${hue}, 70%, 94%), hsl(${hue}, 60%, 89%))`,
     fg: `hsl(${hue}, 55%, 28%)`,
   }
+}
+
+/** İsimden deterministik DOLU (koyu doygun) avatar rengi — "yorumun tamamı"
+ * popup'ında Google'ın kendi yorum kutusundaki gibi bold renkli daire + beyaz harf. */
+function modalAvatarColor(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 360
+  return `hsl(${hash}, 62%, 46%)`
 }
 
 function GoogleMark({ size = 18 }: { size?: number }) {
@@ -231,11 +239,8 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                     />
                   ) : (
                     <span
-                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-bold"
-                      style={{
-                        background: avatarPalette(openReview.name || 'A').bg,
-                        color: avatarPalette(openReview.name || 'A').fg,
-                      }}
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white"
+                      style={{ background: modalAvatarColor(openReview.name || 'A') }}
                       aria-hidden
                     >
                       {(openReview.name || '?').trim().charAt(0).toUpperCase()}
@@ -279,15 +284,14 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
     <>
     <section
       className="w-full py-16 md:py-20"
-      // Referans siteden birebir örneklenen yatay gradyan: solda nane yeşili, sağda turkuaz
-      style={{ background: 'linear-gradient(to right, #7afbc9 0%, #6de8e8 100%)' }}
+      style={{ background: 'linear-gradient(90deg, #29ffc6, #20e3b2, #0cebeb)' }}
       aria-labelledby="home-reviews-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">
         <header className="mb-10 text-center">
           <h2
             id="home-reviews-heading"
-            className="text-[24px] font-black uppercase leading-[1.15] sm:text-[27px] md:text-[30px] lg:text-[33px]"
+            className="text-[28px] font-black uppercase leading-[1.15] sm:text-[32px] md:text-[36px] lg:text-[40px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--secondary, #131719)', WebkitTextStroke: '0.4px currentColor' }}
           >
             {HEADING[locale]}
@@ -295,7 +299,7 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
           <div className="mt-4 flex justify-center">
             <StarRow value={avgRating} size="lg" />
           </div>
-          <p className="mx-auto mt-2 max-w-2xl text-center text-base font-normal leading-relaxed md:text-lg" style={{ color: 'var(--secondary, #131719)' }}>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-sm font-normal leading-relaxed md:text-base" style={{ color: 'var(--secondary, #131719)' }}>
             {SUBTEXT[locale](totalCount.toLocaleString(numLocale), avgRating.toFixed(1))}
           </p>
           {googleReviewsUrl && (

@@ -16,10 +16,16 @@ type HomeFaqSectionProps = {
   locale?: SiteLocale
 }
 
-const HEADING: Record<SiteLocale, string> = {
-  tr: 'SIKÇA SORULAN SORULAR',
-  en: 'FREQUENTLY ASKED QUESTIONS',
-  de: 'HÄUFIG GESTELLTE FRAGEN',
+/** İki satıra bölünmüş başlık — ilk satır "Sıkça Sorulan", ikinci satır "Sorular". */
+const HEADING_LINE1: Record<SiteLocale, string> = {
+  tr: 'SIKÇA SORULAN',
+  en: 'FREQUENTLY ASKED',
+  de: 'HÄUFIG GESTELLTE',
+}
+const HEADING_LINE2: Record<SiteLocale, string> = {
+  tr: 'SORULAR',
+  en: 'QUESTIONS',
+  de: 'FRAGEN',
 }
 
 const VIEW_ALL_LABEL: Record<SiteLocale, string> = {
@@ -89,10 +95,12 @@ export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionP
       <div className="mx-auto max-w-[900px] px-4">
         <h2
           id="home-faq-heading"
-          className="mb-8 text-center text-[24px] font-black uppercase leading-[1.15] sm:text-[27px] md:mb-10 md:text-[30px]"
+          className="mb-8 text-center text-[28px] font-black uppercase leading-[1.15] sm:text-[32px] md:mb-10 md:text-[36px] lg:text-[40px]"
           style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--primary, #2168b8)', WebkitTextStroke: '0.4px currentColor' }}
         >
-          {HEADING[locale]}
+          {HEADING_LINE1[locale]}
+          <br />
+          {HEADING_LINE2[locale]}
         </h2>
 
         <div className="flex flex-col gap-3">

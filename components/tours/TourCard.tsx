@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Clock, MapPin } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
@@ -11,6 +12,9 @@ import { SANITY_DISPLAY_IMAGE_PROPS } from '@/lib/sanityImage'
 import { useWishlist } from '@/lib/wishlist/WishlistContext'
 
 const ICON_MUTED = 'var(--muted, #81848b)'
+/** Süre/kalkış satırındaki çizgi ikonlar (saat, konum) — referans örnekteki
+    mavimsi gri ton. */
+const META_ICON_COLOR = '#8a99ad'
 
 function StarIcon({ className }: { className?: string }) {
   return (
@@ -44,43 +48,6 @@ function HeartIcon({ className, filled }: { className?: string; filled?: boolean
       focusable="false"
     >
       <path d="M20.8 4.6c-1.7-1.7-4.5-1.7-6.2 0L12 7.2 9.4 4.6c-1.7-1.7-4.5-1.7-6.2 0-1.7 1.7-1.7 4.5 0 6.2L12 19.4l8.8-8.6c1.7-1.7 1.7-4.5 0-6.2z" />
-    </svg>
-  )
-}
-
-function ClockIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-      focusable="false"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 6v6l4 2" />
-    </svg>
-  )
-}
-
-function PinIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className={className}
-      aria-hidden
-      focusable="false"
-    >
-      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
     </svg>
   )
 }
@@ -223,7 +190,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
     <div className="mt-2.5 space-y-1.5">
       {tour.durationLabel && (
         <div className={`${styles.metaRow} flex items-center gap-2 text-[13px] leading-snug`} style={{ color: ICON_MUTED }}>
-          <ClockIcon className="size-4 shrink-0" />
+          <Clock className="size-4 shrink-0" style={{ color: META_ICON_COLOR }} strokeWidth={2} aria-hidden />
           <span>
             {tourUi.tourCardDurationPrefix}
             {tour.durationLabel}
@@ -232,7 +199,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
       )}
       {tour.departureLabel && (
         <div className={`${styles.metaRow} flex items-center gap-2 text-[13px] leading-snug`} style={{ color: ICON_MUTED }}>
-          <PinIcon className="size-4 shrink-0" />
+          <MapPin className="size-4 shrink-0" style={{ color: META_ICON_COLOR }} strokeWidth={2} aria-hidden />
           <span>
             {tourUi.tourCardDeparturePrefix}
             {tour.departureLabel}

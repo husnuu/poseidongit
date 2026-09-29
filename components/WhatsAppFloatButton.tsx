@@ -44,9 +44,16 @@ export default function WhatsAppFloatButton({ href }: Props) {
   /** Çerez bannerı açıkken mobilde WhatsApp butonu "Kabul Et" gibi butonların
    * üzerine binebiliyordu — banner görünürken buton tamamen gizlenir. */
   const [hideForCookieBanner, setHideForCookieBanner] = useState(false)
+  /** "Rezerve Et", "Bilet Al", "Müsaitlik Sor" gibi butonlarla açılan
+   * rezervasyon/sihirbaz modalları hep aynı şekilde `document.body.style.overflow
+   * = 'hidden'` ayarlıyor — bu ortak sinyali kullanarak, bu modallardan biri
+   * açıkken WhatsApp butonu (masaüstü + mobil) tamamen gizlenir. */
+  const [hideForOpenModal, setHideForOpenModal] = useState(false)
 
   useLayoutEffect(() => {
     const sync = () => {
+      setHideForOpenModal(document.body.style.overflow === 'hidden')
+
       if (!isMobileViewport()) {
         setRelaxBottom(false)
         setHideForCookieBanner(false)
@@ -68,7 +75,7 @@ export default function WhatsAppFloatButton({ href }: Props) {
     }
   }, [])
 
-  if (hideForCookieBanner) return null
+  if (hideForCookieBanner || hideForOpenModal) return null
 
   return (
     <a

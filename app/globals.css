@@ -170,6 +170,44 @@ summary:focus-visible,
   }
 }
 
+/* Hero üstündeki "Hantal Turizm - Belge No" rozeti — referans sitedeki
+   "Hero_creds" rozetiyle aynı teknik: sağ kenarı çentikli (ok ucu gibi)
+   bir şerit, border-box/padding-box katmanlı arka planla (border-block
+   sayesinde dış katmanda yumuşak bir "halo" görünümü) + hafif cam-buzlu
+   (backdrop-blur) efekt. */
+.hero-creds-badge {
+  --r: 0.8em;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8125rem;
+  color: #fff;
+  border-block: 0.5em solid rgba(0, 0, 0, 0);
+  padding: 4px 24px 2px 16px;
+  line-height: 2;
+  text-decoration: none;
+  clip-path: polygon(
+    100% 0,
+    0 0,
+    0 100%,
+    100% 100%,
+    100% calc(100% - 0.25em),
+    calc(100% - var(--r)) 50%,
+    100% 0.25em
+  );
+  background:
+    radial-gradient(0.2em 50% at left, rgba(35, 33, 33, 0.307), rgba(71, 69, 69, 0)) border-box,
+    rgba(33, 104, 184, 0.486) padding-box;
+  width: fit-content;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+@media (min-width: 768px) {
+  .hero-creds-badge {
+    font-size: 0.875rem;
+  }
+}
+
 /* Sayfa kaydırıldıkça anasayfa bölümlerinin (IntersectionObserver ile
    tetiklenen) yumuşak belirme efekti — bkz. components/ui/ScrollReveal.tsx. */
 .scroll-reveal {

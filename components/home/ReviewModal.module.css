@@ -22,7 +22,7 @@
 }
 
 .sheet {
-  background: #fefaf1;
+  background: #fff;
   width: 100%;
   max-width: 560px;
   max-height: 88dvh;
@@ -68,7 +68,7 @@
 
 .sheetBody {
   overflow-y: auto;
-  padding: 8px 24px 32px;
+  padding: 16px 24px 32px;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -145,5 +145,9 @@
 
   .sheetHandle {
     display: none;
+  }
+
+  .sheetBody {
+    padding-top: 28px;
   }
 }

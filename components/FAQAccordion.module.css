@@ -5,12 +5,12 @@
   padding-bottom: 28px;
 }
 
-/* Başlık: Yorumlar bölümündeki başlıkla aynı font/boyut/kalınlık */
+/* Başlık: referans siteyle aynı — büyük, sade, siyah */
 .faqTitle,
 .faqTitleSection {
   font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-weight: 800;
-  font-size: 17px;
+  font-size: 22px;
   -webkit-text-stroke: 0.5px currentColor;
   line-height: 1.25;
   text-transform: uppercase;
@@ -23,7 +23,7 @@
 @media (min-width: 640px) {
   .faqTitle,
   .faqTitleSection {
-    font-size: 21px;
+    font-size: 27px;
   }
 }
 
@@ -31,47 +31,46 @@
   width: 100%;
 }
 
-/* Kart listesi: anasayfadaki Sık Sorulan Sorular ile aynı görünüm */
+/* Düz liste + ince ayraç çizgiler — referans siteyle aynı sade görünüm
+   (kart/kutu yok, sadece satırlar arasında border-bottom). */
 .faqList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .accordionItem {
-  overflow: hidden;
-  border-radius: 16px;
-  border: 1px solid #f1f5f9;
-  background: #fff;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.accordionItem:last-child {
+  border-bottom: 0;
 }
 
 .accordionItemLine {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
   background: transparent;
   cursor: pointer;
   border: 0;
-  padding: 18px 22px;
+  padding: 18px 0;
   text-align: left;
 }
 
 .accordionItemTitle {
   font-family: var(--font-family), sans-serif;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 15px;
   line-height: 1.4;
   color: var(--secondary, #131719);
 }
 
 .accordionItemIcon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex: 0 0 auto;
-  color: var(--muted, #81848b);
+  color: var(--primary, #2168b8);
   transition: transform 200ms ease;
 }
 
@@ -80,7 +79,7 @@
 }
 
 .accordionItemContent {
-  padding: 0 22px 20px;
+  padding: 0 0 20px 34px;
 }
 
 .accordionItemParagraph {
@@ -92,12 +91,10 @@
   color: var(--text-color, #58595b);
 }
 
+/* "Sorunuz yukarıda yer almıyor mu?" — referans siteyle aynı: kutu/kart yok,
+   sade bir satır + altında yan yana iki kompakt buton. */
 .missingQuestion {
-  margin-top: 24px;
-  border: 1px solid rgb(229, 231, 235);
-  border-radius: 12px;
-  background: rgb(255, 255, 255);
-  padding: 20px;
+  margin-top: 28px;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -106,13 +103,13 @@
 .missingQuestionLeft {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .missingQuestionLeft p {
   margin: 0;
   font-family: var(--font-family), sans-serif;
-  font-weight: 400;
+  font-weight: 700;
   font-size: 16px;
   line-height: 24px;
   color: var(--secondary, #131719);
@@ -126,7 +123,8 @@
 
 .contactActions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 14px;
 }
 
@@ -145,13 +143,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  width: auto;
   font-family: var(--font-family), sans-serif;
   font-weight: 700;
-  font-size: 16px;
-  height: 54px;
+  font-size: 12.5px;
+  height: 40px;
   margin: 0;
-  padding: 0 24px;
+  padding: 0 18px;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.02em;
@@ -183,14 +181,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: 100%;
+  gap: 7px;
+  width: auto;
   font-family: var(--font-family), sans-serif;
   font-weight: 700;
-  font-size: 16px;
-  height: 54px;
+  font-size: 12.5px;
+  height: 40px;
   margin: 0;
-  padding: 0 24px;
+  padding: 0 18px;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.02em;
@@ -229,7 +227,8 @@
   }
 
   .accordionItemLine {
-    padding: 16px 18px;
+    padding: 16px 0;
+    gap: 12px;
   }
 
   .accordionItemTitle {
@@ -237,7 +236,7 @@
   }
 
   .accordionItemContent {
-    padding: 0 18px 18px;
+    padding: 0 0 18px 32px;
   }
 
   .accordionItemParagraph {
@@ -246,7 +245,6 @@
   }
 
   .missingQuestion {
-    padding: 16px;
     margin-top: 20px;
   }
 
@@ -256,10 +254,15 @@
     word-break: break-word;
   }
 
+  .contactActions {
+    flex-direction: column;
+  }
+
   .contactBtn,
   .whatsappBtn {
-    font-size: 15px;
-    padding: 0 18px;
-    height: 50px;
+    width: 100%;
+    font-size: 13px;
+    padding: 0 16px;
+    height: 44px;
   }
 }

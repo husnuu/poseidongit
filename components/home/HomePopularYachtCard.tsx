@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
-import { Heart, Star, Users, Calendar, BedDouble, Ruler } from 'lucide-react'
+import { Heart, Star, Users, Calendar, BedDouble, Ruler, Info } from 'lucide-react'
 import type { YachtSpecifications } from '@/lib/yachtTypes'
 import { formatYachtMobileOvernightTotal } from '@/lib/yachtFormat'
 import tourCardStyles from '@/components/tours/TourCard.module.css'
@@ -43,7 +43,7 @@ function detailHref(y: HomePopularYachtCardData, locale: SiteLocale = 'tr'): str
 }
 
 const VIEW_YACHT_CTA: Record<SiteLocale, string> = {
-  tr: 'Tekneyi incele',
+  tr: 'Tekneyi görüntüle',
   en: 'View yacht',
   de: 'Yacht ansehen',
 }
@@ -60,16 +60,15 @@ const FEATURED_LABEL: Record<SiteLocale, string> = {
   de: 'Empfohlen',
 }
 
-const FROM_LABEL: Record<SiteLocale, string> = { tr: 'Şu fiyattan', en: 'From', de: 'Ab' }
 const PER_DAY_LABEL: Record<SiteLocale, string> = { tr: 'Günlük', en: 'Per day', de: 'Pro Tag' }
 const OVERNIGHT_LABEL: Record<SiteLocale, string> = { tr: 'Konaklamalı', en: 'Overnight', de: 'Übernachtung' }
 
 const GUEST_CAPACITY_LABEL: Record<SiteLocale, string> = {
-  tr: 'Misafir kapasitesi',
+  tr: 'Yolcu Kapasitesi',
   en: 'Guest capacity',
   de: 'Gästekapazität',
 }
-const BUILT_YEAR_LABEL: Record<SiteLocale, string> = { tr: 'Yapım yılı', en: 'Built year', de: 'Baujahr' }
+const BUILT_YEAR_LABEL: Record<SiteLocale, string> = { tr: 'Yapım Yılı', en: 'Built year', de: 'Baujahr' }
 const CABINS_LABEL: Record<SiteLocale, string> = { tr: 'Kabin', en: 'Cabins', de: 'Kabinen' }
 const LENGTH_LABEL: Record<SiteLocale, string> = { tr: 'Uzunluk', en: 'Length', de: 'Länge' }
 
@@ -129,9 +128,6 @@ export default function HomePopularYachtCard({
   const priceBlock =
     dailyOn && yacht.priceFrom != null ? (
       <p className="leading-tight">
-        <span className="block text-[11px] font-semibold uppercase tracking-wide" style={{ color: ICON_MUTED }}>
-          {FROM_LABEL[locale]}
-        </span>
         <span className="block whitespace-nowrap text-lg font-extrabold tabular-nums tracking-tight text-[#131719] sm:text-xl">
           {yacht.priceFrom.toLocaleString('tr-TR')} ₺
         </span>
@@ -203,11 +199,22 @@ export default function HomePopularYachtCard({
     </div>
   )
 
+  const licenceNote = yacht.sailingLicenceRequired?.trim() || null
+
   const metaSection = (
     <>
       {locationLine && (
-        <p className={`${tourCardStyles.description} mt-1.5 text-sm leading-relaxed text-zinc-500`}>
+        <p className={`${tourCardStyles.description} mt-1.5 flex items-center gap-1.5 text-sm leading-relaxed text-zinc-500`}>
           {locationLine}
+          {licenceNote && (
+            <Info
+              className="h-[15px] w-[15px] shrink-0 text-[var(--primary,#2168b8)]"
+              strokeWidth={2}
+              aria-hidden
+            >
+              <title>{licenceNote}</title>
+            </Info>
+          )}
         </p>
       )}
       {rows.length > 0 && (

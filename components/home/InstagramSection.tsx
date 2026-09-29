@@ -44,14 +44,14 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
         <header className="mb-10 text-center">
           <h2
             id="instagram-section-heading"
-            className="text-[24px] font-black leading-[1.15] mb-3 sm:text-[27px] md:text-[30px] lg:text-[33px]"
+            className="text-[28px] font-black leading-[1.15] mb-3 sm:text-[32px] md:text-[36px] lg:text-[40px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900, WebkitTextStroke: '0.4px currentColor', color: 'var(--primary, #2168b8)' }}
           >
             {displayHeading}
           </h2>
           {description && (
             <p
-              className="mx-auto max-w-2xl text-base font-normal leading-relaxed md:text-lg"
+              className="mx-auto max-w-2xl text-sm font-normal leading-relaxed md:text-base"
               style={{ color: 'var(--text-color)' }}
             >
               {description}
@@ -101,7 +101,7 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
             rel="noopener noreferrer"
             // Üstüne gelince Instagram'ın kendi gradyan renklerine geçiyor (Google
             // Yorumları butonundaki dolu-renk hover deseniyle aynı mantık).
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border-2 border-[#2168b8] bg-white px-8 py-2.5 text-xs font-bold uppercase tracking-wide text-[#2168b8] transition duration-200 hover:scale-105 hover:border-transparent hover:bg-[linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)] hover:text-white"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 overflow-hidden rounded-lg border-2 border-[#2168b8] bg-white bg-clip-padding px-8 py-2.5 text-xs font-bold uppercase tracking-wide text-[#2168b8] transition duration-200 hover:scale-105 hover:border-transparent hover:bg-[linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)] hover:text-white"
           >
             <Instagram className="h-4 w-4" strokeWidth={2} />
             {ctaText || 'Bizi takip et'}

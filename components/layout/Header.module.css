@@ -50,10 +50,11 @@
  * renkli, yazılar/ikon her zaman koyu renkli.
  */
 .headerScrolled {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: none;
+  border-bottom: 1px solid rgba(32, 104, 184, 0.13);
 }
 
 .headerInner {

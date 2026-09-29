@@ -204,17 +204,20 @@ export default function RouteSection({
                 >
                   <X className="h-5 w-5" aria-hidden />
                 </button>
+                {/* Kartla aynı yerleşim: konum + başlık fotoğrafın üstünde */}
+                <div className={modalStyles.mediaContent}>
+                  <p className={modalStyles.overlayLocationTag}>
+                    <MapPin className="h-3.5 w-3.5" aria-hidden />
+                    {openLoc.location}
+                  </p>
+                  <h3 className={modalStyles.overlayTitle}>{openLoc.name}</h3>
+                </div>
               </div>
-              <div className={modalStyles.body}>
-                <p className={modalStyles.locationTag}>
-                  <MapPin className="h-3.5 w-3.5" aria-hidden />
-                  {openLoc.location}
-                </p>
-                <h3 className={modalStyles.title}>{openLoc.name}</h3>
-                {openLoc.description && (
+              {openLoc.description && (
+                <div className={modalStyles.body}>
                   <p className={modalStyles.description}>{openLoc.description}</p>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>,
           portalEl
@@ -237,7 +240,7 @@ export default function RouteSection({
           <div className="mb-10 md:mb-14">
             <h2
               id="route-section-heading"
-              className="text-[24px] font-black uppercase leading-[1.15] sm:text-[27px] md:text-[30px] lg:text-[33px]"
+              className="text-[28px] font-black uppercase leading-[1.15] sm:text-[32px] md:text-[36px] lg:text-[40px]"
               style={{
                 fontFamily: 'var(--font-family-title, var(--font-family))',
                 fontWeight: 900,

@@ -109,15 +109,10 @@ export default function HeroBanner({
       />
 
       {(hero.topBadgeText?.trim() || hero.heroBadgeEnabled) && (
-        <div className="pointer-events-none absolute left-0 top-[12px] z-10 md:top-[24px]">
+        <div className="pointer-events-none absolute left-4 top-[12px] z-10 md:left-6 md:top-[24px]">
           <span
-            className="relative inline-flex items-center py-2 pl-5 pr-8 text-xs tracking-wide text-white backdrop-blur-sm md:py-2.5 md:pl-10 md:pr-10 md:text-sm"
-            style={{
-              fontFamily: 'var(--font-family)',
-              fontWeight: 500,
-              background: 'rgba(33, 104, 184, 0.72)',
-              clipPath: 'polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%)',
-            }}
+            className="hero-creds-badge"
+            style={{ fontFamily: 'var(--font-family)', fontWeight: 500 }}
           >
             {resolveTopBadgeText(hero.topBadgeText)}
           </span>

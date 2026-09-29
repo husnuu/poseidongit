@@ -1059,7 +1059,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <HomeReviewsSection data={homeReviews} locale={locale} />
       </ScrollReveal>
       <ScrollReveal>
-        <AboutTeaserSplit data={aboutTeaser} />
+        <PopularYachtsSection data={popularYachtsSection} locale={locale} />
       </ScrollReveal>
 
       {loyaltyBanner && (
@@ -1091,7 +1091,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       )}
 
       <ScrollReveal>
-        <PopularYachtsSection data={popularYachtsSection} locale={locale} />
+        <AboutTeaserSplit data={aboutTeaser} />
       </ScrollReveal>
       <ScrollReveal>
         <HomeFaqSection items={homeFaqItems} locale={locale} />

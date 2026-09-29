@@ -38,7 +38,7 @@ type PopularToursSectionProps = {
 }
 
 const DEFAULT_HEADING_CLASS =
-  'text-[26px] font-black uppercase leading-[1.15] mb-6 sm:text-[30px] md:text-[34px] lg:text-[37px]'
+  'text-[28px] font-black uppercase leading-[1.15] mb-6 sm:text-[32px] md:text-[36px] lg:text-[40px]'
 
 export default function PopularToursSection({
   data,
