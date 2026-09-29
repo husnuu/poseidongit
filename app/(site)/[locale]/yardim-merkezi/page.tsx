@@ -5,7 +5,8 @@ import { siteSettingsWhatsappQuery } from '@/lib/queries'
 import { buildWhatsAppHref } from '@/lib/buildWhatsAppHref'
 import { fetchHelpCategoriesWithArticles, fetchHelpCenterPage } from '@/lib/sanity/fetchers/helpCenter'
 import HelpCenterHome from '@/components/help-center/HelpCenterHome'
-import { absoluteUrl, getSiteName } from '@/lib/seo'
+import { getSiteName } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -30,14 +31,12 @@ export async function generateMetadata({
     ui.metaHelpDescriptionFallback
   const site = getSiteName()
   const title = site && !titleBase.includes('|') ? `${titleBase} | ${site}` : titleBase
-  const path = withLocalePath(locale, '/yardim-merkezi')
-  const canonical = absoluteUrl(path)
-  return {
+  return buildPageMetadata({
+    locale,
+    path: '/yardim-merkezi',
     title,
     description: description.slice(0, 160),
-    alternates: { canonical },
-    openGraph: { title, description: description.slice(0, 160), url: canonical, type: 'website' },
-  }
+  })
 }
 
 export default async function YardimMerkeziPage({ params }: { params: Promise<{ locale: string }> }) {

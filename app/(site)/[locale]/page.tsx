@@ -957,7 +957,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   })
   let travelAgencySchema: Record<string, unknown>
   try {
-    travelAgencySchema = buildTravelAgencyStructuredData(travelAgencyImageOverrides)
+    // Google'ın structured-data kuralları: şema, sayfada GERÇEKTEN görünen
+    // puan/yorum sayısıyla eşleşmeli — sabit yedek yerine anasayfadaki
+    // "Sizden Gelenler" bölümünün canlı toplamını kullanıyoruz.
+    const liveRating =
+      homeReviews && homeReviews.totalCount > 0
+        ? { ratingValue: homeReviews.avgRating, reviewCount: homeReviews.totalCount }
+        : null
+    travelAgencySchema = buildTravelAgencyStructuredData(travelAgencyImageOverrides, liveRating)
   } catch {
     travelAgencySchema = {
       '@context': 'https://schema.org',

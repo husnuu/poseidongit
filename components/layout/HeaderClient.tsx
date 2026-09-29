@@ -463,6 +463,19 @@ export default function HeaderClient({
     }
   }, [wishlistOpen])
 
+  useEffect(() => {
+    if (!mobileOpen) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = ''
+    }
+  }, [mobileOpen])
+
   const logoUrl = settings.logo?.asset
     ? urlFor(settings.logo.asset).width(220).height(60).url()
     : settings.logo?.url ?? null
@@ -609,6 +622,8 @@ export default function HeaderClient({
                 className={styles.mobileMenuBtn}
                 onClick={() => setMobileOpen(true)}
                 aria-label={aria.openMenu}
+                aria-expanded={mobileOpen}
+                aria-haspopup="dialog"
               >
                 <span className={styles.hamburgerIcon} aria-hidden>
                   <MenuIcon />

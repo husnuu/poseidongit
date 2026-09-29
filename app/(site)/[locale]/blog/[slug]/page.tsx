@@ -17,6 +17,7 @@ import styles from './BlogPost.module.css'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
+import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
 import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
 import { formatBlogReadTime } from '@/lib/i18n/formatBlogReadTime'
@@ -92,16 +93,27 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      languages: alternateLanguageAbsoluteUrls(`/blog/${pathSlug}`),
+    },
     openGraph: {
       title,
       description,
       url,
       type: 'article',
+      locale: locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : 'en_US',
+      ...(siteName ? { siteName } : {}),
       publishedTime: merged.publishDate ?? undefined,
       modifiedTime: merged._updatedAt ?? undefined,
       authors: merged.author ? [merged.author] : undefined,
       images: image ? [{ url: image, width: 1200, height: 630, alt: merged.title }] : undefined,
+    },
+    twitter: {
+      card: image ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      ...(image ? { images: [image] } : {}),
     },
   }
 }

@@ -3,10 +3,9 @@ import { notFound } from 'next/navigation'
 import MenuPageClient, { type MenuItemCard } from '@/components/menu/MenuPageClient'
 import { client, safeSanityImageUrl } from '@/lib/sanity'
 import { menuItemsQuery } from '@/lib/queries'
-import { getBaseUrl, getSiteName } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
-import { withLocalePath } from '@/lib/i18n/paths'
 import { translateText } from '@/lib/i18n/runtimeTranslate'
 
 export const revalidate = 60
@@ -52,10 +51,6 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: loc } = await params
   const locale: SiteLocale = isSiteLocale(loc) ? loc : 'tr'
-  const path = withLocalePath(locale, '/menu')
-  const canonical = path === '/' ? getBaseUrl() : `${getBaseUrl()}${path}`
-  const site = getSiteName()
-
   const titles: Record<SiteLocale, string> = {
     tr: 'Tekne menüsü',
     en: 'Yacht menu',
@@ -67,16 +62,7 @@ export async function generateMetadata({
     de: 'Poseidon-Yachtmenü: Getränke, Snacks und Gourmetteller.',
   }
 
-  return {
-    title: titles[locale],
-    description: descs[locale],
-    alternates: { canonical },
-    openGraph: {
-      title: `${titles[locale]}${site ? ` | ${site}` : ''}`,
-      description: descs[locale],
-      url: canonical,
-    },
-  }
+  return buildPageMetadata({ locale, path: '/menu', title: titles[locale], description: descs[locale] })
 }
 
 export default async function MenuPage({ params }: { params: Promise<{ locale: string }> }) {

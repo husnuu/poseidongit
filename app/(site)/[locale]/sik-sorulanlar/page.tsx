@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { client, urlFor } from '@/lib/sanity'
 import { faqPageQuery, siteFooterQuery } from '@/lib/queries'
 import { absoluteUrl, buildFAQSchema, getSiteName } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import JsonLd from '@/components/seo/JsonLd'
 import FAQAccordion from '@/components/FAQAccordion'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -39,20 +40,23 @@ function splitHeadingForBlogStyle(heading: string): [string, string] {
   return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')]
 }
 
-export async function generateMetadata() {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: loc } = await params
+  const locale: SiteLocale = isSiteLocale(loc) ? loc : 'tr'
   try {
     const data = await client.fetch<FaqPageData | null>(faqPageQuery, {}, { useCdn: false })
-    const title = data?.seo?.metaTitle ?? data?.cover?.heading ?? 'Sık Sorulanlar'
+    const rawTitle = data?.seo?.metaTitle ?? data?.cover?.heading ?? 'Sık Sorulanlar'
+    const title = rawTitle.includes('|') ? rawTitle : getSiteName() ? `${rawTitle} | ${getSiteName()}` : rawTitle
     const description = data?.seo?.metaDescription ?? data?.cover?.description ?? 'Sıkça sorulan sorular ve cevapları.'
-    return {
-      title: title.includes('|') ? title : getSiteName() ? `${title} | ${getSiteName()}` : title,
-      description,
-    }
+    return buildPageMetadata({ locale, path: '/sik-sorulanlar', title, description })
   } catch {
-    return {
-      title: getSiteName() ? `Sık Sorulanlar | ${getSiteName()}` : 'Sık Sorulanlar',
+    const title = getSiteName() ? `Sık Sorulanlar | ${getSiteName()}` : 'Sık Sorulanlar'
+    return buildPageMetadata({
+      locale,
+      path: '/sik-sorulanlar',
+      title,
       description: 'Sıkça sorulan sorular ve cevapları.',
-    }
+    })
   }
 }
 

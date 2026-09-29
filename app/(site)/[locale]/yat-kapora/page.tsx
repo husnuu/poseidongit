@@ -9,7 +9,9 @@ import {
 import { getYachtDepositPageUi } from '@/lib/i18n/strings/yachtDepositPage'
 import { getYachtDepositPageContent } from '@/lib/yachtDepositDefaults'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
+import { withLocalePath } from '@/lib/i18n/paths'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
+import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
 import {
   buildYachtDepositCharterConfig,
   yachtDepositContextLine,
@@ -42,11 +44,17 @@ export async function generateMetadata({
   const title = content.seo.title
   const description = content.seo.description
   const site = getSiteName()
-  const path = locale === 'en' ? '/en/yacht-deposit' : '/yat-kapora'
+  // NOT: Önceki sürümde EN için var olmayan `/en/yacht-deposit` yoluna işaret
+  // eden hatalı bir canonical vardı (404). Gerçek rota her locale için de
+  // `/yat-kapora` (yalnızca locale önekiyle) — bkz. LOCALE_PATH_PREFIX.
+  const path = withLocalePath(locale, '/yat-kapora')
   return {
     title: site ? `${title} | ${site}` : title,
     description,
-    alternates: { canonical: `${getBaseUrl()}${path}` },
+    alternates: {
+      canonical: `${getBaseUrl()}${path}`,
+      languages: alternateLanguageAbsoluteUrls('/yat-kapora'),
+    },
     robots: page?.enabled === false ? { index: false, follow: false } : undefined,
   }
 }

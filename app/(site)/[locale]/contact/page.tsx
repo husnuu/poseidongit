@@ -9,6 +9,7 @@ import type { ContactSidebarData } from '@/components/contact/ContactSidebar'
 import PopularToursSection from '@/components/home/PopularToursSection'
 import type { TourListItem } from '@/components/tours/TourCard'
 import { getSiteName } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import { notFound } from 'next/navigation'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
@@ -85,17 +86,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       raw?.pageTranslations,
       locale,
     )
-    const title = seo.metaTitle?.trim() || baseUi.defaultTitle
+    const rawTitle = seo.metaTitle?.trim() || baseUi.defaultTitle
+    const title = rawTitle.includes('|') ? rawTitle : siteName ? `${rawTitle} | ${siteName}` : rawTitle
     const description = seo.metaDescription?.trim() || baseUi.defaultMetaDescription
-    return {
-      title: title.includes('|') ? title : siteName ? `${title} | ${siteName}` : title,
-      description,
-    }
+    return buildPageMetadata({ locale, path: '/contact', title, description })
   } catch {
-    return {
-      title: siteName ? `${baseUi.defaultTitle} | ${siteName}` : baseUi.defaultTitle,
-      description: baseUi.defaultMetaDescription,
-    }
+    const title = siteName ? `${baseUi.defaultTitle} | ${siteName}` : baseUi.defaultTitle
+    return buildPageMetadata({ locale, path: '/contact', title, description: baseUi.defaultMetaDescription })
   }
 }
 

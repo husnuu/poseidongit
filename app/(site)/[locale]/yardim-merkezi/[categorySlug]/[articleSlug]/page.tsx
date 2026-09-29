@@ -16,6 +16,7 @@ import {
 } from '@/lib/sanity/fetchers/helpCenter'
 import type { HelpArticleDetail } from '@/lib/sanity/types/helpCenter'
 import { absoluteUrl, buildBreadcrumbSchema, getSiteName } from '@/lib/seo'
+import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -52,15 +53,26 @@ export async function generateMetadata({
     ''
   const path = withLocalePath(locale, `/yardim-merkezi/${categorySlug}/${articleSlug}`)
   const url = absoluteUrl(path)
+  const ogLocale = locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : 'en_US'
   return {
     title,
     description: description.slice(0, 160),
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      languages: alternateLanguageAbsoluteUrls(`/yardim-merkezi/${categorySlug}/${articleSlug}`),
+    },
     openGraph: {
       title,
       description: description.slice(0, 160),
       url,
       type: 'article',
+      locale: ogLocale,
+      ...(site ? { siteName: site } : {}),
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description: description.slice(0, 160),
     },
   }
 }

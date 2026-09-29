@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next'
 import { client } from '@/lib/sanity'
 import { getBaseUrl } from '@/lib/seo'
 import { tourSlugRowsForLocalesQuery } from '@/lib/queries'
+import { helpArticleSlugsByLocaleQuery } from '@/lib/sanity/queries/helpCenter'
 import { canonicalRouteToPublicPath } from '@/lib/i18n/routeAliases'
 import type { SiteLocale } from '@/lib/i18n/config'
 
@@ -104,6 +105,58 @@ async function getYachtDetailEntries(): Promise<{ path: string; lastModified: Da
   }
 }
 
+/** Feribot bilet hatları — slug locale bazında değişmiyor (tek segment, /feribot/[slug]). */
+async function getFerryRouteEntries(): Promise<SitemapEntry[]> {
+  try {
+    const list = await client.fetch<{ slug: string | null; _updatedAt: string }[]>(
+      `*[_type == "ferryRoute" && isActive != false && defined(slug.current)]{ "slug": slug.current, _updatedAt }`
+    )
+    return (list ?? [])
+      .filter((r): r is { slug: string; _updatedAt: string } => Boolean(r.slug))
+      .map((r) => ({
+        slug: r.slug,
+        lastModified: r._updatedAt ? new Date(r._updatedAt) : new Date(),
+      }))
+  } catch {
+    return []
+  }
+}
+
+/** Yardım merkezi kategorileri — TR/EN/DE çeviri slug'ları ayrı alanlarda tutuluyor. */
+async function getHelpCategorySitemapRows(): Promise<
+  { trSlug?: string | null; enSlug?: string | null; deSlug?: string | null; _updatedAt?: string }[]
+> {
+  try {
+    return await client.fetch(
+      `*[_type == "helpCategory" && defined(slug.current)]{
+        "trSlug": slug.current,
+        "enSlug": translations.en.slug.current,
+        "deSlug": translations.de.slug.current,
+        _updatedAt
+      }`
+    )
+  } catch {
+    return []
+  }
+}
+
+type HelpArticleLocaleRow = {
+  trCat?: string | null
+  trArt?: string | null
+  enCat?: string | null
+  enArt?: string | null
+  deCat?: string | null
+  deArt?: string | null
+}
+
+async function getHelpArticleSitemapRows(): Promise<HelpArticleLocaleRow[]> {
+  try {
+    return await client.fetch<HelpArticleLocaleRow[]>(helpArticleSlugsByLocaleQuery)
+  } catch {
+    return []
+  }
+}
+
 async function getLegalEntries(): Promise<SitemapEntry[]> {
   try {
     const list = await client.fetch<{ slug: string | null; _updatedAt: string }[]>(
@@ -121,14 +174,25 @@ async function getLegalEntries(): Promise<SitemapEntry[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [tourRows, blogEntriesRaw, legalEntriesRaw, yachtLocRaw, yachtDetailRaw] =
-    await Promise.all([
-      getTourSitemapRows(),
-      getBlogEntries(),
-      getLegalEntries(),
-      getYachtLocationEntries(),
-      getYachtDetailEntries(),
-    ])
+  const [
+    tourRows,
+    blogEntriesRaw,
+    legalEntriesRaw,
+    yachtLocRaw,
+    yachtDetailRaw,
+    ferryRouteEntriesRaw,
+    helpCategoryRows,
+    helpArticleRows,
+  ] = await Promise.all([
+    getTourSitemapRows(),
+    getBlogEntries(),
+    getLegalEntries(),
+    getYachtLocationEntries(),
+    getYachtDetailEntries(),
+    getFerryRouteEntries(),
+    getHelpCategorySitemapRows(),
+    getHelpArticleSitemapRows(),
+  ])
 
   const now = new Date()
   const locales: SiteLocaleKey[] = ['tr', 'en', 'de']
@@ -144,12 +208,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/rezervasyon',
     '/yat-kiralama',
     '/yardim-merkezi',
+    '/feribot',
   ] as const
 
   function staticPriority(path: string): number {
     if (path === '/') return 1
     if (path === '/turlar') return 0.9
     if (path === '/yat-kiralama') return 0.85
+    if (path === '/feribot') return 0.8
     if (path === '/koylar' || path === '/blog' || path === '/menu') return 0.8
     if (path === '/rezervasyon') return 0.7
     if (path === '/yardim-merkezi') return 0.75
@@ -227,6 +293,66 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
   )
 
+  const ferryRouteEntries: MetadataRoute.Sitemap = ferryRouteEntriesRaw.flatMap(({ slug, lastModified }) =>
+    locales.map((loc) => ({
+      url: publicUrl(loc, `/feribot/${slug}`),
+      lastModified,
+      changeFrequency: 'weekly' as const,
+      priority: 0.75,
+    }))
+  )
+
+  const helpCategoryEntries: MetadataRoute.Sitemap = []
+  for (const row of helpCategoryRows ?? []) {
+    const lm = row._updatedAt ? new Date(row._updatedAt) : now
+    if (row.trSlug)
+      helpCategoryEntries.push({
+        url: publicUrl('tr', `/yardim-merkezi/kategori/${row.trSlug}`),
+        lastModified: lm,
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      })
+    if (row.enSlug)
+      helpCategoryEntries.push({
+        url: publicUrl('en', `/yardim-merkezi/kategori/${row.enSlug}`),
+        lastModified: lm,
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      })
+    if (row.deSlug)
+      helpCategoryEntries.push({
+        url: publicUrl('de', `/yardim-merkezi/kategori/${row.deSlug}`),
+        lastModified: lm,
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      })
+  }
+
+  const helpArticleEntries: MetadataRoute.Sitemap = []
+  for (const row of helpArticleRows ?? []) {
+    if (row.trCat && row.trArt)
+      helpArticleEntries.push({
+        url: publicUrl('tr', `/yardim-merkezi/${row.trCat}/${row.trArt}`),
+        lastModified: now,
+        changeFrequency: 'monthly',
+        priority: 0.55,
+      })
+    if (row.enCat && row.enArt)
+      helpArticleEntries.push({
+        url: publicUrl('en', `/yardim-merkezi/${row.enCat}/${row.enArt}`),
+        lastModified: now,
+        changeFrequency: 'monthly',
+        priority: 0.55,
+      })
+    if (row.deCat && row.deArt)
+      helpArticleEntries.push({
+        url: publicUrl('de', `/yardim-merkezi/${row.deCat}/${row.deArt}`),
+        lastModified: now,
+        changeFrequency: 'monthly',
+        priority: 0.55,
+      })
+  }
+
   return [
     ...staticPages,
     ...tourEntries,
@@ -234,5 +360,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...legalEntries,
     ...yachtLocationEntries,
     ...yachtDetailEntries,
+    ...ferryRouteEntries,
+    ...helpCategoryEntries,
+    ...helpArticleEntries,
   ]
 }

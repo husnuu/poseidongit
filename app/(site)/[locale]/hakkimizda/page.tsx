@@ -3,12 +3,12 @@ import { aboutPageMetaQuery, aboutPageQuery } from '@/lib/queries'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
 import Image from 'next/image'
-import { getBaseUrl, getSiteName } from '@/lib/seo'
+import { getSiteName } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
-import { withLocalePath } from '@/lib/i18n/paths'
 import {
   aboutBoatFieldHasManualTranslation,
   aboutFieldHasManualTranslation,
@@ -98,8 +98,6 @@ export async function generateMetadata({
   const locale: SiteLocale = isSiteLocale(loc) ? loc : 'tr'
   const ui = getAboutPageUiStrings(locale)
   const siteName = getSiteName()
-  const aboutPath = withLocalePath(locale, '/hakkimizda')
-  const canonicalBase = aboutPath === '/' ? getBaseUrl() : `${getBaseUrl()}${aboutPath}`
 
   try {
     const row = await client.fetch<{
@@ -133,17 +131,15 @@ export async function generateMetadata({
       translatedDescription?.trim()?.slice(0, 160) || ui.metaDescriptionFallback
     const title =
       titleBase.includes('|') || !siteName ? titleBase : `${titleBase} | ${siteName}`
-    return {
-      title,
-      description,
-      alternates: { canonical: canonicalBase },
-    }
+    return buildPageMetadata({ locale, path: '/hakkimizda', title, description })
   } catch {
     const title = siteName ? `${ui.metaTitleFallback} | ${siteName}` : ui.metaTitleFallback
-    return {
+    return buildPageMetadata({
+      locale,
+      path: '/hakkimizda',
       title,
       description: ui.metaDescriptionFallback,
-    }
+    })
   }
 }
 

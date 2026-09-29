@@ -7,10 +7,11 @@ import type { TourListItem } from '@/components/tours/TourCard'
 import styles from './page.module.css'
 
 import type { Metadata } from 'next'
-import { getBaseUrl, getSiteName } from '@/lib/seo'
+import { getSiteName } from '@/lib/seo'
+import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
+import { absoluteUrl } from '@/lib/seo'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
-import { withLocalePath } from '@/lib/i18n/paths'
 import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
 import { mergeHomePageLocale } from '@/lib/i18n/mergeHomePageLocale'
 import { translateText } from '@/lib/i18n/runtimeTranslate'
@@ -68,15 +69,25 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: loc } = await params
   const locale = isSiteLocale(loc) ? (loc as SiteLocale) : 'tr'
-  const canonical = `${getBaseUrl()}${withLocalePath(locale, '/turlar')}`
+  const languages = alternateLanguageAbsoluteUrls('/turlar')
+  const canonical = languages[locale === 'tr' ? 'tr' : locale === 'en' ? 'en' : 'de'] ?? absoluteUrl('/turlar')
+  const ogLocale = locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : 'en_US'
   return {
     title: META_TITLE[locale],
     description: META_DESCRIPTION[locale],
-    alternates: { canonical },
+    alternates: { canonical, languages },
     openGraph: {
       title: OG_META_TITLE[locale],
       description: OG_META_DESCRIPTION[locale],
       url: canonical,
+      type: 'website',
+      locale: ogLocale,
+      ...(siteName ? { siteName } : {}),
+    },
+    twitter: {
+      card: 'summary',
+      title: OG_META_TITLE[locale],
+      description: OG_META_DESCRIPTION[locale],
     },
   }
 }

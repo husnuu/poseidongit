@@ -11,6 +11,14 @@ export type TravelAgencyStructuredDataImageOverrides = {
   imageUrls?: string[]
 }
 
+/** Sayfada GERÇEKTEN gösterilen puan/yorum sayısı — Google’ın structured-data
+ * kurallarına göre şema, sayfanın görünür içeriğiyle eşleşmeli. Verilmezse
+ * aşağıdaki sabit (AGGREGATE_RATING) yedek olarak kullanılır. */
+export type TravelAgencyAggregateRatingOverride = {
+  ratingValue: number
+  reviewCount: number
+}
+
 /** * İşletme görünen adı (sabit) 
  * HTML kaynağındaki "Poseidon" vurgusu ile eşitlendi.
  */
@@ -80,7 +88,8 @@ const WEEKDAYS = [
 ] as const
 
 export function buildTravelAgencyStructuredData(
-  imageOverrides?: TravelAgencyStructuredDataImageOverrides
+  imageOverrides?: TravelAgencyStructuredDataImageOverrides,
+  aggregateRatingOverride?: TravelAgencyAggregateRatingOverride | null
 ): Record<string, unknown> {
   const base = getBaseUrl()
   const id = `${base}/#business`
@@ -148,12 +157,20 @@ export function buildTravelAgencyStructuredData(
     priceRange: PRICE_RANGE,
     currenciesAccepted: 'TRY',
     paymentAccepted: PAYMENT_ACCEPTED,
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: AGGREGATE_RATING.ratingValue,
-      reviewCount: AGGREGATE_RATING.reviewCount,
-      bestRating: AGGREGATE_RATING.bestRating,
-    },
+    aggregateRating:
+      aggregateRatingOverride && aggregateRatingOverride.reviewCount > 0
+        ? {
+            '@type': 'AggregateRating',
+            ratingValue: aggregateRatingOverride.ratingValue.toFixed(1),
+            reviewCount: String(aggregateRatingOverride.reviewCount),
+            bestRating: AGGREGATE_RATING.bestRating,
+          }
+        : {
+            '@type': 'AggregateRating',
+            ratingValue: AGGREGATE_RATING.ratingValue,
+            reviewCount: AGGREGATE_RATING.reviewCount,
+            bestRating: AGGREGATE_RATING.bestRating,
+          },
     sameAs: [...SAME_AS],
     potentialAction: {
       '@type': 'ReserveAction',

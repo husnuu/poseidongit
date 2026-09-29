@@ -102,6 +102,10 @@ export type TourPageUi = {
   stickyDemandAria: string
   headerMobileTicket: string
   headerInstantConfirmation: string
+  /** /rezervasyon/[slug] sayfası: tur detayına dönüş linki. */
+  reservationBackToTour: string
+  /** /rezervasyon/[slug] sayfası: başlığın üstündeki küçük etiket. */
+  reservationEyebrow: string
 }
 
 const UI: Record<SiteLocale, TourPageUi> = {
@@ -198,6 +202,8 @@ const UI: Record<SiteLocale, TourPageUi> = {
     stickyDemandAria: 'Talep uyarısı',
     headerMobileTicket: 'Mobil bilet',
     headerInstantConfirmation: 'Anında onay',
+    reservationBackToTour: 'Tur detayına dön',
+    reservationEyebrow: 'Rezervasyon',
   },
   en: {
     locale: 'en',
@@ -292,6 +298,8 @@ const UI: Record<SiteLocale, TourPageUi> = {
     stickyDemandAria: 'Demand notice',
     headerMobileTicket: 'Mobile ticket',
     headerInstantConfirmation: 'Instant confirmation',
+    reservationBackToTour: 'Back to tour details',
+    reservationEyebrow: 'Reservation',
   },
   de: {
     locale: 'de',
@@ -386,6 +394,8 @@ const UI: Record<SiteLocale, TourPageUi> = {
     stickyDemandAria: 'Nachfragehinweis',
     headerMobileTicket: 'Mobiles Ticket',
     headerInstantConfirmation: 'Sofortige Bestätigung',
+    reservationBackToTour: 'Zurück zur Tour',
+    reservationEyebrow: 'Reservierung',
   },
 }
 

@@ -1,13 +1,13 @@
 import { client, urlFor } from '@/lib/sanity'
 import { blogsListQuery, blogPageMetaQuery, blogPageQuery } from '@/lib/queries'
 import CompactBlogCard from '@/components/blog/CompactBlogCard'
-import { getBaseUrl, getSiteName } from '@/lib/seo'
+import { getSiteName } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { Metadata } from 'next'
 import styles from './blog.module.css'
 import { notFound } from 'next/navigation'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
-import { withLocalePath } from '@/lib/i18n/paths'
 import { mergeBlogPageLocale, mergeBlogPageSeoForLocale } from '@/lib/i18n/mergeBlogPageLocale'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
 import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
@@ -51,9 +51,6 @@ export async function generateMetadata({
   const { locale: loc } = await params
   const locale: SiteLocale = isSiteLocale(loc) ? loc : 'tr'
   const ui = getBlogPageUiStrings(locale)
-  const blogPath = withLocalePath(locale, '/blog')
-  const canonical =
-    blogPath === '/' ? getBaseUrl() : `${getBaseUrl()}${blogPath}`
 
   try {
     const row = await client.fetch<{
@@ -72,24 +69,10 @@ export async function generateMetadata({
         : `${titleBase} | ${siteName}`
     const description =
       seo?.metaDescription?.trim()?.slice(0, 160) ?? ui.blogListDefaultDescription
-    return {
-      title,
-      description,
-      alternates: { canonical },
-      openGraph: {
-        title,
-        description,
-        url: canonical,
-      },
-    }
+    return buildPageMetadata({ locale, path: '/blog', title, description })
   } catch {
     const title = siteName ? `${ui.blogListTitleSuffix} | ${siteName}` : ui.blogListTitleSuffix
-    return {
-      title,
-      description: ui.blogListDefaultDescription,
-      alternates: { canonical },
-      openGraph: { title, description: ui.blogListDefaultDescription, url: canonical },
-    }
+    return buildPageMetadata({ locale, path: '/blog', title, description: ui.blogListDefaultDescription })
   }
 }
 

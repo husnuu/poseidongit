@@ -30,12 +30,13 @@ export async function generateMetadata({
 }: {
   params: Promise<{ locale: string; segment: string; yachtSlug: string }>
 }): Promise<Metadata> {
-  const { segment, yachtSlug } = await params
+  const { locale: loc, segment, yachtSlug } = await params
+  const locale: SiteLocale = isSiteLocale(loc) ? loc : 'tr'
   const yacht = await getYacht(segment, yachtSlug)
   if (!yacht) return { title: 'Yat bulunamadı' }
   const path = `/yat-kiralama/${segment}/${yachtSlug}`
   try {
-    return buildYachtDetailMetadata(yacht, path)
+    return buildYachtDetailMetadata(yacht, path, locale)
   } catch (err) {
     console.error('[yat-kiralama] generateMetadata failed', { segment, yachtSlug, err })
     return { title: yacht.name || 'Yat kiralama' }

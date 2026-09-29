@@ -6,9 +6,9 @@ import { mapSanityYachtRowsToHomeCards } from '@/lib/mapYachtListItem'
 import type { SanityYachtCardRow } from '@/lib/yachtTypes'
 import YachtRentalListSection from '@/components/yacht/YachtRentalListSection'
 import listStyles from '../turlar/page.module.css'
-import { getBaseUrl, getSiteName } from '@/lib/seo'
+import { getSiteName } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
-import { withLocalePath } from '@/lib/i18n/paths'
 import { translateText } from '@/lib/i18n/runtimeTranslate'
 
 export const revalidate = 3600
@@ -90,18 +90,8 @@ export async function generateMetadata({
 
   const title = translatedTitle?.trim() || DEFAULT_SEO_TITLE[locale]
   const description = translatedDescription?.trim() || DEFAULT_SEO_DESCRIPTION[locale]
-  const canonical = `${getBaseUrl()}${withLocalePath(locale, '/yat-kiralama')}`
 
-  return {
-    title,
-    description,
-    alternates: { canonical },
-    openGraph: {
-      title,
-      description,
-      url: canonical,
-    },
-  }
+  return buildPageMetadata({ locale, path: '/yat-kiralama', title, description })
 }
 
 export default async function YatKiralamaPage({

@@ -7,6 +7,7 @@ import { legalPageBySlugQuery } from '@/lib/queries'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock, PortableTextComponents } from '@portabletext/react'
 import { getSiteName, absoluteUrl } from '@/lib/seo'
+import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -112,13 +113,15 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages: alternateLanguageAbsoluteUrls(`/yasal/${slug}`) },
     openGraph: {
       title,
       description,
       url,
       type: 'website',
+      ...(siteName ? { siteName } : {}),
     },
+    twitter: { card: 'summary', title, description },
   }
 }
 

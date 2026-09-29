@@ -1,12 +1,8 @@
-import { cache } from 'react'
 import { notFound } from 'next/navigation'
-import Image from 'next/image'
-import type { PortableTextBlock } from '@portabletext/react'
 import type { Metadata } from 'next'
 import { client, urlFor } from '@/lib/sanity'
-import { tourGalleryHeroImageUrl, tourCoverImageUrl } from '@/lib/sanityImage'
+import { tourCoverImageUrl } from '@/lib/sanityImage'
 import {
-  tourByLocaleSlugQuery,
   tourSlugRowsForLocalesQuery,
   siteFooterQuery,
   otherToursForTourPageQuery,
@@ -15,32 +11,23 @@ import OtherToursSection from '@/components/OtherToursSection'
 import type { TourListItem } from '@/components/tours/TourCard'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
 import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
-import {
-  translateText,
-  translatePortableTextBlocks,
-  translateTextArray,
-  translateFields,
-  translateArrayFields,
-} from '@/lib/i18n/runtimeTranslate'
+import { translateText } from '@/lib/i18n/runtimeTranslate'
 import { withLocalePath } from '@/lib/i18n/paths'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
-import { type TourGalleryImage } from '@/components/TourGalleryHero'
 import PhotoGrid from '@/components/PhotoGrid'
 import { TourHeader } from '@/components/TourHeader'
 import FAQAccordion from '@/components/FAQAccordion'
 import IncludedNotIncluded from '@/components/IncludedNotIncluded'
-import ItineraryTimeline, {
-  type ItineraryTimelineItem,
-} from '@/components/ItineraryTimeline'
+import ItineraryTimeline from '@/components/ItineraryTimeline'
 import HighlightsDetailsRow from '@/components/HighlightsDetailsRow'
 import TourDescription from '@/components/TourDescription'
 import HostBlock from '@/components/HostBlock'
 import TourBookingSidebar from '@/components/booking/TourBookingSidebar'
 import type { TourForBooking } from '@/lib/sanity/bookingTypes'
 import ReviewsSection from '@/components/ReviewsSection'
-import WhereSection, { type WhereSectionData } from '@/components/tour/WhereSection'
+import WhereSection from '@/components/tour/WhereSection'
 import TourReelsRail from '@/components/tour/TourReelsRail'
 import JsonLd from '@/components/seo/JsonLd'
 import {
@@ -48,419 +35,15 @@ import {
   buildFAQSchema,
   buildTourSchema,
   absoluteUrl,
+  getSiteName,
 } from '@/lib/seo'
-
-interface TourVideo {
-  enabled: boolean
-  type?: 'youtube' | 'vimeo' | 'upload'
-  youtubeUrl?: string
-  vimeoUrl?: string
-  fileUrl?: string
-  caption?: string
-  poster?: {
-    asset?: { _ref?: string; _type?: string }
-    url?: string
-    metadata?: { lqip?: string; dimensions?: { width: number; height: number } }
-  }
-}
-
-interface GalleryImage {
-  asset?: { _ref?: string; _type?: string }
-  url?: string
-  metadata?: {
-    lqip?: string
-    dimensions?: { width: number; height: number }
-  }
-}
-
-interface QuickFacts {
-  durationText?: string
-  availabilityText?: string
-  meetingLocation?: string
-  startTime?: string
-  returnTime?: string
-  language?: string
-  groupType?: string
-  maxCapacity?: number
-}
-
-interface Highlight {
-  icon?: string
-  title: string
-  description?: string
-}
-
-interface TourDetail {
-  label: string
-  value: string
-  icon?: string
-}
-
-interface ItineraryItem {
-  time?: string
-  title: string
-  description?: string
-  tag?: string
-  image?: GalleryImage
-}
-
-interface FAQ {
-  question: string
-  answer: string
-}
-
-interface Host {
-  name: string
-  title?: string
-  photo?: GalleryImage
-  note?: string
-}
-
-interface WhyYouWillLove {
-  title?: string
-  text?: string
-}
-
-interface PriceByAge {
-  ageKey: string
-  ageLabel: string
-  minAge?: number
-  maxAge?: number
-  price: number
-}
-
-interface TicketClassImage {
-  asset?: { _ref?: string; _type?: string }
-  url?: string
-  alt?: string
-  caption?: string
-  metadata?: { lqip?: string; dimensions?: { width: number; height: number } }
-}
-
-interface TicketClass {
-  key: string
-  label: string
-  description?: string
-  badge?: string
-  bullets?: string[]
-  classImage?: TicketClassImage
-  classImages?: TicketClassImage[]
-  pricesByAge?: PriceByAge[]
-}
-
-interface SeasonRule {
-  name: string
-  start: string
-  end: string
-  multiplier?: number | null
-  classAdjustments?: Array<{
-    classKey: string
-    adultAdjustment?: number | null
-    childAdjustment?: number | null
-    infantAdjustment?: number | null
-  }> | null
-}
-
-interface Deposit {
-  enabled: boolean
-  type?: 'percentage' | 'fixed'
-  value?: number
-}
-
-interface Extra {
-  title: string
-  description?: string
-  price: number
-  priceType?: 'perPerson' | 'total'
-  icon?: string
-}
-
-interface BookingCard {
-  fromText?: string
-  ctaText?: string
-  urgencyText?: string
-  trustBadges?: string[]
-}
-
-interface ReviewItem {
-  name: string
-  title: string
-  description: string
-  rating?: number
-  avatar?: {
-    asset?: { _ref?: string; _type?: string }
-    url?: string
-    metadata?: { lqip?: string; dimensions?: { width: number; height: number } }
-  }
-}
-
-interface ReviewsSection {
-  enabled?: boolean
-  reviewCount?: number
-  ratingValue?: number
-  ratingDots?: number
-  sourceLabel?: string
-  moreLinkText?: string
-  moreLinkUrl?: string
-  items?: ReviewItem[]
-}
-
-interface FoodMenuItemRaw {
-  title?: string
-  excerpt?: string
-  priceLabel?: string
-  metaLine1?: string
-  metaLine2?: string
-  image?: { asset?: { _ref?: string; _type?: string }; alt?: string | null }
-  detail?: PortableTextBlock[] | null
-}
-
-interface TourFoodMenuData {
-  enabled?: boolean
-  sectionTitle?: string | null
-  intro?: string | null
-  items?: FoodMenuItemRaw[] | null
-}
-
-interface TourReelsItem {
-  caption?: string
-  videoUrl?: string
-  poster?: GalleryImage
-}
-
-interface TourReelsSectionData {
-  enabled?: boolean
-  sectionTitle?: string | null
-  items?: TourReelsItem[] | null
-}
-
-interface TourSeo {
-  metaTitle?: string | null
-  metaDescription?: string | null
-  keywords?: string | null
-  noIndex?: boolean | null
-  ogImage?: (GalleryImage & { alt?: string | null }) | null
-}
-
-interface Tour {
-  _id?: string
-  title: string
-  slug: string
-  shortDescription?: string
-  seo?: TourSeo | null
-  description?: PortableTextBlock[] | null
-  mainImage?: GalleryImage
-  gallery?: GalleryImage[]
-  tourVideo?: TourVideo
-  rating?: number
-  reviewCount?: number
-  ratingLabel?: string
-  reviewsUrl?: string
-  quickFacts?: QuickFacts
-  highlights?: Highlight[]
-  tourDetails?: TourDetail[]
-  itinerary?: ItineraryItem[]
-  included?: string[]
-  notIncluded?: string[]
-  faqs?: FAQ[]
-  host?: Host
-  whyYouWillLove?: WhyYouWillLove
-  ticketClasses?: TicketClass[]
-  seasonRules?: SeasonRule[]
-  deposit?: Deposit
-  extras?: Extra[]
-  bookingCard?: BookingCard
-  reviewsSection?: ReviewsSection
-  whereSection?: WhereSectionData | null
-  pickupPoints?: { name?: string; address?: string; description?: string; isDefault?: boolean }[]
-  foodMenu?: TourFoodMenuData | null
-  reelsSection?: TourReelsSectionData | null
-  _updatedAt?: string
-  translations?: unknown
-}
-
-const getTour = cache(async function getTour(
-  slug: string,
-  locale: SiteLocale
-): Promise<Tour | null> {
-  const raw = await client.fetch<(Tour & { translations?: unknown }) | null>(tourByLocaleSlugQuery, {
-    slug,
-    locale,
-  })
-  if (!raw) return null
-  const rawRecord = raw as unknown as Record<string, unknown>
-  const merged = mergeTourForLocale(rawRecord, locale) as unknown as Tour
-
-  // Editör manuel çeviri girmemişse (translations.en/de boşsa), anlık makine
-  // çevirisiyle Türkçe içeriği doldur — Sanity'e hiçbir şey yazılmaz.
-  if (locale !== 'tr') {
-    const has = (field: string) => tourFieldHasManualTranslation(rawRecord, locale, field)
-    const rawTranslationsPatch = rawRecord.translations as Record<string, unknown> | undefined
-    const rawLocalePatch = (locale === 'en' ? rawTranslationsPatch?.en : rawTranslationsPatch?.de) as
-      | Record<string, unknown>
-      | undefined
-    const rawSeoPatch = rawLocalePatch?.seo as { metaTitle?: string; metaDescription?: string } | undefined
-    const hasManualSeoTitle = !!rawSeoPatch?.metaTitle?.trim()
-    const hasManualSeoDescription = !!rawSeoPatch?.metaDescription?.trim()
-
-    const [
-      title,
-      seoMetaTitle,
-      seoMetaDescription,
-      quickFacts,
-      description,
-      faqs,
-      shortDescription,
-      highlights,
-      tourDetails,
-      itinerary,
-      included,
-      notIncluded,
-      host,
-      whyYouWillLove,
-      ticketClasses,
-      extras,
-      bookingCard,
-      pickupPoints,
-      foodMenu,
-      reelsSection,
-      reviewsSection,
-      whereSection,
-    ] = await Promise.all([
-      has('title') ? merged.title : translateText(merged.title, locale),
-      hasManualSeoTitle ? merged.seo?.metaTitle : translateText(merged.seo?.metaTitle, locale),
-      hasManualSeoDescription ? merged.seo?.metaDescription : translateText(merged.seo?.metaDescription, locale),
-      has('quickFacts')
-        ? merged.quickFacts
-        : (async () => {
-            const qf = merged.quickFacts
-            if (!qf) return qf
-            const [durationText, availabilityText, meetingLocation, language, groupType] = await Promise.all([
-              translateText(qf.durationText, locale),
-              translateText(qf.availabilityText, locale),
-              translateText(qf.meetingLocation, locale),
-              translateText(qf.language, locale),
-              translateText(qf.groupType, locale),
-            ])
-            return {
-              ...qf,
-              durationText: durationText || qf.durationText,
-              availabilityText: availabilityText || qf.availabilityText,
-              meetingLocation: meetingLocation || qf.meetingLocation,
-              language: language || qf.language,
-              groupType: groupType || qf.groupType,
-            }
-          })(),
-      has('description') ? merged.description : translatePortableTextBlocks(merged.description, locale),
-      has('faqs')
-        ? merged.faqs
-        : translateArrayFields(merged.faqs, ['question', 'answer'], locale),
-      has('shortDescription') ? merged.shortDescription : translateText(merged.shortDescription, locale),
-      has('highlights')
-        ? merged.highlights
-        : translateArrayFields(merged.highlights, ['title', 'description'], locale),
-      has('tourDetails')
-        ? merged.tourDetails
-        : translateArrayFields(merged.tourDetails, ['label', 'value'], locale),
-      has('itinerary')
-        ? merged.itinerary
-        : translateArrayFields(merged.itinerary, ['title', 'description', 'tag'], locale),
-      has('included') ? merged.included : translateTextArray(merged.included, locale),
-      has('notIncluded') ? merged.notIncluded : translateTextArray(merged.notIncluded, locale),
-      has('host') ? merged.host : translateFields(merged.host, ['title', 'note'], locale),
-      has('whyYouWillLove')
-        ? merged.whyYouWillLove
-        : translateFields(merged.whyYouWillLove, ['title', 'text'], locale),
-      has('ticketClasses')
-        ? merged.ticketClasses
-        : Promise.all(
-            (merged.ticketClasses ?? []).map(async (tc) => ({
-              ...tc,
-              label: await translateText(tc.label, locale),
-              description: tc.description ? await translateText(tc.description, locale) : tc.description,
-              badge: tc.badge ? await translateText(tc.badge, locale) : tc.badge,
-              bullets: tc.bullets ? await translateTextArray(tc.bullets, locale) : tc.bullets,
-              pricesByAge: tc.pricesByAge
-                ? await Promise.all(
-                    tc.pricesByAge.map(async (pa) => ({
-                      ...pa,
-                      ageLabel: (await translateText(pa.ageLabel, locale)) || pa.ageLabel,
-                    }))
-                  )
-                : tc.pricesByAge,
-            }))
-          ),
-      has('extras') ? merged.extras : translateArrayFields(merged.extras, ['title', 'description'], locale),
-      has('bookingCard')
-        ? merged.bookingCard
-        : (async () => {
-            const bc = await translateFields(merged.bookingCard, ['fromText', 'ctaText', 'urgencyText'], locale)
-            if (!bc) return bc
-            return { ...bc, trustBadges: await translateTextArray(bc.trustBadges, locale) }
-          })(),
-      has('pickupPoints')
-        ? merged.pickupPoints
-        : translateArrayFields(merged.pickupPoints, ['description'], locale),
-      has('foodMenu')
-        ? merged.foodMenu
-        : (async () => {
-            const fm = await translateFields(merged.foodMenu, ['sectionTitle', 'intro'], locale)
-            if (!fm) return fm
-            return { ...fm, items: await translateArrayFields(fm.items, ['title', 'excerpt'], locale) }
-          })(),
-      has('reelsSection')
-        ? merged.reelsSection
-        : (async () => {
-            const rs = await translateFields(merged.reelsSection, ['sectionTitle'], locale)
-            if (!rs) return rs
-            return { ...rs, items: await translateArrayFields(rs.items, ['caption'], locale) }
-          })(),
-      has('reviewsSection')
-        ? merged.reviewsSection
-        : (async () => {
-            const rv = merged.reviewsSection
-            if (!rv) return rv
-            return { ...rv, items: await translateArrayFields(rv.items, ['description'], locale) }
-          })(),
-      has('whereSection')
-        ? merged.whereSection
-        : translateFields(merged.whereSection, ['heading', 'meetingPointLabel', 'openInMapsLabel'], locale),
-    ])
-
-    return {
-      ...merged,
-      title: title || merged.title,
-      seo: merged.seo
-        ? {
-            ...merged.seo,
-            metaTitle: seoMetaTitle || merged.seo.metaTitle,
-            metaDescription: seoMetaDescription || merged.seo.metaDescription,
-          }
-        : merged.seo,
-      quickFacts: quickFacts ?? merged.quickFacts,
-      description,
-      faqs: faqs ?? undefined,
-      shortDescription,
-      highlights: highlights ?? undefined,
-      tourDetails: tourDetails ?? undefined,
-      itinerary: itinerary ?? undefined,
-      included: included ?? undefined,
-      notIncluded: notIncluded ?? undefined,
-      host: host ?? undefined,
-      whyYouWillLove: whyYouWillLove ?? undefined,
-      ticketClasses: ticketClasses ?? undefined,
-      extras: extras ?? undefined,
-      bookingCard: (bookingCard ?? undefined) as Tour['bookingCard'],
-      pickupPoints: pickupPoints ?? undefined,
-      foodMenu: foodMenu ?? undefined,
-      reelsSection: reelsSection ?? undefined,
-      reviewsSection: (reviewsSection ?? undefined) as Tour['reviewsSection'],
-      whereSection: whereSection ?? undefined,
-    }
-  }
-
-  return merged
-})
+import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
+import {
+  getTour,
+  buildGalleryHeroImages,
+  buildItineraryTimelineItems,
+  getVideoEmbedUrl,
+} from '@/lib/sanity/getTourFull'
 
 function parseMetaKeywords(raw: string | null | undefined): string[] | undefined {
   if (!raw?.trim()) return undefined
@@ -519,18 +102,22 @@ export async function generateMetadata({
   const ogImageAlt = tour.seo?.ogImage?.alt?.trim() || tour.title
 
   const keywords = parseMetaKeywords(tour.seo?.keywords)
+  const siteName = getSiteName()
+  const ogLocale = locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : 'en_US'
 
   return {
     title,
     description,
     ...(keywords?.length ? { keywords } : {}),
     ...(tour.seo?.noIndex ? { robots: { index: false, follow: true as const } } : {}),
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages: alternateLanguageAbsoluteUrls(`/tur/${slug}`) },
     openGraph: {
       title,
       description,
       url,
       type: 'website',
+      locale: ogLocale,
+      ...(siteName ? { siteName } : {}),
       images: image ? [{ url: image, width: 1200, height: 630, alt: ogImageAlt }] : undefined,
     },
     twitter: {
@@ -540,19 +127,6 @@ export async function generateMetadata({
       ...(image ? { images: [image] } : {}),
     },
   }
-}
-
-function buildGalleryHeroImages(tour: Tour, tourUi: ReturnType<typeof getTourPageUi>): TourGalleryImage[] {
-  const main = tour.mainImage?.asset ? [tour.mainImage] : []
-  const gallery = tour.gallery ?? []
-  const all = [...main, ...gallery].filter(
-    (img): img is GalleryImage => Boolean(img?.asset)
-  )
-  return all.map((img, i) => ({
-    src: tourGalleryHeroImageUrl(img.asset) ?? '',
-    blurDataURL: img.metadata?.lqip ?? null,
-    alt: tourUi.galleryImageAlt(tour.title, i),
-  })).filter((row) => row.src.length > 0)
 }
 
 type OtherTourRaw = {
@@ -606,37 +180,6 @@ async function mapOtherTours(raw: OtherTourRaw[], locale: SiteLocale): Promise<T
       }
     })
   )
-}
-
-function buildItineraryTimelineItems(tour: Tour): ItineraryTimelineItem[] {
-  if (!tour.itinerary?.length) return []
-  return tour.itinerary
-    .filter((item) => item.image?.asset && item.title)
-    .map((item) => ({
-      title: item.title,
-      description: item.description ?? null,
-      time: item.time ?? null,
-      tag: item.tag ?? null,
-      imageUrl: item.image?.asset
-        ? urlFor(item.image.asset).width(500).height(630).url()
-        : null,
-      imageBlurDataURL: item.image?.metadata?.lqip ?? null,
-    }))
-}
-
-function getVideoEmbedUrl(video: TourVideo): string | null {
-  if (!video.enabled || !video.type) return null
-  if (video.type === 'youtube' && video.youtubeUrl) {
-    const youtubeId = video.youtubeUrl.match(
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/
-    )?.[1]
-    return youtubeId ? `https://www.youtube.com/embed/${youtubeId}` : null
-  }
-  if (video.type === 'vimeo' && video.vimeoUrl) {
-    const vimeoId = video.vimeoUrl.match(/(?:vimeo\.com\/)(\d+)/)?.[1]
-    return vimeoId ? `https://player.vimeo.com/video/${vimeoId}` : null
-  }
-  return null
 }
 
 export default async function TourPage({

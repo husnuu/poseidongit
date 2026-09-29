@@ -1,11 +1,13 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Star } from 'lucide-react'
+import { ArrowRight, Star, X } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
+import modalStyles from './ReviewModal.module.css'
 
 export type HomeReviewItem = {
   id: string
@@ -70,22 +72,16 @@ const SHOW_TRANSLATION_LABEL: Record<SiteLocale, string> = {
   de: 'Übersetzung anzeigen',
 }
 
-const VERIFIED_LABEL: Record<SiteLocale, string> = {
-  tr: 'Doğrulanmış misafir',
-  en: 'Verified guest',
-  de: 'Verifizierter Gast',
+const READ_FULL_LABEL: Record<SiteLocale, string> = {
+  tr: 'Yorumun tamamını oku',
+  en: 'Read the full review',
+  de: 'Ganze Bewertung lesen',
 }
 
-/** Google'ın doğrulanmış-yorum mavi rozeti (referans site ile aynı ikon). */
-function VerifiedMark({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 22 22" aria-hidden focusable="false">
-      <path
-        fill="#1d9bf0"
-        d="M20.396 11a3.49 3.49 0 0 0-2.008-3.062 3.47 3.47 0 0 0-.742-3.584 3.474 3.474 0 0 0-3.584-.742A3.47 3.47 0 0 0 11 1.604a3.46 3.46 0 0 0-3.053 2.008 3.47 3.47 0 0 0-1.902-.14c-.635.13-1.22.436-1.69.882a3.461 3.461 0 0 0-.734 3.584A3.49 3.49 0 0 0 1.604 11a3.496 3.496 0 0 0 2.017 3.062 3.471 3.471 0 0 0 .733 3.584 3.49 3.49 0 0 0 3.584.742A3.49 3.49 0 0 0 11 20.396a3.48 3.48 0 0 0 3.062-2.007 3.335 3.335 0 0 0 4.326-4.327A3.49 3.49 0 0 0 20.396 11M9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"
-      />
-    </svg>
-  )
+const CLOSE_LABEL: Record<SiteLocale, string> = {
+  tr: 'Kapat',
+  en: 'Close',
+  de: 'Schließen',
 }
 
 /** İsimden deterministik pastel avatar rengi (referans siteyle aynı görünüm). */
@@ -135,6 +131,8 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeDot, setActiveDot] = useState(0)
   const [revealedOriginal, setRevealedOriginal] = useState<ReadonlySet<string>>(() => new Set())
+  const [openReviewId, setOpenReviewId] = useState<string | null>(null)
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null)
 
   const toggleOriginal = (id: string) => {
     setRevealedOriginal((prev) => {
@@ -144,6 +142,30 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
       return next
     })
   }
+
+  useEffect(() => {
+    const el = document.createElement('div')
+    el.id = 'home-review-portal'
+    document.body.appendChild(el)
+    setPortalEl(el)
+    return () => {
+      if (el.parentNode) el.parentNode.removeChild(el)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!openReviewId) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenReviewId(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [openReviewId])
 
   if (!data?.enabled || !data.items?.length) return null
 
@@ -174,7 +196,87 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
     setActiveDot(closest)
   }
 
+  const openReview = openReviewId ? items.find((r) => r.id === openReviewId) ?? null : null
+  const openReviewRevealed = openReview ? revealedOriginal.has(openReview.id) : false
+  const openReviewText =
+    openReview && openReviewRevealed && openReview.originalDescription
+      ? openReview.originalDescription
+      : openReview?.description ?? ''
+
+  const modal =
+    portalEl && openReview
+      ? createPortal(
+          <div
+            className={`${modalStyles.overlay} ${modalStyles.overlayVisible}`}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setOpenReviewId(null)
+            }}
+            role="dialog"
+            aria-modal
+            aria-label={openReview.name}
+          >
+            <div className={modalStyles.sheet}>
+              <div className={modalStyles.sheetHandle} aria-hidden />
+              <div className={modalStyles.sheetBody}>
+                <div className={modalStyles.topRow}>
+                  {openReview.avatarUrl ? (
+                    <Image
+                      src={openReview.avatarUrl}
+                      alt={openReview.name}
+                      width={56}
+                      height={56}
+                      className="h-14 w-14 shrink-0 rounded-full object-cover"
+                      placeholder={openReview.avatarLqip ? 'blur' : 'empty'}
+                      blurDataURL={openReview.avatarLqip ?? undefined}
+                    />
+                  ) : (
+                    <span
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-bold"
+                      style={{
+                        background: avatarPalette(openReview.name || 'A').bg,
+                        color: avatarPalette(openReview.name || 'A').fg,
+                      }}
+                      aria-hidden
+                    >
+                      {(openReview.name || '?').trim().charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <div className={modalStyles.reviewerText}>
+                    <p className={modalStyles.reviewerName}>{openReview.name}</p>
+                    <StarRow value={openReview.rating} />
+                    {openReview.dateLabel && (
+                      <span className={modalStyles.dateLabel}>{openReview.dateLabel}</span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className={modalStyles.closeBtn}
+                    onClick={() => setOpenReviewId(null)}
+                    aria-label={CLOSE_LABEL[locale]}
+                  >
+                    <X className="h-5 w-5" aria-hidden />
+                  </button>
+                </div>
+
+                <p className={modalStyles.fullText}>{openReviewText}</p>
+
+                {openReview.originalDescription && (
+                  <p className={modalStyles.translatedRow}>
+                    {TRANSLATED_FROM_LABEL[locale]} ·{' '}
+                    <button type="button" onClick={() => toggleOriginal(openReview.id)}>
+                      {openReviewRevealed ? SHOW_TRANSLATION_LABEL[locale] : SHOW_ORIGINAL_LABEL[locale]}
+                    </button>
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>,
+          portalEl
+        )
+      : null
+
   return (
+    <>
     <section
       className="w-full py-16 md:py-20"
       // Referans siteden birebir örneklenen yatay gradyan: solda nane yeşili, sağda turkuaz
@@ -237,15 +339,14 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                   <div className="flex items-center justify-between gap-2">
                     <StarRow value={review.rating} />
                     <span
-                      className="inline-flex items-center gap-1.5 text-xs font-bold"
-                      style={{ color: 'var(--primary, #2168b8)' }}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-md"
+                      aria-label="Google"
                     >
-                      <VerifiedMark />
-                      {VERIFIED_LABEL[locale]}
+                      <GoogleMark size={19} />
                     </span>
                   </div>
 
-                  <div className="flex flex-1 flex-col justify-center py-6">
+                  <div className="flex flex-1 flex-col justify-center gap-3 py-6">
                     <p
                       className="line-clamp-6 text-[17px] italic leading-relaxed"
                       style={{ color: 'var(--text-color, #58595b)' }}
@@ -253,11 +354,23 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                       “{shownDescription}”
                     </p>
 
+                    {shownDescription.length > 180 && (
+                      <button
+                        type="button"
+                        onClick={() => setOpenReviewId(review.id)}
+                        className="inline-flex w-fit items-center gap-1.5 text-[15px] font-bold transition hover:opacity-75"
+                        style={{ color: 'var(--primary, #2168b8)' }}
+                      >
+                        {READ_FULL_LABEL[locale]}
+                        <ArrowRight className="h-4 w-4" aria-hidden />
+                      </button>
+                    )}
+
                     {review.originalDescription && (
                       <button
                         type="button"
                         onClick={() => toggleOriginal(review.id)}
-                        className="mt-2 self-start text-xs font-medium underline decoration-dotted underline-offset-2 transition hover:opacity-70"
+                        className="self-start text-xs font-medium underline decoration-dotted underline-offset-2 transition hover:opacity-70"
                         style={{ color: 'var(--muted, #81848b)' }}
                       >
                         {TRANSLATED_FROM_LABEL[locale]} · {isRevealed ? SHOW_TRANSLATION_LABEL[locale] : SHOW_ORIGINAL_LABEL[locale]}
@@ -325,5 +438,7 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
         )}
       </div>
     </section>
+    {modal}
+    </>
   )
 }

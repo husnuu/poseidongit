@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { safeSanityImageUrl } from '@/lib/sanity'
-import { absoluteUrl } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
+import type { SiteLocale } from '@/lib/i18n/config'
 
 function metaDescription(yacht: YachtRentalDocument): string {
   const seod = yacht.seo?.description?.trim()
@@ -13,28 +14,28 @@ function metaDescription(yacht: YachtRentalDocument): string {
   return `Özel yat: ${yacht.name}. Müsaitlik sorun, teklif alın.`
 }
 
+/**
+ * `canonicalPath` locale ÖNEKİ OLMADAN verilir (örn. `/yat-kiralama/cesme/foo`) —
+ * hreflang alternates ve canonical bu yoldan, doğru locale önekiyle üretilir.
+ */
 export function buildYachtDetailMetadata(
   yacht: YachtRentalDocument,
-  canonicalPath: string
+  canonicalPath: string,
+  locale: SiteLocale = 'tr'
 ): Metadata {
   const title =
     yacht.seo?.title?.trim() ||
     `${yacht.name} | Özel yat kiralama`
   const description = metaDescription(yacht)
-  const url = absoluteUrl(canonicalPath)
   const ogAsset = yacht.seo?.ogImage?.asset ?? yacht.mainImage?.asset
   const image =
     safeSanityImageUrl(ogAsset, (b) => b.width(1200).height(630)) ?? undefined
-  return {
+  return buildPageMetadata({
+    locale,
+    path: canonicalPath,
     title,
     description,
-    alternates: { canonical: url },
-    openGraph: {
-      title,
-      description,
-      url,
-      type: 'website',
-      images: image ? [{ url: image, width: 1200, height: 630, alt: yacht.name }] : undefined,
-    },
-  }
+    image,
+    imageAlt: yacht.name,
+  })
 }

@@ -11,6 +11,7 @@ import FAQAccordion from '@/components/FAQAccordion'
 import FerryBookingSidebar from '@/components/ferry/FerryBookingSidebar'
 import { buildWhatsAppHref } from '@/lib/buildWhatsAppHref'
 import { getSiteName } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { getFerryPageUiStrings } from '@/lib/i18n/strings/ferryPage'
@@ -118,12 +119,20 @@ export async function generateMetadata({
   const ui = getFerryPageUiStrings(locale)
   const siteName = getSiteName()
   const data = await getFerryRoute(slug, locale)
-  const title = data?.seo?.metaTitle?.trim() || data?.title || ui.defaultTitle
+  const rawTitle = data?.seo?.metaTitle?.trim() || data?.title || ui.defaultTitle
+  const title = siteName ? `${rawTitle} | ${siteName}` : rawTitle
   const description = data?.seo?.metaDescription?.trim() || ui.defaultMetaDescription
-  return {
-    title: siteName ? `${title} | ${siteName}` : title,
+  const image = data?.mainImage?.asset
+    ? tourGalleryHeroImageUrl(data.mainImage.asset)
+    : undefined
+  return buildPageMetadata({
+    locale,
+    path: `/feribot/${slug}`,
+    title,
     description,
-  }
+    image: image ?? undefined,
+    imageAlt: data?.mainImage?.alt ?? data?.title ?? undefined,
+  })
 }
 
 export default async function FerryRoutePage({

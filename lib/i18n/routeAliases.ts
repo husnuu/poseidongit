@@ -34,7 +34,12 @@ const EN_FIRST_IN: Record<string, string> = {
   legal: 'yasal',
   booking: 'rezervasyon',
   ticket: 'bilet',
-  iletisim: 'contact',
+  // NOT: 'iletisim' BURAYA eklenmiyor — 'contact' zaten kanonik segment adı
+  // (İngilizce çevirisi yok/gerekmiyor). Eskiden buradaki `iletisim: 'contact'`
+  // girdisi geri döndürüldüğünde (EN_FIRST_OUT) yanlışlıkla İngilizce genel
+  // URL'yi "/en/iletisim" (Türkçe kelime) yapıyordu — canonical/hreflang artık
+  // doğru şekilde "/en/contact" üretiyor. Eski "/en/iletisim" linkleri hâlâ
+  // çalışır: aşağıdaki `normalizeFirstSegmentIn`'deki özel durum bunu handle eder.
 }
 
 const DE_FIRST_IN: Record<string, string> = {

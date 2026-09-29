@@ -9,10 +9,9 @@ import { getFerryPageUiStrings } from '@/lib/i18n/strings/ferryPage'
 import FerryRouteCard from '@/components/ferry/FerryRouteCard'
 import type { FerryRouteListItem } from '@/components/ferry/FerryRouteCard'
 import type { FerryAgeTier } from '@/components/ferry/ferryTypes'
-import { getBaseUrl } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
-import { withLocalePath } from '@/lib/i18n/paths'
 import styles from './page.module.css'
 
 export const dynamic = 'force-dynamic'
@@ -25,17 +24,12 @@ export async function generateMetadata({
   const { locale: loc } = await params
   const locale = isSiteLocale(loc) ? (loc as SiteLocale) : 'tr'
   const ui = getFerryPageUiStrings(locale)
-  const canonical = `${getBaseUrl()}${withLocalePath(locale, '/feribot')}`
-  return {
+  return buildPageMetadata({
+    locale,
+    path: '/feribot',
     title: ui.listMetaTitle,
     description: ui.listMetaDescription,
-    alternates: { canonical },
-    openGraph: {
-      title: ui.listMetaTitle,
-      description: ui.listMetaDescription,
-      url: canonical,
-    },
-  }
+  })
 }
 
 type FerryRouteRaw = {

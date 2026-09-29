@@ -13,7 +13,8 @@ import YachtDetailView from '@/components/yacht/YachtDetailView'
 import YachtRentalListSection from '@/components/yacht/YachtRentalListSection'
 import { buildYachtDetailMetadata } from '@/lib/yachtMetadata'
 import listStyles from '../../turlar/page.module.css'
-import { getBaseUrl, getSiteName } from '@/lib/seo'
+import { getSiteName } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import { getYachtUi } from '@/lib/i18n/yachtUi'
 import { translateYachtRentalDocument } from '@/lib/yachtTranslate'
@@ -63,9 +64,10 @@ const getYachtsByLocation = cache(async (locationSlug: string) => {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ segment: string }>
+  params: Promise<{ locale: string; segment: string }>
 }): Promise<Metadata> {
-  const { segment } = await params
+  const { locale: rawLocale, segment } = await params
+  const locale: SiteLocale = isSiteLocale(rawLocale) ? rawLocale : 'tr'
   const yacht = await getYachtBySlug(segment)
   if (yacht) {
     const path =
@@ -73,7 +75,7 @@ export async function generateMetadata({
         ? `/yat-kiralama/${yacht.locationSlug}/${yacht.slug}`
         : `/yat-kiralama/${segment}`
     try {
-      return buildYachtDetailMetadata(yacht, path)
+      return buildYachtDetailMetadata(yacht, path, locale)
     } catch (err) {
       console.error('[yat-kiralama segment] generateMetadata yacht', { segment, err })
       return { title: yacht.name || 'Yat kiralama' }
@@ -83,11 +85,12 @@ export async function generateMetadata({
   if (loc?.title) {
     const site = getSiteName()
     const title = site ? `${loc.title} yat kiralama | ${site}` : `${loc.title} | Yat kiralama`
-    return {
+    return buildPageMetadata({
+      locale,
+      path: `/yat-kiralama/${segment}`,
       title,
       description: `${loc.title} bölgesinde özel yat ve charter seçenekleri.`,
-      alternates: { canonical: `${getBaseUrl()}/yat-kiralama/${segment}` },
-    }
+    })
   }
   return { title: 'Sayfa bulunamadı' }
 }

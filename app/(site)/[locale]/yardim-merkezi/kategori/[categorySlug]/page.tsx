@@ -8,7 +8,8 @@ import { client } from '@/lib/sanity'
 import { siteSettingsWhatsappQuery } from '@/lib/queries'
 import { buildWhatsAppHref } from '@/lib/buildWhatsAppHref'
 import { fetchHelpCategoryPage } from '@/lib/sanity/fetchers/helpCenter'
-import { getSiteName, absoluteUrl } from '@/lib/seo'
+import { getSiteName } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -35,12 +36,12 @@ export async function generateMetadata({
       : `${titleBase} | ${ui.metaCategoryTitleSuffix}`
   const description =
     cat.shortDescription?.trim() || ui.metaCategoryDescriptionFallback(cat.title ?? ui.categoryFallbackTitle)
-  const path = withLocalePath(locale, `/yardim-merkezi/kategori/${categorySlug}`)
-  return {
+  return buildPageMetadata({
+    locale,
+    path: `/yardim-merkezi/kategori/${categorySlug}`,
     title,
     description: description.slice(0, 160),
-    alternates: { canonical: absoluteUrl(path) },
-  }
+  })
 }
 
 export default async function HelpCategoryListingPage({

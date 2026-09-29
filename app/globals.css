@@ -2,6 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ────────────────────────────────────────────────────────────────────────
+   ERİŞİLEBİLİRLİK TEMELİ (site geneli)
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* "İçeriğe geç" atlama linki — ekran okuyucu/klavye kullanıcıları header'ı
+   ve tekrarlanan navigasyonu atlayıp doğrudan sayfa içeriğine geçebilsin.
+   Görsel olarak gizli, yalnızca klavye odağı aldığında görünür olur. */
+.skip-link {
+  position: fixed;
+  top: -80px;
+  left: 12px;
+  z-index: 100000;
+  background: #131719;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-family: var(--font-family), sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: max(12px, env(safe-area-inset-top, 12px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skip-link {
+    transition: none;
+  }
+}
+
+/* Klavyeyle gezinirken her interaktif öğede görünür odak halkası garantisi
+   (WCAG 2.4.7 "Focus Visible"). Daha spesifik bileşen kuralları (örn.
+   `.trigger:focus-visible { box-shadow: ... }`) normal şekilde bunun
+   üzerine yazar; bu yalnızca hiçbir özel odak stili tanımlanmamış öğeler
+   için bir güvenlik ağıdır — fare/dokunma odağında (:focus) görünmez. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--primary, #2168b8);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Hareketi azaltma tercihi (prefers-reduced-motion) — kullanıcı işletim
+   sisteminden bunu istediyse, site genelindeki TÜM animasyon/geçişleri
+   neredeyse anlık hale getir. Bileşene özel daha ince ayarlı kurallar
+   (örn. `.hero-reveal { animation: none }`) `animation-name`'i etkilediği
+   için bunun üzerine öncelikli olarak çalışmaya devam eder; bu kural asıl
+   olarak henüz özel bir reduced-motion kuralı olmayan animasyonları
+   (modallar, açılır menüler, pulse efektleri vb.) güvence altına alır. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Inter: next/font ile layout'tan yüklenir (render-blocking değil). */
 
 /* Hero birincil buton: kenarda hareket eden beyaz parıltı (dönme yok, sadece parıltı konumu hareket eder) */

@@ -2,12 +2,12 @@ import { client, urlFor } from '@/lib/sanity'
 import { covesPageQuery, covesListQuery } from '@/lib/queries'
 import CovesHero from '@/components/coves/CovesHero'
 import CoveCard from '@/components/coves/CoveCard'
-import { getBaseUrl, getSiteName } from '@/lib/seo'
+import { getSiteName } from '@/lib/seo'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
-import { withLocalePath } from '@/lib/i18n/paths'
 import { mergeCoveForLocale } from '@/lib/i18n/mergeCoveForLocale'
 import { mergeCovesPageLocale, mergeCovesPageSeoForLocale } from '@/lib/i18n/mergeCovesPageLocale'
 import { getCovesPageUiStrings } from '@/lib/i18n/strings/covesPage'
@@ -46,8 +46,6 @@ export async function generateMetadata({
   const locale: SiteLocale = isSiteLocale(loc) ? loc : 'tr'
   const ui = getCovesPageUiStrings(locale)
   const siteName = getSiteName()
-  const path = withLocalePath(locale, '/koylar')
-  const canonical = path === '/' ? getBaseUrl() : `${getBaseUrl()}${path}`
 
   try {
     const data = await client.fetch<CovesPageData | null>(covesPageQuery, {}, opts)
@@ -66,18 +64,10 @@ export async function generateMetadata({
         data?.description?.trim() ||
         ui.metaDescriptionFallback)?.slice(0, 160) ?? ui.metaDescriptionFallback
     const title = titleBase.includes('|') || !siteName ? titleBase : `${titleBase} | ${siteName}`
-    return {
-      title,
-      description,
-      alternates: { canonical },
-    }
+    return buildPageMetadata({ locale, path: '/koylar', title, description })
   } catch {
     const title = siteName ? `${ui.metaTitleFallback} | ${siteName}` : ui.metaTitleFallback
-    return {
-      title,
-      description: ui.metaDescriptionFallback,
-      alternates: { canonical },
-    }
+    return buildPageMetadata({ locale, path: '/koylar', title, description: ui.metaDescriptionFallback })
   }
 }
 
