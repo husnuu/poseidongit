@@ -40,6 +40,10 @@ export type ContactPageUiStrings = {
   ariaInstagram: string
   mapIframeTitle: string
   defaultPopularToursTitle: string
+  /** Sanity'de instagramLabel boşsa gösterilecek varsayılan metin. */
+  instagramFallbackLabel: string
+  /** Sanity'de youtubeLabel boşsa gösterilecek varsayılan metin. */
+  youtubeFallbackLabel: string
 }
 
 const TR: ContactPageUiStrings = {
@@ -77,6 +81,8 @@ const TR: ContactPageUiStrings = {
   ariaInstagram: 'Instagram’da takip et',
   mapIframeTitle: 'Harita',
   defaultPopularToursTitle: 'VEYA POPÜLER TURLARIMIZI BURADA BULABİLİRSİNİZ!',
+  instagramFallbackLabel: "Instagram'da bizi takip edin",
+  youtubeFallbackLabel: "Bizi YouTube'da bulun",
 }
 
 const EN: ContactPageUiStrings = {
@@ -114,6 +120,8 @@ const EN: ContactPageUiStrings = {
   ariaInstagram: 'Follow on Instagram',
   mapIframeTitle: 'Map',
   defaultPopularToursTitle: 'OR YOU CAN FIND OUR MOST POPULAR TOURS HERE!',
+  instagramFallbackLabel: 'Follow us on Instagram',
+  youtubeFallbackLabel: 'Find us on Youtube',
 }
 
 const DE: ContactPageUiStrings = {
@@ -151,6 +159,8 @@ const DE: ContactPageUiStrings = {
   ariaInstagram: 'Auf Instagram folgen',
   mapIframeTitle: 'Karte',
   defaultPopularToursTitle: 'HIER FINDEN SIE UNSERE BELIEBTESTEN TOUREN!',
+  instagramFallbackLabel: 'Folgen Sie uns auf Instagram',
+  youtubeFallbackLabel: 'Finden Sie uns auf YouTube',
 }
 
 export function getContactPageUiStrings(locale: SiteLocale): ContactPageUiStrings {

@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useId } from 'react'
+import { X } from 'lucide-react'
 import type { PriceFilterOption } from '@/lib/yachtListFilters'
 import type { CapacityFilterId, CabinFilterId } from '@/lib/yachtListFilters'
-import { getCapacityOptions, getCabinOptions } from '@/lib/yachtListFilters'
+import { getCapacityOptions, getCabinOptions, countActiveFilters } from '@/lib/yachtListFilters'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getYachtUi } from '@/lib/i18n/yachtUi'
 
 const ACCENT = '#2168b8'
-const ACCENT_DARK = '#1e3a5f'
 
 interface YachtRentalFiltersSheetProps {
   open: boolean
@@ -22,38 +22,49 @@ interface YachtRentalFiltersSheetProps {
   onCabinChange: (v: CabinFilterId) => void
   onApply: () => void
   onClearDraft: () => void
+  /** Taslak (henüz uygulanmamış) seçimlerle kaç sonuç kalacağı — "Sonuçları göster (N)" butonunda. */
+  resultCount: number
   locale?: SiteLocale
 }
 
-function Pill({
+/** Referans siteki gibi sade onay kutusu (dolu pill değil) + etiket satırı. */
+function CheckboxOption({
   selected,
-  children,
+  label,
   onClick,
-  fullWidth,
 }: {
   selected: boolean
-  children: React.ReactNode
+  label: string
   onClick: () => void
-  fullWidth?: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${
-        fullWidth ? 'w-full text-left' : 'shrink-0 text-left'
-      } ${
-        selected
-          ? 'border-transparent text-white shadow-sm'
-          : 'border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300'
-      }`}
-      style={
-        selected
-          ? { backgroundColor: ACCENT, borderColor: ACCENT }
-          : undefined
-      }
+      className="flex items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-zinc-50"
     >
-      {children}
+      <span
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition"
+        style={
+          selected
+            ? { backgroundColor: ACCENT, borderColor: ACCENT }
+            : { borderColor: '#d4d4d8', backgroundColor: '#fff' }
+        }
+        aria-hidden
+      >
+        {selected ? (
+          <svg className="h-3.5 w-3.5 text-white" viewBox="0 0 12 12" fill="none">
+            <path
+              d="M2 6l3 3 5-5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ) : null}
+      </span>
+      <span className="text-[15px] font-medium leading-snug text-zinc-800">{label}</span>
     </button>
   )
 }
@@ -70,6 +81,7 @@ export default function YachtRentalFiltersSheet({
   onCabinChange,
   onApply,
   onClearDraft,
+  resultCount,
   locale = 'tr',
 }: YachtRentalFiltersSheetProps) {
   const ui = getYachtUi(locale)
@@ -92,6 +104,7 @@ export default function YachtRentalFiltersSheet({
 
   const capacityOpts = getCapacityOptions(locale)
   const cabinOpts = getCabinOptions(locale)
+  const hasDraftFilters = countActiveFilters(priceMax, capacityId, cabinId) > 0
 
   return (
     <div className="fixed inset-0 z-[80] flex flex-col justify-end sm:justify-center sm:p-4" role="presentation">
@@ -110,109 +123,96 @@ export default function YachtRentalFiltersSheet({
         style={{ fontFamily: 'var(--font-family)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex shrink-0 flex-col items-center border-b border-zinc-100 px-4 pb-3 pt-2">
-          <span
-            className="mb-2 h-1 w-10 rounded-full bg-zinc-300"
-            aria-hidden
-          />
-          <h2 id={titleId} className="m-0 text-lg font-bold tracking-tight" style={{ color: ACCENT_DARK }}>
-            {ui.filtersTitle}
-          </h2>
+        <div className="flex shrink-0 flex-col border-b border-zinc-100 px-5 pt-4 pb-4 sm:px-6">
+          <span className="mx-auto mb-3 h-1 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" aria-hidden />
+          <div className="flex items-center justify-between gap-3">
+            <h2 id={titleId} className="m-0 text-lg font-black uppercase tracking-tight text-zinc-900">
+              {ui.filtersTitle}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={ui.filtersCloseAria}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-100"
+            >
+              <X className="h-5 w-5" strokeWidth={2} />
+            </button>
+          </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5">
-          <section className="mb-8">
-            <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-zinc-900">{ui.filtersDailyPriceTitle}</h3>
-            <div className="flex flex-wrap gap-2">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
+          <section className="mb-6 border-b border-zinc-100 pb-6">
+            <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-400">
+              {ui.filtersDailyPriceTitle}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2">
               {priceOptions.map((opt) => {
                 const selected =
                   opt.maxPrice === null
                     ? priceMax === null
                     : priceMax === opt.maxPrice
                 return (
-                  <Pill
+                  <CheckboxOption
                     key={opt.id}
                     selected={selected}
-                    onClick={() => onPriceMaxChange(opt.maxPrice)}
-                  >
-                    {opt.label}
-                  </Pill>
+                    label={opt.label}
+                    onClick={() => onPriceMaxChange(selected ? null : opt.maxPrice)}
+                  />
                 )
               })}
             </div>
           </section>
 
-          <section className="mb-8">
-            <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-zinc-900">{ui.filtersCapacityTitle}</h3>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <section className="mb-6 border-b border-zinc-100 pb-6">
+            <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-400">
+              {ui.filtersCapacityTitle}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2">
               {capacityOpts.map((o) => (
-                <Pill
+                <CheckboxOption
                   key={o.id}
-                  fullWidth
                   selected={capacityId === o.id}
-                  onClick={() => onCapacityChange(o.id)}
-                >
-                  <span className="flex items-center gap-2">
-                    <span
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                        capacityId === o.id
-                          ? 'border-white bg-white/20'
-                          : 'border-zinc-300 bg-white'
-                      }`}
-                    >
-                      {capacityId === o.id ? (
-                        <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none" aria-hidden>
-                          <path
-                            d="M2 6l3 3 5-5"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      ) : null}
-                    </span>
-                    {o.label}
-                  </span>
-                </Pill>
+                  label={o.label}
+                  onClick={() => onCapacityChange(capacityId === o.id ? 'all' : o.id)}
+                />
               ))}
             </div>
           </section>
 
-          <section className="mb-2">
-            <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-zinc-900">{ui.filtersCabinsTitle}</h3>
-            <div className="flex flex-wrap gap-2">
+          <section>
+            <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-400">
+              {ui.filtersCabinsTitle}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2">
               {cabinOpts.map((o) => (
-                <Pill
+                <CheckboxOption
                   key={o.id}
                   selected={cabinId === o.id}
-                  onClick={() => onCabinChange(o.id)}
-                >
-                  {o.label}
-                </Pill>
+                  label={o.label}
+                  onClick={() => onCabinChange(cabinId === o.id ? 'all' : o.id)}
+                />
               ))}
             </div>
           </section>
         </div>
 
-        <div className="shrink-0 border-t border-zinc-100 bg-white px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClearDraft}
-              className="flex-1 rounded-xl border-2 border-zinc-200 py-3.5 text-sm font-bold text-zinc-700 transition duration-200 hover:scale-[1.03] hover:bg-zinc-50"
-            >
-              {ui.filtersClearButton}
-            </button>
-            <button
-              type="button"
-              onClick={onApply}
-              className="flex-1 rounded-xl py-3.5 text-sm font-bold text-white shadow-md transition duration-200 hover:scale-[1.03] hover:opacity-95"
-              style={{ backgroundColor: ACCENT }}
-            >
-              {ui.filtersApplyButton}
-            </button>
-          </div>
+        <div className="flex shrink-0 items-center justify-between gap-4 border-t border-zinc-100 bg-white px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
+          <button
+            type="button"
+            onClick={onClearDraft}
+            disabled={!hasDraftFilters}
+            className="shrink-0 text-sm font-bold uppercase tracking-wide text-zinc-400 transition hover:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-zinc-400"
+          >
+            {ui.filtersClearButton}
+          </button>
+          <button
+            type="button"
+            onClick={onApply}
+            className="flex-1 rounded-xl py-3.5 text-sm font-bold text-white shadow-md transition duration-200 hover:scale-[1.02] hover:opacity-95 sm:flex-initial sm:px-8"
+            style={{ backgroundColor: ACCENT }}
+          >
+            {ui.filtersApplyButtonWithCount(resultCount)}
+          </button>
         </div>
       </div>
     </div>

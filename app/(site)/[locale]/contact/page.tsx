@@ -148,9 +148,18 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
     }),
   }
 
+  // schemaTypes/contactPage.ts'deki submitLabel alanının hiç değiştirilmemiş
+  // İngilizce varsayılanı ("SEND MESSAGE") — Sanity'de bu alan boş değil,
+  // olduğu gibi bu placeholder metni tutuyor, bu yüzden Türkçe sayfada da
+  // İngilizce çıkıyordu. Editör gerçekten özel bir metin girerse ona saygı
+  // gösterilmeye devam eder.
+  const PLACEHOLDER_SUBMIT_LABEL = 'SEND MESSAGE'
   const formProps = {
     ...ui,
-    submitLabel: form.submitLabel ?? ui.defaultSubmitLabel,
+    submitLabel:
+      form.submitLabel && form.submitLabel.trim() !== PLACEHOLDER_SUBMIT_LABEL
+        ? form.submitLabel
+        : ui.defaultSubmitLabel,
     successMessage: form.successMessage ?? ui.defaultSuccessMessage,
   }
 
@@ -205,6 +214,8 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                 ariaWhatsapp: ui.ariaWhatsapp,
                 ariaYoutube: ui.ariaYoutube,
                 ariaInstagram: ui.ariaInstagram,
+                instagramFallbackLabel: ui.instagramFallbackLabel,
+                youtubeFallbackLabel: ui.youtubeFallbackLabel,
               }}
               data={{
                 email: data?.email ?? null,

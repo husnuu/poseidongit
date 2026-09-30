@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import CompactBlogCard, { type CompactBlogCardPost } from '@/components/blog/CompactBlogCard'
@@ -46,6 +46,8 @@ export default function BlogSection({
   const sectionRef = useRef<HTMLElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
+  const [canScrollPrev, setCanScrollPrev] = useState(false)
+  const [canScrollNext, setCanScrollNext] = useState(true)
 
   useEffect(() => {
     const el = sectionRef.current
@@ -60,8 +62,25 @@ export default function BlogSection({
     return () => observer.disconnect()
   }, [])
 
+  useEffect(() => {
+    handleRailScroll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.posts?.length])
+
   const scrollNext = () => {
     scrollRef.current?.scrollBy({ left: 316, behavior: 'smooth' })
+  }
+
+  const scrollPrev = () => {
+    scrollRef.current?.scrollBy({ left: -316, behavior: 'smooth' })
+  }
+
+  const handleRailScroll = () => {
+    const el = scrollRef.current
+    if (!el) return
+    const maxScroll = el.scrollWidth - el.clientWidth
+    setCanScrollPrev(el.scrollLeft > 4)
+    setCanScrollNext(el.scrollLeft < maxScroll - 4)
   }
 
   if (!data?.enabled || !data?.posts?.length) return null
@@ -111,6 +130,7 @@ export default function BlogSection({
         <div className="relative">
           <div
             ref={scrollRef}
+            onScroll={handleRailScroll}
             role="region"
             aria-label="Blog yazıları listesi"
             tabIndex={0}
@@ -134,15 +154,29 @@ export default function BlogSection({
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={scrollNext}
-            className="pointer-events-auto absolute right-0 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 translate-x-1 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-md transition hover:bg-zinc-50 md:flex"
-            style={{ color: 'var(--primary, #2168b8)' }}
-            aria-label="Sonraki yazılar"
-          >
-            <ChevronRight className="h-6 w-6" strokeWidth={2} aria-hidden />
-          </button>
+          {canScrollPrev && (
+            <button
+              type="button"
+              onClick={scrollPrev}
+              className="pointer-events-auto absolute left-0 top-1/2 z-10 hidden h-11 w-11 -translate-x-1 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-md transition hover:bg-zinc-50 md:flex"
+              style={{ color: 'var(--primary, #2168b8)' }}
+              aria-label="Önceki yazılar"
+            >
+              <ChevronLeft className="h-6 w-6" strokeWidth={2} aria-hidden />
+            </button>
+          )}
+
+          {canScrollNext && (
+            <button
+              type="button"
+              onClick={scrollNext}
+              className="pointer-events-auto absolute right-0 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 translate-x-1 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-md transition hover:bg-zinc-50 md:flex"
+              style={{ color: 'var(--primary, #2168b8)' }}
+              aria-label="Sonraki yazılar"
+            >
+              <ChevronRight className="h-6 w-6" strokeWidth={2} aria-hidden />
+            </button>
+          )}
         </div>
 
         <div className="mt-8 flex justify-center md:mt-10">

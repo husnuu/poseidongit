@@ -1,34 +1,39 @@
-/* ── Standart yuvarlak WhatsApp butonu (kenardan boşluklu), pulse halkası ── */
+/* ── Sağ kenara yapışık "tab" şeklinde WhatsApp butonu — sadece sol köşeler
+   yuvarlak, degrade (shimmer) arka plan, pulse halkası ── */
 .anchor {
   position: fixed;
   z-index: 10000;
-  right: 24px;
-  bottom: 24px;
+  right: 0;
+  left: auto;
   top: auto;
-  transform: none;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #25d366;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  height: 48px;
+  width: auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-decoration: none;
+  padding: 8px 8px 4px 13px;
+  background-color: #25d366;
+  background-image: linear-gradient(90deg, #25d366 0%, #28b85d 51%, #25d366 100%);
+  background-size: 200% auto;
   color: #fff;
-  box-shadow:
-    0 4px 18px rgba(37, 211, 102, 0.45),
-    0 2px 8px rgba(0, 0, 0, 0.15);
-  outline: none;
+  border-top-left-radius: 100px;
+  border-bottom-left-radius: 100px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  text-decoration: none;
   overflow: visible;
-  transition: transform 0.18s ease, background 0.15s ease, box-shadow 0.18s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: background-position 0.5s ease, box-shadow 0.2s ease;
 }
 
-/* Pulse halkası */
+/* Pulse halkası — butonla aynı (sadece sol köşeler yuvarlak) şekil */
 .anchor::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 50%;
+  border-top-left-radius: 100px;
+  border-bottom-left-radius: 100px;
   background: #25d366;
   opacity: 0.55;
   animation: wa-pulse 2.4s ease-out infinite;
@@ -38,16 +43,13 @@
 
 @keyframes wa-pulse {
   0%   { transform: scale(1);    opacity: 0.55; }
-  70%  { transform: scale(1.45); opacity: 0; }
-  100% { transform: scale(1.45); opacity: 0; }
+  70%  { transform: scale(1.3); opacity: 0; }
+  100% { transform: scale(1.3); opacity: 0; }
 }
 
 .anchor:hover {
-  background: #20bd5a;
-  transform: scale(1.08);
-  box-shadow:
-    0 6px 22px rgba(37, 211, 102, 0.55),
-    0 3px 10px rgba(0, 0, 0, 0.18);
+  background-position: right center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
 }
 
 /* Hover'da pulse durur */
@@ -57,8 +59,7 @@
 }
 
 .anchor:active {
-  background: #1aad52;
-  transform: scale(0.96);
+  background-color: #1aad52;
 }
 
 .anchor:focus-visible {
@@ -66,9 +67,19 @@
   outline-offset: 2px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .anchor {
+    transition: none;
+  }
+
+  .anchor::before {
+    animation: none;
+  }
+}
+
 .icon {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   color: #fff;
   flex-shrink: 0;
   position: relative;
@@ -78,18 +89,10 @@
 /* ── Mobil: sticky bar üstünde ── */
 @media (max-width: 1023px) {
   .anchor {
-    right: 16px;
-    width: 52px;
-    height: 52px;
     bottom: max(calc(7rem + env(safe-area-inset-bottom, 0px)), 7.25rem);
   }
 
   .anchor.relaxBottom {
-    bottom: max(2.5rem, calc(1rem + env(safe-area-inset-bottom, 0px)));
-  }
-
-  .icon {
-    width: 27px;
-    height: 27px;
+    bottom: max(calc(1.5rem + env(safe-area-inset-bottom, 0px)), 1.5rem);
   }
 }

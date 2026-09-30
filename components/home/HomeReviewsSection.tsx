@@ -116,17 +116,20 @@ function GoogleMark({ size = 18 }: { size?: number }) {
 
 function StarRow({ value, size = 'sm' }: { value: number; size?: 'sm' | 'lg' }) {
   const filled = Math.max(0, Math.min(5, Math.round(value)))
-  // Referanstaki üst yıldız sırası ~24px/yıldız, sıkı aralıklı
-  const starClass = size === 'lg' ? 'h-6 w-6 sm:h-[26px] sm:w-[26px]' : 'h-4 w-4'
-  const gapClass = size === 'lg' ? 'gap-0.5' : 'gap-0.5'
+  // "lg" = özet/ortalama puan satırı (örn. "Sizden Gelenler" başlığının
+  // altındaki genel puan) — referans: font-size 1.5rem (=24px), gap .25rem,
+  // renk #f5a623.
+  const starClass = size === 'lg' ? 'h-6 w-6' : 'h-4 w-4'
+  const gapClass = size === 'lg' ? 'gap-1' : 'gap-0.5'
+  const color = size === 'lg' ? '#f5a623' : '#eaaa45'
   return (
     <span className={`inline-flex items-center ${gapClass}`} aria-label={`${filled} / 5`}>
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
           className={starClass}
-          fill={i < filled ? '#eaaa45' : 'none'}
-          stroke={i < filled ? '#eaaa45' : '#d4d4d8'}
+          fill={i < filled ? color : 'none'}
+          stroke={i < filled ? color : '#d4d4d8'}
           strokeWidth={2}
           aria-hidden
         />

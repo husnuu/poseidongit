@@ -11,7 +11,8 @@
   width: 100%;
 }
 
-/* Desktop grid: left half = 1 big image, right half = 4 squares, no gaps.
+/* Desktop grid: left half = 1 big image, right half = 4 squares, referans
+   siteki gibi karolar arasında ince (4px) boşluk çizgisi var.
    Mobil altta ayrı bir kaydırmalı (swipe) şerit kullanıyor — bkz. .mobileCarouselWrap. */
 .desktopGrid {
   display: none;
@@ -23,8 +24,9 @@
     grid-template-columns: 1fr 1fr 1fr 1fr;
     grid-template-rows: 300px 300px;
     height: 600px;
-    gap: 0;
+    gap: 4px;
     width: 100%;
+    background: #fff;
   }
 }
 

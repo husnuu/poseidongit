@@ -1043,7 +1043,10 @@ export const contactPageQuery = `coalesce(
   locationTitle,
   showPopularTours,
   popularToursTitle,
-  "popularTours": popularTours[]->{
+  // Elle seçilen popularTours referansları yerine kayıtlı TÜM turları
+  // gösteriyoruz (iletişim sayfasındaki bu bölüm için editörün her yeni turu
+  // ayrıca seçmesine gerek kalmasın).
+  "popularTours": *[_type == "tour"] | order(title asc) {
     _id,
     title,
     "slug": slug.current,

@@ -70,6 +70,8 @@ export type YachtUi = {
   filtersCabinsTitle: string
   filtersClearButton: string
   filtersApplyButton: string
+  /** Örn. "Sonuçları göster (45)" — uygula butonundaki canlı sonuç sayısı. */
+  filtersApplyButtonWithCount: (n: number) => string
   filterAll: string
   filterThisPrice: string
   filterUpTo: (amount: string) => string
@@ -211,8 +213,9 @@ const TR: YachtUi = {
   filtersDailyPriceTitle: 'Günlük fiyat',
   filtersCapacityTitle: 'Kişi kapasitesi',
   filtersCabinsTitle: 'Kabin sayısı',
-  filtersClearButton: 'Temizle',
+  filtersClearButton: 'Filtreleri sıfırla',
   filtersApplyButton: 'Uygula',
+  filtersApplyButtonWithCount: (n) => `Sonuçları göster (${n})`,
   filterAll: 'Tümü',
   filterThisPrice: 'Bu fiyat',
   filterUpTo: (amount) => `${amount}’ye kadar`,
@@ -354,8 +357,9 @@ const EN: YachtUi = {
   filtersDailyPriceTitle: 'Daily price',
   filtersCapacityTitle: 'Guest capacity',
   filtersCabinsTitle: 'Number of cabins',
-  filtersClearButton: 'Clear',
+  filtersClearButton: 'Reset filters',
   filtersApplyButton: 'Apply',
+  filtersApplyButtonWithCount: (n) => `Show results (${n})`,
   filterAll: 'All',
   filterThisPrice: 'This price',
   filterUpTo: (amount) => `Up to ${amount}`,
@@ -497,8 +501,9 @@ const DE: YachtUi = {
   filtersDailyPriceTitle: 'Tagespreis',
   filtersCapacityTitle: 'Personenkapazität',
   filtersCabinsTitle: 'Anzahl der Kabinen',
-  filtersClearButton: 'Zurücksetzen',
+  filtersClearButton: 'Filter zurücksetzen',
   filtersApplyButton: 'Anwenden',
+  filtersApplyButtonWithCount: (n) => `Ergebnisse anzeigen (${n})`,
   filterAll: 'Alle',
   filterThisPrice: 'Dieser Preis',
   filterUpTo: (amount) => `Bis zu ${amount}`,

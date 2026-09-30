@@ -226,9 +226,9 @@ export default function ContactForm(props: ContactFormProps) {
           disabled={status === 'sending' || (!!siteKey && !turnstileToken)}
           className="w-full font-bold uppercase text-white transition disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.98]"
           style={{
-            height: 56,
+            height: 48,
             borderRadius: 10,
-            fontSize: 16,
+            fontSize: 14,
             letterSpacing: '0.02em',
             backgroundImage:
               'linear-gradient(to right, var(--primary, #2168b8) 0%, #4f8dc7 51%, var(--primary, #2168b8) 100%)',

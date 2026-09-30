@@ -50,7 +50,7 @@ const WISHLIST_LABELS: Record<
     remove: 'Kaldır',
     close: 'Kapat',
     groupTour: 'TURLAR',
-    groupYacht: 'YATLAR',
+    groupYacht: 'TEKNELER',
   },
   en: {
     open: 'Wishlist',
@@ -696,9 +696,6 @@ export default function HeaderClient({
                             </span>
                             <span className={styles.wishlistItemInfo}>
                               <span className={styles.wishlistItemTitle}>{item.title}</span>
-                              {item.priceLabel && (
-                                <span className={styles.wishlistItemPrice}>{item.priceLabel}</span>
-                              )}
                             </span>
                           </Link>
                           <button

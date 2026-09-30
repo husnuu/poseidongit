@@ -9,7 +9,7 @@ import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import { useWishlist } from '@/lib/wishlist/WishlistContext'
 import styles from './PhotoGrid.module.css'
 import { SANITY_DISPLAY_IMAGE_PROPS } from '@/lib/sanityImage'
-import { Camera, Image as ImageIcon, Facebook, Heart, Link2, Mail, MessageCircle, Send, Share2, Twitter, X as XIcon } from 'lucide-react'
+import { Image as ImageIcon, Facebook, Heart, Link2, Mail, MessageCircle, Send, Share, Twitter, X as XIcon } from 'lucide-react'
 
 export interface PhotoGridImage {
   src: string
@@ -183,7 +183,7 @@ export default function PhotoGrid({
         }}
         aria-label={shareUi.share}
       >
-        <Share2 className={styles.actionIcon} strokeWidth={2} aria-hidden />
+        <Share className={styles.actionIcon} strokeWidth={2} aria-hidden />
       </button>
       {wishlistId && (
         <button
@@ -268,7 +268,7 @@ export default function PhotoGrid({
                         openLightbox(0)
                       }}
                     >
-                      <Camera className={styles.viewAllIcon} strokeWidth={2} aria-hidden />
+                      <ImageIcon className={styles.viewAllIcon} strokeWidth={2} aria-hidden />
                       {images.length > 5
                         ? tourUi.photoGridSeeAllWithExtra(images.length - 5)
                         : tourUi.photoGridSeeAll}

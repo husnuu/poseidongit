@@ -86,18 +86,21 @@ export default function YachtRentalSortSheet({
         style={{ fontFamily: 'var(--font-family)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative flex shrink-0 items-center justify-center border-b border-zinc-100 px-4 py-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-zinc-600 transition hover:bg-zinc-100"
-            aria-label={ui.sortCloseAria}
-          >
-            <X className="h-6 w-6" strokeWidth={2} />
-          </button>
-          <h2 id={titleId} className="m-0 text-center text-base font-bold text-zinc-900">
-            {ui.sortTitle}
-          </h2>
+        <div className="flex shrink-0 flex-col border-b border-zinc-100 px-5 pt-4 pb-4 sm:px-6">
+          <span className="mx-auto mb-3 h-1 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" aria-hidden />
+          <div className="flex items-center justify-between gap-3">
+            <h2 id={titleId} className="m-0 text-lg font-black uppercase tracking-tight text-zinc-900">
+              {ui.sortTitle}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={ui.sortCloseAria}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-100"
+            >
+              <X className="h-5 w-5" strokeWidth={2} />
+            </button>
+          </div>
         </div>
 
         <ul className="m-0 list-none overflow-y-auto overscroll-contain p-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]">

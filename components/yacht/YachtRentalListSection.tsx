@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { ArrowUpDown, SlidersHorizontal } from 'lucide-react'
 import HomePopularYachtCard from '@/components/home/HomePopularYachtCard'
 import type { YachtListCardItem } from '@/lib/yachtListPrice'
 import YachtRentalFiltersSheet from '@/components/yacht/YachtRentalFiltersSheet'
@@ -75,6 +76,13 @@ export default function YachtRentalListSection({
 
   const filterActiveCount = countActiveFilters(appliedPriceMax, appliedCap, appliedCab)
 
+  // Filtre popup'ı açıkken "Sonuçları göster (N)" butonunda canlı önizleme —
+  // henüz uygulanmamış taslak seçimlerle kaç tekne kalacağını gösterir.
+  const draftFilteredCount = useMemo(
+    () => filterYachtList(yachts, draftPriceMax, draftCap, draftCab).length,
+    [yachts, draftPriceMax, draftCap, draftCab]
+  )
+
   return (
     <>
       {yachts.length > 0 && (
@@ -92,16 +100,10 @@ export default function YachtRentalListSection({
                 setFilterSheetOpen(false)
                 setSortSheetOpen(true)
               }}
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-lg border-2 bg-white px-5 py-2.5 text-sm font-normal uppercase tracking-wide shadow-sm transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:flex-initial"
-              style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
+              className="inline-flex h-12 flex-shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border-2 bg-white px-5 text-sm font-bold uppercase tracking-wide transition duration-200 hover:bg-[var(--primary)]/[0.06]"
+              style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)', boxShadow: 'none' }}
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                />
-              </svg>
+              <ArrowUpDown className="h-5 w-5" strokeWidth={2} aria-hidden />
               {ui.sortButton}
               {appliedSort !== 'default' ? (
                 <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: 'var(--primary, #2168b8)' }} aria-hidden />
@@ -110,16 +112,10 @@ export default function YachtRentalListSection({
             <button
               type="button"
               onClick={openFilterSheet}
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-lg border-2 bg-white px-5 py-2.5 text-sm font-normal uppercase tracking-wide shadow-sm transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:flex-initial"
-              style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
+              className="inline-flex h-12 flex-shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border-2 bg-white px-5 text-sm font-bold uppercase tracking-wide transition duration-200 hover:bg-[var(--primary)]/[0.06]"
+              style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)', boxShadow: 'none' }}
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                />
-              </svg>
+              <SlidersHorizontal className="h-5 w-5" strokeWidth={2} aria-hidden />
               {ui.filtersButton}
               {filterActiveCount > 0 ? (
                 <span
@@ -170,6 +166,7 @@ export default function YachtRentalListSection({
         onCabinChange={setDraftCab}
         onApply={applyFilters}
         onClearDraft={clearFilterDraft}
+        resultCount={draftFilteredCount}
         locale={locale}
       />
 
