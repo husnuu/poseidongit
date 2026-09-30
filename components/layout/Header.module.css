@@ -183,6 +183,30 @@
   background: rgba(19, 23, 25, 0.14);
 }
 
+/* Footerdaki tıklanabilir öğeler (e-posta, telefon, tur/menü linkleri, rozetler
+   vb.) için üst menüdeki gibi ortadan büyüyen alt çizgi efekti. */
+.footerLink {
+  position: relative;
+  display: inline-block;
+}
+
+.footerLink::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+
+.footerLink:hover::after {
+  transform: scaleX(1);
+}
+
 .headerCtaWrap {
   display: none;
   align-items: center;
@@ -222,6 +246,115 @@
 .headerCta:focus-visible {
   outline: 2px solid #1e3a8a;
   outline-offset: 2px;
+}
+
+/* Mobil menüdeki "DİL" bölümü — referans siteki gibi hap şeklinde seçenekler,
+   seçili olan beyaz zeminde onay işaretiyle öne çıkıyor. */
+.mobileMenuLangSection {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.mobileMenuLangLabel {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Referans siteki "LanguageSwitcher_gridItem" düzeni: dikey liste değil,
+   2 sütunlu ızgara. */
+.mobileMenuLangList {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+/* Referans siteki .LanguageSwitcher_gridItem kuralıyla birebir (boyut/aralık/
+   geçiş) — sadece renkler bizim koyu mavi menü zeminimize uyarlandı. */
+.mobileMenuLangOption {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.mobileMenuLangOption:hover {
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.mobileMenuLangOptionSelected,
+.mobileMenuLangOptionSelected:hover {
+  background: #fff;
+  border-color: #fff;
+  color: var(--secondary, #131719);
+}
+
+.mobileMenuLangOptionComingSoon {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.mobileMenuLangFlag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mobileMenuLangFlagImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.mobileMenuLangFlagInner {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.mobileMenuLangOptionLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileMenuLangCheck {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--primary, #2168b8);
+}
+
+.mobileMenuLangComingSoonBadge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .mobileMenuCta {

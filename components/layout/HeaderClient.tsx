@@ -12,6 +12,7 @@ import {
   Anchor,
   Bell,
   Calendar,
+  Check,
   Heart,
   Info,
   Megaphone,
@@ -98,6 +99,19 @@ const EMOJI_FALLBACK: Record<string, string> = {
   de: '🇩🇪',
 }
 
+const LANG_SECTION_LABEL: Record<SiteLocale, string> = {
+  tr: 'DİL',
+  en: 'LANGUAGE',
+  de: 'SPRACHE',
+}
+
+/** Almanca artık tam destekleniyor — CMS'te "yakında" işaretli kalmış olsa bile kilidi kaldır. */
+function normalizeLanguages(languages: HeaderLanguage[]): HeaderLanguage[] {
+  return (languages.length > 0 ? languages : DEFAULT_HEADER_LANGUAGES).map((item) =>
+    item.code.toLowerCase() === 'de' ? { ...item, comingSoon: false } : item
+  )
+}
+
 export interface HeaderLanguage {
   code: string
   label: string
@@ -171,10 +185,7 @@ function LanguageDropdown({
   const ref = useRef<HTMLDivElement>(null)
   const aria = headerAria(locale)
 
-  // Almanca artık tam destekleniyor — CMS'te "yakında" işaretli kalmış olsa bile kilidi kaldır.
-  const list = (languages.length > 0 ? languages : DEFAULT_HEADER_LANGUAGES).map((item) =>
-    item.code.toLowerCase() === 'de' ? { ...item, comingSoon: false } : item
-  )
+  const list = normalizeLanguages(languages)
   const current = locale
   const currentItem = list.find((item) => item.code.toLowerCase() === current) ?? list[0]
 
@@ -319,6 +330,84 @@ function LanguageDropdown({
           })}
         </div>
       )}
+    </div>
+  )
+}
+
+/** Mobil menüde dropdown yerine referans siteki gibi düz, hap şeklinde dil
+    seçenekleri listesi — seçili olan beyaz zeminde onay işaretiyle öne çıkar. */
+function MobileLanguageList({
+  languages,
+  locale,
+  onNavigate,
+}: {
+  languages: HeaderLanguage[]
+  locale: SiteLocale
+  onNavigate?: () => void
+}) {
+  const router = useRouter()
+  const list = normalizeLanguages(languages)
+  const sectionLabel = LANG_SECTION_LABEL[locale] ?? LANG_SECTION_LABEL.tr
+
+  if (list.length === 0) return null
+
+  return (
+    <div className={styles.mobileMenuLangSection}>
+      <span className={styles.mobileMenuLangLabel}>{sectionLabel}</span>
+      <div className={styles.mobileMenuLangList}>
+        {list.map((item) => {
+          const key = item.code.toLowerCase()
+          const isSelected = locale === key
+          const soon = Boolean(item.comingSoon)
+          const flag = item.flag?.url ? (
+            <Image
+              src={item.flag.url}
+              alt=""
+              width={26}
+              height={26}
+              className={styles.mobileMenuLangFlagImg}
+            />
+          ) : (
+            <span className={styles.mobileMenuLangFlagInner}>{EMOJI_FALLBACK[key] ?? '🇹🇷'}</span>
+          )
+
+          if (soon) {
+            const soonLabel = comingSoonLabelForLanguageCode(key)
+            return (
+              <div
+                key={key}
+                role="option"
+                aria-disabled="true"
+                aria-selected={false}
+                className={`${styles.mobileMenuLangOption} ${styles.mobileMenuLangOptionComingSoon}`}
+              >
+                <span className={styles.mobileMenuLangFlag}>{flag}</span>
+                <span className={styles.mobileMenuLangOptionLabel}>{item.label}</span>
+                <span className={styles.mobileMenuLangComingSoonBadge}>{soonLabel}</span>
+              </div>
+            )
+          }
+
+          return (
+            <button
+              key={key}
+              type="button"
+              role="option"
+              aria-selected={isSelected}
+              className={`${styles.mobileMenuLangOption} ${isSelected ? styles.mobileMenuLangOptionSelected : ''}`}
+              onClick={() => {
+                onNavigate?.()
+                if (!isSiteLocale(key)) return
+                router.push(withLocalePath(key, '/'))
+              }}
+            >
+              <span className={styles.mobileMenuLangFlag}>{flag}</span>
+              <span className={styles.mobileMenuLangOptionLabel}>{item.label}</span>
+              {isSelected && <Check className={styles.mobileMenuLangCheck} aria-hidden />}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -768,6 +857,11 @@ export default function HeaderClient({
                 ))}
               </ul>
             </nav>
+            <MobileLanguageList
+              locale={locale}
+              languages={settings.headerLanguages?.length ? settings.headerLanguages : DEFAULT_HEADER_LANGUAGES}
+              onNavigate={() => setMobileOpen(false)}
+            />
             {showCta && ctaHref && (
               <div className={styles.mobileMenuCta}>
                 <Link

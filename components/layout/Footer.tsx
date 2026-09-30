@@ -24,7 +24,6 @@ import { exploreLinksWithHelpCenter } from '@/lib/i18n/headerNavWithHelpCenter'
 import FooterLegal from '@/components/layout/FooterLegal'
 import type { FooterLegalData } from '@/components/layout/FooterLegal'
 import InstagramModern from '@/components/icons/InstagramModern'
-import GoogleModern from '@/components/icons/GoogleModern'
 import {
   Youtube,
   Facebook,
@@ -149,6 +148,28 @@ const AWARD_IMAGES_FALLBACK_PATHS = [
   '/awards/badge4.svg',
 ]
 
+/** Google'ın kendi marka renkleriyle "Google" yazısı — referans siteki gibi
+    ikon değil, doğrudan renkli logotype metni. */
+function GoogleWordmark({ className }: { className?: string }) {
+  const letters: Array<[string, string]> = [
+    ['G', '#4285F4'],
+    ['o', '#EA4335'],
+    ['o', '#FBBC05'],
+    ['g', '#4285F4'],
+    ['l', '#34A853'],
+    ['e', '#EA4335'],
+  ]
+  return (
+    <span className={`font-bold leading-none ${className ?? ''}`}>
+      {letters.map(([ch, color], i) => (
+        <span key={i} style={{ color }}>
+          {ch}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 const SOCIAL_ICONS: Record<string, LucideIcon | typeof InstagramModern> = {
   instagram: InstagramModern,
   youtube: Youtube,
@@ -201,10 +222,35 @@ async function getFooterPopularTours(): Promise<FooterPopularToursRaw> {
   }
 }
 
+/** Anasayfadaki "Sizden Gelenler" bölümüyle aynı mantık: turlardan herhangi
+    birinin gerçek Google yorumları linkini al — hepsi aynı işletme profiline
+    gittiği için footerdaki puan rozetini buraya yönlendirmek için kullanılır. */
+async function getFooterGoogleReviewsUrl(): Promise<string | null> {
+  noStore()
+  try {
+    const url = await client.fetch<string | null>(
+      `*[_type == "tour" && defined(reviewsUrl)][0].reviewsUrl`,
+      {},
+      { useCdn: false }
+    )
+    return url ?? null
+  } catch {
+    return null
+  }
+}
+
 const POPULAR_TOURS_TITLE: Record<SiteLocale, string> = {
   tr: 'En Popüler Turlarımız',
   en: 'Our Most Popular Tours',
   de: 'Unsere beliebtesten Touren',
+}
+
+/** Referans siteki "AWARD-WINNING EXPERIENCES" sütununun karşılığı — bizde
+    gerçek veri olan resmi üyelik rozetlerimiz (TÜRSAB, Deniz Ticaret Odası). */
+const MEMBERSHIPS_TITLE: Record<SiteLocale, string> = {
+  tr: 'Yetkili Üyeliklerimiz',
+  en: 'Our Certifications',
+  de: 'Unsere Zertifizierungen',
 }
 
 function locHref(locale: SiteLocale, href: string | null | undefined): string {
@@ -233,10 +279,11 @@ async function mergeFooterLegal(raw: SiteFooterLegalRaw | null | undefined, loca
 }
 
 export default async function Footer({ locale }: { locale: SiteLocale }) {
-  const [data, settingsForLogo, popularToursRaw] = await Promise.all([
+  const [data, settingsForLogo, popularToursRaw, googleReviewsUrl] = await Promise.all([
     getFooterData(),
     getSiteSettingsLogo(),
     getFooterPopularTours(),
+    getFooterGoogleReviewsUrl(),
   ])
   const f = footerUi(locale)
   const numLoc = NUMBER_LOCALE[locale]
@@ -256,7 +303,6 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
 
   const topRated = data?.topRated
   const showTopRated = topRated?.enabled !== false
-  const ratingValue = topRated?.ratingValue ?? 5
   const ratingMax = topRated?.ratingMax ?? 5
   const reviewCount = topRated?.reviewCount ?? 0
   const openingValueFallback: Record<SiteLocale, string> = {
@@ -386,9 +432,9 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
 
   return (
     <footer
-      className="text-[#97a3b6] print:hidden"
+      className="text-white print:hidden"
       style={{
-        background: '#101729',
+        background: 'linear-gradient(to left, var(--primary, #2168b8), #373b44)',
         fontFamily: 'var(--font-family)',
       }}
     >
@@ -418,28 +464,57 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
               </div>
             </Link>
             {showTopRated && (
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="inline-flex items-center gap-3 rounded-xl bg-[#192031] px-4 py-3">
-                  <GoogleModern aria-hidden className="h-7 w-7 flex-shrink-0" />
-                  <div className="leading-tight">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-xl font-black text-white">{ratingValue}</span>
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
-                        ))}
-                      </div>
-                    </div>
-                    {reviewCount > 0 && (
-                      <span className="text-xs font-medium text-[#757983]">
-                        {f.reviews(reviewCount.toLocaleString(numLoc))}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <span className="inline-flex items-center gap-2 rounded-full bg-[#192031] px-4 py-2 text-xs font-bold uppercase tracking-wide text-white">
+              <div className="space-y-4">
+                <span
+                  className="inline-flex w-fit items-center justify-center bg-white py-1 px-6 text-[10px] font-extrabold uppercase tracking-wide"
+                  style={{
+                    clipPath: 'polygon(0 0, 100% 0, 92% 50%, 100% 100%, 0 100%, 8% 50%)',
+                    color: 'var(--primary, #2168b8)',
+                  }}
+                >
                   {topRatedLabel}
                 </span>
+                <div>
+                  {(() => {
+                    const ratingRowInner = (
+                      <>
+                        <GoogleWordmark className="text-xl leading-none" />
+                        <span className="h-4 w-px flex-shrink-0 bg-white/30" aria-hidden />
+                        {/* Sanity'deki topRated.ratingValue alanı şu an 5 — site sahibinin
+                            talebiyle footerda gerçek güncel Google puanı olan 4.7 gösteriliyor.
+                            Tam tutarlılık için Sanity'deki alanın da 4.7'ye güncellenmesi önerilir. */}
+                        <span className="text-base font-bold leading-none text-white">4.7</span>
+                        {reviewCount > 0 && (
+                          <>
+                            <span className="h-4 w-px flex-shrink-0 bg-white/30" aria-hidden />
+                            <span className="text-sm font-medium leading-none text-white/85">
+                              {f.reviews(reviewCount.toLocaleString(numLoc))}
+                            </span>
+                          </>
+                        )}
+                        <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 text-white/70" aria-hidden />
+                      </>
+                    )
+                    return googleReviewsUrl ? (
+                      <a
+                        href={googleReviewsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex w-fit items-center gap-2.5"
+                        aria-label={f.reviews(reviewCount.toLocaleString(numLoc))}
+                      >
+                        {ratingRowInner}
+                      </a>
+                    ) : (
+                      <div className="flex items-center gap-2.5">{ratingRowInner}</div>
+                    )
+                  })()}
+                  <div className="mt-1.5 flex gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
             <div className="grid grid-cols-1 gap-y-4">
@@ -447,14 +522,16 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                 {email && (
                   <a
                     href={`mailto:${email}`}
-                    className="flex items-start gap-3 text-sm font-medium text-[#97a3b6] hover:text-white transition-colors"
+                    className="group flex items-start gap-3 text-sm font-medium text-white transition-colors"
                   >
                     <Mail className="mt-0.5 h-5 w-5 flex-shrink-0" />
-                    <span>{email}</span>
+                    <span className="relative inline-block after:absolute after:-bottom-0.5 after:left-0 after:right-0 after:h-px after:origin-center after:scale-x-0 after:bg-current after:transition-transform after:duration-200 group-hover:after:scale-x-100">
+                      {email}
+                    </span>
                   </a>
                 )}
                 {addressText && (
-                  <div className="flex items-start gap-3 text-sm font-medium text-[#97a3b6]">
+                  <div className="flex items-start gap-3 text-sm font-medium text-white">
                     <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0" />
                     <span>{addressText}</span>
                   </div>
@@ -464,14 +541,16 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                 {phone && (
                   <a
                     href={`tel:${phone.replace(/\s/g, '')}`}
-                    className="flex items-center gap-3 text-sm font-medium text-[#97a3b6] hover:text-white transition-colors"
+                    className="group flex items-center gap-3 text-sm font-medium text-white transition-colors"
                   >
                     <Phone className="h-5 w-5 flex-shrink-0" />
-                    <span className="whitespace-nowrap">{chatTitle}</span>
+                    <span className="relative inline-block whitespace-nowrap after:absolute after:-bottom-0.5 after:left-0 after:right-0 after:h-px after:origin-center after:scale-x-0 after:bg-current after:transition-transform after:duration-200 group-hover:after:scale-x-100">
+                      {chatTitle}
+                    </span>
                   </a>
                 )}
-                <div className="flex items-start gap-3 text-sm font-medium text-[#97a3b6]">
-                  <span className="text-[#757983]">{openingTitle}:</span>
+                <div className="flex items-start gap-3 text-sm font-medium text-white">
+                  <span className="text-white/85">{openingTitle}:</span>
                   <span>{openingValue}</span>
                 </div>
               </div>
@@ -489,7 +568,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`group relative flex h-11 w-11 items-center justify-center rounded-full bg-[#192031] text-white transition-all duration-200 hover:scale-110 ${SOCIAL_HOVER_CLASS[platform] ?? 'hover:bg-[#20293a]'}`}
+                      className={`group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-lg border border-white/40 bg-transparent bg-clip-padding text-white transition-all duration-200 hover:scale-110 hover:border-transparent ${SOCIAL_HOVER_CLASS[platform] ?? 'hover:bg-white/15'}`}
                       aria-label={label}
                     >
                       <Icon className="h-5 w-5" />
@@ -510,16 +589,13 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
               </h3>
               <ul className="space-y-4">
                 {popularTourLinks.map((item) => (
-                  <li key={item.href}>
+                  <li key={item.href} className="flex items-start gap-2.5">
+                    <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-white/70" aria-hidden />
                     <Link
                       href={locHref(locale, item.href)}
-                      className="group inline-flex items-center gap-1.5 text-sm font-medium text-[#97a3b6] transition-colors duration-200 hover:text-white"
+                      className={`${headerStyles.footerLink} text-sm font-medium text-white transition-colors duration-200 hover:text-white/75`}
                     >
-                      <ChevronRight
-                        className="h-3.5 w-3.5 flex-shrink-0 -translate-x-2 text-[var(--primary,#2168b8)] opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
-                        aria-hidden
-                      />
-                      <span className="transition-transform duration-200 group-hover:translate-x-0.5">{item.label}</span>
+                      {item.label}
                     </Link>
                   </li>
                 ))}
@@ -536,7 +612,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                 <li key={index}>
                   <Link
                     href={locHref(locale, item.href || '#')}
-                    className="group inline-flex items-center gap-1.5 text-sm font-medium text-[#97a3b6] transition-colors duration-200 hover:text-white"
+                    className="group inline-flex items-center gap-1.5 text-sm font-medium text-white transition-colors duration-200 hover:text-white"
                     target={item.openInNewTab ? '_blank' : undefined}
                     rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
                   >
@@ -544,7 +620,9 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                       className="h-3.5 w-3.5 flex-shrink-0 -translate-x-2 text-[var(--primary,#2168b8)] opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
                       aria-hidden
                     />
-                    <span className="transition-transform duration-200 group-hover:translate-x-0.5">{item.label}</span>
+                    <span className="relative inline-block transition-transform duration-200 after:absolute after:-bottom-0.5 after:left-0 after:right-0 after:h-px after:origin-center after:scale-x-0 after:bg-current after:transition-transform after:duration-200 group-hover:translate-x-0.5 group-hover:after:scale-x-100">
+                      {item.label}
+                    </span>
                   </Link>
                 </li>
               ))}
@@ -561,7 +639,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                   const content = (
                     <div
                       key={index}
-                      className="flex items-center justify-center rounded-xl bg-[#192031] p-4"
+                      className="flex items-center justify-center rounded-xl bg-white/10 p-4"
                     >
                       {item.src ? (
                         <Image
@@ -590,17 +668,20 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
             </div>
           ) : null}
           <div>
+            <h3 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
+              {MEMBERSHIPS_TITLE[locale]}
+            </h3>
             <div className="grid grid-cols-2 gap-4">
               <a
                 href="https://www.tursab.org.tr"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="TÜRSAB"
-                className="group relative flex flex-col items-center justify-center gap-3 rounded-xl bg-[#192031] p-5 text-center transition-colors hover:bg-[#20293a]"
+                className="group relative flex flex-col items-center justify-center gap-3 rounded-xl bg-white/10 p-5 text-center transition-colors hover:bg-white/15"
               >
                 <ExternalLink
                   aria-hidden
-                  className="absolute right-3 top-3 h-3.5 w-3.5 text-[#5c6473] transition-colors group-hover:text-[#757983]"
+                  className="absolute right-3 top-3 h-3.5 w-3.5 text-white/70 transition-colors group-hover:text-white/85"
                 />
                 <Image
                   src="/memberships/tursab.png"
@@ -609,7 +690,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                   height={50}
                   className="h-10 w-auto object-contain brightness-0 invert opacity-70"
                 />
-                <span className="text-xs font-semibold uppercase leading-snug tracking-wide text-[#97a3b6]">
+                <span className="relative inline-block text-xs font-semibold uppercase leading-snug tracking-wide text-white after:absolute after:-bottom-0.5 after:left-0 after:right-0 after:h-px after:origin-center after:scale-x-0 after:bg-current after:transition-transform after:duration-200 group-hover:after:scale-x-100">
                   TÜRSAB Üyesi
                 </span>
               </a>
@@ -618,11 +699,11 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="İMEAK Deniz Ticaret Odası"
-                className="group relative flex flex-col items-center justify-center gap-3 rounded-xl bg-[#192031] p-5 text-center transition-colors hover:bg-[#20293a]"
+                className="group relative flex flex-col items-center justify-center gap-3 rounded-xl bg-white/10 p-5 text-center transition-colors hover:bg-white/15"
               >
                 <ExternalLink
                   aria-hidden
-                  className="absolute right-3 top-3 h-3.5 w-3.5 text-[#5c6473] transition-colors group-hover:text-[#757983]"
+                  className="absolute right-3 top-3 h-3.5 w-3.5 text-white/70 transition-colors group-hover:text-white/85"
                 />
                 <Image
                   src="/memberships/imeak-deniz-ticaret-odasi.png"
@@ -631,7 +712,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                   height={80}
                   className="h-9 w-auto object-contain brightness-0 invert opacity-70"
                 />
-                <span className="text-xs font-semibold uppercase leading-snug tracking-wide text-[#97a3b6]">
+                <span className="relative inline-block text-xs font-semibold uppercase leading-snug tracking-wide text-white after:absolute after:-bottom-0.5 after:left-0 after:right-0 after:h-px after:origin-center after:scale-x-0 after:bg-current after:transition-transform after:duration-200 group-hover:after:scale-x-100">
                   Deniz Ticaret Odası Üyesi
                 </span>
               </a>
@@ -639,19 +720,19 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
           </div>
         </div>
 
-        <div className="mt-14 border-t border-[#20293a] pt-8">
+        <div className="mt-14 border-t border-white/15 pt-8">
           <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
             {data?.footerLegal && footerLegalMerged && (
               <FooterLegal data={footerLegalMerged} inline regionAriaLabel={f.legalRegion} />
             )}
             <div
-              className={`flex flex-wrap gap-x-12 gap-y-4 text-xs font-semibold text-[#97a3b6] ${data?.footerLegal ? 'justify-center md:justify-end' : 'justify-center'}`}
+              className={`flex flex-wrap gap-x-12 gap-y-4 text-xs font-semibold text-white ${data?.footerLegal ? 'justify-center md:justify-end' : 'justify-center'}`}
             >
               {legalLinks.map((item, index) => (
                 <Link
                   key={index}
                   href={locHref(locale, item.href || '#')}
-                  className="transition-colors hover:text-white"
+                  className={`${headerStyles.footerLink} transition-colors hover:text-white`}
                 >
                   {item.label}
                 </Link>
@@ -660,24 +741,24 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
           </div>
 
           {data?.craftedBy?.name && (
-            <div className="mt-6 border-t border-[#20293a] pt-6 text-center text-sm font-medium text-[#757983]">
+            <div className="mt-6 border-t border-white/15 pt-6 text-center text-sm font-medium text-white/85">
               {f.craftedByPrefix}{' '}
               {data.craftedBy.linkedInUrl ? (
                 <a
                   href={data.craftedBy.linkedInUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#97a3b6] underline transition-colors hover:text-white"
+                  className="text-white underline transition-colors hover:text-white"
                 >
                   {data.craftedBy.name}
                 </a>
               ) : (
-                <span className="text-[#97a3b6]">{data.craftedBy.name}</span>
+                <span className="text-white">{data.craftedBy.name}</span>
               )}
             </div>
           )}
 
-          <div className="mt-6 flex items-center justify-center gap-1.5 text-xs font-medium text-[#5c6473]">
+          <div className="mt-6 flex items-center justify-center gap-1.5 text-xs font-medium text-white/70">
             <span>Made with</span>
             <Heart className="h-3.5 w-3.5 fill-current text-rose-500" aria-hidden />
             <span>in İyidere, Rize</span>

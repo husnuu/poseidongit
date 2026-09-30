@@ -349,6 +349,7 @@ export default async function FerryRoutePage({
             extraFees={data.extraFees}
             bulletItems={data.bookingBullets}
             importantNotes={importantNotes}
+            notesTitle={knowBeforeYouGoTitle}
             ctaLabel={ctaLabel}
             waBaseHref={baseWaHref}
             locale={locale}

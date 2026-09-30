@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useId, useMemo, useState } from 'react'
-import { X, Minus, Plus, ChevronLeft, ChevronRight, Info, Check, Calendar as CalendarIcon } from 'lucide-react'
+import { X, Minus, Plus, ChevronLeft, ChevronRight, Check, Calendar as CalendarIcon } from 'lucide-react'
 import PhoneField from '@/components/ui/PhoneField'
 import NationalitySelect from './NationalitySelect'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -18,9 +18,21 @@ interface FerryBookingWizardProps {
   currency: string
   ageTiers: FerryAgeTier[]
   importantNotes: string[]
+  /** "Bilmeniz Gerekenler" gibi CMS başlığı — verilmezse yerelleştirilmiş varsayılana düşer. */
+  notesTitle?: string
+  /** Referans siteki gibi biletin altında "Ayrıca o gün nakit ödenir" notu (Sanity: cashNote). */
+  cashNote?: string | null
+  /** Liman vergisi vb. ek ücretler (Sanity: extraFees). */
+  extraFees?: { label?: string | null; amount?: string | null }[] | null
   waBaseHref: string | null
   locale: SiteLocale
   numberLocale: string
+}
+
+const NOTES_TITLE_FALLBACK: Record<SiteLocale, string> = {
+  tr: 'Bilmeniz Gerekenler',
+  en: 'Good to Know',
+  de: 'Gut zu wissen',
 }
 
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1)
@@ -32,9 +44,9 @@ const CURRENT_YEAR = new Date().getFullYear()
 const YEARS = Array.from({ length: 100 }, (_, i) => CURRENT_YEAR - i)
 
 const STEP_LABELS: Record<SiteLocale, string[]> = {
-  tr: ['Sefer', 'Bilgileriniz', 'Ödeme'],
-  en: ['Trip', 'Your Details', 'Payment'],
-  de: ['Reise', 'Ihre Daten', 'Zahlung'],
+  tr: ['Sefer', 'Bilgileriniz', 'Kontrol et ve öde'],
+  en: ['Trip', 'Your Details', 'Review & Pay'],
+  de: ['Reise', 'Ihre Daten', 'Prüfen & Zahlen'],
 }
 
 const TRIP_TYPE_LABELS: Record<SiteLocale, Record<FerryTripType, string>> = {
@@ -57,7 +69,6 @@ const SAME_DAY_RETURN_HINT: Record<SiteLocale, string> = {
 
 const DEPARTURE_LABEL: Record<SiteLocale, string> = { tr: 'Gidiş', en: 'Departure', de: 'Hinfahrt' }
 const RETURN_LABEL: Record<SiteLocale, string> = { tr: 'Dönüş', en: 'Return', de: 'Rückfahrt' }
-const DATE_LABEL_SINGLE: Record<SiteLocale, string> = { tr: 'Tarih', en: 'Date', de: 'Datum' }
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10)
@@ -306,6 +317,9 @@ export default function FerryBookingWizard({
   currency,
   ageTiers,
   importantNotes,
+  notesTitle,
+  cashNote,
+  extraFees,
   waBaseHref,
   locale,
   numberLocale,
@@ -347,6 +361,11 @@ export default function FerryBookingWizard({
 
   const stepLabels = STEP_LABELS[locale] ?? STEP_LABELS.tr
   const tripTypeLabels = TRIP_TYPE_LABELS[locale] ?? TRIP_TYPE_LABELS.tr
+  const resolvedNotesTitle = notesTitle?.trim() || NOTES_TITLE_FALLBACK[locale] || NOTES_TITLE_FALLBACK.tr
+  const cashNoteText = cashNote?.trim() || null
+  const extraFeeRows = (extraFees ?? []).filter(
+    (f): f is { label: string; amount: string } => !!f?.label?.trim() && !!f?.amount?.trim(),
+  )
 
   const totalPassengers = useMemo(
     () => Object.values(counts).reduce((a, b) => a + b, 0),
@@ -401,6 +420,16 @@ export default function FerryBookingWizard({
     totalPassengers > 0 &&
     !!departureDate &&
     (tripType !== 'diffday' || (!!returnDate && returnDate >= departureDate))
+
+  // Referans site ile birebir: 1. adımda buton eksik olan şeye göre değişen bir
+  // metin gösteriyor ("Gidiş tarihi seçin" vb.) — hepsi tamamlanınca "Devam Et".
+  const step1ButtonLabel = !departureDate
+    ? 'Gidiş tarihi seçin'
+    : tripType === 'diffday' && (!returnDate || returnDate < departureDate)
+      ? 'Dönüş tarihi seçin'
+      : totalPassengers <= 0
+        ? 'Yolcu seçin'
+        : 'Devam Et'
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
   const passengerNamesValid = passengerSlots.every((_, i) => {
@@ -521,6 +550,20 @@ export default function FerryBookingWizard({
               </div>
 
               <div className={styles.ticketStubRight}>
+                {(cashNoteText || extraFeeRows.length > 0) && (
+                  <div className={styles.ticketCashBlock}>
+                    {cashNoteText && (
+                      <span className={styles.ticketCashNoteLabel}>
+                        {cashNoteText.toLocaleUpperCase(DATE_LOCALE_MAP[locale] ?? DATE_LOCALE_MAP.tr)}:
+                      </span>
+                    )}
+                    {extraFeeRows.map((fee, i) => (
+                      <p key={i} className={styles.ticketFeeRow}>
+                        {fee.label} <span className={styles.ticketFeeAmount}>{fee.amount}</span>
+                      </p>
+                    ))}
+                  </div>
+                )}
                 <span className={styles.ticketTotalLabel}>Bugün ödenecek toplam</span>
                 <span className={styles.ticketTotalValue}>{formatMoney(totalPrice, currency, numberLocale)}</span>
               </div>
@@ -556,13 +599,15 @@ export default function FerryBookingWizard({
             const done = step > n
             const active = step === n
             return (
-              <div key={label} className={styles.stepItem}>
-                <span
-                  className={`${styles.stepDot} ${done ? styles.stepDone : ''} ${active ? styles.stepActive : ''}`}
-                >
-                  {done ? <Check size={14} strokeWidth={3} aria-hidden /> : n}
-                </span>
-                <span className={`${styles.stepLabel} ${active ? styles.stepLabelActive : ''}`}>{label}</span>
+              <div key={label} className={styles.stepGroup}>
+                <div className={styles.stepItem}>
+                  <span
+                    className={`${styles.stepDot} ${done ? styles.stepDone : ''} ${active ? styles.stepActive : ''}`}
+                  >
+                    {done ? <Check size={14} strokeWidth={3} aria-hidden /> : n}
+                  </span>
+                  <span className={`${styles.stepLabel} ${active ? styles.stepLabelActive : ''}`}>{label}</span>
+                </div>
                 {i < stepLabels.length - 1 && (
                   <span className={`${styles.stepLine} ${step > n ? styles.stepLineDone : ''}`} />
                 )}
@@ -609,7 +654,7 @@ export default function FerryBookingWizard({
 
               <div className={styles.sectionHeaderPlain}><h3 className={styles.sectionTitlePlain}>Tarih</h3></div>
               <MiniCalendar
-                label={tripType === 'diffday' ? (DEPARTURE_LABEL[locale] ?? DEPARTURE_LABEL.tr) : (DATE_LABEL_SINGLE[locale] ?? DATE_LABEL_SINGLE.tr)}
+                label={DEPARTURE_LABEL[locale] ?? DEPARTURE_LABEL.tr}
                 value={departureDate}
                 onChange={(iso) => {
                   setDepartureDate(iso)
@@ -692,16 +737,16 @@ export default function FerryBookingWizard({
               </div>
 
               {importantNotes.length > 0 && (
-                <div className={styles.notesBlock}>
-                  <div className={styles.notesTitle}>
-                    <Info size={16} strokeWidth={2} aria-hidden /> Önemli Bilgiler
+                <>
+                  <div className={styles.sectionHeaderPlain}>
+                    <h3 className={styles.sectionTitlePlain}>{resolvedNotesTitle}</h3>
                   </div>
-                  <ul className={styles.notesList}>
+                  <ul className={styles.notesListPlain}>
                     {importantNotes.map((n, i) => (
                       <li key={i}>{n}</li>
                     ))}
                   </ul>
-                </div>
+                </>
               )}
 
               {totalPassengers > 0 && (
@@ -851,16 +896,16 @@ export default function FerryBookingWizard({
           {step === 3 && (
             <>
               {importantNotes.length > 0 && (
-                <div className={styles.notesBlock}>
-                  <div className={styles.notesTitle}>
-                    <Info size={16} strokeWidth={2} aria-hidden /> Önemli Bilgiler
+                <>
+                  <div className={styles.sectionHeaderPlain}>
+                    <h3 className={styles.sectionTitlePlain}>{resolvedNotesTitle}</h3>
                   </div>
-                  <ul className={styles.notesList}>
+                  <ul className={styles.notesListPlain}>
                     {importantNotes.map((n, i) => (
                       <li key={i}>{n}</li>
                     ))}
                   </ul>
-                </div>
+                </>
               )}
 
               <div className={styles.sectionHeaderPlain}><h3 className={styles.sectionTitlePlain}>Ödeme</h3></div>
@@ -874,11 +919,6 @@ export default function FerryBookingWizard({
         </div>
 
         <div className={styles.footer}>
-          {step > 1 && (
-            <button type="button" className={styles.backBtn} onClick={() => setStep((s) => (s - 1) as 1 | 2)}>
-              <ChevronLeft size={18} strokeWidth={2} aria-hidden /> Geri
-            </button>
-          )}
           <div className={styles.footerTotal}>
             <span className={styles.footerTotalLabel}>Toplam Ücret</span>
             <span className={styles.footerTotalValue}>
@@ -889,21 +929,28 @@ export default function FerryBookingWizard({
                   : '—'}
             </span>
           </div>
-          {step === 1 && (
-            <button type="button" className={styles.nextBtn} disabled={!step1Valid} onClick={() => setStep(2)}>
-              Devam Et
-            </button>
-          )}
-          {step === 2 && (
-            <button type="button" className={styles.nextBtn} disabled={!step2Valid} onClick={() => setStep(3)}>
-              Ödemeye Geç
-            </button>
-          )}
-          {step === 3 && (
-            <button type="button" className={styles.nextBtn} disabled={!waBaseHref} onClick={handleSend}>
-              WhatsApp&apos;tan Gönder
-            </button>
-          )}
+          <div className={styles.footerActions}>
+            {step > 1 && (
+              <button type="button" className={styles.backBtn} onClick={() => setStep((s) => (s - 1) as 1 | 2)}>
+                <ChevronLeft size={18} strokeWidth={2} aria-hidden /> Geri
+              </button>
+            )}
+            {step === 1 && (
+              <button type="button" className={styles.nextBtn} disabled={!step1Valid} onClick={() => setStep(2)}>
+                {step1ButtonLabel}
+              </button>
+            )}
+            {step === 2 && (
+              <button type="button" className={styles.nextBtn} disabled={!step2Valid} onClick={() => setStep(3)}>
+                Ödemeye Geç
+              </button>
+            )}
+            {step === 3 && (
+              <button type="button" className={styles.nextBtn} disabled={!waBaseHref} onClick={handleSend}>
+                WhatsApp&apos;tan Gönder
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

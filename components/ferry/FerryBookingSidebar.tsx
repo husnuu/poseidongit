@@ -19,6 +19,8 @@ interface FerryBookingSidebarProps {
   extraFees?: FerryExtraFee[] | null
   bulletItems?: string[] | null
   importantNotes: string[]
+  /** "Bilmeniz Gerekenler" gibi CMS başlığı — rezervasyon modalındaki notlar bölümünde kullanılır. */
+  notesTitle?: string
   ctaLabel: string
   waBaseHref: string | null
   locale: SiteLocale
@@ -37,6 +39,7 @@ export default function FerryBookingSidebar({
   extraFees,
   bulletItems,
   importantNotes,
+  notesTitle,
   ctaLabel,
   waBaseHref,
   locale,
@@ -80,6 +83,9 @@ export default function FerryBookingSidebar({
         currency={currency}
         ageTiers={ageTiers}
         importantNotes={importantNotes}
+        notesTitle={notesTitle}
+        cashNote={cashNote}
+        extraFees={extraFees}
         waBaseHref={waBaseHref}
         locale={locale}
         numberLocale={numberLocale}
