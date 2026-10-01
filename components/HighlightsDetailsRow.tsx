@@ -1,8 +1,8 @@
 import {
-  ThumbsUp, Anchor, Utensils, Sparkles, Sofa, Bus,
+  ThumbsUp, Anchor, UtensilsCrossed, Sparkles, Armchair, Bus,
   Sun, Waves, Music, Camera, Fish, Flame, Shield,
-  Clock, Users, Map, Fuel, Wifi, Wind, Star,
-  LifeBuoy, CheckCircle2, Sailboat,
+  Clock, Users, MapPin, Fuel, Wifi, Wind, Star,
+  LifeBuoy, CheckCircle2, Compass,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { TourPageUi } from '@/lib/i18n/tourPageUi'
@@ -22,10 +22,10 @@ interface HighlightsDetailsRowProps {
 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
-  food:          Utensils,
+  food:          UtensilsCrossed,
   new:           Sparkles,
-  captain:       Sailboat,
-  comfort:       Sofa,
+  captain:       Compass,
+  comfort:       Armchair,
   'luxury-bus':  Bus,
   anchor:        Anchor,
   star:          Star,
@@ -40,7 +40,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   life:          LifeBuoy,
   clock:         Clock,
   group:         Users,
-  map:           Map,
+  map:           MapPin,
   fuel:          Fuel,
   wifi:          Wifi,
   ac:            Wind,
@@ -68,7 +68,7 @@ export default function HighlightsDetailsRow({
           return (
             <li key={index} className={styles.item}>
               <span className={styles.iconBox} aria-hidden>
-                <Icon size={24} strokeWidth={1.6} />
+                <Icon size={24} strokeWidth={2} />
               </span>
               <div className={styles.textBlock}>
                 <p className={styles.title}>{highlight.title}</p>

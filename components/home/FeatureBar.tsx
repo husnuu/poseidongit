@@ -34,6 +34,28 @@ type FeatureBarProps = {
 // Referans: ~48px ince çizgili (line-art) ikonlar
 const ICON_SIZE = 30
 
+/** Başlık metnine göre anasayfadaki ilgili bölüme bağlantı — TR kaynak metin ve
+    sabit DE çevirisi (bkz. translationMemory.ts) birebir eşleşiyor; EN gibi
+    makine çevirisi geçebilecek diller için sırayla (index) eşleşmeye düşer. */
+const SECTION_LINK_BY_TITLE: Record<string, string> = {
+  'EN İYİ FİYAT GARANTİSİ': '#home-tours',
+  BESTPREISGARANTIE: '#home-tours',
+  '5★ MİSAFİR MEMNUNİYETİ': '#home-reviews',
+  '5★ GÄSTEZUFRIEDENHEIT': '#home-reviews',
+  "1988'DEN BERİ DENEYİM": '#home-about',
+  'ERFAHRUNG SEIT 1988': '#home-about',
+}
+const SECTION_LINK_BY_INDEX: Record<number, string> = {
+  0: '#home-tours',
+  1: '#home-reviews',
+  3: '#home-about',
+}
+
+function resolveFeatureLink(title: string, index: number): string | null {
+  const normalized = title.trim().toUpperCase()
+  return SECTION_LINK_BY_TITLE[normalized] ?? SECTION_LINK_BY_INDEX[index] ?? null
+}
+
 const FEATURE_BAR_BG = {
   backgroundColor: 'var(--primary, #2168b8)',
   backgroundImage: 'linear-gradient(to right, var(--primary, #2168b8), #a17fe0, #59c173)',
@@ -54,10 +76,16 @@ export default function FeatureBar({ items }: FeatureBarProps) {
         <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
           {displayItems.map((item, index) => {
             const IconComponent = iconMap[item.icon] ?? Bolt
+            const href = resolveFeatureLink(item.title, index)
+            const Wrapper = href ? 'a' : 'div'
             return (
-              <div key={index} className="flex min-w-0 items-start gap-4">
+              <Wrapper
+                key={index}
+                {...(href ? { href } : {})}
+                className={`group/feature flex min-w-0 items-start gap-4 ${href ? 'cursor-pointer no-underline text-inherit' : ''}`}
+              >
                 <div
-                  className="flex-shrink-0 transition-transform duration-200 hover:scale-110"
+                  className="flex-shrink-0 transition-transform duration-200 group-hover/feature:scale-110"
                   aria-hidden
                 >
                   <IconComponent
@@ -68,7 +96,7 @@ export default function FeatureBar({ items }: FeatureBarProps) {
                 </div>
                 <div className="min-w-0" style={{ fontFamily: 'var(--font-family)' }}>
                   <div
-                    className="font-black uppercase text-[16px] leading-tight tracking-wide"
+                    className={`font-black uppercase text-[16px] leading-tight tracking-wide ${href ? 'group-hover/feature:underline underline-offset-4' : ''}`}
                     style={{ WebkitTextStroke: '0.7px currentColor' }}
                   >
                     {item.title}
@@ -79,7 +107,7 @@ export default function FeatureBar({ items }: FeatureBarProps) {
                     </div>
                   )}
                 </div>
-              </div>
+              </Wrapper>
             )
           })}
         </div>

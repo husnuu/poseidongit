@@ -42,6 +42,8 @@
   padding-left: 24px;
 }
 
+/* Tur kartlarındaki süre/kalkış ikonlarıyla (TourCard.tsx META_ICON_COLOR)
+   birebir aynı mavimsi-gri ton. */
 .iconBox {
   flex-shrink: 0;
   width: 28px;
@@ -49,7 +51,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary, #2168b8);
+  color: #8a99ad;
   margin-top: 2px;
 }
 

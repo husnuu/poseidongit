@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { unstable_noStore as noStore } from 'next/cache'
@@ -14,46 +13,84 @@ import { withLocalePath } from '@/lib/i18n/paths'
 import { mergeLegalPageForLocale } from '@/lib/i18n/mergeLegalPageForLocale'
 import { dateLocaleForSiteLocale, getLegalPageUiStrings } from '@/lib/i18n/strings/legalPage'
 
-/* Sanity editöründeki boyutların birebir karşılığı: Başlık 1/2/3 büyük, Normal gövde. */
+/* Sanity editöründeki boyutların birebir karşılığı: Başlık 1/2/3 büyük, Normal gövde.
+   Font/renk/boyutlar sitedeki diğer uzun-metin sayfasıyla (blog yazısı — bkz.
+   app/(site)/[locale]/blog/[slug]/BlogPost.module.css) aynı: başlıklar
+   font-family-title + koyu (secondary) renk, gövde metni font-family + 17px/1.7
+   satır yüksekliğiyle (text-color). */
+const TITLE_FONT = 'var(--font-family-title, var(--font-family)), sans-serif'
+const BODY_FONT = 'var(--font-family), sans-serif'
+const SECONDARY_COLOR = 'var(--secondary, #131719)'
+const TEXT_COLOR = 'var(--text-color, #58595b)'
+
 const legalPageComponents: PortableTextComponents = {
   block: {
     h1: ({ children }) => (
-      <h1 className="mb-4 mt-10 text-[1.875rem] font-bold leading-tight text-zinc-900 first:mt-0">
+      <h1
+        className="mb-3 mt-10 text-[1.5rem] uppercase leading-tight first:mt-0"
+        style={{ fontFamily: TITLE_FONT, fontWeight: 900, color: SECONDARY_COLOR }}
+      >
         {children}
       </h1>
     ),
     h2: ({ children }) => (
-      <h2 className="mb-3 mt-8 text-[1.5rem] font-bold leading-tight text-zinc-900">
+      <h2
+        className="mb-2 mt-8 text-[1.35rem] uppercase leading-tight"
+        style={{ fontFamily: TITLE_FONT, fontWeight: 800, color: SECONDARY_COLOR }}
+      >
         {children}
       </h2>
     ),
     h3: ({ children }) => (
-      <h3 className="mb-2 mt-6 text-[1.25rem] font-bold leading-snug text-zinc-900">
+      <h3
+        className="mb-2 mt-6 text-[1.15rem] uppercase leading-snug"
+        style={{ fontFamily: TITLE_FONT, fontWeight: 800, color: SECONDARY_COLOR }}
+      >
         {children}
       </h3>
     ),
     normal: ({ children }) => (
-      <p className="mb-4 text-base leading-relaxed text-zinc-700">
+      <p
+        className="mb-4 text-[17px] leading-[1.7]"
+        style={{ fontFamily: BODY_FONT, color: TEXT_COLOR }}
+      >
         {children}
       </p>
     ),
     blockquote: ({ children }) => (
-      <blockquote className="mb-4 border-l-4 border-zinc-300 pl-4 italic text-zinc-600">
+      <blockquote
+        className="mb-4 border-l-4 border-zinc-300 pl-4 italic text-[17px] leading-[1.7]"
+        style={{ fontFamily: BODY_FONT, color: TEXT_COLOR }}
+      >
         {children}
       </blockquote>
     ),
   },
   list: {
-    bullet: ({ children }) => <ul className="mb-4 ml-5 list-disc space-y-1 text-zinc-700">{children}</ul>,
-    number: ({ children }) => <ol className="mb-4 ml-5 list-decimal space-y-1 text-zinc-700">{children}</ol>,
+    bullet: ({ children }) => (
+      <ul className="mb-4 ml-5 list-disc space-y-1" style={{ fontFamily: BODY_FONT, color: TEXT_COLOR }}>
+        {children}
+      </ul>
+    ),
+    number: ({ children }) => (
+      <ol className="mb-4 ml-5 list-decimal space-y-1" style={{ fontFamily: BODY_FONT, color: TEXT_COLOR }}>
+        {children}
+      </ol>
+    ),
   },
   listItem: {
-    bullet: ({ children }) => <li className="text-base leading-relaxed">{children}</li>,
-    number: ({ children }) => <li className="text-base leading-relaxed">{children}</li>,
+    bullet: ({ children }) => <li className="text-[17px] leading-[1.7]">{children}</li>,
+    number: ({ children }) => <li className="text-[17px] leading-[1.7]">{children}</li>,
   },
   marks: {
     link: ({ children, value }) => (
-      <a href={value?.href} className="text-sky-600 underline hover:no-underline" target="_blank" rel="noopener noreferrer">
+      <a
+        href={value?.href}
+        className="underline hover:no-underline"
+        style={{ color: 'var(--primary, #2168b8)' }}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         {children}
       </a>
     ),
@@ -157,26 +194,21 @@ export default async function YasalSayfaPage({
   const contentBlocks =
     Array.isArray(page.content) && page.content.length > 0 ? page.content : null
 
-  const homeHref = withLocalePath(locale, '/')
-
   return (
     <main className="min-h-screen bg-zinc-50">
       <article className="mx-auto max-w-3xl px-4 py-10 md:py-16">
-        <div className="mb-6">
-          <Link
-            href={homeHref}
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition"
+        <header className="mb-10 text-center">
+          <h1
+            className="m-0 text-[29px] uppercase leading-[1.15] sm:text-[31px] md:text-[35px] lg:text-[39px] pageHeroTitleStroke"
+            style={{ fontFamily: TITLE_FONT, fontWeight: 800, color: 'var(--primary, #2168b8)' }}
           >
-            {ui.backToHome}
-          </Link>
-        </div>
-
-        <header className="mb-10">
-          <h1 className="text-3xl font-bold text-zinc-900 md:text-4xl lg:text-[2.25rem] leading-tight">
             {page.title}
           </h1>
           {page.updatedAt && (
-            <p className="mt-3 text-base text-zinc-500">
+            <p
+              className="mt-3 text-sm"
+              style={{ fontFamily: BODY_FONT, color: 'var(--muted, #81848b)' }}
+            >
               {ui.lastUpdatedPrefix} {formatDate(page.updatedAt, locale)}
             </p>
           )}
@@ -187,17 +219,10 @@ export default async function YasalSayfaPage({
             <PortableText value={contentBlocks} components={legalPageComponents} />
           </div>
         ) : (
-          <p className="text-lg text-zinc-500 italic">{ui.contentEmpty}</p>
+          <p className="text-[17px] italic" style={{ fontFamily: BODY_FONT, color: TEXT_COLOR }}>
+            {ui.contentEmpty}
+          </p>
         )}
-
-        <div className="mt-12 border-t border-zinc-200 pt-6">
-          <Link
-            href={homeHref}
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition"
-          >
-            {ui.backToHome}
-          </Link>
-        </div>
       </article>
     </main>
   )

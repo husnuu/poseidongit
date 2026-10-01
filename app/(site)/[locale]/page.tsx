@@ -1035,14 +1035,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <FeatureBar items={featureBar} />
         </ScrollReveal>
       )}
+      <span id="home-tours" className="block scroll-mt-24" aria-hidden />
       <ScrollReveal>
         <PopularToursSection data={popularToursSection} locale={locale} />
       </ScrollReveal>
       <ScrollReveal>
         <HomeClassesSection data={classesSection} locale={locale} />
-      </ScrollReveal>
-      <ScrollReveal>
-        <PoseidonSecure locale={locale} />
       </ScrollReveal>
       {routeSection && (
         <ScrollReveal>
@@ -1055,6 +1053,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           />
         </ScrollReveal>
       )}
+      <span id="home-reviews" className="block scroll-mt-24" aria-hidden />
       <ScrollReveal>
         <HomeReviewsSection data={homeReviews} locale={locale} />
       </ScrollReveal>
@@ -1090,11 +1089,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       )}
 
+      <span id="home-about" className="block scroll-mt-24" aria-hidden />
       <ScrollReveal>
         <AboutTeaserSplit data={aboutTeaser} />
       </ScrollReveal>
       <ScrollReveal>
         <HomeFaqSection items={homeFaqItems} locale={locale} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <PoseidonSecure locale={locale} />
       </ScrollReveal>
       <ScrollReveal>
         <BlogSection data={blogSection} locale={locale} noImageLabel={blogUi.noCoverImage} />

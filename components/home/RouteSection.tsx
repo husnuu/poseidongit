@@ -69,15 +69,15 @@ function LocationCard({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-          {/* Tıklanabilirlik ipucu: her zaman görünen küçük rozet (dokunmatikte
-              hover olmadığı için şart), masaüstünde üstüne gelince "Keşfet"
-              etiketi belirir — footer linklerindeki kayan chevron ile aynı dil. */}
+          {/* Tıklanabilirlik ipucu: etiket her zaman görünür (dokunmatikte hover
+              olmadığı için şart) — cam efektli modern bir "chip" rozet;
+              masaüstünde üstüne gelince hafifçe yükselir ve "+" ikonu döner. */}
           {hasDescription && (
-            <span className="absolute right-3 top-3 z-[1] flex items-center gap-1.5 rounded-full bg-white/90 py-1.5 pl-1.5 pr-1.5 text-[var(--primary,#2168b8)] shadow-md backdrop-blur-sm transition-all duration-300 group-hover:pr-3">
+            <span className="absolute right-3 top-3 z-[1] flex items-center gap-1.5 rounded-full bg-white/95 py-1.5 pl-1.5 pr-3 text-[var(--primary,#2168b8)] shadow-[0_2px_10px_rgba(0,0,0,0.18)] backdrop-blur-sm transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_4px_18px_rgba(0,0,0,0.26)]">
               <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--primary,#2168b8)] text-white transition-transform duration-300 group-hover:rotate-90">
                 <Plus className="h-3 w-3" strokeWidth={3} aria-hidden />
               </span>
-              <span className="max-w-0 overflow-hidden whitespace-nowrap text-xs font-bold opacity-0 transition-all duration-300 group-hover:max-w-[90px] group-hover:opacity-100">
+              <span className="whitespace-nowrap text-[11px] font-bold uppercase tracking-wide">
                 {discoverLabel}
               </span>
             </span>

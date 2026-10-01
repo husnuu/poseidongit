@@ -49,10 +49,54 @@
 /* ── Item layout ─────────────────────────────────── */
 .item {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  column-gap: 28px;
+  grid-template-columns: 28px 220px 1fr;
+  column-gap: 20px;
   align-items: start;
   position: relative;
+}
+
+/* ── Numaralı adım rozeti + bağlantı çizgisi — bir sonraki adıma kadar
+     uzanıp "rota" hissi versin diye (bkz. .list'teki 44px gap). ── */
+.stepCol {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.stepCircle {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary, #2168b8);
+  color: #fff;
+  font-family: var(--font-family), sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(33, 104, 184, 0.35);
+  z-index: 2;
+}
+
+.stepLine {
+  position: absolute;
+  top: 28px;
+  bottom: -44px;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(33, 104, 184, 0.25) 0,
+    rgba(33, 104, 184, 0.25) 4px,
+    transparent 4px,
+    transparent 9px
+  );
+  z-index: 1;
 }
 
 .left {
@@ -71,10 +115,20 @@
   background: #f3f4f6;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   z-index: 1;
+  transition: box-shadow 0.3s ease;
+}
+
+.item:hover .thumb {
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
 }
 
 .image {
   object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.item:hover .image {
+  transform: scale(1.06);
 }
 
 /* Sol köşe: saat — mavi tonlu kutucuk */
@@ -157,9 +211,20 @@
   }
 
   .item {
-    grid-template-columns: 140px 1fr;
-    column-gap: 16px;
+    grid-template-columns: 22px 140px 1fr;
+    column-gap: 12px;
     margin-bottom: 28px;
+  }
+
+  .stepCircle {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+
+  .stepLine {
+    top: 22px;
+    bottom: -28px;
   }
 
   .thumb {

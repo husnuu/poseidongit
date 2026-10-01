@@ -1,4 +1,6 @@
-/* Kaptan tanıtım kartı: üstte taşan ortalanmış avatar, açık gri kutu, sol hizalı metin (referans: boattripturkey.com) */
+/* Kaptan tanıtım kartı: üstte taşan ortalanmış avatar, sol hizalı metin
+   (referans: boattripturkey.com) — açık gri dolgu + yumuşak gölge, sağ üstte
+   dekoratif tırnak işareti ince bir "tanıklık/testimonial" hissi katıyor. */
 .band {
   width: 100%;
   max-width: 100%;
@@ -7,11 +9,26 @@
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
-  padding: 96px 24px 24px;
+  padding: 96px 28px 28px;
   background-color: #f7f7fa;
-  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(19, 23, 25, 0.05);
+  border-radius: 16px;
   margin-top: 3rem;
   margin-bottom: 3rem;
+}
+
+.quoteMark {
+  position: absolute;
+  top: 8px;
+  right: 24px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 96px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--primary, #2168b8);
+  opacity: 0.08;
+  pointer-events: none;
+  user-select: none;
 }
 
 .avatarWrap {
@@ -24,7 +41,9 @@
   border-radius: 50%;
   overflow: hidden;
   background: #fff;
-  box-shadow: 0 6px 20px rgba(19, 23, 25, 0.14);
+  box-shadow:
+    0 0 0 4px rgba(33, 104, 184, 0.12),
+    0 6px 20px rgba(19, 23, 25, 0.14);
   border: 3px solid #fff;
 }
 
@@ -47,6 +66,7 @@
   font-family: var(--font-family), sans-serif;
   font-size: 15px;
   font-weight: 700;
+  /* Kaptan ismi bilinçli olarak silik/gri — vurgu gövde metninde. */
   color: #9297a1;
 }
 
@@ -96,6 +116,12 @@
     top: -48px;
     width: 96px;
     height: 96px;
+  }
+
+  .quoteMark {
+    font-size: 64px;
+    top: 4px;
+    right: 16px;
   }
 
   .mainTitle {

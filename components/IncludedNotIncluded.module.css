@@ -16,7 +16,8 @@
   align-items: start;
   padding: 28px 0;
   border-top: 1px solid #e9edf3;
-  border-bottom: 1px solid #e9edf3;
+  /* Alt çizgi kaldırıldı — host kartının üstten taşan dairesel logosu bu
+     çizgiyle çakışıyordu. */
 }
 
 .heading {

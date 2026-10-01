@@ -78,6 +78,10 @@ export default function HostBlock({ host, whyYouWillLove, tourUi: tourUiProp }: 
       className={styles.band}
       aria-labelledby={mainTitle ? 'host-card-title' : undefined}
     >
+      <span className={styles.quoteMark} aria-hidden>
+        &rdquo;
+      </span>
+
       {avatarAsset && (
         <div className={styles.avatarWrap}>
           <Image

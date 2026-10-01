@@ -1,11 +1,11 @@
-/* Tam ekran genişliğinde arka plan (içerik max-w ile sınırlı) */
+/* Tam ekran genişliğinde arka plan (içerik max-w ile sınırlı) — komşu
+   bölümlere bitişik dursun diye üst/alt dış boşluk (margin) yok, sadece
+   kendi renkli şeridinin içinde iç boşluk (padding) var. */
 .fullBleed {
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   background: var(--poseidon-secure-bg, var(--section-turquoise-bg, #dff4fc));
-  margin-top: 56px;
-  margin-bottom: 56px;
   padding-top: 40px;
   padding-bottom: 40px;
 }
@@ -19,7 +19,7 @@
 }
 
 .inner {
-  max-width: 680px;
+  max-width: 720px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -37,12 +37,12 @@
 .shieldIcon {
   color: var(--primary, #2168b8);
   flex-shrink: 0;
-  width: 29px;
-  height: 29px;
+  width: 32px;
+  height: 32px;
 }
 
 .logoText {
-  font-size: 29px;
+  font-size: 32px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.5px;
@@ -58,8 +58,8 @@
 }
 
 .description {
-  font-size: 17px;
-  line-height: 1.6;
+  font-size: 18px;
+  line-height: 1.65;
   color: var(--text-color, #58595b);
   margin: 0;
 }
@@ -105,8 +105,6 @@
 
 @media (max-width: 640px) {
   .fullBleed {
-    margin-top: 40px;
-    margin-bottom: 40px;
     padding-top: 32px;
     padding-bottom: 32px;
   }

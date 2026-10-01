@@ -60,18 +60,20 @@ function ChevronRightIcon() {
   )
 }
 
-/** 5 yeşil daire — Tripadvisor tarzı puan göstergesi */
-function RatingDots({ score }: { score?: number | null }) {
-  const filled = score != null ? Math.round(score) : 5
+/** Tur kartlarındaki (TourCard.tsx) yıldız ikonuyla birebir aynı şekil/renk. */
+function StarIcon({ className }: { className?: string }) {
   return (
-    <span className={styles.ratingDots} aria-hidden>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <span
-          key={i}
-          className={i <= filled ? styles.dotFilled : styles.dotEmpty}
-        />
-      ))}
-    </span>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden
+      focusable="false"
+    >
+      <path d="M12 2.5l2.9 6.14 6.6.63-5 4.53 1.46 6.7L12 17.1l-5.96 3.4 1.46-6.7-5-4.53 6.6-.63L12 2.5z" />
+    </svg>
   )
 }
 
@@ -124,7 +126,12 @@ export function TourHeader({
             <span className={styles.metaText}>
               {displayRatingLabel}
             </span>
-            <RatingDots score={score} />
+            {score != null && (
+              <span className={styles.ratingStarGroup}>
+                <StarIcon className={styles.ratingStar} />
+                <span className={styles.ratingScore}>{score.toFixed(1)}</span>
+              </span>
+            )}
             {reviewCount != null && (
               <a
                 href={reviewHref}

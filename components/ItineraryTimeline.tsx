@@ -87,6 +87,10 @@ function ItineraryTimelineClient({
               className={`${styles.item} ${visible[index] ? styles.itemVisible : styles.itemHidden}`}
               style={{ transitionDelay: `${index * 60}ms` }}
             >
+              <div className={styles.stepCol} aria-hidden>
+                <span className={styles.stepCircle}>{index + 1}</span>
+                {index < validItems.length - 1 && <span className={styles.stepLine} />}
+              </div>
               <div className={styles.left}>
                 <div className={styles.thumb}>
                   <Image
