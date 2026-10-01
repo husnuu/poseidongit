@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Star } from 'lucide-react'
+import { Star, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   buildYachtCalendarDaysForMonth,
   todayStrLocal,
@@ -67,10 +67,34 @@ export default function YachtCalendar({
   const calUi = getYachtCalendarUi(locale)
   const dateLocale = locale === 'en' ? 'en-US' : locale === 'de' ? 'de-DE' : 'tr-TR'
 
-  const monthLabel = useMemo(() => {
-    const d = new Date(viewYear, viewMonth - 1, 1)
-    return d.toLocaleDateString(dateLocale, { month: 'long', year: 'numeric' })
-  }, [viewYear, viewMonth, dateLocale])
+  /** Ay/yıl etiketine tıklayınca gerçek bir seçim listesi (native select) açılsın diye
+      — tur rezervasyon takvimiyle (Step1PeopleDate) birebir aynı desen. */
+  const monthNameOnly = useMemo(
+    () => new Date(viewYear, viewMonth - 1, 1).toLocaleDateString(dateLocale, { month: 'long' }),
+    [viewYear, viewMonth, dateLocale]
+  )
+  const monthOptions = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) => ({
+        value: i + 1,
+        label: new Date(2000, i, 1).toLocaleDateString(dateLocale, { month: 'long' }),
+      })),
+    [dateLocale]
+  )
+  const yearOptions = useMemo(() => [t.getFullYear(), t.getFullYear() + 1, t.getFullYear() + 2], [])
+  const isViewingCurrentMonth = viewYear === t.getFullYear() && viewMonth === t.getMonth() + 1
+  const goToPrevMonth = () => {
+    if (viewMonth === 1) {
+      setViewMonth(12)
+      setViewYear((y) => y - 1)
+    } else setViewMonth((m) => m - 1)
+  }
+  const goToNextMonth = () => {
+    if (viewMonth === 12) {
+      setViewMonth(1)
+      setViewYear((y) => y + 1)
+    } else setViewMonth((m) => m + 1)
+  }
 
   const weekdays = useMemo(() => {
     const baseMonday = new Date(2024, 0, 1)
@@ -128,45 +152,69 @@ export default function YachtCalendar({
       {!compactTitle && (
         <h3 className={`${styles.cardTitle} ${styles.wizardMainStepTitle}`}>{title}</h3>
       )}
-      <div
-        className="flex items-center justify-between"
-        style={{ marginBottom: 8 }}
-      >
-        <button
-          type="button"
-          className={styles.counterBtn}
-          aria-label={calUi.prevMonth}
-          disabled={
-            viewYear < t.getFullYear() ||
-            (viewYear === t.getFullYear() && viewMonth <= t.getMonth() + 1)
-          }
-          onClick={() => {
-            if (viewMonth === 1) {
-              setViewMonth(12)
-              setViewYear((y) => y - 1)
-            } else setViewMonth((m) => m - 1)
-          }}
-        >
-          ←
-        </button>
-        <span className="font-semibold text-[15px]" style={{ fontFamily: 'var(--font-family)' }}>
-          {monthLabel}
-        </span>
-        <button
-          type="button"
-          className={styles.counterBtn}
-          aria-label={calUi.nextMonth}
-          onClick={() => {
-            if (viewMonth === 12) {
-              setViewMonth(1)
-              setViewYear((y) => y + 1)
-            } else setViewMonth((m) => m + 1)
-          }}
-        >
-          →
-        </button>
+      {/* Tur rezervasyon takvimiyle (Step1PeopleDate) birebir aynı desen:
+          "Ay › Yıl ›" etiketleri solda (tıklanabilir native select kapağı),
+          yuvarlak ‹ › ok butonları sağda. */}
+      <div className={styles.calendarMonthHeader}>
+        <div className={styles.calendarMonthYearLabels}>
+          <div className={styles.calendarMonthYearWrap}>
+            <select
+              className={styles.calendarMonthYearSelect}
+              value={viewMonth}
+              onChange={(e) => setViewMonth(Number(e.target.value))}
+              aria-label={calUi.selectMonthAria}
+            >
+              {monthOptions.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+            <span className={styles.calendarMonthYearItem} aria-hidden>
+              {monthNameOnly}
+              <ChevronRight width={15} height={15} aria-hidden />
+            </span>
+          </div>
+          <div className={styles.calendarMonthYearWrap}>
+            <select
+              className={styles.calendarMonthYearSelect}
+              value={viewYear}
+              onChange={(e) => setViewYear(Number(e.target.value))}
+              aria-label={calUi.selectYearAria}
+            >
+              {yearOptions.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+            <span className={styles.calendarMonthYearItem} aria-hidden>
+              {viewYear}
+              <ChevronRight width={15} height={15} aria-hidden />
+            </span>
+          </div>
+        </div>
+        <div className={styles.calendarNavBtnGroup}>
+          <button
+            type="button"
+            className={styles.calendarNavBtn}
+            aria-label={calUi.prevMonth}
+            disabled={isViewingCurrentMonth}
+            onClick={goToPrevMonth}
+          >
+            <ChevronLeft width={17} height={17} aria-hidden />
+          </button>
+          <button
+            type="button"
+            className={styles.calendarNavBtn}
+            aria-label={calUi.nextMonth}
+            onClick={goToNextMonth}
+          >
+            <ChevronRight width={17} height={17} aria-hidden />
+          </button>
+        </div>
       </div>
-      <div className={styles.calendarWrap}>
+      <div className={`${styles.calendarWrap} ${styles.yachtCalendarWrap}`}>
         <div className={styles.calendarGrid}>
           {weekdays.map((wd) => (
             <div key={wd} className={styles.weekday} aria-hidden>

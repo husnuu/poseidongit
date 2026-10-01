@@ -90,7 +90,7 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
           id={id}
           value={value}
           defaultValue={defaultValue}
-          className={`w-full bg-transparent text-[#475569] outline-none ${className}`}
+          className={`w-full bg-transparent text-[#475569] outline-none focus-visible:outline-none ${className}`}
           style={{
             height,
             paddingLeft: paddingX,

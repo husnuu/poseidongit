@@ -1,9 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
+import { X } from 'lucide-react'
 import ReviewCardExpand from './ReviewCardExpand'
 import styles from './ReviewsSection.module.css'
+import modalStyles from './home/ReviewModal.module.css'
 
 export type ReviewListItem = {
   name: string
@@ -19,7 +22,7 @@ type ReviewsListProps = {
   verifiedGuestLabel: string
   loadMoreLabel: string
   readMoreLabel?: string
-  showLessLabel?: string
+  closeLabel?: string
   pageSize?: number
 }
 
@@ -32,6 +35,15 @@ function avatarPalette(name: string): { bg: string; fg: string } {
     bg: `linear-gradient(135deg, hsl(${hue}, 70%, 94%), hsl(${hue}, 60%, 89%))`,
     fg: `hsl(${hue}, 55%, 28%)`,
   }
+}
+
+/** Anasayfadaki "yorumun tamamını oku" modalıyla aynı: isimden deterministik
+    DOLU (koyu doygun) avatar rengi — modalda Google'ın kendi yorum kutusundaki
+    gibi bold renkli daire + beyaz harf. */
+function modalAvatarColor(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 360
+  return `hsl(${hash}, 62%, 46%)`
 }
 
 /** Google'ın doğrulanmış-yorum mavi rozeti (referans site ile birebir aynı ikon). */
@@ -79,12 +91,101 @@ export default function ReviewsList({
   verifiedGuestLabel,
   loadMoreLabel,
   readMoreLabel,
-  showLessLabel,
+  closeLabel = 'Kapat',
   pageSize = 5,
 }: ReviewsListProps) {
   const [visibleCount, setVisibleCount] = useState(pageSize)
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [portalEl, setPortalEl] = useState<HTMLDivElement | null>(null)
   const visibleItems = items.slice(0, visibleCount)
   const hasMore = visibleCount < items.length
+
+  // Anasayfadaki "yorumun tamamını oku" modalıyla aynı mekanik: body'ye
+  // eklenen bir portal konteyneri + Escape ile kapatma + arka plan kaydırmayı kilitleme.
+  useEffect(() => {
+    const el = document.createElement('div')
+    document.body.appendChild(el)
+    setPortalEl(el)
+    return () => {
+      if (el.parentNode) el.parentNode.removeChild(el)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (openIndex === null) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenIndex(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [openIndex])
+
+  const openItem = openIndex != null ? (items[openIndex] ?? null) : null
+
+  const modal =
+    portalEl && openItem
+      ? createPortal(
+          <div
+            className={`${modalStyles.overlay} ${modalStyles.overlayVisible}`}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setOpenIndex(null)
+            }}
+            role="dialog"
+            aria-modal
+            aria-label={openItem.name}
+          >
+            <div className={modalStyles.sheet}>
+              <div className={modalStyles.sheetHandle} aria-hidden />
+              <div className={modalStyles.sheetBody}>
+                <div className={modalStyles.topRow}>
+                  {openItem.avatarSrc ? (
+                    <Image
+                      src={openItem.avatarSrc}
+                      alt={openItem.name}
+                      width={56}
+                      height={56}
+                      className="h-14 w-14 shrink-0 rounded-full object-cover"
+                      placeholder={openItem.avatarLqip ? 'blur' : 'empty'}
+                      blurDataURL={openItem.avatarLqip}
+                    />
+                  ) : (
+                    <span
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white"
+                      style={{ background: modalAvatarColor(openItem.name || 'A') }}
+                      aria-hidden
+                    >
+                      {(openItem.name || '?').trim().charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <div className={modalStyles.reviewerText}>
+                    <p className={modalStyles.reviewerName}>{openItem.name}</p>
+                    <StarRow value={openItem.rating} />
+                    {openItem.dateLabel && (
+                      <span className={modalStyles.dateLabel}>{openItem.dateLabel}</span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className={modalStyles.closeBtn}
+                    onClick={() => setOpenIndex(null)}
+                    aria-label={closeLabel}
+                  >
+                    <X className="h-5 w-5" aria-hidden />
+                  </button>
+                </div>
+
+                <p className={modalStyles.fullText}>{openItem.description}</p>
+              </div>
+            </div>
+          </div>,
+          portalEl
+        )
+      : null
 
   return (
     <>
@@ -126,7 +227,7 @@ export default function ReviewsList({
                 <ReviewCardExpand
                   text={it.description}
                   readMoreLabel={readMoreLabel}
-                  showLessLabel={showLessLabel}
+                  onReadMore={() => setOpenIndex(idx)}
                 />
               </div>
             </div>
@@ -146,6 +247,8 @@ export default function ReviewsList({
           </button>
         </div>
       )}
+
+      {modal}
     </>
   )
 }

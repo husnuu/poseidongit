@@ -2,6 +2,7 @@ import { client, urlFor } from '@/lib/sanity'
 import { covesPageQuery, covesListQuery } from '@/lib/queries'
 import CovesHero from '@/components/coves/CovesHero'
 import CoveCard from '@/components/coves/CoveCard'
+import ScrollReveal from '@/components/ui/ScrollReveal'
 import { getSiteName } from '@/lib/seo'
 import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { Metadata } from 'next'
@@ -117,20 +118,21 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
         <CovesHero title={title} description={description} />
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
-          {items.map((cove) => (
-            <CoveCard
-              key={cove._id}
-              title={cove.title ?? ui.defaultCoveTitle}
-              description={cove.description}
-              imageUrl={
-                cove.image?.asset
-                  ? urlFor(cove.image.asset).width(900).height(675).url()
-                  : null
-              }
-              alt={cove.image?.alt}
-              locationTag={cove.locationTag}
-              noImageLabel={ui.noImage}
-            />
+          {items.map((cove, i) => (
+            <ScrollReveal key={cove._id} delayMs={(i % 3) * 80}>
+              <CoveCard
+                title={cove.title ?? ui.defaultCoveTitle}
+                description={cove.description}
+                imageUrl={
+                  cove.image?.asset
+                    ? urlFor(cove.image.asset).width(900).height(675).url()
+                    : null
+                }
+                alt={cove.image?.alt}
+                locationTag={cove.locationTag}
+                noImageLabel={ui.noImage}
+              />
+            </ScrollReveal>
           ))}
         </div>
 

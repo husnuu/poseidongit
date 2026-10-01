@@ -24,9 +24,16 @@
 }
 
 .wrapperCompact :global(.PhoneInput) {
+  /* min-height değil sabit height: kütüphanenin kendi iç içeriği (bayrak
+     ikonu + ok) min-height'ı aşıp kutuyu diğer alanlardan (Ad/Soyad/E-posta)
+     birkaç piksel daha uzun gösteriyordu. Taban .wrapper kuralındaki
+     min-height:52px'i de burada ezmemiz gerekiyor — yoksa min-height her
+     zaman daha küçük bir height'ı geçersiz kılıp kutuyu yine şişiriyor. */
+  height: 42px;
   min-height: 42px;
   padding-left: 8px;
   padding-right: 12px;
+  box-sizing: border-box;
 }
 
 .wrapper :global(.PhoneInputInput) {

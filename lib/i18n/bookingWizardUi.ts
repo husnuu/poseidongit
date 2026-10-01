@@ -131,6 +131,10 @@ export type BookingWizardUi = {
   termsCheckboxTrail: string
   distanceSalesAgreementLinkText: string
   distanceSalesAgreementLead: string
+  /** İki link arasındaki bağlaç — örn. " ve " */
+  distanceSalesAgreementMiddle: string
+  /** İkinci link: Şartlar ve Koşullar */
+  distanceSalesAgreementLinkText2: string
   distanceSalesAgreementTrail: string
   back: string
   backAria: string
@@ -325,7 +329,9 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     termsCheckboxTrail: '’ı okudum ve kabul ediyorum.',
     distanceSalesAgreementLinkText: 'Mesafeli Satış Sözleşmesi',
     distanceSalesAgreementLead: '',
-    distanceSalesAgreementTrail: '’ni okudum ve kabul ediyorum.',
+    distanceSalesAgreementMiddle: ' ve ',
+    distanceSalesAgreementLinkText2: 'Şartlar ve Koşullar',
+    distanceSalesAgreementTrail: ' okudum, anladım ve kabul ediyorum.',
     back: 'Geri',
     backAria: 'Önceki adıma dön',
     closeAria: 'Kapat',
@@ -519,7 +525,9 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     termsCheckboxLead: 'I have read and accept the ',
     termsCheckboxTrail: '.',
     distanceSalesAgreementLinkText: 'Distance Sales Agreement',
-    distanceSalesAgreementLead: 'I have read and accept the ',
+    distanceSalesAgreementLead: 'I have read, understood and accept the ',
+    distanceSalesAgreementMiddle: ' and ',
+    distanceSalesAgreementLinkText2: 'Terms and Conditions',
     distanceSalesAgreementTrail: '.',
     back: 'Back',
     backAria: 'Go to previous step',
@@ -714,7 +722,9 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     termsCheckboxTrail: ' gelesen und akzeptiere sie.',
     distanceSalesAgreementLinkText: 'Fernabsatzvertrag',
     distanceSalesAgreementLead: 'Ich habe den ',
-    distanceSalesAgreementTrail: ' gelesen und akzeptiere ihn.',
+    distanceSalesAgreementMiddle: ' und die ',
+    distanceSalesAgreementLinkText2: 'Allgemeinen Geschäftsbedingungen',
+    distanceSalesAgreementTrail: ' gelesen, verstanden und akzeptiere sie.',
     back: 'Zurück',
     backAria: 'Zum vorherigen Schritt',
     closeAria: 'Schließen',

@@ -81,6 +81,13 @@ export default function StickyInquiryCard({
   const noteTitle = inquiryCard?.noteTitle?.trim() || ui.defaultNoteTitle
   const noteSubtitle = inquiryCard?.noteSubtitle?.trim() || ui.defaultNoteSubtitle
 
+  // "/ gün" | "/ gece" gibi kısa birim ekleri fiyatın hemen yanında, aynı satırda
+  // gösterilsin (daha derli toplu); seçili tarih veya konaklama özeti gibi daha
+  // uzun metinler ise eskisi gibi alt satırda kalsın.
+  const trimmedMeta = priceMeta?.trim() || null
+  const inlineSuffix = trimmedMeta?.startsWith('/') ? trimmedMeta : null
+  const belowMeta = inlineSuffix ? null : trimmedMeta
+
   return (
     <div className={styles.sidebar}>
       <div className={styles.content}>
@@ -88,8 +95,11 @@ export default function StickyInquiryCard({
 
         <div className={styles.priceBlock}>
           {priceLabel ? <span className={styles.priceFrom}>{priceLabel}</span> : null}
-          <span className={styles.priceValue}>{priceValue}</span>
-          {priceMeta ? <span className={styles.depositLine}>{priceMeta}</span> : null}
+          <span className={styles.priceValueRow}>
+            <span className={styles.priceValue}>{priceValue}</span>
+            {inlineSuffix ? <span className={styles.priceSuffix}>{inlineSuffix}</span> : null}
+          </span>
+          {belowMeta ? <span className={styles.depositLine}>{belowMeta}</span> : null}
         </div>
 
         <ul className={styles.list}>

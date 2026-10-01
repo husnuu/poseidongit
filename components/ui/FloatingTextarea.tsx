@@ -74,7 +74,7 @@ const FloatingTextarea = forwardRef<HTMLTextAreaElement, FloatingTextareaProps>(
           value={value}
           defaultValue={defaultValue}
           rows={rows}
-          className={`w-full bg-transparent resize-y outline-none rounded-xl ${className}`}
+          className={`w-full bg-transparent resize-y outline-none focus-visible:outline-none rounded-xl ${className}`}
           style={{
             paddingLeft: 14,
             paddingRight: 14,

@@ -33,6 +33,12 @@ const TEAR_HERE_LABEL: Record<string, string> = {
   de: 'Hier abtrennen',
 }
 
+const CONFIRMATION_EMAIL_LABEL: Record<string, string> = {
+  tr: 'Onay e-postası şu adrese gönderilecek:',
+  en: 'A confirmation email will be sent to:',
+  de: 'Eine Bestätigungs-E-Mail wird gesendet an:',
+}
+
 /** "YYYY-MM-DD" tarihini biletteki gibi "Pazar, 27 Eylül 2026" biçimine çevirir
     (Intl'in kendi hafta günü sırası tr-TR'de tarihin SONUNA koyduğu için elle birleştiriyoruz). */
 export function formatTicketDateLabel(dateStr: string, ui: BookingWizardUi): string {
@@ -97,6 +103,8 @@ export interface ReservationTicketProps {
   /** Kapora / kalan tutar satırları — verilirse bilete, yırtık bir kesik çizginin
       altında, aynı kartın devamı olarak eklenir (3. adımda). */
   breakdownRows?: ReservationTicketRow[]
+  /** Girilmişse biletin altında "Onay e-postası şu adrese gönderilecek: …" notu gösterilir. */
+  confirmationEmail?: string | null
 }
 
 /** Referans siteki bilet kesiği ile birebir: dikey kesik çizgi + "Buradan yırtın" etiketi,
@@ -112,14 +120,17 @@ export default function ReservationTicket({
   timeLabel,
   totalValue,
   breakdownRows,
+  confirmationEmail,
 }: ReservationTicketProps) {
   const totalPriceLabel = TOTAL_PRICE_LABEL[ui.locale] ?? TOTAL_PRICE_LABEL.tr
   const meetingPointLabel = MEETING_POINT_LABEL[ui.locale] ?? MEETING_POINT_LABEL.tr
   const boatLabel = BOAT_LABEL[ui.locale] ?? BOAT_LABEL.tr
   const guestLabel = GUEST_LABEL[ui.locale] ?? GUEST_LABEL.tr
   const tearHereLabel = TEAR_HERE_LABEL[ui.locale] ?? TEAR_HERE_LABEL.tr
+  const confirmationEmailLabel = CONFIRMATION_EMAIL_LABEL[ui.locale] ?? CONFIRMATION_EMAIL_LABEL.tr
 
   return (
+    <>
     <div className={styles.reservationTicketStackWrap}>
       {/* Referanstaki "arkada bir bilet daha duruyor" görünümü — tek dekoratif
           kart dilimi (toplam 2 bilet). Kendi çentikleri de GERÇEKTEN kesik
@@ -160,13 +171,6 @@ export default function ReservationTicket({
               ))}
             </p>
           </div>
-        </div>
-
-        <div
-          className={`${styles.reservationTicketDivider} ${breakdownRows && breakdownRows.length > 0 ? styles.reservationTicketDividerConnected : ''}`}
-          aria-hidden
-        >
-          <span className={styles.reservationTicketTearLabel}>{tearHereLabel}</span>
         </div>
 
         <div className={styles.reservationTicketStubRight}>
@@ -223,8 +227,22 @@ export default function ReservationTicket({
         </>
       )}
       </div>
+      {/* Tek parça, baştan sona (kapora dökümü olsa da olmasa da) kesintisiz
+          kesik çizgi — üstteki/alttaki yuvarlak çentiklerle AYNI %55 noktasında,
+          .reservationTicketBodyCell'in tam yüksekliğine otomatik uzanır. Bu
+          katman bilerek EN SONDA (en üstte boyanacak şekilde) duruyor — kapora
+          dökümünün kendi opak beyaz arka planı, altındaki çizgiyi örtmesin diye. */}
+      <div className={styles.reservationTicketTearLine} aria-hidden>
+        <span className={styles.reservationTicketTearLabel}>{tearHereLabel}</span>
+      </div>
       </div>
       </div>
     </div>
+    {confirmationEmail && (
+      <p className={styles.reservationTicketEmailNote}>
+        {confirmationEmailLabel} <span className={styles.reservationTicketEmailValue}>{confirmationEmail}</span>
+      </p>
+    )}
+    </>
   )
 }

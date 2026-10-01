@@ -54,7 +54,16 @@ export async function POST(request: Request) {
     const id = row && typeof row.id === 'string' ? row.id : ''
     const rowEmail = row && typeof row.email === 'string' ? row.email.trim().toLowerCase() : email
 
-    if (!id || !hash || !bcrypt.compareSync(password, hash)) {
+    // Kullanıcı bulunamadığında bcrypt hiç çağrılmazsa, "var olmayan e-posta"
+    // isteği "var olan e-posta + yanlış şifre" isteğinden belirgin şekilde
+    // daha hızlı döner — bu zaman farkı, admin e-postalarını kaba kuvvetle
+    // keşfetmek için kullanılabilir (timing attack / user enumeration).
+    // Gerçek hash yoksa sabit bir "dummy" hash'e karşı kıyaslayıp süreyi
+    // eşitliyoruz; sonuç yine de her zaman false olur.
+    const DUMMY_HASH = '$2b$10$0uR4NVZwd.n5rNWgyl313OkXH.9Q0OHOewGATXtkhlvuqb9v8e65y'
+    const passwordMatches = bcrypt.compareSync(password, hash || DUMMY_HASH)
+
+    if (!id || !hash || !passwordMatches) {
       return NextResponse.json({ error: 'E-posta, şifre veya panel anahtarı hatalı' }, { status: 401 })
     }
 

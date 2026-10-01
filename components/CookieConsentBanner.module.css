@@ -1,164 +1,16 @@
-/* ── Settings modal backdrop ───────────────────────────────────────────── */
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  background: rgba(19, 23, 25, 0.45);
-  backdrop-filter: blur(4px);
-}
-
-/* ── Settings panel ────────────────────────────────────────────────────── */
-.settingsPanel {
-  position: fixed;
-  z-index: 9999;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(420px, calc(100vw - 2rem));
-  max-height: min(80vh, 520px);
-  overflow: auto;
-  padding: 1.75rem;
-  border-radius: 1rem;
-  background: #ffffff;
-  color: #131719;
-  border: 1px solid #f1f5f9;
-  box-shadow: 0 4px 20px rgba(19, 23, 25, 0.12);
-}
-
-.settingsPanel h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1.125rem;
-  font-weight: 800;
-  color: #131719;
-}
-
-.settingsPanel p {
-  margin: 0 0 1.25rem;
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: #71717a;
-}
-
-.row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.875rem 0;
-  border-top: 1px solid #f1f5f9;
-}
-
-.rowLabel strong {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #131719;
-}
-
-.rowLabel span {
-  display: block;
-  margin-top: 0.2rem;
-  font-size: 0.75rem;
-  color: #71717a;
-  line-height: 1.4;
-}
-
-.switch {
-  flex-shrink: 0;
-  width: 2.75rem;
-  height: 1.5rem;
-  border-radius: 9999px;
-  border: none;
-  cursor: pointer;
-  background: #e4e4e7;
-  position: relative;
-  transition: background 0.2s ease;
-}
-
-.switch[data-on='true'] {
-  background: #2168b8;
-}
-
-.switchKnob {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 1.125rem;
-  height: 1.125rem;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease;
-}
-
-.switch[data-on='true'] .switchKnob {
-  transform: translateX(1.25rem);
-}
-
-.settingsActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.625rem;
-  margin-top: 1.25rem;
-}
-
-/* ── Modal action buttons ───────────────────────────────────────────────── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.6rem 1.1rem;
-  font-size: 0.875rem;
-  font-weight: 700;
-  border-radius: 0.75rem;
-  border: 1.5px solid transparent;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
-  white-space: nowrap;
-}
-
-.btnPrimary {
-  background: #2168b8;
-  color: #ffffff;
-  border-color: #2168b8;
-}
-
-.btnPrimary:hover {
-  background: #1b5697;
-  border-color: #1b5697;
-}
-
-.btnGhost {
-  background: #ffffff;
-  color: #131719;
-  border-color: #e4e4e7;
-}
-
-.btnGhost:hover {
-  background: #fafafa;
-}
-
 /* ── Cookie banner (main popup) ─────────────────────────────────────────── */
-@keyframes cookieSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(1.5rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
+/* Referans site ile birebir: sağ alt değil sol alt köşede, sayfanın geri
+   kalanını kaplamayan kompakt yüzen kart — ve her zaman en üstte kalması
+   için sitedeki diğer tüm fixed/overlay katmanlarından (menü, modallar,
+   WhatsApp butonu vb. — hepsi en fazla ~10000) kesin olarak daha yüksek
+   bir z-index. */
 .banner {
   position: fixed;
-  z-index: 9997;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  z-index: 999999;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
   pointer-events: none;
   opacity: 0;
   transform: translateY(1.5rem);
@@ -175,16 +27,15 @@
 
 @media (min-width: 640px) {
   .banner {
-    left: auto;
-    right: 1.5rem;
+    right: auto;
     bottom: 1.5rem;
-    max-width: 440px;
+    max-width: 400px;
   }
 }
 
 @media (min-width: 1024px) {
   .banner {
-    right: 2rem;
+    left: 2rem;
     bottom: 2rem;
   }
 }
@@ -198,39 +49,41 @@
 
 .card {
   background: #ffffff;
-  border-radius: 1rem 1rem 0 0;
-  padding: 1.25rem 1.25rem 1.25rem;
-  box-shadow: 0 4px 20px rgba(19, 23, 25, 0.1);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 10px 34px rgba(19, 23, 25, 0.16);
   border: 1px solid #f1f5f9;
-  border-bottom: none;
 }
 
 @media (min-width: 640px) {
   .card {
-    border-radius: 1rem;
-    border-bottom: 1px solid #f1f5f9;
     padding: 1.5rem;
   }
 }
 
+/* Başlık: sitedeki diğer başlıklarla aynı font ailesi/kalınlık (anasayfadaki
+   gibi ince kontur ile desteklenmiş 800 ağırlık) — rengi de aynı var(--secondary). */
 .cardTitle {
   margin: 0 0 0.5rem;
-  font-size: 1rem;
+  font-family: var(--font-family-title, var(--font-family));
+  font-size: 1.0625rem;
   font-weight: 800;
-  color: #131719;
+  -webkit-text-stroke: 0.3px currentColor;
+  color: var(--secondary, #131719);
   line-height: 1.3;
 }
 
 .cardText {
   margin: 0 0 1rem;
+  font-family: var(--font-family);
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: #71717a;
+  color: var(--text-color, #58595b);
 }
 
 .policyLink {
-  color: #2168b8;
-  font-weight: 600;
+  color: var(--primary, #2168b8);
+  font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -246,7 +99,9 @@
   flex-wrap: wrap;
 }
 
-.btnCustomize,
+/* Anasayfadaki CTA butonlarıyla (HeroBanner, rezervasyon sihirbazı vb.) aynı
+   tip: birincil = parlayan mavi degrade dolgu, ikincil = beyaz zemin + mavi
+   kenarlık/metin — ikisi de uppercase, kalın, aynı font ailesi. */
 .btnReject,
 .btnAccept {
   flex: 1;
@@ -255,52 +110,62 @@
   align-items: center;
   justify-content: center;
   padding: 0.5rem 0.75rem;
+  font-family: var(--font-family);
   font-size: 0.8125rem;
   font-weight: 700;
-  border-radius: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border-radius: 0.5rem;
   cursor: pointer;
   transition:
+    background-position 0.4s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
     background 0.15s ease,
     border-color 0.15s ease,
     color 0.15s ease;
   white-space: nowrap;
 }
 
-.btnCustomize {
-  background: #ffffff;
-  color: #131719;
-  border: 1.5px solid #e4e4e7;
-}
-
-.btnCustomize:hover {
-  background: #fafafa;
-}
-
 .btnReject {
   background: #ffffff;
-  color: #131719;
-  border: 1.5px solid #e4e4e7;
+  color: var(--primary, #2168b8);
+  border: 1.5px solid var(--primary, #2168b8);
 }
 
 .btnReject:hover {
-  background: #fafafa;
+  background: rgba(var(--primary-rgb, 33, 104, 184), 0.06);
 }
 
 .btnAccept {
-  background: #2168b8;
+  background-image: linear-gradient(
+    to right,
+    var(--primary, #2168b8) 0%,
+    #4f8dc7 51%,
+    var(--primary, #2168b8) 100%
+  );
+  background-size: 200% auto;
+  background-position: 0 center;
   color: #ffffff;
-  border: 1.5px solid #2168b8;
+  border: 1.5px solid transparent;
+  box-shadow: 0 2px 10px rgba(var(--primary-rgb, 33, 104, 184), 0.32);
 }
 
 .btnAccept:hover {
-  background: #1b5697;
-  border-color: #1b5697;
+  background-position: right center;
+  box-shadow: 0 4px 16px rgba(var(--primary-rgb, 33, 104, 184), 0.4);
 }
 
 @media (min-width: 380px) {
-  .btnCustomize,
   .btnReject,
   .btnAccept {
     padding: 0.5625rem 0.875rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btnReject,
+  .btnAccept {
+    transition: none;
   }
 }

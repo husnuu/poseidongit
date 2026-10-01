@@ -86,9 +86,13 @@ function specRows(spec: YachtSpecifications | null | undefined, locale: SiteLoca
 export default function HomePopularYachtCard({
   yacht,
   locale = 'tr',
+  /** 'stacked' (varsayılan, anasayfa): "Günlük" fiyatın altında ayrı satırda.
+      'inline' (yat listeleme sayfası): "/ Günlük" fiyatın yanında aynı satırda. */
+  priceLayout = 'stacked',
 }: {
   yacht: HomePopularYachtCardData
   locale?: SiteLocale
+  priceLayout?: 'stacked' | 'inline'
 }) {
   const { isSaved, toggle } = useWishlist()
   const href = detailHref(yacht, locale)
@@ -127,14 +131,25 @@ export default function HomePopularYachtCard({
 
   const priceBlock =
     dailyOn && yacht.priceFrom != null ? (
-      <p className="leading-tight">
-        <span className="block whitespace-nowrap text-lg font-extrabold tabular-nums tracking-tight text-[#131719] sm:text-xl">
-          {yacht.priceFrom.toLocaleString('tr-TR')} ₺
-        </span>
-        <span className="mt-0.5 block text-[11px] font-semibold uppercase tracking-wide" style={{ color: ICON_MUTED }}>
-          {PER_DAY_LABEL[locale]}
-        </span>
-      </p>
+      priceLayout === 'inline' ? (
+        <p className="leading-tight whitespace-nowrap">
+          <span className="text-lg font-extrabold tabular-nums tracking-tight text-[#131719] sm:text-xl">
+            {yacht.priceFrom.toLocaleString('tr-TR')} ₺
+          </span>
+          <span className="ml-1.5 text-[11px] font-semibold uppercase tracking-wide" style={{ color: ICON_MUTED }}>
+            / {PER_DAY_LABEL[locale]}
+          </span>
+        </p>
+      ) : (
+        <p className="leading-tight">
+          <span className="block whitespace-nowrap text-lg font-extrabold tabular-nums tracking-tight text-[#131719] sm:text-xl">
+            {yacht.priceFrom.toLocaleString('tr-TR')} ₺
+          </span>
+          <span className="mt-0.5 block text-[11px] font-semibold uppercase tracking-wide" style={{ color: ICON_MUTED }}>
+            {PER_DAY_LABEL[locale]}
+          </span>
+        </p>
+      )
     ) : overnightOn && overnightLine?.trim() ? (
       <p className="leading-tight">
         <span className="block text-[11px] font-semibold uppercase tracking-wide" style={{ color: ICON_MUTED }}>

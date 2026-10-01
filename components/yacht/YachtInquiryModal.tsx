@@ -9,7 +9,7 @@ import bookingStyles from '@/components/booking/booking.module.css'
 import stickyCardStyles from '@/components/StickyBookingCard.module.css'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getYachtUi } from '@/lib/i18n/yachtUi'
-import { Check, ChevronLeft } from 'lucide-react'
+import { Check, ChevronLeft, X } from 'lucide-react'
 import {
   isValidOvernightRange,
   overnightNights,
@@ -130,63 +130,69 @@ export default function YachtInquiryModal({
         className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl rounded-b-none shadow-2xl flex flex-col overflow-hidden max-sm:h-[92dvh] max-sm:max-h-[92dvh] sm:max-h-[min(92vh,720px)] sm:h-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 z-20 bg-white sm:rounded-t-2xl border-b border-zinc-100">
-          <div className="flex items-center justify-between gap-3 px-4 py-3">
-            <h2
-              id="yacht-inquiry-modal-title"
-              className="text-lg font-black uppercase tracking-wide text-[#2168b8] m-0 truncate"
-              style={{ fontFamily: 'var(--font-family)' }}
-            >
+        <div className="shrink-0 z-20 overflow-hidden sm:rounded-t-2xl">
+          <header className={bookingStyles.wizardModalHeader}>
+            <h2 id="yacht-inquiry-modal-title" className={bookingStyles.wizardModalTitle}>
               {ui.inquiryModalTitle}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 shrink-0"
+              className={`${bookingStyles.closeBtn} ${bookingStyles.wizardModalClose}`}
               aria-label={ui.modalCloseAria}
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path
-                  d="M18 6L6 18M6 6L18 18"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <X className="w-5 h-5" aria-hidden />
             </button>
-          </div>
+          </header>
 
-          <div
-            id="yacht-inquiry-modal-step-desc"
-            className={bookingStyles.wizardModalStepStrip}
-            role="progressbar"
-            aria-valuenow={step}
-            aria-valuemin={1}
-            aria-valuemax={2}
-            aria-label={ui.stepAria(step, 2)}
-          >
-            {[1, 2].map((s) => (
-              <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div
-                  className={`${bookingStyles.stepCircle} ${
-                    step > s
-                      ? bookingStyles.stepCircleDone
-                      : step === s
-                        ? bookingStyles.stepCircleActive
-                        : ''
-                  }`}
-                  aria-current={step === s ? 'step' : undefined}
-                >
-                  {step > s ? <Check className="w-3.5 h-3.5" aria-hidden /> : s}
+          <div className={bookingStyles.wizardModalStepArea} id="yacht-inquiry-modal-step-desc">
+            <div
+              className={bookingStyles.wizardStepper}
+              role="progressbar"
+              aria-valuenow={step}
+              aria-valuemin={1}
+              aria-valuemax={2}
+              aria-label={ui.stepAria(step, 2)}
+            >
+              {(
+                [
+                  { s: 1, label: ui.step1Label },
+                  { s: 2, label: ui.step2Label },
+                ] as const
+              ).map(({ s, label }, index) => (
+                <div key={s} className={bookingStyles.wizardStepperSegment}>
+                  <div className={bookingStyles.wizardStepColumn}>
+                    <div
+                      className={`${bookingStyles.stepCircle} ${
+                        step > s
+                          ? bookingStyles.stepCircleDone
+                          : step === s
+                            ? bookingStyles.stepCircleActive
+                            : ''
+                      }`}
+                      aria-current={step === s ? 'step' : undefined}
+                    >
+                      {step > s ? <Check className="w-3.5 h-3.5" aria-hidden /> : s}
+                    </div>
+                    <span
+                      className={
+                        step === s ? bookingStyles.wizardStepLabelActive : bookingStyles.wizardStepLabel
+                      }
+                    >
+                      {label}
+                    </span>
+                  </div>
+                  {index < 1 && (
+                    <div
+                      className={`${bookingStyles.wizardStepConnector} ${
+                        step > s ? bookingStyles.wizardStepConnectorDone : ''
+                      }`}
+                      aria-hidden
+                    />
+                  )}
                 </div>
-                {s < 2 && (
-                  <div
-                    className={`${bookingStyles.connector} ${step > s ? bookingStyles.connectorDone : ''}`}
-                    aria-hidden
-                  />
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 

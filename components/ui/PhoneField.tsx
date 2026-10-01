@@ -68,7 +68,12 @@ export default function PhoneField({
           ...WRAPPER_STYLE,
           ...(focused ? FOCUS_STYLE : {}),
           ...(error ? { borderColor: '#dc2626' } : {}),
-          minHeight,
+          // "Bilgileriniz" formundaki diğer kutucuklarla (Ad/Soyad/E-posta)
+          // birebir aynı boyutta olsun diye min-height değil sabit height —
+          // react-phone-number-input'un kendi iç içeriği (bayrak + ok)
+          // min-height'ı görmezden gelip kutuyu birkaç piksel şişiriyordu.
+          height: compact ? minHeight : undefined,
+          minHeight: compact ? undefined : minHeight,
         }}
       >
         <PhoneInput

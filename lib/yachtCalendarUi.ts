@@ -3,6 +3,8 @@ import type { SiteLocale } from '@/lib/i18n/config'
 export type YachtCalendarUi = {
   prevMonth: string
   nextMonth: string
+  selectMonthAria: string
+  selectYearAria: string
   unavailableDay: (day: number) => string
   pastDay: (day: number) => string
   dayLabel: (day: number, iso: string) => string
@@ -15,6 +17,8 @@ export type YachtCalendarUi = {
 const TR: YachtCalendarUi = {
   prevMonth: 'Önceki ay',
   nextMonth: 'Sonraki ay',
+  selectMonthAria: 'Ay seçin',
+  selectYearAria: 'Yıl seçin',
   unavailableDay: (day) => `${day} müsait değil`,
   pastDay: (day) => `${day} geçmiş`,
   dayLabel: (day, iso) => `${day} ${iso}`,
@@ -27,6 +31,8 @@ const TR: YachtCalendarUi = {
 const EN: YachtCalendarUi = {
   prevMonth: 'Previous month',
   nextMonth: 'Next month',
+  selectMonthAria: 'Select month',
+  selectYearAria: 'Select year',
   unavailableDay: (day) => `${day} unavailable`,
   pastDay: (day) => `${day} past`,
   dayLabel: (day, iso) => `${day} ${iso}`,

@@ -16,6 +16,7 @@ import type { SiteLocale } from '@/lib/i18n/config'
 import { getYachtUi } from '@/lib/i18n/yachtUi'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import YachtOptionalSections from '@/components/yacht/YachtOptionalSections'
+import ScrollReveal from '@/components/ui/ScrollReveal'
 
 /** Ağır client alt ağaçları ayrı chunk — ChunkLoadError / timeout riskini azaltır */
 const PhotoGrid = dynamic(() => import('@/components/PhotoGrid'), {
@@ -71,7 +72,17 @@ export default function YachtDetailView({ locale, yacht, path }: YachtDetailView
       <JsonLd data={breadcrumbSchema} />
       {images.length > 0 && (
         <div className="relative w-full mb-0">
-          <PhotoGrid images={images} tourTitle={yacht.name} heroBadges={yacht.badges} locale={locale} />
+          <PhotoGrid
+            images={images}
+            tourTitle={yacht.name}
+            heroBadges={yacht.badges}
+            locale={locale}
+            itemType="yacht"
+            itemPath={path}
+            tourId={yacht._id}
+            tourSlug={yacht.slug}
+            tourDescription={yacht.shortDescription}
+          />
         </div>
       )}
       <div className="container mx-auto px-4 py-16 max-w-[1360px]">
@@ -85,24 +96,40 @@ export default function YachtDetailView({ locale, yacht, path }: YachtDetailView
               locale={locale}
             />
             <YachtShortSummary text={yacht.shortDescription} />
-            <YachtHighlights
-              specifications={yacht.specifications}
-              departurePoint={yacht.departurePoint}
-              technicalSpecs={yacht.technicalSpecs}
-              locale={locale}
-            />
-            <YachtRouteSection routes={yacht.routeSuggestions ?? []} locale={locale} />
-            <YachtDescription description={yacht.fullDescription} locale={locale} />
-            <YachtIncludedWithGallery
-              included={yacht.included}
-              notIncluded={yacht.notIncluded}
-              gallery={sidebarGallery}
-              locale={locale}
-            />
-            <YachtAmenitiesSection amenities={yacht.amenities ?? []} locale={locale} />
-            <YachtPolicySections yacht={yacht} locale={locale} />
-            <YachtFAQAccordion items={yacht.faqs ?? []} locale={locale} />
-            <YachtOptionalSections locale={locale} yacht={yacht} />
+            <ScrollReveal>
+              <YachtHighlights
+                specifications={yacht.specifications}
+                departurePoint={yacht.departurePoint}
+                technicalSpecs={yacht.technicalSpecs}
+                locale={locale}
+              />
+            </ScrollReveal>
+            <ScrollReveal>
+              <YachtRouteSection routes={yacht.routeSuggestions ?? []} locale={locale} />
+            </ScrollReveal>
+            <ScrollReveal>
+              <YachtDescription description={yacht.fullDescription} locale={locale} />
+            </ScrollReveal>
+            <ScrollReveal>
+              <YachtIncludedWithGallery
+                included={yacht.included}
+                notIncluded={yacht.notIncluded}
+                gallery={sidebarGallery}
+                locale={locale}
+              />
+            </ScrollReveal>
+            <ScrollReveal>
+              <YachtAmenitiesSection amenities={yacht.amenities ?? []} locale={locale} />
+            </ScrollReveal>
+            <ScrollReveal>
+              <YachtPolicySections yacht={yacht} locale={locale} />
+            </ScrollReveal>
+            <ScrollReveal>
+              <YachtFAQAccordion items={yacht.faqs ?? []} locale={locale} />
+            </ScrollReveal>
+            <ScrollReveal>
+              <YachtOptionalSections locale={locale} yacht={yacht} />
+            </ScrollReveal>
           </main>
           <YachtInquiryExperience yacht={yacht} locale={locale} />
         </div>

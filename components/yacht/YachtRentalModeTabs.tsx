@@ -12,9 +12,13 @@ interface YachtRentalModeTabsProps {
 
 export default function YachtRentalModeTabs({ value, onChange, locale = 'tr' }: YachtRentalModeTabsProps) {
   const ui = getYachtUi(locale)
+  // Feribot rezervasyon sihirbazındaki "Tek Yön / Aynı Gün / Farklı Gün"
+  // sekmeleriyle birebir aynı tasarım: gri hap kapsayıcı, aktif sekme beyaz
+  // zemin + SİYAH (mavi değil) kalın yazı.
   return (
     <div
-      className="flex rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-1 gap-1 mb-4"
+      className="mb-4 flex flex-wrap gap-0.5 rounded-xl border border-[#e2e8f0] p-1"
+      style={{ background: '#eef2f6' }}
       role="tablist"
       aria-label={ui.rentalModeTabsAria}
     >
@@ -22,12 +26,12 @@ export default function YachtRentalModeTabs({ value, onChange, locale = 'tr' }: 
         type="button"
         role="tab"
         aria-selected={value === 'daily'}
-        className={`flex-1 rounded-lg py-2.5 px-3 text-xs font-extrabold uppercase tracking-wide transition ${
+        className="flex-1 rounded-[9px] px-2.5 py-2.5 text-center text-[12.5px] font-semibold leading-tight transition"
+        style={
           value === 'daily'
-            ? 'bg-white text-[#2168b8] shadow-sm ring-1 ring-zinc-200/80'
-            : 'text-zinc-500 hover:text-zinc-800'
-        }`}
-        style={{ fontFamily: 'var(--font-family)' }}
+            ? { background: '#fff', color: 'var(--secondary, #131719)', fontWeight: 700, boxShadow: '0 1px 4px rgba(15, 23, 42, 0.1)' }
+            : { background: 'transparent', color: '#64748b' }
+        }
         onClick={() => onChange('daily')}
       >
         {ui.rentalModeDaily}
@@ -36,12 +40,12 @@ export default function YachtRentalModeTabs({ value, onChange, locale = 'tr' }: 
         type="button"
         role="tab"
         aria-selected={value === 'overnight'}
-        className={`flex-1 rounded-lg py-2.5 px-3 text-xs font-extrabold uppercase tracking-wide transition ${
+        className="flex-1 rounded-[9px] px-2.5 py-2.5 text-center text-[12.5px] font-semibold leading-tight transition"
+        style={
           value === 'overnight'
-            ? 'bg-white text-[#2168b8] shadow-sm ring-1 ring-zinc-200/80'
-            : 'text-zinc-500 hover:text-zinc-800'
-        }`}
-        style={{ fontFamily: 'var(--font-family)' }}
+            ? { background: '#fff', color: 'var(--secondary, #131719)', fontWeight: 700, boxShadow: '0 1px 4px rgba(15, 23, 42, 0.1)' }
+            : { background: 'transparent', color: '#64748b' }
+        }
         onClick={() => onChange('overnight')}
       >
         {ui.rentalModeOvernight}

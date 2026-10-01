@@ -1117,6 +1117,23 @@
   letter-spacing: -0.01em;
 }
 
+/* Yat kiralama günlük fiyatları ("60.000 ₺" gibi) tur biletlerinden çok daha
+   uzun rakamlar — aynı küçük hücrede tur fiyatlarıyla aynı boyutta kalınca
+   taşıp kabalaşıyordu. Hücreyi biraz büyütüp fiyat metnini küçülterek
+   ferahlatıyoruz (yalnızca yat takvimine özel, tur takvimine dokunmuyor). */
+.yachtCalendarWrap .dayCell {
+  min-height: 54px;
+  min-width: 46px;
+  font-size: 16px;
+  padding: 5px 2px;
+}
+
+.yachtCalendarWrap .dayPrice {
+  font-size: 9px;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
 /* Satışa kapalı/geçmiş günlerde referans sitedeki gibi üstü çizili fiyat */
 .dayPriceStrike {
   color: #cbd5e1;
@@ -2063,16 +2080,21 @@
   mask-composite: intersect, intersect;
 }
 
+/* Not: yatay dolgu artık burada değil, stubLeft/stubRight'ın kendi
+   üstünde — böylece %55 noktası (üstteki/alttaki çentiklerle VE
+   .reservationTicketTearLine ile) hizalanıyor; bu satırın kendisi
+   dolgusuz, kartın tam genişliğini kaplıyor. */
 .reservationTicketStub {
   display: flex;
   align-items: stretch;
   position: relative;
-  padding: 18px 16px;
-  gap: 14px;
 }
 
 .reservationTicketStubLeft {
-  flex: 1.3;
+  flex: 0 0 55%;
+  max-width: 55%;
+  box-sizing: border-box;
+  padding: 18px 20px 18px 16px;
   min-width: 0;
   min-height: 230px;
   display: flex;
@@ -2081,7 +2103,10 @@
 }
 
 .reservationTicketStubRight {
-  flex: 1;
+  flex: 0 0 45%;
+  max-width: 45%;
+  box-sizing: border-box;
+  padding: 18px 16px 18px 20px;
   min-width: 0;
   min-height: 230px;
   display: flex;
@@ -2179,36 +2204,28 @@
   -webkit-text-stroke: 0.4px currentColor;
 }
 
-/* Dikey kesik çizgi + üstte/altta bilet çentikleri + ortada döndürülmüş
-   "Buradan yırtın" etiketi — referans siteki bilet ile birebir. */
-.reservationTicketDivider {
+/* TEK parça dikey kesik çizgi — üstteki/alttaki yuvarlak çentiklerle
+   (.reservationTicketBodyBg, %55 0% / %55 100%) AYNI yatay noktada, kartın
+   kendi grid hücresinde (.reservationTicketBodyCell) diğer katmanlarla
+   birlikte otomatik olarak TAM yüksekliğe geriliyor — kapora/ekstra dökümü
+   olsun olmasın, bilgi (stub) kısmından kartın gerçek alt kenarına kadar
+   kesintisiz devam eder (önceden stub'ın flex düzeninde ayrı bir eleman
+   olduğu ve kapora dökümünde de ayrı bir %55 ile "yaklaşık" hizalandığı
+   için çizgi yamuk/eksik görünüyordu). */
+.reservationTicketTearLine {
   position: relative;
   width: 0;
+  margin-left: 55%;
+  box-sizing: border-box;
+  padding: 18px 0;
   border-left: 2px dashed #D7E1EC;
-  flex-shrink: 0;
-  /* Çizgi tam üstteki yuvarlak kesiğin bittiği yerde başlasın — kesiğin
-     gölge halkası ~22px yarıçapta; stub'ın kendi 18px dolgusuna ek olarak
-     burada da boşluk bırakıyoruz ki çizgi kesiğe kadar/dışına taşıp üst
-     kenarla birleşmesin. Alt boşluk da varsayılan: kapora/ekstra dökümü
-     YOKSA stub'ın altı kartın gerçek alt kenarı demektir, orada da bir
-     çentik vardır — bu yüzden varsayılan olarak alta da aynı boşluğu
-     bırakıyoruz. */
-  margin: 8px 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
-/* Kapora/ekstra dökümü VARSA: stub'ın altı artık kartın gerçek alt kenarı
-   değil (çentik en alta taşındı) — çizgi burada durmasın, kesintisiz olarak
-   .reservationTicketBreakdownRows'daki devamına bağlansın. */
-.reservationTicketDividerConnected {
-  margin-bottom: 0;
-}
-
-/* Bilet çentiği — düzgün, pürüzsüz tam yuvarlak delik (kart kenarında
-   overflow:hidden ile yarısı kesiliyor, gerçek bir "ısırık" gibi görünüyor). */
-/* Dikeyde döndürülmüş "Buradan yırtın" etiketi, ayracın tam ortasında */
+/* Dikeyde döndürülmüş "Buradan yırtın" etiketi, çizginin tam ortasında */
 .reservationTicketTearLabel {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
@@ -2244,19 +2261,6 @@
   background: #fff;
 }
 
-/* Yırtık/kesik çizgi biletin üst (bilgi) kısmında bitmesin — stub'daki
-   çizginin devamı olarak kesintisiz (üstte boşluksuz, orada artık çentik
-   yok) kapora/kalan dökümü boyunca aşağı insin; kartın GERÇEK alt kenarındaki
-   (artık en altta olan) çentiğe değmeden hemen önce dursun. */
-.reservationTicketBreakdownRows::before {
-  content: '';
-  position: absolute;
-  left: 55%;
-  top: 0;
-  bottom: 26px;
-  border-left: 2px dashed #D7E1EC;
-}
-
 .ticketBreakdownRow {
   display: flex;
   justify-content: space-between;
@@ -2290,6 +2294,20 @@
 .ticketBreakdownRowEmphasis .ticketBreakdownValue {
   color: #fc6c4f;
   font-size: 17px;
+}
+
+/* Biletin altında "Onay e-postası şu adrese gönderilecek: …" notu. */
+.reservationTicketEmailNote {
+  margin: 10px 4px 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #71717a;
+  text-align: center;
+}
+
+.reservationTicketEmailValue {
+  font-weight: 700;
+  color: var(--secondary, #131719);
 }
 
 .summaryPriceRow {
@@ -2451,24 +2469,24 @@
   margin-bottom: 12px;
 }
 
+/* Referans site ile birebir: kart/kutu yok — düz sayfa zemininde checkbox + metin. */
 .termsCard {
-  margin: 8px 16px 0;
-  padding: 14px 16px;
-  background: #fff;
-  border: 1px solid #e8edf3;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  margin: 16px 16px 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 /* Sözleşme checkbox satırı */
 .termsRow {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
   padding: 0;
   cursor: pointer;
-  font-size: 13px;
-  color: #475569;
+  font-size: 15px;
+  color: #3f3f46;
   line-height: 1.55;
   font-family: var(--font-family);
 }
@@ -2477,25 +2495,55 @@
   flex: 1;
 }
 
+/* Referans site ile birebir: özel çizilmiş, köşeleri hafif yuvarlak kare
+   checkbox — işaretlenince mavi dolgu + beyaz onay işareti. */
 .termsCheckbox {
-  margin-top: 3px;
+  appearance: none;
+  -webkit-appearance: none;
+  margin-top: 1px;
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  accent-color: var(--primary, #2168b8);
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1.5px solid #d4d4d8;
+  background: #fff;
+  position: relative;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.termsCheckbox:checked {
+  background: var(--primary, #2168b8);
+  border-color: var(--primary, #2168b8);
+}
+
+.termsCheckbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 6px;
+  height: 11px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.termsCheckbox:focus-visible {
+  outline: 2px solid var(--primary, #2168b8);
+  outline-offset: 2px;
 }
 
 .termsLink {
   color: var(--primary, #2168b8);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  font-weight: 600;
+  text-decoration: none;
+  font-weight: 700;
   transition: color 0.15s;
 }
 
 .termsLink:hover {
-  color: #f85a3a;
+  color: #1b5697;
+  text-decoration: underline;
 }
 
 /* ── Flat sayfa bölümleri (Step 1) ── */
@@ -2621,7 +2669,7 @@
 .sectionTitle {
   font-size: 15px;
   font-weight: 700;
-  color: var(--primary, #2168b8);
+  color: var(--secondary, #131719);
   margin: 0;
   font-family: var(--font-family);
   letter-spacing: -0.01em;

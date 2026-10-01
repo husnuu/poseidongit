@@ -66,10 +66,15 @@ interface PhotoGridProps {
   heroBadges?: string[]
   /** RSC sınırında `tourUi` nesnesi (içinde fonksiyonlar) geçirilemez; yalnızca locale. */
   locale?: SiteLocale
-  /** Wishlist + paylaşım linki için: tur kimliği/slug'ı ve kısa açıklaması */
+  /** Wishlist + paylaşım linki için: öğe kimliği/slug'ı ve kısa açıklaması */
   tourId?: string | null
   tourSlug?: string | null
   tourDescription?: string | null
+  /** Wishlist'e hangi tür olarak kaydedilsin (varsayılan: 'tour') */
+  itemType?: 'tour' | 'yacht'
+  /** Tur dışı öğeler (ör. yat) için tam sayfa yolu — verilirse tourSlug'dan
+      `/tur/...` üretmek yerine doğrudan bu yol kullanılır. */
+  itemPath?: string | null
 }
 
 export default function PhotoGrid({
@@ -80,6 +85,8 @@ export default function PhotoGrid({
   tourId,
   tourSlug,
   tourDescription,
+  itemType = 'tour',
+  itemPath,
 }: PhotoGridProps) {
   const safeLocale = locale ?? 'tr'
   const tourUi = useMemo(() => getTourPageUi(safeLocale), [safeLocale])
@@ -111,7 +118,11 @@ export default function PhotoGrid({
 
   const wishlistId = tourId || tourSlug || null
   const saved = wishlistId ? isSaved(wishlistId) : false
-  const tourHref = tourSlug ? withLocalePath(safeLocale, `/tur/${tourSlug}`) : null
+  const tourHref = itemPath
+    ? withLocalePath(safeLocale, itemPath)
+    : tourSlug
+      ? withLocalePath(safeLocale, `/tur/${tourSlug}`)
+      : null
 
   const openLightbox = (index: number) => {
     setLightboxIndex(index)
@@ -139,7 +150,7 @@ export default function PhotoGrid({
     if (!wishlistId) return
     toggle({
       id: wishlistId,
-      type: 'tour',
+      type: itemType,
       title: tourTitle,
       imageUrl: mainImage?.src ?? null,
       priceLabel: null,

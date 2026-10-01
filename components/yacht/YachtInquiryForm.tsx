@@ -9,6 +9,7 @@ import { Turnstile } from '@marsidev/react-turnstile'
 import FloatingInput from '@/components/ui/FloatingInput'
 import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
+import bookingStyles from '@/components/booking/booking.module.css'
 import { CalendarDays, Check, Clock, MapPin, Moon, Sailboat, Users } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getYachtUi } from '@/lib/i18n/yachtUi'
@@ -307,12 +308,16 @@ export default function YachtInquiryForm({
             label={ui.labelFirstName}
             autoComplete="given-name"
             error={errors.firstName?.message}
+            compact
+            variant="outlined"
             {...register('firstName')}
           />
           <FloatingInput
             label={ui.labelLastName}
             autoComplete="family-name"
             error={errors.lastName?.message}
+            compact
+            variant="outlined"
             {...register('lastName')}
           />
         </div>
@@ -321,6 +326,8 @@ export default function YachtInquiryForm({
           type="email"
           autoComplete="email"
           error={errors.email?.message}
+          compact
+          variant="outlined"
           {...register('email')}
         />
         <PhoneField
@@ -331,11 +338,14 @@ export default function YachtInquiryForm({
           onBlur={() => {}}
           error={errors.phone?.message}
           defaultCountry="TR"
+          compact
+          variant="outlined"
         />
         <FloatingTextarea
           label={ui.labelMessage}
           rows={4}
           error={errors.message?.message}
+          variant="outlined"
           {...register('message')}
         />
 
@@ -355,13 +365,7 @@ export default function YachtInquiryForm({
         <button
           type="submit"
           disabled={status === 'sending' || (!!siteKey && !turnstileToken)}
-          className="w-full rounded-xl border-0 font-bold uppercase text-white text-base transition hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none"
-          style={{
-            height: 56,
-            background: '#fc6c4f',
-            boxShadow: '0 2px 10px rgba(252, 108, 79, 0.28)',
-            fontFamily: 'var(--font-family)',
-          }}
+          className={`${bookingStyles.stepBtnPrimary} disabled:opacity-60 disabled:cursor-not-allowed`}
         >
           {status === 'sending' ? ui.sending : resolvedSubmitLabel}
         </button>

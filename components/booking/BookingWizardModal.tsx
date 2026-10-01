@@ -586,6 +586,7 @@ export default function BookingWizardModal({
                     ctaDisabled={ctaDisabled}
                     ui={ui}
                     termsHref="https://cesmetekneturu.net/yasal/mesafeli-satis-sozlesmesi"
+                    termsAndConditionsHref="https://cesmetekneturu.net/yasal/sartlar-ve-kosullar"
                   />
                 </>
               )}

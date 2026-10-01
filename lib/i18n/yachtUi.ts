@@ -112,6 +112,9 @@ export type YachtUi = {
   inquiryModalTitle: string
   modalCloseAria: string
   stepAria: (step: number, max: number) => string
+  /** Adım göstergesindeki kısa etiketler (tur rezervasyon sihirbazıyla aynı tarz). */
+  step1Label: string
+  step2Label: string
   step1Subtitle: string
   step2Subtitle: string
   guestCountLabel: string
@@ -256,6 +259,8 @@ const TR: YachtUi = {
   inquiryModalTitle: 'Rezervasyon talebi',
   modalCloseAria: 'Kapat',
   stepAria: (step, max) => `Adım ${step} / ${max}`,
+  step1Label: 'Tarih ve Misafir',
+  step2Label: 'Bilgileriniz',
   step1Subtitle: 'Tarih ve misafir sayısını seçin',
   step2Subtitle: 'İletişim bilgilerinizi bırakın',
   guestCountLabel: 'Misafir sayısı',
@@ -400,6 +405,8 @@ const EN: YachtUi = {
   inquiryModalTitle: 'Booking request',
   modalCloseAria: 'Close',
   stepAria: (step, max) => `Step ${step} / ${max}`,
+  step1Label: 'Date & Guests',
+  step2Label: 'Your Details',
   step1Subtitle: 'Choose a date and number of guests',
   step2Subtitle: 'Leave your contact details',
   guestCountLabel: 'Number of guests',
@@ -544,6 +551,8 @@ const DE: YachtUi = {
   inquiryModalTitle: 'Buchungsanfrage',
   modalCloseAria: 'Schließen',
   stepAria: (step, max) => `Schritt ${step} / ${max}`,
+  step1Label: 'Datum & Gäste',
+  step2Label: 'Ihre Daten',
   step1Subtitle: 'Wählen Sie Datum und Anzahl der Gäste',
   step2Subtitle: 'Hinterlassen Sie Ihre Kontaktdaten',
   guestCountLabel: 'Anzahl der Gäste',

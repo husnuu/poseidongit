@@ -29,6 +29,7 @@ import type { TourForBooking } from '@/lib/sanity/bookingTypes'
 import ReviewsSection from '@/components/ReviewsSection'
 import WhereSection from '@/components/tour/WhereSection'
 import TourReelsRail from '@/components/tour/TourReelsRail'
+import ScrollReveal from '@/components/ui/ScrollReveal'
 import JsonLd from '@/components/seo/JsonLd'
 import {
   buildBreadcrumbSchema,
@@ -306,24 +307,32 @@ export default async function TourPage({
           locale={locale}
         />
 
-        <HighlightsDetailsRow
-          highlights={tour.highlights}
-          tourDetails={tour.tourDetails}
-          quickFacts={tour.quickFacts}
-          tourUi={tourUi}
-        />
+        <ScrollReveal>
+          <HighlightsDetailsRow
+            highlights={tour.highlights}
+            tourDetails={tour.tourDetails}
+            quickFacts={tour.quickFacts}
+            tourUi={tourUi}
+          />
+        </ScrollReveal>
 
-        <ItineraryTimeline items={itineraryTimelineItems} sectionTitle={tourUi.itineraryTitle} locale={locale} />
+        <ScrollReveal>
+          <ItineraryTimeline items={itineraryTimelineItems} sectionTitle={tourUi.itineraryTitle} locale={locale} />
+        </ScrollReveal>
 
         {reelsSlides.length > 0 ? (
-          <TourReelsRail slides={reelsSlides} locale={locale} />
+          <ScrollReveal>
+            <TourReelsRail slides={reelsSlides} locale={locale} />
+          </ScrollReveal>
         ) : null}
 
-        <TourDescription description={tour.description} locale={locale} />
+        <ScrollReveal>
+          <TourDescription description={tour.description} locale={locale} />
+        </ScrollReveal>
 
         {/* Video Section */}
         {tour.tourVideo?.enabled && (
-          <div className="mb-8">
+          <ScrollReveal className="mb-8">
             {videoEmbedUrl && tour.tourVideo.type !== 'upload' ? (
               <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-zinc-900">
                 {tour.tourVideo.type === 'youtube' && (
@@ -371,28 +380,32 @@ export default async function TourPage({
                 {tour.tourVideo.caption}
               </p>
             )}
-          </div>
+          </ScrollReveal>
         )}
 
-        <IncludedNotIncluded included={tour.included} notIncluded={tour.notIncluded} tourUi={tourUi} />
+        <ScrollReveal>
+          <IncludedNotIncluded included={tour.included} notIncluded={tour.notIncluded} tourUi={tourUi} />
+        </ScrollReveal>
 
-        <HostBlock host={tour.host} whyYouWillLove={tour.whyYouWillLove} tourUi={tourUi} />
+        <ScrollReveal>
+          <HostBlock host={tour.host} whyYouWillLove={tour.whyYouWillLove} tourUi={tourUi} />
+        </ScrollReveal>
 
-        <div className="mb-14">
+        <ScrollReveal className="mb-14">
           <FAQAccordion faqs={tour.faqs} locale={locale} whatsappUrl={whatsappUrl} />
-        </div>
+        </ScrollReveal>
 
-        <div className="mt-14 mb-14">
+        <ScrollReveal className="mt-14 mb-14">
           <WhereSection
             data={tour.whereSection}
             headingFallback={tourUi.whereHeadingFallback}
             locale={locale}
           />
-        </div>
+        </ScrollReveal>
 
-        <div className="mt-14">
+        <ScrollReveal className="mt-14">
           <ReviewsSection reviewsUrl={tour.reviewsUrl} reviewsSection={tour.reviewsSection} tourUi={tourUi} />
-        </div>
+        </ScrollReveal>
 
           </main>
           <TourBookingSidebar
@@ -404,7 +417,9 @@ export default async function TourPage({
           />
         </div>
 
-        <OtherToursSection items={otherTours} locale={locale} />
+        <ScrollReveal>
+          <OtherToursSection items={otherTours} locale={locale} />
+        </ScrollReveal>
       </div>
     </div>
   )

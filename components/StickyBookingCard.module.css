@@ -61,6 +61,22 @@
   line-height: 1.4;
 }
 
+/* ── Yat müsaitlik kartı: fiyat + "/ gün" | "/ gece" eki yan yana (bkz. StickyInquiryCard) ── */
+.priceValueRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.priceSuffix {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .depositLine {
   font-size: 13px;
   font-weight: 700;

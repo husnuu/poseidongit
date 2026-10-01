@@ -4,6 +4,7 @@ import { tourCoverImageUrl } from '@/lib/sanityImage'
 import { homePopularToursOrderQuery, toursListQuery, toursPageQuery } from '@/lib/queries'
 import TourCard from '@/components/tours/TourCard'
 import type { TourListItem } from '@/components/tours/TourCard'
+import ScrollReveal from '@/components/ui/ScrollReveal'
 import styles from './page.module.css'
 
 import type { Metadata } from 'next'
@@ -218,8 +219,10 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
           </header>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {tours.map((tour) => (
-              <TourCard key={tour._id} tour={tour} locale={locale} />
+            {tours.map((tour, i) => (
+              <ScrollReveal key={tour._id} delayMs={(i % 3) * 80}>
+                <TourCard tour={tour} locale={locale} />
+              </ScrollReveal>
             ))}
           </div>
 

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { ArrowUpDown, SlidersHorizontal } from 'lucide-react'
 import HomePopularYachtCard from '@/components/home/HomePopularYachtCard'
+import ScrollReveal from '@/components/ui/ScrollReveal'
 import type { YachtListCardItem } from '@/lib/yachtListPrice'
 import YachtRentalFiltersSheet from '@/components/yacht/YachtRentalFiltersSheet'
 import YachtRentalSortSheet from '@/components/yacht/YachtRentalSortSheet'
@@ -139,8 +140,10 @@ export default function YachtRentalListSection({
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
-          {sorted.map((y) => (
-            <HomePopularYachtCard key={y._id} yacht={y} locale={locale} />
+          {sorted.map((y, i) => (
+            <ScrollReveal key={y._id} delayMs={(i % 3) * 80}>
+              <HomePopularYachtCard yacht={y} locale={locale} />
+            </ScrollReveal>
           ))}
         </div>
       )}

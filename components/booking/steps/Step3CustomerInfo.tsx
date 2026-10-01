@@ -36,6 +36,8 @@ interface Step3CustomerInfoProps {
   ctaDisabled: boolean
   ui: BookingWizardUi
   termsHref?: string
+  /** Şartlar ve Koşullar sayfası linki (Mesafeli Satış Sözleşmesi'nden ayrı). */
+  termsAndConditionsHref?: string
 }
 
 export default function Step3CustomerInfo({
@@ -50,6 +52,7 @@ export default function Step3CustomerInfo({
   ctaDisabled,
   ui,
   termsHref = '/terms',
+  termsAndConditionsHref = '/yasal/sartlar-ve-kosullar',
 }: Step3CustomerInfoProps) {
   const [termsAccepted, setTermsAccepted] = useState(false)
   const { visibleErrors, touch, attemptSubmit } = useBookingPassengerValidation(
@@ -163,6 +166,7 @@ export default function Step3CustomerInfo({
           timeLabel={tour.quickFacts?.startTime}
           totalValue={state.pricingSummary ? totalPrice : null}
           breakdownRows={ticketBreakdownRows}
+          confirmationEmail={state.customer.email?.trim() || null}
         />
       </div>
 
@@ -322,6 +326,16 @@ export default function Step3CustomerInfo({
               onClick={(e) => e.stopPropagation()}
             >
               {ui.distanceSalesAgreementLinkText}
+            </a>
+            {ui.distanceSalesAgreementMiddle}
+            <a
+              href={termsAndConditionsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.termsLink}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {ui.distanceSalesAgreementLinkText2}
             </a>
             {ui.distanceSalesAgreementTrail}
           </span>
