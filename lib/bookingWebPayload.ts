@@ -44,11 +44,17 @@ const customerSchema = z.object({
     .max(320)
     .transform((s) => s.trim().toLowerCase())
     .pipe(z.string().min(1, { message: 'E-posta gerekli' }).max(254).email({ message: 'Geçerli e-posta gerekli' })),
+  // .optional() şart: Zod'da bir alanın değeri undefined OLABİLİR demek, o anahtarın
+  // istekten tamamen eksik olmasına izin vermiyor — .optional() olmadan, boş
+  // bırakılan (ve JSON.stringify ile isteğe hiç eklenmeyen) alanlar doğrulamayı
+  // "Invalid input: expected nonoptional, received undefined" hatasıyla patlatıyordu.
   phone: z
     .union([z.string(), z.undefined(), z.null()])
+    .optional()
     .transform((v) => sanitizePhoneDisplay(typeof v === 'string' ? v : '', 48)),
   note: z
     .union([z.string(), z.undefined(), z.null()])
+    .optional()
     .transform((v) => (typeof v === 'string' ? sanitizeCustomerNote(v, 2000) : undefined)),
   gender: z.union([z.string(), z.undefined(), z.null()]).optional(),
 })
