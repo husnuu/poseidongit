@@ -7,6 +7,7 @@ import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/me
 import { translateText } from '@/lib/i18n/runtimeTranslate'
 import headerStyles from '@/components/layout/Header.module.css'
 import { getSiteName } from '@/lib/seo'
+import { DISPLAYED_GOOGLE_RATING } from '@/lib/siteTrustRating'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { localizeNavHref } from '@/lib/i18n/localizeNavHref'
 import {
@@ -480,10 +481,10 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                       <>
                         <GoogleWordmark className="text-xl leading-none" />
                         <span className="h-4 w-px flex-shrink-0 bg-white/30" aria-hidden />
-                        {/* Sanity'deki topRated.ratingValue alanı şu an 5 — site sahibinin
-                            talebiyle footerda gerçek güncel Google puanı olan 4.7 gösteriliyor.
-                            Tam tutarlılık için Sanity'deki alanın da 4.7'ye güncellenmesi önerilir. */}
-                        <span className="text-base font-bold leading-none text-white">4.7</span>
+                        {/* Sanity'deki topRated.ratingValue alanı şu an 5 — bkz. lib/siteTrustRating.ts */}
+                        <span className="text-base font-bold leading-none text-white">
+                          {DISPLAYED_GOOGLE_RATING}
+                        </span>
                         {reviewCount > 0 && (
                           <>
                             <span className="h-4 w-px flex-shrink-0 bg-white/30" aria-hidden />

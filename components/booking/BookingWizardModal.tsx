@@ -336,15 +336,18 @@ export default function BookingWizardModal({
         } catch {
           if (!res.ok) {
             setSubmitError(ui.serverError(res.status))
+            setSubmitting(false)
             return
           }
         }
         if (!res.ok) {
           setSubmitError(data.error ?? ui.bookingSaveFailed(res.status))
+          setSubmitting(false)
           return
         }
         if (!data.bookingId || !data.summary) {
           setSubmitError(ui.invalidServerResponse)
+          setSubmitting(false)
           return
         }
         const dateNorm = (state.selectedDate ?? '').slice(0, 10)
@@ -380,6 +383,7 @@ export default function BookingWizardModal({
 
         if (!payRes.ok || !payData.action || !payData.fields) {
           setSubmitError(payData.error ?? 'Ödeme sayfası başlatılamadı. Lütfen tekrar deneyin.')
+          setSubmitting(false)
           return
         }
 

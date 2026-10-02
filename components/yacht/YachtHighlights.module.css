@@ -58,11 +58,13 @@
   gap: 10px;
 }
 
+/* Tur sayfasındaki "Öne Çıkan Bilgiler" ikonlarıyla (ve tur kartlarıyla) aynı
+   muted ton — eskiden parlak maviydi, sitedeki diğer yerlerle tutarsızdı. */
 .rowIcon {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  color: var(--primary, #2168b8);
+  color: #8a99ad;
 }
 
 .label {

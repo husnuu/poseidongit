@@ -1,4 +1,3 @@
-import { ScrollText } from 'lucide-react'
 import TourDescriptionExpandable from '@/components/TourDescriptionExpandable'
 import type { PortableTextBlock } from '@portabletext/react'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -19,7 +18,6 @@ export default function YachtDescription({ description, locale = 'tr' }: YachtDe
       heading={ui.descriptionHeading}
       headingVariant="yacht"
       headingClassName={headingStyles.h2}
-      headingIcon={<ScrollText className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden />}
     />
   )
 }

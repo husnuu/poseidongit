@@ -1,5 +1,12 @@
 import { client, urlFor } from '@/lib/sanity'
-import { aboutPageMetaQuery, aboutPageQuery } from '@/lib/queries'
+import { aboutPageMetaQuery, aboutPageQuery, siteTrustStatsQuery } from '@/lib/queries'
+import { DISPLAYED_GOOGLE_RATING } from '@/lib/siteTrustRating'
+import { Star } from 'lucide-react'
+import {
+  ExperienceIllustration,
+  FleetIllustration,
+  RatingIllustration,
+} from '@/components/about/AboutTrustIllustrations'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
 import Image from 'next/image'
@@ -28,6 +35,15 @@ type BoatItem = {
   isActive?: boolean | null
   image?: { asset?: { _ref: string }; alt?: string | null } | null
 }
+
+type TrustStatsRaw = {
+  topRated?: {
+    enabled?: boolean | null
+    ratingValue?: number | null
+    ratingMax?: number | null
+    reviewCount?: number | null
+  } | null
+} | null
 
 type AboutPageData = {
   slug?: string | null
@@ -159,6 +175,15 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
     raw = null
   }
 
+  // Güven rozeti şeridi için: footer'daki "TOP RATED" rozetiyle aynı gerçek
+  // puan/yorum sayısı — ayrı, hafif bir sorgu (tüm footer belgesini çekmeden).
+  let trustStats: TrustStatsRaw = null
+  try {
+    trustStats = await client.fetch<TrustStatsRaw>(siteTrustStatsQuery, {}, { useCdn: false })
+  } catch {
+    trustStats = null
+  }
+
   let data = raw
 
   // Editör pageTranslations.en/.de'ye elle çeviri girmemişse, anlık makine
@@ -254,6 +279,58 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
   const heroPhotoAsset = boats[0]?.image?.asset ?? null
   const heroPhotoUrl = heroPhotoAsset ? urlFor(heroPhotoAsset).width(1920).height(1000).quality(85).url() : null
   const heroPhotoAlt = boats[0]?.imageAlt || heroLogoAlt
+
+  // Güven rozeti şeridi: hepsi gerçek, zaten çekilmiş veriden — uydurma yok.
+  // Deneyim yılı, filodaki en eski teknenin yılından ("North Star, 1988" gibi)
+  // hesaplanıyor; filo sayısı aktif teknelerin sayısı; puan/yorum ise
+  // footer'daki "TOP RATED" rozetiyle aynı siteFooter alanından geliyor.
+  const boatYears = boats
+    .map((b) => parseInt(b.year ?? '', 10))
+    .filter((y): y is number => Number.isFinite(y) && y > 1900)
+  const foundingYear = boatYears.length > 0 ? Math.min(...boatYears) : null
+  const yearsExperience = foundingYear != null ? new Date().getFullYear() - foundingYear : null
+  const fleetCount = boats.length
+  const topRated = trustStats?.topRated
+  const showRatingStat = topRated?.enabled !== false && (topRated?.ratingValue ?? 0) > 0
+  const reviewCount = topRated?.reviewCount ?? 0
+  const numberLocale = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
+
+  const trustStatsItems = [
+    yearsExperience != null && yearsExperience > 0
+      ? {
+          Illustration: ExperienceIllustration,
+          value: `${yearsExperience}+`,
+          label: ui.trustYearsLabel,
+          showStars: false,
+        }
+      : null,
+    fleetCount > 0
+      ? {
+          Illustration: FleetIllustration,
+          value: `${fleetCount}`,
+          label: ui.trustFleetLabel,
+          showStars: false,
+        }
+      : null,
+    showRatingStat
+      ? {
+          // Footer'daki "TOP RATED" rozetiyle aynı gerçek puan — bkz. lib/siteTrustRating.ts
+          Illustration: RatingIllustration,
+          value: DISPLAYED_GOOGLE_RATING.toLocaleString(numberLocale, { maximumFractionDigits: 1 }),
+          label: ui.trustReviewsLabel(reviewCount > 0 ? `${reviewCount.toLocaleString(numberLocale)}+` : ''),
+          showStars: true,
+        }
+      : null,
+  ].filter(
+    (
+      item
+    ): item is {
+      Illustration: typeof ExperienceIllustration
+      value: string
+      label: string
+      showStars: boolean
+    } => item != null
+  )
 
   const localeTag = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
   const toHeadingUpper = (s: string) => s.trim().toLocaleUpperCase(localeTag)
@@ -371,6 +448,52 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
             <div className="text-left">
               <PortableText value={data.intro} components={defaultBlockComponents} />
             </div>
+          </div>
+        </section>
+      )}
+
+      {trustStatsItems.length > 0 && (
+        <section className="w-full bg-white px-4 pb-14 md:pb-20" aria-label={ui.metaTitleFallback}>
+          <div className="mx-auto flex max-w-4xl flex-col divide-y divide-[#eef1f4] sm:flex-row sm:divide-x sm:divide-y-0">
+            {trustStatsItems.map(({ Illustration, value, label, showStars }, i) => (
+              <div
+                key={i}
+                className="flex flex-1 items-center justify-center py-6 sm:px-6 sm:py-2"
+              >
+                {/* Sabit genişlikte iç kutu: etiket metni satır sayısına/uzunluğuna göre
+                    değişse bile ikon + sayı her satırda aynı x konumunda hizalı kalsın diye
+                    (dıştaki justify-center, değişken genişlikli içeriği değil, bu sabit
+                    kutuyu ortalıyor). */}
+                <div className="mx-auto flex w-full max-w-[240px] items-center gap-4 sm:mx-0 sm:w-auto">
+                  <Illustration className="h-20 w-20 flex-shrink-0 sm:h-24 sm:w-24" />
+                  <div className="flex flex-col items-start text-left">
+                    <span
+                      className="text-[30px] font-black leading-none sm:text-[34px]"
+                      style={{
+                        fontFamily: 'var(--font-family-title, var(--font-family))',
+                        color: 'var(--secondary, #131719)',
+                        WebkitTextStroke: '0.4px currentColor',
+                      }}
+                    >
+                      {value}
+                    </span>
+                    {showStars && (
+                      <span className="mt-1 flex gap-0.5" aria-hidden>
+                        {Array.from({ length: 5 }).map((_, starIndex) => (
+                          <Star key={starIndex} className="h-4 w-4 fill-[#f5a623] text-[#f5a623]" />
+                        ))}
+                      </span>
+                    )}
+                    <span
+                      className="mt-1 text-[12px] font-bold uppercase leading-snug tracking-wide sm:text-[13px]"
+                      style={{ color: 'var(--muted, #81848b)' }}
+                    >
+                      {label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       )}

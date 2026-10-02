@@ -1233,6 +1233,18 @@ export const siteFooterContactQuery = `*[_type == "siteFooter"][0]{
   }
 }`
 
+/** Footer'daki "TOP RATED" rozetiyle aynı gerçek sayılar (siteFooter tekil
+    belgesi) — Hakkımızda sayfasındaki güven rozeti şeridi için, tüm footer
+    belgesini çekmeden sadece ilgili alanlar. */
+export const siteTrustStatsQuery = `*[_type == "siteFooter"][0] {
+  topRated {
+    enabled,
+    ratingValue,
+    ratingMax,
+    reviewCount
+  }
+}`
+
 export const siteFooterQuery = `*[_type == "siteFooter"][0] {
   brandName,
   logo {

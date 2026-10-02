@@ -6,6 +6,9 @@ export type AboutPageUiStrings = {
   loadError: string
   noImage: string
   defaultBoatImageAlt: string
+  trustYearsLabel: string
+  trustFleetLabel: string
+  trustReviewsLabel: (count: string) => string
 }
 
 const TR: AboutPageUiStrings = {
@@ -14,6 +17,9 @@ const TR: AboutPageUiStrings = {
   loadError: 'Hakkımızda içeriği yüklenemedi.',
   noImage: 'Görsel yok',
   defaultBoatImageAlt: 'Tekne',
+  trustYearsLabel: 'Yıllık Deneyim',
+  trustFleetLabel: 'Farklı Teknede Hizmet',
+  trustReviewsLabel: (count) => `${count} Misafir Yorumu`,
 }
 
 const EN: AboutPageUiStrings = {
@@ -22,6 +28,9 @@ const EN: AboutPageUiStrings = {
   loadError: 'About page could not be loaded.',
   noImage: 'No image',
   defaultBoatImageAlt: 'Boat',
+  trustYearsLabel: 'Years of Experience',
+  trustFleetLabel: 'Boats in Our Fleet',
+  trustReviewsLabel: (count) => `${count} Guest Reviews`,
 }
 
 const DE: AboutPageUiStrings = {
@@ -30,6 +39,9 @@ const DE: AboutPageUiStrings = {
   loadError: 'Die Seite „Über uns“ konnte nicht geladen werden.',
   noImage: 'Kein Bild',
   defaultBoatImageAlt: 'Boot',
+  trustYearsLabel: 'Jahre Erfahrung',
+  trustFleetLabel: 'Boote in Unserer Flotte',
+  trustReviewsLabel: (count) => `${count} Gästebewertungen`,
 }
 
 export function getAboutPageUiStrings(locale: SiteLocale): AboutPageUiStrings {
