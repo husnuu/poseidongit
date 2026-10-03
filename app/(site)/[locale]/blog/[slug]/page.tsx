@@ -21,7 +21,6 @@ import { withLocalePath } from '@/lib/i18n/paths'
 import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
 import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
-import { formatBlogReadTime } from '@/lib/i18n/formatBlogReadTime'
 import { dateLocaleForSite } from '@/lib/i18n/dateLocale'
 
 interface BlogPost {
@@ -166,11 +165,6 @@ export default async function BlogPostPage({
     author: merged.author ?? undefined,
   })
 
-  const readTimeDisplay = formatBlogReadTime(
-    { readingTime: merged.readingTime, readTime: merged.readTime },
-    ui.readTimeSuffix,
-  )
-
   return (
     <main className="min-h-screen bg-zinc-50">
       <JsonLd data={breadcrumbSchema} />
@@ -197,7 +191,6 @@ export default async function BlogPostPage({
                   <span>
                     {ui.updatedLabel}: {formatDate(merged._updatedAt ?? merged.publishDate, dateLocale)}
                   </span>
-                  {readTimeDisplay && <span className={styles.metaSep}>{readTimeDisplay}</span>}
                 </span>
               )}
             </div>

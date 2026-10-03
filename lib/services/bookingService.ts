@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { normalizeDateOnly, type SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { runBookingPaidEmailSideEffects } from '@/lib/services/bookingPaidEmailSideEffects'
-import { isYachtDepositBooking } from '@/lib/yachtDepositBooking'
 
 const MAX_CALLBACK_JSON_CHARS = 28_000
 
@@ -138,30 +137,6 @@ export async function getBookingStatusById(bookingId: string): Promise<string | 
   if (!data || typeof data !== 'object') return null
   const s = (data as { status?: string | null }).status
   return typeof s === 'string' ? s.trim().toLowerCase() : null
-}
-
-/**
- * Bu booking, yeni 3D Pay (kart alanları bizim sayfamızda) akışından mı geldi?
- *   true  → tur rezervasyon sihirbazı (source='web', yat kaporası DEĞİL) — HASH doğrulaması ZORUNLU.
- *   false → yat kaporası, ödeme linki (manuel) veya belirlenemeyen durum — mevcut (lenient) davranış korunur.
- * Herhangi bir hata/eksik kayıt durumunda GÜVENLİ varsayılan `false`'dur — mevcut 3D Pay Hosting
- * akışlarının davranışını asla değiştirmez.
- */
-export async function isTourWebPaymentFlow(bookingId: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from('bookings')
-      .select('source, tour_id')
-      .eq('id', bookingId)
-      .maybeSingle()
-    if (error || !data) return false
-    const row = data as { source?: string | null; tour_id?: string | null }
-    const source = typeof row.source === 'string' ? row.source.trim().toLowerCase() : ''
-    if (source !== 'web') return false
-    return !isYachtDepositBooking({ source: row.source, tour_id: row.tour_id })
-  } catch {
-    return false
-  }
 }
 
 export async function updateBookingStatus(bookingId: string, status: BookingStatus): Promise<BookingStatusResult> {

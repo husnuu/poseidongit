@@ -2482,27 +2482,33 @@
 /* Referans site ile birebir: kart/kutu yok — düz sayfa zemininde checkbox + metin. */
 .termsCard {
   margin: 16px 16px 10px;
-  padding: 0;
+  padding: 14px 0;
   background: transparent;
-  border: none;
+  border-top: 1px solid #E8EDF3;
+  border-bottom: 1px solid #E8EDF3;
   box-shadow: none;
+  display: flex;
+  justify-content: center;
 }
 
-/* Sözleşme checkbox satırı */
+/* Sözleşme checkbox satırı — iki çizgi (üst/alt border) arasında ortalanmış,
+   kompakt bir metin bloğu olarak gösterilir. */
 .termsRow {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
   padding: 0;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12.5px;
   color: #3f3f46;
   line-height: 1.5;
   font-family: var(--font-family);
 }
 
 .termsText {
-  flex: 1;
+  flex: initial;
+  max-width: 300px;
+  text-align: center;
 }
 
 /* Referans site ile birebir: özel çizilmiş, köşeleri hafif yuvarlak kare
