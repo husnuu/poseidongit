@@ -12,6 +12,7 @@ export type FirstClassLocaUi = {
   availableBadge: string
   twoPerson: string
   bowRowLabel: string
+  row2Label: string
   selectedOfRequired: (selected: number, required: number) => string
 }
 
@@ -198,6 +199,10 @@ export type BookingWizardUi = {
     travelerLast: string
     mealPreference: string
     gender: string
+    cardNumber: string
+    cardExpiry: string
+    cardCvc: string
+    cardHolderName: string
   }
 }
 
@@ -216,6 +221,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       availableBadge: 'Uygun',
       twoPerson: '2 Kişilik',
       bowRowLabel: 'Teknenin önü · 1. Sıra',
+      row2Label: '2. Sıra',
       selectedOfRequired: (s, r) => `${s} / ${r} loca seçildi`,
     },
     rulesTitleFallback: 'Rezervasyon Bilgileri',
@@ -287,7 +293,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     payDepositNowLabel: (percent) => `%${percent} kapora — şimdi ödeyin`,
     payRemainingAtDoorLabel: 'Kalan — kapıda ödeyin',
     formHeadingSr: 'Bilgileriniz',
-    yourDetailsTitle: 'Bilgileriniz',
+    yourDetailsTitle: 'Bilgiler ve Ödeme',
     labelFirstName: 'Ad *',
     labelLastName: 'Soyad *',
     labelEmail: 'E-posta Adresiniz *',
@@ -319,7 +325,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     nestpayRedirectTitle: 'Güvenli ödeme',
     nestpayRedirectBody:
       'Ödeme, bankanın güvenli sayfasında tamamlanır; kart bilgisi sitemizde toplanmaz. «Öde»ye bastığınızda kısa süre içinde ödeme ekranına yönlendirileceksiniz.',
-    cardDetailsTitle: 'Kart Bilgileri',
+    cardDetailsTitle: 'Ödeme bilgileri',
     cardholderName: 'Kart Sahibi Adı *',
     cardNumber: 'Kart Numarası *',
     cardExpiry: 'Son Kullanma (AA/YY) *',
@@ -336,7 +342,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     backAria: 'Önceki adıma dön',
     closeAria: 'Kapat',
     continue: 'Devam',
-    toPayment: 'Ödemeye Geç',
+    toPayment: 'Öde',
     confirmCashReservation: 'Rezervasyonu Onayla',
     processing: 'İşleniyor…',
     pay: 'ÖDE',
@@ -397,6 +403,10 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       travelerLast: 'Soyad zorunludur.',
       mealPreference: 'Yemek tercihi zorunludur.',
       gender: 'Cinsiyet seçimi zorunludur.',
+      cardNumber: 'Geçerli bir kart numarası giriniz.',
+      cardExpiry: 'Geçerli bir son kullanma tarihi giriniz.',
+      cardCvc: 'Geçerli bir güvenlik kodu giriniz.',
+      cardHolderName: 'Kart sahibinin adı zorunludur.',
     },
   },
   en: {
@@ -413,6 +423,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       availableBadge: 'Available',
       twoPerson: '2 guests',
       bowRowLabel: 'Bow · Row 1',
+      row2Label: 'Row 2',
       selectedOfRequired: (s, r) => `${s} / ${r} booths selected`,
     },
     rulesTitleFallback: 'Booking information',
@@ -484,7 +495,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     payDepositNowLabel: (percent) => `Pay ${percent}% deposit now`,
     payRemainingAtDoorLabel: 'Remaining — pay at boarding',
     formHeadingSr: 'Your details',
-    yourDetailsTitle: 'Your details',
+    yourDetailsTitle: 'Details & payment',
     labelFirstName: 'First name *',
     labelLastName: 'Last name *',
     labelEmail: 'Email *',
@@ -516,7 +527,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     nestpayRedirectTitle: 'Secure payment',
     nestpayRedirectBody:
       'You will complete payment on your bank’s secure page; card details are not collected on this site. After you tap Pay, you will be redirected to the payment screen.',
-    cardDetailsTitle: 'Card details',
+    cardDetailsTitle: 'Payment details',
     cardholderName: 'Name on card *',
     cardNumber: 'Card number *',
     cardExpiry: 'Expiry (MM/YY) *',
@@ -533,7 +544,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     backAria: 'Go to previous step',
     closeAria: 'Close',
     continue: 'Continue',
-    toPayment: 'Continue to payment',
+    toPayment: 'Pay',
     confirmCashReservation: 'Confirm reservation',
     processing: 'Processing…',
     pay: 'PAY',
@@ -593,6 +604,10 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       travelerLast: 'Last name is required.',
       mealPreference: 'Meal preference is required.',
       gender: 'Gender selection is required.',
+      cardNumber: 'Please enter a valid card number.',
+      cardExpiry: 'Please enter a valid expiry date.',
+      cardCvc: 'Please enter a valid security code.',
+      cardHolderName: 'Cardholder name is required.',
     },
   },
   de: {
@@ -609,6 +624,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       availableBadge: 'Frei',
       twoPerson: '2 Personen',
       bowRowLabel: 'Bug · Reihe 1',
+      row2Label: 'Reihe 2',
       selectedOfRequired: (s, r) => `${s} / ${r} Logen gewählt`,
     },
     rulesTitleFallback: 'Buchungsinformationen',
@@ -680,7 +696,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     payDepositNowLabel: (percent) => `${percent}% Anzahlung — jetzt zahlen`,
     payRemainingAtDoorLabel: 'Rest — vor Ort zahlen',
     formHeadingSr: 'Ihre Angaben',
-    yourDetailsTitle: 'Ihre Angaben',
+    yourDetailsTitle: 'Angaben & Zahlung',
     labelFirstName: 'Vorname *',
     labelLastName: 'Nachname *',
     labelEmail: 'E-Mail *',
@@ -712,7 +728,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     nestpayRedirectTitle: 'Sichere Zahlung',
     nestpayRedirectBody:
       'Die Zahlung erfolgt auf der sicheren Seite Ihrer Bank; Kartendaten werden auf dieser Website nicht erfasst. Nach „Bezahlen“ werden Sie zur Zahlungsseite weitergeleitet.',
-    cardDetailsTitle: 'Kartendaten',
+    cardDetailsTitle: 'Zahlungsdetails',
     cardholderName: 'Name auf der Karte *',
     cardNumber: 'Kartennummer *',
     cardExpiry: 'Gültig bis (MM/JJ) *',
@@ -729,7 +745,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     backAria: 'Zum vorherigen Schritt',
     closeAria: 'Schließen',
     continue: 'Weiter',
-    toPayment: 'Zur Zahlung',
+    toPayment: 'Zahlen',
     confirmCashReservation: 'Reservierung bestätigen',
     processing: 'Wird verarbeitet…',
     pay: 'ZAHLEN',
@@ -789,6 +805,10 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       travelerLast: 'Nachname ist erforderlich.',
       mealPreference: 'Menüwunsch ist erforderlich.',
       gender: 'Geschlechtsauswahl ist erforderlich.',
+      cardNumber: 'Bitte geben Sie eine gültige Kartennummer ein.',
+      cardExpiry: 'Bitte geben Sie ein gültiges Ablaufdatum ein.',
+      cardCvc: 'Bitte geben Sie einen gültigen Sicherheitscode ein.',
+      cardHolderName: 'Name des Karteninhabers ist erforderlich.',
     },
   },
 }

@@ -29,6 +29,10 @@ export interface FloatingInputProps
   compact?: boolean
   /** Label border'ın üstünde (Material outlined) */
   variant?: 'default' | 'outlined'
+  /** Girdinin sağına, kutunun İÇİNDE sabit bir öğe (kart marka ikonları, CVV ipucu ikonu vb.) */
+  rightAdornment?: React.ReactNode
+  /** rightAdornment'ın kapladığı genişlik (px) — metnin altına girmemesi için input'un sağ padding'i buna göre ayarlanır. Varsayılan 64. */
+  rightAdornmentWidth?: number
 }
 
 const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function FloatingInput({
@@ -41,6 +45,8 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
   wrapperClassName = '',
   compact = false,
   variant = 'default',
+  rightAdornment,
+  rightAdornmentWidth = 64,
   onFocus,
   onBlur,
   onChange,
@@ -94,7 +100,7 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
           style={{
             height,
             paddingLeft: paddingX,
-            paddingRight: paddingX,
+            paddingRight: rightAdornment ? paddingX + rightAdornmentWidth : paddingX,
             paddingTop,
             paddingBottom,
             fontSize: inputFontSize,
@@ -116,6 +122,14 @@ const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(function 
           aria-describedby={error ? `${id}-error` : undefined}
           {...rest}
         />
+        {rightAdornment && (
+          <div
+            className="absolute right-0 top-0 h-full flex items-center pointer-events-none"
+            style={{ paddingRight: paddingX }}
+          >
+            {rightAdornment}
+          </div>
+        )}
         <label
           htmlFor={id}
           className="absolute pointer-events-none transition-all duration-200 origin-left"

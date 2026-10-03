@@ -22,6 +22,8 @@ import {
   getBookingStatusById,
   markBookingPaid,
   markBookingFailed,
+  markBookingPaymentCallbackSuspicious,
+  isTourWebPaymentFlow,
 } from '@/lib/services/bookingService'
 
 export const runtime = 'nodejs'
@@ -89,8 +91,20 @@ export async function POST(request: NextRequest) {
       procCode: params['ProcReturnCode'],
       fieldCount: Object.keys(params).length,
     })
-    if (process.env.NESTPAY_HASH_STRICT === 'true') {
-      console.error('[payment/callback] NESTPAY_HASH_STRICT=true — işlem reddedildi', { oid })
+    // Yeni 3D Pay (tur rezervasyonu) akışında HASH doğrulaması ZORUNLUDUR — bkz. payment/result.
+    // Bankaya her durumda 200 OK dönülür (tekrar denemeyi durdurmak için), ama booking durumu
+    // DEĞİŞTİRİLMEZ (ne paid ne failed) — sadece şüpheli olarak işaretlenir.
+    const strictRequired = process.env.NESTPAY_HASH_STRICT === 'true' || (await isTourWebPaymentFlow(oid))
+    if (strictRequired) {
+      console.error('[payment/callback] HASH doğrulanamadı — bildirim güvenilmez sayıldı, işlem yapılmadı', { oid })
+      try {
+        await markBookingPaymentCallbackSuspicious(oid, {
+          rawCallback: params,
+          detail: `[callback] HASH mismatch — Response=${params['Response']} Proc=${params['ProcReturnCode']}`,
+        })
+      } catch (err) {
+        console.error('[payment/callback] Şüpheli işaret kaydedilemedi', { oid, err })
+      }
       return ok()
     }
   }

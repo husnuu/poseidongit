@@ -1,6 +1,6 @@
 'use client'
 
-import { BedDouble, Check, Lock } from 'lucide-react'
+import { Check, Lock, Sofa } from 'lucide-react'
 import type { FirstClassLocaUi } from '@/lib/i18n/bookingWizardUi'
 import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import styles from './FirstClassSeatSelector.module.css'
@@ -19,6 +19,15 @@ const LOCAS: { id: string; row: number }[] = [
 ]
 
 const LOCA_REGEX = /^L(10|[1-9])$/
+
+/** Pruva (geminin önü) yönünü gösteren ince, sade bir ok — dolu üçgen yerine. */
+function BowIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 14 8" fill="none" className={className} aria-hidden>
+      <path d="M1 7L7 1L13 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
 export interface FirstClassSeatSelectorProps {
   selectedLocaIds: string[]
@@ -100,7 +109,7 @@ export default function FirstClassSeatSelector({
         {isReserved ? (
           <Lock className={styles.iconSm} aria-hidden />
         ) : (
-          <BedDouble className={styles.iconMd} aria-hidden />
+          <Sofa className={styles.iconMd} strokeWidth={1.8} aria-hidden />
         )}
         <span className={styles.locaId}>{loca.id}</span>
         <span className={styles.locaSub}>
@@ -126,14 +135,32 @@ export default function FirstClassSeatSelector({
   return (
     <div className={styles.wrap} role="group" aria-label={locaUi.ariaGroup}>
       <div className={styles.stage}>
-        <span className={styles.rowLabel}>{locaUi.bowRowLabel}</span>
+        <div className={styles.rowLabelWrap}>
+          <BowIcon className={styles.bowIcon} />
+          <span className={styles.rowLabel}>{locaUi.bowRowLabel}</span>
+        </div>
         <div className={styles.grid}>{row1.map(renderLocaCard)}</div>
+
+        <div className={`${styles.rowLabelWrap} ${styles.row2LabelWrap}`}>
+          <span className={styles.rowLabel}>{locaUi.row2Label}</span>
+        </div>
         <div className={`${styles.grid} ${styles.row2}`}>{row2.map(renderLocaCard)}</div>
+
         <div
           className={`${styles.footer} ${complete ? styles.footerComplete : ''}`}
           aria-live="polite"
         >
-          {locaUi.selectedOfRequired(selectedCount, requiredCount)}
+          {requiredCount > 0 && (
+            <span className={styles.progressDots} aria-hidden>
+              {Array.from({ length: requiredCount }).map((_, i) => (
+                <span
+                  key={i}
+                  className={`${styles.progressDot} ${i < selectedCount ? styles.progressDotFilled : ''}`}
+                />
+              ))}
+            </span>
+          )}
+          <span>{locaUi.selectedOfRequired(selectedCount, requiredCount)}</span>
         </div>
       </div>
     </div>

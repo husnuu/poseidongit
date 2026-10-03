@@ -345,6 +345,15 @@ export type NestpayFormInput = {
   customerEmail?: string
   /** Sayfa dili. Varsayılan: tr */
   lang?: 'tr' | 'en'
+  /**
+   * NestPay store type — ödeme modeli.
+   *   '3d_pay_hosting' (varsayılan): kart sayfası banka tarafında (mevcut akışlar).
+   *   '3d_pay': kart alanları bizim sayfamızda, form doğrudan tarayıcıdan bankaya POST edilir
+   *             (tur rezervasyon sihirbazı — bkz. BookingWizardModal.tsx).
+   * Varsayılan olmadan çağrılan tüm mevcut entegrasyonlar (yat kaporası, ödeme linki)
+   * davranış değişikliği YAŞAMAZ.
+   */
+  storeType?: '3d_pay_hosting' | '3d_pay'
 }
 
 export type NestpayFormConfig = {
@@ -379,7 +388,7 @@ export function buildPaymentFormFields(
 
   const params: Record<string, string> = {
     clientid: config.clientId,
-    storetype: '3d_pay_hosting',
+    storetype: input.storeType ?? '3d_pay_hosting',
     hashAlgorithm: 'ver3',
     islemtipi: 'Auth',
     amount: amountStr,

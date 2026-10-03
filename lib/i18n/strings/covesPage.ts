@@ -8,6 +8,8 @@ export type CovesPageUiStrings = {
   noImage: string
   detailHint: string
   defaultCoveTitle: string
+  closeAria: string
+  cardAriaLabel: (title: string) => string
 }
 
 const TR: CovesPageUiStrings = {
@@ -16,8 +18,10 @@ const TR: CovesPageUiStrings = {
   pageTitleFallback: 'Koylar',
   emptyList: 'Henüz koy eklenmemiş.',
   noImage: 'Görsel yok',
-  detailHint: 'Detay',
+  detailHint: 'Devamını oku',
   defaultCoveTitle: 'Koy',
+  closeAria: 'Kapat',
+  cardAriaLabel: (title) => `${title} hakkında devamını oku`,
 }
 
 const EN: CovesPageUiStrings = {
@@ -26,8 +30,10 @@ const EN: CovesPageUiStrings = {
   pageTitleFallback: 'Bays & coves',
   emptyList: 'No coves have been added yet.',
   noImage: 'No image',
-  detailHint: 'Details',
+  detailHint: 'Read more',
   defaultCoveTitle: 'Cove',
+  closeAria: 'Close',
+  cardAriaLabel: (title) => `Read more about ${title}`,
 }
 
 const DE: CovesPageUiStrings = {
@@ -36,8 +42,10 @@ const DE: CovesPageUiStrings = {
   pageTitleFallback: 'Buchten',
   emptyList: 'Es wurden noch keine Buchten hinzugefügt.',
   noImage: 'Kein Bild',
-  detailHint: 'Details',
+  detailHint: 'Mehr lesen',
   defaultCoveTitle: 'Bucht',
+  closeAria: 'Schließen',
+  cardAriaLabel: (title) => `Mehr über ${title} lesen`,
 }
 
 export function getCovesPageUiStrings(locale: SiteLocale): CovesPageUiStrings {

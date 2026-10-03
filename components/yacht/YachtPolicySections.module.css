@@ -47,6 +47,22 @@
   color: var(--secondary, #131719);
 }
 
+/* Elle "•" yazılan madde satırları — renkli nokta + asılı girinti. */
+.bulletParagraph {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.bulletDot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin-top: 9px;
+  border-radius: 50%;
+  background: var(--primary, #2168b8);
+}
+
 .plain {
   margin: 0;
 }

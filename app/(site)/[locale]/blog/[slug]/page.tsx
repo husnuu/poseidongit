@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import { Clock } from 'lucide-react'
 import { client, urlFor } from '@/lib/sanity'
 import { blogBySlugQuery } from '@/lib/queries'
 import { PortableText } from '@portabletext/react'
@@ -49,6 +50,14 @@ interface BlogPost {
     metaDescription?: string | null
     ogImage?: { asset?: { _ref?: string } } | null
   } | null
+}
+
+/** Yazar fotoğrafı CMS'te yok — gerçek olmayan bir yüz uydurmak yerine isim
+    baş harflerinden (örn. "Ergun Dündar" → "ED") rozet üretiyoruz. */
+function authorInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  const letters = parts.slice(0, 2).map((p) => p[0]?.toLocaleUpperCase('tr') ?? '')
+  return letters.join('') || '?'
 }
 
 function formatDate(dateString: string | undefined, dateLocale: string): string {
@@ -167,29 +176,35 @@ export default async function BlogPostPage({
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={blogPostingSchema} />
       <article className={styles.article}>
-        <div className={styles.backLinkWrap}>
-          <Link href={blogListPath} className={styles.backLink}>
-            {ui.backToList}
-          </Link>
-        </div>
-
         <header className={styles.header}>
-          {merged.category && (
-            <span className={styles.category}>{merged.category}</span>
-          )}
-          <h1 className={styles.title}>{merged.title}</h1>
-          {(merged.author || merged.publishDate || readTimeDisplay) && (
-            <div className={styles.meta}>
-              {merged.author && <span>{merged.author}</span>}
-              {merged.publishDate && (
-                <span className={styles.metaSep}>{formatDate(merged.publishDate, dateLocale)}</span>
+          <h1 className={`${styles.title} pageHeroTitleStroke`}>{merged.title}</h1>
+
+          {merged.excerpt && <p className={styles.lead}>{merged.excerpt}</p>}
+
+          {(merged.author || merged.publishDate || merged._updatedAt) && (
+            <div className={styles.authorRow}>
+              {merged.author && (
+                <>
+                  <span className={styles.avatar} aria-hidden>
+                    {authorInitials(merged.author)}
+                  </span>
+                  <span className={styles.authorName}>{merged.author}</span>
+                </>
               )}
-              {readTimeDisplay && (
-                <span className={styles.metaSep}>{readTimeDisplay}</span>
+              {(merged._updatedAt || merged.publishDate) && (
+                <span className={styles.updatedWrap}>
+                  <Clock className={styles.updatedIcon} size={15} strokeWidth={2} aria-hidden />
+                  <span>
+                    {ui.updatedLabel}: {formatDate(merged._updatedAt ?? merged.publishDate, dateLocale)}
+                  </span>
+                  {readTimeDisplay && <span className={styles.metaSep}>{readTimeDisplay}</span>}
+                </span>
               )}
             </div>
           )}
         </header>
+
+        <hr className={styles.headerDivider} />
 
         {coverUrl && (
           <div className={styles.coverWrap}>
@@ -202,10 +217,6 @@ export default async function BlogPostPage({
               priority
             />
           </div>
-        )}
-
-        {merged.excerpt && (
-          <p className={styles.excerpt}>{merged.excerpt}</p>
         )}
 
         {merged.content && merged.content.length > 0 && (

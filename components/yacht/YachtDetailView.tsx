@@ -45,9 +45,11 @@ interface YachtDetailViewProps {
   yacht: YachtRentalDocument
   /** SEO ve breadcrumb için tam yol (örn. /yat-kiralama/cesme/gulet-ada) */
   path: string
+  /** Footer WhatsApp numarasından üretilir — SSS'teki "WhatsApp'tan Yazın" CTA'sı için (tur sayfasıyla aynı). */
+  whatsappUrl?: string | null
 }
 
-export default function YachtDetailView({ locale, yacht, path }: YachtDetailViewProps) {
+export default function YachtDetailView({ locale, yacht, path, whatsappUrl }: YachtDetailViewProps) {
   const ui = getYachtUi(locale)
   const tourUi = getTourPageUi(locale)
   const images = buildYachtPhotoGridImages(yacht)
@@ -125,7 +127,7 @@ export default function YachtDetailView({ locale, yacht, path }: YachtDetailView
               <YachtPolicySections yacht={yacht} locale={locale} />
             </ScrollReveal>
             <ScrollReveal>
-              <YachtFAQAccordion items={yacht.faqs ?? []} locale={locale} />
+              <YachtFAQAccordion items={yacht.faqs ?? []} locale={locale} whatsappUrl={whatsappUrl} />
             </ScrollReveal>
             <ScrollReveal>
               <YachtOptionalSections locale={locale} yacht={yacht} />

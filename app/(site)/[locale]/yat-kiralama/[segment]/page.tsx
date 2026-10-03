@@ -18,6 +18,8 @@ import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import { getYachtUi } from '@/lib/i18n/yachtUi'
 import { translateYachtRentalDocument } from '@/lib/yachtTranslate'
+import { siteFooterQuery } from '@/lib/queries'
+import { buildWhatsAppLink } from '@/lib/whatsapp'
 
 /** Root layout `headers()` ile uyum (prod: DYNAMIC_SERVER_USAGE). */
 export const dynamic = 'force-dynamic'
@@ -111,7 +113,20 @@ export default async function YatKiralamaSegmentPage({
         ? `/yat-kiralama/${yacht.locationSlug}/${yacht.slug}`
         : `/yat-kiralama/${segment}`
     const translatedYacht = await translateYachtRentalDocument(yacht, locale)
-    return <YachtDetailView locale={locale} yacht={translatedYacht} path={path} />
+
+    let whatsappUrl: string | null = null
+    try {
+      const footer = await client.fetch<{ contact?: { chatValue?: string | null } | null } | null>(
+        siteFooterQuery,
+        {},
+        { useCdn: false }
+      )
+      whatsappUrl = buildWhatsAppLink(footer?.contact?.chatValue ?? null)
+    } catch {
+      whatsappUrl = null
+    }
+
+    return <YachtDetailView locale={locale} yacht={translatedYacht} path={path} whatsappUrl={whatsappUrl} />
   }
 
   const location = await getLocationBySlug(segment)

@@ -226,7 +226,7 @@ export default function YachtInquiryModal({
                 >
                   {ui.guestCountLabel}
                 </p>
-                <div className="flex items-center gap-3">
+                <div className={bookingStyles.counterControls} style={{ width: 'fit-content' }}>
                   <button
                     type="button"
                     className={bookingStyles.counterBtn}

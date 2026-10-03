@@ -1,8 +1,7 @@
 import { client, urlFor } from '@/lib/sanity'
 import { covesPageQuery, covesListQuery } from '@/lib/queries'
 import CovesHero from '@/components/coves/CovesHero'
-import CoveCard from '@/components/coves/CoveCard'
-import ScrollReveal from '@/components/ui/ScrollReveal'
+import CovesGrid from '@/components/coves/CovesGrid'
 import { getSiteName } from '@/lib/seo'
 import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { Metadata } from 'next'
@@ -117,24 +116,28 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
       <div className="mx-auto max-w-[1400px] px-4 py-12 sm:py-16">
         <CovesHero title={title} description={description} />
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
-          {items.map((cove, i) => (
-            <ScrollReveal key={cove._id} delayMs={(i % 3) * 80}>
-              <CoveCard
-                title={cove.title ?? ui.defaultCoveTitle}
-                description={cove.description}
-                imageUrl={
-                  cove.image?.asset
-                    ? urlFor(cove.image.asset).width(900).height(675).url()
-                    : null
-                }
-                alt={cove.image?.alt}
-                locationTag={cove.locationTag}
-                noImageLabel={ui.noImage}
-              />
-            </ScrollReveal>
-          ))}
-        </div>
+        <CovesGrid
+          items={items.map((cove) => {
+            const resolvedTitle = cove.title ?? ui.defaultCoveTitle
+            return {
+              id: cove._id,
+              title: resolvedTitle,
+              description: cove.description,
+              imageUrl: cove.image?.asset
+                ? urlFor(cove.image.asset).width(900).height(675).url()
+                : null,
+              fullImageUrl: cove.image?.asset
+                ? urlFor(cove.image.asset).width(1600).height(1000).url()
+                : null,
+              alt: cove.image?.alt,
+              locationTag: cove.locationTag,
+              ariaLabel: ui.cardAriaLabel(resolvedTitle),
+            }
+          })}
+          noImageLabel={ui.noImage}
+          detailHint={ui.detailHint}
+          closeAria={ui.closeAria}
+        />
 
         {items.length === 0 && (
           <p className="mt-10 text-center text-zinc-500" style={{ fontFamily: 'var(--font-family)' }}>

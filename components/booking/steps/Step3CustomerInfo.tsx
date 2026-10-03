@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { User, ChevronLeft, ArrowRight } from 'lucide-react'
+import { User, ChevronLeft, ArrowRight, CreditCard } from 'lucide-react'
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
 import ReservationTicket, { formatTicketDateLabel, boatNameForTour } from '../ReservationTicket'
 import FloatingInput from '@/components/ui/FloatingInput'
@@ -14,6 +14,17 @@ import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import { useBookingPassengerValidation } from '../hooks/useBookingPassengerValidation'
+import {
+  EMPTY_CARD_FIELDS,
+  detectCardBrand,
+  formatCardNumberDisplay,
+  formatExpiryDisplay,
+  parseExpiryInput,
+  sanitizeCardNumberInput,
+  validateCardFields,
+  type CardFields,
+} from '@/lib/nestpayCardFields'
+import { CardBrandIconStrip, CvvHintIcon } from '../CardBrandIcons'
 import styles from '../booking.module.css'
 
 /** Kullanıcı isteğiyle sadeleştirildi: sadece "Özel istekler" (alerji ibaresi kaldırıldı). */
@@ -38,6 +49,13 @@ interface Step3CustomerInfoProps {
   termsHref?: string
   /** Şartlar ve Koşullar sayfası linki (Mesafeli Satış Sözleşmesi'nden ayrı). */
   termsAndConditionsHref?: string
+  /**
+   * Kart alanları her değiştiğinde en güncel değerleri üst bileşene iletir.
+   * Üst bileşen bunu bir ref'te tutar (React state DEĞİL) — kart verisi asla
+   * fetch gövdesine, Supabase'e veya loglara karışmaz; tek kullanım yeri submit
+   * anında NestPay'e gidecek <form>'un alanlarını tamamlamaktır.
+   */
+  onCardFieldsChange?: (fields: CardFields) => void
 }
 
 export default function Step3CustomerInfo({
@@ -53,6 +71,7 @@ export default function Step3CustomerInfo({
   ui,
   termsHref = '/terms',
   termsAndConditionsHref = '/yasal/sartlar-ve-kosullar',
+  onCardFieldsChange,
 }: Step3CustomerInfoProps) {
   const [termsAccepted, setTermsAccepted] = useState(false)
   const { visibleErrors, touch, attemptSubmit } = useBookingPassengerValidation(
@@ -60,6 +79,31 @@ export default function Step3CustomerInfo({
     ui,
     onValidationChange
   )
+
+  // Kapıda nakit ödeme açık değilse online kart ödemesi zorunlu — kart alanları gösterilir.
+  const requiresCardPayment = !tour.cashPaymentEnabled
+  const [cardFields, setCardFields] = useState<CardFields>(EMPTY_CARD_FIELDS)
+  const [cardTouched, setCardTouched] = useState<Partial<Record<keyof CardFields, boolean>>>({})
+  const [cardSubmitAttempted, setCardSubmitAttempted] = useState(false)
+  const cardMessages = {
+    cardNumber: ui.validation.cardNumber,
+    cardExpiry: ui.validation.cardExpiry,
+    cardCvc: ui.validation.cardCvc,
+    cardHolderName: ui.validation.cardHolderName,
+  }
+  const cardErrors = requiresCardPayment ? validateCardFields(cardFields, cardMessages) : {}
+  const cardValid = !requiresCardPayment || Object.keys(cardErrors).length === 0
+  const cardErrorFor = (key: keyof CardFields): string | undefined =>
+    cardTouched[key] || cardSubmitAttempted ? cardErrors[key] : undefined
+  const touchCard = (key: keyof CardFields) => setCardTouched((p) => ({ ...p, [key]: true }))
+
+  useEffect(() => {
+    onCardFieldsChange?.(cardFields)
+  }, [cardFields, onCardFieldsChange])
+
+  const [expiryDisplay, setExpiryDisplay] = useState('')
+  const [cardNumberDisplay, setCardNumberDisplay] = useState('')
+  const detectedCardBrand = detectCardBrand(cardFields.pan)
 
   useEffect(() => {
     onTermsAcceptanceChange?.(termsAccepted)
@@ -141,6 +185,10 @@ export default function Step3CustomerInfo({
 
   const handlePayClick = () => {
     if (!attemptSubmit()) return
+    if (requiresCardPayment) {
+      setCardSubmitAttempted(true)
+      if (!cardValid) return
+    }
     if (!termsAccepted) return
     onNext()
   }
@@ -306,6 +354,90 @@ export default function Step3CustomerInfo({
         />
         <AllMaleGenderNotice state={state} ui={ui} />
       </div>
+
+      {requiresCardPayment && (
+        <div className={styles.sectionFlat}>
+          <div className={styles.sectionHeader}>
+            <div className={styles.sectionHeaderLeft}>
+              <CreditCard width={18} height={18} className={styles.sectionIcon} aria-hidden />
+              <h3 className={styles.sectionTitle}>{ui.cardDetailsTitle}</h3>
+            </div>
+          </div>
+
+          <div className={styles.formField}>
+            <FloatingInput
+              id="booking-card-holder"
+              label={ui.cardholderName}
+              autoComplete="cc-name"
+              value={cardFields.holderName}
+              onChange={(e) => setCardFields((p) => ({ ...p, holderName: e.target.value }))}
+              onBlur={() => touchCard('holderName')}
+              error={cardErrorFor('holderName')}
+              compact
+              variant="outlined"
+            />
+          </div>
+
+          <div className={styles.formField} style={{ marginTop: 12 }}>
+            <FloatingInput
+              id="booking-card-number"
+              label={ui.cardNumber}
+              inputMode="numeric"
+              autoComplete="cc-number"
+              maxLength={25}
+              value={cardNumberDisplay}
+              onChange={(e) => {
+                const digits = sanitizeCardNumberInput(e.target.value)
+                setCardFields((p) => ({ ...p, pan: digits }))
+                setCardNumberDisplay(formatCardNumberDisplay(digits))
+              }}
+              onBlur={() => touchCard('pan')}
+              error={cardErrorFor('pan')}
+              rightAdornment={<CardBrandIconStrip activeBrand={detectedCardBrand} />}
+              rightAdornmentWidth={140}
+              compact
+              variant="outlined"
+            />
+          </div>
+
+          <div className={styles.formGrid2} style={{ marginTop: 12 }}>
+            <FloatingInput
+              id="booking-card-expiry"
+              label={ui.cardExpiry}
+              inputMode="numeric"
+              autoComplete="cc-exp"
+              maxLength={5}
+              value={expiryDisplay}
+              onChange={(e) => {
+                const { month, year } = parseExpiryInput(e.target.value)
+                setCardFields((p) => ({ ...p, expMonth: month, expYear: year }))
+                setExpiryDisplay(formatExpiryDisplay(e.target.value))
+              }}
+              onBlur={() => touchCard('expMonth')}
+              error={cardErrorFor('expMonth')}
+              compact
+              variant="outlined"
+            />
+            <FloatingInput
+              id="booking-card-cvc"
+              label={ui.cardCvc}
+              type="tel"
+              inputMode="numeric"
+              autoComplete="cc-csc"
+              maxLength={4}
+              value={cardFields.cvv}
+              onChange={(e) =>
+                setCardFields((p) => ({ ...p, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))
+              }
+              onBlur={() => touchCard('cvv')}
+              error={cardErrorFor('cvv')}
+              rightAdornment={<CvvHintIcon />}
+              compact
+              variant="outlined"
+            />
+          </div>
+        </div>
+      )}
 
       <div className={styles.termsCard}>
         <label className={styles.termsRow}>

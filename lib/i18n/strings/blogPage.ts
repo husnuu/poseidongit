@@ -14,6 +14,7 @@ export type BlogPageUiStrings = {
   readTimeSuffix: string
   blogListTitleSuffix: string
   blogListDefaultDescription: string
+  updatedLabel: string
 }
 
 const TR: BlogPageUiStrings = {
@@ -31,6 +32,7 @@ const TR: BlogPageUiStrings = {
   blogListTitleSuffix: 'Blog',
   blogListDefaultDescription:
     'Tekne turu ipuçları, koy rehberleri ve tatil yazıları.',
+  updatedLabel: 'Son güncelleme',
 }
 
 const EN: BlogPageUiStrings = {
@@ -48,6 +50,7 @@ const EN: BlogPageUiStrings = {
   blogListTitleSuffix: 'Blog',
   blogListDefaultDescription:
     'Boat tour tips, cove guides, and travel stories.',
+  updatedLabel: 'Last updated',
 }
 
 const DE: BlogPageUiStrings = {
@@ -65,6 +68,7 @@ const DE: BlogPageUiStrings = {
   blogListTitleSuffix: 'Blog',
   blogListDefaultDescription:
     'Tipps zu Bootstouren, Buchtenführer und Reisetexte.',
+  updatedLabel: 'Letzte Aktualisierung',
 }
 
 export function getBlogPageUiStrings(locale: SiteLocale): BlogPageUiStrings {

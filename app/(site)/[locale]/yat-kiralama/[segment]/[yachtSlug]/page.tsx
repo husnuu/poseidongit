@@ -3,11 +3,13 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { client } from '@/lib/sanity'
 import { yachtRentalByLocationAndSlugQuery } from '@/lib/yachtQueries'
+import { siteFooterQuery } from '@/lib/queries'
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
 import YachtDetailView from '@/components/yacht/YachtDetailView'
 import { buildYachtDetailMetadata } from '@/lib/yachtMetadata'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import { translateYachtRentalDocument } from '@/lib/yachtTranslate'
+import { buildWhatsAppLink } from '@/lib/whatsapp'
 
 /** Root layout `headers()` kullandığı için ISR/statik ön üretim ile çakışmayı önler (prod: DYNAMIC_SERVER_USAGE). */
 export const dynamic = 'force-dynamic'
@@ -55,5 +57,18 @@ export default async function YatKiralamaLocationDetailPage({
   if (!yacht) notFound()
   const path = `/yat-kiralama/${segment}/${yachtSlug}`
   const translatedYacht = await translateYachtRentalDocument(yacht, locale)
-  return <YachtDetailView locale={locale} yacht={translatedYacht} path={path} />
+
+  let whatsappUrl: string | null = null
+  try {
+    const footer = await client.fetch<{ contact?: { chatValue?: string | null } | null } | null>(
+      siteFooterQuery,
+      {},
+      { useCdn: false }
+    )
+    whatsappUrl = buildWhatsAppLink(footer?.contact?.chatValue ?? null)
+  } catch {
+    whatsappUrl = null
+  }
+
+  return <YachtDetailView locale={locale} yacht={translatedYacht} path={path} whatsappUrl={whatsappUrl} />
 }

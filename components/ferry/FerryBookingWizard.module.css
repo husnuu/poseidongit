@@ -557,24 +557,31 @@
   color: #8a8f98;
 }
 
+/* Tur sayfasındaki (booking.module.css .counterControls) hap şeklindeki sayaçla birebir aynı. */
 .counter {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 2px;
   flex-shrink: 0;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 4px;
+  box-shadow: 0 1px 3px rgba(10, 22, 40, 0.06);
 }
 
 .counterBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: none;
   background: #f1f5f9;
   color: #334155;
   cursor: pointer;
+  flex-shrink: 0;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -591,11 +598,13 @@
 }
 
 .counterValue {
-  min-width: 22px;
+  min-width: 26px;
   text-align: center;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
-  color: #131719;
+  color: #0a1628;
+  font-feature-settings: 'tnum';
+  font-variant-numeric: tabular-nums;
 }
 
 /* Referans site ile birebir: kutu/ikon yok — sectionHeaderPlain başlığının

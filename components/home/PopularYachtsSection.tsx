@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import HomePopularYachtCard, { type HomePopularYachtCardData } from '@/components/home/HomePopularYachtCard'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -37,6 +37,10 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
   const scrollRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
   const [activeDot, setActiveDot] = useState(0)
+
+  const scrollPrev = () => {
+    scrollRef.current?.scrollBy({ left: -336, behavior: 'smooth' })
+  }
 
   const scrollNext = () => {
     scrollRef.current?.scrollBy({ left: 336, behavior: 'smooth' })
@@ -133,7 +137,7 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
             role="region"
             aria-label="Özel tekneler listesi"
             tabIndex={0}
-            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 pl-0 pr-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:thin] scroll-smooth md:pr-14 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-track]:bg-transparent"
+            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 pl-0 pr-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:thin] scroll-smooth md:pl-14 md:pr-14 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-track]:bg-transparent"
           >
             {items.map((yacht, index) => (
               <div
@@ -155,8 +159,18 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
 
           <button
             type="button"
+            onClick={scrollPrev}
+            className="pointer-events-auto absolute left-0 top-1/2 z-10 hidden h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-md transition hover:bg-zinc-50 md:flex"
+            style={{ color: 'var(--primary, #2168b8)' }}
+            aria-label="Önceki tekneler"
+          >
+            <ChevronLeft className="h-6 w-6" strokeWidth={2} aria-hidden />
+          </button>
+
+          <button
+            type="button"
             onClick={scrollNext}
-            className="pointer-events-auto absolute right-0 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 translate-x-1 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-md transition hover:bg-zinc-50 md:flex"
+            className="pointer-events-auto absolute right-0 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-md transition hover:bg-zinc-50 md:flex"
             style={{ color: 'var(--primary, #2168b8)' }}
             aria-label="Sonraki tekneler"
           >

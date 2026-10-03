@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { submitNestpayForm } from '@/lib/nestpay/submitPaymentForm'
+import { toNestpayCardParams, type CardFields } from '@/lib/nestpayCardFields'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
@@ -86,6 +87,14 @@ export default function BookingWizardModal({
   const [availabilityInvalidateKey, setAvailabilityInvalidateKey] = useState('')
   const paneRef = useRef<HTMLDivElement>(null)
   const prevStepRef = useRef(state.step)
+  /**
+   * Kart alanlarının (PAN/CVV/SKT) en güncel değerleri — bilinçli olarak React
+   * state DEĞİL, bir ref. Böylece kart verisi hiçbir zaman bu bileşenin render
+   * ağacının/serileştirilebilir state'inin parçası olmaz; tek okunduğu yer,
+   * aşağıdaki handleCta içinde NestPay'e submit edilecek <form> alanlarını
+   * tamamlarken (submit anında, bir kerelik).
+   */
+  const cardFieldsRef = useRef<CardFields | null>(null)
 
   useEffect(() => {
     if (open) setAvailabilityInvalidateKey(String(Date.now()))
@@ -387,9 +396,24 @@ export default function BookingWizardModal({
           return
         }
 
+        // 3D Pay (storetype='3d_pay'): kart alanları (pan/cv2/SKT) sunucudan DEĞİL, bu an
+        // tarayıcı belleğindeki ref'ten okunur ve SADECE bankaya gidecek form nesnesine
+        // eklenir — hiçbir zaman fetch ile bizim backend'imize gönderilmez. Hash zaten
+        // sunucuda, bu alanlar hiç görülmeden hesaplanmıştı (bkz. lib/nestpay/hash.ts).
+        let fieldsToSubmit = payData.fields
+        if (payData.fields.storetype === '3d_pay') {
+          if (!cardFieldsRef.current) {
+            setSubmitError('Kart bilgileri eksik. Lütfen tekrar deneyin.')
+            setSubmitting(false)
+            return
+          }
+          fieldsToSubmit = { ...payData.fields, ...toNestpayCardParams(cardFieldsRef.current) }
+        }
+
         // Form bankaya submit edildi — tarayıcı sayfayı terk edene kadar overlay göstermek için
         // setSubmitting(false) ÇAĞIRILMAZ. Bileşen zaten unmount olacak.
-        submitNestpayForm(payData.action, payData.fields)
+        submitNestpayForm(payData.action, fieldsToSubmit)
+        cardFieldsRef.current = null // Hijyen: kart verisi referansı submit sonrası hemen temizlenir.
         return
       } catch {
         setSubmitError(ui.connectionError)
@@ -591,6 +615,9 @@ export default function BookingWizardModal({
                     ui={ui}
                     termsHref="https://cesmetekneturu.net/yasal/mesafeli-satis-sozlesmesi"
                     termsAndConditionsHref="https://cesmetekneturu.net/yasal/sartlar-ve-kosullar"
+                    onCardFieldsChange={(fields) => {
+                      cardFieldsRef.current = fields
+                    }}
                   />
                 </>
               )}

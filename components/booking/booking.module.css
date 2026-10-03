@@ -774,20 +774,27 @@
   font-family: var(--font-family);
 }
 
+/* Tek parça, hap biçimli (pill) sayaç kutusu — eksi/sayı/artı artık ayrı ayrı
+   yüzen elemanlar değil, ince kenarlıklı tek bir kapsül içinde sıkı gruplu. */
 .counterControls {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 4px;
+  box-shadow: 0 1px 3px rgba(10, 22, 40, 0.06);
 }
 
 .counterBtn {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: none;
   background: #F1F5F9;
   color: #334155;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 400;
   line-height: 1;
   cursor: pointer;
@@ -795,6 +802,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 
@@ -827,12 +835,14 @@
 }
 
 .counterValue {
-  font-size: 24px;
+  font-size: 16px;
   font-weight: 700;
-  min-width: 32px;
+  min-width: 26px;
   text-align: center;
   color: #0A1628;
   font-family: var(--font-family);
+  font-feature-settings: 'tnum';
+  font-variant-numeric: tabular-nums;
 }
 
 /* Takvim ay navigasyon satırı */
@@ -2471,7 +2481,7 @@
 
 /* Referans site ile birebir: kart/kutu yok — düz sayfa zemininde checkbox + metin. */
 .termsCard {
-  margin: 16px 16px 0;
+  margin: 16px 16px 10px;
   padding: 0;
   background: transparent;
   border: none;
@@ -2482,12 +2492,12 @@
 .termsRow {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
   padding: 0;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 13px;
   color: #3f3f46;
-  line-height: 1.55;
+  line-height: 1.5;
   font-family: var(--font-family);
 }
 
@@ -2502,9 +2512,9 @@
   -webkit-appearance: none;
   margin-top: 1px;
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
+  width: 19px;
+  height: 19px;
+  border-radius: 5px;
   border: 1.5px solid #d4d4d8;
   background: #fff;
   position: relative;
@@ -2522,8 +2532,8 @@
   position: absolute;
   left: 50%;
   top: 45%;
-  width: 6px;
-  height: 11px;
+  width: 5px;
+  height: 9px;
   border: solid #fff;
   border-width: 0 2px 2px 0;
   transform: translate(-50%, -50%) rotate(45deg);
@@ -2576,7 +2586,7 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: #fc6c4f;
+  color: var(--primary, #2168b8);
   background: none;
   border: none;
   cursor: pointer;
@@ -2586,7 +2596,7 @@
 }
 
 .rulesAccordionToggle:hover {
-  color: #f85a3a;
+  color: #184f8c;
 }
 
 .rulesAccordionChevron {
@@ -2603,8 +2613,8 @@
 .rulesAccordionContent {
   padding: 12px 14px 16px;
   margin-bottom: 4px;
-  background: #FFF8F6;
-  border: 1px solid #FDD0C7;
+  background: rgba(var(--primary-rgb, 33, 104, 184), 0.05);
+  border: 1px solid rgba(var(--primary-rgb, 33, 104, 184), 0.18);
   border-radius: 10px;
   animation: bookingFadeIn 0.18s ease-out;
 }
@@ -2631,7 +2641,7 @@
 }
 
 .rulesAccordionList li::marker {
-  color: #fc6c4f;
+  color: var(--primary, #2168b8);
 }
 
 /* Bölüm başlığı satırı (flat layout için) — referanstaki gibi başlığın
@@ -2875,18 +2885,21 @@
   font-size: 14px;
   font-weight: 600;
   color: #fff;
-  background: #fc6c4f;
+  /* Diğer adımlardaki (Devam/Ödemeye Geç vb.) ana mavi degradeyle aynı — önceden
+     turuncuydu, sitedeki diğer butonlarla tutarsızdı. */
+  background: linear-gradient(to right, var(--primary, #2168b8) 0%, #4f8dc7 51%, var(--primary, #2168b8) 100%);
+  background-size: 200% auto;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: background 0.18s, box-shadow 0.18s, transform 0.1s;
-  box-shadow: 0 2px 8px rgba(252, 108, 79, 0.3);
+  transition: background-position 0.3s ease, box-shadow 0.18s, transform 0.1s;
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb, 33, 104, 184), 0.3);
   white-space: nowrap;
 }
 
 .classCardSelectBtn:hover:not(:disabled) {
-  background: #f85a3a;
-  box-shadow: 0 4px 12px rgba(252, 108, 79, 0.4);
+  background-position: right center;
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb, 33, 104, 184), 0.4);
 }
 
 .classCardSelectBtn:active:not(:disabled) {
@@ -2902,13 +2915,13 @@
 /* Seçildi state */
 .classCardSelectBtnSelected {
   background: transparent;
-  color: #fc6c4f;
-  border: 1.5px solid #fc6c4f;
+  color: var(--primary, #2168b8);
+  border: 1.5px solid var(--primary, #2168b8);
   box-shadow: none;
 }
 
 .classCardSelectBtnSelected:hover:not(:disabled) {
-  background: #FFF0ED;
+  background: rgba(var(--primary-rgb, 33, 104, 184), 0.08);
   box-shadow: none;
 }
 

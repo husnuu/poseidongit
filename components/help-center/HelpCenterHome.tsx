@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Search } from 'lucide-react'
 import HelpSupportCTA from '@/components/help-center/HelpSupportCTA'
-import type { HelpCategoryWithArticles, HelpCenterPageDoc } from '@/lib/sanity/types/helpCenter'
+import type { HelpArticleListItem, HelpCategoryWithArticles, HelpCenterPageDoc } from '@/lib/sanity/types/helpCenter'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getHelpCenterUiStrings, helpSearchLocaleTag } from '@/lib/i18n/strings/helpCenter'
 
@@ -55,8 +55,54 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
     )
   }, [flatArticles, search, activeCategory, locale])
 
+  /** "Tümü" seçiliyken ~35 soruyu tek bir ayrışmasız yığın yerine kategori
+      başlıklarıyla gruplu gösterir — filtre çiplerinin zaten taşıdığı yapıyı
+      listede de görünür kılar, taranabilirliği artırır. */
+  const groupedFiltered = useMemo(() => {
+    if (activeCategory !== 'all') return null
+    const q = search.trim()
+    return categories
+      .map((c) => ({
+        id: c._id,
+        title: c.title ?? ui.categoryFallbackTitle,
+        articles: (c.articles ?? []).filter((a) => articleMatches(q, locale, a.title, a.shortDescription)),
+      }))
+      .filter((g) => g.articles.length > 0)
+  }, [categories, activeCategory, search, locale, ui.categoryFallbackTitle])
+
   const title = ui.metaHelpTitleFallback
   const desc = page?.shortDescription
+
+  const renderArticle = (a: HelpArticleListItem) => {
+    const isOpen = openArticleId === a._id
+    return (
+      <div key={a._id} className="overflow-hidden rounded-xl border bg-white" style={{ borderColor: '#e2e8f0' }}>
+        <button
+          type="button"
+          onClick={() => setOpenArticleId(isOpen ? null : a._id)}
+          aria-expanded={isOpen}
+          className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
+        >
+          <span className="text-[15px] font-semibold sm:text-base" style={{ color: 'var(--secondary, #131719)' }}>
+            {a.title ?? ui.articleFallbackTitle}
+          </span>
+          <ChevronDown
+            className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+            style={{ color: 'var(--muted, #81848b)' }}
+            strokeWidth={2}
+            aria-hidden
+          />
+        </button>
+        {isOpen && (
+          <div className="px-5 pb-5 sm:px-6">
+            <p className="text-sm leading-relaxed sm:text-[15px]" style={{ color: 'var(--text-color, #58595b)' }}>
+              {a.shortDescription?.trim() || ui.articleBodyEmpty}
+            </p>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -146,55 +192,39 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
           </div>
         )}
 
-        {filtered.length === 0 ? (
+        {groupedFiltered ? (
+          groupedFiltered.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-zinc-200/90 bg-white/90 px-6 py-16 text-center">
+              <p className="mx-auto max-w-md text-[15px] leading-relaxed text-zinc-600">
+                {search.trim() ? ui.homeEmptySearch : ui.homeEmptyNoArticles}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-10">
+              {groupedFiltered.map((group) => (
+                <div key={group.id}>
+                  <div className="mb-4 flex items-center gap-3">
+                    <h2
+                      className="text-[13px] font-extrabold uppercase tracking-wide sm:text-sm"
+                      style={{ color: 'var(--primary, #2168b8)', fontFamily: 'var(--font-family), sans-serif' }}
+                    >
+                      {group.title}
+                    </h2>
+                    <span className="h-px flex-1" style={{ background: '#e2e8f0' }} aria-hidden />
+                  </div>
+                  <div className="flex flex-col gap-3">{group.articles.map(renderArticle)}</div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-zinc-200/90 bg-white/90 px-6 py-16 text-center">
             <p className="mx-auto max-w-md text-[15px] leading-relaxed text-zinc-600">
               {search.trim() ? ui.homeEmptySearch : ui.homeEmptyNoArticles}
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {filtered.map((a) => {
-              const isOpen = openArticleId === a._id
-              return (
-                <div
-                  key={a._id}
-                  className="overflow-hidden rounded-xl border bg-white"
-                  style={{ borderColor: '#e2e8f0' }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenArticleId(isOpen ? null : a._id)}
-                    aria-expanded={isOpen}
-                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
-                  >
-                    <span
-                      className="text-[15px] font-semibold sm:text-base"
-                      style={{ color: 'var(--secondary, #131719)' }}
-                    >
-                      {a.title ?? ui.articleFallbackTitle}
-                    </span>
-                    <ChevronDown
-                      className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                      style={{ color: 'var(--muted, #81848b)' }}
-                      strokeWidth={2}
-                      aria-hidden
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className="px-5 pb-5 sm:px-6">
-                      <p
-                        className="text-sm leading-relaxed sm:text-[15px]"
-                        style={{ color: 'var(--text-color, #58595b)' }}
-                      >
-                        {a.shortDescription?.trim() || ui.articleBodyEmpty}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          <div className="flex flex-col gap-3">{filtered.map(renderArticle)}</div>
         )}
 
         <HelpSupportCTA

@@ -18,11 +18,14 @@ import {
   isMdStatusAuthenticated,
   isPaymentApproved,
   loadNestpayConfig,
+  buildCallbackExcludeSet,
 } from '@/lib/nestpay/hash'
 import {
   getBookingStatusById,
   markBookingPaid,
   markBookingFailed,
+  markBookingPaymentCallbackSuspicious,
+  isTourWebPaymentFlow,
 } from '@/lib/services/bookingService'
 
 export const runtime = 'nodejs'
@@ -72,16 +75,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(new URL(`/payment/fail?oid=${encodeURIComponent(oid)}`, request.url))
   }
 
-  const hashOk = verifyResponseHash(params, config.storeKey)
+  // Girogate proxy'nin dinamik kur dönüşümü (DCC) veya kampanya gibi özelliklerle hash
+  // hesabına SONRADAN eklediği ek alanları (querydcchash, showdcchash, girogateParamReqHash
+  // vb.) dışla — aksi halde yabancı kartlarda DCC devreye girdiğinde bu sayfaya (okUrl/failUrl)
+  // gelen yanıtın hash'i, bu alanlar yüzünden YANLIŞLIKLA geçersiz sayılabilir. /api/payment/callback
+  // ile aynı dışlama kümesi (bkz. lib/nestpay/hash.ts).
+  const hashOk = verifyResponseHash(params, config.storeKey, buildCallbackExcludeSet())
   if (!hashOk) {
     console.warn('[payment/result] HASH doğrulama BAŞARISIZ — devam ediliyor (Girogate proxy)', {
       oid,
       response: params['Response'],
       procCode: params['ProcReturnCode'],
     })
-    // HASH_STRICT modunda tamamen reddet
-    if (process.env.NESTPAY_HASH_STRICT === 'true') {
-      console.error('[payment/result] NESTPAY_HASH_STRICT=true — işlem reddedildi', { oid })
+    // Yeni 3D Pay (tur rezervasyonu) akışında HASH doğrulaması ZORUNLUDUR — doğrulanamayan
+    // yanıt hiçbir şekilde güvenilmez, ödeme onaylanmaz/reddedilmez (durum pending kalır),
+    // sadece inceleme için işaretlenir. Mevcut Hosting akışları (yat kaporası, ödeme linki)
+    // NESTPAY_HASH_STRICT env değişkeni olmadan lenient davranışını aynen korur.
+    const strictRequired = process.env.NESTPAY_HASH_STRICT === 'true' || (await isTourWebPaymentFlow(oid))
+    if (strictRequired) {
+      console.error('[payment/result] HASH doğrulanamadı — yanıt güvenilmez sayıldı, ödeme ONAYLANMADI', { oid })
+      try {
+        await markBookingPaymentCallbackSuspicious(oid, {
+          rawCallback: params,
+          detail: `[result] HASH mismatch — Response=${params['Response']} Proc=${params['ProcReturnCode']}`,
+        })
+      } catch (err) {
+        console.error('[payment/result] Şüpheli işaret kaydedilemedi', { oid, err })
+      }
       return NextResponse.redirect(new URL(`/payment/fail?oid=${encodeURIComponent(oid)}&reason=hash`, request.url))
     }
   }

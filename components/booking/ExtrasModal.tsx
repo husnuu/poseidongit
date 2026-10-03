@@ -183,25 +183,27 @@ export default function ExtrasModal({
                       <div className={styles.extraNoteWrap}>
                         <label className={styles.extraNoteLabel}>{ui.extraQuantityLabel}</label>
                         <div className={styles.extraQuantityRow}>
-                          <button
-                            type="button"
-                            className={styles.counterBtn}
-                            onClick={() => handleQuantityChange(extra.key, qty - 1)}
-                            disabled={qty <= 1}
-                            aria-label={ui.decreaseAria}
-                          >
-                            <Minus width={14} height={14} strokeWidth={3} />
-                          </button>
-                          <span className={styles.counterValue}>{qty}</span>
-                          <button
-                            type="button"
-                            className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
-                            onClick={() => handleQuantityChange(extra.key, qty + 1)}
-                            disabled={qty >= totalPax}
-                            aria-label={ui.increaseAria}
-                          >
-                            <Plus width={14} height={14} strokeWidth={3} />
-                          </button>
+                          <div className={styles.counterControls}>
+                            <button
+                              type="button"
+                              className={styles.counterBtn}
+                              onClick={() => handleQuantityChange(extra.key, qty - 1)}
+                              disabled={qty <= 1}
+                              aria-label={ui.decreaseAria}
+                            >
+                              <Minus width={14} height={14} strokeWidth={3} />
+                            </button>
+                            <span className={styles.counterValue}>{qty}</span>
+                            <button
+                              type="button"
+                              className={`${styles.counterBtn} ${styles.counterBtnPlus}`}
+                              onClick={() => handleQuantityChange(extra.key, qty + 1)}
+                              disabled={qty >= totalPax}
+                              aria-label={ui.increaseAria}
+                            >
+                              <Plus width={14} height={14} strokeWidth={3} />
+                            </button>
+                          </div>
                           <span className={styles.extraQuantityTotal}>
                             {(extra.price * qty).toLocaleString(ui.numberLocale)} ₺
                           </span>
