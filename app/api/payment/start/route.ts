@@ -10,8 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { loadPendingBookingForPayment } from '@/lib/services/bookingService'
-import { buildPaymentFormFields, loadNestpayConfig, type NestpayFormInput } from '@/lib/nestpay/hash'
-import { isYachtDepositBooking } from '@/lib/yachtDepositBooking'
+import { buildPaymentFormFields, loadNestpayConfig } from '@/lib/nestpay/hash'
 import { rateLimitResponse } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
@@ -58,23 +57,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Rezervasyon yüklenemedi.' }, { status: 500 })
   }
 
-  // Varsayılan: mevcut akışlar (yat kaporası, ödeme linki) — davranış DEĞİŞMEZ.
-  // Sadece tur rezervasyon sihirbazından (source='web', yat kaporası hariç) gelen
-  // ödemeler yeni 3D Pay akışına (kart alanları bizim sayfamızda) yönlendirilir.
-  let storeType: NestpayFormInput['storeType'] = '3d_pay_hosting'
+  // Nakit ödeme açık turlarda online ödeme engellenir.
   try {
     const { client } = await import('@/lib/sanity')
     const { supabase } = await import('@/lib/supabase')
     const { data: bookingRow } = await supabase
       .from('bookings')
-      .select('tour_id, source')
+      .select('tour_id')
       .eq('id', id)
       .maybeSingle()
     const tourId = typeof bookingRow?.tour_id === 'string' ? bookingRow.tour_id.trim() : ''
-    const source = typeof bookingRow?.source === 'string' ? bookingRow.source.trim().toLowerCase() : ''
-    if (source === 'web' && !isYachtDepositBooking({ source: bookingRow?.source ?? null, tour_id: bookingRow?.tour_id ?? null })) {
-      storeType = '3d_pay'
-    }
     if (tourId) {
       const tourCash = await client.fetch<{ cashPaymentEnabled?: boolean } | null>(
         `*[_type == "tour" && (_id == $id || slug.current == $id)][0]{ cashPaymentEnabled }`,
@@ -88,8 +80,7 @@ export async function POST(request: NextRequest) {
       }
     }
   } catch {
-    // Sanity/Supabase kontrolü başarısızsa storeType varsayılanı (3d_pay_hosting) korunur —
-    // mevcut akışları bozmamak için en güvenli seçenek. Nakit turlar API yanıtında cashPayment döner.
+    // Sanity kontrolü başarısızsa NestPay devam edebilir; nakit turlar API yanıtında cashPayment döner
   }
 
   let config
@@ -106,7 +97,6 @@ export async function POST(request: NextRequest) {
       amount: snapshot.totalPrice,
       customerName: snapshot.name,
       customerEmail: snapshot.email,
-      storeType,
     },
     config
   )
@@ -115,7 +105,6 @@ export async function POST(request: NextRequest) {
     bookingId: snapshot.id,
     amount: snapshot.totalPrice,
     oid: result.fields.oid,
-    storeType,
     gateway: config.gatewayUrl,
   })
 
