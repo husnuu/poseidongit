@@ -85,9 +85,30 @@ const REQUEST_EXCLUDE = new Set(['encoding', 'hash'])
 /**
  * Bankaya gönderilecek form için hash üretir.
  * encoding ve hash parametreleri hariç tutulur.
+ *
+ * Not: Bu fonksiyon kart alanları (pan/cv2/Ecom_Payment_Card_ExpDate_*) eklenmeden
+ * ÖNCE, sunucuda çağrılır (bkz. BookingWizardModal.tsx) — dolayısıyla bu alanlar
+ * hash'e hiç girmez ve aşağıdaki debug log'da da asla görünmez.
  */
 export function generateRequestHash(params: Record<string, string>, storeKey: string): string {
-  return sha512Base64(buildPlaintext(params, storeKey, REQUEST_EXCLUDE))
+  const plaintext = buildPlaintext(params, storeKey, REQUEST_EXCLUDE)
+  const hash = sha512Base64(plaintext)
+
+  if (process.env.PAYMENT_DEBUG === '1') {
+    const includedKeys = Object.keys(params)
+      .filter((k) => !REQUEST_EXCLUDE.has(k.toLowerCase()))
+      .sort(caseInsensitiveSort)
+    console.info('[nestpay:hash] İstek hash üretildi', {
+      storetype: params.storetype,
+      oid: params.oid,
+      includedKeys,
+      plaintextLen: plaintext.length,
+      storeKeyHint: storeKey.length >= 6 ? `${storeKey.slice(0, 3)}…${storeKey.slice(-3)}` : '(kısa)',
+      hash,
+    })
+  }
+
+  return hash
 }
 
 // ─── Yanıt hash doğrulama ──────────────────────────────────────────────────────
