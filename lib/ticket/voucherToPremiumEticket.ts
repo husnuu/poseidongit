@@ -59,8 +59,13 @@ export function voucherDataToPremiumEticket(
   const total = Number(data.totalPrice) || 0
   const remaining = Math.max(0, total - paid)
 
+  // lib/email.ts'deki e-posta şablonlarıyla aynı gerçek varsayılan telefon —
+  // env değişkeni tanımlı değilse bilette hiç telefon görünmemesindense gerçek
+  // destek hattı gösterilir.
   const supportPhone =
-    process.env.NEXT_PUBLIC_SUPPORT_PHONE?.trim() || process.env.SUPPORT_PHONE?.trim()
+    process.env.NEXT_PUBLIC_SUPPORT_PHONE?.trim() ||
+    process.env.SUPPORT_PHONE?.trim() ||
+    '+90 533 417 36 56'
 
   return {
     passengerName: data.customerName,
@@ -69,6 +74,7 @@ export function voucherDataToPremiumEticket(
       locale
     ),
     ticketClass: classDisplay,
+    ...(data.date && data.date !== '—' ? { tourDate: data.date } : {}),
     boardingTime,
     departureTime: depTime,
     returnTime,

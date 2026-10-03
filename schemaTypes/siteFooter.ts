@@ -323,6 +323,13 @@ export default defineType({
                                     type: 'boolean',
                                     initialValue: true,
                                 }),
+                                defineField({
+                                    name: 'followerCount',
+                                    title: 'Takipçi Sayısı',
+                                    type: 'string',
+                                    description:
+                                        'Opsiyonel, örn. "15.2K" veya "15.000". Şu an sadece anasayfadaki Instagram butonunda gösterilir — boş bırakılırsa sayı olmadan gösterilir.',
+                                }),
                             ],
                             preview: {
                                 select: {

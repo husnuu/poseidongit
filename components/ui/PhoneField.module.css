@@ -111,6 +111,16 @@
   font-size: 11px;
 }
 
+/* Hata düzeltmesi: compact + outlined birlikte kullanıldığında (rezervasyon
+   formundaki telefon alanı gibi), .labelCompact.labelActive (0,2,0 özgüllük)
+   .labelOutlined'ın (0,1,0) top:-9px değerini eziyordu — etiket kutunun
+   İÇİNDE (top:6px) kalıp girilen numarayla üst üste biniyordu. Üç sınıfın
+   birlikte eşleştiği bu kural daha yüksek özgüllükle (0,3,0) doğru konumu
+   (border üstü, dışarı taşan) geri kazandırır. */
+.labelCompact.labelActive.labelOutlined {
+  top: -9px !important;
+}
+
 /* Label border üstünde — yalnızca dolu veya odaklı */
 .labelOutlined {
   top: -9px !important;

@@ -347,7 +347,7 @@ async function fetchTourMapInfo(
     )
     return {
       mapLink: row?.mapLink?.trim() || undefined,
-      mapImageUrl: mapImageUrlFromEmbed(row?.mapEmbedUrl),
+      mapImageUrl: mapImageUrlFromEmbed(row?.mapEmbedUrl, undefined, row?.mapLink),
     }
   } catch {
     return {}

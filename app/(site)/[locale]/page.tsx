@@ -6,6 +6,7 @@ import {
   homePageHeroImageUrlsQuery,
   homePageHeroQuery,
   homeReviewsQuery,
+  siteFooterInstagramQuery,
   siteSettingsTravelAgencyImagesQuery,
 } from '@/lib/queries'
 import HomeReviewsSection, { type HomeReviewsSectionData, type HomeReviewItem } from '@/components/home/HomeReviewsSection'
@@ -697,7 +698,7 @@ async function mapRouteSection(
       return {
         name: name || loc.name || '',
         location: location || loc.location || '',
-        imageUrl: loc.image?.asset ? urlFor(loc.image.asset).width(600).height(800).url() : null,
+        imageUrl: loc.image?.asset ? urlFor(loc.image.asset).width(960).height(720).url() : null,
         alt: loc.image?.alt ?? null,
         description,
       }
@@ -969,6 +970,22 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       homeReviews = { ...flattened, items }
     } else {
       homeReviews = flattened
+    }
+    if (homeReviews) {
+      try {
+        const footerSocial = await client.fetch<{ instagram?: { href?: string | null; followerCount?: string | null } | null } | null>(
+          siteFooterInstagramQuery,
+          {},
+          { useCdn: false }
+        )
+        homeReviews = {
+          ...homeReviews,
+          instagramUrl: footerSocial?.instagram?.href ?? null,
+          instagramFollowerCount: footerSocial?.instagram?.followerCount ?? null,
+        }
+      } catch {
+        // Instagram butonu opsiyonel — sorgu başarısız olursa sessizce atlanır.
+      }
     }
   } catch {
     homeReviews = null

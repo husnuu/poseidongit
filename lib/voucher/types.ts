@@ -76,8 +76,12 @@ export const DEFAULT_POLICIES = {
   voucherNotice: 'Biniş sırasında bu bileti gösteriniz.',
 }
 
-/** Varsayılan iletişim (env ile override edilebilir) */
+/** Varsayılan iletişim (env ile override edilebilir) — gerçek işletme bilgileri,
+ *  lib/email.ts'deki e-posta şablonlarıyla aynı (bkz. SUPPORT_EMAIL/SUPPORT_PHONE
+ *  oradaki varsayılanlar). Önceden "poseidonbooking.com" gibi uydurma bir
+ *  placeholder domain kullanılıyordu — site/env değişkeni eksikse müşteri
+ *  biletinde YANLIŞ iletişim bilgisi görünüyordu. */
 export const DEFAULT_CONTACT = {
-  supportEmail: 'info@poseidonbooking.com',
-  website: 'https://poseidonbooking.com',
+  supportEmail: 'turkeycesme@hotmail.com',
+  website: 'https://cesmetekneturu.net',
 }

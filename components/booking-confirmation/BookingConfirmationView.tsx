@@ -9,7 +9,7 @@ import {
   CalendarPlus,
   CalendarDays,
   CalendarClock,
-  XCircle,
+  Undo2,
   MapPin,
   Clock,
   Wine,
@@ -91,11 +91,13 @@ function StatusOnlyCard({
 export default function BookingConfirmationView({ data }: { data: BookingConfirmationData }) {
   const ui = getBookingConfirmationUi(data.locale)
   const router = useRouter()
-  const [cancelled, setCancelled] = useState(data.isCancelled)
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
-  const [cancelling, setCancelling] = useState(false)
-  const [cancelError, setCancelError] = useState<string | null>(null)
-  const [cancelResultMsg, setCancelResultMsg] = useState<string | null>(null)
+  const cancelled = data.isCancelled
+  const [refundStatus, setRefundStatus] = useState(data.refundStatus)
+  const [showRefundConfirm, setShowRefundConfirm] = useState(false)
+  const [refundReason, setRefundReason] = useState('')
+  const [refundSending, setRefundSending] = useState(false)
+  const [refundError, setRefundError] = useState<string | null>(null)
+  const [refundSuccessMsg, setRefundSuccessMsg] = useState<string | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [boardingPassOpen, setBoardingPassOpen] = useState(false)
   const [changeDateOpen, setChangeDateOpen] = useState(false)
@@ -111,28 +113,43 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
 
   const customerName = data.guests[0]?.name ?? '—'
 
-  const handleCancel = async () => {
-    setCancelling(true)
-    setCancelError(null)
+  const refundAlreadyRequested = !!refundStatus && refundStatus !== 'request_rejected' && refundStatus !== 'refund_failed'
+  const canRequestRefund = data.isOnlinePaid && !refundAlreadyRequested && data.refundWindowOpen
+
+  const handleRefundClick = () => {
+    if (!canRequestRefund) return
+    setRefundReason('')
+    setRefundError(null)
+    setShowRefundConfirm(true)
+  }
+
+  const handleRefundConfirm = async () => {
+    if (!canRequestRefund) return
+    setRefundSending(true)
+    setRefundError(null)
     try {
-      const res = await fetch('/api/booking/cancel', {
+      const res = await fetch('/api/booking/refund-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId: data.bookingId, email: data.customerEmail }),
+        body: JSON.stringify({
+          bookingId: data.bookingId,
+          email: data.customerEmail,
+          reason: refundReason.trim() || undefined,
+        }),
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok || !json.ok) {
-        setCancelError(json.error ?? 'İşlem başarısız oldu.')
-        setCancelling(false)
+        setRefundError(json.error ?? 'İşlem başarısız oldu.')
+        setRefundSending(false)
         return
       }
-      setCancelResultMsg(String(json.message ?? ui.cancelledNotice))
-      setCancelled(true)
-      setShowCancelConfirm(false)
+      setRefundStatus('requested')
+      setRefundSuccessMsg(String(json.message ?? ui.refundAlreadyRequestedNotice))
+      setShowRefundConfirm(false)
     } catch {
-      setCancelError('Bağlantı hatası.')
+      setRefundError('Bağlantı hatası.')
     } finally {
-      setCancelling(false)
+      setRefundSending(false)
     }
   }
 
@@ -145,7 +162,7 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
         : ui.pendingTitle(data.customerFirstName)
 
   const subtitle = cancelled
-    ? cancelResultMsg ?? ui.cancelledSubtitle
+    ? ui.cancelledSubtitle
     : data.isPaid
       ? ui.paidSubtitle
       : data.isPendingCash
@@ -313,19 +330,24 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
                 {ui.changeDate}
               </button>
 
-              {data.canCancel ? (
+              {refundAlreadyRequested ? (
+                <span className="flex w-full flex-col items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-2 py-3 text-center text-xs font-semibold text-amber-700">
+                  <Undo2 className="h-[18px] w-[18px]" aria-hidden />
+                  {ui.requestRefund}
+                </span>
+              ) : canRequestRefund ? (
                 <button
                   type="button"
-                  onClick={() => setShowCancelConfirm(true)}
+                  onClick={handleRefundClick}
                   className="flex w-full flex-col items-center gap-1.5 rounded-xl border border-red-200 px-2 py-3 text-center text-xs font-semibold text-red-600 hover:bg-red-50"
                 >
-                  <XCircle className="h-[18px] w-[18px]" aria-hidden />
-                  {ui.cancelBooking}
+                  <Undo2 className="h-[18px] w-[18px]" aria-hidden />
+                  {ui.requestRefund}
                 </button>
               ) : (
                 <span className="flex w-full flex-col items-center gap-1.5 rounded-xl border border-zinc-100 px-2 py-3 text-center text-xs font-semibold text-zinc-300">
-                  <XCircle className="h-[18px] w-[18px]" aria-hidden />
-                  {ui.cancelBooking}
+                  <Undo2 className="h-[18px] w-[18px]" aria-hidden />
+                  {ui.requestRefund}
                 </span>
               )}
             </div>
@@ -359,21 +381,29 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
           />
         )}
 
-        {/* İptal politikası */}
-        {!cancelled && !data.isYachtDeposit && (
-          <div className="mt-4 flex items-start gap-3 rounded-xl border border-[#dbeafe] bg-[#eff6ff] px-4 py-3.5">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#2168b8]" aria-hidden />
-            <p className="m-0 text-sm text-[#1e429f]">
-              {data.canCancel && data.cancelDeadlineLabel
-                ? ui.cancelPolicyText(data.cancelDeadlineLabel, money(data.paidAmount ?? data.totalPrice, data.currency))
-                : ui.cancelUnavailableText}
-            </p>
-          </div>
-        )}
+        {/* İade politikası */}
+        {!cancelled &&
+          (refundAlreadyRequested ? (
+            <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+              <p className="m-0 text-sm text-amber-900">{refundSuccessMsg ?? ui.refundAlreadyRequestedNotice}</p>
+            </div>
+          ) : (
+            <div className="mt-4 flex items-start gap-3 rounded-xl border border-[#dbeafe] bg-[#eff6ff] px-4 py-3.5">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#2168b8]" aria-hidden />
+              <p className="m-0 text-sm text-[#1e429f]">
+                {!data.isOnlinePaid
+                  ? ui.refundNotOnlinePaidText
+                  : data.refundWindowOpen && data.refundDeadlineLabel
+                    ? ui.refundPolicyText(data.refundDeadlineLabel)
+                    : ui.refundWindowClosedText}
+              </p>
+            </div>
+          ))}
 
-        {cancelError && (
+        {refundError && (
           <p className="mt-3 text-sm font-medium text-red-600" role="alert">
-            {cancelError}
+            {refundError}
           </p>
         )}
 
@@ -572,38 +602,48 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
         </div>
       </div>
 
-      {/* İptal onay modalı */}
-      {showCancelConfirm && (
+      {/* İade talebi modalı */}
+      {showRefundConfirm && (
         <div
           className="fixed inset-0 z-[10003] flex items-center justify-center bg-black/55 p-4"
           role="dialog"
           aria-modal="true"
-          onClick={() => !cancelling && setShowCancelConfirm(false)}
+          onClick={() => !refundSending && setShowRefundConfirm(false)}
         >
           <div
             className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
             style={{ fontFamily: 'var(--font-family)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="m-0 text-lg font-bold text-[#131719]">{ui.cancelConfirmTitle}</h2>
-            <p className="mt-2 text-sm text-zinc-600">{ui.cancelConfirmBody}</p>
-            {cancelError && <p className="mt-2 text-sm font-medium text-red-600">{cancelError}</p>}
+            <h2 className="m-0 text-lg font-bold text-[#131719]">{ui.refundModalTitle}</h2>
+            <p className="mt-2 text-sm text-zinc-600">{ui.refundModalBody}</p>
+            <label className="mb-1.5 mt-4 block text-xs font-semibold text-zinc-700">{ui.refundReasonLabel}</label>
+            <textarea
+              value={refundReason}
+              onChange={(e) => setRefundReason(e.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder={ui.refundReasonPlaceholder}
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#2168b8] focus:outline-none"
+            />
+            {refundError && <p className="mt-2 text-sm font-medium text-red-600">{refundError}</p>}
             <div className="mt-5 flex flex-col gap-2.5">
               <button
                 type="button"
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
+                onClick={handleRefundConfirm}
+                disabled={refundSending}
+                className="rounded-xl px-4 py-3 text-sm font-bold text-white disabled:opacity-60"
+                style={{ background: 'var(--primary, #2168b8)' }}
               >
-                {cancelling ? ui.cancelling : ui.cancelConfirmYes}
+                {refundSending ? ui.refundSending : ui.refundModalConfirm}
               </button>
               <button
                 type="button"
-                onClick={() => setShowCancelConfirm(false)}
-                disabled={cancelling}
+                onClick={() => setShowRefundConfirm(false)}
+                disabled={refundSending}
                 className="rounded-xl border border-zinc-200 px-4 py-3 text-sm font-semibold text-[#131719] hover:bg-zinc-50"
               >
-                {ui.cancelConfirmNo}
+                {ui.refundModalCancel}
               </button>
             </div>
           </div>

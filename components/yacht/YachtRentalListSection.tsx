@@ -94,34 +94,41 @@ export default function YachtRentalListSection({
           <p className="m-0 text-sm font-semibold text-black/60">
             {ui.yachtsListedCount(sorted.length)}
           </p>
-          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          <div className="flex flex-wrap items-center gap-2.5 sm:justify-end">
+            {/* Menü ve Yardım Merkezi kategori sekmeleriyle birebir aynı buton dili:
+                rounded-lg + border-2, aktifken dolu mavi, pasifken beyaz/mavi kontur. */}
             <button
               type="button"
               onClick={() => {
                 setFilterSheetOpen(false)
                 setSortSheetOpen(true)
               }}
-              className="inline-flex h-12 flex-shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border-2 bg-white px-5 text-sm font-bold uppercase tracking-wide transition duration-200 hover:bg-[var(--primary)]/[0.06]"
-              style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)', boxShadow: 'none' }}
+              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border-2 px-5 py-2.5 text-sm font-bold uppercase tracking-wide transition duration-200 hover:scale-105"
+              style={
+                appliedSort !== 'default'
+                  ? { background: 'var(--primary, #2168b8)', borderColor: 'var(--primary, #2168b8)', color: '#fff' }
+                  : { background: '#fff', borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }
+              }
             >
-              <ArrowUpDown className="h-5 w-5" strokeWidth={2} aria-hidden />
+              <ArrowUpDown className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
               {ui.sortButton}
-              {appliedSort !== 'default' ? (
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: 'var(--primary, #2168b8)' }} aria-hidden />
-              ) : null}
             </button>
             <button
               type="button"
               onClick={openFilterSheet}
-              className="inline-flex h-12 flex-shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border-2 bg-white px-5 text-sm font-bold uppercase tracking-wide transition duration-200 hover:bg-[var(--primary)]/[0.06]"
-              style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)', boxShadow: 'none' }}
+              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border-2 px-5 py-2.5 text-sm font-bold uppercase tracking-wide transition duration-200 hover:scale-105"
+              style={
+                filterActiveCount > 0
+                  ? { background: 'var(--primary, #2168b8)', borderColor: 'var(--primary, #2168b8)', color: '#fff' }
+                  : { background: '#fff', borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }
+              }
             >
-              <SlidersHorizontal className="h-5 w-5" strokeWidth={2} aria-hidden />
+              <SlidersHorizontal className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
               {ui.filtersButton}
               {filterActiveCount > 0 ? (
                 <span
-                  className="flex h-6 min-w-[24px] items-center justify-center rounded-full px-1.5 text-xs font-bold text-white"
-                  style={{ background: 'var(--primary, #2168b8)' }}
+                  className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white px-1.5 text-xs font-bold"
+                  style={{ color: 'var(--primary, #2168b8)' }}
                 >
                   {filterActiveCount}
                 </span>

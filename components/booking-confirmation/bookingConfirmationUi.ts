@@ -28,15 +28,18 @@ export interface BookingConfirmationUi {
   appleOutlookCalendar: string
   googleCalendar: string
   changeDate: string
-  cancelBooking: string
-  cancelConfirmTitle: string
-  cancelConfirmBody: string
-  cancelConfirmYes: string
-  cancelConfirmNo: string
-  cancelling: string
-  cancelledNotice: string
-  cancelPolicyText: (deadline: string, amount: string) => string
-  cancelUnavailableText: string
+  requestRefund: string
+  refundModalTitle: string
+  refundModalBody: string
+  refundReasonLabel: string
+  refundReasonPlaceholder: string
+  refundModalCancel: string
+  refundModalConfirm: string
+  refundSending: string
+  refundAlreadyRequestedNotice: string
+  refundNotOnlinePaidText: string
+  refundWindowClosedText: string
+  refundPolicyText: (deadline: string) => string
   guestListTitle: string
   editInfoLink: string
   boatBarTitle: string
@@ -93,16 +96,20 @@ const TR: BookingConfirmationUi = {
   appleOutlookCalendar: 'Apple / Outlook Takvim',
   googleCalendar: 'Google Takvim',
   changeDate: 'Tarihi değiştir',
-  cancelBooking: 'İptal Et',
-  cancelConfirmTitle: 'Rezervasyonu iptal et',
-  cancelConfirmBody: 'Bu rezervasyonu iptal etmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
-  cancelConfirmYes: 'Evet, iptal et',
-  cancelConfirmNo: 'Vazgeç',
-  cancelling: 'İptal ediliyor...',
-  cancelledNotice: 'Rezervasyonunuz iptal edildi.',
-  cancelPolicyText: (deadline, amount) =>
-    `${deadline} tarihine kadar iptal ederseniz ödemenizin tamamı (${amount}) iade edilir.`,
-  cancelUnavailableText: 'İptal süresi geçmiştir. Değişiklik için lütfen bizimle iletişime geçin.',
+  requestRefund: 'İade İsteği Gönder',
+  refundModalTitle: 'İade Talebi Gönder',
+  refundModalBody:
+    'Talebiniz yöneticilerimize iletilecek ve 24 saat içinde sonuçlanacaktır. Onaylanma anında ödemeniz kartınıza iade edilir.',
+  refundReasonLabel: 'İade nedeni (opsiyonel)',
+  refundReasonPlaceholder: 'Örn. tarih değişikliği yapamadım, hava koşulları, vb.',
+  refundModalCancel: 'Vazgeç',
+  refundModalConfirm: 'Talebi Gönder',
+  refundSending: 'Gönderiliyor...',
+  refundAlreadyRequestedNotice:
+    'İade talebiniz yöneticilerimize iletildi. 24 saat içinde sonuçlanacaktır; onaylanma anında size e-posta gönderilecektir.',
+  refundNotOnlinePaidText: 'Bu rezervasyon online ödenmediği için sadece iletişim kanalları üzerinden işlem yapılabilir.',
+  refundWindowClosedText: 'Tur kalkışına 24 saatten az kaldığı için iade talebi gönderilemez. Lütfen bizimle iletişime geçin.',
+  refundPolicyText: (deadline) => `${deadline} tarihine kadar iade talebi gönderebilirsiniz.`,
   guestListTitle: 'Misafir listesi',
   editInfoLink: 'Bilgilerinizi düzenleyin',
   boatBarTitle: 'Tekne Barı',
@@ -160,16 +167,20 @@ const EN: BookingConfirmationUi = {
   appleOutlookCalendar: 'Apple / Outlook Calendar',
   googleCalendar: 'Google Calendar',
   changeDate: 'Change date',
-  cancelBooking: 'Cancel',
-  cancelConfirmTitle: 'Cancel booking',
-  cancelConfirmBody: 'Are you sure you want to cancel this booking? This action cannot be undone.',
-  cancelConfirmYes: 'Yes, cancel it',
-  cancelConfirmNo: 'Keep booking',
-  cancelling: 'Cancelling...',
-  cancelledNotice: 'Your booking has been cancelled.',
-  cancelPolicyText: (deadline, amount) =>
-    `Cancel before ${deadline} for a full refund (${amount}).`,
-  cancelUnavailableText: 'The cancellation window has passed. Please contact us for changes.',
+  requestRefund: 'Request Refund',
+  refundModalTitle: 'Request a Refund',
+  refundModalBody:
+    'Your request will be sent to our team and resolved within 24 hours. Once approved, your payment will be refunded to your card.',
+  refundReasonLabel: 'Reason (optional)',
+  refundReasonPlaceholder: 'E.g. could not change the date, weather conditions, etc.',
+  refundModalCancel: 'Cancel',
+  refundModalConfirm: 'Send Request',
+  refundSending: 'Sending...',
+  refundAlreadyRequestedNotice:
+    'Your refund request has been sent to our team. It will be resolved within 24 hours; you will receive an email once it is approved.',
+  refundNotOnlinePaidText: 'This booking was not paid online, so changes can only be made through our contact channels.',
+  refundWindowClosedText: 'Less than 24 hours remain until departure, so a refund request can no longer be sent. Please contact us.',
+  refundPolicyText: (deadline) => `You can request a refund until ${deadline}.`,
   guestListTitle: 'Guest list',
   editInfoLink: 'Edit your details',
   boatBarTitle: 'Boat Bar',

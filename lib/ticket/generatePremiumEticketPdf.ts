@@ -105,6 +105,7 @@ function labels(locale: 'tr' | 'en') {
     passenger: 'YOLCU',
     haveANiceTrip: 'İyi yolculuklar!',
     pageTwoTitle: 'Yolculuk Bilgileri',
+    tourDate: 'Tur Tarihi',
   }
   return {
     ebilet: 'E-TICKET', from: 'DEPARTURE', boarding: 'Boarding', departure: 'Departs',
@@ -122,6 +123,7 @@ function labels(locale: 'tr' | 'en') {
     passenger: 'PASSENGER',
     haveANiceTrip: 'Have a great trip!',
     pageTwoTitle: 'Trip Information',
+    tourDate: 'Tour Date',
   }
 }
 
@@ -282,9 +284,17 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
 
   y -= paxCardH + 14
 
-  // ── Saat + Buluşma noktası kartı ──
-  const timeCardH = payload.meetingPoint?.trim() ? 112 : 72
+  // ── Tarih + Saat + Buluşma noktası kartı ──
+  const hasDateRow = !!payload.tourDate?.trim()
+  const dateRowH = hasDateRow ? 32 : 0
+  const timeCardH = dateRowH + (payload.meetingPoint?.trim() ? 112 : 72)
   floatingCard(page, padX, y - timeCardH, cardW, timeCardH)
+
+  if (hasDateRow) {
+    page.drawText(L.tourDate.toUpperCase(), { x: padX + 20, y: y - 20, size: 8, font: bold, color: MUTED })
+    page.drawText(payload.tourDate!.trim(), { x: padX + 20, y: y - 36, size: 13, font: bold, color: CORAL })
+    hLine(page, padX + 20, y - dateRowH, cardW - 40)
+  }
 
   const tw = (cardW - 40) / 3
   const times: [string, string][] = [
@@ -295,21 +305,21 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
   for (let i = 0; i < 3; i++) {
     const [lbl, val] = times[i]
     const tx = padX + 20 + i * tw
-    page.drawText(lbl.toUpperCase(), { x: tx, y: y - 22, size: 8, font: bold, color: MUTED })
-    page.drawText(val, { x: tx, y: y - 44, size: 17, font: bold, color: NAVY })
+    page.drawText(lbl.toUpperCase(), { x: tx, y: y - dateRowH - 22, size: 8, font: bold, color: MUTED })
+    page.drawText(val, { x: tx, y: y - dateRowH - 44, size: 17, font: bold, color: NAVY })
     if (i < 2) {
       page.drawLine({
-        start: { x: tx + tw - 14, y: y - 18 }, end: { x: tx + tw - 14, y: y - 52 },
+        start: { x: tx + tw - 14, y: y - dateRowH - 18 }, end: { x: tx + tw - 14, y: y - dateRowH - 52 },
         thickness: 1, color: DIVIDER,
       })
     }
   }
 
   if (payload.meetingPoint?.trim()) {
-    hLine(page, padX + 20, y - 62, cardW - 40)
-    page.drawText(L.meeting.toUpperCase(), { x: padX + 20, y: y - 76, size: 8, font: bold, color: MUTED })
+    hLine(page, padX + 20, y - dateRowH - 62, cardW - 40)
+    page.drawText(L.meeting.toUpperCase(), { x: padX + 20, y: y - dateRowH - 76, size: 8, font: bold, color: MUTED })
     page.drawText(payload.meetingPoint.trim(), {
-      x: padX + 20, y: y - 91, size: 10, font, color: SLATE,
+      x: padX + 20, y: y - dateRowH - 91, size: 10, font, color: SLATE,
       maxWidth: cardW - 40, lineHeight: 12.5,
     })
   }

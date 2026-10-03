@@ -409,7 +409,7 @@ export default function PhotoGrid({
                 className={styles.shareOption}
                 href={`mailto:?subject=${shareTextEncoded}&body=${shareUrlEncoded}`}
               >
-                <Mail className={styles.shareOptionIcon} style={{ color: 'var(--muted, #81848b)' }} strokeWidth={2} aria-hidden />
+                <Mail className={styles.shareOptionIcon} style={{ color: 'var(--primary, #2168b8)' }} strokeWidth={2} aria-hidden />
                 {shareUi.email}
               </a>
               <button
@@ -417,7 +417,9 @@ export default function PhotoGrid({
                 className={styles.shareOption}
                 onClick={() => openShareTarget(`https://t.me/share/url?url=${shareUrlEncoded}&text=${shareTextEncoded}`)}
               >
-                <Send className={styles.shareOptionIcon} style={{ color: '#229ed9' }} strokeWidth={2} aria-hidden />
+                <span className={styles.shareOptionIconBadge} style={{ background: '#229ed9' }}>
+                  <Send className={styles.shareOptionIcon} strokeWidth={2} fill="currentColor" aria-hidden />
+                </span>
                 {shareUi.telegram}
               </button>
               <button
@@ -425,7 +427,9 @@ export default function PhotoGrid({
                 className={styles.shareOption}
                 onClick={() => openShareTarget(`https://www.facebook.com/sharer/sharer.php?u=${shareUrlEncoded}`)}
               >
-                <Facebook className={styles.shareOptionIcon} style={{ color: '#1877f2' }} strokeWidth={2} aria-hidden />
+                <span className={styles.shareOptionIconBadge} style={{ background: '#1877f2' }}>
+                  <Facebook className={styles.shareOptionIcon} strokeWidth={2} fill="currentColor" aria-hidden />
+                </span>
                 {shareUi.facebook}
               </button>
               <button

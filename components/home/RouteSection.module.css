@@ -1,0 +1,12 @@
+/* Sınıflar (TourClassShowcase) tab stilini birebir reuse ediyoruz; koy isimleri
+   ("Mercan Adası" gibi) bilet sınıfı isimlerinden (Eco/First) daha uzun olduğu
+   için sadece dar telefon genişliklerinde hafif bir boyut düzeltmesi gerekiyor.
+   Paylaşılan modülün sınıfıyla aynı özgüllükte olduğundan (tek class selector),
+   kazanması için !important şart. */
+@media (max-width: 480px) {
+  .tabOverride {
+    padding: 0.55rem 0.3rem !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.01em !important;
+  }
+}

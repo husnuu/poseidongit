@@ -21,6 +21,18 @@ const BOAT_LABEL: Record<string, string> = {
   de: 'Ihr Boot',
 }
 
+const CLASS_LABEL: Record<string, string> = {
+  tr: 'Sınıf',
+  en: 'Class',
+  de: 'Klasse',
+}
+
+const LOCA_LABEL: Record<string, string> = {
+  tr: 'Loca',
+  en: 'Booth',
+  de: 'Loge',
+}
+
 const GUEST_LABEL: Record<string, string> = {
   tr: 'Misafir:',
   en: 'Guests:',
@@ -93,6 +105,10 @@ export interface ReservationTicketProps {
   hostName?: string | null
   /** Örn. "Çeşme Sahil" — sadece gerçek veri varsa gösterilir. */
   meetingLocation?: string | null
+  /** Seçilen bilet sınıfının görünen adı (örn. "First Class") — seçilmediyse gösterilmez. */
+  classLabel?: string | null
+  /** First Class için seçilen loca numaraları (örn. ["L1", "L2"]) — sadece First Class'ta ve seçim yapıldıysa gösterilir. */
+  locaIds?: string[] | null
   guestLines: ReservationTicketGuestLine[]
   /** Hafta günü + uzun tarih, örn. "Pazar, 27 Eylül 2026" — tarih seçilmediyse null. */
   dateLabel?: string | null
@@ -115,6 +131,8 @@ export default function ReservationTicket({
   durationText,
   hostName,
   meetingLocation,
+  classLabel,
+  locaIds,
   guestLines,
   dateLabel,
   timeLabel,
@@ -124,6 +142,9 @@ export default function ReservationTicket({
 }: ReservationTicketProps) {
   const totalPriceLabel = TOTAL_PRICE_LABEL[ui.locale] ?? TOTAL_PRICE_LABEL.tr
   const meetingPointLabel = MEETING_POINT_LABEL[ui.locale] ?? MEETING_POINT_LABEL.tr
+  const classLabelText = CLASS_LABEL[ui.locale] ?? CLASS_LABEL.tr
+  const locaLabelText = LOCA_LABEL[ui.locale] ?? LOCA_LABEL.tr
+  const locaIdsClean = (locaIds ?? []).filter((x) => x?.trim())
   const boatLabel = BOAT_LABEL[ui.locale] ?? BOAT_LABEL.tr
   const guestLabel = GUEST_LABEL[ui.locale] ?? GUEST_LABEL.tr
   const tearHereLabel = TEAR_HERE_LABEL[ui.locale] ?? TEAR_HERE_LABEL.tr
@@ -158,6 +179,15 @@ export default function ReservationTicket({
               <p className={styles.ticketInfoLine}>
                 <span className={styles.ticketInfoLabel}>{meetingPointLabel}</span>{' '}
                 <span className={styles.ticketInfoLink}>{meetingLocation}</span>
+              </p>
+            )}
+            {classLabel && (
+              <p className={styles.ticketInfoLine}>
+                <span className={styles.ticketInfoLabel}>{classLabelText}:</span>{' '}
+                <span className={styles.ticketInfoLink}>
+                  {classLabel}
+                  {locaIdsClean.length > 0 ? ` · ${locaLabelText} ${locaIdsClean.join(', ')}` : ''}
+                </span>
               </p>
             )}
             <p className={styles.ticketInfoLineBold}>

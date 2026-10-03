@@ -14,6 +14,7 @@ import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import { useBookingPassengerValidation } from '../hooks/useBookingPassengerValidation'
+import { isFirstClassKey } from '@/lib/sanity/bookingPricing'
 import styles from '../booking.module.css'
 
 /** Kullanıcı isteğiyle sadeleştirildi: sadece "Özel istekler" (alerji ibaresi kaldırıldı). */
@@ -98,6 +99,14 @@ export default function Step3CustomerInfo({
     defaultPickupForAddress?.name?.trim() ||
     null
 
+  /** Rezervasyon özetinde (bilet) gösterilecek sınıf adı + First Class ise seçilen loca(lar). */
+  const selectedTicketClass = tour.ticketClasses?.find((c) => c.key === state.selectedClassKey) ?? null
+  const summaryClassLabel = selectedTicketClass?.label?.trim() || null
+  const summaryLocaIds =
+    summaryClassLabel && isFirstClassKey(tour, state.selectedClassKey)
+      ? (state.firstClassLocas ?? []).filter((x) => x?.trim())
+      : null
+
   const ageLabelFor = (ageKey: string) =>
     ageKey === 'adult' ? ui.adult : ageKey === 'child' ? ui.child : ui.baby
 
@@ -161,6 +170,8 @@ export default function Step3CustomerInfo({
           durationText={tour.quickFacts?.durationText}
           hostName={boatNameForTour(tour.slug)}
           meetingLocation={tourAddress}
+          classLabel={summaryClassLabel}
+          locaIds={summaryLocaIds}
           guestLines={guestLines}
           dateLabel={dateWithWeekday}
           timeLabel={tour.quickFacts?.startTime}

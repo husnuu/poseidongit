@@ -5,6 +5,13 @@ import { getBaseUrl } from '@/lib/seo'
  * Google Maps API anahtarı gerektirmez: Google'ın "Haritayı yerleştir" iframe
  * linklerindeki (whereSection.mapEmbedUrl) pb= parametresi enlem/boylamı
  * düz ondalık olarak (!2d<lng>!3d<lat>) içerir; buradan koordinat çıkarılır.
+ *
+ * ÖNEMLİ: Bu embed URL'deki koordinat, embed kodu alınırken haritanın
+ * EKRANDAKİ GÖRÜNÜM MERKEZİDİR — kullanıcı pini koyduktan sonra haritayı
+ * kaydırmış/yakınlaştırmışsa gerçek işaretlenen noktadan (gerçek bir turda
+ * ~225m) sapabilir. "Haritada Aç" yol tarifi linkindeki (locationMapLink,
+ * ?destination=lat,lng) koordinat ise Google'ın GEOCODE ETTİĞİ gerçek hedef
+ * noktasıdır — bu yüzden varsa ona öncelik verilir (bkz. resolveMapLatLng).
  */
 
 export function parseLatLngFromMapEmbedUrl(
@@ -17,6 +24,29 @@ export function parseLatLngFromMapEmbedUrl(
   const lat = Number(m[2])
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
   return { lat, lng }
+}
+
+/** Google Maps "yol tarifi al" linkinden (?destination=lat,lng) koordinat çıkarır —
+ *  embed URL'in görünüm merkezinden daha güvenilir, çünkü bu gerçek geocode edilmiş hedeftir. */
+export function parseLatLngFromDirectionsLink(
+  directionsLink: string | undefined | null
+): { lat: number; lng: number } | null {
+  if (!directionsLink?.trim()) return null
+  const m = /[?&]destination=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/.exec(directionsLink)
+  if (!m) return null
+  const lat = Number(m[1])
+  const lng = Number(m[2])
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+  return { lat, lng }
+}
+
+/** Önce yol tarifi linkindeki (daha güvenilir) hedef koordinatı, yoksa embed URL'in
+ *  görünüm merkezini dener. */
+export function resolveMapLatLng(
+  directionsLink: string | undefined | null,
+  embedUrl: string | undefined | null
+): { lat: number; lng: number } | null {
+  return parseLatLngFromDirectionsLink(directionsLink) ?? parseLatLngFromMapEmbedUrl(embedUrl)
 }
 
 /**
@@ -61,12 +91,14 @@ export function staticMapImageUrl(
   return `${base}/api/static-map?${params.toString()}`
 }
 
-/** whereSection.mapEmbedUrl → statik harita görseli URL'i (koordinat çıkarılamazsa undefined). */
+/** whereSection.mapEmbedUrl (+ varsa daha güvenilir locationMapLink) → statik harita
+ *  görseli URL'i (koordinat çıkarılamazsa undefined). */
 export function mapImageUrlFromEmbed(
   embedUrl: string | undefined | null,
-  opts?: { width?: number; height?: number; zoom?: number }
+  opts?: { width?: number; height?: number; zoom?: number },
+  directionsLink?: string | undefined | null
 ): string | undefined {
-  const coords = parseLatLngFromMapEmbedUrl(embedUrl)
+  const coords = resolveMapLatLng(directionsLink, embedUrl)
   if (!coords) return undefined
   return staticMapImageUrl(coords.lat, coords.lng, opts)
 }

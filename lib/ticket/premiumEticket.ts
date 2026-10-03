@@ -5,6 +5,8 @@ export const premiumEticketPayloadSchema = z.object({
   passengerName: z.string().min(1).max(200),
   guestCount: z.union([z.number().int().min(1).max(500), z.string().min(1).max(120)]),
   ticketClass: z.string().min(1).max(120),
+  /** Tur tarihi — biçimlendirilmiş, gösterime hazır (örn. "Pazar, 3 Ekim 2026"). */
+  tourDate: z.string().max(120).optional(),
   boardingTime: z.string().min(1).max(80),
   departureTime: z.string().min(1).max(80),
   returnTime: z.string().min(1).max(80),
@@ -39,6 +41,7 @@ export const premiumEticketSamplePayload: PremiumEticketPayload = {
   passengerName: 'Ayşe Yılmaz',
   guestCount: 2,
   ticketClass: 'Standart · Üst Güverte',
+  tourDate: 'Pazar, 18 Ekim 2026',
   boardingTime: '09:30',
   departureTime: '10:00',
   returnTime: '16:30',

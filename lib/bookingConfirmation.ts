@@ -15,6 +15,7 @@ import { getSiteBaseUrl } from '@/lib/siteUrls'
 import { formatTicketDate } from '@/lib/voucher/formatTicketDate'
 import { buildWhatsAppHref } from '@/lib/buildWhatsAppHref'
 import { timeMinutesBefore } from '@/lib/boardingTime'
+import { computeRefundEligibility, REFUND_REQUEST_MIN_HOURS } from '@/lib/bookings/refundEligibility'
 import type { SiteLocale } from '@/lib/i18n/config'
 
 /** ui_locale sütunundan sadece desteklenen dilleri kabul eder; diğerleri (veya boş) TR'ye düşer. */
@@ -74,8 +75,12 @@ export interface BookingConfirmationData {
   manageUrl: string
   homeUrl: string
   menuUrl: string
-  canCancel: boolean
-  cancelDeadlineLabel: string | null
+  /** Rezervasyon NestPay üzerinden online ödenmiş mi (iade talebi gönderilebilmesi için şart). */
+  isOnlinePaid: boolean
+  /** Tur kalkışına 24 saatten fazla var mı (iade talebi penceresi açık mı) — /rezervasyon/yonet ile aynı kural. */
+  refundWindowOpen: boolean
+  /** İade talebi gönderilebilecek son an (kalkıştan 24 saat önce), kullanıcıya gösterilecek metin. */
+  refundDeadlineLabel: string | null
   googleCalendarUrl: string | null
   icsUrl: string | null
   whatsappHref: string | null
@@ -105,12 +110,13 @@ function resolvePaidAmount(
   return totalPrice
 }
 
-/** /api/booking/cancel ile birebir aynı kural: tur gününden bir önceki gün saat 11:00 (Europe/Istanbul). */
-function resolveCancelInfo(dateStr: string): { canCancel: boolean; deadlineLabel: string | null } {
-  if (!dateStr) return { canCancel: false, deadlineLabel: null }
-  const cancelDeadline = new Date(new Date(`${dateStr}T00:00:00+03:00`).getTime() - 13 * 60 * 60 * 1000)
-  const canCancel = Date.now() < cancelDeadline.getTime()
-  const deadlineLabel = cancelDeadline.toLocaleString('tr-TR', {
+/** `computeRefundEligibility` ile birebir aynı kalkış-zamanı hesabı; sadece sınırı okunabilir metne çevirir. */
+function resolveRefundDeadlineLabel(dateStr: string, timeStr?: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null
+  const t = typeof timeStr === 'string' && /^\d{2}:\d{2}/.test(timeStr) ? timeStr.slice(0, 5) : '12:00'
+  const tourTime = new Date(`${dateStr}T${t}:00.000Z`).getTime() - 3 * 60 * 60 * 1000
+  const deadline = tourTime - REFUND_REQUEST_MIN_HOURS * 60 * 60 * 1000
+  return new Date(deadline).toLocaleString('tr-TR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -118,7 +124,6 @@ function resolveCancelInfo(dateStr: string): { canCancel: boolean; deadlineLabel
     minute: '2-digit',
     timeZone: 'Europe/Istanbul',
   })
-  return { canCancel, deadlineLabel }
 }
 
 async function resolveWhatsappHref(reference: string): Promise<string | null> {
@@ -236,8 +241,12 @@ export async function getBookingConfirmationData(
   const homeUrl = withLocalePath(locale, '/')
   const menuUrl = withLocalePath(locale, '/menu')
 
-  const { canCancel: canCancelByDate, deadlineLabel } = resolveCancelInfo(dateRaw)
-  const canCancel = canCancelByDate && !isYachtDeposit && !isCancelled && !isFailed
+  // /rezervasyon/yonet (ManageBookingClient) ile birebir aynı kural: NestPay üzerinden online ödenmiş olmalı.
+  const paymentStatus = row.payment_status ? String(row.payment_status).trim() : ''
+  const nestpayTransId = row.nestpay_trans_id ? String(row.nestpay_trans_id).trim() : ''
+  const isOnlinePaid = paymentStatus === 'paid' && nestpayTransId.length > 0
+  const refundWindowOpen = !isCancelled && !isFailed && computeRefundEligibility(dateRaw, displayTime).eligible
+  const refundDeadlineLabel = refundWindowOpen ? resolveRefundDeadlineLabel(dateRaw, displayTime) : null
 
   const googleCalendarUrl =
     !isCancelled && !isFailed && dateRaw
@@ -294,8 +303,9 @@ export async function getBookingConfirmationData(
     manageUrl,
     homeUrl,
     menuUrl,
-    canCancel,
-    cancelDeadlineLabel: canCancel ? deadlineLabel : null,
+    isOnlinePaid,
+    refundWindowOpen,
+    refundDeadlineLabel,
     googleCalendarUrl,
     icsUrl,
     whatsappHref: await resolveWhatsappHref(reference),

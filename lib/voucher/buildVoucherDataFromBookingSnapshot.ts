@@ -121,7 +121,7 @@ export async function buildVoucherDataFromBookingRow(
         const fallbackTime = tourMeta.quickFacts?.startTime?.trim() || undefined
         const arrivalTime = tourMeta.quickFacts?.returnTime?.trim() || undefined
         const mapLink = tourMeta.whereSection?.locationMapLink?.trim() || undefined
-        const mapImageUrl = mapImageUrlFromEmbed(tourMeta.whereSection?.mapEmbedUrl)
+        const mapImageUrl = mapImageUrlFromEmbed(tourMeta.whereSection?.mapEmbedUrl, undefined, mapLink)
         voucherData = {
           ...voucherData,
           ...(voucherData.time ? {} : fallbackTime ? { time: fallbackTime } : {}),

@@ -386,28 +386,46 @@
   gap: 0.625rem;
   padding: 0.75rem 1rem;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid var(--primary, #2168b8);
   background: #fff;
   font-family: var(--font-family), sans-serif;
   font-weight: 700;
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: var(--secondary, #131719);
+  color: var(--primary, #2168b8);
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .shareOption:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: rgba(var(--primary-rgb, 33, 104, 184), 0.06);
+  transform: scale(1.02);
 }
 
 .shareOptionIcon {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+}
+
+/* Telegram/Facebook gibi marka ikonları referans siteki gibi dolu renkli
+   rozet (badge) içinde — düz çizgi ikonlardan (link/e-posta/X) ayrışsın diye. */
+.shareOptionIconBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.shareOptionIconBadge .shareOptionIcon {
+  width: 13px;
+  height: 13px;
+  color: #fff;
 }
 
 @media (max-width: 480px) {

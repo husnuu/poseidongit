@@ -46,7 +46,7 @@ export default function CompactBlogCard({
   const dateLabel = formatDate(post.publishDate, locale)
 
   return (
-    <article className="group flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#f1f5f9] bg-[#f8fafc] shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.14)]">
+    <article className="group flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e7eaee] bg-[#f1f3f5] shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.14)]">
       <Link
         href={href}
         className="flex min-h-0 flex-1 flex-col rounded-2xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#2168b8]"

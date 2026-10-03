@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { ArrowRight, Star, X } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
+import InstagramModern from '@/components/icons/InstagramModern'
 import modalStyles from './ReviewModal.module.css'
 
 export type HomeReviewItem = {
@@ -29,6 +30,9 @@ export type HomeReviewsSectionData = {
   avgRating: number
   totalCount: number
   googleReviewsUrl?: string | null
+  instagramUrl?: string | null
+  /** Opsiyonel, Sanity'de (siteFooter > social > Instagram) manuel girilir — ör. "15.2K". */
+  instagramFollowerCount?: string | null
 }
 
 type HomeReviewsSectionProps = {
@@ -52,6 +56,18 @@ const GOOGLE_LABEL: Record<SiteLocale, (count: string) => string> = {
   tr: (count) => `Google Yorumları (+${count})`,
   en: (count) => `Google Reviews (+${count})`,
   de: (count) => `Google-Bewertungen (+${count})`,
+}
+
+const INSTAGRAM_LABEL: Record<SiteLocale, (count: string) => string> = {
+  tr: (count) => `Instagram Takipçi (+${count})`,
+  en: (count) => `Instagram Followers (+${count})`,
+  de: (count) => `Instagram-Follower (+${count})`,
+}
+
+const INSTAGRAM_FOLLOW_LABEL: Record<SiteLocale, string> = {
+  tr: "Instagram'da Takip Et",
+  en: 'Follow on Instagram',
+  de: 'Auf Instagram folgen',
 }
 
 const TRANSLATED_FROM_LABEL: Record<SiteLocale, string> = {
@@ -180,7 +196,7 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
 
   if (!data?.enabled || !data.items?.length) return null
 
-  const { items, avgRating, totalCount, googleReviewsUrl } = data
+  const { items, avgRating, totalCount, googleReviewsUrl, instagramUrl, instagramFollowerCount } = data
   const numLocale = locale === 'de' ? 'de-DE' : locale === 'en' ? 'en-US' : 'tr-TR'
 
   const scrollToIndex = (index: number) => {
@@ -305,20 +321,39 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
           <p className="mx-auto mt-2 max-w-2xl text-center text-sm font-normal leading-relaxed md:text-base" style={{ color: 'var(--secondary, #131719)' }}>
             {SUBTEXT[locale](totalCount.toLocaleString(numLocale), avgRating.toFixed(1))}
           </p>
-          {googleReviewsUrl && (
-            <div className="mt-5 flex justify-center">
-              <a
-                href={googleReviewsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                // Referans: şeffaf zemin (gradyan görünür), 2px #366deb çerçeve, aynı mavi
-                // büyük harf metin, küçük köşe yuvarlaklığı — beyaz "hap" değil. Üstüne
-                // gelince dolgu maviye dönüyor + hafif büyüme efekti.
-                className="inline-flex items-center gap-2.5 rounded-lg border-2 border-[#366deb] bg-transparent px-6 py-2.5 text-[15px] font-bold uppercase tracking-wide text-[#366deb] transition duration-200 hover:scale-105 hover:bg-[#366deb] hover:text-white"
-              >
-                <GoogleMark size={21} />
-                {GOOGLE_LABEL[locale](totalCount.toLocaleString(numLocale))}
-              </a>
+          {(googleReviewsUrl || instagramUrl) && (
+            <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
+              {googleReviewsUrl && (
+                <a
+                  href={googleReviewsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  // Referans: şeffaf zemin (gradyan görünür), 2px #366deb çerçeve, aynı mavi
+                  // büyük harf metin, küçük köşe yuvarlaklığı — beyaz "hap" değil. Üstüne
+                  // gelince dolgu maviye dönüyor + hafif büyüme efekti.
+                  className="inline-flex items-center gap-2.5 rounded-lg border-2 border-[#366deb] bg-transparent px-6 py-2.5 text-[15px] font-bold uppercase tracking-wide text-[#366deb] transition duration-200 hover:scale-105 hover:bg-[#366deb] hover:text-white"
+                >
+                  <GoogleMark size={21} />
+                  {GOOGLE_LABEL[locale](totalCount.toLocaleString(numLocale))}
+                </a>
+              )}
+              {instagramUrl && (
+                <a
+                  href={instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  // Google butonuyla birebir aynı dil: şeffaf zemin + 2px tek renk (Instagram
+                  // pembesi) çerçeve, üstüne gelince/basınca dolgu AYNI pembeye dönüyor + beyaz
+                  // metin (gradyan yok — Google butonundaki gibi tek renk). Mobilde Google
+                  // butonunun altında, biraz daha küçük; masaüstünde yan yana ve aynı boyutta.
+                  className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-lg border-2 border-[#d62976] bg-transparent px-4 py-1.5 text-[12px] font-bold uppercase tracking-wide text-[#d62976] transition duration-200 hover:scale-105 hover:bg-[#d62976] hover:text-white sm:gap-2.5 sm:px-6 sm:py-2.5 sm:text-[15px]"
+                >
+                  <InstagramModern className="h-[15px] w-[15px] sm:h-[21px] sm:w-[21px]" />
+                  {instagramFollowerCount
+                    ? INSTAGRAM_LABEL[locale](instagramFollowerCount)
+                    : INSTAGRAM_FOLLOW_LABEL[locale]}
+                </a>
+              )}
             </div>
           )}
         </header>

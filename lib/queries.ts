@@ -765,6 +765,15 @@ export const siteSettingsWhatsappQuery = `*[_type == "siteSettings"][0]{
   "whatsapp": contactInfo.whatsapp
 }`
 
+/** Anasayfa "Sizden Gelenler" bölümündeki Instagram butonu — footer'daki aynı
+ * Instagram hesabının linkini ve (varsa) takipçi sayısını kullanır. */
+export const siteFooterInstagramQuery = `*[_type == "siteFooter"][0]{
+  "instagram": social.items[platform == "instagram" && enabled != false][0]{
+    href,
+    followerCount
+  }
+}`
+
 /** Footer logosunu header ile aynı kaynaktan (siteSettings) hizalamak için hafif sorgu */
 export const siteSettingsLogoQuery = `*[_type == "siteSettings"][0]{
   siteName,

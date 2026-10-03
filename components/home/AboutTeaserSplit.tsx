@@ -74,7 +74,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
         {/* Metin - solda (referans: koyu başlık, sol hizalı, iki buton) */}
         <div
           ref={contentRef}
-          className="order-2 w-full text-left transition-all duration-300 ease-out lg:order-1"
+          className="order-2 w-full text-center transition-all duration-300 ease-out lg:order-1 lg:text-left"
           style={{
             opacity: visible ? 1 : 0,
             transform: visible ? 'translateY(0)' : 'translateY(8px)',
@@ -99,7 +99,7 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
             </div>
           )}
           {(primaryCta?.label || secondaryCta?.label) && (
-            <div className="mt-8 flex flex-wrap items-center gap-4">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4 lg:justify-start">
               {primaryCta?.label && (
                 <>
                   {primaryPath ? (

@@ -292,7 +292,7 @@ export default async function TourPage({
           />
         </div>
       )}
-      <div className="container mx-auto px-4 pt-12 pb-16 max-w-[1360px]">
+      <div className="container mx-auto px-4 pt-6 pb-16 lg:pt-12 max-w-[1360px]">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
           <main className="flex-1 min-w-0">
             <span id="reviews" className="block scroll-mt-24" aria-hidden />
