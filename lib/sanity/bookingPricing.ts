@@ -298,7 +298,13 @@ function getMinPriceForDate(tour: TourForBooking, dateStr: string): number | nul
   return min
 }
 
-function isDateAvailable(tour: TourForBooking, dateStr: string): boolean {
+/** Sadece `availability` alanına bakar — dar bir şekil kabul eder, sunucu tarafı
+ *  takvim API'leri (örn. rezervasyon tarihi değiştirme) tam `TourForBooking` nesnesi
+ *  olmadan da çağırabilsin diye export edildi. */
+export function isDateAvailable(
+  tour: Pick<TourForBooking, 'availability'>,
+  dateStr: string
+): boolean {
   const avail = tour.availability
   // Sanity'de takvim kapalıysa veya yoksa tüm günler müsait
   if (!avail?.enabled) return true

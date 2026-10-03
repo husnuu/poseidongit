@@ -1,4 +1,16 @@
-import { PDFDocument, rgb, StandardFonts, type PDFFont, type PDFPage } from 'pdf-lib'
+import {
+  PDFDocument,
+  rgb,
+  StandardFonts,
+  pushGraphicsState,
+  popGraphicsState,
+  rectangle,
+  clip,
+  endPath,
+  type PDFFont,
+  type PDFPage,
+  type Color,
+} from 'pdf-lib'
 import QRCode from 'qrcode'
 import type { PremiumEticketPayload } from './premiumEticket'
 
@@ -6,16 +18,18 @@ import type { PremiumEticketPayload } from './premiumEticket'
 const DEJAVU_FONT_URL = 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf'
 const DEJAVU_BOLD_URL = 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf'
 
-// —— Palette: temiz beyaz boarding pass ——
+// —— Palette: modern, yumuşak zemin + beyaz yüzen kartlar ——
+const PAGE_BG = rgb(0.953, 0.961, 0.973)      // #f3f5f8 — kağıt değil, hafif mavimsi gri
 const WHITE   = rgb(1, 1, 1)
-const OFF_WHITE = rgb(0.97, 0.975, 0.985)
 const NAVY    = rgb(33 / 255, 104 / 255, 184 / 255)   // #2168b8 (site brand blue)
+const NAVY_DEEP = rgb(14 / 255, 56 / 255, 102 / 255)  // hero scrim / koyu vurgu
 const CORAL   = rgb(0.988, 0.424, 0.310)     // #fc6c4f
 const SLATE   = rgb(0.28, 0.33, 0.40)        // #48545f
 const MUTED   = rgb(0.56, 0.61, 0.67)        // #8f9caa
-const DIVIDER = rgb(0.88, 0.90, 0.93)        // #e1e6ed
-const GREEN   = rgb(0.13, 0.77, 0.37)        // #22c55e
-const AMBER   = rgb(0.95, 0.70, 0.13)        // #f2b422
+const DIVIDER = rgb(0.90, 0.92, 0.95)        // #e5ebf2
+const SHADOW  = rgb(0.72, 0.76, 0.82)
+const GREEN   = rgb(0.06, 0.60, 0.35)
+const AMBER   = rgb(0.80, 0.52, 0.02)
 
 async function tryEmbedFontUrl(doc: PDFDocument, url: string): Promise<PDFFont | null> {
   try {
@@ -78,7 +92,7 @@ function labels(locale: 'tr' | 'en') {
   if (locale === 'tr') return {
     ebilet: 'E-BİLET', from: 'KALKIŞ', boarding: 'Biniş', departure: 'Kalkış',
     return: 'Dönüş', meeting: 'Buluşma noktası', guests: 'Misafir',
-    class: 'Sınıf', payment: 'ÖDEME ÖZETI', total: 'Toplam', paid: 'Ödenen',
+    class: 'Sınıf', payment: 'ÖDEME ÖZETİ', total: 'Toplam', paid: 'Ödenen',
     remaining: 'Kalan', reservation: 'REZERVASYON NO', scan: 'QR kodu biniş noktasında gösterin',
     contact: 'İletişim', viewOnMap: 'Haritada görüntüle',
     whatToBringTitle: 'Getirmeniz gerekenler',
@@ -88,11 +102,14 @@ function labels(locale: 'tr' | 'en') {
     foodDrinkTitle: 'Yiyecek & İçecek',
     foodDrinkPolicyText: 'Dışarıdan yiyecek getirmeniz serbesttir; içecek getirilmesine izin verilmemektedir.',
     mealLabel: 'Yemek tercihleri',
+    passenger: 'YOLCU',
+    haveANiceTrip: 'İyi yolculuklar!',
+    pageTwoTitle: 'Yolculuk Bilgileri',
   }
   return {
     ebilet: 'E-TICKET', from: 'DEPARTURE', boarding: 'Boarding', departure: 'Departs',
     return: 'Returns', meeting: 'Meeting point', guests: 'Guests',
-    class: 'Class', payment: 'PAYMENT', total: 'Total', paid: 'Paid',
+    class: 'Class', payment: 'PAYMENT SUMMARY', total: 'Total', paid: 'Paid',
     remaining: 'Due', reservation: 'RESERVATION NO', scan: 'Show QR code at boarding',
     contact: 'Contact', viewOnMap: 'View on map',
     whatToBringTitle: 'What to bring',
@@ -102,29 +119,74 @@ function labels(locale: 'tr' | 'en') {
     foodDrinkTitle: 'Food & Drinks',
     foodDrinkPolicyText: "You're welcome to bring your own food; outside drinks are not permitted on board.",
     mealLabel: 'Meal preferences',
+    passenger: 'PASSENGER',
+    haveANiceTrip: 'Have a great trip!',
+    pageTwoTitle: 'Trip Information',
+  }
+}
+
+// ─── Çizim yardımcıları ──────────────────────────────────────────────────────
+
+/** Köşeleri yuvarlatılmış dikdörtgen için SVG path (w×h kutusu, sol-üst (0,0)). */
+function roundedRectPath(w: number, h: number, r: number): string {
+  const rr = Math.max(0, Math.min(r, w / 2, h / 2))
+  return `M ${rr},0 H ${w - rr} Q ${w},0 ${w},${rr} V ${h - rr} Q ${w},${h} ${w - rr},${h} H ${rr} Q 0,${h} 0,${h - rr} V ${rr} Q 0,0 ${rr},0 Z`
+}
+
+/** Yuvarlak köşeli dikdörtgen çizer. (x, yBottom) sol-alt köşedir — drawRectangle ile aynı konvansiyon. */
+function roundedRect(
+  page: PDFPage,
+  x: number, yBottom: number, w: number, h: number, r: number,
+  opts: { fill?: Color; borderColor?: Color; borderWidth?: number; opacity?: number } = {}
+) {
+  page.drawSvgPath(roundedRectPath(w, h, r), {
+    x, y: yBottom + h,
+    color: opts.fill,
+    borderColor: opts.borderColor,
+    borderWidth: opts.borderWidth,
+    opacity: opts.opacity,
+  })
+}
+
+/** Hafif bir gölge + üzerinde beyaz (veya verilen renkte) yuvarlak kart — "yüzen kart" hissi. */
+function floatingCard(page: PDFPage, x: number, yBottom: number, w: number, h: number, r = 16, fill: Color = WHITE) {
+  roundedRect(page, x + 2.5, yBottom - 3, w, h, r, { fill: SHADOW, opacity: 0.35 })
+  roundedRect(page, x, yBottom, w, h, r, { fill, borderColor: DIVIDER, borderWidth: 1 })
+}
+
+/** Dikdörtgen bir alana görseli ORANTIYI KORUYARAK KIRPARAK (cover-fit) sığdırır — pdf-lib'in
+ *  native "object-fit: cover" karşılığı yok, bu yüzden clip path ile elde ediyoruz. */
+function drawImageCover(
+  page: PDFPage,
+  img: Awaited<ReturnType<PDFDocument['embedPng']>>,
+  x: number, yBottom: number, w: number, h: number
+) {
+  const scale = Math.max(w / img.width, h / img.height)
+  const drawW = img.width * scale
+  const drawH = img.height * scale
+  const drawX = x + (w - drawW) / 2
+  const drawY = yBottom + (h - drawH) / 2
+  page.pushOperators(pushGraphicsState(), rectangle(x, yBottom, w, h), clip(), endPath())
+  page.drawImage(img, { x: drawX, y: drawY, width: drawW, height: drawH })
+  page.pushOperators(popGraphicsState())
+}
+
+/** Görselin altında, metin okunabilirliği için yumuşak koyulaşan sahte gradyan (üst üste yarı-saydam bantlar). */
+function drawBottomScrim(page: PDFPage, x: number, yBottom: number, w: number, scrimH: number) {
+  const bands = 10
+  for (let i = 0; i < bands; i++) {
+    const bandH = scrimH / bands
+    const t = i / (bands - 1) // 0 (üstte, açık) → 1 (altta, koyu)
+    page.drawRectangle({
+      x, y: yBottom + i * bandH, width: w, height: bandH + 0.5,
+      color: NAVY_DEEP, opacity: 0.08 + t * 0.62,
+    })
   }
 }
 
 /** Yatay köprü çizgisi */
-function hLine(page: PDFPage, x: number, y: number, w: number) {
-  page.drawLine({ start: { x, y }, end: { x: x + w, y }, thickness: 0.6, color: DIVIDER })
-}
-
-/** Sol başlık + sağ değer çifti */
-function labelValue(
-  page: PDFPage,
-  font: PDFFont, bold: PDFFont,
-  x: number, y: number, w: number,
-  label: string, value: string,
-  valSize = 10, valColor = SLATE
-) {
-  page.drawText(label.toUpperCase(), { x, y: y + 14, size: 7, font: bold, color: MUTED })
-  page.drawText(value, { x, y, size: valSize, font: bold, color: valColor, maxWidth: w, lineHeight: 13 })
-}
-
-/** Rounded rectangle yoksa köşeli çiz (pdf-lib desteği kısıtlı) */
-function card(page: PDFPage, x: number, y: number, w: number, h: number, bg = OFF_WHITE) {
-  page.drawRectangle({ x, y, width: w, height: h, color: bg })
+function hLine(page: PDFPage, x: number, y: number, w: number, color: Color = DIVIDER) {
+  page.drawLine({ start: { x, y }, end: { x: x + w, y }, thickness: 1, color })
 }
 
 export async function generatePremiumEticketPdf(payload: PremiumEticketPayload): Promise<Uint8Array> {
@@ -138,104 +200,93 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
   const L = labels(payload.locale)
   const numLocale = payload.locale === 'tr' ? 'tr-TR' : 'en-US'
 
-  const padX = 36
+  const padX = 32
   const cardW = W - padX * 2
 
-  // —— Beyaz zemin ——
-  page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: WHITE })
+  page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: PAGE_BG })
 
-  // —— Üst şerit (navy) ——
-  const topH = 80
-  page.drawRectangle({ x: 0, y: H - topH, width: W, height: topH, color: NAVY })
-
-  // Logo / marka
+  // ── Tam genişlikte hero görsel (kırpılarak kaplanır) + alt gradyan + üzerine başlık ──
+  const heroH = 208
+  const heroTop = H
+  const heroBottom = H - heroH
   const brand = (payload.brandName ?? process.env.NEXT_PUBLIC_SITE_NAME ?? 'Poseidon').trim()
-  let logoBottom = H - topH + 20
-  if (payload.logoUrl) {
-    const img = await tryEmbedRemoteImage(doc, payload.logoUrl)
-    if (img) {
-      const maxH = 36, scale = Math.min(160 / img.width, maxH / img.height)
-      const iw = img.width * scale, ih = img.height * scale
-      logoBottom = H - topH + (topH - ih) / 2
-      page.drawImage(img, { x: padX, y: logoBottom, width: iw, height: ih })
-    } else {
-      page.drawText(brand.toUpperCase(), { x: padX, y: H - topH + 28, size: 16, font: bold, color: WHITE })
-    }
-  } else {
-    page.drawText(brand.toUpperCase(), { x: padX, y: H - topH + 28, size: 16, font: bold, color: WHITE })
-  }
 
-  // E-Bilet etiketi (sağ üst)
-  const pillTxt = L.ebilet
-  const pillW = bold.widthOfTextAtSize(pillTxt, 8) + 20
-  const pillH = 20
-  const pillX = W - padX - pillW
-  const pillY = H - topH + (topH - pillH) / 2
-  page.drawRectangle({ x: pillX, y: pillY, width: pillW, height: pillH, color: CORAL })
-  page.drawText(pillTxt, { x: pillX + 10, y: pillY + 6, size: 8, font: bold, color: WHITE })
-
-  // —— Turuncu şerit (ince) ——
-  page.drawRectangle({ x: 0, y: H - topH - 4, width: W, height: 4, color: CORAL })
-
-  let y = H - topH - 28
-
-  // —— Tur kapak fotoğrafı ——
+  let heroImg: Awaited<ReturnType<typeof tryEmbedRemoteImage>> = null
   if (payload.tourImageUrl) {
-    const heroImg = await tryEmbedRemoteImage(doc, payload.tourImageUrl)
-    if (heroImg) {
-      const heroH = 130
-      const heroScale = Math.min(cardW / heroImg.width, heroH / heroImg.height)
-      const drawW = heroImg.width * heroScale
-      const drawH = heroImg.height * heroScale
-      page.drawRectangle({ x: padX, y: y - heroH, width: cardW, height: heroH, color: OFF_WHITE })
-      page.drawImage(heroImg, {
-        x: padX + (cardW - drawW) / 2,
-        y: y - heroH + (heroH - drawH) / 2,
-        width: drawW,
-        height: drawH,
-      })
-      y -= heroH + 16
+    heroImg = await tryEmbedRemoteImage(doc, payload.tourImageUrl)
+  }
+
+  if (heroImg) {
+    drawImageCover(page, heroImg, 0, heroBottom, W, heroH)
+    drawBottomScrim(page, 0, heroBottom, W, heroH * 0.72)
+  } else {
+    page.drawRectangle({ x: 0, y: heroBottom, width: W, height: heroH, color: NAVY })
+  }
+
+  // Marka / logo — hero üzerinde sol üst (açık renk, gölgeli okunur)
+  let logoDrawn = false
+  if (payload.logoUrl) {
+    const logoImg = await tryEmbedRemoteImage(doc, payload.logoUrl)
+    if (logoImg) {
+      const maxH = 30
+      const scale = Math.min(140 / logoImg.width, maxH / logoImg.height)
+      const iw = logoImg.width * scale
+      const ih = logoImg.height * scale
+      page.drawImage(logoImg, { x: padX, y: heroTop - 20 - ih, width: iw, height: ih })
+      logoDrawn = true
     }
   }
-
-  // —— Tur başlığı ——
-  if (payload.tourTitle?.trim()) {
-    page.drawText(payload.tourTitle.trim().toUpperCase(), {
-      x: padX, y, size: 13, font: bold, color: NAVY,
-      maxWidth: cardW, lineHeight: 16,
-    })
-    y -= 22
-    hLine(page, padX, y + 4, cardW)
-    y -= 16
+  if (!logoDrawn) {
+    page.drawText(brand.toUpperCase(), { x: padX, y: heroTop - 36, size: 15, font: bold, color: WHITE })
   }
 
-  // —— Yolcu bilgi kartı ——
-  const paxCardH = 80
-  card(page, padX, y - paxCardH, cardW, paxCardH)
-  page.drawRectangle({ x: padX, y: y - paxCardH, width: 4, height: paxCardH, color: CORAL })
+  // "E-BİLET" rozeti — hero üzerinde sağ üst
+  const pillTxt = L.ebilet
+  const pillW = bold.widthOfTextAtSize(pillTxt, 8.5) + 22
+  const pillH = 22
+  roundedRect(page, W - padX - pillW, heroTop - 20 - pillH, pillW, pillH, pillH / 2, { fill: CORAL })
+  page.drawText(pillTxt, {
+    x: W - padX - pillW + 11, y: heroTop - 20 - pillH + 7.5, size: 8.5, font: bold, color: WHITE,
+  })
 
-  // İsim
-  page.drawText(payload.locale === 'tr' ? 'YOLCU' : 'PASSENGER',
-    { x: padX + 14, y: y - 16, size: 7, font: bold, color: MUTED })
-  page.drawText(payload.passengerName,
-    { x: padX + 14, y: y - 34, size: 16, font: bold, color: NAVY, maxWidth: cardW * 0.55 })
+  // Tur başlığı + sınıf rozeti — hero altındaki gradyan üzerinde
+  const titleY = heroBottom + 52
+  if (payload.tourTitle?.trim()) {
+    page.drawText(payload.tourTitle.trim(), {
+      x: padX, y: titleY, size: 18, font: bold, color: WHITE,
+      maxWidth: cardW - 20, lineHeight: 21,
+    })
+  }
+  const classTxt = payload.ticketClass
+  const classPillW = bold.widthOfTextAtSize(classTxt, 9) + 20
+  roundedRect(page, padX, heroBottom + 16, classPillW, 20, 10, { fill: WHITE, opacity: 0.92 })
+  page.drawText(classTxt, { x: padX + 10, y: heroBottom + 22, size: 9, font: bold, color: NAVY })
 
-  // Misafir + Sınıf
-  const col2x = padX + 14 + cardW * 0.58
-  page.drawText(L.guests.toUpperCase(), { x: col2x, y: y - 16, size: 7, font: bold, color: MUTED })
-  page.drawText(guestLine(payload), { x: col2x, y: y - 34, size: 13, font: bold, color: CORAL })
+  let y = heroBottom - 16
 
-  page.drawText(L.class.toUpperCase(), { x: col2x, y: y - 54, size: 7, font: bold, color: MUTED })
-  page.drawText(payload.ticketClass, { x: col2x, y: y - 68, size: 10, font: bold, color: SLATE, maxWidth: cardW * 0.38 })
+  // ── Yolcu / Misafir / Sınıf bilgi kartı ──
+  const paxCardH = 72
+  floatingCard(page, padX, y - paxCardH, cardW, paxCardH)
 
-  y -= paxCardH + 18
+  page.drawText(L.passenger, { x: padX + 20, y: y - 20, size: 8, font: bold, color: MUTED })
+  page.drawText(payload.passengerName, {
+    x: padX + 20, y: y - 40, size: 16, font: bold, color: NAVY, maxWidth: cardW * 0.52,
+  })
 
-  // —— Saat + Konum ——
-  const timeCardH = payload.meetingPoint?.trim() ? 108 : 76
-  card(page, padX, y - timeCardH, cardW, timeCardH)
-  page.drawRectangle({ x: padX, y: y - timeCardH, width: 4, height: timeCardH, color: NAVY })
+  const col2x = padX + 20 + cardW * 0.56
+  page.drawText(L.guests.toUpperCase(), { x: col2x, y: y - 20, size: 8, font: bold, color: MUTED })
+  page.drawText(guestLine(payload), { x: col2x, y: y - 36, size: 13, font: bold, color: CORAL })
 
-  const tw = (cardW - 24) / 3
+  page.drawText(L.class.toUpperCase(), { x: col2x, y: y - 52, size: 8, font: bold, color: MUTED })
+  page.drawText(payload.ticketClass, { x: col2x, y: y - 65, size: 9.5, font: bold, color: SLATE, maxWidth: cardW * 0.36 })
+
+  y -= paxCardH + 14
+
+  // ── Saat + Buluşma noktası kartı ──
+  const timeCardH = payload.meetingPoint?.trim() ? 112 : 72
+  floatingCard(page, padX, y - timeCardH, cardW, timeCardH)
+
+  const tw = (cardW - 40) / 3
   const times: [string, string][] = [
     [L.boarding, payload.boardingTime],
     [L.departure, payload.departureTime],
@@ -243,185 +294,190 @@ export async function generatePremiumEticketPdf(payload: PremiumEticketPayload):
   ]
   for (let i = 0; i < 3; i++) {
     const [lbl, val] = times[i]
-    const tx = padX + 14 + i * tw
-    page.drawText(lbl.toUpperCase(), { x: tx, y: y - 16, size: 7, font: bold, color: MUTED })
-    page.drawText(val, { x: tx, y: y - 36, size: 16, font: bold, color: NAVY })
-    if (i < 2) page.drawLine({
-      start: { x: tx + tw - 8, y: y - 18 }, end: { x: tx + tw - 8, y: y - 52 },
-      thickness: 0.5, color: DIVIDER,
-    })
+    const tx = padX + 20 + i * tw
+    page.drawText(lbl.toUpperCase(), { x: tx, y: y - 22, size: 8, font: bold, color: MUTED })
+    page.drawText(val, { x: tx, y: y - 44, size: 17, font: bold, color: NAVY })
+    if (i < 2) {
+      page.drawLine({
+        start: { x: tx + tw - 14, y: y - 18 }, end: { x: tx + tw - 14, y: y - 52 },
+        thickness: 1, color: DIVIDER,
+      })
+    }
   }
 
   if (payload.meetingPoint?.trim()) {
-    hLine(page, padX + 14, y - 56, cardW - 28)
-    page.drawText(L.meeting.toUpperCase(), { x: padX + 14, y: y - 68, size: 7, font: bold, color: MUTED })
+    hLine(page, padX + 20, y - 62, cardW - 40)
+    page.drawText(L.meeting.toUpperCase(), { x: padX + 20, y: y - 76, size: 8, font: bold, color: MUTED })
     page.drawText(payload.meetingPoint.trim(), {
-      x: padX + 14, y: y - 84, size: 10, font: font, color: SLATE,
-      maxWidth: cardW - 28, lineHeight: 13,
+      x: padX + 20, y: y - 91, size: 10, font, color: SLATE,
+      maxWidth: cardW - 40, lineHeight: 12.5,
     })
   }
 
-  y -= timeCardH + 18
+  y -= timeCardH + 16
 
-  // —— Perforasyon çizgisi (koçan ayrımı) ——
-  const perfY = y - 4
-  page.drawLine({ start: { x: padX, y: perfY }, end: { x: W - padX, y: perfY }, thickness: 0.5, color: DIVIDER, dashArray: [4, 3] })
-  page.drawCircle({ x: padX - 8, y: perfY, size: 8, color: WHITE })
-  page.drawCircle({ x: W - padX + 8, y: perfY, size: 8, color: WHITE })
-  y -= 22
-
-  // —— QR Kod ——
+  // ── QR kartı (gölgeli, ortalanmış) + Rezervasyon No ──
   const qrPixels = 480
   const qrDataUrl = await QRCode.toDataURL(payload.qrPayload, {
-    type: 'image/png', width: qrPixels, margin: 2, errorCorrectionLevel: 'M',
-    color: { dark: '#172066', light: '#ffffff' },
+    type: 'image/png', width: qrPixels, margin: 1, errorCorrectionLevel: 'M',
+    color: { dark: '#0e3866', light: '#ffffff' },
   })
   const qrImg = await embedPngFromDataUrl(doc, qrDataUrl)
-  const qrTarget = 120
+  const qrTarget = 110
   const qrScale = qrTarget / Math.max(qrImg.width, qrImg.height)
   const qrW = qrImg.width * qrScale
   const qrH = qrImg.height * qrScale
-  const qrBoxPad = 12
+  const qrBoxPad = 16
   const qrBoxW = qrW + qrBoxPad * 2
-  const qrBoxH = qrH + qrBoxPad * 2 + 30
+  const qrBoxH = qrH + qrBoxPad * 2 + 26 + 48 // QR + üst metin + rezervasyon no bloğu
   const qrBoxX = (W - qrBoxW) / 2
 
-  card(page, qrBoxX, y - qrBoxH, qrBoxW, qrBoxH)
-  page.drawRectangle({ x: qrBoxX, y: y - qrBoxH, width: qrBoxW, height: qrBoxH, borderColor: DIVIDER, borderWidth: 0.7 })
+  floatingCard(page, qrBoxX, y - qrBoxH, qrBoxW, qrBoxH, 18)
 
   page.drawText(L.scan, {
-    x: W / 2 - bold.widthOfTextAtSize(L.scan, 8) / 2,
-    y: y - 16, size: 8, font: bold, color: MUTED,
+    x: W / 2 - font.widthOfTextAtSize(L.scan, 8.5) / 2,
+    y: y - 16, size: 8.5, font, color: MUTED,
   })
-  page.drawImage(qrImg, { x: qrBoxX + qrBoxPad, y: y - qrBoxH + qrBoxPad, width: qrW, height: qrH })
+  const qrImgY = y - 16 - 12 - qrH
+  page.drawImage(qrImg, { x: W / 2 - qrW / 2, y: qrImgY, width: qrW, height: qrH })
 
-  y -= qrBoxH + 20
+  hLine(page, qrBoxX + 20, qrImgY - 14, qrBoxW - 40)
 
-  // —— Rezervasyon no (büyük) ——
   const resCode = payload.reservationCode
-  const resW = bold.widthOfTextAtSize(resCode, 18)
+  const resW = bold.widthOfTextAtSize(resCode, 19)
   page.drawText(L.reservation, {
     x: W / 2 - bold.widthOfTextAtSize(L.reservation, 8) / 2,
-    y: y - 14, size: 8, font: bold, color: MUTED,
+    y: qrImgY - 29, size: 8, font: bold, color: MUTED,
   })
-  page.drawText(resCode, { x: W / 2 - resW / 2, y: y - 36, size: 18, font: bold, color: NAVY })
+  page.drawText(resCode, { x: W / 2 - resW / 2, y: qrImgY - 50, size: 19, font: bold, color: NAVY })
 
-  hLine(page, padX, y - 48, cardW)
-  y -= 66
+  y -= qrBoxH + 16
 
-  // —— Ödeme özeti ——
-  page.drawText(L.payment, { x: padX, y, size: 8, font: bold, color: MUTED })
-  y -= 18
+  // ── Ödeme özeti — 3 eşit "chip" kart ──
+  page.drawText(L.payment, { x: padX, y, size: 9, font: bold, color: MUTED })
+  y -= 14
 
-  const pw = (cardW - 16) / 3
-  const payItems: [string, number, ReturnType<typeof rgb>][] = [
+  const chipGap = 10
+  const chipW = (cardW - chipGap * 2) / 3
+  const chipH = 48
+  const payItems: [string, number, Color][] = [
     [L.total, payload.totalAmount, NAVY],
     [L.paid, payload.paidAmount, GREEN],
     [L.remaining, payload.remainingAmount, AMBER],
   ]
   for (let i = 0; i < 3; i++) {
     const [lbl, amt, col] = payItems[i]
-    const px = padX + i * pw
-    page.drawText(lbl.toUpperCase(), { x: px, y, size: 7, font: bold, color: MUTED })
-    page.drawText(fmtMoney(amt, payload.currency, numLocale), { x: px, y: y - 18, size: 13, font: bold, color: col })
+    const cx = padX + i * (chipW + chipGap)
+    roundedRect(page, cx, y - chipH, chipW, chipH, 12, { fill: WHITE, borderColor: DIVIDER, borderWidth: 1 })
+    page.drawText(lbl.toUpperCase(), { x: cx + 14, y: y - 18, size: 7.5, font: bold, color: MUTED })
+    const amtTxt = fmtMoney(amt, payload.currency, numLocale)
+    page.drawText(amtTxt, { x: cx + 14, y: y - 36, size: 13, font: bold, color: col, maxWidth: chipW - 24 })
   }
 
-  y -= 44
-  hLine(page, padX, y, cardW)
-  y -= 20
+  y -= chipH + 18
 
-  // —— Footer iletişim ——
+  // ── Footer iletişim ──
   const contactBits = [payload.contactPhone, payload.contactEmail, payload.contactWebsite].filter(Boolean) as string[]
   if (contactBits.length) {
-    page.drawText(L.contact.toUpperCase(), { x: padX, y, size: 7, font: bold, color: MUTED })
-    page.drawText(contactBits.join('   ·   '), { x: padX, y: y - 14, size: 8, font: font, color: SLATE, maxWidth: cardW, lineHeight: 11 })
+    page.drawText(L.contact.toUpperCase(), {
+      x: W / 2 - bold.widthOfTextAtSize(L.contact.toUpperCase(), 7.5) / 2,
+      y, size: 7.5, font: bold, color: MUTED,
+    })
+    y -= 15
+    const line = contactBits.join('   ·   ')
+    page.drawText(line, {
+      x: W / 2 - font.widthOfTextAtSize(line, 9) / 2,
+      y, size: 9, font, color: SLATE, maxWidth: cardW, lineHeight: 12,
+    })
   }
 
-  // Alt turuncu bar
+  // Alt turuncu şerit — marka imzası
   page.drawRectangle({ x: 0, y: 0, width: W, height: 6, color: CORAL })
 
-  // —— Sayfa 2: Getirmeniz gerekenler / Yiyecek & içecek / yemek dağılımı / harita ——
+  // ───────────────────────────────────────────────────────────────────────
+  // Sayfa 2: Yolculuk bilgileri (getirmeniz gerekenler / yiyecek-içecek / buluşma + harita)
+  // ───────────────────────────────────────────────────────────────────────
   const page2 = doc.addPage([595, 842])
-  const topH2 = 56
+  page2.drawRectangle({ x: 0, y: 0, width: W, height: H, color: PAGE_BG })
+
+  const topH2 = 86
   page2.drawRectangle({ x: 0, y: H - topH2, width: W, height: topH2, color: NAVY })
-  page2.drawText(brand.toUpperCase(), { x: padX, y: H - topH2 + 20, size: 13, font: bold, color: WHITE })
-  page2.drawRectangle({ x: 0, y: H - topH2 - 4, width: W, height: 4, color: CORAL })
+  page2.drawText(brand.toUpperCase(), { x: padX, y: H - 34, size: 13, font: bold, color: WHITE })
+  page2.drawText(L.pageTwoTitle, { x: padX, y: H - 58, size: 19, font: bold, color: WHITE })
+  page2.drawRectangle({ x: 0, y: H - topH2 - 5, width: W, height: 5, color: CORAL })
 
-  let y2 = H - topH2 - 36
+  let y2 = H - topH2 - 30
 
-  // Getirmeniz gerekenler
-  page2.drawText(L.whatToBringTitle.toUpperCase(), { x: padX, y: y2, size: 11, font: bold, color: NAVY })
-  y2 -= 20
-  page2.drawText(L.whatToBringText, {
-    x: padX, y: y2, size: 10, font, color: SLATE, maxWidth: cardW, lineHeight: 14,
-  })
-  y2 -= 46
-  page2.drawText(L.equipmentProvidedText, {
-    x: padX, y: y2, size: 10, font, color: MUTED, maxWidth: cardW, lineHeight: 14,
-  })
-  y2 -= 40
-
-  hLine(page2, padX, y2, cardW)
-  y2 -= 26
-
-  // Yiyecek & İçecek
-  page2.drawText(L.foodDrinkTitle.toUpperCase(), { x: padX, y: y2, size: 11, font: bold, color: NAVY })
-  y2 -= 20
-  page2.drawText(L.foodDrinkPolicyText, {
-    x: padX, y: y2, size: 10, font, color: SLATE, maxWidth: cardW, lineHeight: 14,
-  })
-  y2 -= 40
-
-  // Yemek tercihleri (varsa)
+  type InfoSection = { title: string; body: string; sub?: string }
+  const sections: InfoSection[] = [
+    { title: L.whatToBringTitle, body: L.whatToBringText, sub: L.equipmentProvidedText },
+    { title: L.foodDrinkTitle, body: L.foodDrinkPolicyText },
+  ]
   if (payload.mealCounts?.length) {
-    hLine(page2, padX, y2, cardW)
-    y2 -= 26
-    page2.drawText(L.mealLabel.toUpperCase(), { x: padX, y: y2, size: 11, font: bold, color: NAVY })
-    y2 -= 20
     const mealLine = payload.mealCounts.map((m) => `${m.label} × ${m.count}`).join('   ·   ')
-    page2.drawText(mealLine, { x: padX, y: y2, size: 10, font: bold, color: SLATE, maxWidth: cardW, lineHeight: 14 })
-    y2 -= 36
+    sections.push({ title: L.mealLabel, body: mealLine })
   }
 
-  // Toplanma noktası + harita linki (varsa)
-  if (payload.meetingPoint?.trim() || payload.mapLink) {
-    hLine(page2, padX, y2, cardW)
-    y2 -= 26
-    page2.drawText(L.meeting.toUpperCase(), { x: padX, y: y2, size: 11, font: bold, color: NAVY })
-    y2 -= 20
+  for (const section of sections) {
+    const lines = section.sub ? 3 : 2
+    const h = lines === 3 ? 108 : 78
+    floatingCard(page2, padX, y2 - h, cardW, h, 16)
+    page2.drawText(section.title.toUpperCase(), { x: padX + 20, y: y2 - 24, size: 9.5, font: bold, color: NAVY })
+    page2.drawText(section.body, {
+      x: padX + 20, y: y2 - 44, size: 10.5, font, color: SLATE, maxWidth: cardW - 40, lineHeight: 14,
+    })
+    if (section.sub) {
+      page2.drawText(section.sub, {
+        x: padX + 20, y: y2 - 90, size: 9.5, font, color: MUTED, maxWidth: cardW - 40, lineHeight: 13,
+      })
+    }
+    y2 -= h + 18
+  }
+
+  // Toplanma noktası + harita — harita görseli önce getirilir, kart yüksekliği
+  // GERÇEKTEN kullanılabilir bir görsel olup olmamasına göre belirlenir (URL verilip
+  // de çekilemezse kartta boşuna büyük bir boşluk kalmasın diye).
+  const mapImg = payload.mapImageUrl ? await tryEmbedRemoteImage(doc, payload.mapImageUrl) : null
+  if (payload.meetingPoint?.trim() || mapImg) {
+    const mapH = mapImg ? 170 : 0
+    const textH = 56
+    const cardH = textH + (mapImg ? mapH + 16 : 0) + 16
+    floatingCard(page2, padX, y2 - cardH, cardW, cardH, 16)
+
+    page2.drawText(L.meeting.toUpperCase(), { x: padX + 20, y: y2 - 24, size: 9.5, font: bold, color: NAVY })
     if (payload.meetingPoint?.trim()) {
       page2.drawText(payload.meetingPoint.trim(), {
-        x: padX, y: y2, size: 10, font, color: SLATE, maxWidth: cardW, lineHeight: 14,
+        x: padX + 20, y: y2 - 42, size: 10.5, font, color: SLATE, maxWidth: cardW - 40, lineHeight: 14,
       })
-      y2 -= 30
     }
-    if (payload.mapImageUrl) {
-      const mapImg = await tryEmbedRemoteImage(doc, payload.mapImageUrl)
-      if (mapImg) {
-        const mapH = 150
-        const mapScale = Math.min(cardW / mapImg.width, mapH / mapImg.height)
-        const drawW = mapImg.width * mapScale
-        const drawH = mapImg.height * mapScale
-        page2.drawRectangle({ x: padX, y: y2 - mapH, width: cardW, height: mapH, color: OFF_WHITE })
-        page2.drawRectangle({ x: padX, y: y2 - mapH, width: cardW, height: mapH, borderColor: DIVIDER, borderWidth: 0.7 })
-        page2.drawImage(mapImg, {
-          x: padX + (cardW - drawW) / 2,
-          y: y2 - mapH + (mapH - drawH) / 2,
-          width: drawW,
-          height: drawH,
-        })
-        // Merkez nokta işaretçisi (toplanma noktası)
-        page2.drawCircle({ x: padX + cardW / 2, y: y2 - mapH / 2, size: 8, color: WHITE })
-        page2.drawCircle({ x: padX + cardW / 2, y: y2 - mapH / 2, size: 5.5, color: CORAL })
-        y2 -= mapH + 14
-      }
+
+    if (mapImg) {
+      const mapX = padX + 16
+      const mapW = cardW - 32
+      const mapYBottom = y2 - cardH + 14
+      drawImageCover(page2, mapImg, mapX, mapYBottom, mapW, mapH)
+      roundedRect(page2, mapX, mapYBottom, mapW, mapH, 12, { borderColor: DIVIDER, borderWidth: 1 })
+      // Merkez pin işaretçisi
+      const pinX = mapX + mapW / 2
+      const pinY = mapYBottom + mapH / 2
+      page2.drawCircle({ x: pinX, y: pinY, size: 9, color: WHITE })
+      page2.drawCircle({ x: pinX, y: pinY, size: 6, color: CORAL })
     }
-    if (payload.mapLink) {
-      page2.drawText(`${L.viewOnMap}: ${payload.mapLink}`, {
+    y2 -= cardH + 18
+
+    if (payload.mapLink?.trim()) {
+      page2.drawText(`${L.viewOnMap}: ${payload.mapLink.trim()}`, {
         x: padX, y: y2, size: 9, font, color: NAVY, maxWidth: cardW, lineHeight: 13,
       })
+      y2 -= 20
     }
   }
+
+  // Kapanış notu
+  page2.drawText(L.haveANiceTrip, {
+    x: W / 2 - bold.widthOfTextAtSize(L.haveANiceTrip, 12) / 2,
+    y: Math.min(y2 - 16, 120), size: 12, font: bold, color: NAVY,
+  })
 
   page2.drawRectangle({ x: 0, y: 0, width: W, height: 6, color: CORAL })
 

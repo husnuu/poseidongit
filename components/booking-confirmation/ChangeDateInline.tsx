@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import FirstClassSeatSelector from '@/components/booking/FirstClassSeatSelector'
 import type { CalendarDayAvailability } from '@/app/api/availability/calendar/route'
+import type { TourCalendarDay } from '@/app/api/availability/tour-calendar/route'
 import styles from '@/components/booking/booking.module.css'
 import { getEarliestBookableDateStr } from '@/lib/booking/bookingWindow'
 import { getBookingWizardUi } from '@/lib/i18n/bookingWizardUi'
@@ -43,29 +44,36 @@ export default function ChangeDateInline({
   const requiredLocas = isFirstClass ? Math.ceil(totalPax / 2) : 0
   const blocked = !!refundStatus && refundStatus !== 'request_rejected' && refundStatus !== 'refund_failed'
 
-  const [newDate, setNewDate] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(blocked ? 'İade talebiniz veya iade süreciniz devam ettiği için tarih değiştirilemez.' : null)
   const [calendarMonth, setCalendarMonth] = useState(() => currentDate.slice(0, 7) || new Date().toISOString().slice(0, 7))
-  const [calendarDays, setCalendarDays] = useState<CalendarDayAvailability[]>([])
   const [calendarLoading, setCalendarLoading] = useState(false)
   const [selectedNewDate, setSelectedNewDate] = useState<string | null>(null)
   const [selectedLocas, setSelectedLocas] = useState<string[]>([])
 
+  // First Class: loca bazlı müsaitlik (mevcut akış).
+  const [firstClassDays, setFirstClassDays] = useState<CalendarDayAvailability[]>([])
+  // Diğer sınıflar: genel kişi kontenjanı bazlı müsaitlik.
+  const [generalDays, setGeneralDays] = useState<TourCalendarDay[]>([])
+
   useEffect(() => {
-    if (!isFirstClass || !tourId || !calendarMonth) {
-      setCalendarDays([])
-      return
-    }
+    if (!tourId || !calendarMonth) return
     setCalendarLoading(true)
-    fetch(
-      `/api/availability/calendar?tourId=${encodeURIComponent(tourId)}&month=${encodeURIComponent(calendarMonth)}&excludeBookingId=${encodeURIComponent(bookingId)}`
-    )
+    const url = isFirstClass
+      ? `/api/availability/calendar?tourId=${encodeURIComponent(tourId)}&month=${encodeURIComponent(calendarMonth)}&excludeBookingId=${encodeURIComponent(bookingId)}`
+      : `/api/availability/tour-calendar?tourId=${encodeURIComponent(tourId)}&month=${encodeURIComponent(calendarMonth)}&classId=${encodeURIComponent(classId)}&excludeBookingId=${encodeURIComponent(bookingId)}`
+    fetch(url)
       .then((r) => r.json())
-      .then((data) => setCalendarDays(Array.isArray(data.days) ? data.days : []))
-      .catch(() => setCalendarDays([]))
+      .then((data) => {
+        if (isFirstClass) setFirstClassDays(Array.isArray(data.days) ? data.days : [])
+        else setGeneralDays(Array.isArray(data.days) ? data.days : [])
+      })
+      .catch(() => {
+        if (isFirstClass) setFirstClassDays([])
+        else setGeneralDays([])
+      })
       .finally(() => setCalendarLoading(false))
-  }, [isFirstClass, tourId, calendarMonth, bookingId])
+  }, [isFirstClass, tourId, calendarMonth, bookingId, classId])
 
   useEffect(() => {
     if (!isFirstClass || !selectedNewDate) return
@@ -77,7 +85,7 @@ export default function ChangeDateInline({
   }, [selectedNewDate, isFirstClass, currentDate, currentFirstClassLocas])
 
   const handleSubmit = async () => {
-    const dateToUse = isFirstClass && selectedNewDate ? selectedNewDate : newDate.trim().slice(0, 10)
+    const dateToUse = selectedNewDate
     if (!dateToUse || !/^\d{4}-\d{2}-\d{2}$/.test(dateToUse)) {
       setError('Geçerli bir tarih seçin.')
       return
@@ -129,131 +137,146 @@ export default function ChangeDateInline({
         </button>
       </div>
 
-      {isFirstClass ? (
-        <>
-          <p className="mb-3 mt-3 text-xs text-zinc-500">
-            Aynı gün sadece loca değiştirmek için tur tarihinizi tekrar seçin. Takvimde <strong>müsait loca sayısı</strong> gösterilir.
+      <p className="mb-3 mt-3 text-xs text-zinc-500">
+        {isFirstClass ? (
+          <>Aynı gün sadece loca değiştirmek için tur tarihinizi tekrar seçin. Takvimde <strong>müsait loca sayısı</strong> gösterilir.</>
+        ) : (
+          <>Yeni bir tur tarihi seçin. Takvimde o günkü <strong>müsait kontenjan</strong> gösterilir.</>
+        )}
+      </p>
+
+      <div className={styles.card}>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              const [y, m] = calendarMonth.split('-').map(Number)
+              const d = new Date(y, m - 2, 1)
+              setCalendarMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+            }}
+            disabled={blocked}
+            className="min-h-[36px] min-w-[36px] rounded-lg border border-zinc-200 bg-white text-[#131719] hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            ‹
+          </button>
+          <span className="text-sm font-bold text-[#131719]">
+            {new Date(calendarMonth + '-01').toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              const [y, m] = calendarMonth.split('-').map(Number)
+              const d = new Date(y, m, 1)
+              setCalendarMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+            }}
+            disabled={blocked}
+            className="min-h-[36px] min-w-[36px] rounded-lg border border-zinc-200 bg-white text-[#131719] hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            ›
+          </button>
+        </div>
+        {calendarLoading ? (
+          <div className="py-8 text-center text-sm text-zinc-500">Yükleniyor…</div>
+        ) : (
+          <div className={styles.calendarWrap}>
+            <div className={styles.calendarGrid}>
+              {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((w) => (
+                <div key={w} className={styles.weekday}>{w}</div>
+              ))}
+              {(() => {
+                const [y, m] = calendarMonth.split('-').map(Number)
+                const firstDay = new Date(y, m - 1, 1)
+                const lastDay = new Date(y, m, 0)
+                const gridStart = (firstDay.getDay() + 6) % 7
+                const pads = Array.from({ length: gridStart }, (_, i) => <div key={`pad-${i}`} />)
+                const dayCells = []
+
+                if (isFirstClass) {
+                  const dayMap = Object.fromEntries(firstClassDays.map((d) => [d.date, d]))
+                  for (let day = 1; day <= lastDay.getDate(); day++) {
+                    const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                    const info = dayMap[dateStr]
+                    const isPast = dateStr < minBookableStr
+                    const locasFree =
+                      info && typeof info.firstRemainingLocas === 'number'
+                        ? info.firstRemainingLocas
+                        : info
+                          ? Math.min(10, Math.max(0, Math.ceil((info.firstRemaining ?? 0) / 2)))
+                          : 0
+                    const isOwnTourDate = dateStr === currentDate.slice(0, 10)
+                    const locaSlotsOk = isOwnTourDate || (requiredLocas > 0 ? locasFree >= requiredLocas : locasFree > 0)
+                    const hasCapacity = info && info.firstRemaining > 0 && locaSlotsOk
+                    const available = !isPast && hasCapacity
+                    const selected = selectedNewDate === dateStr
+                    dayCells.push(
+                      <button
+                        key={dateStr}
+                        type="button"
+                        className={`${styles.dayCell} ${selected ? styles.dayCellSelected : ''} ${!available || blocked ? styles.dayCellDisabled : ''}`}
+                        onClick={() => available && !blocked && setSelectedNewDate(dateStr)}
+                        disabled={!available || blocked}
+                      >
+                        <span className={styles.dayNum}>{day}</span>
+                        {info && !isPast && <span className={styles.dayPrice}>{locasFree} loca</span>}
+                      </button>
+                    )
+                  }
+                } else {
+                  const dayMap = Object.fromEntries(generalDays.map((d) => [d.date, d]))
+                  for (let day = 1; day <= lastDay.getDate(); day++) {
+                    const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                    const info = dayMap[dateStr]
+                    const isPast = dateStr < minBookableStr
+                    const isOwnTourDate = dateStr === currentDate.slice(0, 10)
+                    const available = !isPast && (isOwnTourDate || !!info?.available)
+                    const selected = selectedNewDate === dateStr
+                    dayCells.push(
+                      <button
+                        key={dateStr}
+                        type="button"
+                        className={`${styles.dayCell} ${selected ? styles.dayCellSelected : ''} ${!available || blocked ? styles.dayCellDisabled : ''}`}
+                        onClick={() => available && !blocked && setSelectedNewDate(dateStr)}
+                        disabled={!available || blocked}
+                      >
+                        <span className={styles.dayNum}>{day}</span>
+                        {info && !isPast && !isOwnTourDate && (
+                          <span className={styles.dayPrice}>{info.remaining} yer</span>
+                        )}
+                      </button>
+                    )
+                  }
+                }
+                return [...pads, ...dayCells]
+              })()}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {isFirstClass && selectedNewDate && (
+        <div className={`mt-4 ${blocked ? 'pointer-events-none opacity-55' : ''}`}>
+          <p className="mb-2 text-sm font-bold text-[#131719]">
+            {selectedNewDate} için loca seçin ({requiredLocas} loca gerekli)
           </p>
-          <div className={styles.card}>
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const [y, m] = calendarMonth.split('-').map(Number)
-                  const d = new Date(y, m - 2, 1)
-                  setCalendarMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
-                }}
-                disabled={blocked}
-                className="min-h-[36px] min-w-[36px] rounded-lg border border-zinc-200 bg-white text-[#131719] hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                ‹
-              </button>
-              <span className="text-sm font-bold text-[#131719]">
-                {new Date(calendarMonth + '-01').toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  const [y, m] = calendarMonth.split('-').map(Number)
-                  const d = new Date(y, m, 1)
-                  setCalendarMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
-                }}
-                disabled={blocked}
-                className="min-h-[36px] min-w-[36px] rounded-lg border border-zinc-200 bg-white text-[#131719] hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                ›
-              </button>
-            </div>
-            {calendarLoading ? (
-              <div className="py-8 text-center text-sm text-zinc-500">Yükleniyor…</div>
-            ) : (
-              <div className={styles.calendarWrap}>
-                <div className={styles.calendarGrid}>
-                  {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((w) => (
-                    <div key={w} className={styles.weekday}>{w}</div>
-                  ))}
-                  {(() => {
-                    const [y, m] = calendarMonth.split('-').map(Number)
-                    const firstDay = new Date(y, m - 1, 1)
-                    const lastDay = new Date(y, m, 0)
-                    const gridStart = (firstDay.getDay() + 6) % 7
-                    const dayMap = Object.fromEntries(calendarDays.map((d) => [d.date, d]))
-                    const pads = Array.from({ length: gridStart }, (_, i) => <div key={`pad-${i}`} />)
-                    const dayCells = []
-                    for (let day = 1; day <= lastDay.getDate(); day++) {
-                      const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-                      const info = dayMap[dateStr]
-                      const isPast = dateStr < minBookableStr
-                      const locasFree =
-                        info && typeof info.firstRemainingLocas === 'number'
-                          ? info.firstRemainingLocas
-                          : info
-                            ? Math.min(10, Math.max(0, Math.ceil((info.firstRemaining ?? 0) / 2)))
-                            : 0
-                      const isOwnTourDate = dateStr === currentDate.slice(0, 10)
-                      const locaSlotsOk = isOwnTourDate || (requiredLocas > 0 ? locasFree >= requiredLocas : locasFree > 0)
-                      const hasCapacity = info && info.firstRemaining > 0 && locaSlotsOk
-                      const available = !isPast && hasCapacity
-                      const selected = selectedNewDate === dateStr
-                      dayCells.push(
-                        <button
-                          key={dateStr}
-                          type="button"
-                          className={`${styles.dayCell} ${selected ? styles.dayCellSelected : ''} ${!available || blocked ? styles.dayCellDisabled : ''}`}
-                          onClick={() => available && !blocked && setSelectedNewDate(dateStr)}
-                          disabled={!available || blocked}
-                        >
-                          <span className={styles.dayNum}>{day}</span>
-                          {info && !isPast && <span className={styles.dayPrice}>{locasFree} loca</span>}
-                        </button>
-                      )
-                    }
-                    return [...pads, ...dayCells]
-                  })()}
-                </div>
-              </div>
-            )}
-          </div>
-          {selectedNewDate && (
-            <div className={`mt-4 ${blocked ? 'pointer-events-none opacity-55' : ''}`}>
-              <p className="mb-2 text-sm font-bold text-[#131719]">
-                {selectedNewDate} için loca seçin ({requiredLocas} loca gerekli)
-              </p>
-              <FirstClassSeatSelector
-                selectedLocaIds={selectedLocas}
-                reservedLocaIds={calendarDays.find((d) => d.date === selectedNewDate)?.firstClassLocasReserved ?? []}
-                currentBookingLocaIds={
-                  selectedNewDate === currentDate.slice(0, 10)
-                    ? currentFirstClassLocas.map((x) => x.trim().toUpperCase())
-                    : []
-                }
-                requiredCount={requiredLocas}
-                onToggle={(id) =>
-                  setSelectedLocas((prev) =>
-                    prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < requiredLocas ? [...prev, id] : prev
-                  )
-                }
-                onReplace={(removeId, addId) =>
-                  setSelectedLocas((prev) => prev.filter((x) => x !== removeId).concat(addId))
-                }
-                locaUi={locaUi}
-              />
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="mt-3 flex flex-wrap items-end gap-2">
-          <div className="min-w-[140px] flex-1">
-            <label className="mb-1 block text-xs font-semibold text-zinc-500">Yeni tarih</label>
-            <input
-              type="date"
-              value={newDate}
-              onChange={(e) => setNewDate(e.target.value)}
-              min={minBookableStr}
-              disabled={blocked}
-              className="w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-sm focus:border-[#2168b8] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
+          <FirstClassSeatSelector
+            selectedLocaIds={selectedLocas}
+            reservedLocaIds={firstClassDays.find((d) => d.date === selectedNewDate)?.firstClassLocasReserved ?? []}
+            currentBookingLocaIds={
+              selectedNewDate === currentDate.slice(0, 10)
+                ? currentFirstClassLocas.map((x) => x.trim().toUpperCase())
+                : []
+            }
+            requiredCount={requiredLocas}
+            onToggle={(id) =>
+              setSelectedLocas((prev) =>
+                prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < requiredLocas ? [...prev, id] : prev
+              )
+            }
+            onReplace={(removeId, addId) =>
+              setSelectedLocas((prev) => prev.filter((x) => x !== removeId).concat(addId))
+            }
+            locaUi={locaUi}
+          />
         </div>
       )}
 
@@ -262,7 +285,7 @@ export default function ChangeDateInline({
       <button
         type="button"
         onClick={handleSubmit}
-        disabled={blocked || loading || (isFirstClass ? !selectedNewDate : !newDate.trim())}
+        disabled={blocked || loading || !selectedNewDate}
         className="mt-4 w-full rounded-xl px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
         style={{ background: 'var(--primary, #2168b8)' }}
       >

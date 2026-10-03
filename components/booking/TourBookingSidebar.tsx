@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import StickyBookingCard from '@/components/StickyBookingCard'
 import MobileStickyBookingBar from '@/components/MobileStickyBookingBar'
 import BookingWizardModal from '@/components/booking/BookingWizardModal'
@@ -27,33 +27,10 @@ export default function TourBookingSidebar({
 }: TourBookingSidebarProps) {
   const [isBookingOpen, setIsBookingOpen] = useState(false)
 
-  // GEÇİCİ — canlı test şifresi. Rezervasyon akışı herkese açılmadan önce, gerçek
-  // kullanıcıların yanlışlıkla ödeme adımına girmesini engellemek için konuldu.
-  // Test bitince bu bloğu (ve requestBookingOpen çağrılarını eski haline) kaldır.
-  //
-  // Not: StickyBookingCard / MobileStickyBookingBar aynı tıklamada hem bu fonksiyonu
-  // doğrudan hem de BOOKING_MODAL_OPEN_EVENT event'ini (bu dosyadaki listener üzerinden
-  // yine bu fonksiyonu) tetikliyor — tek tıkta şifre iki kez sorulmasın diye promptRef
-  // ile aynı tık içindeki ikinci çağrı sessizce atlanıyor.
-  const promptLockRef = useRef(false)
-  const requestBookingOpen = () => {
-    if (promptLockRef.current) return
-    promptLockRef.current = true
-    setTimeout(() => {
-      promptLockRef.current = false
-    }, 0)
-
-    const input = window.prompt('Devam etmek için şifreyi girin:')
-    if (input === '53') {
-      setIsBookingOpen(true)
-    } else if (input !== null) {
-      window.alert('Şifre hatalı.')
-    }
-  }
-
   useEffect(() => {
-    window.addEventListener(BOOKING_MODAL_OPEN_EVENT, requestBookingOpen)
-    return () => window.removeEventListener(BOOKING_MODAL_OPEN_EVENT, requestBookingOpen)
+    const handleOpen = () => setIsBookingOpen(true)
+    window.addEventListener(BOOKING_MODAL_OPEN_EVENT, handleOpen)
+    return () => window.removeEventListener(BOOKING_MODAL_OPEN_EVENT, handleOpen)
   }, [])
 
   return (
@@ -65,7 +42,7 @@ export default function TourBookingSidebar({
           ticketClasses={ticketClasses}
           bookingCard={bookingCard}
           deposit={tour.deposit}
-          onRezervasyonClick={requestBookingOpen}
+          onRezervasyonClick={() => setIsBookingOpen(true)}
           locale={locale}
         />
       </aside>
@@ -73,7 +50,7 @@ export default function TourBookingSidebar({
         ticketClasses={ticketClasses}
         bookingCard={bookingCard}
         deposit={tour.deposit}
-        onReserve={requestBookingOpen}
+        onReserve={() => setIsBookingOpen(true)}
         isModalOpen={isBookingOpen}
         locale={locale}
       />

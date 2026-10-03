@@ -3,6 +3,7 @@ import QRCode from 'qrcode'
 import { buildGoogleCalendarUrl } from '@/lib/calendar'
 import { timeMinutesBefore } from '@/lib/boardingTime'
 import { getBaseUrl, getSiteName } from '@/lib/seo'
+import { FULL_ADDRESS_LINE } from '@/lib/seo/travelAgencyStructuredData'
 import {
   manageBookingUrl,
   manageBookingUrlForLocale,
@@ -46,7 +47,7 @@ const EMAIL_SURFACE = '#ffffff'
 const EMAIL_ICON_STROKE = '#111827'
 
 function emailIconSvg(
-  name: 'check' | 'clock' | 'x' | 'ticketLight' | 'phone' | 'mail'
+  name: 'check' | 'clock' | 'x' | 'ticketLight' | 'phone' | 'mail' | 'pin'
 ): string {
   const s = EMAIL_ICON_STROKE
   switch (name) {
@@ -62,6 +63,8 @@ function emailIconSvg(
       return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${s}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`
     case 'mail':
       return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${s}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>`
+    case 'pin':
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${s}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`
     default:
       return ''
   }
@@ -1186,7 +1189,7 @@ function buildPremiumConfirmationEmailHtml(
   const successTitle = isPaid ? t.successTitlePaid : t.successTitlePending
   const dateFormatted = formatEmailBookingDate(p.date, loc)
   const tourImage = p.tourImageUrl?.trim() || ''
-  const pickup = p.pickup?.trim() || 'Çeşme Sahil'
+  const pickup = p.pickup?.trim() || `Poseidon Tekne Turları – ${FULL_ADDRESS_LINE}`
   const supportPhone = process.env.SUPPORT_PHONE?.trim() || '+90 533 417 36 56'
   const supportEmail = process.env.SUPPORT_EMAIL?.trim() || 'turkeycesme@hotmail.com'
 
@@ -1352,30 +1355,46 @@ function buildPremiumConfirmationEmailHtml(
 
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 22px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
     <p style="margin:0 0 10px;font-size:13px;color:${EMAIL_TEXT_BODY};">${escapeHtml(t.manageIntro)}</p>
-    <a href="${escapeHtml(manageUrl)}" target="_blank"
-       style="display:block;width:100%;background:${brandOrange};color:#ffffff!important;font-size:15px;font-weight:700;text-decoration:none;text-align:center;padding:15px 22px;border-radius:10px;box-sizing:border-box;margin-bottom:10px;">
-      ${escapeHtml(t.manageCta)}
-    </a>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;border-radius:12px;background:linear-gradient(135deg, ${brandBlue} 0%, #4f8dc7 100%);box-shadow:0 4px 14px rgba(33,104,184,0.3);">
+      <tr><td align="center" style="padding:1px;">
+        <a href="${escapeHtml(manageUrl)}" target="_blank"
+           style="display:block;width:100%;color:#ffffff!important;font-size:15px;font-weight:700;text-decoration:none;text-align:center;padding:15px 22px;box-sizing:border-box;">
+          ${escapeHtml(t.manageCta)}&nbsp;&nbsp;→
+        </a>
+      </td></tr>
+    </table>
     <a href="${escapeHtml(viewTicketUrl)}" target="_blank"
-       style="display:block;width:100%;background:${EMAIL_SURFACE};color:${brandBlue}!important;font-size:14px;font-weight:600;text-decoration:none;text-align:center;padding:13px 22px;border-radius:10px;border:1.5px solid ${brandBlue};box-sizing:border-box;">
+       style="display:block;width:100%;background:${EMAIL_SURFACE};color:${brandBlue}!important;font-size:14px;font-weight:600;text-decoration:none;text-align:center;padding:13px 22px;border-radius:12px;border:1.5px solid ${brandBlue};box-sizing:border-box;">
       ${escapeHtml(t.viewTicketCta)}
     </a>
   </td></tr>
 
   <tr><td style="background:${EMAIL_SURFACE};padding:0 28px 26px;border-left:1px solid ${EMAIL_BORDER};border-right:1px solid ${EMAIL_BORDER};">
-    <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${EMAIL_MUTED};">${escapeHtml(t.contactTitle)}</p>
-    <table role="presentation" cellpadding="0" cellspacing="0">
-      <tr><td style="padding:0 0 8px;">
-        <a href="tel:${escapeHtml(supportPhone.replace(/[^+\d]/g, ''))}" style="display:inline-block;white-space:nowrap;background:#f1f5f9;border:1px solid ${EMAIL_BORDER};border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;color:${secondary};text-decoration:none;">
-          <span style="display:inline-block;vertical-align:middle;">${emailIconSvg('phone')}</span>
-          <span style="display:inline-block;vertical-align:middle;margin-left:6px;">${escapeHtml(supportPhone)}</span>
-        </a>
-      </td></tr>
-      <tr><td>
-        <a href="mailto:${escapeHtml(supportEmail)}" style="display:inline-block;white-space:nowrap;background:#f1f5f9;border:1px solid ${EMAIL_BORDER};border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;color:${secondary};text-decoration:none;">
-          <span style="display:inline-block;vertical-align:middle;">${emailIconSvg('mail')}</span>
-          <span style="display:inline-block;vertical-align:middle;margin-left:6px;">${escapeHtml(supportEmail)}</span>
-        </a>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_BORDER};border-radius:12px;background:#f8fafc;">
+      <tr><td style="padding:18px 20px;">
+        <p style="margin:0 0 12px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:${brandBlue};">${escapeHtml(t.contactTitle)}</p>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td width="22" style="vertical-align:top;padding:2px 0;color:${EMAIL_MUTED};">${emailIconSvg('pin')}</td>
+            <td style="vertical-align:top;padding:2px 0 0 8px;font-size:13px;color:${secondary};line-height:1.55;font-weight:600;">${escapeHtml(pickup)}</td>
+          </tr>
+        </table>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:12px;">
+          <tr><td style="padding:0 0 8px;">
+            <a href="tel:${escapeHtml(supportPhone.replace(/[^+\d]/g, ''))}" style="display:inline-block;white-space:nowrap;background:#ffffff;border:1px solid ${EMAIL_BORDER};border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;color:${secondary};text-decoration:none;">
+              <span style="display:inline-block;vertical-align:middle;color:${brandBlue};">${emailIconSvg('phone')}</span>
+              <span style="display:inline-block;vertical-align:middle;margin-left:6px;">${escapeHtml(supportPhone)}</span>
+            </a>
+          </td></tr>
+          <tr><td>
+            <a href="mailto:${escapeHtml(supportEmail)}" style="display:inline-block;white-space:nowrap;background:#ffffff;border:1px solid ${EMAIL_BORDER};border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;color:${secondary};text-decoration:none;">
+              <span style="display:inline-block;vertical-align:middle;color:${brandBlue};">${emailIconSvg('mail')}</span>
+              <span style="display:inline-block;vertical-align:middle;margin-left:6px;">${escapeHtml(supportEmail)}</span>
+            </a>
+          </td></tr>
+        </table>
       </td></tr>
     </table>
   </td></tr>

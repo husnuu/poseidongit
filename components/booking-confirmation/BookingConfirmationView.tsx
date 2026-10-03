@@ -25,6 +25,7 @@ import { getBookingConfirmationUi } from './bookingConfirmationUi'
 import BoardingPassModal from './BoardingPassModal'
 import ChangeDateInline from './ChangeDateInline'
 import EditGuestInfoInline from './EditGuestInfoInline'
+import BarMenuModal from './BarMenuModal'
 
 function money(amount: number, currency: string): string {
   const symbol = currency === 'TRY' ? '₺' : currency
@@ -100,6 +101,7 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
   const [changeDateOpen, setChangeDateOpen] = useState(false)
   const [editInfoOpen, setEditInfoOpen] = useState(false)
   const [updateNotice, setUpdateNotice] = useState<string | null>(null)
+  const [barMenuOpen, setBarMenuOpen] = useState(false)
 
   if (data.isFailed) {
     return (
@@ -436,13 +438,22 @@ export default function BookingConfirmationView({ data }: { data: BookingConfirm
               <p className="m-0 font-bold text-[#131719]">{ui.boatBarTitle}</p>
               <p className="m-0 mt-0.5 text-sm text-zinc-500">{ui.boatBarDesc}</p>
             </div>
-            <Link
-              href={data.menuUrl}
+            <button
+              type="button"
+              onClick={() => setBarMenuOpen(true)}
               className="shrink-0 text-xs font-bold uppercase tracking-wide text-[#2168b8] hover:underline"
             >
               {ui.boatBarCta}
-            </Link>
+            </button>
           </div>
+        )}
+
+        {barMenuOpen && (
+          <BarMenuModal
+            locale={data.locale}
+            onClose={() => setBarMenuOpen(false)}
+            closeAria={ui.close}
+          />
         )}
 
         {/* Toplanma noktası / biniş bilgisi */}

@@ -35,13 +35,18 @@ const TELEPHONE = '+90-532-153-28-14'
 const EMAIL = 'turkeycesme@hotmail.com'
 
 /** * Adres bilgisi HTML footer ile birebir eşitlendi.
+ * Export edildi: lib/email.ts'deki e-posta şablonları da aynı gerçek adresi
+ * toplanma noktası olarak kullanır (uydurma adres yok, tek kaynak burası).
  */
-const ADDRESS = {
+export const ADDRESS = {
   streetAddress: '16 Eylül Mahallesi 3053 Sokak, Hürriyet Caddesi, Yat Limanı',
   addressLocality: 'Çeşme',
   addressRegion: 'İzmir',
   postalCode: '35930',
 } as const
+
+/** Tek satırlık, e-posta/toplanma noktası gibi yerlerde kullanılacak biçim. */
+export const FULL_ADDRESS_LINE = `${ADDRESS.streetAddress}, ${ADDRESS.addressLocality}/${ADDRESS.addressRegion}`
 
 /** Koordinatlar Çeşme Marina merkezine göre optimize edildi */
 const GEO = { latitude: 38.3237, longitude: 26.3030 } as const
