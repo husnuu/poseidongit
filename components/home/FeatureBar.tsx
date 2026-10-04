@@ -73,7 +73,7 @@ export default function FeatureBar({ items }: FeatureBarProps) {
       aria-label="Özellikler"
     >
       <div className="mx-auto max-w-[1200px] min-w-0 px-4">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-8 lg:grid-cols-4 lg:gap-x-12">
           {displayItems.map((item, index) => {
             const IconComponent = iconMap[item.icon] ?? Bolt
             const href = resolveFeatureLink(item.title, index)
@@ -96,13 +96,13 @@ export default function FeatureBar({ items }: FeatureBarProps) {
                 </div>
                 <div className="min-w-0" style={{ fontFamily: 'var(--font-family)' }}>
                   <div
-                    className={`font-black uppercase text-[16px] leading-tight tracking-wide ${href ? 'group-hover/feature:underline underline-offset-4' : ''}`}
+                    className={`font-black uppercase text-[17px] leading-tight tracking-wide xl:whitespace-nowrap ${href ? 'group-hover/feature:underline underline-offset-4' : ''}`}
                     style={{ WebkitTextStroke: '0.7px currentColor' }}
                   >
                     {item.title}
                   </div>
                   {item.description && (
-                    <div className="mt-1.5 text-[14px] leading-snug opacity-90">
+                    <div className="mt-1.5 text-[15px] leading-snug opacity-90">
                       {item.description}
                     </div>
                   )}

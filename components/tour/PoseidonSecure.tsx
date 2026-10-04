@@ -1,9 +1,14 @@
 import styles from './PoseidonSecure.module.css'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, Undo2, CloudSun } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
-import { getPoseidonSecureStrings } from '@/lib/i18n/strings/poseidonSecure'
+import { getPoseidonSecureStrings, type PoseidonSecureBadge } from '@/lib/i18n/strings/poseidonSecure'
 
 export type PoseidonSecureLayout = 'fullBleed' | 'contained'
+
+const BADGE_ICON: Record<PoseidonSecureBadge['icon'], typeof Undo2> = {
+  refund: Undo2,
+  weather: CloudSun,
+}
 
 export default function PoseidonSecure({
   locale = 'tr',
@@ -29,11 +34,24 @@ export default function PoseidonSecure({
             </span>
           </div>
 
-          <p className={styles.description}>
-            {t.beforeStrong}
-            <strong>{t.strong}</strong>
-            {t.afterStrong}
-          </p>
+          {/* İki garanti artık düz metnin içine gömülü değil, taranabilir ayrı
+              rozetler — sitenin geri kalanındaki ikon+etiket diliyle (FeatureBar,
+              Öne Çıkanlar) tutarlı. */}
+          <div className={styles.badgesRow}>
+            {t.badges.map((badge) => {
+              const Icon = BADGE_ICON[badge.icon]
+              return (
+                <span key={badge.icon} className={styles.badge}>
+                  <span className={styles.badgeIconWrap} aria-hidden>
+                    <Icon size={15} strokeWidth={2.25} />
+                  </span>
+                  <span className={styles.badgeLabel}>{badge.label}</span>
+                </span>
+              )
+            })}
+          </div>
+
+          <p className={styles.description}>{t.description}</p>
         </div>
       </div>
     </section>

@@ -10,6 +10,8 @@ export type CovesPageUiStrings = {
   defaultCoveTitle: string
   closeAria: string
   cardAriaLabel: (title: string) => string
+  covesListedCount: (n: number) => string
+  exploreLabel: string
 }
 
 const TR: CovesPageUiStrings = {
@@ -22,6 +24,8 @@ const TR: CovesPageUiStrings = {
   defaultCoveTitle: 'Koy',
   closeAria: 'Kapat',
   cardAriaLabel: (title) => `${title} hakkında devamını oku`,
+  covesListedCount: (n) => `${n} koy listeleniyor`,
+  exploreLabel: 'Keşfet',
 }
 
 const EN: CovesPageUiStrings = {
@@ -34,6 +38,8 @@ const EN: CovesPageUiStrings = {
   defaultCoveTitle: 'Cove',
   closeAria: 'Close',
   cardAriaLabel: (title) => `Read more about ${title}`,
+  covesListedCount: (n) => `${n} coves listed`,
+  exploreLabel: 'Explore',
 }
 
 const DE: CovesPageUiStrings = {
@@ -46,6 +52,8 @@ const DE: CovesPageUiStrings = {
   defaultCoveTitle: 'Bucht',
   closeAria: 'Schließen',
   cardAriaLabel: (title) => `Mehr über ${title} lesen`,
+  covesListedCount: (n) => `${n} Buchten aufgelistet`,
+  exploreLabel: 'Entdecken',
 }
 
 export function getCovesPageUiStrings(locale: SiteLocale): CovesPageUiStrings {

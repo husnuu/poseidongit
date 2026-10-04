@@ -1,0 +1,25 @@
+/* Anasayfadaki bölüm başlıklarıyla (RouteSection, HomeClassesSection) birebir
+   aynı tipografi dili: büyük, kalın, ince konturlu mavi başlık + altında kısa
+   açıklama paragrafı. */
+.title {
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.15;
+  margin: 0 0 1rem;
+  font-size: 28px;
+  -webkit-text-stroke: 0.4px currentColor;
+  color: var(--primary, #2168b8);
+}
+
+@media (min-width: 640px) {
+  .title { font-size: 32px; }
+}
+
+@media (min-width: 768px) {
+  .title { font-size: 36px; }
+}
+
+@media (min-width: 1024px) {
+  .title { font-size: 40px; }
+}

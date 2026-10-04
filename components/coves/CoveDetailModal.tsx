@@ -75,9 +75,10 @@ export default function CoveDetailModal({ cove, onClose, closeAria }: CoveDetail
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-6 sm:px-8 sm:py-8">
           {cove.locationTag?.trim() && (
+            // Tur/yat kartları ve koy kartlarıyla (CoveCard.tsx) birebir aynı ton.
             <span
-              className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide"
-              style={{ color: 'var(--primary, #2168b8)' }}
+              className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide"
+              style={{ color: '#8a99ad' }}
             >
               <MapPin className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
               {cove.locationTag}

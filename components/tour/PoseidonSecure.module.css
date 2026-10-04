@@ -37,16 +37,34 @@
 .shieldIcon {
   color: var(--primary, #2168b8);
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
 }
 
 .logoText {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.5px;
-  -webkit-text-stroke: 0.45px currentColor;
+  -webkit-text-stroke: 0.35px currentColor;
+}
+
+/* Sitenin geri kalanındaki bölüm başlıklarıyla (RouteSection, Instagram, Sınıflar)
+   aynı duyarlı büyüme eğrisi — bu başlık diğer tüm içerikten (rozetler, açıklama)
+   belirgin şekilde büyük kalsın diye. */
+@media (min-width: 640px) {
+  .shieldIcon { width: 30px; height: 30px; }
+  .logoText { font-size: 30px; -webkit-text-stroke: 0.4px currentColor; }
+}
+
+@media (min-width: 768px) {
+  .shieldIcon { width: 34px; height: 34px; }
+  .logoText { font-size: 34px; }
+}
+
+@media (min-width: 1024px) {
+  .shieldIcon { width: 40px; height: 40px; }
+  .logoText { font-size: 40px; -webkit-text-stroke: 0.5px currentColor; }
 }
 
 .logoBold {
@@ -58,7 +76,7 @@
 }
 
 .description {
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.65;
   color: var(--text-color, #58595b);
   margin: 0;
@@ -67,6 +85,47 @@
 .description strong {
   color: var(--primary, #2168b8);
   font-weight: 600;
+}
+
+/* İki garanti rozeti: beyaz hap + mavi ikon dairesi, zemin şeridinden yüzer gibi. */
+.badgesRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border-radius: 999px;
+  padding: 7px 16px 7px 7px;
+  box-shadow: 0 2px 8px rgba(19, 23, 25, 0.08);
+}
+
+.badgeIconWrap {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--primary, #2168b8);
+  color: #fff;
+}
+
+.badgeLabel {
+  font-family: var(--font-family), sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--secondary, #131719);
+  white-space: nowrap;
 }
 
 /* Tur sayfası: viewport’u taşırmadan ana içerik kolonu ile aynı genişlik */
@@ -117,18 +176,33 @@
     border-radius: 10px;
   }
 
-  .shieldIcon {
-    width: 19px;
-    height: 19px;
-  }
-
-  .logoText {
-    font-size: 19px;
-    -webkit-text-stroke: 0.25px currentColor;
-  }
-
   .description {
     font-size: 13px;
     line-height: 1.55;
+  }
+
+  /* Mobilde yan yana sıkışık değil, alt alta ayrı satırlarda — ama tam genişliğe
+     uzatılmış değil (kısa metin tam genişlikte sağda boş alan bırakıyordu);
+     her rozet kendi metnine göre ortalanmış, kompakt bir hap olarak kalıyor. */
+  .badgesRow {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .badge {
+    border-radius: 999px;
+    padding: 7px 16px 7px 7px;
+    gap: 8px;
+  }
+
+  .badgeIconWrap {
+    width: 26px;
+    height: 26px;
+  }
+
+  .badgeLabel {
+    font-size: 12.5px;
+    white-space: normal;
   }
 }

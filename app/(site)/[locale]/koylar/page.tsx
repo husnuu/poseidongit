@@ -112,9 +112,16 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
   const emptyMsg = pageData?.emptyListMessage?.trim() || ui.emptyList
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-[1400px] px-4 py-12 sm:py-16">
-        <CovesHero title={title} description={description} />
+    // Anasayfadaki "Koylar" bölümüyle (RouteSection) aynı mavimsi-yeşil zemin —
+    // sitede nereye gidilirse gidilsin "Koylar" aynı renk kimliğiyle tanınsın diye.
+    <div className="min-h-screen bg-[#eafbf7]">
+      <div className="mx-auto max-w-[1400px] px-4 py-14 sm:py-16 md:py-20">
+        <CovesHero
+          title={title}
+          description={description}
+          count={items.length}
+          countLabel={items.length > 0 ? ui.covesListedCount(items.length) : undefined}
+        />
 
         <CovesGrid
           items={items.map((cove) => {
@@ -135,7 +142,7 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
             }
           })}
           noImageLabel={ui.noImage}
-          detailHint={ui.detailHint}
+          detailHint={ui.exploreLabel}
           closeAria={ui.closeAria}
         />
 

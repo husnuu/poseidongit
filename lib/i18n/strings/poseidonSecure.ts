@@ -1,34 +1,45 @@
 import type { SiteLocale } from '@/lib/i18n/config'
 
+export type PoseidonSecureBadge = {
+  icon: 'refund' | 'weather'
+  label: string
+}
+
 export type PoseidonSecureStrings = {
   ariaLabel: string
-  beforeStrong: string
-  strong: string
-  afterStrong: string
+  /** Metnin içine gömülü olan iki garanti artık ayrı ikonlu rozetler olarak gösteriliyor. */
+  badges: PoseidonSecureBadge[]
+  description: string
 }
 
 const TR: PoseidonSecureStrings = {
   ariaLabel: 'Poseidon Secure',
-  beforeStrong: 'Yeni nesil tam donanımlı teknelerimizde, ',
-  strong: '24 saate kadar şartsız iade ve hava durumu garantisiyle',
-  afterStrong:
-    ' size kusursuz bir deniz keyfi sunar. Siz sadece rotanın tadını çıkarın; güvenliğiniz ve tüm haklarınız bizim güvencemizde.',
+  badges: [
+    { icon: 'refund', label: '24 Saate Kadar Şartsız İade' },
+    { icon: 'weather', label: 'Hava Durumu Garantisi' },
+  ],
+  description:
+    'Yeni nesil tam donanımlı teknelerimizle size kusursuz bir deniz keyfi sunarız. Siz sadece rotanın tadını çıkarın; güvenliğiniz ve tüm haklarınız bizim güvencemizde.',
 }
 
 const EN: PoseidonSecureStrings = {
   ariaLabel: 'Poseidon Secure',
-  beforeStrong: 'On our next-generation fully equipped yachts, ',
-  strong: 'we offer up to 24 hours unconditional refund and a weather guarantee',
-  afterStrong:
-    ' — so you can enjoy the sea with confidence. Focus on the route — your safety and rights are fully protected.',
+  badges: [
+    { icon: 'refund', label: 'Up to 24-Hour Unconditional Refund' },
+    { icon: 'weather', label: 'Weather Guarantee' },
+  ],
+  description:
+    'On our next-generation fully equipped yachts, we offer a flawless sea experience — enjoy the route while your safety and rights stay fully protected.',
 }
 
 const DE: PoseidonSecureStrings = {
   ariaLabel: 'Poseidon Secure',
-  beforeStrong: 'Auf unseren modernen, voll ausgestatteten Yachten ',
-  strong: 'bieten wir bis zu 24 Stunden bedingungslose Rückerstattung und eine Wettergarantie',
-  afterStrong:
-    ' — für ein rundum sorgenfreies Erlebnis auf See. Genießen Sie die Route; Ihre Sicherheit und Rechte sind geschützt.',
+  badges: [
+    { icon: 'refund', label: 'Bis zu 24 Std. Bedingungslose Rückerstattung' },
+    { icon: 'weather', label: 'Wettergarantie' },
+  ],
+  description:
+    'Auf unseren modernen, voll ausgestatteten Yachten genießen Sie ein rundum sorgenfreies Erlebnis auf See — konzentrieren Sie sich auf die Route, Ihre Sicherheit und Rechte sind geschützt.',
 }
 
 export function getPoseidonSecureStrings(locale: SiteLocale): PoseidonSecureStrings {

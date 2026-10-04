@@ -23,9 +23,12 @@ type InstagramSectionProps = {
   data: InstagramSectionData | null
 }
 
-/** Hashtag'li kısımları küçük harfe çevirir: #CesmePoseidon → #cesmeposeidon */
+/** Hashtag'li kısımları küçük harfe çevirip baştaki "#"ı "@"ya çevirir:
+    #CesmePoseidon → @cesmeposeidon — buton zaten hesabı takip etmeye
+    yönlendirdiği için hashtag değil, kullanıcı adı (handle) olarak gösterilir.
+    Sanity'deki gerçek metin (#cesmeposeidon) değişmez, sadece ekranda böyle görünür. */
 function formatInstagramHeading(text: string): string {
-  return text.replace(/#(\w+)/g, (_, tag) => `#${tag.toLowerCase()}`)
+  return text.replace(/#(\w+)/g, (_, tag) => `@${tag.toLowerCase()}`)
 }
 
 export default function InstagramSection({ data }: InstagramSectionProps) {
@@ -36,8 +39,10 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
   const displayHeading = formatInstagramHeading(heading || 'Instagram')
 
   return (
+    // Üstündeki Blog bölümüyle (bg-zinc-50/60) karışmasın diye kendi renk kimliği:
+    // Instagram'ın marka tonlarından hafif bir pembe-mor yıkama.
     <section
-      className="w-full bg-zinc-50 pt-7 pb-14 md:pt-9 md:pb-20"
+      className="w-full bg-[#fdf2f8] pt-7 pb-14 md:pt-9 md:pb-20"
       aria-labelledby="instagram-section-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">
@@ -60,14 +65,16 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
         </header>
 
         {hasPosts && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-10">
+          // Köşeler yuvarlatılmadan, aralık neredeyse sıfıra indirilerek gerçek
+          // Instagram ızgarası ("duvar") hissi verildi — kare kareler, bitişik.
+          <div className="grid grid-cols-2 gap-0.5 md:grid-cols-4 md:gap-1 mb-10">
             {posts.map((post, i) => (
               <a
                 key={i}
                 href={post.postUrl || instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block relative aspect-[3/4] rounded-xl overflow-hidden bg-zinc-200 transition transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
+                className="group relative block aspect-square overflow-hidden bg-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--primary)]"
                 aria-label={post.imageAlt || 'Instagram gönderisi'}
               >
                 {post.imageUrl ? (
@@ -75,7 +82,7 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
                     src={post.imageUrl}
                     alt={post.imageAlt || 'Instagram'}
                     fill
-                    className="object-cover"
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
                     sizes="(max-width: 768px) 50vw, 25vw"
                   />
                 ) : (
@@ -83,12 +90,13 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
                     Görsel
                   </div>
                 )}
-                <span
-                  className="absolute bottom-2 left-2 flex items-center justify-center w-8 h-8 rounded-lg bg-black/50 text-white"
-                  aria-hidden
-                >
-                  <Instagram className="w-4 h-4" strokeWidth={2} />
-                </span>
+                {/* Hover'da: karartma + ortalanmış IG ikonu + "Gönderiyi Gör" — gerçek
+                    Instagram'ın kendi feed önizlemesindeki beğeni/yorum katmanına
+                    benzer, markalı bir etkileşim ipucu. */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/0 opacity-0 transition-all duration-300 group-hover:bg-black/55 group-hover:opacity-100">
+                  <Instagram className="h-6 w-6 text-white" strokeWidth={2} />
+                  <span className="text-xs font-bold uppercase tracking-wide text-white">Gönderiyi Gör</span>
+                </div>
               </a>
             ))}
           </div>
