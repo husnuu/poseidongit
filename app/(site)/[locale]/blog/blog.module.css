@@ -106,11 +106,19 @@
   }
 }
 
-/* Anasayfa blog şeridi kartları ile aynı ~300px kart, esnek sütunlar */
+/* /turlar ve /koylar sayfalarıyla aynı sabit sütun düzeni: mobilde 1,
+   tablette 2, masaüstünde her satırda tam 3 kart — genişliğe göre değişen
+   auto-fill yerine sabit 3 sütun. */
 .blogsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  grid-template-columns: 1fr;
   gap: 24px;
+}
+
+@media (min-width: 640px) {
+  .blogsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (min-width: 768px) {
@@ -121,6 +129,7 @@
 
 @media (min-width: 1024px) {
   .blogsGrid {
+    grid-template-columns: repeat(3, 1fr);
     gap: 32px;
   }
 }

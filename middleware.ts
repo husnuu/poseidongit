@@ -93,15 +93,20 @@ export async function middleware(request: NextRequest) {
     }
     const canonicalPath = incomingPathToCanonicalRoute(locale, pathWithoutLocale)
     const internalPath = `/${locale}${canonicalPath === '/' ? '' : canonicalPath}`
+    // Sunucu bileşenlerinin (ör. [locale]/layout.tsx) geçerli yolu headers() ile
+    // okuyabilmesi için — rezervasyon/yönet gibi "sade" sayfalarda Header/Footer
+    // menülerini gizlemek için kullanılıyor.
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-pathname', pathname)
     if (internalPath === pathname) {
-      const res = NextResponse.next()
+      const res = NextResponse.next({ request: { headers: requestHeaders } })
       res.headers.set('x-site-locale', locale)
       return res
     }
     // clone + pathname: `new URL(internalPath, request.url)` strips ?query (bilet ?token= kaybolur)
     const rewriteUrl = request.nextUrl.clone()
     rewriteUrl.pathname = internalPath
-    const res = NextResponse.rewrite(rewriteUrl)
+    const res = NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } })
     res.headers.set('x-site-locale', locale)
     return res
   }

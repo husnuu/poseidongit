@@ -19,6 +19,19 @@ export default function LocaleRouteLoading() {
           </div>
         </div>
       </section>
+      <div className="feature-bar-skeleton" aria-hidden>
+        <div className="feature-bar-skeleton__grid">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="feature-bar-skeleton__item">
+              <div className="feature-bar-skeleton__icon" />
+              <div className="feature-bar-skeleton__lines">
+                <div className="feature-bar-skeleton__line" />
+                <div className="feature-bar-skeleton__line feature-bar-skeleton__line--sub" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
       <div className="mx-auto max-w-[1200px] px-4 py-12">
         <div className="mb-8 h-10 max-w-md rounded-lg bg-zinc-200/90" />
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">

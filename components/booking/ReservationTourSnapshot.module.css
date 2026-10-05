@@ -105,7 +105,7 @@
   padding: 0;
   border: none;
   background: none;
-  color: #fc6c4f;
+  color: var(--primary, #2168b8);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -263,7 +263,7 @@
   flex-shrink: 0;
   font-size: 12px;
   font-weight: 700;
-  color: #fc6c4f;
+  color: var(--primary, #2168b8);
 }
 
 .menuMeta {

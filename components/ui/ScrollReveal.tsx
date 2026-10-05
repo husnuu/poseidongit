@@ -33,7 +33,12 @@ export default function ScrollReveal({ children, className = '', delayMs = 0 }: 
           }
         })
       },
-      { threshold: 0.12, rootMargin: '0px 0px -60px 0px' },
+      // Sitedeki diğer bölümlerin (RouteSection, HomeReviewsSection, vb.) kendi
+      // IntersectionObserver'larıyla aynı, cömert eşik — önceki negatif rootMargin
+      // (-60px) hero'nun hemen altındaki içeriğin sayfa ilk açıldığında (henüz
+      // kaydırmadan) görünür kalmasını engelliyor, mobilde beyaz bir boşluk gibi
+      // görünüyordu.
+      { threshold: 0.08, rootMargin: '0px 0px 150px 0px' },
     )
     observer.observe(el)
     return () => observer.disconnect()

@@ -517,6 +517,58 @@ summary:focus-visible,
   }
 }
 
+/* Anasayfada hero'nun hemen altında "Özellikler" (FeatureBar) şeridi var —
+   bu renkli bant olmadan iskelet doğrudan beyaza düşüyor ve hero bitince
+   kısa bir an (özellikle mobil/yavaş bağlantıda) beyaz bir boşluk gibi
+   görünüyordu. Gerçek FeatureBar ile aynı gradyanı kullanan bir iskelet
+   bandı ekleyerek bu boşluğu kapatıyoruz. */
+.feature-bar-skeleton {
+  width: 100%;
+  padding: 3rem 1.25rem;
+  background-color: var(--primary, #2168b8);
+  background-image: linear-gradient(to right, var(--primary, #2168b8), #a17fe0, #59c173);
+}
+.feature-bar-skeleton__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+@media (min-width: 1024px) {
+  .feature-bar-skeleton__grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.feature-bar-skeleton__item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.feature-bar-skeleton__icon {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+}
+.feature-bar-skeleton__lines {
+  flex: 1;
+  min-width: 0;
+}
+.feature-bar-skeleton__line {
+  height: 11px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.4);
+  max-width: 80%;
+}
+.feature-bar-skeleton__line--sub {
+  margin-top: 8px;
+  height: 9px;
+  width: 60%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
 @layer base {
   html {
     /* Cihaz genişliğine göre akışkan kök ölçek (14–16px) */

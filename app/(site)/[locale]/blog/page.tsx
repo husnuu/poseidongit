@@ -157,7 +157,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
                     }}
                     locale={locale}
                     noImageLabel={ui.noCoverImage}
-                    imageSizes="(max-width: 640px) min(100vw, 400px), (max-width: 1024px) 45vw, 300px"
+                    imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 )
               })}

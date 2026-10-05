@@ -404,7 +404,7 @@ export default function Step2ClassSelect({
                             <Check
                               width={13}
                               height={13}
-                              style={{ color: '#fc6c4f', flexShrink: 0 }}
+                              style={{ color: 'var(--primary, #2168b8)', flexShrink: 0 }}
                               aria-hidden
                             />
                             {b}
