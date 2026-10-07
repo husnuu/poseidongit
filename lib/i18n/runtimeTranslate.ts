@@ -11,8 +11,8 @@ import { DE_TRANSLATION_MEMORY, EN_TRANSLATION_MEMORY } from './translationMemor
 
 const CACHE_TTL_SECONDS = 60 * 60 * 24 * 30 // 30 gün
 
-const DEEPL_TARGET_LANG: Record<SiteLocale, string> = { tr: 'TR', en: 'EN-GB', de: 'DE' }
-const MYMEMORY_TARGET_LANG: Record<SiteLocale, string> = { tr: 'tr', en: 'en', de: 'de' }
+const DEEPL_TARGET_LANG: Record<SiteLocale, string> = { tr: 'TR', en: 'EN-GB', de: 'DE', ru: 'RU' }
+const MYMEMORY_TARGET_LANG: Record<SiteLocale, string> = { tr: 'tr', en: 'en', de: 'de', ru: 'ru' }
 
 /**
  * MyMemory anonim kotası günde ~5.000 kelime; istekte bir iletişim e-postası

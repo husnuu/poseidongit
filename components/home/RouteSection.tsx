@@ -8,6 +8,7 @@ import { MapPin } from 'lucide-react'
 // aynı CSS modülü reuse ediliyor — iki bileşen de görsel olarak aynı dili konuşsun.
 import showcaseStyles from '@/components/tour/TourClassShowcase.module.css'
 import styles from './RouteSection.module.css'
+import type { SiteLocale } from '@/lib/i18n/config'
 
 export type RouteSectionLocation = {
   name: string
@@ -24,19 +25,21 @@ export type RouteSectionProps = {
   description: string
   ctaButton?: { label?: string | null; href?: string | null } | null
   locations: RouteSectionLocation[]
-  locale?: 'tr' | 'en' | 'de'
+  locale?: SiteLocale
 }
 
 const SELECT_ARIA: Record<string, string> = {
   tr: 'Koy seç',
   en: 'Select a cove',
   de: 'Bucht auswählen',
+  ru: 'Выбрать бухту',
 }
 
 const NO_IMAGE_LABEL: Record<string, string> = {
   tr: 'Görsel yok',
   en: 'No image',
   de: 'Kein Bild',
+  ru: 'Нет изображения',
 }
 
 export default function RouteSection({

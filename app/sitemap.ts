@@ -11,7 +11,7 @@ export const revalidate = 3600
 
 const BASE = getBaseUrl()
 
-type SiteLocaleKey = 'tr' | 'en' | 'de'
+type SiteLocaleKey = 'tr' | 'en' | 'de' | 'ru'
 
 /** Kanonik iç path; EN/DE için hem önek hem slug’lar yerelleştirilir (örn. /hakkimizda → /en/about). */
 function publicUrl(locale: SiteLocaleKey, path: string): string {
@@ -31,6 +31,7 @@ type TourLocaleRow = {
   tSlug?: string | null
   enSlug?: string | null
   deSlug?: string | null
+  ruSlug?: string | null
   _updatedAt?: string
 }
 
@@ -124,7 +125,13 @@ async function getFerryRouteEntries(): Promise<SitemapEntry[]> {
 
 /** Yardım merkezi kategorileri — TR/EN/DE çeviri slug'ları ayrı alanlarda tutuluyor. */
 async function getHelpCategorySitemapRows(): Promise<
-  { trSlug?: string | null; enSlug?: string | null; deSlug?: string | null; _updatedAt?: string }[]
+  {
+    trSlug?: string | null
+    enSlug?: string | null
+    deSlug?: string | null
+    ruSlug?: string | null
+    _updatedAt?: string
+  }[]
 > {
   try {
     return await client.fetch(
@@ -132,6 +139,7 @@ async function getHelpCategorySitemapRows(): Promise<
         "trSlug": slug.current,
         "enSlug": translations.en.slug.current,
         "deSlug": translations.de.slug.current,
+        "ruSlug": translations.ru.slug.current,
         _updatedAt
       }`
     )
@@ -147,6 +155,8 @@ type HelpArticleLocaleRow = {
   enArt?: string | null
   deCat?: string | null
   deArt?: string | null
+  ruCat?: string | null
+  ruArt?: string | null
 }
 
 async function getHelpArticleSitemapRows(): Promise<HelpArticleLocaleRow[]> {
@@ -195,7 +205,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ])
 
   const now = new Date()
-  const locales: SiteLocaleKey[] = ['tr', 'en', 'de']
+  const locales: SiteLocaleKey[] = ['tr', 'en', 'de', 'ru']
   const staticPaths = [
     '/',
     '/turlar',
@@ -251,6 +261,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (row.deSlug)
       tourEntries.push({
         url: publicUrl('de', `/tur/${row.deSlug}`),
+        lastModified: lm,
+        changeFrequency: 'weekly',
+        priority: 0.85,
+      })
+    if (row.ruSlug)
+      tourEntries.push({
+        url: publicUrl('ru', `/tur/${row.ruSlug}`),
         lastModified: lm,
         changeFrequency: 'weekly',
         priority: 0.85,
@@ -326,6 +343,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'monthly',
         priority: 0.5,
       })
+    if (row.ruSlug)
+      helpCategoryEntries.push({
+        url: publicUrl('ru', `/yardim-merkezi/kategori/${row.ruSlug}`),
+        lastModified: lm,
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      })
   }
 
   const helpArticleEntries: MetadataRoute.Sitemap = []
@@ -347,6 +371,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (row.deCat && row.deArt)
       helpArticleEntries.push({
         url: publicUrl('de', `/yardim-merkezi/${row.deCat}/${row.deArt}`),
+        lastModified: now,
+        changeFrequency: 'monthly',
+        priority: 0.55,
+      })
+    if (row.ruCat && row.ruArt)
+      helpArticleEntries.push({
+        url: publicUrl('ru', `/yardim-merkezi/${row.ruCat}/${row.ruArt}`),
         lastModified: now,
         changeFrequency: 'monthly',
         priority: 0.55,

@@ -24,6 +24,11 @@ const LABELS: Record<
     dates: 'Charterdatum',
     depositFor: 'Diese Anzahlung gilt für die unten genannte Yacht und Termine',
   },
+  ru: {
+    yacht: 'Яхта для этого депозита',
+    dates: 'Даты аренды',
+    depositFor: 'Этот депозит относится к указанной ниже яхте и датам',
+  },
 }
 
 interface YachtDepositCharterSummaryProps {

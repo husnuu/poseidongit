@@ -156,14 +156,56 @@ const DE: HelpCenterUiStrings = {
   filterAllLabel: 'Alle',
 }
 
+const RU: HelpCenterUiStrings = {
+  breadcrumbHome: 'Главная',
+  breadcrumbHelp: 'Центр помощи',
+  breadcrumbCategoryFallback: 'Категория',
+  breadcrumbArticleFallback: 'Статья',
+  metaHelpTitleFallback: 'Центр помощи',
+  metaHelpDescriptionFallback:
+    'Помощь по бронированию морских прогулок, вопросам в день тура и часто задаваемым вопросам.',
+  metaCategoryNotFoundTitle: 'Категория не найдена',
+  metaArticleNotFoundTitle: 'Статья не найдена',
+  metaCategoryTitleSuffix: 'Помощь',
+  metaCategoryDescriptionFallback: (categoryTitle: string) =>
+    `Статьи в категории «${categoryTitle}».`,
+  allHelpTopicsLink: '← Все темы помощи',
+  noArticlesInCategory: 'В этой категории пока нет статей.',
+  noArticlesInCategoryCard: 'Нет статей в этой категории.',
+  articleFallbackTitle: 'Статья',
+  categoryFallbackTitle: 'Категория',
+  categoryCardEyebrowFallback: 'Категория',
+  articleBodyEmpty: 'Текст для этой статьи пока не добавлен.',
+  relatedArticlesHeading: 'Похожие статьи',
+  supportHeading: 'Не нашли нужный ответ?',
+  supportBody:
+    'Наша команда рада помочь с морскими прогулками, бронированием и вопросами в день тура.',
+  supportWhatsappCta: 'Написать в WhatsApp',
+  supportWhatsappMissing:
+    'WhatsApp не настроен. Вы можете связаться с нами через страницу контактов.',
+  supportContactCta: 'Контакты',
+  searchPlaceholder: 'Поиск статей или тем…',
+  searchLabelSrOnly: 'Поиск статей помощи',
+  searchCountNone: 'Совпадающих статей не найдено',
+  searchCountListed: (n: number) => (n === 1 ? '1 статья в списке' : `${n} статей в списке`),
+  homeSectionEyebrow: 'Руководство',
+  homeTopicsHeadingPrimary: 'Обзор',
+  homeTopicsHeadingSecondary: ' тем',
+  homeEmptySearch: 'По вашему запросу не найдено статей. Попробуйте другое слово.',
+  homeEmptyNoArticles: 'Пока нет статей для отображения. Загляните позже.',
+  filterAllLabel: 'Все',
+}
+
 export function getHelpCenterUiStrings(locale: SiteLocale): HelpCenterUiStrings {
   if (locale === 'en') return EN
   if (locale === 'de') return DE
+  if (locale === 'ru') return RU
   return TR
 }
 
 export function helpSearchLocaleTag(locale: SiteLocale): string {
   if (locale === 'en') return 'en-US'
   if (locale === 'de') return 'de-DE'
+  if (locale === 'ru') return 'ru-RU'
   return 'tr-TR'
 }

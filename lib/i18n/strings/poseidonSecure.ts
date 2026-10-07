@@ -42,8 +42,19 @@ const DE: PoseidonSecureStrings = {
     'Auf unseren modernen, voll ausgestatteten Yachten genießen Sie ein rundum sorgenfreies Erlebnis auf See — konzentrieren Sie sich auf die Route, Ihre Sicherheit und Rechte sind geschützt.',
 }
 
+const RU: PoseidonSecureStrings = {
+  ariaLabel: 'Poseidon Secure',
+  badges: [
+    { icon: 'refund', label: 'Безусловный возврат в течение 24 часов' },
+    { icon: 'weather', label: 'Гарантия хорошей погоды' },
+  ],
+  description:
+    'На наших современных, полностью оснащённых яхтах мы дарим вам безупречный морской отдых — наслаждайтесь маршрутом, пока ваша безопасность и права находятся под нашей защитой.',
+}
+
 export function getPoseidonSecureStrings(locale: SiteLocale): PoseidonSecureStrings {
   if (locale === 'en') return EN
   if (locale === 'de') return DE
+  if (locale === 'ru') return RU
   return TR
 }

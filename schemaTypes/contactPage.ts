@@ -235,7 +235,7 @@ export default defineType({
     }),
     defineField({
       name: 'pageTranslations',
-      title: 'Çeviriler — English / Deutsch',
+      title: 'Çeviriler — English / Deutsch / Русский',
       type: 'object',
       description: 'İletişim sayfası başlık, giriş, form etiketleri ve isteğe bağlı arayüz metinleri.',
       fields: [
@@ -247,6 +247,11 @@ export default defineType({
         defineField({
           name: 'de',
           title: 'Deutsch',
+          type: 'contactPageLocaleOverlay',
+        }),
+        defineField({
+          name: 'ru',
+          title: 'Русский',
           type: 'contactPageLocaleOverlay',
         }),
       ],

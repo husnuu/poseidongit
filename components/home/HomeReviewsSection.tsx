@@ -44,60 +44,70 @@ const HEADING: Record<SiteLocale, string> = {
   tr: 'SİZDEN GELENLER',
   en: 'FROM OUR GUESTS',
   de: 'VON UNSEREN GÄSTEN',
+  ru: 'ОТ НАШИХ ГОСТЕЙ',
 }
 
 const SUBTEXT: Record<SiteLocale, (count: string, rating: string) => string> = {
   tr: (count, rating) => `${count}+ doğrulanmış misafir tarafından ${rating} / 5.0 puan`,
   en: (count, rating) => `Rated ${rating} / 5.0 by ${count}+ verified guests`,
   de: (count, rating) => `Bewertet mit ${rating} / 5.0 von über ${count} verifizierten Gästen`,
+  ru: (count, rating) => `Оценка ${rating} / 5.0 от более чем ${count} проверенных гостей`,
 }
 
 const GOOGLE_LABEL: Record<SiteLocale, (count: string) => string> = {
   tr: (count) => `Google Yorumları (+${count})`,
   en: (count) => `Google Reviews (+${count})`,
   de: (count) => `Google-Bewertungen (+${count})`,
+  ru: (count) => `Отзывы Google (+${count})`,
 }
 
 const INSTAGRAM_LABEL: Record<SiteLocale, (count: string) => string> = {
   tr: (count) => `Instagram Takipçi (+${count})`,
   en: (count) => `Instagram Followers (+${count})`,
   de: (count) => `Instagram-Follower (+${count})`,
+  ru: (count) => `Подписчики в Instagram (+${count})`,
 }
 
 const INSTAGRAM_FOLLOW_LABEL: Record<SiteLocale, string> = {
   tr: "Instagram'da Takip Et",
   en: 'Follow on Instagram',
   de: 'Auf Instagram folgen',
+  ru: 'Подписаться в Instagram',
 }
 
 const TRANSLATED_FROM_LABEL: Record<SiteLocale, string> = {
   tr: '',
   en: 'Translated from Turkish',
   de: 'Aus dem Türkischen übersetzt',
+  ru: 'Перевод с турецкого',
 }
 
 const SHOW_ORIGINAL_LABEL: Record<SiteLocale, string> = {
   tr: '',
   en: 'Show original',
   de: 'Original anzeigen',
+  ru: 'Показать оригинал',
 }
 
 const SHOW_TRANSLATION_LABEL: Record<SiteLocale, string> = {
   tr: '',
   en: 'Show translation',
   de: 'Übersetzung anzeigen',
+  ru: 'Показать перевод',
 }
 
 const READ_FULL_LABEL: Record<SiteLocale, string> = {
   tr: 'Yorumun tamamını oku',
   en: 'Read the full review',
   de: 'Ganze Bewertung lesen',
+  ru: 'Читать отзыв полностью',
 }
 
 const CLOSE_LABEL: Record<SiteLocale, string> = {
   tr: 'Kapat',
   en: 'Close',
   de: 'Schließen',
+  ru: 'Закрыть',
 }
 
 /** İsimden deterministik pastel avatar rengi (kart üzerinde — referans siteyle aynı görünüm). */

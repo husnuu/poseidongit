@@ -23,6 +23,12 @@ const STRINGS: Record<SiteLocale, { title: string; body: string; retry: string; 
     retry: 'Erneut versuchen',
     home: 'Startseite',
   },
+  ru: {
+    title: 'Не удалось загрузить тур',
+    body: 'Эта страница тура сейчас недоступна. Пожалуйста, попробуйте снова или вернитесь на главную страницу.',
+    retry: 'Попробовать снова',
+    home: 'Главная',
+  },
 }
 
 function localeFromPathname(pathname: string | null): SiteLocale {

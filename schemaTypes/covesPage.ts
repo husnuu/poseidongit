@@ -52,6 +52,7 @@ export default defineType({
       fields: [
         defineField({ name: 'en', title: 'English', type: 'covesPageLocaleOverlay' }),
         defineField({ name: 'de', title: 'Deutsch', type: 'covesPageLocaleOverlay' }),
+        defineField({ name: 'ru', title: 'Русский', type: 'covesPageLocaleOverlay' }),
       ],
     }),
   ],

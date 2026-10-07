@@ -20,8 +20,10 @@ import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
+import { tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
 import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
 import { dateLocaleForSite } from '@/lib/i18n/dateLocale'
+import { translateText, translatePortableTextBlocks, translateTextArray } from '@/lib/i18n/runtimeTranslate'
 
 interface BlogPost {
   _id: string
@@ -82,14 +84,23 @@ export async function generateMetadata({
   const ui = getBlogPageUiStrings(locale)
   const post = await client.fetch<BlogPost | null>(blogBySlugQuery, { slug })
   if (!post) return { title: ui.postNotFoundTitle }
-  const merged = mergeBlogForLocale(post as unknown as Record<string, unknown>, locale) as unknown as BlogPost
+  const rawPost = post as unknown as Record<string, unknown>
+  const merged = mergeBlogForLocale(rawPost, locale) as unknown as BlogPost
   const siteName = getSiteName()
-  const metaTitle = merged.seo?.metaTitle?.trim() || merged.title
+  const hasManualTitle = tourFieldHasManualTranslation(rawPost, locale, 'title')
+  const hasManualSeoTitle = tourFieldHasManualTranslation(rawPost, locale, 'seo')
+  const translatedTitle = hasManualTitle ? merged.title : await translateText(merged.title, locale)
+  const metaTitleRaw = merged.seo?.metaTitle?.trim() || translatedTitle
+  const metaTitle = hasManualSeoTitle || !merged.seo?.metaTitle?.trim()
+    ? metaTitleRaw
+    : await translateText(metaTitleRaw, locale)
   const title = siteName ? `${metaTitle} | ${ui.blogListTitleSuffix} | ${siteName}` : `${metaTitle} | ${ui.blogListTitleSuffix}`
-  const description =
-    (merged.seo?.metaDescription?.trim() ||
-      merged.excerpt ||
-      merged.title).replace(/\s+/g, ' ').slice(0, 160) || title
+  const descriptionRaw = merged.seo?.metaDescription?.trim() || merged.excerpt || translatedTitle
+  const descriptionTranslated =
+    hasManualSeoTitle || !merged.seo?.metaDescription?.trim()
+      ? descriptionRaw
+      : await translateText(descriptionRaw, locale)
+  const description = descriptionTranslated.replace(/\s+/g, ' ').slice(0, 160) || title
   const pathSlug = typeof merged.slug === 'string' ? merged.slug : slug
   const url = absoluteUrl(withLocalePath(locale, `/blog/${pathSlug}`))
   const ogFromSeo = merged.seo?.ogImage?.asset
@@ -110,12 +121,12 @@ export async function generateMetadata({
       description,
       url,
       type: 'article',
-      locale: locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : 'en_US',
+      locale: locale === 'tr' ? 'tr_TR' : locale === 'en' ? 'en_US' : locale === 'de' ? 'de_DE' : 'ru_RU',
       ...(siteName ? { siteName } : {}),
       publishedTime: merged.publishDate ?? undefined,
       modifiedTime: merged._updatedAt ?? undefined,
       authors: merged.author ? [merged.author] : undefined,
-      images: image ? [{ url: image, width: 1200, height: 630, alt: merged.title }] : undefined,
+      images: image ? [{ url: image, width: 1200, height: 630, alt: translatedTitle }] : undefined,
     },
     twitter: {
       card: image ? 'summary_large_image' : 'summary',
@@ -141,7 +152,29 @@ export default async function BlogPostPage({
 
   if (!post) notFound()
 
-  const merged = mergeBlogForLocale(post as unknown as Record<string, unknown>, locale) as unknown as BlogPost
+  const rawPost = post as unknown as Record<string, unknown>
+  const merged = mergeBlogForLocale(rawPost, locale) as unknown as BlogPost
+
+  const title = tourFieldHasManualTranslation(rawPost, locale, 'title')
+    ? merged.title
+    : await translateText(merged.title, locale)
+  const excerpt = merged.excerpt
+    ? tourFieldHasManualTranslation(rawPost, locale, 'excerpt')
+      ? merged.excerpt
+      : await translateText(merged.excerpt, locale)
+    : merged.excerpt
+  const content =
+    merged.content && merged.content.length > 0
+      ? tourFieldHasManualTranslation(rawPost, locale, 'content')
+        ? merged.content
+        : await translatePortableTextBlocks(merged.content, locale)
+      : merged.content
+  const tags =
+    merged.tags && merged.tags.length > 0
+      ? tourFieldHasManualTranslation(rawPost, locale, 'tags')
+        ? merged.tags
+        : await translateTextArray(merged.tags, locale)
+      : merged.tags
 
   const coverUrl = merged.coverImage?.asset
     ? urlFor(merged.coverImage.asset).width(1200).height(630).url()
@@ -151,14 +184,16 @@ export default async function BlogPostPage({
   const blogListPath = withLocalePath(locale, '/blog')
   const postPath = withLocalePath(locale, `/blog/${pathSlug}`)
   const postUrl = absoluteUrl(postPath)
+  const homeLabel =
+    locale === 'tr' ? 'Ana Sayfa' : locale === 'en' ? 'Home' : locale === 'de' ? 'Startseite' : 'Главная'
   const breadcrumbSchema = buildBreadcrumbSchema([
-    { name: locale === 'tr' ? 'Ana Sayfa' : locale === 'en' ? 'Home' : 'Startseite', url: withLocalePath(locale, '/') },
+    { name: homeLabel, url: withLocalePath(locale, '/') },
     { name: ui.blogListTitleSuffix, url: blogListPath },
-    { name: merged.title, url: postPath },
+    { name: title, url: postPath },
   ])
   const blogPostingSchema = buildBlogPostingSchema({
-    title: merged.title,
-    description: merged.excerpt ?? undefined,
+    title,
+    description: excerpt ?? undefined,
     url: postUrl,
     image: coverUrl ?? undefined,
     datePublished: merged.publishDate ?? undefined,
@@ -171,9 +206,9 @@ export default async function BlogPostPage({
       <JsonLd data={blogPostingSchema} />
       <article className={styles.article}>
         <header className={styles.header}>
-          <h1 className={`${styles.title} pageHeroTitleStroke`}>{merged.title}</h1>
+          <h1 className={`${styles.title} pageHeroTitleStroke`}>{title}</h1>
 
-          {merged.excerpt && <p className={styles.lead}>{merged.excerpt}</p>}
+          {excerpt && <p className={styles.lead}>{excerpt}</p>}
 
           {(merged.author || merged.publishDate || merged._updatedAt) && (
             <div className={styles.authorRow}>
@@ -203,7 +238,7 @@ export default async function BlogPostPage({
           <div className={styles.coverWrap}>
             <Image
               src={coverUrl}
-              alt={merged.coverImage?.alt || merged.title}
+              alt={merged.coverImage?.alt || title}
               width={1200}
               height={630}
               className={styles.coverImage}
@@ -212,15 +247,15 @@ export default async function BlogPostPage({
           </div>
         )}
 
-        {merged.content && merged.content.length > 0 && (
+        {content && content.length > 0 && (
           <div className={styles.body}>
-            <PortableText value={merged.content} />
+            <PortableText value={content} />
           </div>
         )}
 
-        {merged.tags && merged.tags.length > 0 && (
+        {tags && tags.length > 0 && (
           <div className={styles.tags}>
-            {merged.tags.map((tag) => (
+            {tags.map((tag) => (
               <span key={tag} className={styles.tag}>
                 {tag}
               </span>

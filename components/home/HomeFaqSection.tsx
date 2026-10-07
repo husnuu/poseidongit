@@ -21,17 +21,20 @@ const HEADING_LINE1: Record<SiteLocale, string> = {
   tr: 'SIKÇA SORULAN',
   en: 'FREQUENTLY ASKED',
   de: 'HÄUFIG GESTELLTE',
+  ru: 'ЧАСТО ЗАДАВАЕМЫЕ',
 }
 const HEADING_LINE2: Record<SiteLocale, string> = {
   tr: 'SORULAR',
   en: 'QUESTIONS',
   de: 'FRAGEN',
+  ru: 'ВОПРОСЫ',
 }
 
 const VIEW_ALL_LABEL: Record<SiteLocale, string> = {
   tr: 'Tüm soruları görüntüle',
   en: 'View all questions',
   de: 'Alle Fragen ansehen',
+  ru: 'Посмотреть все вопросы',
 }
 
 /** CMS'te henüz yeterli soru yoksa gösterilecek varsayılan liste. */
@@ -79,7 +82,7 @@ const DEFAULT_FAQ_TR: HomeFaqItem[] = [
 ]
 
 export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionProps) {
-  const [openIndex, setOpenIndex] = useState<number | null>(0)
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   const resolvedItems = items && items.length > 0 ? items : locale === 'tr' ? DEFAULT_FAQ_TR : null
   if (!resolvedItems || resolvedItems.length === 0) return null

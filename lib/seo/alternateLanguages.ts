@@ -12,7 +12,7 @@ export function alternateLanguageAbsoluteUrls(path: string): Record<string, stri
   for (const loc of SITE_LOCALES) {
     const p = withLocalePath(loc, path)
     const abs = p === '/' ? base : `${base}${p}`
-    const hreflang = loc === 'tr' ? 'tr' : loc === 'en' ? 'en' : 'de'
+    const hreflang = loc === 'tr' ? 'tr' : loc === 'en' ? 'en' : loc === 'de' ? 'de' : 'ru'
     out[hreflang] = abs
   }
   const defaultPath = withLocalePath(DEFAULT_LOCALE as SiteLocale, path)

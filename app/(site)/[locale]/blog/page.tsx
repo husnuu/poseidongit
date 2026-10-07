@@ -10,7 +10,9 @@ import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { mergeBlogPageLocale, mergeBlogPageSeoForLocale } from '@/lib/i18n/mergeBlogPageLocale'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
+import { tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
 import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
+import { translateText } from '@/lib/i18n/runtimeTranslate'
 
 const siteName = getSiteName()
 
@@ -100,15 +102,26 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
     console.error('Blog page fetch error:', err)
   }
 
-  const line1 = pageContent?.heroTitle ?? 'BLOG'
-  const line2 = pageContent?.heroHighlightTitlePart ?? 'YAZILARI'
+  const line1 =
+    pageContent?.heroTitle ?? (locale === 'ru' ? 'БЛОГ' : 'BLOG')
+  const line2 =
+    pageContent?.heroHighlightTitlePart ??
+    (locale === 'en'
+      ? 'POSTS'
+      : locale === 'de'
+        ? 'BEITRÄGE'
+        : locale === 'ru'
+          ? 'СТАТЬИ'
+          : 'YAZILARI')
   const leadText =
     pageContent?.heroDescription ??
     (locale === 'tr'
       ? 'Çeşme, tekne turları ve tatil ipuçları. Deneyimler ve rehberler.'
       : locale === 'en'
         ? 'Çeşme, boat tours, and travel tips — guides and stories.'
-        : 'Çeşme, Bootstouren und Reisetipps — Erlebnisse und Ratgeber.')
+        : locale === 'de'
+          ? 'Çeşme, Bootstouren und Reisetipps — Erlebnisse und Ratgeber.'
+          : 'Чешме, морские прогулки и советы для отдыха. Истории и путеводители.')
 
   const emptyMsg =
     pageContent?.emptyListMessage ??
@@ -116,7 +129,40 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
       ? 'Henüz blog yazısı yok. Sanity Studio üzerinden ekleyebilirsiniz.'
       : locale === 'en'
         ? 'No blog posts yet. You can add them in Sanity Studio.'
-        : 'Noch keine Blogbeiträge. Sie können sie in Sanity Studio anlegen.')
+        : locale === 'de'
+          ? 'Noch keine Blogbeiträge. Sie können sie in Sanity Studio anlegen.'
+          : 'Пока нет записей в блоге. Вы можете добавить их в Sanity Studio.')
+
+  const blogCards = await Promise.all(
+    (blogs ?? []).map(async (blog) => {
+      const rawBlog = blog as unknown as Record<string, unknown>
+      const merged = mergeBlogForLocale(rawBlog, locale) as unknown as BlogItem
+      const coverImageUrl =
+        merged.coverImage?.asset != null
+          ? urlFor(merged.coverImage.asset).width(800).height(600).url()
+          : null
+      const title = tourFieldHasManualTranslation(rawBlog, locale, 'title')
+        ? merged.title
+        : await translateText(merged.title, locale)
+      const excerpt = merged.excerpt
+        ? tourFieldHasManualTranslation(rawBlog, locale, 'excerpt')
+          ? merged.excerpt
+          : await translateText(merged.excerpt, locale)
+        : null
+      return {
+        id: blog._id,
+        post: {
+          _id: merged._id,
+          title,
+          slug: merged.slug,
+          coverImageUrl,
+          coverImageAlt: merged.coverImage?.alt ?? null,
+          excerpt,
+          publishDate: merged.publishDate ?? null,
+        },
+      }
+    })
+  )
 
   return (
     <main className={styles.main}>
@@ -132,35 +178,17 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
 
       <section className={styles.gridSection}>
         <div className={styles.gridContainer}>
-          {blogs?.length > 0 ? (
+          {blogCards.length > 0 ? (
             <div className={styles.blogsGrid}>
-              {blogs.map((blog) => {
-                const merged = mergeBlogForLocale(
-                  blog as unknown as Record<string, unknown>,
-                  locale,
-                ) as unknown as BlogItem
-                const coverImageUrl =
-                  merged.coverImage?.asset != null
-                    ? urlFor(merged.coverImage.asset).width(800).height(600).url()
-                    : null
-                return (
-                  <CompactBlogCard
-                    key={blog._id}
-                    post={{
-                      _id: merged._id,
-                      title: merged.title,
-                      slug: merged.slug,
-                      coverImageUrl,
-                      coverImageAlt: merged.coverImage?.alt ?? null,
-                      excerpt: merged.excerpt ?? null,
-                      publishDate: merged.publishDate ?? null,
-                    }}
-                    locale={locale}
-                    noImageLabel={ui.noCoverImage}
-                    imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
-                )
-              })}
+              {blogCards.map(({ id, post }) => (
+                <CompactBlogCard
+                  key={id}
+                  post={post}
+                  locale={locale}
+                  noImageLabel={ui.noCoverImage}
+                  imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+              ))}
             </div>
           ) : (
             <p className={styles.empty}>{emptyMsg}</p>

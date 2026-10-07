@@ -1,6 +1,7 @@
 import { sanitizeSingleLineText } from '@/lib/inputSanitize'
 import type { BookingWizardState } from '@/lib/sanity/bookingTypes'
 import { additionalTravelerSlotCount } from '@/lib/bookingAdditionalTravelers'
+import type { SiteLocale } from '@/lib/i18n/config'
 
 export type PassengerGender = 'male' | 'female'
 
@@ -99,7 +100,15 @@ export function parseInfantGendersFromBody(raw: unknown): PassengerGender[] | nu
   return out
 }
 
-export function genderLabel(gender: PassengerGender, locale: 'tr' | 'en' | 'de' = 'tr'): string {
-  if (gender === 'male') return locale === 'en' ? 'Male' : locale === 'de' ? 'Herr' : 'Bay'
-  return locale === 'en' ? 'Female' : locale === 'de' ? 'Frau' : 'Bayan'
+export function genderLabel(gender: PassengerGender, locale: SiteLocale = 'tr'): string {
+  if (gender === 'male') {
+    if (locale === 'en') return 'Male'
+    if (locale === 'de') return 'Herr'
+    if (locale === 'ru') return 'Мужчина'
+    return 'Bay'
+  }
+  if (locale === 'en') return 'Female'
+  if (locale === 'de') return 'Frau'
+  if (locale === 'ru') return 'Женщина'
+  return 'Bayan'
 }

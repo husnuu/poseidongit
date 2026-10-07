@@ -27,7 +27,7 @@ export function mergeContactPageLocale<T extends Record<string, unknown>>(data: 
   if (!data || locale === 'tr') return data
   const pt = data.pageTranslations as { en?: Record<string, unknown>; de?: Record<string, unknown> } | undefined
   if (!pt) return data
-  const patch = locale === 'en' ? pt.en : pt.de
+  const patch = locale === 'en' ? pt.en : locale === 'de' ? pt.de : undefined
   if (!patch || typeof patch !== 'object') return data
 
   const out = { ...data } as Record<string, unknown>
@@ -77,7 +77,7 @@ export function mergeContactPageSeoForLocale(
   if (locale === 'tr' || !pageTranslations) {
     return { metaTitle, metaDescription }
   }
-  const patch = locale === 'en' ? pageTranslations.en : pageTranslations.de
+  const patch = locale === 'en' ? pageTranslations.en : locale === 'de' ? pageTranslations.de : undefined
   if (!patch) return { metaTitle, metaDescription }
 
   let nextTitle = metaTitle

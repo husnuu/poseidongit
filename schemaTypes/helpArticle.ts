@@ -88,6 +88,7 @@ export default defineType({
       fields: [
         defineField({ name: 'en', title: 'English', type: 'helpArticleTranslation' }),
         defineField({ name: 'de', title: 'Deutsch', type: 'helpArticleTranslation' }),
+        defineField({ name: 'ru', title: 'Русский', type: 'helpArticleTranslation' }),
       ],
     }),
   ],

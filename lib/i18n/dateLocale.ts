@@ -4,5 +4,6 @@ import type { SiteLocale } from './config'
 export function dateLocaleForSite(locale: SiteLocale): string {
   if (locale === 'en') return 'en-US'
   if (locale === 'de') return 'de-DE'
+  if (locale === 'ru') return 'ru-RU'
   return 'tr-TR'
 }

@@ -363,6 +363,36 @@ export default defineType({
       initialValue: false,
     }),
     defineField({
+      name: 'cardDiscount',
+      title: 'İndirim Rozeti (Tur Kartı)',
+      type: 'object',
+      description:
+        'Tur/anasayfa listelerindeki karta kırmızı "-%X İndirim" rozeti ve üstü çizili eski fiyat ekler. Sadece kart üzerindeki görünümü etkiler; rezervasyon adımındaki gerçek bilet fiyatlarını değiştirmez.',
+      fields: [
+        defineField({
+          name: 'enabled',
+          title: 'Aktif',
+          type: 'boolean',
+          initialValue: false,
+        }),
+        defineField({
+          name: 'percentage',
+          title: 'İndirim Yüzdesi',
+          type: 'number',
+          description: 'Örn. 15 → "%15 İndirim" ve fiyat %15 düşürülmüş gösterilir.',
+          validation: (Rule) => Rule.min(1).max(90).integer().error('1 ile 90 arasında bir tam sayı olmalıdır'),
+        }),
+      ],
+      preview: {
+        select: { enabled: 'enabled', percentage: 'percentage' },
+        prepare({ enabled, percentage }) {
+          return {
+            title: enabled && percentage ? `İndirim aktif: %${percentage}` : 'İndirim kapalı',
+          }
+        },
+      },
+    }),
+    defineField({
       name: 'ratingLabel',
       title: 'Puan Etiketi',
       type: 'string',
@@ -2155,10 +2185,10 @@ export default defineType({
 
     defineField({
       name: 'translations',
-      title: 'Çeviriler (EN / DE)',
+      title: 'Çeviriler (EN / DE / RU)',
       type: 'object',
       description:
-        'İngilizce ve Almanca başlık, slug ve sayfa metinleri. Türkçe alanlar kök belgede kalır; URL /en/... ve /de/... için burada slug girin.',
+        'İngilizce, Almanca ve Rusça başlık, slug ve sayfa metinleri. Türkçe alanlar kök belgede kalır; URL /en/..., /de/... ve /ru/... için burada slug girin.',
       fields: [
         defineField({
           name: 'en',
@@ -2168,6 +2198,11 @@ export default defineType({
         defineField({
           name: 'de',
           title: 'Deutsch',
+          type: 'tourTranslation',
+        }),
+        defineField({
+          name: 'ru',
+          title: 'Русский',
           type: 'tourTranslation',
         }),
       ],

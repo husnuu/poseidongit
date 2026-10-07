@@ -46,31 +46,35 @@ const VIEW_YACHT_CTA: Record<SiteLocale, string> = {
   tr: 'Tekneyi görüntüle',
   en: 'View yacht',
   de: 'Yacht ansehen',
+  ru: 'Смотреть яхту',
 }
 
 const FAVORITE_LABEL: Record<SiteLocale, string> = {
   tr: 'Favorilere ekle',
   en: 'Add to favorites',
   de: 'Zu Favoriten hinzufügen',
+  ru: 'Добавить в избранное',
 }
 
 const FEATURED_LABEL: Record<SiteLocale, string> = {
   tr: 'Öne çıkan',
   en: 'Featured',
   de: 'Empfohlen',
+  ru: 'Рекомендуем',
 }
 
-const PER_DAY_LABEL: Record<SiteLocale, string> = { tr: 'Günlük', en: 'Per day', de: 'Pro Tag' }
-const OVERNIGHT_LABEL: Record<SiteLocale, string> = { tr: 'Konaklamalı', en: 'Overnight', de: 'Übernachtung' }
+const PER_DAY_LABEL: Record<SiteLocale, string> = { tr: 'Günlük', en: 'Per day', de: 'Pro Tag', ru: 'В день' }
+const OVERNIGHT_LABEL: Record<SiteLocale, string> = { tr: 'Konaklamalı', en: 'Overnight', de: 'Übernachtung', ru: 'С ночёвкой' }
 
 const GUEST_CAPACITY_LABEL: Record<SiteLocale, string> = {
   tr: 'Yolcu Kapasitesi',
   en: 'Guest capacity',
   de: 'Gästekapazität',
+  ru: 'Вместимость гостей',
 }
-const BUILT_YEAR_LABEL: Record<SiteLocale, string> = { tr: 'Yapım Yılı', en: 'Built year', de: 'Baujahr' }
-const CABINS_LABEL: Record<SiteLocale, string> = { tr: 'Kabin', en: 'Cabins', de: 'Kabinen' }
-const LENGTH_LABEL: Record<SiteLocale, string> = { tr: 'Uzunluk', en: 'Length', de: 'Länge' }
+const BUILT_YEAR_LABEL: Record<SiteLocale, string> = { tr: 'Yapım Yılı', en: 'Built year', de: 'Baujahr', ru: 'Год постройки' }
+const CABINS_LABEL: Record<SiteLocale, string> = { tr: 'Kabin', en: 'Cabins', de: 'Kabinen', ru: 'Каюты' }
+const LENGTH_LABEL: Record<SiteLocale, string> = { tr: 'Uzunluk', en: 'Length', de: 'Länge', ru: 'Длина' }
 
 function specRows(spec: YachtSpecifications | null | undefined, locale: SiteLocale) {
   if (!spec) return []

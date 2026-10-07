@@ -33,6 +33,7 @@ const NOTES_TITLE_FALLBACK: Record<SiteLocale, string> = {
   tr: 'Bilmeniz Gerekenler',
   en: 'Good to Know',
   de: 'Gut zu wissen',
+  ru: 'Полезно знать',
 }
 
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1)
@@ -47,28 +48,32 @@ const STEP_LABELS: Record<SiteLocale, string[]> = {
   tr: ['Sefer', 'Bilgileriniz', 'Kontrol et ve öde'],
   en: ['Trip', 'Your Details', 'Review & Pay'],
   de: ['Reise', 'Ihre Daten', 'Prüfen & Zahlen'],
+  ru: ['Поездка', 'Ваши данные', 'Проверка и оплата'],
 }
 
 const TRIP_TYPE_LABELS: Record<SiteLocale, Record<FerryTripType, string>> = {
   tr: { oneway: 'Tek Yön', sameday: 'Aynı Gün Gidiş-Dönüş', diffday: 'Farklı Gün Gidiş-Dönüş' },
   en: { oneway: 'One Way', sameday: 'Same-Day Round Trip', diffday: 'Different-Day Round Trip' },
   de: { oneway: 'Einfache Fahrt', sameday: 'Hin- und Rückfahrt (gleicher Tag)', diffday: 'Hin- und Rückfahrt (anderer Tag)' },
+  ru: { oneway: 'В одну сторону', sameday: 'Туда и обратно в тот же день', diffday: 'Туда и обратно в разные дни' },
 }
 
 const DATE_PLACEHOLDER: Record<SiteLocale, string> = {
   tr: 'Tarih seçin',
   en: 'Select date',
   de: 'Datum wählen',
+  ru: 'Выберите дату',
 }
 
 const SAME_DAY_RETURN_HINT: Record<SiteLocale, string> = {
   tr: 'Gidiş ile aynı gün',
   en: 'Same day as departure',
   de: 'Am selben Tag wie die Hinfahrt',
+  ru: 'В тот же день, что и отправление',
 }
 
-const DEPARTURE_LABEL: Record<SiteLocale, string> = { tr: 'Gidiş', en: 'Departure', de: 'Hinfahrt' }
-const RETURN_LABEL: Record<SiteLocale, string> = { tr: 'Dönüş', en: 'Return', de: 'Rückfahrt' }
+const DEPARTURE_LABEL: Record<SiteLocale, string> = { tr: 'Gidiş', en: 'Departure', de: 'Hinfahrt', ru: 'Отправление' }
+const RETURN_LABEL: Record<SiteLocale, string> = { tr: 'Dönüş', en: 'Return', de: 'Rückfahrt', ru: 'Возвращение' }
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10)
@@ -93,11 +98,12 @@ function parseIsoParts(iso: string): { y: number; m: number; d: number } | null 
   return { y, m, d }
 }
 
-const DATE_LOCALE_MAP: Record<SiteLocale, string> = { tr: 'tr-TR', en: 'en-US', de: 'de-DE' }
+const DATE_LOCALE_MAP: Record<SiteLocale, string> = { tr: 'tr-TR', en: 'en-US', de: 'de-DE', ru: 'ru-RU' }
 const WEEKDAYS_MAP: Record<SiteLocale, string[]> = {
   tr: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'],
   en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   de: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
+  ru: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
 }
 
 function formatDateDisplay(iso: string, locale: SiteLocale): string {
@@ -140,6 +146,7 @@ const MONTH_NAMES_MAP: Record<SiteLocale, string[]> = {
   tr: MONTHS_TR,
   en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
   de: ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
+  ru: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
 }
 
 interface MiniCalendarProps {

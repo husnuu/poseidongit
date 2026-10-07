@@ -14,6 +14,7 @@ const HEADING: Record<SiteLocale, string> = {
   tr: 'Diğer Turlarımız',
   en: 'Other Tours',
   de: 'Weitere Touren',
+  ru: 'Другие наши туры',
 }
 
 /** Tur detay sayfasının en altında (yorumların altında) — mevcut turu hariç

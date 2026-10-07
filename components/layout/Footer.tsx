@@ -244,6 +244,7 @@ const POPULAR_TOURS_TITLE: Record<SiteLocale, string> = {
   tr: 'En Popüler Turlarımız',
   en: 'Our Most Popular Tours',
   de: 'Unsere beliebtesten Touren',
+  ru: 'Наши самые популярные туры',
 }
 
 /** Referans siteki "AWARD-WINNING EXPERIENCES" sütununun karşılığı — bizde
@@ -252,6 +253,7 @@ const MEMBERSHIPS_TITLE: Record<SiteLocale, string> = {
   tr: 'Yetkili Üyeliklerimiz',
   en: 'Our Certifications',
   de: 'Unsere Zertifizierungen',
+  ru: 'Наши сертификаты',
 }
 
 function locHref(locale: SiteLocale, href: string | null | undefined): string {
@@ -310,6 +312,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
     tr: 'Pazartesi - Cuma: 09:00 - 17:00',
     en: 'Monday - Friday: 09:00 - 17:00',
     de: 'Montag - Freitag: 09:00 - 17:00',
+    ru: 'Понедельник - Пятница: 09:00 - 17:00',
   }
   const [topRatedLabel, chatTitle, openingTitle, openingValue, exploreTitle] = await Promise.all([
     pickLocalizedStringTranslated(topRated?.label, topRated?.labelEn, topRated?.labelDe, locale, 'TOP RATED'),

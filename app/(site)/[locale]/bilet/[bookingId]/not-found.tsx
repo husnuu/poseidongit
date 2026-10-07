@@ -21,6 +21,12 @@ const STRINGS: Record<SiteLocale, { title: string; body: string; cta: string; fo
     cta: 'Zurück zur Startseite',
     footer: 'Falls das Problem weiterhin besteht, kontaktieren Sie uns bitte.',
   },
+  ru: {
+    title: 'Бронирование не найдено',
+    body: 'Мы не смогли найти бронирование по этому номеру билета. Пожалуйста, проверьте ссылку в письме или номер вашего бронирования.',
+    cta: 'Вернуться на главную',
+    footer: 'Если проблема повторяется, пожалуйста, свяжитесь с нами.',
+  },
 }
 
 export default async function BiletNotFound() {

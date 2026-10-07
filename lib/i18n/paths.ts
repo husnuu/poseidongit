@@ -39,6 +39,10 @@ export function stripLocalePathPrefix(pathname: string): string {
     const rest = pathname.slice(3) || '/'
     return rest.startsWith('/') ? rest : `/${rest}`
   }
+  if (pathname === '/ru' || pathname.startsWith('/ru/')) {
+    const rest = pathname.slice(3) || '/'
+    return rest.startsWith('/') ? rest : `/${rest}`
+  }
   if (pathname === '/tr' || pathname.startsWith('/tr/')) {
     const rest = pathname.slice(3) || '/'
     return rest.startsWith('/') ? rest : `/${rest}`
@@ -87,6 +91,10 @@ export function parseLocaleFromPathname(pathname: string): {
   if (parts[0] === 'de') {
     const rest = parts.slice(1)
     return { locale: 'de', pathWithoutLocale: rest.length ? `/${rest.join('/')}` : '/' }
+  }
+  if (parts[0] === 'ru') {
+    const rest = parts.slice(1)
+    return { locale: 'ru', pathWithoutLocale: rest.length ? `/${rest.join('/')}` : '/' }
   }
   /** İç rewrite veya doğrudan /tr/... adres çubuğunda */
   if (parts[0] === 'tr') {

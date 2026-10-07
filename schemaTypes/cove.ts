@@ -63,6 +63,7 @@ export default defineType({
       fields: [
         defineField({ name: 'en', title: 'English', type: 'coveTranslation' }),
         defineField({ name: 'de', title: 'Deutsch', type: 'coveTranslation' }),
+        defineField({ name: 'ru', title: 'Русский', type: 'coveTranslation' }),
       ],
     }),
   ],

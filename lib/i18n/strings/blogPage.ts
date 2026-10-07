@@ -71,8 +71,27 @@ const DE: BlogPageUiStrings = {
   updatedLabel: 'Letzte Aktualisierung',
 }
 
+const RU: BlogPageUiStrings = {
+  readPostCta: 'ЧИТАТЬ СТАТЬЮ',
+  homeBlogCardCta: 'Читать статью',
+  noCoverImage: 'Нет фото',
+  noExcerptFallback: 'Для этой статьи пока не добавлено краткое описание.',
+  backToList: '← Назад к блогу',
+  allPosts: '← Все статьи',
+  relatedPagesHeading: 'Похожие страницы',
+  relatedTours: 'Морские прогулки в Чешме',
+  relatedCoves: 'Бухты Чешме',
+  postNotFoundTitle: 'Статья не найдена',
+  readTimeSuffix: 'мин',
+  blogListTitleSuffix: 'Блог',
+  blogListDefaultDescription:
+    'Советы по морским прогулкам, путеводители по бухтам и истории о путешествиях.',
+  updatedLabel: 'Последнее обновление',
+}
+
 export function getBlogPageUiStrings(locale: SiteLocale): BlogPageUiStrings {
   if (locale === 'en') return EN
   if (locale === 'de') return DE
+  if (locale === 'ru') return RU
   return TR
 }

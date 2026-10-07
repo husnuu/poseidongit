@@ -55,11 +55,13 @@ export async function generateMetadata({
     tr: 'Tekne menüsü',
     en: 'Yacht menu',
     de: 'Yacht-Menü',
+    ru: 'Меню яхты',
   }
   const descs: Record<SiteLocale, string> = {
     tr: 'Poseidon tekne menüsü: içecekler, atıştırmalıklar ve gurme tabaklar.',
     en: 'Poseidon yacht menu: drinks, snacks and gourmet plates.',
     de: 'Poseidon-Yachtmenü: Getränke, Snacks und Gourmetteller.',
+    ru: 'Меню яхты Poseidon: напитки, снеки и гурме-блюда.',
   }
 
   return buildPageMetadata({ locale, path: '/menu', title: titles[locale], description: descs[locale] })

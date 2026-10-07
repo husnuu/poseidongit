@@ -158,6 +158,12 @@ export const VOUCHER_POLICIES: Record<
     voucherNotice: 'Bitte zeigen Sie dieses Ticket beim Einsteigen.',
     languageLabel: 'Deutsch',
   },
+  ru: {
+    cancellationPolicy:
+      'Бесплатная отмена возможна не позднее чем за 24 часа до начала тура. После этого оплаченная сумма не возвращается.',
+    voucherNotice: 'Пожалуйста, предъявите этот билет при посадке.',
+    languageLabel: 'Русский',
+  },
 }
 
 /** Premium müşteri e-postası (ödeme onayı) — tablo etiketleri ve metinler */

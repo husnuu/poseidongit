@@ -267,9 +267,9 @@ export const getTour = cache(async function getTour(
   if (locale !== 'tr') {
     const has = (field: string) => tourFieldHasManualTranslation(rawRecord, locale, field)
     const rawTranslationsPatch = rawRecord.translations as Record<string, unknown> | undefined
-    const rawLocalePatch = (locale === 'en' ? rawTranslationsPatch?.en : rawTranslationsPatch?.de) as
-      | Record<string, unknown>
-      | undefined
+    const rawLocalePatch = (
+      locale === 'en' ? rawTranslationsPatch?.en : locale === 'de' ? rawTranslationsPatch?.de : rawTranslationsPatch?.ru
+    ) as Record<string, unknown> | undefined
     const rawSeoPatch = rawLocalePatch?.seo as { metaTitle?: string; metaDescription?: string } | undefined
     const hasManualSeoTitle = !!rawSeoPatch?.metaTitle?.trim()
     const hasManualSeoDescription = !!rawSeoPatch?.metaDescription?.trim()

@@ -36,38 +36,45 @@ export interface ReviewsSectionProps {
 function localeTagForNumbers(locale: TourPageUi['locale']): string {
   if (locale === 'de') return 'de-DE'
   if (locale === 'en') return 'en-US'
+  if (locale === 'ru') return 'ru-RU'
   return 'tr-TR'
 }
 
 function reviewsCountHeading(count: number | undefined, locale: TourPageUi['locale'], numLocale: string): string {
-  if (count == null) return locale === 'en' ? 'reviews' : locale === 'de' ? 'Bewertungen' : 'yorum'
+  if (count == null)
+    return locale === 'en' ? 'reviews' : locale === 'de' ? 'Bewertungen' : locale === 'ru' ? 'отзывов' : 'yorum'
   const n = count.toLocaleString(numLocale)
   if (locale === 'en') return `${n} reviews`
   if (locale === 'de') return `${n} Bewertungen`
+  if (locale === 'ru') return `${n} отзывов`
   return `${n} yorum`
 }
 
 function verifiedGuestLabel(locale: TourPageUi['locale']): string {
   if (locale === 'en') return 'Verified guest'
   if (locale === 'de') return 'Verifizierter Gast'
+  if (locale === 'ru') return 'Проверенный гость'
   return 'Doğrulanmış misafir'
 }
 
 function loadMoreLabel(locale: TourPageUi['locale']): string {
   if (locale === 'en') return 'Show more reviews'
   if (locale === 'de') return 'Weitere Bewertungen anzeigen'
+  if (locale === 'ru') return 'Показать больше отзывов'
   return 'Daha fazla yorum göster'
 }
 
 function readMoreLabel(locale: TourPageUi['locale']): string {
   if (locale === 'en') return 'Read more'
   if (locale === 'de') return 'Weiterlesen'
+  if (locale === 'ru') return 'Читать далее'
   return 'Devamını oku'
 }
 
 function closeLabel(locale: TourPageUi['locale']): string {
   if (locale === 'en') return 'Close'
   if (locale === 'de') return 'Schließen'
+  if (locale === 'ru') return 'Закрыть'
   return 'Kapat'
 }
 
@@ -97,7 +104,11 @@ export default function ReviewsSection({
   }))
 
   return (
-    <section className={styles.sectionWrapper} aria-labelledby="tour-reviews-heading">
+    <section
+      id="all-reviews"
+      className={`${styles.sectionWrapper} scroll-mt-24`}
+      aria-labelledby="tour-reviews-heading"
+    >
       <div className={styles.header}>
         <h2 id="tour-reviews-heading" className={styles.sectionHeading}>
           {headingText}

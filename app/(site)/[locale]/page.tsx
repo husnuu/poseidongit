@@ -70,17 +70,20 @@ const DEFAULT_HOME_TITLE: Record<SiteLocale, string> = {
   tr: siteName ? `Tekne Turu | Adalar ve Koylar – ${siteName}` : 'Tekne Turu | Adalar ve Koylar',
   en: siteName ? `Boat Tour | Islands and Bays – ${siteName}` : 'Boat Tour | Islands and Bays',
   de: siteName ? `Bootstour | Inseln und Buchten – ${siteName}` : 'Bootstour | Inseln und Buchten',
+  ru: siteName ? `Морская прогулка | Острова и бухты – ${siteName}` : 'Морская прогулка | Острова и бухты',
 }
 const DEFAULT_HOME_DESCRIPTION: Record<SiteLocale, string> = {
   tr: 'Tekne turu rezervasyonu. Adalar ve koylar turu, BBQ turları, günlük turlar. Online rezervasyon.',
   en: 'Boat tour booking. Islands and bays tour, BBQ tours, daily tours. Book online.',
   de: 'Bootstour-Buchung. Insel- und Buchtentour, BBQ-Touren, Tagestouren. Online buchen.',
+  ru: 'Бронирование морской прогулки. Тур по островам и бухтам, BBQ-туры, однодневные туры. Онлайн-бронирование.',
 }
 
 const OG_LOCALE: Record<SiteLocale, string> = {
   tr: 'tr_TR',
   en: 'en_US',
   de: 'de_DE',
+  ru: 'ru_RU',
 }
 
 function parseMetaKeywords(raw?: string | null): string[] | undefined {
@@ -131,7 +134,7 @@ export async function generateMetadata({
   try {
     const row = await client.fetch<{
       seo?: HomePageSeoPayload | null
-      pageTranslations?: { en?: Record<string, unknown>; de?: Record<string, unknown> }
+      pageTranslations?: { en?: Record<string, unknown>; de?: Record<string, unknown>; ru?: Record<string, unknown> }
       heroOgFallback?: { asset?: unknown; alt?: string | null } | null
     } | null>(homePageMetaQuery, {}, { useCdn: false })
 
@@ -142,9 +145,13 @@ export async function generateMetadata({
     ) as HomePageSeoPayload | null | undefined
 
     // Editör pageTranslations.en/.de.seo'ya elle çeviri girmemişse anlık çeviriyle doldur.
-    const patchSeo = (locale === 'en' ? row?.pageTranslations?.en?.seo : row?.pageTranslations?.de?.seo) as
-      | { metaTitle?: string; metaDescription?: string }
-      | undefined
+    const patchSeo = (
+      locale === 'en'
+        ? row?.pageTranslations?.en?.seo
+        : locale === 'de'
+          ? row?.pageTranslations?.de?.seo
+          : row?.pageTranslations?.ru?.seo
+    ) as { metaTitle?: string; metaDescription?: string } | undefined
     const hasManualMetaTitle = !!patchSeo?.metaTitle?.trim()
     const hasManualMetaDescription = !!patchSeo?.metaDescription?.trim()
     const [translatedMetaTitle, translatedMetaDescription] =
@@ -291,6 +298,7 @@ type PopularToursSectionRaw = {
     reviewCount?: number | null
     reviewsUrl?: string | null
     isPopular?: boolean | null
+    cardDiscount?: { enabled?: boolean | null; percentage?: number | null } | null
     mainImage?: { asset?: { _ref: string }; alt?: string | null } | null
     translations?: unknown
   }> | null
@@ -558,6 +566,7 @@ async function mapPopularToursToCardItems(
         reviewCount: merged.reviewCount,
         reviewsUrl: merged.reviewsUrl ?? null,
         isPopular: merged.isPopular ?? false,
+        cardDiscount: merged.cardDiscount ?? null,
         coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
         coverImageAlt: merged.mainImage?.alt ?? null,
       }
@@ -572,12 +581,15 @@ async function mapBlogSection(raw: BlogSectionRaw | null, locale: SiteLocale): P
     raw.posts.map(async (p) => {
       const rawPost = p as unknown as Record<string, unknown>
       const merged = mergeBlogForLocale(rawPost, locale) as unknown as (typeof raw.posts)[number]
+      const title = tourFieldHasManualTranslation(rawPost, locale, 'title')
+        ? merged.title
+        : await translateText(merged.title, locale)
       const excerpt = tourFieldHasManualTranslation(rawPost, locale, 'excerpt')
         ? merged.excerpt
         : await translateText(merged.excerpt, locale)
       return {
         _id: merged._id,
-        title: merged.title,
+        title,
         slug: merged.slug,
         excerpt,
         publishDate: merged.publishDate,

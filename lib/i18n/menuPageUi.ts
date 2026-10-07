@@ -104,7 +104,33 @@ const DE: MenuPageUi = {
   tabDesserts: 'Desserts',
 }
 
-const MAP: Record<SiteLocale, MenuPageUi> = { tr: TR, en: EN, de: DE }
+const RU: MenuPageUi = {
+  numberLocale: 'ru-RU',
+  pageTitle: 'Меню на борту',
+  pageIntro: 'Напитки и закуски в духе концепции роскошной яхты. Нажмите на категорию, чтобы отфильтровать.',
+  categoriesAriaLabel: 'Категории меню',
+  emptyCategory: 'В этой категории пока нет товаров.',
+  outOfStock: 'Распродано',
+  tabAll: 'Все',
+  tabCocktails: 'Коктейли',
+  cardCocktails: 'Коктейли (Маргарита, Мохито и др.)',
+  tabMocktails: 'Безалкогольные коктейли',
+  tabBeerWine: 'Пиво и вино',
+  cardAlcoholic: 'Алкогольные напитки',
+  tabSoftDrinks: 'Безалкогольные напитки',
+  cardSoftDrinks: 'Безалкогольные напитки',
+  tabBottles: 'Бутылки',
+  tabColdCoffee: 'Холодный кофе',
+  cardColdCoffee: 'Холодный кофе',
+  tabHotCoffee: 'Горячий кофе',
+  cardHotCoffee: 'Горячий кофе',
+  tabPremiumTea: 'Премиум чай',
+  cardPremiumTea: 'Премиум чай',
+  tabIceCream: 'Мороженое',
+  tabDesserts: 'Десерты',
+}
+
+const MAP: Record<SiteLocale, MenuPageUi> = { tr: TR, en: EN, de: DE, ru: RU }
 
 export function getMenuPageUi(locale: SiteLocale): MenuPageUi {
   return MAP[locale] ?? TR

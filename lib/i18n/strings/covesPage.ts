@@ -56,8 +56,23 @@ const DE: CovesPageUiStrings = {
   exploreLabel: 'Entdecken',
 }
 
+const RU: CovesPageUiStrings = {
+  metaTitleFallback: 'Бухты',
+  metaDescriptionFallback: 'Бухты, которые стоит исследовать.',
+  pageTitleFallback: 'Бухты',
+  emptyList: 'Бухты пока не добавлены.',
+  noImage: 'Нет фото',
+  detailHint: 'Подробнее',
+  defaultCoveTitle: 'Бухта',
+  closeAria: 'Закрыть',
+  cardAriaLabel: (title) => `Подробнее о ${title}`,
+  covesListedCount: (n) => `${n} бухт в списке`,
+  exploreLabel: 'Исследовать',
+}
+
 export function getCovesPageUiStrings(locale: SiteLocale): CovesPageUiStrings {
   if (locale === 'en') return EN
   if (locale === 'de') return DE
+  if (locale === 'ru') return RU
   return TR
 }

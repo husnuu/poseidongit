@@ -124,10 +124,10 @@ export default defineType({
     // C) SEO
     defineField({
       name: 'translations',
-      title: 'Çeviriler — English / Deutsch',
+      title: 'Çeviriler — English / Deutsch / Русский',
       type: 'object',
       description:
-        'İngilizce ve Almanca başlık, özet, içerik ve URL slug. Slug bu dilde /en/blog/… veya /de/blog/… adresinde kullanılır.',
+        'İngilizce, Almanca ve Rusça başlık, özet, içerik ve URL slug. Slug bu dilde /en/blog/…, /de/blog/… veya /ru/blog/… adresinde kullanılır.',
       fields: [
         defineField({
           name: 'en',
@@ -137,6 +137,11 @@ export default defineType({
         defineField({
           name: 'de',
           title: 'Deutsch',
+          type: 'blogTranslation',
+        }),
+        defineField({
+          name: 'ru',
+          title: 'Русский',
           type: 'blogTranslation',
         }),
       ],

@@ -188,22 +188,91 @@ const EN_API: YachtDepositApiMessages = {
   termsRequired: 'You must accept the distance sales agreement.',
 }
 
+const RU_CONTENT: YachtDepositPageContent = {
+  titleTop: 'ЧАСТНАЯ ЯХТА',
+  titleBottom: 'ЗАЛОГ ЗА АРЕНДУ',
+  intro:
+    'Вы можете безопасно внести залог на этой странице, чтобы подтвердить запрос на аренду частной яхты. После подтверждения оплаты команда Poseidon свяжется с вами по поводу доступности и деталей аренды.',
+  bullets: [
+    'Залог подтверждает ваш запрос на аренду частной яхты.',
+    'Оплата проходит на защищённой странице 3D-подтверждения вашего банка.',
+    'Письмо с подтверждением и данными об оплате будет отправлено на ваш адрес электронной почты.',
+    'Оставшаяся сумма взимается до даты аренды или по взаимной договорённости.',
+  ],
+  seo: {
+    title: 'Оплата залога за аренду частной яхты',
+    description:
+      'Оплатите залог за аренду частной яхты безопасно через наш платёжный шлюз. Команда Poseidon свяжется с вами после оплаты.',
+  },
+}
+
+const RU_FORM: YachtDepositFormUi = {
+  formSectionTitle: 'Ваши данные',
+  depositLabel: 'Сумма залога',
+  calendarTitle: 'Предпочитаемая дата аренды',
+  yachtNameLabel: 'Яхта / запрос (необязательно)',
+  messageLabel: 'Ваше примечание (необязательно)',
+  submitLabel: 'Оплатить залог',
+  secureNote: 'Оплата проходит на защищённой странице 3D-подтверждения вашего банка.',
+  redirectNote: 'Для продолжения вы будете перенаправлены на страницу оплаты банка.',
+  labelFirstName: 'Имя',
+  labelLastName: 'Фамилия',
+  labelEmail: 'Электронная почта',
+  labelPhone: 'Телефон',
+  valFirstName: 'Укажите имя',
+  valLastName: 'Укажите фамилию',
+  valEmail: 'Введите действительный адрес электронной почты',
+  valPhone: 'Укажите номер телефона',
+  valCharterDate: 'Пожалуйста, выберите дату в календаре.',
+  valTerms: 'Для продолжения оплаты необходимо принять договор.',
+  termsLinkText: 'Договор дистанционной продажи',
+  termsCheckboxLead: 'Я прочитал(а) и принимаю ',
+  termsCheckboxTrail: '.',
+  turnstileError: 'Пожалуйста, пройдите проверку.',
+  payError: 'Не удалось начать оплату. Пожалуйста, попробуйте снова.',
+  networkError: 'Ошибка соединения. Пожалуйста, попробуйте снова.',
+  disabledMessage: 'Страница оплаты залога временно недоступна. Пожалуйста, свяжитесь с нами.',
+  processingLabel: 'Переадресация…',
+}
+
+const RU_API: YachtDepositApiMessages = {
+  invalidRequest: 'Неверный запрос.',
+  requiredFields: 'Имя, фамилия, электронная почта и телефон обязательны.',
+  invalidEmail: 'Введите действительный адрес электронной почты.',
+  turnstileRequired: 'Требуется проверка.',
+  turnstileFailed: 'Проверка не пройдена.',
+  recordFailed: 'Не удалось создать запись.',
+  paymentConfigFailed: 'Платёжная система не настроена.',
+  genericFailed: 'Запрос не может быть выполнен.',
+  pageDisabled: 'Страница оплаты залога временно недоступна.',
+  amountInvalid: 'Сумма залога не настроена.',
+  noteYachtPrefix: 'Яхта',
+  noteDateRangePrefix: 'Даты аренды',
+  charterDateRequired: 'Пожалуйста, выберите дату аренды.',
+  charterMismatch: 'Даты аренды были обновлены. Пожалуйста, обновите страницу и попробуйте снова.',
+  yachtMismatch: 'Данные яхты были обновлены. Пожалуйста, обновите страницу и попробуйте снова.',
+  termsRequired: 'Вы должны принять договор дистанционной продажи.',
+}
+
 const CONTENT: Record<SiteLocale, YachtDepositPageContent> = {
   tr: TR_CONTENT,
   en: EN_CONTENT,
   de: EN_CONTENT,
+  ru: RU_CONTENT,
 }
 
 const FORM: Record<SiteLocale, YachtDepositFormUi> = {
   tr: TR_FORM,
   en: EN_FORM,
   de: { ...EN_FORM, processingLabel: 'Weiterleitung…' },
+  ru: RU_FORM,
 }
 
 const API: Record<SiteLocale, YachtDepositApiMessages> = {
   tr: TR_API,
   en: EN_API,
   de: EN_API,
+  ru: RU_API,
 }
 
 export function getYachtDepositPageContent(locale: SiteLocale): YachtDepositPageContent {

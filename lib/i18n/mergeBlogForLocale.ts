@@ -21,7 +21,7 @@ export function mergeBlogForLocale<T extends Record<string, unknown>>(post: T, l
   if (locale === 'tr') return post
   const translations = post.translations as Record<string, unknown> | undefined
   if (!translations) return post
-  const raw = (locale === 'en' ? translations.en : translations.de) as Record<string, unknown> | undefined
+  const raw = (locale === 'en' ? translations.en : locale === 'de' ? translations.de : undefined) as Record<string, unknown> | undefined
   if (!raw || typeof raw !== 'object') return post
 
   const patch = { ...raw } as Record<string, unknown>

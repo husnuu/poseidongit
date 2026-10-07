@@ -20,7 +20,7 @@ function pickTranslationPatch(
   if (!doc || locale === 'tr') return null
   const translations = doc.translations as Record<string, unknown> | undefined
   if (!translations) return null
-  const raw = (locale === 'en' ? translations.en : translations.de) as Record<string, unknown> | undefined
+  const raw = (locale === 'en' ? translations.en : locale === 'de' ? translations.de : undefined) as Record<string, unknown> | undefined
   return raw && typeof raw === 'object' ? { ...raw } : null
 }
 
@@ -29,7 +29,7 @@ export function mergeHelpCenterPageDoc<T extends Record<string, unknown>>(data: 
   if (!data || locale === 'tr') return data
   const pt = data.pageTranslations as { en?: Record<string, unknown>; de?: Record<string, unknown> } | undefined
   if (!pt) return data
-  const patch = locale === 'en' ? pt.en : pt.de
+  const patch = locale === 'en' ? pt.en : locale === 'de' ? pt.de : undefined
   if (!patch || typeof patch !== 'object') return data
 
   const out = { ...data } as Record<string, unknown>

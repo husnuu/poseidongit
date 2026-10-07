@@ -27,6 +27,7 @@ import HostBlock from '@/components/HostBlock'
 import TourBookingSidebar from '@/components/booking/TourBookingSidebar'
 import type { TourForBooking } from '@/lib/sanity/bookingTypes'
 import ReviewsSection from '@/components/ReviewsSection'
+import ReviewExcerptStrip from '@/components/ReviewExcerptStrip'
 import WhereSection from '@/components/tour/WhereSection'
 import TourReelsRail from '@/components/tour/TourReelsRail'
 import ScrollReveal from '@/components/ui/ScrollReveal'
@@ -104,7 +105,7 @@ export async function generateMetadata({
 
   const keywords = parseMetaKeywords(tour.seo?.keywords)
   const siteName = getSiteName()
-  const ogLocale = locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : 'en_US'
+  const ogLocale = locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : locale === 'ru' ? 'ru_RU' : 'en_US'
 
   return {
     title,
@@ -142,6 +143,7 @@ type OtherTourRaw = {
   reviewCount?: number | null
   reviewsUrl?: string | null
   isPopular?: boolean | null
+  cardDiscount?: { enabled?: boolean | null; percentage?: number | null } | null
   mainImage?: { asset?: { _ref: string }; alt?: string | null } | null
   translations?: unknown
 }
@@ -176,6 +178,7 @@ async function mapOtherTours(raw: OtherTourRaw[], locale: SiteLocale): Promise<T
         reviewCount: merged.reviewCount ?? null,
         reviewsUrl: merged.reviewsUrl ?? null,
         isPopular: merged.isPopular ?? false,
+        cardDiscount: merged.cardDiscount ?? null,
         coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
         coverImageAlt: merged.mainImage?.alt ?? null,
       }
@@ -314,6 +317,10 @@ export default async function TourPage({
             quickFacts={tour.quickFacts}
             tourUi={tourUi}
           />
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <ReviewExcerptStrip reviewsSection={tour.reviewsSection} locale={locale} />
         </ScrollReveal>
 
         <ScrollReveal>

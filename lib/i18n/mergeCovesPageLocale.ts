@@ -8,7 +8,7 @@ export function mergeCovesPageLocale<T extends Record<string, unknown>>(data: T 
   if (!data || locale === 'tr') return data
   const pt = data.pageTranslations as { en?: Record<string, unknown>; de?: Record<string, unknown> } | undefined
   if (!pt) return data
-  const patch = locale === 'en' ? pt.en : pt.de
+  const patch = locale === 'en' ? pt.en : locale === 'de' ? pt.de : undefined
   if (!patch || typeof patch !== 'object') return data
 
   const out = { ...data } as Record<string, unknown>
@@ -44,7 +44,7 @@ export function mergeCovesPageSeoForLocale(
   if (locale === 'tr' || !pageTranslations) {
     return { metaTitle, metaDescription }
   }
-  const patch = locale === 'en' ? pageTranslations.en : pageTranslations.de
+  const patch = locale === 'en' ? pageTranslations.en : locale === 'de' ? pageTranslations.de : undefined
   let nextTitle = metaTitle
   let nextDesc = metaDescription
   if (!patch) return { metaTitle: nextTitle, metaDescription: nextDesc }

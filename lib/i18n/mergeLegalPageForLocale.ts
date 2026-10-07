@@ -17,7 +17,7 @@ export function mergeLegalPageForLocale<T extends Record<string, unknown>>(page:
   if (locale === 'tr') return page
   const translations = page.translations as Record<string, unknown> | undefined
   if (!translations) return page
-  const raw = (locale === 'en' ? translations.en : translations.de) as Record<string, unknown> | undefined
+  const raw = (locale === 'en' ? translations.en : locale === 'de' ? translations.de : undefined) as Record<string, unknown> | undefined
   if (!raw || typeof raw !== 'object') return page
 
   const patch = { ...raw } as Record<string, unknown>

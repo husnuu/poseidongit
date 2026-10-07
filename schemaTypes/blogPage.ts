@@ -56,7 +56,7 @@ export default defineType({
     }),
     defineField({
       name: 'pageTranslations',
-      title: 'Çeviriler — English / Deutsch',
+      title: 'Çeviriler — English / Deutsch / Русский',
       type: 'object',
       description: 'Blog liste sayfası hero ve SEO metinleri.',
       fields: [
@@ -68,6 +68,11 @@ export default defineType({
         defineField({
           name: 'de',
           title: 'Deutsch',
+          type: 'blogPageLocaleOverlay',
+        }),
+        defineField({
+          name: 'ru',
+          title: 'Русский',
           type: 'blogPageLocaleOverlay',
         }),
       ],

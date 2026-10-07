@@ -151,6 +151,7 @@ export default defineType({
       fields: [
         defineField({ name: 'en', title: 'English', type: 'aboutPageLocaleOverlay' }),
         defineField({ name: 'de', title: 'Deutsch', type: 'aboutPageLocaleOverlay' }),
+        defineField({ name: 'ru', title: 'Русский', type: 'aboutPageLocaleOverlay' }),
       ],
     }),
 

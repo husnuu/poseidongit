@@ -43,7 +43,7 @@ type TrustStatsRaw = {
 type AboutPageData = {
   slug?: string | null
   seo?: { metaTitle?: string | null; metaDescription?: string | null } | null
-  pageTranslations?: { en?: Record<string, unknown>; de?: Record<string, unknown> }
+  pageTranslations?: { en?: Record<string, unknown>; de?: Record<string, unknown>; ru?: Record<string, unknown> }
   titleTop?: string | null
   titleBottom?: string | null
   heroLogo?: { asset?: { _ref: string }; alt?: string | null } | null
@@ -113,7 +113,7 @@ export async function generateMetadata({
   try {
     const row = await client.fetch<{
       seo?: { metaTitle?: string | null; metaDescription?: string | null } | null
-      pageTranslations?: { en?: Record<string, unknown>; de?: Record<string, unknown> }
+      pageTranslations?: { en?: Record<string, unknown>; de?: Record<string, unknown>; ru?: Record<string, unknown> }
     } | null>(aboutPageMetaQuery, {}, { useCdn: false })
     const merged = mergeAboutPageSeoForLocale(
       row?.seo as Record<string, unknown> | undefined,
@@ -121,9 +121,13 @@ export async function generateMetadata({
       locale,
     )
     // Editör pageTranslations.en/.de.seo'ya elle çeviri girmemişse anlık çeviriyle doldur.
-    const patchSeo = (locale === 'en' ? row?.pageTranslations?.en?.seo : row?.pageTranslations?.de?.seo) as
-      | { metaTitle?: string; metaDescription?: string }
-      | undefined
+    const patchSeo = (
+      locale === 'en'
+        ? row?.pageTranslations?.en?.seo
+        : locale === 'de'
+          ? row?.pageTranslations?.de?.seo
+          : row?.pageTranslations?.ru?.seo
+    ) as { metaTitle?: string; metaDescription?: string } | undefined
     const hasManualTitle = !!patchSeo?.metaTitle?.trim()
     const hasManualDescription = !!patchSeo?.metaDescription?.trim()
     const [translatedTitle, translatedDescription] =

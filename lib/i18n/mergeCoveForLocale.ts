@@ -17,7 +17,7 @@ export function mergeCoveForLocale<T extends Record<string, unknown>>(cove: T, l
   if (locale === 'tr') return cove
   const translations = cove.translations as Record<string, unknown> | undefined
   if (!translations) return cove
-  const raw = (locale === 'en' ? translations.en : translations.de) as Record<string, unknown> | undefined
+  const raw = (locale === 'en' ? translations.en : locale === 'de' ? translations.de : undefined) as Record<string, unknown> | undefined
   if (!raw || typeof raw !== 'object') return cove
 
   const patch = { ...raw } as Record<string, unknown>

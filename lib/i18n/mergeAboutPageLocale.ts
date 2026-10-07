@@ -26,7 +26,7 @@ export function mergeAboutPageLocale<T extends Record<string, unknown>>(data: T 
   if (!data || locale === 'tr') return data
   const pt = data.pageTranslations as { en?: Record<string, unknown>; de?: Record<string, unknown> } | undefined
   if (!pt) return data
-  const patch = locale === 'en' ? pt.en : pt.de
+  const patch = locale === 'en' ? pt.en : locale === 'de' ? pt.de : undefined
   if (!patch || typeof patch !== 'object') return data
 
   const out = { ...data } as Record<string, unknown>
@@ -77,7 +77,7 @@ export function aboutFieldHasManualTranslation(
   if (locale === 'tr') return true
   const pt = data.pageTranslations as { en?: Record<string, unknown>; de?: Record<string, unknown> } | undefined
   if (!pt) return false
-  const patch = locale === 'en' ? pt.en : pt.de
+  const patch = locale === 'en' ? pt.en : locale === 'de' ? pt.de : undefined
   if (!patch || typeof patch !== 'object') return false
   const value = (patch as Record<string, unknown>)[field]
   if (value == null) return false
@@ -96,7 +96,7 @@ export function aboutBoatFieldHasManualTranslation(
   if (locale === 'tr') return true
   const pt = data.pageTranslations as { en?: Record<string, unknown>; de?: Record<string, unknown> } | undefined
   if (!pt) return false
-  const patch = locale === 'en' ? pt.en : pt.de
+  const patch = locale === 'en' ? pt.en : locale === 'de' ? pt.de : undefined
   const boatsPatch = patch?.boats
   if (!Array.isArray(boatsPatch)) return false
   const boatPatch = boatsPatch[index] as Record<string, unknown> | undefined
@@ -114,7 +114,7 @@ export function mergeAboutPageSeoForLocale(
     const s = seo as { metaTitle?: string | null; metaDescription?: string | null } | undefined
     return { metaTitle: s?.metaTitle, metaDescription: s?.metaDescription }
   }
-  const patch = locale === 'en' ? pageTranslations.en : pageTranslations.de
+  const patch = locale === 'en' ? pageTranslations.en : locale === 'de' ? pageTranslations.de : undefined
   let metaTitle =
     (seo as { metaTitle?: string | null } | undefined)?.metaTitle ?? null
   let metaDescription =

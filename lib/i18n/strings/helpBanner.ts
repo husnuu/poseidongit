@@ -36,8 +36,18 @@ const DE: HelpBannerStrings = {
   emailLabel: 'E-Mail',
 }
 
+const RU: HelpBannerStrings = {
+  heading: 'Нужна помощь?',
+  lead: 'Наша команда готова помочь вам семь дней в неделю.',
+  languagesLine: 'Поддерживаемые языки: турецкий, английский',
+  phoneRegionLabel: 'Турция',
+  whatsappLabel: 'WhatsApp',
+  emailLabel: 'Эл. почта',
+}
+
 export function getHelpBannerStrings(locale: SiteLocale): HelpBannerStrings {
   if (locale === 'en') return EN
   if (locale === 'de') return DE
+  if (locale === 'ru') return RU
   return TR
 }

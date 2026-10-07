@@ -57,6 +57,7 @@ export default defineType({
       fields: [
         defineField({ name: 'en', title: 'English', type: 'helpCenterPageLocaleOverlay' }),
         defineField({ name: 'de', title: 'Deutsch', type: 'helpCenterPageLocaleOverlay' }),
+        defineField({ name: 'ru', title: 'Русский', type: 'helpCenterPageLocaleOverlay' }),
       ],
     }),
   ],

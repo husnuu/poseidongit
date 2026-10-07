@@ -324,6 +324,7 @@ export default defineType({
       fields: [
         defineField({ name: 'en', title: 'English', type: 'ferryRouteTranslation' }),
         defineField({ name: 'de', title: 'Deutsch', type: 'ferryRouteTranslation' }),
+        defineField({ name: 'ru', title: 'Русский', type: 'ferryRouteTranslation' }),
       ],
     }),
   ],

@@ -1,0 +1,179 @@
+.wrapper {
+  margin: 0 0 48px 0;
+  width: 100%;
+}
+
+.headerRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.labelGroup {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.label {
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted, #81848b);
+  margin: 0;
+}
+
+.infoBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted, #81848b);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.infoBtn:hover,
+.infoBtn[aria-expanded='true'] {
+  color: var(--primary, #2168b8);
+}
+
+.infoIcon {
+  width: 15px;
+  height: 15px;
+}
+
+.readAllLink {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary, #2168b8);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.readAllLink:hover {
+  text-decoration: underline;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.card {
+  margin: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+}
+
+.quoteIcon {
+  width: 18px;
+  height: 18px;
+  color: var(--primary, #2168b8);
+  opacity: 0.5;
+}
+
+.quoteText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--secondary, #131719);
+  font-style: italic;
+}
+
+.readMoreBtn {
+  display: inline;
+  margin-left: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 700;
+  font-style: normal;
+  color: var(--primary, #2168b8);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.readMoreBtn:hover {
+  text-decoration: underline;
+}
+
+.footer {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-style: normal;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.footerText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.nameRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.name {
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-color, #58595b);
+}
+
+.sourceLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted, #81848b);
+}
+
+@media (max-width: 640px) {
+  .wrapper {
+    margin-bottom: 36px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Mobilde tek kart yeterli — şerit kompakt kalsın. */
+  .cardExtra {
+    display: none;
+  }
+}

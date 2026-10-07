@@ -108,8 +108,36 @@ const DE: FerryPageUiStrings = {
   cardNoImage: 'Kein Bild',
 }
 
+const RU: FerryPageUiStrings = {
+  defaultTitle: 'Билет на паром',
+  defaultMetaDescription: 'Купите билет на паром.',
+  notFoundTitle: 'Страница не найдена',
+  notFoundDesc: 'Паромный маршрут, который вы ищете, не существует или был удалён.',
+  backHome: 'Вернуться на главную',
+  galleryImageAlt: (title, index) => (index === 0 ? title : `${title} — фото ${index + 1}`),
+  bookingCardTitle: 'Купить билет',
+  defaultPriceUnitLabel: 'За человека',
+  defaultCtaLabel: 'Купить билет',
+  defaultAboutTitle: 'О поездке',
+  defaultKnowBeforeYouGoTitle: 'Полезно знать',
+  includedTitle: 'Что включено',
+  notIncludedTitle: 'Что не включено',
+  faqTitle: 'Часто задаваемые вопросы',
+  numberLocale: 'ru-RU',
+  listHeadingTop: 'ПАРОМНЫЕ',
+  listHeadingBottom: 'БИЛЕТЫ',
+  listSubtitle: 'Легко оформите билеты на паром между Турцией и Грецией.',
+  listMetaTitle: 'Билеты на паром',
+  listMetaDescription: 'Ознакомьтесь с нашими паромными маршрутами и купите билет за несколько минут.',
+  listEmptyMessage: 'Паромные маршруты пока не добавлены.',
+  viewRouteButton: 'Посмотреть маршрут',
+  perPersonLabel: 'За человека',
+  cardNoImage: 'Нет фото',
+}
+
 export function getFerryPageUiStrings(locale: SiteLocale): FerryPageUiStrings {
   if (locale === 'en') return EN
   if (locale === 'de') return DE
+  if (locale === 'ru') return RU
   return TR
 }

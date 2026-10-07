@@ -57,6 +57,19 @@ const SHARE_LABELS: Record<SiteLocale, { title: string; copyLink: string; copied
     share: 'Teilen',
     wishlist: 'Zur Merkliste hinzufügen',
   },
+  ru: {
+    title: 'ПОДЕЛИТЬСЯ',
+    copyLink: 'Скопировать ссылку',
+    copied: 'Скопировано!',
+    close: 'Закрыть',
+    whatsapp: 'WhatsApp',
+    email: 'Эл. почта',
+    telegram: 'Telegram',
+    facebook: 'Facebook',
+    x: 'X',
+    share: 'Поделиться',
+    wishlist: 'Добавить в избранное',
+  },
 }
 
 interface PhotoGridProps {

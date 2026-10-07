@@ -2,6 +2,7 @@ import { getCountries } from 'react-phone-number-input/input'
 import trLabels from 'react-phone-number-input/locale/tr.json'
 import enLabels from 'react-phone-number-input/locale/en.json'
 import deLabels from 'react-phone-number-input/locale/de.json'
+import ruLabels from 'react-phone-number-input/locale/ru.json'
 import type { SiteLocale } from '@/lib/i18n/config'
 
 export interface NationalityOption {
@@ -14,6 +15,7 @@ const LABELS_BY_LOCALE: Record<SiteLocale, Record<string, string>> = {
   tr: trLabels as Record<string, string>,
   en: enLabels as Record<string, string>,
   de: deLabels as Record<string, string>,
+  ru: ruLabels as Record<string, string>,
 }
 
 /** ISO 3166-1 alpha-2 kodundan bayrak emojisi üretir (örn. "TR" → 🇹🇷). */

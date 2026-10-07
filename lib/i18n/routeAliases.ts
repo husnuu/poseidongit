@@ -58,6 +58,24 @@ const DE_FIRST_IN: Record<string, string> = {
   speisekarte: 'menu',
 }
 
+/** Rusça (Kiril) URL segmentleri — EN/DE ile aynı kural: o dildeki gerçek kelime. */
+const RU_FIRST_IN: Record<string, string> = {
+  'о-нас': 'hakkimizda',
+  тур: 'tur',
+  туры: 'turlar',
+  faq: 'sik-sorulanlar',
+  бухты: 'koylar',
+  'аренда-яхт': 'yat-kiralama',
+  'залог-яхты': 'yat-kapora',
+  помощь: 'yardim-merkezi',
+  правовая: 'yasal',
+  бронирование: 'rezervasyon',
+  билет: 'bilet',
+  контакты: 'contact',
+  блог: 'blog',
+  меню: 'menu',
+}
+
 /** Kök domain (locale yok) için İngilizce kısayollar → kanonik */
 const TR_ROOT_ALIASES: Record<string, string> = {
   ...EN_FIRST_IN,
@@ -71,17 +89,25 @@ const DE_FIRST_OUT: Record<string, string> = Object.fromEntries(
   Object.entries(DE_FIRST_IN).map(([k, v]) => [v, k])
 ) as Record<string, string>
 
+const RU_FIRST_OUT: Record<string, string> = Object.fromEntries(
+  Object.entries(RU_FIRST_IN).map(([k, v]) => [v, k])
+) as Record<string, string>
+
 const HELP_SUB_IN_EN: Record<string, string> = { category: 'kategori' }
 const HELP_SUB_IN_DE: Record<string, string> = { kategorie: 'kategori' }
+const HELP_SUB_IN_RU: Record<string, string> = { категория: 'kategori' }
 
 const HELP_SUB_OUT_EN: Record<string, string> = { kategori: 'category' }
 const HELP_SUB_OUT_DE: Record<string, string> = { kategori: 'kategorie' }
+const HELP_SUB_OUT_RU: Record<string, string> = { kategori: 'категория' }
 
 const REZ_SUB_IN_EN: Record<string, string> = { manage: 'yonet' }
 const REZ_SUB_IN_DE: Record<string, string> = { verwalten: 'yonet' }
+const REZ_SUB_IN_RU: Record<string, string> = { управление: 'yonet' }
 
 const REZ_SUB_OUT_EN: Record<string, string> = { yonet: 'manage' }
 const REZ_SUB_OUT_DE: Record<string, string> = { yonet: 'verwalten' }
+const REZ_SUB_OUT_RU: Record<string, string> = { yonet: 'управление' }
 
 function normalizeFirstSegmentIn(locale: SiteLocale, seg: string): string {
   const key = seg.toLowerCase()
@@ -89,6 +115,7 @@ function normalizeFirstSegmentIn(locale: SiteLocale, seg: string): string {
   if (CANONICAL_FIRST_SEGMENTS.has(key)) return key
   if (locale === 'en') return EN_FIRST_IN[key] ?? seg
   if (locale === 'de') return DE_FIRST_IN[key] ?? seg
+  if (locale === 'ru') return RU_FIRST_IN[key] ?? seg
   return TR_ROOT_ALIASES[key] ?? seg
 }
 
@@ -97,6 +124,7 @@ function normalizeHelpSubIn(locale: SiteLocale, seg: string): string {
   if (key === 'kategori') return 'kategori'
   if (locale === 'en') return HELP_SUB_IN_EN[key] ?? seg
   if (locale === 'de') return HELP_SUB_IN_DE[key] ?? seg
+  if (locale === 'ru') return HELP_SUB_IN_RU[key] ?? seg
   return seg
 }
 
@@ -105,9 +133,14 @@ function normalizeRezSubIn(locale: SiteLocale, seg: string): string {
   if (key === 'yonet') return 'yonet'
   if (locale === 'en') return REZ_SUB_IN_EN[key] ?? seg
   if (locale === 'de') return REZ_SUB_IN_DE[key] ?? seg
+  if (locale === 'ru') return REZ_SUB_IN_RU[key] ?? seg
   return seg
 }
 
+/** 'ru' için linkler bilerek Türkçe (kanonik) segmentlerle üretiliyor — Kiril
+    URL çevirisi istenmedi; sadece İÇERİK Rusçaya çevrilsin, adres çubuğu Türkçe kalsın.
+    (RU_FIRST_IN/RU_FIRST_OUT yine de duruyor: biri elle bir Kiril linki yazarsa/paylaşırsa
+    gelen tarafta hâlâ doğru sayfaya düşer — sadece biz artık böyle bir link ÜRETMİYORUZ.) */
 function localizeFirstSegmentOut(locale: SiteLocale, seg: string): string {
   if (locale === 'en') return EN_FIRST_OUT[seg] ?? seg
   if (locale === 'de') return DE_FIRST_OUT[seg] ?? seg
@@ -125,6 +158,7 @@ function localizeRezSubOut(locale: SiteLocale, seg: string): string {
   if (seg !== 'yonet') return seg
   if (locale === 'en') return REZ_SUB_OUT_EN.yonet
   if (locale === 'de') return REZ_SUB_OUT_DE.yonet
+  if (locale === 'ru') return REZ_SUB_OUT_RU.yonet
   return seg
 }
 
@@ -132,9 +166,19 @@ function localizeRezSubOut(locale: SiteLocale, seg: string): string {
  * Adres çubuğu / middleware: locale çıkarılmış path → App Router’ın beklediği kanonik path.
  * Örn. en + `/about` → `/hakkimizda`, en + `/help-center/category/foo` → `/yardim-merkezi/kategori/foo`
  */
+/** `request.nextUrl.pathname` Kiril/özel karakterli segmentleri yüzde-kodlanmış bırakır
+    (örn. "о-нас" → "%D0%BE-%D0%BD%D0%B0%D1%81") — eşleştirmeden önce çözülmesi gerekir. */
+function safeDecodeSegment(seg: string): string {
+  try {
+    return decodeURIComponent(seg)
+  } catch {
+    return seg
+  }
+}
+
 export function incomingPathToCanonicalRoute(locale: SiteLocale, pathWithoutLocale: string): string {
   if (!pathWithoutLocale || pathWithoutLocale === '/') return '/'
-  const segments = pathWithoutLocale.split('/').filter(Boolean)
+  const segments = pathWithoutLocale.split('/').filter(Boolean).map(safeDecodeSegment)
   const out: string[] = []
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i]

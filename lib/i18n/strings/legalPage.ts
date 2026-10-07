@@ -28,14 +28,23 @@ const DE: LegalPageUiStrings = {
   metaNotFoundTitle: 'Seite nicht gefunden',
 }
 
+const RU: LegalPageUiStrings = {
+  backToHome: '← Вернуться на главную',
+  lastUpdatedPrefix: 'Последнее обновление:',
+  contentEmpty: 'Содержимое пока не добавлено.',
+  metaNotFoundTitle: 'Страница не найдена',
+}
+
 export function getLegalPageUiStrings(locale: SiteLocale): LegalPageUiStrings {
   if (locale === 'en') return EN
   if (locale === 'de') return DE
+  if (locale === 'ru') return RU
   return TR
 }
 
 export function dateLocaleForSiteLocale(locale: SiteLocale): string {
   if (locale === 'en') return 'en-US'
   if (locale === 'de') return 'de-DE'
+  if (locale === 'ru') return 'ru-RU'
   return 'tr-TR'
 }

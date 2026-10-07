@@ -28,36 +28,42 @@ const DEFAULT_INTRO: Record<SiteLocale, string> = {
   tr: 'Tarih ve misafir sayınızı seçin, müsaitlik talebi bırakın — ekibimiz size özel teklif için en kısa sürede dönüş yapar.',
   en: 'Pick your dates and guest count, submit an availability request — our team will get back to you with a tailored quote.',
   de: 'Wählen Sie Datum und Gästezahl, senden Sie eine Verfügbarkeitsanfrage — unser Team meldet sich zeitnah mit einem individuellen Angebot.',
+  ru: 'Выберите даты и количество гостей, отправьте запрос на доступность — наша команда свяжется с вами в ближайшее время с индивидуальным предложением.',
 }
 
 const DEFAULT_EMPTY: Record<SiteLocale, string> = {
   tr: 'Yakında yat ilanları eklenecek. Sanity Studio’dan yat kiralama içeriği ekleyebilirsiniz.',
   en: 'Yacht listings will be added soon. You can add yacht rental content from Sanity Studio.',
   de: 'In Kürze werden Yachtangebote hinzugefügt. Sie können Yachtcharter-Inhalte über Sanity Studio hinzufügen.',
+  ru: 'Скоро здесь появятся предложения яхт. Вы можете добавить контент по аренде яхт через Sanity Studio.',
 }
 
 const DEFAULT_TITLE_TOP: Record<SiteLocale, string> = {
   tr: 'ÖZEL',
   en: 'PRIVATE',
   de: 'EXKLUSIVE',
+  ru: 'ЧАСТНАЯ',
 }
 
 const DEFAULT_TITLE_BOTTOM: Record<SiteLocale, string> = {
   tr: 'YAT KİRALAMA',
   en: 'YACHT RENTAL',
   de: 'YACHTCHARTER',
+  ru: 'АРЕНДА ЯХТ',
 }
 
 const DEFAULT_SEO_TITLE: Record<SiteLocale, string> = {
   tr: siteName ? `Yat Kiralama | ${siteName}` : 'Yat kiralama | Özel charter',
   en: siteName ? `Yacht Rental | ${siteName}` : 'Yacht rental | Private charter',
   de: siteName ? `Yachtcharter | ${siteName}` : 'Yachtcharter | Privatcharter',
+  ru: siteName ? `Аренда яхт | ${siteName}` : 'Аренда яхт | Частный чартер',
 }
 
 const DEFAULT_SEO_DESCRIPTION: Record<SiteLocale, string> = {
   tr: 'Özel yat ve gulet kiralama. Günlük charter, kaptanlı seçenekler. Müsaitlik talebi ile teklif alın.',
   en: 'Private yacht and gulet rental. Daily charters, skippered options available. Request a quote via our availability form.',
   de: 'Private Yacht- und Gulet-Vermietung. Tagescharter, Optionen mit Skipper. Angebot per Verfügbarkeitsanfrage erhalten.',
+  ru: 'Аренда частных яхт и гулетов. Дневные чартеры, есть варианты с капитаном. Получите предложение через форму запроса доступности.',
 }
 
 export async function generateMetadata({

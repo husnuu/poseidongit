@@ -15,6 +15,7 @@ const SKIP_LINK_LABEL: Record<SiteLocale, string> = {
   tr: 'İçeriğe geç',
   en: 'Skip to content',
   de: 'Zum Inhalt springen',
+  ru: 'Перейти к содержимому',
 }
 
 export default async function LocaleSiteLayout({

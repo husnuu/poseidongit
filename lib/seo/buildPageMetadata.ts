@@ -8,6 +8,7 @@ const OG_LOCALE: Record<SiteLocale, string> = {
   tr: 'tr_TR',
   en: 'en_US',
   de: 'de_DE',
+  ru: 'ru_RU',
 }
 
 export interface PageMetadataInput {
@@ -36,7 +37,7 @@ export interface PageMetadataInput {
 export function buildPageMetadata(input: PageMetadataInput): Metadata {
   const { locale, path, title, description, image, imageAlt, noIndex, type = 'website', keywords } = input
   const languages = alternateLanguageAbsoluteUrls(path)
-  const hreflang = locale === 'tr' ? 'tr' : locale === 'en' ? 'en' : 'de'
+  const hreflang = locale === 'tr' ? 'tr' : locale === 'en' ? 'en' : locale === 'de' ? 'de' : 'ru'
   const canonical = languages[hreflang] ?? absoluteUrl(path)
   const siteName = getSiteName()
 

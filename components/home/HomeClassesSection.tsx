@@ -21,6 +21,7 @@ type Props = {
 function defaultHeadingFallback(locale: SiteLocale): string {
   if (locale === 'en') return 'Ticket classes'
   if (locale === 'de') return 'Ticketklassen'
+  if (locale === 'ru') return 'Классы билетов'
   return 'BİLET SINIFLARI'
 }
 
@@ -45,7 +46,7 @@ export default function HomeClassesSection({ data, locale }: Props) {
   const items = (data.items ?? []).filter((i) => i && i.key && i.label)
   if (items.length === 0) return null
 
-  const localeUpper = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
+  const localeUpper = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : locale === 'ru' ? 'ru-RU' : 'en-US'
   const titleUpper = (data.heading?.trim() || defaultHeadingFallback(locale))
     .trim()
     .toLocaleUpperCase(localeUpper)

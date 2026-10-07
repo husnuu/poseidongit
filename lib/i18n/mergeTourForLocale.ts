@@ -140,7 +140,7 @@ export function tourFieldHasManualTranslation(
   if (locale === 'tr') return true
   const translations = tour.translations as Record<string, unknown> | undefined
   if (!translations) return false
-  const raw = (locale === 'en' ? translations.en : translations.de) as Record<string, unknown> | undefined
+  const raw = (locale === 'en' ? translations.en : locale === 'de' ? translations.de : undefined) as Record<string, unknown> | undefined
   if (!raw) return false
   const value = raw[field]
   if (value == null) return false
@@ -156,7 +156,7 @@ export function mergeTourForLocale<T extends Record<string, unknown>>(tour: T, l
   if (locale === 'tr') return tour
   const translations = tour.translations as Record<string, unknown> | undefined
   if (!translations) return tour
-  const raw = (locale === 'en' ? translations.en : translations.de) as Record<string, unknown> | undefined
+  const raw = (locale === 'en' ? translations.en : locale === 'de' ? translations.de : undefined) as Record<string, unknown> | undefined
   if (!raw || typeof raw !== 'object') return tour
 
   const patch = { ...raw } as Record<string, unknown>

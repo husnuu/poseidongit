@@ -23,12 +23,14 @@ type PopularYachtsSectionProps = {
 function defaultTitleFallback(locale: SiteLocale): string {
   if (locale === 'en') return 'Our most popular yachts'
   if (locale === 'de') return 'Unsere beliebtesten Yachten'
+  if (locale === 'ru') return 'Наши самые популярные яхты'
   return 'En popüler tekneler'
 }
 
 function defaultCtaLabel(locale: SiteLocale): string {
   if (locale === 'en') return 'See all yachts'
   if (locale === 'de') return 'Alle Boote ansehen'
+  if (locale === 'ru') return 'Смотреть все яхты'
   return 'Tüm tekneleri gör'
 }
 

@@ -12,6 +12,7 @@ const VIEW_ALL_LABEL: Record<SiteLocale, string> = {
   tr: 'Tüm Turları Görüntüle',
   en: 'View All Tours',
   de: 'Alle Touren anzeigen',
+  ru: 'Посмотреть все туры',
 }
 
 export type PopularToursSectionData = {

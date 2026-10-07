@@ -163,9 +163,49 @@ const DE: ContactPageUiStrings = {
   youtubeFallbackLabel: 'Finden Sie uns auf YouTube',
 }
 
+const RU: ContactPageUiStrings = {
+  defaultTitle: 'Контакты',
+  defaultMetaDescription: 'Свяжитесь с нами.',
+  formSectionAria: 'Контактная форма',
+  labelFullName: 'Ваше имя *',
+  labelGroupSize: 'Количество человек *',
+  labelEmail: 'Ваш адрес электронной почты *',
+  labelPhone: 'Номер телефона',
+  labelMessage: 'Ваше сообщение *',
+  sending: 'Отправка...',
+  defaultSubmitLabel: 'Отправить сообщение',
+  defaultSuccessMessage: 'Спасибо — мы получили ваше сообщение и скоро свяжемся с вами.',
+  turnstileError: 'Пожалуйста, пройдите проверку безопасности.',
+  submitErrorGeneric: 'Что-то пошло не так. Пожалуйста, попробуйте снова.',
+  submitErrorNetwork: 'Ошибка сети. Пожалуйста, попробуйте снова.',
+  valNameMin: 'Имя должно содержать не менее 2 символов',
+  valGroupMin: 'Количество человек должно быть не менее 1',
+  valEmail: 'Введите действительный адрес электронной почты',
+  valMessageMin: 'Сообщение должно содержать не менее 10 символов',
+  sidebarAria: 'Контактная информация',
+  rowEmail: 'ЭЛ. ПОЧТА',
+  rowHours: 'ЧАСЫ РАБОТЫ',
+  rowAddress: 'АДРЕС',
+  rowPhone: 'ПОЗВОНИТЕ НАМ',
+  rowWhatsapp: 'НАПИШИТЕ В WHATSAPP',
+  rowFriends: 'YOUTUBE',
+  rowInspired: 'INSTAGRAM',
+  ariaEmailSend: 'Отправить письмо',
+  ariaOpenMaps: 'Открыть адрес в Google Картах',
+  ariaCall: 'Позвонить',
+  ariaWhatsapp: 'Написать в WhatsApp',
+  ariaYoutube: 'Наш канал на YouTube',
+  ariaInstagram: 'Подписаться в Instagram',
+  mapIframeTitle: 'Карта',
+  defaultPopularToursTitle: 'ИЛИ ВЫБЕРИТЕ ОДИН ИЗ НАШИХ САМЫХ ПОПУЛЯРНЫХ ТУРОВ!',
+  instagramFallbackLabel: 'Подписывайтесь на нас в Instagram',
+  youtubeFallbackLabel: 'Найдите нас на YouTube',
+}
+
 export function getContactPageUiStrings(locale: SiteLocale): ContactPageUiStrings {
   if (locale === 'en') return EN
   if (locale === 'de') return DE
+  if (locale === 'ru') return RU
   return TR
 }
 

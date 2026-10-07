@@ -73,6 +73,16 @@ const WISHLIST_LABELS: Record<
     groupTour: 'TOUREN',
     groupYacht: 'YACHTEN',
   },
+  ru: {
+    open: 'Избранное',
+    title: 'СОХРАНЁННОЕ',
+    emptyTitle: 'Вы ещё ничего не сохранили.',
+    emptyBody: 'Нажмите на сердечко у тура или яхты, чтобы сохранить его здесь.',
+    remove: 'Удалить',
+    close: 'Закрыть',
+    groupTour: 'ТУРЫ',
+    groupYacht: 'ЯХТЫ',
+  },
 }
 
 const ANNOUNCEMENT_ICONS: Record<string, LucideIcon> = {
@@ -97,18 +107,29 @@ const EMOJI_FALLBACK: Record<string, string> = {
   tr: '🇹🇷',
   en: '🇬🇧',
   de: '🇩🇪',
+  ru: '🇷🇺',
+}
+
+/** TR/EN/DE bayrakları Sanity'de yüklü görsel olarak geliyor; "ru" için editör henüz
+    bir görsel yüklemediyse metin emoji yerine gerçek bir bayrak görseli göstersin diye
+    yerel bir SVG — Sanity'de bir gün görsel yüklenirse o öncelikli kalır. */
+const LOCAL_FLAG_FALLBACK: Record<string, string> = {
+  ru: '/flags/ru.svg',
 }
 
 const LANG_SECTION_LABEL: Record<SiteLocale, string> = {
   tr: 'DİL',
   en: 'LANGUAGE',
   de: 'SPRACHE',
+  ru: 'ЯЗЫК',
 }
 
-/** Almanca artık tam destekleniyor — CMS'te "yakında" işaretli kalmış olsa bile kilidi kaldır. */
+/** Almanca ve Rusça artık tam destekleniyor — CMS'te "yakında" işaretli kalmış olsa bile kilidi kaldır. */
 function normalizeLanguages(languages: HeaderLanguage[]): HeaderLanguage[] {
   return (languages.length > 0 ? languages : DEFAULT_HEADER_LANGUAGES).map((item) =>
-    item.code.toLowerCase() === 'de' ? { ...item, comingSoon: false } : item
+    item.code.toLowerCase() === 'de' || item.code.toLowerCase() === 'ru'
+      ? { ...item, comingSoon: false }
+      : item
   )
 }
 
@@ -132,6 +153,7 @@ const DEFAULT_HEADER_LANGUAGES: HeaderLanguage[] = [
   { code: 'tr', label: 'Türkçe' },
   { code: 'en', label: 'English' },
   { code: 'de', label: 'Deutsch' },
+  { code: 'ru', label: 'Русский' },
 ]
 
 interface SiteSettings {
@@ -213,9 +235,9 @@ function LanguageDropdown({
       >
         <span className={styles.languageTriggerLabel}>
           <span className={styles.languageTriggerFlag} aria-hidden>
-            {currentItem?.flag?.url ? (
+            {currentItem?.flag?.url || LOCAL_FLAG_FALLBACK[currentItem?.code?.toLowerCase() ?? ''] ? (
               <Image
-                src={currentItem.flag.url}
+                src={currentItem?.flag?.url || LOCAL_FLAG_FALLBACK[currentItem?.code?.toLowerCase() ?? '']}
                 alt=""
                 width={28}
                 height={28}
@@ -265,9 +287,9 @@ function LanguageDropdown({
                   className={`${styles.languageOption} ${styles.languageOptionComingSoon}`}
                 >
                   <span className={styles.languageOptionFlag}>
-                    {item.flag?.url ? (
+                    {item.flag?.url || LOCAL_FLAG_FALLBACK[key] ? (
                       <Image
-                        src={item.flag.url}
+                        src={item.flag?.url || LOCAL_FLAG_FALLBACK[key]}
                         alt=""
                         width={24}
                         height={24}
@@ -309,9 +331,9 @@ function LanguageDropdown({
                 }}
               >
                 <span className={styles.languageOptionFlag}>
-                  {item.flag?.url ? (
+                  {item.flag?.url || LOCAL_FLAG_FALLBACK[key] ? (
                     <Image
-                      src={item.flag.url}
+                      src={item.flag?.url || LOCAL_FLAG_FALLBACK[key]}
                       alt=""
                       width={24}
                       height={24}
@@ -359,9 +381,9 @@ function MobileLanguageList({
           const key = item.code.toLowerCase()
           const isSelected = locale === key
           const soon = Boolean(item.comingSoon)
-          const flag = item.flag?.url ? (
+          const flag = item.flag?.url || LOCAL_FLAG_FALLBACK[key] ? (
             <Image
-              src={item.flag.url}
+              src={item.flag?.url || LOCAL_FLAG_FALLBACK[key]}
               alt=""
               width={26}
               height={26}

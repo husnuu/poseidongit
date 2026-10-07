@@ -19,12 +19,14 @@ const SEARCH_PLACEHOLDER: Record<SiteLocale, string> = {
   tr: 'Ülke ara…',
   en: 'Search country…',
   de: 'Land suchen…',
+  ru: 'Поиск страны…',
 }
 
 const NO_RESULTS: Record<SiteLocale, string> = {
   tr: 'Sonuç bulunamadı',
   en: 'No results found',
   de: 'Keine Ergebnisse',
+  ru: 'Результатов не найдено',
 }
 
 interface PanelRect {

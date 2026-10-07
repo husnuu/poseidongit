@@ -32,6 +32,13 @@ const UI: Record<SiteLocale, PaymentLoadingOverlayUi> = {
     waitNote: 'Bitte warten Sie und schließen Sie diese Seite nicht.',
     sslBadge: '256-Bit-SSL-verschlüsselte Verbindung',
   },
+  ru: {
+    ariaLabel: 'Перенаправление на страницу оплаты',
+    line1: 'Переходим на',
+    line2: 'защищённую страницу оплаты',
+    waitNote: 'Пожалуйста, подождите и не закрывайте эту страницу.',
+    sslBadge: 'Защищённое соединение 256-бит SSL',
+  },
 }
 
 interface PaymentLoadingOverlayProps {

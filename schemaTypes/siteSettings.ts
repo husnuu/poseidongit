@@ -286,6 +286,7 @@ export default defineType({
                   { title: 'Türkçe (tr)', value: 'tr' },
                   { title: 'English (en)', value: 'en' },
                   { title: 'Deutsch (de)', value: 'de' },
+                  { title: 'Русский (ru)', value: 'ru' },
                 ],
               },
             }),

@@ -53,7 +53,7 @@ export async function generateMetadata({
     ''
   const path = withLocalePath(locale, `/yardim-merkezi/${categorySlug}/${articleSlug}`)
   const url = absoluteUrl(path)
-  const ogLocale = locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : 'en_US'
+  const ogLocale = locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : locale === 'ru' ? 'ru_RU' : 'en_US'
   return {
     title,
     description: description.slice(0, 160),

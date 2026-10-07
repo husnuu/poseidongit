@@ -96,6 +96,7 @@ export default defineType({
       fields: [
         defineField({ name: 'en', title: 'English', type: 'legalPageTranslation' }),
         defineField({ name: 'de', title: 'Deutsch', type: 'legalPageTranslation' }),
+        defineField({ name: 'ru', title: 'Русский', type: 'legalPageTranslation' }),
       ],
     }),
   ],

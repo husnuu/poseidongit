@@ -26,13 +26,14 @@ const READ_MORE_LABEL: Record<SiteLocale, string> = {
   tr: 'Yazıyı oku',
   en: 'Read the post',
   de: 'Artikel lesen',
+  ru: 'Читать статью',
 }
 
 function formatDate(dateStr: string | null | undefined, locale: SiteLocale): string | null {
   if (!dateStr) return null
   const date = new Date(dateStr)
   if (Number.isNaN(date.getTime())) return null
-  const tag = locale === 'de' ? 'de-DE' : locale === 'en' ? 'en-US' : 'tr-TR'
+  const tag = locale === 'de' ? 'de-DE' : locale === 'en' ? 'en-US' : locale === 'ru' ? 'ru-RU' : 'tr-TR'
   return new Intl.DateTimeFormat(tag, { day: 'numeric', month: 'long', year: 'numeric' }).format(date)
 }
 

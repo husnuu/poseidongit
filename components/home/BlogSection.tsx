@@ -29,6 +29,7 @@ type BlogSectionProps = {
 function seeAllPostsLabel(locale: SiteLocale): string {
   if (locale === 'en') return 'View all posts'
   if (locale === 'de') return 'Alle Artikel ansehen'
+  if (locale === 'ru') return 'Посмотреть все публикации'
   return 'Tüm yazıları gör'
 }
 
@@ -36,6 +37,7 @@ const SECTION_TITLE: Record<SiteLocale, string> = {
   tr: 'MAVİ HİKAYELER',
   en: 'FROM OUR LOGBOOK',
   de: 'AUS UNSEREM LOGBUCH',
+  ru: 'ИЗ НАШЕГО БОРТОВОГО ЖУРНАЛА',
 }
 
 export default function BlogSection({

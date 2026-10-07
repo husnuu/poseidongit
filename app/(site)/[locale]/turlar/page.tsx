@@ -25,42 +25,49 @@ const DEFAULT_TITLE_TOP: Record<SiteLocale, string> = {
   tr: 'EN POPÜLER',
   en: 'MOST POPULAR',
   de: 'AM BELIEBTESTEN',
+  ru: 'САМЫЕ ПОПУЛЯРНЫЕ',
 }
 
 const DEFAULT_TITLE_BOTTOM: Record<SiteLocale, string> = {
   tr: 'TURLAR',
   en: 'TOURS',
   de: 'TOUREN',
+  ru: 'ТУРЫ',
 }
 
 const EMPTY_TOURS_MESSAGE: Record<SiteLocale, string> = {
   tr: 'Henüz tur eklenmemiş.',
   en: 'No tours have been added yet.',
   de: 'Es wurden noch keine Touren hinzugefügt.',
+  ru: 'Туры еще не добавлены.',
 }
 
 const META_TITLE: Record<SiteLocale, string> = {
   tr: siteName ? `Tekne Turları | ${siteName}` : 'Tekne Turları | Turlar ve Fiyatlar',
   en: siteName ? `Boat Tours | ${siteName}` : 'Boat Tours | Tours and Prices',
   de: siteName ? `Bootstouren | ${siteName}` : 'Bootstouren | Touren und Preise',
+  ru: siteName ? `Морские прогулки | ${siteName}` : 'Морские прогулки | Туры и цены',
 }
 
 const META_DESCRIPTION: Record<SiteLocale, string> = {
   tr: 'Tekne turu seçenekleri: adalar ve koylar turu, BBQ turları, günlük turlar. Fiyatlar ve rezervasyon.',
   en: 'Boat tour options: islands and bays tour, BBQ tours, daily tours. Prices and booking.',
   de: 'Bootstour-Optionen: Insel- und Buchtentour, BBQ-Touren, Tagestouren. Preise und Buchung.',
+  ru: 'Варианты морских прогулок: тур по островам и бухтам, BBQ-туры, однодневные туры. Цены и бронирование.',
 }
 
 const OG_META_TITLE: Record<SiteLocale, string> = {
   tr: siteName ? `Tekne Turları | ${siteName}` : 'Tekne Turları',
   en: siteName ? `Boat Tours | ${siteName}` : 'Boat Tours',
   de: siteName ? `Bootstouren | ${siteName}` : 'Bootstouren',
+  ru: siteName ? `Морские прогулки | ${siteName}` : 'Морские прогулки',
 }
 
 const OG_META_DESCRIPTION: Record<SiteLocale, string> = {
   tr: 'Tekne turları ve deneyimler. Rezervasyon.',
   en: 'Boat tours and experiences. Book now.',
   de: 'Bootstouren und Erlebnisse. Jetzt buchen.',
+  ru: 'Морские прогулки и впечатления. Забронируйте сейчас.',
 }
 
 export async function generateMetadata({
@@ -71,8 +78,10 @@ export async function generateMetadata({
   const { locale: loc } = await params
   const locale = isSiteLocale(loc) ? (loc as SiteLocale) : 'tr'
   const languages = alternateLanguageAbsoluteUrls('/turlar')
-  const canonical = languages[locale === 'tr' ? 'tr' : locale === 'en' ? 'en' : 'de'] ?? absoluteUrl('/turlar')
-  const ogLocale = locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : 'en_US'
+  const canonical =
+    languages[locale === 'tr' ? 'tr' : locale === 'en' ? 'en' : locale === 'de' ? 'de' : 'ru'] ??
+    absoluteUrl('/turlar')
+  const ogLocale = locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : locale === 'ru' ? 'ru_RU' : 'en_US'
   return {
     title: META_TITLE[locale],
     description: META_DESCRIPTION[locale],
@@ -185,6 +194,7 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
           reviewCount: merged.reviewCount,
           reviewsUrl: merged.reviewsUrl ?? null,
           isPopular: merged.isPopular,
+          cardDiscount: merged.cardDiscount ?? null,
           departureLabel: departureLabel || departureLabelRaw,
           durationLabel: durationLabel || durationLabelRaw,
           priceFrom: merged.priceFrom,

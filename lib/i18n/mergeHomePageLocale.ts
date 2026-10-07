@@ -33,7 +33,7 @@ export function homeFieldHasManualTranslation(
   if (locale === 'tr' || !data) return true
   const pt = data.pageTranslations as { en?: Record<string, unknown>; de?: Record<string, unknown> } | undefined
   if (!pt) return false
-  const patch = locale === 'en' ? pt.en : pt.de
+  const patch = locale === 'en' ? pt.en : locale === 'de' ? pt.de : undefined
   const sec = patch?.[section] as Record<string, unknown> | undefined
   if (!sec) return false
   const value = sec[field]
@@ -51,7 +51,7 @@ export function mergeHomePageLocale<T extends Record<string, unknown>>(data: T |
   if (!data || locale === 'tr') return data
   const pt = data.pageTranslations as { en?: Record<string, unknown>; de?: Record<string, unknown> } | undefined
   if (!pt) return data
-  const patch = locale === 'en' ? pt.en : pt.de
+  const patch = locale === 'en' ? pt.en : locale === 'de' ? pt.de : undefined
   if (!patch || typeof patch !== 'object') return data
 
   const out = { ...data } as Record<string, unknown>
@@ -178,7 +178,7 @@ export function mergeHomePageSeoForLocale(
   locale: SiteLocale,
 ): Record<string, unknown> | null | undefined {
   if (locale === 'tr' || !pageTranslations) return seo
-  const patch = locale === 'en' ? pageTranslations.en : pageTranslations.de
+  const patch = locale === 'en' ? pageTranslations.en : locale === 'de' ? pageTranslations.de : undefined
   const pSeo = patch?.seo as Record<string, unknown> | undefined
   if (!pSeo) return seo
   const base = isPlainObject(seo) ? seo : {}

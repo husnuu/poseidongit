@@ -6,6 +6,7 @@ export const tourSlugRowsForLocalesQuery = `*[_type == "tour"]{
   "tSlug": slug.current,
   "enSlug": translations.en.slug.current,
   "deSlug": translations.de.slug.current,
+  "ruSlug": translations.ru.slug.current,
   _updatedAt
 }`
 
@@ -312,6 +313,10 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
   ($locale == "de" && (
     translations.de.slug.current == $slug ||
     (!defined(translations.de.slug.current) && slug.current == $slug)
+  )) ||
+  ($locale == "ru" && (
+    translations.ru.slug.current == $slug ||
+    (!defined(translations.ru.slug.current) && slug.current == $slug)
   ))
 )][0] {
   _id,
@@ -886,6 +891,7 @@ export const homePageHeroQuery = `*[_type == "homePage"][0] {
       "durationLabel": quickFacts.durationText,
       "departureLabel": quickFacts.meetingLocation,
       "priceFrom": ticketClasses[0].pricesByAge[0].price,
+      cardDiscount{ enabled, percentage },
       rating,
       reviewCount,
       reviewsUrl,
@@ -1063,6 +1069,7 @@ export const contactPageQuery = `coalesce(
     "durationLabel": quickFacts.durationText,
     "departureLabel": quickFacts.meetingLocation,
     "priceFrom": ticketClasses[0].pricesByAge[0].price,
+    cardDiscount{ enabled, percentage },
     rating,
     reviewCount,
     reviewsUrl,
@@ -1094,6 +1101,7 @@ export const toursListQuery = `*[_type == "tour"] | order(title asc) {
   "departureLabel": quickFacts.meetingLocation,
   "durationLabel": quickFacts.durationText,
   "priceFrom": ticketClasses[0].pricesByAge[0].price,
+  cardDiscount{ enabled, percentage },
   translations
 }`
 
@@ -1466,6 +1474,7 @@ export const otherToursForTourPageQuery = `*[_type == "tour" && slug.current != 
   "durationLabel": quickFacts.durationText,
   "departureLabel": quickFacts.meetingLocation,
   "priceFrom": ticketClasses[0].pricesByAge[0].price,
+  cardDiscount{ enabled, percentage },
   rating,
   reviewCount,
   reviewsUrl,

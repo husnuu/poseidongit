@@ -52,6 +52,12 @@ function HeartIcon({ className, filled }: { className?: string; filled?: boolean
   )
 }
 
+export type TourCardDiscount = {
+  enabled?: boolean | null
+  /** Örn. 15 → "%15 İndirim", fiyat kartta %15 düşürülmüş gösterilir. */
+  percentage?: number | null
+}
+
 export type TourListItem = {
   _id: string
   title: string | null
@@ -66,6 +72,8 @@ export type TourListItem = {
   reviewsUrl?: string | null
   priceFrom?: number | null
   isPopular?: boolean | null
+  /** Sanity'de "İndirim Rozeti" alanı — sadece kart görünümünü etkiler. */
+  cardDiscount?: TourCardDiscount | null
 }
 
 function formatPriceFrom(price: number | null | undefined, numberLocale: string): string {
@@ -73,16 +81,31 @@ function formatPriceFrom(price: number | null | undefined, numberLocale: string)
   return `${price.toLocaleString(numberLocale)} ₺`
 }
 
+/** İndirimli fiyatı en yakın 10'a yuvarlar — Türkiye'deki tur fiyatlandırmasında
+    yaygın olan "yuvarlak sayı" alışkanlığıyla tutarlı (ör. 2.553 yerine 2.550). */
+function computeDiscountedPrice(price: number, percentage: number): number {
+  return Math.round((price * (1 - percentage / 100)) / 10) * 10
+}
+
+const DISCOUNT_BADGE_LABEL: Record<SiteLocale, (percentage: number) => string> = {
+  tr: (p) => `-%${p} İndirim`,
+  en: (p) => `-${p}% Off`,
+  de: (p) => `-${p}% Rabatt`,
+  ru: (p) => `-${p}% Скидка`,
+}
+
 const PER_PERSON_LABEL: Record<SiteLocale, string> = {
   tr: 'Kişi başı',
   en: 'Per person',
   de: 'Pro Person',
+  ru: 'За человека',
 }
 
 const FAVORITE_LABEL: Record<SiteLocale, string> = {
   tr: 'Favorilere ekle',
   en: 'Add to favorites',
   de: 'Zu Favoriten hinzufügen',
+  ru: 'Добавить в избранное',
 }
 
 type TourCardProps = {
@@ -99,6 +122,13 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
   const mainLinkLabel = `${titlePlain} — ${tourUi.tourCardViewTour}`
   const saved = isSaved(tour._id)
 
+  const discountPercent =
+    tour.cardDiscount?.enabled && tour.cardDiscount.percentage ? tour.cardDiscount.percentage : null
+  const hasDiscount = discountPercent != null && tour.priceFrom != null
+  const discountedPrice = hasDiscount
+    ? computeDiscountedPrice(tour.priceFrom as number, discountPercent as number)
+    : null
+
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -107,7 +137,12 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
       type: 'tour',
       title: titlePlain,
       imageUrl: tour.coverImageUrl,
-      priceLabel: tour.priceFrom != null ? formatPriceFrom(tour.priceFrom, tourUi.numberLocale) : null,
+      priceLabel:
+        hasDiscount
+          ? formatPriceFrom(discountedPrice, tourUi.numberLocale)
+          : tour.priceFrom != null
+            ? formatPriceFrom(tour.priceFrom, tourUi.numberLocale)
+            : null,
       href: href ?? '#',
     })
   }
@@ -166,12 +201,24 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
           {tourUi.tourCardNoImage}
         </div>
       )}
-      {tour.isPopular && (
-        <div
-          className="absolute left-3 top-3 z-10 rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[#1a1a1a] shadow-sm"
-          style={{ background: '#ffc736' }}
-        >
-          {tourUi.tourCardPopularBadge}
+      {(tour.isPopular || hasDiscount) && (
+        <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
+          {tour.isPopular && (
+            <span
+              className="rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[#1a1a1a] shadow-sm"
+              style={{ background: '#ffc736' }}
+            >
+              {tourUi.tourCardPopularBadge}
+            </span>
+          )}
+          {hasDiscount && (
+            <span
+              className="rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm"
+              style={{ background: '#e11d48' }}
+            >
+              {DISCOUNT_BADGE_LABEL[locale](discountPercent as number)}
+            </span>
+          )}
         </div>
       )}
       <button
@@ -219,12 +266,27 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
   )
 
   const priceFormatted = tour.priceFrom != null ? formatPriceFrom(tour.priceFrom, tourUi.numberLocale) : ''
+  const discountedPriceFormatted = hasDiscount ? formatPriceFrom(discountedPrice, tourUi.numberLocale) : ''
   const priceBlock =
     tour.priceFrom != null ? (
-      <p className="leading-tight" aria-label={tourUi.tourCardPerPersonFrom(priceFormatted)}>
-        <span className="block whitespace-nowrap text-[20px] font-extrabold tabular-nums tracking-tight text-[#131719] sm:text-[22px]">
-          {priceFormatted}
-        </span>
+      <p
+        className="leading-tight"
+        aria-label={tourUi.tourCardPerPersonFrom(hasDiscount ? discountedPriceFormatted : priceFormatted)}
+      >
+        {hasDiscount ? (
+          <span className="flex flex-wrap items-baseline gap-1.5 whitespace-nowrap">
+            <span className="text-[14px] font-semibold text-zinc-400 line-through tabular-nums">
+              {priceFormatted}
+            </span>
+            <span className="text-[20px] font-extrabold tabular-nums tracking-tight sm:text-[22px]" style={{ color: '#e11d48' }}>
+              {discountedPriceFormatted}
+            </span>
+          </span>
+        ) : (
+          <span className="block whitespace-nowrap text-[20px] font-extrabold tabular-nums tracking-tight text-[#131719] sm:text-[22px]">
+            {priceFormatted}
+          </span>
+        )}
         <span className="mt-0.5 block text-[11px] font-semibold uppercase tracking-wide" style={{ color: ICON_MUTED }}>
           {PER_PERSON_LABEL[locale]}
         </span>

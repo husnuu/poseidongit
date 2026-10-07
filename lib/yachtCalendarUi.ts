@@ -42,10 +42,25 @@ const EN: YachtCalendarUi = {
   rangeTitle: 'Check-in and check-out',
 }
 
+const RU: YachtCalendarUi = {
+  prevMonth: 'Предыдущий месяц',
+  nextMonth: 'Следующий месяц',
+  selectMonthAria: 'Выберите месяц',
+  selectYearAria: 'Выберите год',
+  unavailableDay: (day) => `${day} недоступно`,
+  pastDay: (day) => `${day} в прошлом`,
+  dayLabel: (day, iso) => `${day} ${iso}`,
+  rangeCheckoutHint: 'Выберите дату выезда (день после последней ночи проживания).',
+  blockedHint: 'Серые даты сейчас недоступны. Вы можете оставить запрос на другие даты.',
+  singleTitle: 'Предпочитаемая дата',
+  rangeTitle: 'Дата заезда и выезда',
+}
+
 const MAP: Record<SiteLocale, YachtCalendarUi> = {
   tr: TR,
   en: EN,
   de: EN,
+  ru: RU,
 }
 
 export function getYachtCalendarUi(locale: SiteLocale): YachtCalendarUi {

@@ -44,8 +44,20 @@ const DE: AboutPageUiStrings = {
   trustReviewsLabel: (count) => `${count} Gästebewertungen`,
 }
 
+const RU: AboutPageUiStrings = {
+  metaTitleFallback: 'О нас',
+  metaDescriptionFallback: 'Наша история и катера.',
+  loadError: 'Не удалось загрузить страницу «О нас».',
+  noImage: 'Нет фото',
+  defaultBoatImageAlt: 'Катер',
+  trustYearsLabel: 'Лет опыта',
+  trustFleetLabel: 'Катеров в нашем флоте',
+  trustReviewsLabel: (count) => `${count} отзывов гостей`,
+}
+
 export function getAboutPageUiStrings(locale: SiteLocale): AboutPageUiStrings {
   if (locale === 'en') return EN
   if (locale === 'de') return DE
+  if (locale === 'ru') return RU
   return TR
 }

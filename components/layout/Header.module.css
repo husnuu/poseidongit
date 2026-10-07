@@ -27,7 +27,7 @@
   right: 0;
   z-index: 50;
   width: 100%;
-  background: #fff;
+  background: transparent;
   border-bottom: 0;
   box-shadow: none;
   overflow: visible;
@@ -41,13 +41,13 @@
 }
 
 /*
- * Sticky header, aşağı kaydırıldığında: yarı saydam BEYAZ zemin + buzlu cam (blur).
- * Önceden burası tamamen şeffaf olup logo/menü/hamburger beyaza dönüyordu — bu,
- * yalnızca kaydırıldıktan sonra da koyu bir görsel arkada kalan sayfalarda işe
- * yarıyordu; sitenin büyük kısmı açık renkli olduğundan menü okunaksız hale
- * geliyordu (mobilde hamburger ikonu bile kayboluyordu). Artık her sayfada
- * (tur detay sayfasındaki gibi) okunaklı kalması için zemin her zaman açık
- * renkli, yazılar/ikon her zaman koyu renkli.
+ * Sayfanın en üstünde (henüz kaydırılmamışken) header artık referans siteki gibi
+ * tamamen şeffaf — menü/logo rengi değiştirilmedi (hâlâ mavi/koyu), sadece zemin
+ * kaldırıldı. Not: açık renkli zeminle başlayan sayfalarda (hero fotoğrafı
+ * olmayan listeleme sayfaları gibi) bu, menünün biraz daha az belirgin
+ * görünmesine yol açabilir — bilinçli bir tercih olarak her sayfada aynı
+ * davranışı istediğimiz için böyle bırakıldı. Aşağı kaydırılınca (.headerScrolled)
+ * yarı saydam BEYAZ zemin + buzlu cam (blur) devreye giriyor, zaten okunaklı.
  */
 .headerScrolled {
   background: rgba(255, 255, 255, 0.7);
@@ -251,14 +251,14 @@
 /* Mobil menüdeki "DİL" bölümü — referans siteki gibi hap şeklinde seçenekler,
    seçili olan beyaz zeminde onay işaretiyle öne çıkıyor. */
 .mobileMenuLangSection {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .mobileMenuLangLabel {
   display: block;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -271,7 +271,7 @@
 .mobileMenuLangList {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 6px;
 }
 
 /* Referans siteki .LanguageSwitcher_gridItem kuralıyla birebir (boyut/aralık/
@@ -358,8 +358,8 @@
 }
 
 .mobileMenuCta {
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -905,7 +905,7 @@
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  padding: 32px;
+  padding: 24px 28px;
   overflow-y: auto;
   animation: menuSlideIn 200ms ease-out;
 }
@@ -948,7 +948,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 48px;
+  margin-bottom: 24px;
   flex-shrink: 0;
 }
 
@@ -1011,7 +1011,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 18px;
 }
 
 .mobileMenuNavItem {
@@ -1022,8 +1022,8 @@
 .mobileMenuLink {
   font-family: var(--font-family), 'Inter', system-ui, -apple-system, sans-serif;
   font-weight: 800;
-  -webkit-text-stroke: 1px currentColor;
-  font-size: clamp(34px, 9vw, 44px);
+  -webkit-text-stroke: 0.9px currentColor;
+  font-size: clamp(27px, 7vw, 35px);
   line-height: 1.2;
   text-transform: uppercase;
   color: #fff;

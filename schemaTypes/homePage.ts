@@ -908,7 +908,7 @@ export default defineType({
     }),
     defineField({
       name: 'pageTranslations',
-      title: 'Çeviriler — English / Deutsch',
+      title: 'Çeviriler — English / Deutsch / Русский',
       type: 'object',
       description:
         'Ana sayfa metinleri. Tur, yat ve blog kartları aynı referanslarla kalır; tur/yat içerikleri kendi belgelerindeki çevirilerle gelir. Linkleri /turlar gibi yazın (önek site ekler).',
@@ -921,6 +921,11 @@ export default defineType({
         defineField({
           name: 'de',
           title: 'Deutsch',
+          type: 'homePageLocaleOverlay',
+        }),
+        defineField({
+          name: 'ru',
+          title: 'Русский',
           type: 'homePageLocaleOverlay',
         }),
       ],

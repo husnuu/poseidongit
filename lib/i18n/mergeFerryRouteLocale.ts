@@ -14,7 +14,7 @@ export function mergeFerryRouteLocale<T extends Record<string, unknown>>(
   if (locale === 'tr') return ferryRoute
   const translations = ferryRoute.translations as Record<string, unknown> | undefined
   if (!translations) return ferryRoute
-  const raw = (locale === 'en' ? translations.en : translations.de) as
+  const raw = (locale === 'en' ? translations.en : locale === 'de' ? translations.de : undefined) as
     | Record<string, unknown>
     | undefined
   if (!raw || typeof raw !== 'object') return ferryRoute
@@ -33,7 +33,7 @@ export function ferryRouteFieldHasManualTranslation(
 ): boolean {
   if (locale === 'tr' || !raw) return true
   const translations = raw.translations as Record<string, unknown> | undefined
-  const overlay = (locale === 'en' ? translations?.en : translations?.de) as
+  const overlay = (locale === 'en' ? translations?.en : locale === 'de' ? translations?.de : undefined) as
     | Record<string, unknown>
     | undefined
   const value = overlay?.[field]
