@@ -854,13 +854,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 ? (patchArr!.featureBar as unknown[])[index]
                 : undefined
               const hasManual = !!patchItem
-              return hasManual
-                ? item
-                : {
-                    ...item,
-                    title: await translateText(item.title, locale),
-                    description: item.description ? await translateText(item.description, locale) : item.description,
-                  }
+              if (hasManual) return item
+              return {
+                ...item,
+                title: await translateText(item.title, locale),
+                description: item.description ? await translateText(item.description, locale) : item.description,
+              }
             })
           )
         : rawFeatureBar
@@ -1061,7 +1060,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <HeroBanner hero={hero} locale={locale} />
       {featureBar && featureBar.length > 0 && (
         <ScrollReveal>
-          <FeatureBar items={featureBar} />
+          <FeatureBar items={featureBar} locale={locale} />
         </ScrollReveal>
       )}
       <span id="home-tours" className="block scroll-mt-24" aria-hidden />

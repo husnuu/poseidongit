@@ -122,12 +122,15 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
         aria-hidden
       />
       <div className="mx-auto max-w-[1400px] px-4 py-14 sm:py-16 md:py-20">
-        <CovesHero
-          title={title}
-          description={description}
-          count={items.length}
-          countLabel={items.length > 0 ? ui.covesListedCount(items.length) : undefined}
-        />
+        <CovesHero title={title} description={description} />
+
+        {items.length > 0 && (
+          // Yat kiralama listesindeki "X yat listeleniyor" ile aynı, göze
+          // batmayan konum — ızgaranın hemen üstünde, küçük ve gri.
+          <p className="mb-6 text-sm font-semibold text-black/60" style={{ fontFamily: 'var(--font-family)' }}>
+            {ui.covesListedCount(items.length)}
+          </p>
+        )}
 
         <CovesGrid
           items={items.map((cove) => {

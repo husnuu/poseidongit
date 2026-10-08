@@ -588,7 +588,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
 
           {popularTourLinks.length > 0 && (
             <div>
-              <h3 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
+              <h3 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl lg:whitespace-nowrap">
                 {POPULAR_TOURS_TITLE[locale]}
               </h3>
               <ul className="space-y-4">
@@ -607,7 +607,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
             </div>
           )}
 
-          <div>
+          <div className="lg:pl-6 xl:pl-10">
             <h3 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
               {exploreTitle}
             </h3>

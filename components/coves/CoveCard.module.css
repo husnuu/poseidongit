@@ -1,0 +1,27 @@
+/* TourCard.module.css ile birebir aynı dil: başlık varsayılanda koyu, kart
+   hover edildiğinde ana marka rengine geçer — anasayfadaki tur/yat kartlarıyla
+   tutarlı tıklanabilirlik ipucu. */
+.title {
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-weight: 700;
+  -webkit-text-stroke: 0.3px currentColor;
+  line-height: 1.3;
+  color: var(--secondary, #131719);
+  margin: 0;
+  font-size: 1rem;
+  transition: color 0.25s ease;
+}
+
+:global(.group):hover .title {
+  color: var(--primary, #2168b8);
+}
+
+@media (min-width: 640px) {
+  .title {
+    font-size: 1.0625rem;
+  }
+}
+
+.description {
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+}

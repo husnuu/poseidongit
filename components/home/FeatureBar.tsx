@@ -9,6 +9,7 @@ import {
   Phone,
   type LucideIcon,
 } from 'lucide-react'
+import type { SiteLocale } from '@/lib/i18n/config'
 
 const iconMap: Record<string, LucideIcon> = {
   bolt: Bolt,
@@ -29,6 +30,10 @@ export type FeatureBarItem = {
 
 type FeatureBarProps = {
   items: FeatureBarItem[]
+  /** Başlıkların tek satıra zorlanması (bkz. aşağıdaki not) sadece Türkçe sayfada
+      uygulanır — diğer dillerde çeviri metni daha uzun çıkabiliyor ve zorla tek
+      satır yan karta taşıp üst üste binmeye yol açıyordu. */
+  locale?: SiteLocale
 }
 
 // Referans: ~48px ince çizgili (line-art) ikonlar
@@ -62,9 +67,13 @@ const FEATURE_BAR_BG = {
   boxShadow: 'var(--shadow-md, 0 6px 24px rgba(19, 23, 25, 0.08))',
 } as const
 
-export default function FeatureBar({ items }: FeatureBarProps) {
+export default function FeatureBar({ items, locale = 'tr' }: FeatureBarProps) {
   const displayItems = items.slice(0, 4)
   if (displayItems.length === 0) return null
+  /** Türkçe başlıklar kısa/tek satıra uygun tasarlanmıştı; diğer dillerdeki
+      çeviri metni daha uzun çıkabildiği için orada doğal satır kırılımına
+      bırakılıyor (bkz. FeatureBarProps.locale). */
+  const forceSingleLine = locale === 'tr'
 
   return (
     <section
@@ -73,7 +82,7 @@ export default function FeatureBar({ items }: FeatureBarProps) {
       aria-label="Özellikler"
     >
       <div className="mx-auto max-w-[1200px] min-w-0 px-4">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-8 lg:grid-cols-4 lg:gap-x-12">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-8 lg:grid-cols-4 lg:gap-x-14 xl:gap-x-16">
           {displayItems.map((item, index) => {
             const IconComponent = iconMap[item.icon] ?? Bolt
             const href = resolveFeatureLink(item.title, index)
@@ -96,7 +105,7 @@ export default function FeatureBar({ items }: FeatureBarProps) {
                 </div>
                 <div className="min-w-0" style={{ fontFamily: 'var(--font-family)' }}>
                   <div
-                    className={`font-black uppercase text-[17px] leading-tight tracking-wide ${href ? 'group-hover/feature:underline underline-offset-4' : ''}`}
+                    className={`font-black uppercase text-[17px] leading-tight tracking-wide ${forceSingleLine ? 'xl:whitespace-nowrap' : ''} ${href ? 'group-hover/feature:underline underline-offset-4' : ''}`}
                     style={{ WebkitTextStroke: '0.7px currentColor' }}
                   >
                     {item.title}

@@ -19,6 +19,9 @@ import {
 } from '@/lib/i18n/mergeAboutPageLocale'
 import { getAboutPageUiStrings } from '@/lib/i18n/strings/aboutPage'
 import { translatePortableTextBlocks, translateText } from '@/lib/i18n/runtimeTranslate'
+import ScrollReveal from '@/components/ui/ScrollReveal'
+import FleetTimeline from '@/components/about/FleetTimeline'
+import CountUpStat from '@/components/about/CountUpStat'
 
 export const dynamic = 'force-dynamic'
 
@@ -292,17 +295,21 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
   const topRated = trustStats?.topRated
   const showRatingStat = topRated?.enabled !== false && (topRated?.ratingValue ?? 0) > 0
   const reviewCount = topRated?.reviewCount ?? 0
-  const numberLocale = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
+  const numberLocale =
+    locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : locale === 'ru' ? 'ru-RU' : 'en-US'
 
   // Rozet ikonları artık dışarıdan kopyalanmış "flat illustration" seti değil,
   // sitenin geri kalanıyla (FeatureBar, HighlightsDetailsRow) aynı lucide ikon +
   // marka rengi dili: deneyim/filo mavi rozette, puan ise yıldız sarısında.
+  // "value" artık ham sayı — CountUpStat ekrana girince 0'dan buraya sayıyor.
   const trustStatsItems = [
     yearsExperience != null && yearsExperience > 0
       ? {
           Icon: Anchor,
-          badgeColor: 'var(--primary, #2168b8)',
-          value: `${yearsExperience}+`,
+          accentColor: 'var(--primary, #2168b8)',
+          value: yearsExperience,
+          decimals: 0,
+          suffix: '+',
           label: ui.trustYearsLabel,
           showStars: false,
         }
@@ -310,8 +317,10 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
     fleetCount > 0
       ? {
           Icon: Sailboat,
-          badgeColor: 'var(--primary, #2168b8)',
-          value: `${fleetCount}`,
+          accentColor: 'var(--primary, #2168b8)',
+          value: fleetCount,
+          decimals: 0,
+          suffix: '',
           label: ui.trustFleetLabel,
           showStars: false,
         }
@@ -320,8 +329,10 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
       ? {
           // Footer'daki "TOP RATED" rozetiyle aynı gerçek puan — bkz. lib/siteTrustRating.ts
           Icon: Star,
-          badgeColor: '#f5a623',
-          value: DISPLAYED_GOOGLE_RATING.toLocaleString(numberLocale, { maximumFractionDigits: 1 }),
+          accentColor: '#f5a623',
+          value: DISPLAYED_GOOGLE_RATING,
+          decimals: 1,
+          suffix: '',
           label: ui.trustReviewsLabel(reviewCount > 0 ? `${reviewCount.toLocaleString(numberLocale)}+` : ''),
           showStars: true,
         }
@@ -331,8 +342,10 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
       item
     ): item is {
       Icon: typeof Anchor
-      badgeColor: string
-      value: string
+      accentColor: string
+      value: number
+      decimals: number
+      suffix: string
       label: string
       showStars: boolean
     } => item != null
@@ -354,7 +367,7 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
               alt={heroPhotoAlt}
               fill
               priority
-              className="object-cover object-center"
+              className="hero-ken-burns object-cover object-center"
               sizes="100vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" aria-hidden />
@@ -363,7 +376,7 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
                 {hasHeroLogo && heroLogoUrl ? (
                   <>
                     <h1 className="sr-only">{ui.metaTitleFallback}</h1>
-                    <div className="relative mx-auto h-[64px] w-[min(90vw,420px)] sm:h-[84px] md:h-[100px] md:w-[min(80vw,520px)]">
+                    <div className="hero-reveal hero-reveal-1 relative mx-auto h-[64px] w-[min(90vw,420px)] sm:h-[84px] md:h-[100px] md:w-[min(80vw,520px)]">
                       <Image
                         src={heroLogoUrl}
                         alt={heroLogoAlt}
@@ -378,7 +391,7 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
                   <>
                     {data.titleTop?.trim() && (
                       <h1
-                        className="text-[29px] font-extrabold uppercase leading-[1.15] text-white sm:text-[36px] md:text-[44px] pageHeroTitleStroke"
+                        className="hero-reveal hero-reveal-1 text-[29px] font-extrabold uppercase leading-[1.15] text-white sm:text-[36px] md:text-[44px] pageHeroTitleStroke"
                         style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
                       >
                         {titleTopUpper}
@@ -386,7 +399,7 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
                     )}
                     {data.titleBottom?.trim() && (
                       <p
-                        className="mt-3 text-base font-bold uppercase tracking-wide text-white/90 sm:text-lg md:text-xl"
+                        className="hero-reveal hero-reveal-2 mt-3 text-base font-bold uppercase tracking-wide text-white/90 sm:text-lg md:text-xl"
                         style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
                       >
                         {data.titleBottom}
@@ -405,7 +418,7 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
               <>
                 <h1 className="sr-only">{ui.metaTitleFallback}</h1>
                 <div className="flex justify-center px-2 py-2 md:py-4">
-                  <div className="relative h-[72px] w-[min(100%,420px)] sm:h-[88px] md:h-[104px] md:w-[min(100%,520px)]">
+                  <div className="hero-reveal hero-reveal-1 relative h-[72px] w-[min(100%,420px)] sm:h-[88px] md:h-[104px] md:w-[min(100%,520px)]">
                     <Image
                       src={heroLogoUrl}
                       alt={heroLogoAlt}
@@ -421,7 +434,7 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
               <>
                 {data.titleTop?.trim() && (
                   <h1
-                    className="text-[29px] font-extrabold uppercase leading-[1.15] sm:text-[33px] md:text-[37px] whitespace-nowrap pageHeroTitleStroke"
+                    className="hero-reveal hero-reveal-1 text-[29px] font-extrabold uppercase leading-[1.15] sm:text-[33px] md:text-[37px] whitespace-nowrap pageHeroTitleStroke"
                     style={{
                       fontFamily: 'var(--font-family-title, var(--font-family))',
                       color: 'var(--primary, #2168b8)',
@@ -432,7 +445,7 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
                 )}
                 {data.titleBottom?.trim() && (
                   <p
-                    className="mt-4 text-lg font-bold uppercase tracking-wide sm:text-xl md:text-2xl"
+                    className="hero-reveal hero-reveal-2 mt-4 text-lg font-bold uppercase tracking-wide sm:text-xl md:text-2xl"
                     style={{
                       fontFamily: 'var(--font-family-title, var(--font-family))',
                       color: 'var(--secondary, #131719)',
@@ -448,77 +461,81 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
       )}
 
       {data.intro && data.intro.length > 0 && (
-        <section className="w-full pb-4 pt-12 md:pt-16">
-          <div className="mx-auto max-w-2xl px-4 text-center">
-            <div className="mx-auto mb-6 h-1 w-12 rounded-full" style={{ background: 'var(--primary, #2168b8)' }} aria-hidden />
-            <div className="text-left">
-              <PortableText value={data.intro} components={defaultBlockComponents} />
+        <ScrollReveal>
+          <section className="w-full pb-4 pt-12 md:pt-16">
+            <div className="mx-auto max-w-2xl px-4 text-center">
+              <span
+                className="text-2xl font-extrabold uppercase tracking-[0.06em] sm:text-3xl"
+                style={{
+                  color: 'var(--primary, #2168b8)',
+                  fontFamily: 'var(--font-family-title, var(--font-family))',
+                  WebkitTextStroke: '0.4px currentColor',
+                }}
+              >
+                {ui.introEyebrow}
+              </span>
+              <div className="mt-6 text-left">
+                <PortableText value={data.intro} components={defaultBlockComponents} />
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
       )}
 
       {trustStatsItems.length > 0 && (
-        // Anasayfadaki bölüm bantlarıyla (Popüler Turlar, Koylar) aynı mantık:
-        // güven rozeti şeridi hafif mavi bir zeminle çevredeki beyaz bölümlerden ayrışıyor.
-        <section className="w-full bg-[#eff6ff] px-4 py-12 md:py-16" aria-label={ui.metaTitleFallback}>
-          <div className="mx-auto flex max-w-4xl flex-col divide-y divide-[#dbeafe] sm:flex-row sm:divide-x sm:divide-y-0">
-            {trustStatsItems.map(({ Icon, badgeColor, value, label, showStars }, i) => (
+        <ScrollReveal>
+        <section className="w-full px-4 py-12 md:py-16" aria-label={ui.metaTitleFallback}>
+          <div className="mx-auto grid max-w-4xl grid-cols-1 gap-5 sm:grid-cols-3 md:gap-6">
+            {trustStatsItems.map(({ Icon, accentColor, value, decimals, suffix, label, showStars }, i) => (
               <div
                 key={i}
-                className="flex flex-1 items-center justify-center py-6 sm:px-6 sm:py-2"
+                className="flex flex-col items-center rounded-2xl border border-[#f1f5f9] bg-white px-6 py-8 text-center shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.12)]"
               >
-                {/* Sabit genişlikte iç kutu: etiket metni satır sayısına/uzunluğuna göre
-                    değişse bile ikon + sayı her satırda aynı x konumunda hizalı kalsın diye
-                    (dıştaki justify-center, değişken genişlikli içeriği değil, bu sabit
-                    kutuyu ortalıyor). */}
-                <div className="mx-auto flex w-full max-w-[240px] items-center gap-4 sm:mx-0 sm:w-auto">
-                  <span
-                    className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full shadow-[0_6px_16px_-4px_rgba(19,23,25,0.25)] sm:h-[72px] sm:w-[72px]"
-                    style={{ background: badgeColor }}
-                    aria-hidden
-                  >
-                    <Icon className="h-7 w-7 text-white sm:h-8 sm:w-8" strokeWidth={2} />
+                <Icon className="mb-3 h-9 w-9 flex-shrink-0" style={{ color: accentColor }} strokeWidth={1.75} aria-hidden />
+                <CountUpStat
+                  value={value}
+                  decimals={decimals}
+                  suffix={suffix}
+                  numberLocale={numberLocale}
+                  className="text-[32px] font-black leading-none"
+                  style={{
+                    fontFamily: 'var(--font-family-title, var(--font-family))',
+                    color: 'var(--secondary, #131719)',
+                    WebkitTextStroke: '0.4px currentColor',
+                  }}
+                />
+                {showStars && (
+                  <span className="mt-2 flex gap-0.5" aria-hidden>
+                    {Array.from({ length: 5 }).map((_, starIndex) => (
+                      <Star key={starIndex} className="h-4 w-4 fill-[#f5a623] text-[#f5a623]" />
+                    ))}
                   </span>
-                  <div className="flex flex-col items-start text-left">
-                    <span
-                      className="text-[30px] font-black leading-none sm:text-[34px]"
-                      style={{
-                        fontFamily: 'var(--font-family-title, var(--font-family))',
-                        color: 'var(--secondary, #131719)',
-                        WebkitTextStroke: '0.4px currentColor',
-                      }}
-                    >
-                      {value}
-                    </span>
-                    {showStars && (
-                      <span className="mt-1 flex gap-0.5" aria-hidden>
-                        {Array.from({ length: 5 }).map((_, starIndex) => (
-                          <Star key={starIndex} className="h-4 w-4 fill-[#f5a623] text-[#f5a623]" />
-                        ))}
-                      </span>
-                    )}
-                    <span
-                      className="mt-1 text-[12px] font-bold uppercase leading-snug tracking-wide sm:text-[13px]"
-                      style={{ color: 'var(--muted, #81848b)' }}
-                    >
-                      {label}
-                    </span>
-                  </div>
-                </div>
+                )}
+                <span
+                  className="mt-2 text-[12px] font-bold uppercase leading-snug tracking-wide"
+                  style={{ color: 'var(--muted, #81848b)' }}
+                >
+                  {label}
+                </span>
               </div>
             ))}
           </div>
         </section>
+        </ScrollReveal>
       )}
 
       {(data.sectionTitle || data.sectionBody?.length) && (
+        <ScrollReveal>
         <section className="w-full py-12 md:py-16">
           <div className="mx-auto max-w-[1200px] px-4">
             {data.sectionTitle && (
               <h2
-                className="text-[28px] md:text-[34px] font-extrabold uppercase mb-2"
-                style={{ color: 'var(--primary, #2168b8)', fontFamily: 'var(--font-family-title)' }}
+                className="mb-2 text-[28px] font-extrabold uppercase md:text-[34px]"
+                style={{
+                  color: 'var(--primary, #2168b8)',
+                  fontFamily: 'var(--font-family-title)',
+                  WebkitTextStroke: '0.4px currentColor',
+                }}
               >
                 {data.sectionTitle}
               </h2>
@@ -535,25 +552,28 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
             )}
           </div>
         </section>
+        </ScrollReveal>
       )}
 
       {(data.timelineTitle || data.timelineDescription || boats.length > 0) && (
-        <section className="w-full bg-[#f8fafc] py-14 md:py-20">
+        // Rengi zaten zaman çizgisi (mavi noktalı hat + büyüyen yıl rozetleri)
+        // taşıyor — ayrıca büyük bir renkli bant eklemek "modern" durmuyordu.
+        <section className="w-full py-14 md:py-20">
           <div className="mx-auto max-w-[1300px] px-4">
+            <ScrollReveal>
             <header className="mx-auto mb-12 max-w-2xl text-center">
               {data.timelineTitle && (
                 <h2
                   className="text-[24px] md:text-[30px] font-extrabold uppercase leading-[1.15]"
-                  style={{ fontFamily: 'var(--font-family-title)', color: 'var(--primary, #2168b8)' }}
+                  style={{
+                    fontFamily: 'var(--font-family-title)',
+                    color: 'var(--primary, #2168b8)',
+                    WebkitTextStroke: '0.4px currentColor',
+                  }}
                 >
                   {timelineTitleUpper}
                 </h2>
               )}
-              <div
-                className="mx-auto mt-3 h-[5px] w-10 rounded-full"
-                style={{ background: 'var(--primary, #2168b8)' }}
-                aria-hidden
-              />
               {data.timelineDescription && (
                 <p
                   className="mt-4 text-base leading-relaxed md:text-lg"
@@ -563,60 +583,9 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
                 </p>
               )}
             </header>
+            </ScrollReveal>
 
-            {boats.length > 0 && (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-4">
-                {boats.map((boat, index) => (
-                  <article
-                    key={`${boat.year}-${boat.name}-${index}`}
-                    className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#eef1f4] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.14)]"
-                  >
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100">
-                      {boat.imageUrl ? (
-                        <Image
-                          src={boat.imageUrl}
-                          alt={boat.imageAlt || ''}
-                          fill
-                          className="object-cover transition-transform duration-500 hover:scale-105"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm text-zinc-400">
-                          {ui.noImage}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-1 flex-col px-5 py-5 sm:px-6">
-                      <h3
-                        className="text-[16px] font-extrabold uppercase tracking-wide"
-                        style={{
-                          fontFamily: 'var(--font-family-title, var(--font-family))',
-                          color: 'var(--secondary, #131719)',
-                        }}
-                      >
-                        {boat.name}
-                      </h3>
-                      {boat.year && (
-                        <p
-                          className="mt-0.5 text-xs font-semibold uppercase tracking-wide"
-                          style={{ fontFamily: 'var(--font-family)', color: 'var(--muted, #81848b)' }}
-                        >
-                          {boat.year}
-                        </p>
-                      )}
-                      {boat.description?.trim() && (
-                        <p
-                          className="mt-3 text-sm leading-relaxed"
-                          style={{ fontFamily: 'var(--font-family)', color: 'var(--text-color, #58595b)' }}
-                        >
-                          {boat.description}
-                        </p>
-                      )}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
+            <FleetTimeline boats={boats} noImageLabel={ui.noImage} />
           </div>
         </section>
       )}

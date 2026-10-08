@@ -31,14 +31,16 @@
   margin: 0;
 }
 
-/* ── Toggle tabs: bitişik (segmented) kontrol, aynı köşe/font/renk dili ── */
+/* ── Toggle tabs: bitişik (segmented) kontrol, aynı köşe/font/renk dili ──
+   overflow: hidden YOK — "En Popüler" rozeti sekmenin üstüne taşıp
+   görünebilsin diye köşe yuvarlaması artık dıştaki overflow:hidden yerine
+   ilk/son sekmenin kendi border-radius'una bırakıldı (aşağıda). */
 .tabs {
   display: flex;
   align-items: stretch;
   background: #ffffff;
   border-radius: 12px;
   border: 2px solid var(--primary, #2168b8);
-  overflow: hidden;
   width: 100%;
   max-width: 100%;
 }
@@ -74,8 +76,17 @@
   white-space: nowrap;
 }
 
+.tab:first-child {
+  border-radius: 10px 0 0 10px;
+}
+
 .tab:last-child {
   border-right: 0;
+  border-radius: 0 10px 10px 0;
+}
+
+.tab:only-child {
+  border-radius: 10px;
 }
 
 .tab:hover {
@@ -94,6 +105,46 @@
 
 .tabLabel {
   display: inline-block;
+}
+
+/* "En Popüler" — Premium sekmesinin tam üstünde havada duran, altına doğru
+   küçük bir ok (üçgen kuyruk) uzanan etiket — sitedeki diğer "EN POPÜLER"
+   rozetleriyle (TourCard vb.) aynı altın/koyu renk dilini kullanıyor.
+   Sekmenin ortasına hizalı; .tabs artık overflow:hidden olmadığı için
+   dışarı taşabiliyor. */
+.tabPopularBadge {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  background: #ffc736;
+  color: #1a1a1a;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.tabPopularBadge::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid #ffc736;
+  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.12));
 }
 
 /* ── Panel ───────────────────────────────────────────────── */

@@ -170,6 +170,27 @@ summary:focus-visible,
   }
 }
 
+/* Hakkımızda hero fotoğrafı için çok yavaş, fark edilmeden süren bir
+   yakınlaşma (Ken Burns) — statik bir karenin canlı durmasını sağlıyor. */
+@keyframes hero-ken-burns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+.hero-ken-burns {
+  animation: hero-ken-burns 16s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-ken-burns {
+    animation: none;
+  }
+}
+
 /* Hero üstündeki "Hantal Turizm - Belge No" rozeti — referans sitedeki
    "Hero_creds" rozetiyle aynı teknik: sağ kenarı çentikli (ok ucu gibi)
    bir şerit, border-box/padding-box katmanlı arka planla (border-block

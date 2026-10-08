@@ -153,6 +153,11 @@ export default function TourClassShowcase({ classes, locale, defaultKey, heading
       >
         {safeClasses.map((cls) => {
           const isActive = cls.key === activeKey
+          // Premium sınıf için, Sanity'de özel bir rozet girilmemişse sitedeki
+          // diğer "EN POPÜLER" rozetleriyle aynı etiketi varsayılan göster —
+          // CMS'te gerçek bir rozet varsa her zaman ona öncelik verilir.
+          const isPremium = cls.key?.toLowerCase().startsWith('prem')
+          const popularBadgeText = isPremium ? cls.badge?.trim() || ui.tourCardPopularBadge : null
           return (
             <button
               key={cls.key}
@@ -166,6 +171,7 @@ export default function TourClassShowcase({ classes, locale, defaultKey, heading
               className={`${styles.tab} ${isActive ? styles.tabActive : ''}`}
             >
               <span className={styles.tabLabel}>{cls.label}</span>
+              {popularBadgeText && <span className={styles.tabPopularBadge}>{popularBadgeText}</span>}
             </button>
           )
         })}

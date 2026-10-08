@@ -9,6 +9,10 @@ export type AboutPageUiStrings = {
   trustYearsLabel: string
   trustFleetLabel: string
   trustReviewsLabel: (count: string) => string
+  heroCtaTours: string
+  heroCtaContact: string
+  /** Hikaye metninin üstündeki küçük eyebrow etiketi — metin "direkt" başlamasın diye. */
+  introEyebrow: string
 }
 
 const TR: AboutPageUiStrings = {
@@ -20,6 +24,9 @@ const TR: AboutPageUiStrings = {
   trustYearsLabel: 'Yıllık Deneyim',
   trustFleetLabel: 'Farklı Teknede Hizmet',
   trustReviewsLabel: (count) => `${count} Misafir Yorumu`,
+  heroCtaTours: 'Turlarımızı Keşfet',
+  heroCtaContact: 'Bize Ulaşın',
+  introEyebrow: 'Hikayemiz',
 }
 
 const EN: AboutPageUiStrings = {
@@ -31,6 +38,9 @@ const EN: AboutPageUiStrings = {
   trustYearsLabel: 'Years of Experience',
   trustFleetLabel: 'Boats in Our Fleet',
   trustReviewsLabel: (count) => `${count} Guest Reviews`,
+  heroCtaTours: 'Explore Our Tours',
+  heroCtaContact: 'Contact Us',
+  introEyebrow: 'Our Story',
 }
 
 const DE: AboutPageUiStrings = {
@@ -42,6 +52,9 @@ const DE: AboutPageUiStrings = {
   trustYearsLabel: 'Jahre Erfahrung',
   trustFleetLabel: 'Boote in Unserer Flotte',
   trustReviewsLabel: (count) => `${count} Gästebewertungen`,
+  heroCtaTours: 'Unsere Touren entdecken',
+  heroCtaContact: 'Kontaktieren Sie uns',
+  introEyebrow: 'Unsere Geschichte',
 }
 
 const RU: AboutPageUiStrings = {
@@ -53,6 +66,9 @@ const RU: AboutPageUiStrings = {
   trustYearsLabel: 'Лет опыта',
   trustFleetLabel: 'Катеров в нашем флоте',
   trustReviewsLabel: (count) => `${count} отзывов гостей`,
+  heroCtaTours: 'Смотреть наши туры',
+  heroCtaContact: 'Связаться с нами',
+  introEyebrow: 'Наша история',
 }
 
 export function getAboutPageUiStrings(locale: SiteLocale): AboutPageUiStrings {

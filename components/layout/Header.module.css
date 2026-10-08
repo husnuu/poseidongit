@@ -47,14 +47,95 @@
  * olmayan listeleme sayfaları gibi) bu, menünün biraz daha az belirgin
  * görünmesine yol açabilir — bilinçli bir tercih olarak her sayfada aynı
  * davranışı istediğimiz için böyle bırakıldı. Aşağı kaydırılınca (.headerScrolled)
- * yarı saydam BEYAZ zemin + buzlu cam (blur) devreye giriyor, zaten okunaklı.
+ * koyu, camsı (buzlu) bir zemine geçiliyor ve logo/ikon/menü yazıları tamamen
+ * beyaza dönüyor — modern "glassmorphism" header efekti.
+ *
+ * Zemin/blur katmanı ::before pseudo-element'i her zaman DOM'da duruyor (opacity: 0
+ * ile gizli) ve sadece .headerScrolled'da opacity: 1'e geçiyor — bu sayede scroll
+ * eşiğini geçerken "pat" diye belirmek yerine 0.35s'de yumuşakça beliriyor/kayboluyor
+ * (pseudo-element sadece .headerScrolled altında var olsaydı transition çalışmazdı).
+ * Üstte tam, alta doğru bir mask-image ile saydamlaşarak "çoktan aza" giden bir blur
+ * gradyanı oluşturuyor (CSS'te tek katmanda değişken blur yarıçapı mümkün değil, bu
+ * yüzden blur'un GÖRÜNÜRLÜĞÜ maskeleniyor).
  */
+.header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(to bottom, rgba(16, 28, 54, 0.68) 0%, rgba(16, 28, 54, 0.3) 100%);
+  backdrop-filter: blur(10px) saturate(125%);
+  -webkit-backdrop-filter: blur(10px) saturate(125%);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 15%,
+    rgba(0, 0, 0, 0.75) 40%,
+    rgba(0, 0, 0, 0.35) 70%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 15%,
+    rgba(0, 0, 0, 0.75) 40%,
+    rgba(0, 0, 0, 0.35) 70%,
+    transparent 100%
+  );
+  transition: opacity 0.35s ease;
+}
+
 .headerScrolled {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: none;
-  border-bottom: 1px solid rgba(32, 104, 184, 0.13);
+  background: transparent;
+  box-shadow: 0 8px 30px rgba(8, 15, 30, 0.18);
+}
+
+.headerScrolled::before {
+  opacity: 1;
+}
+
+.headerScrolled .logoImage {
+  filter: brightness(0) invert(1);
+}
+
+.headerScrolled .logoFallback {
+  color: #fff;
+}
+
+.headerScrolled .desktopNavLink {
+  color: #fff;
+}
+
+.headerScrolled .desktopNavLink::after {
+  background: #fff;
+}
+
+.headerScrolled .headerDivider {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.headerScrolled .languageTrigger {
+  color: #fff;
+}
+
+.headerScrolled .languageTrigger:hover {
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.headerScrolled .wishlistTrigger {
+  color: #fff;
+}
+
+/* Aşağı kaydırılınca dil seçici tamamen kaldırılsın — sade/minimal bir
+   kaydırılmış header isteniyor (sayfa başına dönülünce tekrar görünür). */
+.headerScrolled .languageSelector {
+  display: none;
+}
+
+.headerScrolled .mobileMenuBtn {
+  color: #fff;
 }
 
 .headerInner {
@@ -102,6 +183,7 @@
   max-width: 100%;
   max-height: 55px;
   display: block;
+  transition: filter 0.25s ease;
 }
 
 /* Lacivert / koyu zemin: tek renk logo → beyaz (mobil menü + footer) */
@@ -147,7 +229,7 @@
   color: var(--primary, #2168b8);
   text-decoration: none;
   letter-spacing: 0.5px;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, color 0.25s ease;
 }
 
 /* Aktif/üzerine gelinen menüde belirgin alt çizgi — referans site ile birebir. */
@@ -181,6 +263,7 @@
   height: 24px;
   flex-shrink: 0;
   background: rgba(19, 23, 25, 0.14);
+  transition: background-color 0.25s ease;
 }
 
 /* Footerdaki tıklanabilir öğeler (e-posta, telefon, tur/menü linkleri, rozetler
@@ -376,6 +459,7 @@
   padding: 0;
   cursor: pointer;
   color: var(--primary, #2168b8);
+  transition: color 0.25s ease;
 }
 
 .mobileMenuBtn svg {

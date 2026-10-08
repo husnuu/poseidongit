@@ -9,6 +9,7 @@ import type { YachtSpecifications } from '@/lib/yachtTypes'
 import { formatYachtMobileOvernightTotal } from '@/lib/yachtFormat'
 import tourCardStyles from '@/components/tours/TourCard.module.css'
 import { useWishlist } from '@/lib/wishlist/WishlistContext'
+import ShareButton from '@/components/ui/ShareButton'
 
 const ICON_MUTED = 'var(--muted, #81848b)'
 
@@ -199,15 +200,26 @@ export default function HomePopularYachtCard({
           {FEATURED_LABEL[locale]}
         </div>
       )}
-      <button
-        type="button"
-        aria-label={FAVORITE_LABEL[locale]}
-        aria-pressed={saved}
-        onClick={handleToggleWishlist}
-        className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition hover:bg-black/40 ${saved ? 'bg-white text-rose-500' : 'bg-black/25 text-white'}`}
-      >
-        <Heart className="h-[18px] w-[18px]" strokeWidth={2} fill={saved ? 'currentColor' : 'none'} aria-hidden />
-      </button>
+      <div className="absolute right-3 top-3 z-10 flex flex-col items-center gap-2">
+        <button
+          type="button"
+          aria-label={FAVORITE_LABEL[locale]}
+          aria-pressed={saved}
+          onClick={handleToggleWishlist}
+          className={`flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition hover:bg-black/40 ${saved ? 'bg-white text-rose-500' : 'bg-black/25 text-white'}`}
+        >
+          <Heart className="h-[18px] w-[18px]" strokeWidth={2} fill={saved ? 'currentColor' : 'none'} aria-hidden />
+        </button>
+        {href && (
+          <ShareButton
+            title={titlePlain}
+            description={locationLine || null}
+            imageUrl={yacht.coverImageUrl}
+            path={href}
+            locale={locale}
+          />
+        )}
+      </div>
     </div>
   )
 

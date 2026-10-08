@@ -10,6 +10,7 @@ import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './TourCard.module.css'
 import { SANITY_DISPLAY_IMAGE_PROPS } from '@/lib/sanityImage'
 import { useWishlist } from '@/lib/wishlist/WishlistContext'
+import ShareButton from '@/components/ui/ShareButton'
 
 const ICON_MUTED = 'var(--muted, #81848b)'
 /** Süre/kalkış satırındaki çizgi ikonlar (saat, konum) — referans örnekteki
@@ -221,15 +222,26 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
           )}
         </div>
       )}
-      <button
-        type="button"
-        aria-label={FAVORITE_LABEL[locale]}
-        aria-pressed={saved}
-        onClick={handleToggleWishlist}
-        className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition hover:bg-black/40 ${saved ? 'bg-white text-rose-500' : 'bg-black/25 text-white'}`}
-      >
-        <HeartIcon filled={saved} />
-      </button>
+      <div className="absolute right-3 top-3 z-10 flex flex-col items-center gap-2">
+        <button
+          type="button"
+          aria-label={FAVORITE_LABEL[locale]}
+          aria-pressed={saved}
+          onClick={handleToggleWishlist}
+          className={`flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition hover:bg-black/40 ${saved ? 'bg-white text-rose-500' : 'bg-black/25 text-white'}`}
+        >
+          <HeartIcon filled={saved} />
+        </button>
+        {href && (
+          <ShareButton
+            title={titlePlain}
+            description={tour.shortDescription}
+            imageUrl={tour.coverImageUrl}
+            path={href}
+            locale={locale}
+          />
+        )}
+      </div>
     </div>
   )
 
