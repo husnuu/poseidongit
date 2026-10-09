@@ -128,12 +128,6 @@
   color: #fff;
 }
 
-/* Aşağı kaydırılınca dil seçici tamamen kaldırılsın — sade/minimal bir
-   kaydırılmış header isteniyor (sayfa başına dönülünce tekrar görünür). */
-.headerScrolled .languageSelector {
-  display: none;
-}
-
 .headerScrolled .mobileMenuBtn {
   color: #fff;
 }
@@ -482,14 +476,17 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.4rem 0.65rem 0.4rem 0.55rem;
+  /* Ok kaldırıldığı için artık simetrik dolgu — eskiden sağ taraf oka
+     yer açmak için daha genişti. */
+  padding: 0.4rem 0.75rem;
   border-radius: 999px;
   border: none;
   background-color: transparent;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, padding 0.2s ease;
   font-family: var(--font-family), sans-serif;
-  color: var(--text-color, #1f2937);
+  /* Diğer header ikonlarıyla (favoriler kalbi, hamburger) aynı renk. */
+  color: var(--secondary, #131719);
   line-height: 1;
   font-size: 0.85rem;
   font-weight: 500;
@@ -497,6 +494,18 @@
 
 .languageTrigger:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Header kaydırılınca (compact/globe modu): kalp ve hamburger butonlarıyla
+   birebir aynı 38×38 kare ve ortalanmış simetrik dolgu — bayrak+metin için
+   ayarlanmış asimetrik dolgu (solda 0.55rem/sağda 0.65rem) tek başına ikon
+   kalınca ikonun kutu içinde hafif kaymasına, bu yüzden ikonlar arası
+   mesafenin dengesiz görünmesine yol açıyordu. */
+.languageTriggerCompact {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  justify-content: center;
 }
 
 .languageTriggerLabel {
@@ -525,6 +534,14 @@
   aspect-ratio: 1;
 }
 
+/* Header kaydırılınca bayrak yerine gösterilen sade globe ikonu — renk
+   .languageTrigger'dan (scroll'da beyaz) miras alınır. */
+.languageGlobeIcon {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+}
+
 .languageTriggerFlagInner {
   font-size: 1.6em;
   line-height: 1;
@@ -549,6 +566,12 @@
 .languageCaret {
   flex-shrink: 0;
   transition: transform 0.2s ease;
+}
+
+/* Header kaydırılınca (compact/globe modu) ok tamamen kaldırılır — mobildeki
+   "display: block !important" kuralını da ezmesi için bileşik seçici. */
+.languageCaret.languageCaretHidden {
+  display: none !important;
 }
 
 .languageTrigger[aria-expanded='true'] .languageCaret {
@@ -1174,9 +1197,9 @@
   }
 
   .languageTrigger {
-    padding: 0.3rem 0.4rem;
+    padding: 0;
     border-radius: 999px;
-    min-width: 40px;
+    width: 34px;
     height: 34px;
     min-height: 34px;
     display: inline-flex;
@@ -1265,8 +1288,8 @@
     border: none;
     cursor: pointer;
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     color: var(--secondary, #131719);
   }
 

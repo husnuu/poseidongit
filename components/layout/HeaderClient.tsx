@@ -13,6 +13,7 @@ import {
   Bell,
   Calendar,
   Check,
+  Globe,
   Heart,
   Info,
   Megaphone,
@@ -197,10 +198,14 @@ function LanguageDropdown({
   languages,
   locale,
   ariaLabel,
+  compact,
 }: {
   languages: HeaderLanguage[]
   locale: SiteLocale
   ariaLabel: string
+  /** Header aşağı kaydırılınca true — tetikleyicide bayrak/metin yerine
+      sade bir globe ikonu gösterilir (açılan menü aynı kalır). */
+  compact?: boolean
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -227,46 +232,16 @@ function LanguageDropdown({
     <div className={styles.languageSelector} ref={ref}>
       <button
         type="button"
-        className={styles.languageTrigger}
+        className={`${styles.languageTrigger} ${compact ? styles.languageTriggerCompact : ''}`}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={ariaLabel}
       >
         <span className={styles.languageTriggerLabel}>
-          <span className={styles.languageTriggerFlag} aria-hidden>
-            {currentItem?.flag?.url || LOCAL_FLAG_FALLBACK[currentItem?.code?.toLowerCase() ?? ''] ? (
-              <Image
-                src={currentItem?.flag?.url || LOCAL_FLAG_FALLBACK[currentItem?.code?.toLowerCase() ?? '']}
-                alt=""
-                width={28}
-                height={28}
-                className={styles.languageTriggerFlagImg}
-              />
-            ) : (
-              <span className={styles.languageTriggerFlagInner}>
-                {EMOJI_FALLBACK[currentItem?.code?.toLowerCase() ?? 'tr'] ?? '🇹🇷'}
-              </span>
-            )}
-          </span>
-          <span className={styles.languageTriggerLabelText}>{currentItem?.label}</span>
+          <Globe className={styles.languageGlobeIcon} strokeWidth={2} aria-hidden />
+          {!compact && <span className={styles.languageTriggerLabelText}>{currentItem?.label}</span>}
         </span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          className={styles.languageCaret}
-          viewBox="0 0 24 24"
-          width={16}
-          height={16}
-          aria-hidden
-          focusable="false"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
       </button>
       {open && (
         <div className={styles.languageDropdown} role="listbox">
@@ -711,6 +686,7 @@ export default function HeaderClient({
               locale={locale}
               ariaLabel={aria.selectLanguage}
               languages={settings.headerLanguages?.length ? settings.headerLanguages : DEFAULT_HEADER_LANGUAGES}
+              compact={scrolled}
             />
             <div className={styles.wishlistWrap}>
               <button
