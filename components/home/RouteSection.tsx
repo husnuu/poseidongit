@@ -92,7 +92,7 @@ export default function RouteSection({
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
               fontWeight: 900,
-              WebkitTextStroke: '0.4px currentColor',
+              WebkitTextStroke: '0.6px currentColor',
               color: 'var(--primary, #2168b8)',
             }}
           >

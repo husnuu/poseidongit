@@ -328,8 +328,13 @@
 /* Mobil menüdeki "DİL" bölümü — referans siteki gibi hap şeklinde seçenekler,
    seçili olan beyaz zeminde onay işaretiyle öne çıkıyor. */
 .mobileMenuLangSection {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
+  /* Üstteki menü linkleri artık flex:1 ile boş alanı yutmuyor, bu yüzden
+     linkler ile dil seçenekleri arasında ortada koca bir boşluk kalmıyor —
+     sabit, dengeli bir aralıkla hemen altında akıyor. Ekranda kalan boşluk
+     varsa (uzun telefonlarda) menünün en altında, içerikten sonra kalır —
+     içeriğin ORTASINDA değil. */
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
@@ -1106,10 +1111,10 @@
 }
 
 .mobileMenuNav {
-  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  flex-shrink: 0;
 }
 
 .mobileMenuNavList {

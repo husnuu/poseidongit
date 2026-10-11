@@ -99,7 +99,7 @@ export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionP
         <h2
           id="home-faq-heading"
           className="mb-8 text-center text-[28px] font-black uppercase leading-[1.15] sm:text-[32px] md:mb-10 md:text-[36px] lg:text-[40px]"
-          style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--primary, #2168b8)', WebkitTextStroke: '0.4px currentColor' }}
+          style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--primary, #2168b8)', WebkitTextStroke: '0.6px currentColor' }}
         >
           {HEADING_LINE1[locale]}
           <br />

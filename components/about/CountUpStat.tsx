@@ -11,6 +11,9 @@ interface CountUpStatProps {
   suffix?: string
   /** toLocaleString için — ondalık ayıracı (nokta/virgül) dile göre doğru olsun diye. */
   numberLocale?: string
+  /** Binlik ayracı — "4,7" veya "38" gibi değerlerde istenir ama bir yıl
+      ("1988") gibi gruplanmaması gereken sayılarda false verilir. */
+  useGrouping?: boolean
   className?: string
   style?: React.CSSProperties
 }
@@ -23,6 +26,7 @@ export default function CountUpStat({
   decimals = 0,
   suffix = '',
   numberLocale = 'tr-TR',
+  useGrouping = true,
   className,
   style,
 }: CountUpStatProps) {
@@ -70,6 +74,7 @@ export default function CountUpStat({
   const formatted = (done ? value : display).toLocaleString(numberLocale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
+    useGrouping,
   })
 
   return (

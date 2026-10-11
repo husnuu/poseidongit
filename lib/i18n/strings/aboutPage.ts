@@ -13,6 +13,28 @@ export type AboutPageUiStrings = {
   heroCtaContact: string
   /** Hikaye metninin üstündeki küçük eyebrow etiketi — metin "direkt" başlamasın diye. */
   introEyebrow: string
+  /** Hero altındaki kompakt istatistik şeridi (kuruluş yılı / filo / tur / koy sayısı). */
+  statFoundingYearLabel: string
+  statFleetLabel: string
+  statTourLabel: string
+  statCoveLabel: string
+  /** Uzun Sanity metinlerini varsayılan olarak kısaltan "Devamını oku" bloğu. */
+  readMore: string
+  readLess: string
+  /** Gerçek, sitede zaten var olan güven unsurlarını (lisans/üyelik, iptal,
+      hava garantisi, filo) kısa kartlar halinde özetleyen bölüm. */
+  trustGridTitle: string
+  trustGridLicensedTitle: string
+  trustGridLicensedBody: string
+  trustGridCancelTitle: string
+  trustGridCancelBody: string
+  trustGridWeatherTitle: string
+  trustGridWeatherBody: string
+  trustGridFleetTitle: string
+  trustGridFleetBody: (fleetCount: string) => string
+  /** Kapanış CTA bandı. */
+  ctaTitle: string
+  ctaButton: string
 }
 
 const TR: AboutPageUiStrings = {
@@ -27,6 +49,23 @@ const TR: AboutPageUiStrings = {
   heroCtaTours: 'Turlarımızı Keşfet',
   heroCtaContact: 'Bize Ulaşın',
   introEyebrow: 'Hikayemiz',
+  statFoundingYearLabel: 'Kuruluş Yılı',
+  statFleetLabel: 'Tekne',
+  statTourLabel: 'Aktif Tur',
+  statCoveLabel: 'Koy',
+  readMore: 'Devamını oku',
+  readLess: 'Daha az göster',
+  trustGridTitle: 'Bize güvenebilirsiniz, çünkü...',
+  trustGridLicensedTitle: 'Lisanslı ve Üye',
+  trustGridLicensedBody: 'TÜRSAB ve İMEAK Deniz Ticaret Odası üyesiyiz; HANTAL Turizm güvencesiyle hizmet veriyoruz.',
+  trustGridCancelTitle: '24 Saat Ücretsiz İptal',
+  trustGridCancelBody: 'Tur saatinden 24 saat öncesine kadar yapılan iptallerde ücretiniz iade edilir.',
+  trustGridWeatherTitle: 'Hava Garantisi',
+  trustGridWeatherBody: 'Hava koşulları nedeniyle tur yapılamazsa tam iade ya da ücretsiz tarih değişikliği sunuyoruz.',
+  trustGridFleetTitle: 'Geniş Filo',
+  trustGridFleetBody: (fleetCount) => `${fleetCount} tekneyle gruplara, ailelere ve çiftlere uygun seçenekler sunuyoruz.`,
+  ctaTitle: 'Denize açılmaya hazır mısınız?',
+  ctaButton: 'Turları Gör',
 }
 
 const EN: AboutPageUiStrings = {
@@ -41,6 +80,23 @@ const EN: AboutPageUiStrings = {
   heroCtaTours: 'Explore Our Tours',
   heroCtaContact: 'Contact Us',
   introEyebrow: 'Our Story',
+  statFoundingYearLabel: 'Founded',
+  statFleetLabel: 'Boats',
+  statTourLabel: 'Active Tours',
+  statCoveLabel: 'Coves',
+  readMore: 'Read more',
+  readLess: 'Show less',
+  trustGridTitle: 'You can trust us, because...',
+  trustGridLicensedTitle: 'Licensed & Certified',
+  trustGridLicensedBody: 'We are members of TÜRSAB and the İMEAK Chamber of Shipping, operating under HANTAL Turizm.',
+  trustGridCancelTitle: '24-Hour Free Cancellation',
+  trustGridCancelBody: 'Cancellations made up to 24 hours before departure are fully refunded.',
+  trustGridWeatherTitle: 'Weather Guarantee',
+  trustGridWeatherBody: 'If weather prevents the tour, we offer a full refund or a free date change.',
+  trustGridFleetTitle: 'A Large Fleet',
+  trustGridFleetBody: (fleetCount) => `${fleetCount} boats, with options for groups, families and couples.`,
+  ctaTitle: 'Ready to set sail?',
+  ctaButton: 'See Tours',
 }
 
 const DE: AboutPageUiStrings = {
@@ -55,6 +111,23 @@ const DE: AboutPageUiStrings = {
   heroCtaTours: 'Unsere Touren entdecken',
   heroCtaContact: 'Kontaktieren Sie uns',
   introEyebrow: 'Unsere Geschichte',
+  statFoundingYearLabel: 'Gegründet',
+  statFleetLabel: 'Boote',
+  statTourLabel: 'Aktive Touren',
+  statCoveLabel: 'Buchten',
+  readMore: 'Mehr lesen',
+  readLess: 'Weniger anzeigen',
+  trustGridTitle: 'Sie können uns vertrauen, weil...',
+  trustGridLicensedTitle: 'Lizenziert & Mitglied',
+  trustGridLicensedBody: 'Wir sind Mitglied bei TÜRSAB und der İMEAK Handelskammer für Seefahrt und arbeiten unter der Marke HANTAL Turizm.',
+  trustGridCancelTitle: '24 Stunden kostenlos stornieren',
+  trustGridCancelBody: 'Bei Stornierungen bis 24 Stunden vor Abfahrt erstatten wir den vollen Betrag.',
+  trustGridWeatherTitle: 'Wettergarantie',
+  trustGridWeatherBody: 'Kann die Tour wetterbedingt nicht stattfinden, erhalten Sie eine volle Rückerstattung oder einen kostenlosen Termintausch.',
+  trustGridFleetTitle: 'Große Flotte',
+  trustGridFleetBody: (fleetCount) => `${fleetCount} Boote, passend für Gruppen, Familien und Paare.`,
+  ctaTitle: 'Bereit, in See zu stechen?',
+  ctaButton: 'Touren ansehen',
 }
 
 const RU: AboutPageUiStrings = {
@@ -69,6 +142,23 @@ const RU: AboutPageUiStrings = {
   heroCtaTours: 'Смотреть наши туры',
   heroCtaContact: 'Связаться с нами',
   introEyebrow: 'Наша история',
+  statFoundingYearLabel: 'Год основания',
+  statFleetLabel: 'Катеров',
+  statTourLabel: 'Активных туров',
+  statCoveLabel: 'Бухт',
+  readMore: 'Читать далее',
+  readLess: 'Свернуть',
+  trustGridTitle: 'Нам можно доверять, потому что...',
+  trustGridLicensedTitle: 'Лицензия и членство',
+  trustGridLicensedBody: 'Мы являемся членами TÜRSAB и İMEAK (Палата судоходства), работаем под брендом HANTAL Turizm.',
+  trustGridCancelTitle: 'Бесплатная отмена за 24 часа',
+  trustGridCancelBody: 'При отмене не позднее чем за 24 часа до отправления сумма возвращается полностью.',
+  trustGridWeatherTitle: 'Погодная гарантия',
+  trustGridWeatherBody: 'Если тур не может состояться из-за погоды, мы предлагаем полный возврат средств или бесплатный перенос даты.',
+  trustGridFleetTitle: 'Большой флот',
+  trustGridFleetBody: (fleetCount) => `${fleetCount} катеров — варианты для групп, семей и пар.`,
+  ctaTitle: 'Готовы выйти в море?',
+  ctaButton: 'Смотреть туры',
 }
 
 export function getAboutPageUiStrings(locale: SiteLocale): AboutPageUiStrings {

@@ -50,7 +50,7 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
           <h2
             id="instagram-section-heading"
             className="text-[28px] font-black leading-[1.15] mb-3 sm:text-[32px] md:text-[36px] lg:text-[40px]"
-            style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900, WebkitTextStroke: '0.4px currentColor', color: 'var(--primary, #2168b8)' }}
+            style={{ fontFamily: 'var(--font-family-title, var(--font-family))', fontWeight: 900, WebkitTextStroke: '0.6px currentColor', color: 'var(--primary, #2168b8)' }}
           >
             {displayHeading}
           </h2>

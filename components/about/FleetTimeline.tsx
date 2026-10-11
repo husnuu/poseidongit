@@ -48,7 +48,7 @@ function FleetCard({ boat, noImageLabel }: { boat: FleetTimelineBoat; noImageLab
       </div>
       <div className="px-5 py-4">
         <h3
-          className="text-[16px] font-bold leading-tight transition-colors duration-200 group-hover:text-[var(--primary,#2168b8)]"
+          className="text-[17px] font-bold leading-tight transition-colors duration-200 group-hover:text-[var(--primary,#2168b8)]"
           style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--secondary, #131719)' }}
         >
           {boat.name}
@@ -77,7 +77,7 @@ function YearNode({ year, progress, size }: { year?: string | null; progress: nu
       style={{
         width: size,
         height: size,
-        fontSize: 11 + progress * 3,
+        fontSize: 12 + progress * 3,
         background: progressiveBlue(progress),
         fontFamily: 'var(--font-family-title, var(--font-family))',
       }}

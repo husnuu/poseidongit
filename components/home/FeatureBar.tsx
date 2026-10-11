@@ -106,7 +106,7 @@ export default function FeatureBar({ items, locale = 'tr' }: FeatureBarProps) {
                 <div className="min-w-0" style={{ fontFamily: 'var(--font-family)' }}>
                   <div
                     className={`font-black uppercase text-[17px] leading-tight tracking-wide ${forceSingleLine ? 'xl:whitespace-nowrap' : ''} ${href ? 'group-hover/feature:underline underline-offset-4' : ''}`}
-                    style={{ WebkitTextStroke: '0.7px currentColor' }}
+                    style={{ WebkitTextStroke: '0.9px currentColor' }}
                   >
                     {item.title}
                   </div>

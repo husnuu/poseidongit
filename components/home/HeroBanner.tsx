@@ -136,7 +136,7 @@ export default function HeroBanner({
               style={{
                 fontFamily: 'var(--font-family)',
                 fontWeight: 900,
-                WebkitTextStroke: '0.6px currentColor',
+                WebkitTextStroke: '0.8px currentColor',
                 // Gölge className'de: mobilde YOK (telefonda koyu hale/leke yapıyordu —
                 // yazı bembeyaz kalsın), md+ 'da referans sitenin yumuşak gölgesi.
                 marginBottom: '0.5em',
