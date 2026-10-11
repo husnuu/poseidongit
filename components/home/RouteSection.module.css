@@ -2,11 +2,64 @@
    ("Mercan Adası" gibi) bilet sınıfı isimlerinden (Eco/First) daha uzun olduğu
    için sadece dar telefon genişliklerinde hafif bir boyut düzeltmesi gerekiyor.
    Paylaşılan modülün sınıfıyla aynı özgüllükte olduğundan (tek class selector),
-   kazanması için !important şart. */
+   kazanması için !important şart. Bu sadece grid OLMAYAN (tabGridItem'sız,
+   örn. 2 öğelik) durum için — ızgara halindeki hücreler aşağıda ayrı,
+   daha az sıkıştırılmış bir boyut alıyor. */
 @media (max-width: 480px) {
-  .tabOverride {
+  .tabOverride:not(.tabGridItem) {
     padding: 0.55rem 0.3rem !important;
     font-size: 0.7rem !important;
     letter-spacing: 0.01em !important;
   }
+}
+
+/* Koy sekmeleri (genelde 4 öğe: Mavi Koy / Eşek Adası / Mercan Adası / Kış
+   Limanı) tek satırda sıkışık duruyordu — iki satırlı bir ızgara daha ferah
+   ve okunaklı. Paylaşılan .tabs/.tab'ın flex + first/last-child mantığını
+   eziyoruz, bu yüzden !important gerekiyor (bkz. yukarıdaki not). */
+.tabsGrid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  max-width: 640px !important;
+  width: 100% !important;
+}
+
+/* Izgara hücreleri artık satır başına sadece 2 öğe paylaştığı için (4 değil),
+   tek-satırlık düzenin agresif mobil küçültmesine ihtiyaçları yok — biraz
+   daha ferah bir boyut yeterli ve daha okunaklı. */
+@media (max-width: 480px) {
+  .tabGridItem {
+    padding: 0.7rem 0.6rem !important;
+    font-size: 0.82rem !important;
+  }
+}
+
+.tabGridItem {
+  border-right: 2px solid var(--primary, #2168b8) !important;
+  border-bottom: 2px solid var(--primary, #2168b8) !important;
+  border-radius: 0 !important;
+}
+
+/* Sağ sütun: sağ kenarlık yok (dış kenar zaten .tabsGrid'in border'ında var) */
+.tabGridItem:nth-child(2n) {
+  border-right: 0 !important;
+}
+
+/* Alt sıra: alt kenarlık yok */
+.tabGridItem:nth-child(n + 3) {
+  border-bottom: 0 !important;
+}
+
+/* Dört köşe yuvarlama — first/last-child yerine konuma göre */
+.tabGridItem:nth-child(1) {
+  border-radius: 9px 0 0 0 !important;
+}
+.tabGridItem:nth-child(2) {
+  border-radius: 0 9px 0 0 !important;
+}
+.tabGridItem:nth-child(3) {
+  border-radius: 0 0 0 9px !important;
+}
+.tabGridItem:nth-child(4) {
+  border-radius: 0 0 9px 0 !important;
 }

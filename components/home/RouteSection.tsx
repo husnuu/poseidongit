@@ -113,7 +113,7 @@ export default function RouteSection({
             <div
               role="tablist"
               aria-label={selectAria}
-              className={showcaseStyles.tabs}
+              className={`${showcaseStyles.tabs} ${displayLocations.length >= 3 ? styles.tabsGrid : ''}`}
               style={{ margin: '0 auto' }}
             >
               {displayLocations.map((loc, index) => {
@@ -128,7 +128,7 @@ export default function RouteSection({
                     id={`route-location-tab-${index}`}
                     tabIndex={isActive ? 0 : -1}
                     onClick={() => setActiveIndex(index)}
-                    className={`${showcaseStyles.tab} ${styles.tabOverride} ${isActive ? showcaseStyles.tabActive : ''}`}
+                    className={`${showcaseStyles.tab} ${styles.tabOverride} ${displayLocations.length >= 3 ? styles.tabGridItem : ''} ${isActive ? showcaseStyles.tabActive : ''}`}
                   >
                     <span className={showcaseStyles.tabLabel}>{loc.name}</span>
                   </button>

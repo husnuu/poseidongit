@@ -35,6 +35,13 @@ const DEFAULT_TITLE_BOTTOM: Record<SiteLocale, string> = {
   ru: 'ТУРЫ',
 }
 
+const TOURS_DESCRIPTION: Record<SiteLocale, string> = {
+  tr: "Çeşme'de en çok tercih edilen deneyimleri keşfedin. Denizin, koyların ve Ege'nin tadını çıkaracağınız unutulmaz bir gün sizi bekliyor.",
+  en: 'Discover the most popular experiences in Çeşme. An unforgettable day awaits you, filled with the sea, hidden coves and the taste of the Aegean.',
+  de: 'Entdecken Sie die beliebtesten Erlebnisse in Çeşme. Ein unvergesslicher Tag mit dem Meer, den Buchten und dem Flair der Ägäis erwartet Sie.',
+  ru: 'Откройте для себя самые популярные впечатления в Чешме. Вас ждёт незабываемый день у моря, в живописных бухтах Эгейского побережья.',
+}
+
 const EMPTY_TOURS_MESSAGE: Record<SiteLocale, string> = {
   tr: 'Henüz tur eklenmemiş.',
   en: 'No tours have been added yet.',
@@ -226,6 +233,12 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
               {titleTop && <span className={styles.headingLine1}>{titleTop}</span>}
               {titleBottom && <span className={styles.headingLine2}>{titleBottom}</span>}
             </h1>
+            <p
+              className="mx-auto mt-6 max-w-2xl text-center text-base leading-relaxed text-zinc-600 sm:text-[18px] sm:leading-[1.65]"
+              style={{ fontFamily: 'var(--font-family)' }}
+            >
+              {TOURS_DESCRIPTION[locale]}
+            </p>
           </header>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
