@@ -1119,7 +1119,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       <span id="home-about" className="block scroll-mt-24" aria-hidden />
       <ScrollReveal>
-        <AboutTeaserSplit data={aboutTeaser} />
+        <AboutTeaserSplit data={aboutTeaser} locale={locale} />
       </ScrollReveal>
       <ScrollReveal>
         <HomeFaqSection items={homeFaqItems} locale={locale} />

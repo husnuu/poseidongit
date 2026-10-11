@@ -974,6 +974,8 @@ export const homePageHeroQuery = `*[_type == "homePage"][0] {
     body,
     "imageUrl": image.asset->url,
     "imageAlt": image.alt,
+    "imageWidth": image.asset->metadata.dimensions.width,
+    "imageHeight": image.asset->metadata.dimensions.height,
     primaryCta{ label, href },
     secondaryCta{ label, href }
   },

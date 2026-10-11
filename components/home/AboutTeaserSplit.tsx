@@ -6,6 +6,16 @@ import Link from 'next/link'
 import { PortableText } from '@portabletext/react'
 import { sameSitePathFromHref } from '@/lib/siteUrls'
 import type { PortableTextBlock } from '@portabletext/react'
+import type { SiteLocale } from '@/lib/i18n/config'
+
+/** Fotoğrafın altındaki arşiv notu — gerçek tarih/ekip adı sabit, sadece
+    bağlaç kelimesi dile göre çevriliyor. */
+const PHOTO_CAPTION: Record<SiteLocale, string> = {
+  tr: 'Arşivden: Poseidon Ekibi, 2011',
+  en: 'From the archive: Poseidon Team, 2011',
+  de: 'Aus dem Archiv: Poseidon Team, 2011',
+  ru: 'Из архива: команда Poseidon, 2011',
+}
 
 export type AboutTeaserData = {
   enabled?: boolean | null
@@ -13,12 +23,16 @@ export type AboutTeaserData = {
   body?: PortableTextBlock[] | null
   imageUrl?: string | null
   imageAlt?: string | null
+  /** Fotoğrafın gerçek en-boy oranı — kırpılmadan, orijinal haliyle göstermek için. */
+  imageWidth?: number | null
+  imageHeight?: number | null
   primaryCta?: { label?: string | null; href?: string | null } | null
   secondaryCta?: { label?: string | null; href?: string | null } | null
 }
 
 type AboutTeaserSplitProps = {
   data: AboutTeaserData | null
+  locale?: SiteLocale
 }
 
 function isInternalHref(href: string | null | undefined): boolean {
@@ -41,7 +55,7 @@ const bodyComponents = {
   },
 }
 
-export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
+export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSplitProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -60,7 +74,11 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
 
   if (!data?.enabled) return null
 
-  const { heading, body, imageUrl, imageAlt, primaryCta, secondaryCta } = data
+  const { heading, body, imageUrl, imageAlt, imageWidth, imageHeight, primaryCta, secondaryCta } = data
+  // Gerçek en-boy oranı biliniyorsa onu kullan — fotoğraf kırpılmadan,
+  // orijinal haliyle görünsün diye (önceden sabit 4:3 + object-cover
+  // yatayda kenarları kesiyordu). Bilinmiyorsa 4:3'e geri düşer.
+  const naturalRatio = imageWidth && imageHeight ? imageWidth / imageHeight : null
   const primaryPath = primaryCta?.href ? sameSitePathFromHref(primaryCta.href) : null
   const secondaryPath = secondaryCta?.href ? sameSitePathFromHref(secondaryCta.href) : null
 
@@ -151,20 +169,33 @@ export default function AboutTeaserSplit({ data }: AboutTeaserSplitProps) {
         </div>
 
         {/* Görsel - sağda (referans: yuvarlak köşeli tek fotoğraf) */}
-        <div className="relative order-1 aspect-[4/3] w-full overflow-hidden rounded-[28px] shadow-[0_20px_45px_-20px_rgba(26,19,5,0.35)] lg:order-2">
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={imageAlt || heading || 'Hakkımızda'}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority={false}
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/10 text-[#1a1305]/60">
-              Görsel yok
-            </div>
+        <div className="order-1 w-full lg:order-2">
+          <div
+            className="relative w-full overflow-hidden rounded-[28px] bg-black/5 shadow-[0_20px_45px_-20px_rgba(26,19,5,0.35)]"
+            style={{ aspectRatio: naturalRatio ?? 4 / 3 }}
+          >
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={imageAlt || heading || 'Hakkımızda'}
+                fill
+                // object-contain: fotoğraf hiç kırpılmadan, tamamı görünecek
+                // şekilde kutuya sığdırılıyor (gerçek oran zaten kutuyla
+                // eşleştiği için pratikte boşluk da kalmıyor).
+                className="object-contain"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                priority={false}
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10 text-[#1a1305]/60">
+                Görsel yok
+              </div>
+            )}
+          </div>
+          {imageUrl && (
+            <p className="mt-3 text-center text-sm italic text-[#1a1305]/60 lg:text-left" style={{ fontFamily: 'var(--font-family)' }}>
+              {PHOTO_CAPTION[locale]}
+            </p>
           )}
         </div>
       </div>
