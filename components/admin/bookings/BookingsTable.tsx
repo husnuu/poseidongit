@@ -3,25 +3,44 @@
 import { useState, useMemo } from 'react'
 import type { AdminBookingRow, BookingStatus } from '@/types/adminBookings'
 import { MANUAL_SOURCE_LABELS } from '@/types/adminBookings'
+import StatusDropdown from './StatusDropdown'
+import BookingRowActions from './BookingRowActions'
 
-const STATUS_LABELS: Record<BookingStatus, string> = {
-  pending: 'Beklemede',
-  paid: 'Ödendi',
-  failed: 'Ödeme başarısız',
-  cancelled: 'İptal',
+/** "Çeşme " ön ekini (idari ekranda zaten hepsi Çeşme, tekrar bilgi taşımıyor)
+    ve " – Pazarlama Alt Başlığı" kuyruğunu atarak kısa, tek satırlık bir
+    tur adı üretir — tam başlık yine de `title` tooltip'inde kayboluyor. */
+function shortTourTitle(title: string): string {
+  let t = (title || '').trim()
+  t = t.replace(/^Çeşme\s+/i, '')
+  t = t.split(/\s+[–-]\s+/)[0]
+  return t.trim() || title
 }
 
-const STATUS_BADGE_CLASS: Record<BookingStatus, string> = {
-  pending: 'bg-amber-50 text-amber-700',
-  paid: 'bg-emerald-50 text-emerald-700',
-  failed: 'bg-rose-50 text-rose-700',
-  cancelled: 'bg-red-50 text-red-700',
+const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: 'short' })
+
+/** "2026-10-09" → "09 Eki" — rezervasyon satırında tarih sütunu yerine
+    tur adının hemen altında, sınıfla birlikte tek satırda gösteriliyor. */
+function shortDate(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00`)
+  if (Number.isNaN(d.getTime())) return dateStr
+  return SHORT_DATE_FORMATTER.format(d)
 }
 
-function StatusBadge({ status }: { status: BookingStatus }) {
+/** refundStatus gerçek, ayrı bir alan (status enum'ında yok) — iptal/ödendi
+    durumundan bağımsız olarak "İade edildi" gibi ikinci bir bilgi taşıyor,
+    bu yüzden ayrı, gri/mor bir rozet olarak gösteriliyor. */
+function RefundBadge({ refundStatus }: { refundStatus?: string | null }) {
+  if (!refundStatus) return null
+  const map: Record<string, { label: string; cls: string }> = {
+    refunded: { label: 'İade edildi', cls: 'bg-violet-50 text-violet-700' },
+    partial_refunded: { label: 'Kısmi iade', cls: 'bg-violet-50 text-violet-700' },
+    refund_failed: { label: 'İade başarısız', cls: 'bg-zinc-100 text-zinc-500' },
+  }
+  const entry = map[refundStatus]
+  if (!entry) return null
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${STATUS_BADGE_CLASS[status]}`}>
-      {STATUS_LABELS[status]}
+    <span className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${entry.cls}`}>
+      {entry.label}
     </span>
   )
 }
@@ -72,17 +91,14 @@ function ParticipantsBreakdown({ counts }: { counts: { adult: number; child: num
   )
 }
 
-const STATUS_SELECT_CLASS =
-  'rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-[#131719] focus:border-[#2168b8] focus:outline-none disabled:opacity-60'
-
-function ThumbImage({ url }: { url?: string | null }) {
+function ThumbImage({ url, size = 56 }: { url?: string | null; size?: number }) {
   return (
-    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-zinc-100">
+    <div className="shrink-0 overflow-hidden rounded-lg bg-zinc-100" style={{ width: size, height: size }}>
       {url ? (
-        <img src={url} alt="" className="h-full w-full object-cover" width={56} height={56} />
+        <img src={url} alt="" className="h-full w-full object-cover" width={size} height={size} />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-zinc-300">
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
           </svg>
         </div>
@@ -177,16 +193,26 @@ export default function BookingsTable({
             className="rounded-xl border border-[#f1f5f9] bg-zinc-50/50 p-3"
           >
             <div className="flex gap-3">
-              <ThumbImage url={b.tourCoverImageUrl} />
+              <ThumbImage url={b.tourCoverImageUrl} size={44} />
               <div className="min-w-0 flex-1">
-                <p className="truncate font-bold text-[#131719]">{b.tourTitle}</p>
-                <p className="text-xs text-zinc-500">{b.date}{b.className ? ` · Sınıf: ${b.className}${(b.firstClassLocas?.length ? ` (${b.firstClassLocas.join(', ')})` : b.firstClassLoca ? ` (${b.firstClassLoca})` : '')}` : ''}</p>
+                <p className="truncate font-bold text-[#131719]" title={b.tourTitle}>
+                  {shortTourTitle(b.tourTitle)}
+                </p>
+                <p className="truncate text-xs text-zinc-500">
+                  {shortDate(b.date)}
+                  {b.className ? ` · ${b.className}${b.firstClassLocas?.length ? ` (${b.firstClassLocas.join(', ')})` : b.firstClassLoca ? ` (${b.firstClassLoca})` : ''}` : ''}
+                </p>
                 <p className="mt-0.5 text-sm text-zinc-700">
                   {b.customer.firstName} {b.customer.lastName}
                   {b.customer.phone ? ` · ${b.customer.phone}` : ''}
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <StatusBadge status={b.status} />
+                  <StatusDropdown
+                    status={b.status}
+                    onChange={(s) => onStatusChange(b.id, s)}
+                    disabled={updatingId === b.id}
+                  />
+                  <RefundBadge refundStatus={b.refundStatus} />
                   <span className="text-xs font-semibold text-zinc-500">
                     {b.totalPrice > 0 ? `${b.totalPrice.toLocaleString('tr-TR')} ${b.currency}` : ''}
                   </span>
@@ -196,43 +222,16 @@ export default function BookingsTable({
                     </span>
                   )}
                 </div>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => onDetail(b)}
-                    className="rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-bold text-[#2168b8] hover:bg-blue-100"
-                  >
-                    Detay
-                  </button>
-                  <a
-                    href={getVoucherPdfUrl(b.id, b.accessToken)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg bg-zinc-100 px-2.5 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-200"
-                  >
-                    PDF
-                  </a>
-                  <select
-                    value={b.status}
-                    onChange={(e) => onStatusChange(b.id, e.target.value as BookingStatus)}
-                    disabled={updatingId === b.id}
-                    className={STATUS_SELECT_CLASS}
-                  >
-                    <option value="pending">Beklemede</option>
-                    <option value="paid">Ödendi</option>
-                    <option value="failed">Ödeme başarısız</option>
-                    <option value="cancelled">İptal</option>
-                  </select>
-                  {b.status !== 'cancelled' && (
-                    <button
-                      type="button"
-                      onClick={() => onStatusChange(b.id, 'cancelled')}
-                      disabled={updatingId === b.id}
-                      className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50"
-                    >
-                      İptal
-                    </button>
-                  )}
+                <div className="mt-2">
+                  <BookingRowActions
+                    onDetail={() => onDetail(b)}
+                    pdfHref={getVoucherPdfUrl(b.id, b.accessToken)}
+                    onCopyLink={() => handleCopy(b)}
+                    copied={copiedId === b.id}
+                    showCancel={b.status !== 'cancelled'}
+                    cancelDisabled={updatingId === b.id}
+                    onCancel={() => onStatusChange(b.id, 'cancelled')}
+                  />
                 </div>
                 {(b.nestpayAuthCode || b.nestpayHostRefNum || b.nestpayTransId || b.paidAt) && (
                   <p className="mt-1 truncate font-mono text-[11px] text-zinc-400" title={`${b.nestpayTransId ?? ''}`}>
@@ -249,25 +248,18 @@ export default function BookingsTable({
 
       {/* Masaüstü: tablo */}
       <div className="hidden overflow-x-auto rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)] md:block">
-      <table className="w-full min-w-[1000px] text-left text-sm">
+      <table className="w-full min-w-[900px] text-left text-sm">
         <thead>
           <tr className="border-b border-[#f1f5f9]">
-            <th className="sticky top-0 z-10 w-[56px] bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+            <th className="sticky top-0 z-10 w-[44px] bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Görsel
             </th>
-            <Th label="Tur" keyName="tourTitle" />
-            <Th label="Tarih" keyName="date" />
+            <Th label="Tur / Tarih / Sınıf" keyName="tourTitle" className="max-w-[220px]" />
             <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Müşteri
             </th>
             <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
-              Telefon
-            </th>
-            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Katılımcılar
-            </th>
-            <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
-              Sınıf
             </th>
             <th className="sticky top-0 z-10 bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Kaynak
@@ -277,7 +269,7 @@ export default function BookingsTable({
               Durum
             </th>
             <Th label="Oluşturulma" keyName="createdAt" />
-            <th className="sticky top-0 z-10 w-[150px] bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+            <th className="sticky top-0 z-10 w-[120px] bg-zinc-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               İşlemler
             </th>
           </tr>
@@ -288,91 +280,61 @@ export default function BookingsTable({
               key={b.id}
               className="border-b border-[#f1f5f9] transition-colors hover:bg-zinc-50/80"
             >
-              <td className="px-4 py-3">
-                <ThumbImage url={b.tourCoverImageUrl} />
+              <td className="px-4 py-2.5">
+                <ThumbImage url={b.tourCoverImageUrl} size={44} />
               </td>
-              <td className="px-4 py-3">
-                <span className="font-bold text-[#131719]">{b.tourTitle}</span>
+              <td className="max-w-[220px] px-4 py-2.5">
+                <p className="truncate font-bold text-[#131719]" title={b.tourTitle}>
+                  {shortTourTitle(b.tourTitle)}
+                </p>
+                <p className="mt-0.5 truncate text-xs text-zinc-500">
+                  {shortDate(b.date)}
+                  {b.className ? ` · ${b.className}` : ''}
+                  {b.firstClassLocas?.length ? ` (${b.firstClassLocas.join(', ')})` : b.firstClassLoca ? ` (${b.firstClassLoca})` : ''}
+                  {(b.selectedExtras?.length ?? 0) > 0 ? ` · +${b.selectedExtras!.length} ekstra` : ''}
+                </p>
               </td>
-              <td className="px-4 py-3 text-zinc-600">{b.date}</td>
-              <td className="px-4 py-3 font-semibold text-[#131719]">
-                {b.customer.firstName} {b.customer.lastName}
+              <td className="px-4 py-2.5">
+                <p className="font-semibold text-[#131719]">
+                  {b.customer.firstName} {b.customer.lastName}
+                </p>
+                <p className="text-xs text-zinc-500">{b.customer.phone || '—'}</p>
               </td>
-              <td className="px-4 py-3 text-zinc-500">{b.customer.phone || '—'}</td>
-              <td className="px-4 py-3">
+              <td className="px-4 py-2.5">
                 <ParticipantsBreakdown counts={b.counts} />
               </td>
-              <td className="px-4 py-3 text-zinc-600">
-                {b.className}{(b.firstClassLocas?.length ? ` · ${b.firstClassLocas.join(', ')}` : b.firstClassLoca ? ` · ${b.firstClassLoca}` : '')}
-                {(b.selectedExtras?.length ?? 0) > 0 && (
-                  <span className="ml-1.5 inline-flex rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-[#2168b8]">
-                    +{b.selectedExtras!.length}
-                  </span>
-                )}
-              </td>
-              <td className="px-4 py-3">
+              <td className="px-4 py-2.5">
                 <SourceBadge source={b.source} manualSource={b.manualSource} />
               </td>
-              <td className="px-4 py-3 font-bold text-[#131719]">
+              <td className="px-4 py-2.5 font-bold text-[#131719]">
                 {b.totalPrice > 0 ? `${b.totalPrice.toLocaleString('tr-TR')} ${b.currency}` : 'Fiyat belirtilmedi'}
               </td>
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <StatusBadge status={b.status} />
-                  <select
-                    value={b.status}
-                    onChange={(e) => onStatusChange(b.id, e.target.value as BookingStatus)}
+              <td className="px-4 py-2.5">
+                <div className="flex items-center gap-1.5">
+                  <StatusDropdown
+                    status={b.status}
+                    onChange={(s) => onStatusChange(b.id, s)}
                     disabled={updatingId === b.id}
-                    className={`min-w-[100px] ${STATUS_SELECT_CLASS}`}
-                  >
-                    <option value="pending">Beklemede</option>
-                    <option value="paid">Ödendi</option>
-                    <option value="failed">Ödeme başarısız</option>
-                    <option value="cancelled">İptal</option>
-                  </select>
+                  />
+                  <RefundBadge refundStatus={b.refundStatus} />
                   {updatingId === b.id && (
                     <span className="text-xs text-zinc-400">Kaydediliyor…</span>
                   )}
                 </div>
               </td>
-              <td className="px-4 py-3 text-xs text-zinc-400">
+              <td className="px-4 py-2.5 text-xs text-zinc-400">
                 {b.createdAt ? new Date(b.createdAt).toLocaleString('tr-TR') : '—'}
               </td>
-              <td className="px-4 py-3">
-                <div className="flex flex-wrap items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => onDetail(b)}
-                    className="rounded-lg bg-blue-50 px-2 py-1 text-xs font-bold text-[#2168b8] hover:bg-blue-100"
-                  >
-                    Detay
-                  </button>
-                  <a
-                    href={getVoucherPdfUrl(b.id, b.accessToken)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg bg-zinc-100 px-2 py-1 text-xs font-bold text-zinc-600 hover:bg-zinc-200"
-                  >
-                    PDF
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(b)}
-                    className="rounded-lg bg-zinc-100 px-2 py-1 text-xs font-bold text-zinc-600 hover:bg-zinc-200"
-                  >
-                    {copiedId === b.id ? 'Kopyalandı' : 'Link'}
-                  </button>
-                  {b.status !== 'cancelled' && (
-                    <button
-                      type="button"
-                      onClick={() => onStatusChange(b.id, 'cancelled')}
-                      disabled={updatingId === b.id}
-                      className="rounded-lg bg-red-50 px-2 py-1 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50"
-                    >
-                      İptal
-                    </button>
-                  )}
-                </div>
+              <td className="px-4 py-2.5">
+                <BookingRowActions
+                  onDetail={() => onDetail(b)}
+                  pdfHref={getVoucherPdfUrl(b.id, b.accessToken)}
+                  onCopyLink={() => handleCopy(b)}
+                  copied={copiedId === b.id}
+                  showCancel={b.status !== 'cancelled'}
+                  cancelDisabled={updatingId === b.id}
+                  onCancel={() => onStatusChange(b.id, 'cancelled')}
+                />
               </td>
             </tr>
           ))}
