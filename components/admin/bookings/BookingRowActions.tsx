@@ -44,7 +44,7 @@ export default function BookingRowActions({
       <button
         type="button"
         onClick={onDetail}
-        className="rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-bold text-[#2168b8] hover:bg-blue-100"
+        className="rounded-md bg-blue-50 px-2.5 py-1.5 text-xs font-bold text-primary hover:bg-blue-100"
       >
         Detay
       </button>
@@ -55,14 +55,14 @@ export default function BookingRowActions({
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label="Diğer işlemler"
-          className="flex size-7 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+          className="flex size-7 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
         >
           <MoreHorizontal className="size-4" aria-hidden />
         </button>
         {open && (
           <div
             role="menu"
-            className="absolute right-0 top-[calc(100%+4px)] z-20 min-w-[170px] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-[0_8px_24px_rgba(19,23,25,0.12)]"
+            className="absolute right-0 top-[calc(100%+4px)] z-20 min-w-[170px] overflow-hidden rounded-md border border-zinc-200 bg-white py-1 shadow-[0_8px_24px_rgba(19,23,25,0.12)]"
           >
             <a
               href={pdfHref}

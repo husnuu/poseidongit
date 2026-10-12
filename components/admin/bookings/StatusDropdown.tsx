@@ -59,7 +59,7 @@ export default function StatusDropdown({ status, onChange, disabled, compact }: 
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-bold hover:border-zinc-300 focus:border-[#2168b8] focus:outline-none disabled:opacity-50 ${STATUS_TEXT_CLASS[status]} ${compact ? 'w-full justify-between' : ''}`}
+        className={`inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-bold hover:border-zinc-300 focus:border-primary focus:outline-none disabled:opacity-50 ${STATUS_TEXT_CLASS[status]} ${compact ? 'w-full justify-between' : ''}`}
       >
         <span className={`size-1.5 shrink-0 rounded-full ${STATUS_DOT_CLASS[status]}`} aria-hidden />
         {STATUS_LABELS[status]}
@@ -68,7 +68,7 @@ export default function StatusDropdown({ status, onChange, disabled, compact }: 
       {open && (
         <div
           role="listbox"
-          className="absolute left-0 top-[calc(100%+4px)] z-20 min-w-[160px] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-[0_8px_24px_rgba(19,23,25,0.12)]"
+          className="absolute left-0 top-[calc(100%+4px)] z-20 min-w-[160px] overflow-hidden rounded-md border border-zinc-200 bg-white py-1 shadow-[0_8px_24px_rgba(19,23,25,0.12)]"
         >
           {ORDER.map((s) => (
             <button

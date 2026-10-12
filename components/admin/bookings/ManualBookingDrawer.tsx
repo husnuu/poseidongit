@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { X } from 'lucide-react'
 import type { TourOption } from '@/types/adminBookings'
 import FirstClassSeatSelector from '@/components/booking/FirstClassSeatSelector'
 import MealOptionSelect from '@/components/booking/steps/MealOptionSelect'
@@ -55,8 +56,8 @@ function AgentFormSection({
     <section
       className={
         standalone
-          ? 'rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-5'
-          : 'rounded-2xl border border-[#f1f5f9] bg-white p-4 shadow-[0_2px_8px_rgba(19,23,25,0.06)]'
+          ? 'rounded-xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-5'
+          : 'rounded-xl border border-[#f1f5f9] bg-white p-4 shadow-[0_2px_8px_rgba(19,23,25,0.06)]'
       }
     >
       <h2 className={`mb-3 text-xs font-black uppercase tracking-wide ${standalone ? 'text-[#1e3a5f]' : 'text-zinc-400'}`}>
@@ -412,17 +413,17 @@ export default function ManualBookingDrawer({
   if (!open && !standalone) return null
 
   const inp = standalone
-    ? 'min-h-[48px] w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-base text-zinc-900 shadow-sm placeholder:text-zinc-400 transition focus:border-[#fc6c4f] focus:outline-none focus:ring-4 focus:ring-[#fc6c4f]/15 disabled:bg-zinc-50'
-    : 'w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-[#131719] placeholder:text-zinc-400 focus:border-[#2168b8] focus:outline-none'
+    ? 'min-h-[48px] w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-base text-zinc-900 shadow-sm placeholder:text-zinc-400 transition focus:border-[#fc6c4f] focus:outline-none focus:ring-4 focus:ring-[#fc6c4f]/15 disabled:bg-zinc-50'
+    : 'w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-[#131719] placeholder:text-zinc-400 focus:border-primary focus:outline-none'
   const lbl = standalone
     ? 'mb-1.5 block text-xs font-bold uppercase tracking-wide text-[#1e3a5f]'
     : 'mb-1.5 block text-sm font-bold text-zinc-500'
   const ta = standalone
     ? `${inp} min-h-[92px] resize-y py-3`
-    : 'w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-[#131719] focus:border-[#2168b8] focus:outline-none'
+    : 'w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-[#131719] focus:border-primary focus:outline-none'
 
   const wrapperClass = standalone
-    ? 'flex max-h-[min(100dvh-2rem,calc(100vh-2rem))] min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-[0_25px_50px_-12px_rgba(15,23,42,0.1)]'
+    ? 'flex max-h-[min(100dvh-2rem,calc(100vh-2rem))] min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-100 bg-white shadow-[0_25px_50px_-12px_rgba(15,23,42,0.1)]'
     : 'fixed right-0 top-0 z-50 flex h-full w-full max-w-xl flex-col border-l border-[#f1f5f9] bg-white shadow-[0_20px_60px_rgba(19,23,25,0.18)]'
   const headerContent = (
     <div
@@ -452,8 +453,8 @@ export default function ManualBookingDrawer({
             onClick={onLogout}
             className={
               standalone
-                ? 'rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/20 active:scale-[0.98] sm:px-4'
-                : 'rounded-xl px-3 py-1.5 text-sm font-bold text-zinc-500 hover:bg-zinc-100 hover:text-[#131719]'
+                ? 'rounded-lg border border-white/25 bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/20 active:scale-[0.98] sm:px-4'
+                : 'rounded-lg px-3 py-1.5 text-sm font-bold text-zinc-500 hover:bg-zinc-100 hover:text-[#131719]'
             }
           >
             Çıkış
@@ -463,12 +464,10 @@ export default function ManualBookingDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-[#131719]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-[#131719]"
             aria-label="Kapat"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="h-5 w-5" aria-hidden />
           </button>
         )}
       </div>
@@ -477,11 +476,11 @@ export default function ManualBookingDrawer({
 
   const formOuterClass = standalone ? 'space-y-5' : 'space-y-4'
   const chkRow = standalone
-    ? 'flex min-h-[48px] cursor-pointer items-start gap-3 rounded-xl border border-slate-200/90 bg-white px-3 py-2.5 shadow-sm transition hover:border-teal-300/50 active:bg-slate-50/80'
-    : 'flex items-center gap-2.5 rounded-xl border border-zinc-200 px-3 py-2.5 hover:bg-zinc-50'
+    ? 'flex min-h-[48px] cursor-pointer items-start gap-3 rounded-lg border border-slate-200/90 bg-white px-3 py-2.5 shadow-sm transition hover:border-blue-300/50 active:bg-slate-50/80'
+    : 'flex items-center gap-2.5 rounded-lg border border-zinc-200 px-3 py-2.5 hover:bg-zinc-50'
   const mealBox = standalone
-    ? 'rounded-xl border border-slate-200/90 bg-white p-3 shadow-sm'
-    : 'rounded-xl border border-zinc-200 bg-white px-3 py-2.5'
+    ? 'rounded-lg border border-slate-200/90 bg-white p-3 shadow-sm'
+    : 'rounded-lg border border-zinc-200 bg-white px-3 py-2.5'
 
   return (
     <>
@@ -504,8 +503,8 @@ export default function ManualBookingDrawer({
             <div
               className={
                 standalone
-                  ? 'mb-4 flex items-center gap-2 rounded-2xl border border-emerald-200/90 bg-emerald-50/90 px-4 py-3.5 text-sm font-medium text-emerald-900 shadow-sm'
-                  : 'mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700'
+                  ? 'mb-4 flex items-center gap-2 rounded-xl border border-emerald-200/90 bg-emerald-50/90 px-4 py-3.5 text-sm font-medium text-emerald-900 shadow-sm'
+                  : 'mb-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700'
               }
               role="status"
             >
@@ -519,8 +518,8 @@ export default function ManualBookingDrawer({
             <div
               className={
                 standalone
-                  ? 'mb-4 rounded-2xl border border-red-200/90 bg-red-50/95 px-4 py-3.5 text-sm text-red-900 shadow-sm'
-                  : 'mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700'
+                  ? 'mb-4 rounded-xl border border-red-200/90 bg-red-50/95 px-4 py-3.5 text-sm text-red-900 shadow-sm'
+                  : 'mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700'
               }
               role="alert"
             >
@@ -624,7 +623,7 @@ export default function ManualBookingDrawer({
                             const n = Math.max(0, parseInt(e.target.value, 10) || 0)
                             setMealCountsByKey((prev) => ({ ...prev, [opt.key]: n }))
                           }}
-                          className={standalone ? `${inp} mt-2 min-h-[44px]` : 'mt-1 w-full rounded-lg border border-zinc-200 px-2 py-1 text-sm focus:border-[#2168b8] focus:outline-none'}
+                          className={standalone ? `${inp} mt-2 min-h-[44px]` : 'mt-1 w-full rounded-md border border-zinc-200 px-2 py-1 text-sm focus:border-primary focus:outline-none'}
                         />
                       </label>
                     ))}
@@ -646,8 +645,8 @@ export default function ManualBookingDrawer({
                 <div
                   className={
                     standalone
-                      ? 'rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50/90 to-white p-1 sm:p-2'
-                      : 'rounded-xl border border-stone-200/80 bg-gradient-to-b from-white to-stone-50/30 p-4 shadow-sm'
+                      ? 'rounded-xl border border-amber-200/70 bg-gradient-to-br from-amber-50/90 to-white p-1 sm:p-2'
+                      : 'rounded-lg border border-stone-200/80 bg-gradient-to-b from-white to-stone-50/30 p-4 shadow-sm'
                   }
                 >
                   {!standalone && <h4 className="mb-3 text-sm font-semibold text-zinc-800">Loca Seçimi (First Class)</h4>}
@@ -716,12 +715,12 @@ export default function ManualBookingDrawer({
                 <div
                   className={
                     standalone
-                      ? `flex flex-col gap-2 rounded-2xl border p-4 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between ${
+                      ? `flex flex-col gap-2 rounded-xl border p-4 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between ${
                           exceedsCapacity && !forceCreate
                             ? 'border-red-300/90 bg-red-50/90'
                             : 'border-slate-200/90 bg-slate-100/60'
                         }`
-                      : `rounded-xl border p-3.5 text-sm ${
+                      : `rounded-lg border p-3.5 text-sm ${
                           exceedsCapacity && !forceCreate ? 'border-red-300 bg-red-50' : 'border-[#f1f5f9] bg-zinc-50'
                         }`
                   }
@@ -898,7 +897,7 @@ export default function ManualBookingDrawer({
                     type="checkbox"
                     checked={sendVoucher}
                     onChange={(e) => setSendVoucher(e.target.checked)}
-                    className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-[#2168b8] focus:ring-[#2168b8]"
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-primary focus:ring-primary"
                   />
                   <span className={standalone ? 'text-sm font-medium text-slate-700' : 'text-sm text-zinc-700'}>
                     Voucher gönder (isteğe bağlı)
@@ -909,7 +908,7 @@ export default function ManualBookingDrawer({
                     type="checkbox"
                     checked={sendEmail}
                     onChange={(e) => setSendEmail(e.target.checked)}
-                    className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-[#2168b8] focus:ring-[#2168b8]"
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-primary focus:ring-primary"
                   />
                   <span className={standalone ? 'text-sm font-medium text-slate-700' : 'text-sm text-zinc-700'}>
                     Müşteriye e-posta (ödendi ise)
@@ -920,7 +919,7 @@ export default function ManualBookingDrawer({
                     type="checkbox"
                     checked={sendEmailToAdmin}
                     onChange={(e) => setSendEmailToAdmin(e.target.checked)}
-                    className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-[#2168b8] focus:ring-[#2168b8]"
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-primary focus:ring-primary"
                   />
                   <span className={standalone ? 'text-sm font-medium text-slate-700' : 'text-sm text-zinc-700'}>
                     Yöneticiye bilgi e-postası
@@ -944,8 +943,8 @@ export default function ManualBookingDrawer({
             disabled={saving}
             className={
               standalone
-                ? 'min-h-[50px] w-full rounded-xl bg-[#1e3a8a] py-3.5 text-base font-black uppercase tracking-wide text-white shadow-md transition hover:brightness-110 disabled:opacity-50'
-                : 'min-w-[200px] flex-1 rounded-xl bg-[#2168b8] py-2.5 font-bold text-white hover:bg-[#1b5697] disabled:opacity-50'
+                ? 'min-h-[50px] w-full rounded-lg bg-[#1e3a8a] py-3.5 text-base font-black uppercase tracking-wide text-white shadow-md transition hover:brightness-110 disabled:opacity-50'
+                : 'min-w-[200px] flex-1 rounded-lg bg-primary py-2.5 font-bold text-white hover:bg-primary-dark disabled:opacity-50'
             }
           >
             {saving ? 'Kaydediliyor…' : standalone ? 'Kaydet' : 'Kaydet ve yeni kayıda geç'}
@@ -955,7 +954,7 @@ export default function ManualBookingDrawer({
               type="button"
               onClick={() => handleSubmit(false)}
               disabled={saving}
-              className="flex-1 rounded-xl border border-zinc-200 bg-white py-2.5 font-bold text-[#131719] hover:bg-zinc-50 disabled:opacity-50"
+              className="flex-1 rounded-lg border border-zinc-200 bg-white py-2.5 font-bold text-[#131719] hover:bg-zinc-50 disabled:opacity-50"
             >
               Kaydet ve kapat
             </button>

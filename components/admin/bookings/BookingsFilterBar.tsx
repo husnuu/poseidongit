@@ -47,7 +47,7 @@ const STATUS_OPTIONS: { value: BookingStatus | ''; label: string }[] = [
 ]
 
 const INPUT_CLASS =
-  'w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-[#131719] placeholder:text-zinc-400 focus:border-[#2168b8] focus:outline-none'
+  'w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-[#131719] placeholder:text-zinc-400 focus:border-primary focus:outline-none'
 const LABEL_CLASS = 'text-sm font-bold text-zinc-500'
 
 export default function BookingsFilterBar({
@@ -75,7 +75,7 @@ export default function BookingsFilterBar({
   onLogout,
 }: BookingsFilterBarProps) {
   return (
-    <div className="rounded-2xl border border-[#f1f5f9] bg-white p-3 shadow-[0_2px_8px_rgba(19,23,25,0.06)] sm:p-5">
+    <div className="rounded-xl border border-[#f1f5f9] bg-white p-3 shadow-[0_2px_8px_rgba(19,23,25,0.06)] sm:p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="w-full sm:w-auto sm:min-w-0">
           <label className={`sr-only sm:not-sr-only sm:mb-1 sm:block ${LABEL_CLASS}`}>Arama</label>
@@ -176,7 +176,7 @@ export default function BookingsFilterBar({
             type="button"
             onClick={onExportPdf}
             disabled={exportDisabled || pdfExporting}
-            className="min-h-[44px] rounded-xl bg-[#2168b8] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#1b5697] disabled:opacity-50"
+            className="min-h-[44px] rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-dark disabled:opacity-50"
           >
             {pdfExporting ? 'PDF…' : 'PDF'}
           </button>
@@ -184,14 +184,14 @@ export default function BookingsFilterBar({
             type="button"
             onClick={onExportCsv}
             disabled={exportDisabled || csvExporting}
-            className="min-h-[44px] rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-bold text-[#131719] hover:bg-zinc-50 disabled:opacity-50"
+            className="min-h-[44px] rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-bold text-[#131719] hover:bg-zinc-50 disabled:opacity-50"
           >
             {csvExporting ? 'CSV…' : 'CSV'}
           </button>
           <button
             type="button"
             onClick={onLogout}
-            className="min-h-[44px] rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-bold text-zinc-500 hover:bg-zinc-50"
+            className="min-h-[44px] rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-bold text-zinc-500 hover:bg-zinc-50"
           >
             Çıkış
           </button>

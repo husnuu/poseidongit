@@ -45,7 +45,7 @@ export default function PendingRefundRequestsCard({
   if (pending.length === 0) return null
 
   return (
-    <div className="mb-6 rounded-2xl border border-orange-200 bg-orange-50/60 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+    <div className="mb-6 rounded-xl border border-orange-200 bg-orange-50/60 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
       <div className="flex items-center justify-between gap-3 border-b border-orange-200 bg-orange-100/70 px-4 py-3">
         <div>
           <h2 className="text-sm font-black uppercase tracking-wide text-orange-800">
@@ -120,7 +120,7 @@ export default function PendingRefundRequestsCard({
                         type="button"
                         onClick={() => onApprove(b)}
                         disabled={busyId === b.id}
-                        className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
                       >
                         {busyId === b.id ? 'İşleniyor…' : 'İadeyi Onayla'}
                       </button>
@@ -131,7 +131,7 @@ export default function PendingRefundRequestsCard({
                           setRejectReason('')
                         }}
                         disabled={busyId === b.id}
-                        className="rounded-xl border border-rose-300 bg-white px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                        className="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
                       >
                         Reddet
                       </button>
@@ -150,7 +150,7 @@ export default function PendingRefundRequestsCard({
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-[0_20px_60px_rgba(19,23,25,0.18)]">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-[0_20px_60px_rgba(19,23,25,0.18)]">
             <h3 className="mb-2 text-lg font-black text-[#131719]">İade Talebini Reddet</h3>
             <p className="mb-4 text-sm text-zinc-500">
               <span className="font-bold text-[#131719]">{rejectFor.customer.firstName} {rejectFor.customer.lastName}</span>{' '}
@@ -165,13 +165,13 @@ export default function PendingRefundRequestsCard({
               rows={3}
               maxLength={500}
               placeholder="Örn. iptal koşulları gereği iade yapılamamaktadır."
-              className="mb-5 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+              className="mb-5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
             />
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setRejectFor(null)}
-                className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-bold text-[#131719] hover:bg-zinc-50"
+                className="flex-1 rounded-lg border border-zinc-200 py-2.5 text-sm font-bold text-[#131719] hover:bg-zinc-50"
               >
                 Vazgeç
               </button>
@@ -182,7 +182,7 @@ export default function PendingRefundRequestsCard({
                   setRejectFor(null)
                   await onReject(target, rejectReason.trim())
                 }}
-                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-sm font-bold text-white hover:bg-rose-700"
+                className="flex-1 rounded-lg bg-rose-600 py-2.5 text-sm font-bold text-white hover:bg-rose-700"
               >
                 Talebi Reddet
               </button>

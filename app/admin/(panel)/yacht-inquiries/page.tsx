@@ -48,7 +48,7 @@ const STATUS_LABELS: Record<InquiryStatus, string> = {
 
 const STATUS_BADGES: Record<InquiryStatus, string> = {
   new: 'bg-amber-50 text-amber-700 border-amber-200',
-  read: 'bg-blue-50 text-[#2168b8] border-blue-100',
+  read: 'bg-blue-50 text-primary border-blue-100',
   contacted: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   closed: 'bg-zinc-100 text-zinc-600 border-zinc-200',
 }
@@ -223,7 +223,7 @@ export default function AdminYachtInquiriesPage() {
   if (authInitializing) {
     return (
       <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#2168b8] border-t-transparent" />
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
@@ -234,7 +234,7 @@ export default function AdminYachtInquiriesPage() {
         <p className="max-w-md text-zinc-500">Bu sayfa için yönetici girişi gerekir.</p>
         <Link
           href="/login"
-          className="rounded-xl bg-[#2168b8] px-6 py-3 font-bold text-white hover:bg-[#1b5697]"
+          className="rounded-lg bg-primary px-6 py-3 font-bold text-white hover:bg-primary-dark"
         >
           Giriş sayfasına git
         </Link>
@@ -251,50 +251,50 @@ export default function AdminYachtInquiriesPage() {
             type="button"
             onClick={fetchInquiries}
             disabled={loading}
-            className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50 disabled:opacity-60"
+            className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50 disabled:opacity-60"
           >
             {loading ? 'Yenileniyor…' : 'Yenile'}
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
             {error}
           </div>
         )}
 
         <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-[#f1f5f9] bg-white p-4 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+          <div className="rounded-xl border border-[#f1f5f9] bg-white p-4 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
             <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">Toplam</p>
             <p className="mt-1 text-2xl font-black text-[#131719]">{stats.total}</p>
           </div>
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
             <p className="text-[11px] font-bold uppercase tracking-wide text-amber-700">Yeni</p>
             <p className="mt-1 text-2xl font-black text-amber-800">{stats.newCount}</p>
           </div>
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
             <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">İletişime Geçilen</p>
             <p className="mt-1 text-2xl font-black text-emerald-800">{stats.contactedCount}</p>
           </div>
-          <div className="rounded-2xl border border-[#f1f5f9] bg-zinc-50 p-4">
+          <div className="rounded-xl border border-[#f1f5f9] bg-zinc-50 p-4">
             <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500">Kapatılan</p>
             <p className="mt-1 text-2xl font-black text-[#131719]">{stats.closedCount}</p>
           </div>
         </div>
 
-        <div className="mb-4 rounded-2xl border border-[#f1f5f9] bg-white p-4 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+        <div className="mb-4 rounded-xl border border-[#f1f5f9] bg-white p-4 shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Ad, e-posta, telefon, yat, mesaj ara…"
-              className="rounded-xl border border-zinc-200 px-3 py-2.5 text-sm focus:border-[#2168b8] focus:outline-none"
+              className="rounded-lg border border-zinc-200 px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
             />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter((e.target.value as InquiryStatus) || '')}
-              className="rounded-xl border border-zinc-200 px-3 py-2.5 text-sm focus:border-[#2168b8] focus:outline-none"
+              className="rounded-lg border border-zinc-200 px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
             >
               <option value="">Tüm durumlar</option>
               <option value="new">Yeni</option>
@@ -306,13 +306,13 @@ export default function AdminYachtInquiriesPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="rounded-xl border border-zinc-200 px-3 py-2.5 text-sm focus:border-[#2168b8] focus:outline-none"
+              className="rounded-lg border border-zinc-200 px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
             />
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="rounded-xl border border-zinc-200 px-3 py-2.5 text-sm focus:border-[#2168b8] focus:outline-none"
+              className="rounded-lg border border-zinc-200 px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
             />
             <button
               type="button"
@@ -322,14 +322,14 @@ export default function AdminYachtInquiriesPage() {
                 setDateFrom('')
                 setDateTo('')
               }}
-              className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm font-bold text-[#131719] hover:bg-zinc-50"
+              className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm font-bold text-[#131719] hover:bg-zinc-50"
             >
               Filtreyi sıfırla
             </button>
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
+        <div className="overflow-hidden rounded-xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)]">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-[#f1f5f9]">
               <thead className="bg-zinc-50">
@@ -376,7 +376,7 @@ export default function AdminYachtInquiriesPage() {
                         <button
                           type="button"
                           onClick={() => handleOpenDetail(item)}
-                          className="rounded-lg bg-[#2168b8] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#1b5697]"
+                          className="rounded-md bg-primary px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-dark"
                         >
                           Detay
                         </button>
@@ -396,7 +396,7 @@ export default function AdminYachtInquiriesPage() {
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-bold text-[#131719] disabled:opacity-50"
+                className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-bold text-[#131719] disabled:opacity-50"
               >
                 Önceki
               </button>
@@ -404,7 +404,7 @@ export default function AdminYachtInquiriesPage() {
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage >= totalPages}
-                className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-bold text-[#131719] disabled:opacity-50"
+                className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-bold text-[#131719] disabled:opacity-50"
               >
                 Sonraki
               </button>
@@ -415,33 +415,33 @@ export default function AdminYachtInquiriesPage() {
 
       {selectedInquiry && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#131719]/45 p-3 backdrop-blur-[2px]">
-          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-[0_20px_60px_rgba(19,23,25,0.18)]">
+          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white shadow-[0_20px_60px_rgba(19,23,25,0.18)]">
             <div className="flex items-center justify-between border-b border-[#f1f5f9] px-5 py-4">
               <h2 className="text-lg font-black text-[#131719]">Mesaj Detayı</h2>
               <button
                 type="button"
                 onClick={() => setSelectedInquiry(null)}
-                className="rounded-xl border border-zinc-200 px-3 py-1.5 text-sm font-bold text-[#131719] hover:bg-zinc-50"
+                className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-bold text-[#131719] hover:bg-zinc-50"
               >
                 Kapat
               </button>
             </div>
             <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">
-              <div className="rounded-xl border border-[#f1f5f9] bg-zinc-50 p-4">
+              <div className="rounded-lg border border-[#f1f5f9] bg-zinc-50 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">Ad Soyad</p>
                 <p className="mt-1 text-sm font-bold text-[#131719]">{selectedInquiry.firstName} {selectedInquiry.lastName}</p>
               </div>
-              <div className="rounded-xl border border-[#f1f5f9] bg-zinc-50 p-4">
+              <div className="rounded-lg border border-[#f1f5f9] bg-zinc-50 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">İletişim</p>
                 <p className="mt-1 text-sm font-bold text-[#131719]">{selectedInquiry.email}</p>
                 <p className="text-sm text-zinc-500">{selectedInquiry.phone}</p>
               </div>
-              <div className="rounded-xl border border-[#f1f5f9] bg-zinc-50 p-4">
+              <div className="rounded-lg border border-[#f1f5f9] bg-zinc-50 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">Yat</p>
                 <p className="mt-1 text-sm font-bold text-[#131719]">{selectedInquiry.yachtName || selectedInquiry.yachtSlug}</p>
                 <p className="text-sm text-zinc-500">{selectedInquiry.location || 'Konum yok'}</p>
               </div>
-              <div className="rounded-xl border border-[#f1f5f9] bg-zinc-50 p-4">
+              <div className="rounded-lg border border-[#f1f5f9] bg-zinc-50 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">Tur Bilgisi</p>
                 <p className="mt-1 text-sm text-zinc-600">
                   Tür:{' '}
@@ -461,7 +461,7 @@ export default function AdminYachtInquiriesPage() {
             </div>
 
             <div className="px-5 pb-5">
-              <div className="mb-4 rounded-xl border border-[#f1f5f9] bg-white p-4">
+              <div className="mb-4 rounded-lg border border-[#f1f5f9] bg-white p-4">
                 <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-zinc-400">Mesaj</p>
                 <p className="whitespace-pre-wrap text-sm leading-6 text-[#131719]">{selectedInquiry.message || 'Mesaj yok.'}</p>
               </div>
@@ -474,7 +474,7 @@ export default function AdminYachtInquiriesPage() {
                     const ok = await updateInquiry(selectedInquiry.id, { status: 'read', markRead: true })
                     if (ok) setSelectedInquiry((prev) => (prev ? { ...prev, status: 'read', isRead: true } : prev))
                   }}
-                  className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-bold text-[#2168b8] hover:bg-blue-100 disabled:opacity-60"
+                  className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-bold text-primary hover:bg-blue-100 disabled:opacity-60"
                 >
                   Okundu Olarak İşaretle
                 </button>
@@ -485,7 +485,7 @@ export default function AdminYachtInquiriesPage() {
                     const ok = await updateInquiry(selectedInquiry.id, { status: 'contacted', markRead: true })
                     if (ok) setSelectedInquiry((prev) => (prev ? { ...prev, status: 'contacted', isRead: true } : prev))
                   }}
-                  className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
+                  className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
                 >
                   İletişime Geçildi
                 </button>
@@ -496,7 +496,7 @@ export default function AdminYachtInquiriesPage() {
                     const ok = await updateInquiry(selectedInquiry.id, { status: 'closed', markRead: true })
                     if (ok) setSelectedInquiry((prev) => (prev ? { ...prev, status: 'closed', isRead: true } : prev))
                   }}
-                  className="rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-200 disabled:opacity-60"
+                  className="rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-200 disabled:opacity-60"
                 >
                   Talebi Kapat
                 </button>
@@ -508,7 +508,7 @@ export default function AdminYachtInquiriesPage() {
               <textarea
                 defaultValue={selectedInquiry.adminNote ?? ''}
                 placeholder="Müşteri ile konuşma notu, geri dönüş zamanı vb."
-                className="min-h-[110px] w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm focus:border-[#2168b8] focus:outline-none"
+                className="min-h-[110px] w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
                 onBlur={async (e) => {
                   const next = e.target.value
                   if (next === (selectedInquiry.adminNote ?? '')) return

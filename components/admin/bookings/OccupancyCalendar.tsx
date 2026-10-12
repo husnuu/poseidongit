@@ -4,11 +4,21 @@ import { useMemo } from 'react'
 import type { DayOccupancyData } from '@/types/adminBookings'
 import type { TourOption } from '@/types/adminBookings'
 
-function percentColor(percent: number): string {
-  if (percent >= 100) return 'bg-red-500 text-white'
-  if (percent >= 70) return 'bg-orange-600 text-white'
-  if (percent >= 40) return 'bg-amber-500 text-white'
-  return 'bg-emerald-500 text-white'
+/** Doluluk arttıkça görsel vurgu artar — boş/düşük doluluk sakin, %100 kırmızı
+    ve belirgin. Önceden 0%'de bile dolgun yeşil bar gösteriliyordu; bu, boş
+    aylarda ciddi görsel gürültüye yol açıyordu. */
+function occupancyBarClass(percent: number): string {
+  if (percent >= 100) return 'bg-red-500'
+  if (percent >= 70) return 'bg-orange-500'
+  if (percent >= 40) return 'bg-amber-500'
+  return 'bg-sky-400'
+}
+
+function occupancyTextClass(percent: number): string {
+  if (percent >= 100) return 'text-red-600'
+  if (percent >= 70) return 'text-orange-600'
+  if (percent >= 40) return 'text-amber-700'
+  return 'text-zinc-500'
 }
 
 interface OccupancyCalendarProps {
@@ -96,7 +106,7 @@ export default function OccupancyCalendar({
   }, [])
 
   return (
-    <div className="rounded-2xl border border-[#f1f5f9] bg-white p-3 shadow-[0_2px_8px_rgba(19,23,25,0.06)] sm:p-4">
+    <div className="rounded-xl border border-[#f1f5f9] bg-white p-3 shadow-[0_2px_8px_rgba(19,23,25,0.06)] sm:p-4">
       <h2 className="mb-3 text-base font-black text-[#131719] sm:mb-4 sm:text-lg">Kapasite ve Doluluk Takvimi</h2>
       <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
@@ -104,7 +114,7 @@ export default function OccupancyCalendar({
           <select
             value={tourId}
             onChange={(e) => onTourIdChange(e.target.value)}
-            className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-[#131719] focus:border-[#2168b8] focus:outline-none sm:min-w-[160px]"
+            className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-[#131719] focus:border-primary focus:outline-none sm:min-w-[160px]"
           >
             <option value="">Tur seçin</option>
             {tours.map((t) => (
@@ -119,7 +129,7 @@ export default function OccupancyCalendar({
           <select
             value={classFilter}
             onChange={(e) => onClassFilterChange(e.target.value)}
-            className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-[#131719] focus:border-[#2168b8] focus:outline-none sm:min-w-[90px]"
+            className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-[#131719] focus:border-primary focus:outline-none sm:min-w-[90px]"
           >
             {CLASS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -133,7 +143,7 @@ export default function OccupancyCalendar({
           <select
             value={month}
             onChange={(e) => onMonthChange(e.target.value)}
-            className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-[#131719] focus:border-[#2168b8] focus:outline-none sm:min-w-[140px]"
+            className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-[#131719] focus:border-primary focus:outline-none sm:min-w-[140px]"
           >
             {monthOptions.map((o) => (
               <option key={o.value} value={o.value}>
@@ -147,11 +157,11 @@ export default function OccupancyCalendar({
       {loading ? (
         <div className="flex h-64 items-center justify-center text-zinc-400">Yükleniyor…</div>
       ) : !tourId ? (
-        <div className="flex h-64 items-center justify-center rounded-xl bg-zinc-50 text-zinc-400">
+        <div className="flex h-64 items-center justify-center rounded-lg bg-zinc-50 text-zinc-400">
           Tur seçin
         </div>
       ) : occupancyError ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-800">
+        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-6 text-amber-800">
           <p className="text-sm font-bold">Doluluk verisi alınamadı</p>
           <p className="text-xs text-amber-700">{occupancyError}</p>
           <p className="text-xs text-zinc-400">Turun Sanity’de kapasite tanımlı olduğundan emin olun.</p>
@@ -181,7 +191,7 @@ export default function OccupancyCalendar({
                   key={date}
                   type="button"
                   onClick={() => data && onDayClick(data)}
-                  className={`min-h-[52px] rounded-lg border p-1 text-left transition hover:ring-2 hover:ring-blue-200 focus:outline-none focus:ring-2 focus:ring-[#2168b8] sm:min-h-[80px] sm:rounded-xl sm:p-1.5 ${
+                  className={`min-h-[52px] rounded-md border p-1 text-left transition hover:ring-2 hover:ring-blue-200 focus:outline-none focus:ring-2 focus:ring-primary sm:min-h-[80px] sm:rounded-lg sm:p-1.5 ${
                     data ? 'cursor-pointer border-[#f1f5f9] bg-zinc-50/50' : 'cursor-default border-transparent'
                   } ${isToday ? 'ring-2 ring-blue-300' : ''}`}
                 >
@@ -192,19 +202,36 @@ export default function OccupancyCalendar({
                       </div>
                       {hasCapacity ? (
                         <>
-                          <div className="mt-0.5 text-xs text-zinc-500">
-                            Dolu: {data.booked} · Kalan: {data.remaining}
+                          <div
+                            className={`mt-0.5 text-xs ${data.booked > 0 ? 'font-bold text-[#131719]' : 'text-zinc-400'}`}
+                          >
+                            {data.booked} / {data.capacity}
                           </div>
-                          <div className={`mt-0.5 rounded-full px-1.5 py-0.5 text-xs font-bold ${percentColor(data.percent)}`}>
-                            %{data.percent}
-                            {data.percent >= 100 ? ' DOLU' : ''}
-                          </div>
-                          <div className="mt-0.5 text-[10px] text-zinc-600">
-                            Loca: {data.firstClassLocasBooked?.length ?? 0}/10
-                          </div>
-                          {classFilter === 'first' && (data.firstClassLocasBooked?.length ?? 0) > 0 && (
-                            <div className="mt-0.5 text-[10px] text-zinc-600" title="Dolu localar">
-                              Loca: {data.firstClassLocasBooked!.join(', ')}
+                          {data.booked > 0 && (
+                            <div className="mt-1">
+                              <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
+                                <div
+                                  className={`h-full rounded-full ${occupancyBarClass(data.percent)}`}
+                                  style={{ width: `${Math.min(data.percent, 100)}%` }}
+                                />
+                              </div>
+                              <div className={`mt-0.5 text-[10px] font-bold ${occupancyTextClass(data.percent)}`}>
+                                %{data.percent}
+                                {data.percent >= 100 ? ' DOLU' : ''}
+                              </div>
+                            </div>
+                          )}
+                          {/* Loca bilgisi yalnızca First Class filtrelenmişken anlamlı —
+                              Eco/Premium/Tümü seçiliyken her gün altında gösterilmesi
+                              gereksiz görsel yük oluşturuyordu. */}
+                          {classFilter === 'first' && (
+                            <div className="mt-0.5 text-[10px] text-zinc-500">
+                              Loca: {data.firstClassLocasBooked?.length ?? 0}/10
+                              {(data.firstClassLocasBooked?.length ?? 0) > 0 && (
+                                <span className="ml-1" title="Dolu localar">
+                                  ({data.firstClassLocasBooked!.join(', ')})
+                                </span>
+                              )}
                             </div>
                           )}
                           {hasByClass && classFilter === 'all' && (

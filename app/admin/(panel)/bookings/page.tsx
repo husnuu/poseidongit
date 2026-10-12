@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Plus } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import BookingsSummaryCards from '@/components/admin/bookings/BookingsSummaryCards'
@@ -910,7 +911,7 @@ export default function AdminBookingsPage() {
   if (authInitializing) {
     return (
       <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#2168b8] border-t-transparent" />
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
@@ -923,7 +924,7 @@ export default function AdminBookingsPage() {
         </p>
         <Link
           href="/login"
-          className="rounded-xl bg-[#2168b8] px-6 py-3 font-bold text-white hover:bg-[#1b5697]"
+          className="rounded-lg bg-primary px-6 py-3 font-bold text-white hover:bg-primary-dark"
         >
           Giriş sayfasına git
         </Link>
@@ -939,17 +940,15 @@ export default function AdminBookingsPage() {
           <button
             type="button"
             onClick={() => setManualDrawerOpen(true)}
-            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#2168b8] px-4 py-2.5 text-sm font-bold text-white shadow-[0_2px_8px_rgba(19,23,25,0.12)] hover:bg-[#1b5697] sm:w-auto"
+            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_2px_8px_rgba(19,23,25,0.12)] hover:bg-primary-dark sm:w-auto"
           >
-            <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus className="h-5 w-5 shrink-0" aria-hidden />
             Manuel Rezervasyon Ekle
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
             {error}
           </div>
         )}
@@ -1014,11 +1013,11 @@ export default function AdminBookingsPage() {
         <div className="mb-6">
           <h2 className="mb-3 text-base font-black text-[#131719] sm:text-lg">Rezervasyon Listesi</h2>
           {loading && bookings.length === 0 ? (
-            <div className="rounded-2xl border border-[#f1f5f9] bg-white p-12 text-center text-zinc-400">
+            <div className="rounded-xl border border-[#f1f5f9] bg-white p-12 text-center text-zinc-400">
               Yükleniyor…
             </div>
           ) : filteredBookings.length === 0 ? (
-            <div className="rounded-2xl border border-[#f1f5f9] bg-white p-12 text-center text-zinc-400">
+            <div className="rounded-xl border border-[#f1f5f9] bg-white p-12 text-center text-zinc-400">
               Kayıt yok.
             </div>
           ) : (
@@ -1035,7 +1034,7 @@ export default function AdminBookingsPage() {
                 getManageUrl={getManageUrl}
                 getVoucherPdfUrl={getVoucherPdfUrl}
               />
-              <div className="mt-4 flex flex-col items-center justify-center gap-3 rounded-2xl border border-[#f1f5f9] bg-white px-3 py-3 sm:flex-row sm:flex-wrap sm:gap-2">
+              <div className="mt-4 flex flex-col items-center justify-center gap-3 rounded-xl border border-[#f1f5f9] bg-white px-3 py-3 sm:flex-row sm:flex-wrap sm:gap-2">
                 <span className="text-xs font-semibold text-zinc-500 sm:text-sm">
                   {filteredBookings.length} kayıt · Sayfa {currentPage} / {totalPages}
                 </span>
@@ -1044,7 +1043,7 @@ export default function AdminBookingsPage() {
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage <= 1}
-                    className="min-h-[40px] min-w-[40px] rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50 disabled:opacity-50 disabled:hover:bg-white"
+                    className="min-h-[40px] min-w-[40px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50 disabled:opacity-50 disabled:hover:bg-white"
                   >
                     Önceki
                   </button>
@@ -1053,9 +1052,9 @@ export default function AdminBookingsPage() {
                       key={p}
                       type="button"
                       onClick={() => setCurrentPage(p)}
-                      className={`min-h-[40px] min-w-[40px] rounded-xl px-3 py-2 text-sm font-bold ${
+                      className={`min-h-[40px] min-w-[40px] rounded-lg px-3 py-2 text-sm font-bold ${
                         p === currentPage
-                          ? 'bg-[#2168b8] text-white'
+                          ? 'bg-primary text-white'
                           : 'border border-zinc-200 bg-white text-[#131719] hover:bg-zinc-50'
                       }`}
                     >
@@ -1066,7 +1065,7 @@ export default function AdminBookingsPage() {
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage >= totalPages}
-                    className="min-h-[40px] min-w-[40px] rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50 disabled:opacity-50 disabled:hover:bg-white"
+                    className="min-h-[40px] min-w-[40px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50 disabled:opacity-50 disabled:hover:bg-white"
                   >
                     Sonraki
                   </button>

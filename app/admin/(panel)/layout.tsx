@@ -1,4 +1,4 @@
-import AdminHeader from '@/components/admin/AdminHeader'
+import AdminSidebar from '@/components/admin/AdminSidebar'
 
 export default function AdminPanelLayout({
   children,
@@ -6,9 +6,9 @@ export default function AdminPanelLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-zinc-50" style={{ fontFamily: 'var(--font-family)' }}>
-      <AdminHeader />
-      <main>{children}</main>
+    <div className="flex min-h-screen flex-col bg-zinc-50 md:flex-row" style={{ fontFamily: 'var(--font-family)' }}>
+      <AdminSidebar />
+      <main className="min-w-0 flex-1">{children}</main>
     </div>
   )
 }

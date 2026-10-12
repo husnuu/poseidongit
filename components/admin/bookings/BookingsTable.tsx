@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { ImageOff } from 'lucide-react'
 import type { AdminBookingRow, BookingStatus } from '@/types/adminBookings'
 import { MANUAL_SOURCE_LABELS } from '@/types/adminBookings'
 import StatusDropdown from './StatusDropdown'
@@ -93,14 +94,12 @@ function ParticipantsBreakdown({ counts }: { counts: { adult: number; child: num
 
 function ThumbImage({ url, size = 56 }: { url?: string | null; size?: number }) {
   return (
-    <div className="shrink-0 overflow-hidden rounded-lg bg-zinc-100" style={{ width: size, height: size }}>
+    <div className="shrink-0 overflow-hidden rounded-md bg-zinc-100" style={{ width: size, height: size }}>
       {url ? (
         <img src={url} alt="" className="h-full w-full object-cover" width={size} height={size} />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-zinc-300">
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
-          </svg>
+          <ImageOff className="h-5 w-5" aria-hidden />
         </div>
       )}
     </div>
@@ -173,7 +172,7 @@ export default function BookingsTable({
       <button
         type="button"
         onClick={() => onSort(keyName)}
-        className="hover:text-[#2168b8] focus:outline-none"
+        className="hover:text-primary focus:outline-none"
       >
         {label}
         {sortKey === keyName && (
@@ -186,11 +185,11 @@ export default function BookingsTable({
   return (
     <>
       {/* Mobil: kart listesi */}
-      <div className="space-y-3 rounded-2xl border border-[#f1f5f9] bg-white p-3 shadow-[0_2px_8px_rgba(19,23,25,0.06)] md:hidden">
+      <div className="space-y-3 rounded-xl border border-[#f1f5f9] bg-white p-3 shadow-[0_2px_8px_rgba(19,23,25,0.06)] md:hidden">
         {sorted.map((b) => (
           <div
             key={b.id}
-            className="rounded-xl border border-[#f1f5f9] bg-zinc-50/50 p-3"
+            className="rounded-lg border border-[#f1f5f9] bg-zinc-50/50 p-3"
           >
             <div className="flex gap-3">
               <ThumbImage url={b.tourCoverImageUrl} size={44} />
@@ -217,7 +216,7 @@ export default function BookingsTable({
                     {b.totalPrice > 0 ? `${b.totalPrice.toLocaleString('tr-TR')} ${b.currency}` : ''}
                   </span>
                   {(b.selectedExtras?.length ?? 0) > 0 && (
-                    <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#2168b8]">
+                    <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
                       +{b.selectedExtras!.length} ekstra
                     </span>
                   )}
@@ -247,7 +246,7 @@ export default function BookingsTable({
       </div>
 
       {/* Masaüstü: tablo */}
-      <div className="hidden overflow-x-auto rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)] md:block">
+      <div className="hidden overflow-x-auto rounded-xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)] md:block">
       <table className="w-full min-w-[900px] text-left text-sm">
         <thead>
           <tr className="border-b border-[#f1f5f9]">

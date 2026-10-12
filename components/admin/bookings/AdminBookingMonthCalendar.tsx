@@ -64,8 +64,8 @@ export default function AdminBookingMonthCalendar({
 
   const isBiletci = variant === 'biletci'
   const cellBase = isBiletci
-    ? 'relative flex w-full flex-col items-center justify-center rounded-xl border text-center font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fc6c4f] focus-visible:ring-offset-2 disabled:cursor-not-allowed'
-    : 'relative flex w-full flex-col items-center justify-center rounded-xl border text-center font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2168b8] focus-visible:ring-offset-2 disabled:cursor-not-allowed'
+    ? 'relative flex w-full flex-col items-center justify-center rounded-lg border text-center font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fc6c4f] focus-visible:ring-offset-2 disabled:cursor-not-allowed'
+    : 'relative flex w-full flex-col items-center justify-center rounded-lg border text-center font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed'
   const cellSize = isBiletci
     ? 'min-h-[44px] sm:min-h-[48px] py-1.5 text-sm sm:text-base'
     : 'min-h-[40px] py-1 text-sm'
@@ -83,8 +83,8 @@ export default function AdminBookingMonthCalendar({
     <div
       className={
         isBiletci
-          ? 'overflow-hidden rounded-2xl border border-zinc-100 bg-white p-3 shadow-sm sm:p-4'
-          : 'rounded-2xl border border-[#f1f5f9] bg-white p-3 shadow-[0_2px_8px_rgba(19,23,25,0.06)] sm:p-4'
+          ? 'overflow-hidden rounded-xl border border-zinc-100 bg-white p-3 shadow-sm sm:p-4'
+          : 'rounded-xl border border-[#f1f5f9] bg-white p-3 shadow-[0_2px_8px_rgba(19,23,25,0.06)] sm:p-4'
       }
     >
       <div className="mb-3 flex items-center justify-between gap-2 sm:mb-4">
@@ -92,7 +92,7 @@ export default function AdminBookingMonthCalendar({
           type="button"
           onClick={() => shiftMonth(-1)}
           disabled={prevDisabled}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm transition hover:border-[#fc6c4f]/40 hover:bg-[#fff0ed] disabled:pointer-events-none disabled:opacity-40"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-700 shadow-sm transition hover:border-[#fc6c4f]/40 hover:bg-[#fff0ed] disabled:pointer-events-none disabled:opacity-40"
           aria-label="Önceki ay"
         >
           <ChevronLeft className="h-5 w-5" strokeWidth={2} />
@@ -107,10 +107,10 @@ export default function AdminBookingMonthCalendar({
           type="button"
           onClick={() => shiftMonth(1)}
           disabled={disabled}
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm transition ${
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-700 shadow-sm transition ${
             isBiletci
               ? 'hover:border-[#fc6c4f]/40 hover:bg-[#fff0ed] disabled:opacity-40'
-              : 'hover:border-blue-200 hover:bg-blue-50/50 hover:text-[#2168b8] disabled:opacity-40'
+              : 'hover:border-blue-200 hover:bg-blue-50/50 hover:text-primary disabled:opacity-40'
           } disabled:pointer-events-none`}
           aria-label="Sonraki ay"
         >
@@ -146,7 +146,7 @@ export default function AdminBookingMonthCalendar({
                 isSelected
                   ? isBiletci
                     ? 'border-[#fc6c4f] bg-[#fc6c4f] text-white shadow-md shadow-[#fc6c4f]/25'
-                    : 'border-[#2168b8] bg-[#2168b8] text-white shadow-md shadow-[#2168b8]/25'
+                    : 'border-primary bg-primary text-white shadow-md shadow-primary/25'
                   : isPast
                     ? isBiletci
                       ? 'border-transparent bg-zinc-50 text-zinc-300'
@@ -158,14 +158,14 @@ export default function AdminBookingMonthCalendar({
                 isToday && !isSelected
                   ? isBiletci
                     ? 'ring-2 ring-[#fc6c4f] ring-offset-1'
-                    : 'ring-2 ring-[#2168b8] ring-offset-1'
+                    : 'ring-2 ring-primary ring-offset-1'
                   : ''
               }`}
             >
               <span className="tabular-nums">{dayNum}</span>
               {isToday && !isSelected && (
                 <span
-                  className={`absolute bottom-1 h-1 w-1 rounded-full ${isBiletci ? 'bg-[#fc6c4f]' : 'bg-[#2168b8]'}`}
+                  className={`absolute bottom-1 h-1 w-1 rounded-full ${isBiletci ? 'bg-[#fc6c4f]' : 'bg-primary'}`}
                   aria-hidden
                 />
               )}

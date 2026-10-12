@@ -6,7 +6,16 @@ const config: Config = {
     './components/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        // Poseidon ana lacivert/mavi — önceden admin panelinde ~60 yerde
+        // #2168b8 olarak tekrar tekrar yazılıyordu. Artık tek bir token:
+        // globals.css'teki gerçek --primary CSS değişkenine referans verir,
+        // böylece marka rengi tek bir yerden değişebilir.
+        primary: 'var(--primary)',
+        'primary-dark': '#1b5697',
+      },
+    },
   },
   plugins: [],
 }

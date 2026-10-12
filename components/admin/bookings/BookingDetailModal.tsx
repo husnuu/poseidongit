@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { X, ImageOff } from 'lucide-react'
 import type { AdminBookingRow, BookingStatus } from '@/types/adminBookings'
 import { MANUAL_SOURCE_LABELS } from '@/types/adminBookings'
 import { additionalTravelerLabels } from '@/lib/bookingAdditionalTravelers'
@@ -150,7 +151,7 @@ export default function BookingDetailModal({
         onClick={onClose}
       />
       <div
-        className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_20px_60px_rgba(19,23,25,0.18)] sm:w-full"
+        className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#f1f5f9] bg-white shadow-[0_20px_60px_rgba(19,23,25,0.18)] sm:w-full"
         role="dialog"
         aria-modal
         aria-label="Rezervasyon detayı"
@@ -161,18 +162,16 @@ export default function BookingDetailModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100"
               aria-label="Kapat"
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="h-5 w-5" aria-hidden />
             </button>
           </div>
 
           <div className="space-y-4 p-4 sm:p-5">
             <div className="flex gap-4">
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-zinc-100">
+              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
                 {booking.tourCoverImageUrl ? (
                   <img
                     src={booking.tourCoverImageUrl}
@@ -181,9 +180,7 @@ export default function BookingDetailModal({
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-zinc-300">
-                    <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
-                    </svg>
+                    <ImageOff className="h-8 w-8" aria-hidden />
                   </div>
                 )}
               </div>
@@ -197,7 +194,7 @@ export default function BookingDetailModal({
               </div>
             </div>
 
-            <div className="rounded-xl bg-zinc-50 p-3.5">
+            <div className="rounded-lg bg-zinc-50 p-3.5">
               <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">Rezervasyonu yapan</p>
               <p className="font-bold text-[#131719]">{booking.customer.firstName} {booking.customer.lastName}</p>
               <p className="text-sm text-zinc-500">{booking.customer.email}</p>
@@ -207,7 +204,7 @@ export default function BookingDetailModal({
             </div>
 
             {(booking.mealPreference?.label?.trim() || mealCounts.length > 0) && (
-              <div className="rounded-xl border border-amber-100 bg-amber-50/80 p-3.5">
+              <div className="rounded-lg border border-amber-100 bg-amber-50/80 p-3.5">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-amber-700">Yemek tercihi</p>
                 {booking.mealPreference?.label?.trim() ? (
                   <p className="mt-1 text-sm font-bold text-[#131719]">{booking.mealPreference.label.trim()}</p>
@@ -224,7 +221,7 @@ export default function BookingDetailModal({
             )}
 
             {extraTravelers.length > 0 && (
-              <div className="rounded-xl border border-[#f1f5f9] bg-white p-3.5">
+              <div className="rounded-lg border border-[#f1f5f9] bg-white p-3.5">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">Diğer yolcular</p>
                 <ul className="mt-2 space-y-1.5 text-sm text-zinc-700">
                   {extraTravelers.map((t, i) => (
@@ -251,8 +248,8 @@ export default function BookingDetailModal({
             </div>
 
             {(booking.selectedExtras?.length ?? 0) > 0 && (
-              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3.5">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-[#2168b8]">Ekstralar</p>
+              <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-3.5">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-primary">Ekstralar</p>
                 <ul className="mt-2 space-y-1.5 text-sm text-zinc-700">
                   {booking.selectedExtras!.map((extra) => (
                     <li key={extra.key} className="flex items-start justify-between gap-3">
@@ -292,7 +289,7 @@ export default function BookingDetailModal({
                 value={booking.status}
                 onChange={(e) => onStatusChange(booking.id, e.target.value as BookingStatus)}
                 disabled={updating}
-                className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm font-semibold text-[#131719] focus:border-[#2168b8] focus:outline-none disabled:opacity-60"
+                className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-sm font-semibold text-[#131719] focus:border-primary focus:outline-none disabled:opacity-60"
               >
                 <option value="pending">Beklemede</option>
                 <option value="paid">Ödendi</option>
@@ -309,8 +306,11 @@ export default function BookingDetailModal({
               booking.paidAt ||
               booking.paymentLastError ||
               booking.paymentVerificationStatus) && (
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3.5 text-sm">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">Ödeme (NestPay)</p>
+              /* Bu panel hata bilgisini de (paymentLastError) gösterebiliyor —
+                 deniz yeşili yalnızca pozitif durumlar için ayrıldığından
+                 nötr teknik detay paneli olarak zinc tonuna çevrildi. */
+              <div className="rounded-lg border border-zinc-200 bg-zinc-50/60 p-3.5 text-sm">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500">Ödeme (NestPay)</p>
                 <dl className="mt-2 space-y-1 text-zinc-700">
                   {booking.paymentStatus ? (
                     <div className="flex justify-between gap-2">
@@ -360,8 +360,8 @@ export default function BookingDetailModal({
 
             {/* İade bilgisi */}
             {booking.refundStatus && (
-              <div className={`rounded-xl border p-3.5 text-sm ${booking.refundStatus === 'refund_failed' ? 'border-rose-200 bg-rose-50/60' : 'border-blue-100 bg-blue-50/60'}`}>
-                <p className={`mb-2 text-[11px] font-bold uppercase tracking-wide ${booking.refundStatus === 'refund_failed' ? 'text-rose-700' : 'text-[#2168b8]'}`}>İade / İptal</p>
+              <div className={`rounded-lg border p-3.5 text-sm ${booking.refundStatus === 'refund_failed' ? 'border-rose-200 bg-rose-50/60' : 'border-blue-100 bg-blue-50/60'}`}>
+                <p className={`mb-2 text-[11px] font-bold uppercase tracking-wide ${booking.refundStatus === 'refund_failed' ? 'text-rose-700' : 'text-primary'}`}>İade / İptal</p>
                 <dl className="space-y-1 text-zinc-700">
                   <div className="flex justify-between gap-2">
                     <dt className="text-zinc-500">Durum</dt>
@@ -428,20 +428,20 @@ export default function BookingDetailModal({
               <button
                 type="button"
                 onClick={() => { setShowRefundPanel(true); setRefundMsg(null) }}
-                className="w-full rounded-xl border-2 border-orange-300 bg-orange-50 px-3 py-2.5 text-sm font-bold text-orange-700 hover:bg-orange-100"
+                className="w-full rounded-lg border-2 border-orange-300 bg-orange-50 px-3 py-2.5 text-sm font-bold text-orange-700 hover:bg-orange-100"
               >
                 {booking.refundStatus === 'refund_failed' ? 'İadeyi Tekrar Dene' : 'İade Et'}
               </button>
             )}
 
             {refundMsg && (
-              <div className={`rounded-xl px-3 py-2 text-sm font-semibold ${refundMsg.ok ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-rose-200 bg-rose-50 text-rose-700'}`}>
+              <div className={`rounded-lg px-3 py-2 text-sm font-semibold ${refundMsg.ok ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-rose-200 bg-rose-50 text-rose-700'}`}>
                 {refundMsg.text}
               </div>
             )}
 
             {showRefundPanel && (
-              <div className="space-y-3 rounded-xl border-2 border-orange-200 bg-orange-50 p-4">
+              <div className="space-y-3 rounded-lg border-2 border-orange-200 bg-orange-50 p-4">
                 <p className="text-sm font-bold text-orange-800">İade İşlemi</p>
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-zinc-600">
@@ -454,7 +454,7 @@ export default function BookingDetailModal({
                     step="0.01"
                     value={refundAmount}
                     onChange={(e) => setRefundAmount(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-[#2168b8] focus:outline-none"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none"
                   />
                 </div>
                 <div>
@@ -464,7 +464,7 @@ export default function BookingDetailModal({
                     value={refundReason}
                     onChange={(e) => setRefundReason(e.target.value)}
                     placeholder="Müşteri talebi, hizmet iptali..."
-                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-[#2168b8] focus:outline-none"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -472,14 +472,14 @@ export default function BookingDetailModal({
                     type="button"
                     onClick={handleRefundSubmit}
                     disabled={refunding}
-                    className="flex-1 rounded-xl bg-orange-600 px-3 py-2 text-sm font-bold text-white hover:bg-orange-700 disabled:opacity-50"
+                    className="flex-1 rounded-lg bg-orange-600 px-3 py-2 text-sm font-bold text-white hover:bg-orange-700 disabled:opacity-50"
                   >
                     {refunding ? 'İade yapılıyor…' : 'İadeyi Onayla'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowRefundPanel(false)}
-                    className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50"
+                    className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50"
                   >
                     İptal
                   </button>
@@ -510,7 +510,7 @@ export default function BookingDetailModal({
                 href={getVoucherPdfUrl(booking.id, booking.accessToken)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex rounded-xl bg-[#131719] px-3.5 py-2 text-sm font-bold text-white hover:opacity-90"
+                className="inline-flex rounded-lg bg-[#131719] px-3.5 py-2 text-sm font-bold text-white hover:opacity-90"
               >
                 PDF Bilet İndir
               </a>
@@ -518,7 +518,7 @@ export default function BookingDetailModal({
                 href={getManageUrl(booking.id)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50"
+                className="inline-flex rounded-lg border border-zinc-200 bg-white px-3.5 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50"
               >
                 Rezervasyonu Yönet
               </a>
@@ -527,7 +527,7 @@ export default function BookingDetailModal({
                   type="button"
                   onClick={handleSendPaymentLink}
                   disabled={sendingLink}
-                  className="inline-flex rounded-xl bg-[#2168b8] px-3.5 py-2 text-sm font-bold text-white hover:bg-[#1b5697] disabled:opacity-60"
+                  className="inline-flex rounded-lg bg-primary px-3.5 py-2 text-sm font-bold text-white hover:bg-primary-dark disabled:opacity-60"
                 >
                   {sendingLink ? 'Gönderiliyor…' : 'Ödeme Linki Gönder'}
                 </button>
@@ -543,14 +543,14 @@ export default function BookingDetailModal({
                 value={adminNote}
                 onChange={(e) => setAdminNote(e.target.value)}
                 rows={2}
-                className="mt-1.5 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm text-[#131719] focus:border-[#2168b8] focus:outline-none"
+                className="mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-[#131719] focus:border-primary focus:outline-none"
                 placeholder="İç not..."
               />
               <button
                 type="button"
                 onClick={handleSaveNote}
                 disabled={savingNote}
-                className="mt-2 rounded-xl bg-[#131719] px-3.5 py-1.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-50"
+                className="mt-2 rounded-lg bg-[#131719] px-3.5 py-1.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-50"
               >
                 {savingNote ? 'Kaydediliyor…' : 'Notu kaydet'}
               </button>

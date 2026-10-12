@@ -1,5 +1,6 @@
 'use client'
 
+import { X } from 'lucide-react'
 import type { DayOccupancyData } from '@/types/adminBookings'
 import type { AdminBookingRow } from '@/types/adminBookings'
 import { extractMealPreferenceCountsFromBookingLike } from '@/lib/mealPreferenceCounts'
@@ -72,12 +73,10 @@ export default function DayOccupancyDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-[#131719]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-[#131719]"
             aria-label="Kapat"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4 sm:p-5">
@@ -86,7 +85,7 @@ export default function DayOccupancyDrawer({
               <p className="text-sm font-semibold text-zinc-500">{tourTitle}</p>
               <p className="mt-1 text-lg font-black text-[#131719]">{dateLabel}</p>
 
-              <div className="mt-4 rounded-xl bg-zinc-50 p-3.5">
+              <div className="mt-4 rounded-lg bg-zinc-50 p-3.5">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">Özet</p>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                   <span className="text-zinc-500">Toplam kapasite</span>
@@ -106,7 +105,7 @@ export default function DayOccupancyDrawer({
                   {Object.entries(day.byClass).map(([key, v]) => (
                     <div
                       key={key}
-                      className="rounded-xl border border-[#f1f5f9] bg-white p-3 text-sm"
+                      className="rounded-lg border border-[#f1f5f9] bg-white p-3 text-sm"
                     >
                       <span className="font-bold text-[#131719]">{CLASS_LABELS[key] ?? key}</span>
                       <div className="mt-1 flex gap-4 text-zinc-500">
@@ -140,7 +139,7 @@ export default function DayOccupancyDrawer({
                       return (
                         <div
                           key={locaId}
-                          className={`rounded-xl border p-2 text-center text-xs font-bold ${
+                          className={`rounded-lg border p-2 text-center text-xs font-bold ${
                             booked
                               ? 'border-amber-300 bg-amber-50 text-amber-800'
                               : 'border-zinc-200 bg-zinc-50 text-zinc-500'
@@ -175,7 +174,7 @@ export default function DayOccupancyDrawer({
                   {bookingsForDay.map((b) => (
                     <li
                       key={b.id}
-                      className="rounded-xl border border-[#f1f5f9] bg-white p-2.5 text-sm"
+                      className="rounded-lg border border-[#f1f5f9] bg-white p-2.5 text-sm"
                     >
                       <span className="font-bold text-[#131719]">
                         {b.customer.firstName} {b.customer.lastName}

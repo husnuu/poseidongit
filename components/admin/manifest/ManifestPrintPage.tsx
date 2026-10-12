@@ -131,8 +131,11 @@ export default function ManifestPrintPage() {
     setLoading(true)
     setLoadError(null)
     try {
+      // Sınıf parametresi kasıtlı olarak gönderilmiyor: tüm günü tek seferde
+      // çekip sınıf filtresini (segmented control) istemci tarafında
+      // uyguluyoruz — böylece "Eco 157 · Premium 70 · First Class 20" gibi
+      // sınıf kırılımı, filtre değiştirmeden her zaman doğru gösterilebiliyor.
       const params = new URLSearchParams({ date })
-      if (classFilter !== 'all') params.set('classId', classFilter)
       const res = await fetch(`/api/admin/manifest?${params}`, adminFetchInit({}, { adminEmail }))
       if (!res.ok) throw new Error('Rezervasyonlar yüklenemedi')
       const data = (await res.json()) as {
@@ -181,7 +184,7 @@ export default function ManifestPrintPage() {
     } finally {
       setLoading(false)
     }
-  }, [adminEmail, classFilter, date])
+  }, [adminEmail, date])
 
   useEffect(() => {
     reloadManual(date)
@@ -191,13 +194,32 @@ export default function ManifestPrintPage() {
     void loadBookings()
   }, [loadBookings])
 
+  /** Günün tamamı, sınıf filtresinden bağımsız — başlık istatistikleri ve
+      segmented control'deki sınıf kırılımı için. */
+  const dayRows = useMemo(
+    () => sortManifestRowsAlphabetically([...bookingRows, ...manualRows]),
+    [bookingRows, manualRows]
+  )
+
+  const dayTotals = useMemo(() => {
+    const pax = dayRows.reduce((sum, r) => sum + paxTotal(r), 0)
+    return { count: dayRows.length, pax }
+  }, [dayRows])
+
+  const classBreakdown = useMemo(() => {
+    const counts: Record<ManifestClassId, number> = { eco: 0, premium: 0, first: 0 }
+    for (const r of dayRows) {
+      if (r.classId === 'eco' || r.classId === 'premium' || r.classId === 'first') {
+        counts[r.classId] += paxTotal(r)
+      }
+    }
+    return counts
+  }, [dayRows])
+
   const allRows = useMemo(() => {
-    const manualFiltered =
-      classFilter === 'all'
-        ? manualRows
-        : manualRows.filter((r) => r.classId === classFilter)
-    return sortManifestRowsAlphabetically([...bookingRows, ...manualFiltered])
-  }, [bookingRows, classFilter, manualRows])
+    if (classFilter === 'all') return dayRows
+    return dayRows.filter((r) => r.classId === classFilter)
+  }, [classFilter, dayRows])
 
   const totals = useMemo(() => {
     const pax = allRows.reduce((sum, r) => sum + paxTotal(r), 0)
@@ -261,7 +283,7 @@ export default function ManifestPrintPage() {
 
   return (
     <div className="mx-auto max-w-[1200px] px-3 py-6 sm:px-4 lg:px-6">
-      <div className={`${styles.printSheet} rounded-2xl border border-[#f1f5f9] bg-white p-4 shadow-[0_2px_8px_rgba(19,23,25,0.06)] sm:p-6`}>
+      <div className={`${styles.printSheet} rounded-xl border border-[#f1f5f9] bg-white p-4 shadow-[0_2px_8px_rgba(19,23,25,0.06)] sm:p-6`}>
         <div className={`${styles.noPrint} mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between`}>
           <div>
             <h1 className="text-2xl font-black tracking-tight text-[#131719]">Çıktı Listesi</h1>
@@ -273,14 +295,14 @@ export default function ManifestPrintPage() {
             <button
               type="button"
               onClick={() => void loadBookings()}
-              className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50"
+              className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-bold text-[#131719] hover:bg-zinc-50"
             >
               Yenile
             </button>
             <button
               type="button"
               onClick={handlePrint}
-              className="rounded-xl bg-[#2168b8] px-4 py-2 text-sm font-bold text-white hover:bg-[#1b5697]"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary-dark"
             >
               Yazdır / PDF
             </button>
@@ -297,8 +319,12 @@ export default function ManifestPrintPage() {
           </p>
         </div>
 
-        <div className={`${styles.noPrint} mb-6 grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr]`}>
-          <section className="rounded-2xl border border-[#f1f5f9] bg-zinc-50 p-4">
+        {/* Önceden sol panel ~%25, sağda devasa boş alan vardı. Sol panel artık
+            yalnızca tarih + manuel kayıt formuna ayrılan dar bir şerit (~%22);
+            günlük operasyon (özet + sınıf kırılımı + yolcu listesi) sağ tarafta
+            (~%78) tek bir akışta toplandı. */}
+        <div className={`${styles.noPrint} mb-6 grid gap-6 lg:grid-cols-[22fr_78fr]`}>
+          <section className="rounded-xl border border-[#f1f5f9] bg-zinc-50 p-4">
             <h2 className="mb-4 text-sm font-black uppercase tracking-wide text-zinc-500">Manuel Kayıt Ekle</h2>
 
             <div className="mb-4">
@@ -335,7 +361,7 @@ export default function ManifestPrintPage() {
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-[#131719] focus:border-[#2168b8] focus:outline-none"
+                  className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-[#131719] focus:border-primary focus:outline-none"
                   placeholder="Ad"
                 />
               </label>
@@ -345,7 +371,7 @@ export default function ManifestPrintPage() {
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-[#131719] focus:border-[#2168b8] focus:outline-none"
+                  className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-[#131719] focus:border-primary focus:outline-none"
                   placeholder="Soyad"
                 />
               </label>
@@ -359,7 +385,7 @@ export default function ManifestPrintPage() {
                 type="text"
                 value={seatLabel}
                 onChange={(e) => setSeatLabel(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-[#131719] focus:border-[#2168b8] focus:outline-none"
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-[#131719] focus:border-primary focus:outline-none"
                 placeholder="Örn: L3, güvertede sağ, masa 2…"
               />
             </label>
@@ -369,136 +395,146 @@ export default function ManifestPrintPage() {
             <button
               type="button"
               onClick={handleAddManual}
-              className="w-full rounded-xl bg-[#131719] px-4 py-2.5 text-sm font-bold text-white hover:opacity-90"
+              className="w-full rounded-lg bg-[#131719] px-4 py-2.5 text-sm font-bold text-white hover:opacity-90"
             >
               Listeye Ekle
             </button>
           </section>
 
           <section>
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-lg font-black text-[#131719]">{formatDateLabel(date)}</h2>
-                <p className="text-sm text-zinc-500">
-                  {loading
-                    ? 'Yükleniyor…'
-                    : `${totals.count} kayıt · ${totals.pax} kişi · Kapora ${formatMoney(totals.paid)} · Kapıda ${formatMoney(totals.remaining)}`}
+            {/* Günlük operasyon başlığı: tarih + tüm güne ait toplam yolcu/rezervasyon
+                + sınıf kırılımı — seçili filtreden bağımsız, her zaman görünür. */}
+            <div className="mb-3">
+              <h2 className="text-lg font-black text-[#131719] sm:text-xl">{formatDateLabel(date)}</h2>
+              <p className="mt-0.5 text-sm font-semibold text-zinc-600">
+                {loading ? 'Yükleniyor…' : `${dayTotals.pax} yolcu · ${dayTotals.count} rezervasyon`}
+              </p>
+              {!loading && (
+                <p className="mt-0.5 text-sm text-zinc-400">
+                  {MANIFEST_CLASS_OPTIONS.map((c) => `${c.label} ${classBreakdown[c.id]}`).join(' · ')}
                 </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
+              )}
+            </div>
+
+            <div className="mb-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={`${styles.filterChip} ${classFilter === 'all' ? styles.filterChipActive : ''}`}
+                onClick={() => setClassFilter('all')}
+              >
+                Tümü {dayTotals.pax}
+              </button>
+              {MANIFEST_CLASS_OPTIONS.map((c) => (
                 <button
+                  key={c.id}
                   type="button"
-                  className={`${styles.filterChip} ${classFilter === 'all' ? styles.filterChipActive : ''}`}
-                  onClick={() => setClassFilter('all')}
+                  className={`${styles.filterChip} ${classFilter === c.id ? styles.filterChipActive : ''}`}
+                  onClick={() => setClassFilter(c.id)}
                 >
-                  Tümü
+                  {c.label} {classBreakdown[c.id]}
                 </button>
-                {MANIFEST_CLASS_OPTIONS.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    className={`${styles.filterChip} ${classFilter === c.id ? styles.filterChipActive : ''}`}
-                    onClick={() => setClassFilter(c.id)}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
 
             {loadError && <p className="mb-3 text-sm font-semibold text-red-600">{loadError}</p>}
 
-            <div className="mb-3 flex flex-wrap gap-2">
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#2168b8]">
-                Ödenen (sistem): {bookingRows.length}
-              </span>
-              <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-800">
-                Manuel: {manualRows.filter((r) => classFilter === 'all' || r.classId === classFilter).length}
-              </span>
-              <button
-                type="button"
-                onClick={handleClearManual}
-                className="rounded-full border border-amber-200 bg-white px-3 py-1 text-xs font-bold text-amber-700 hover:bg-amber-50"
-              >
-                Manuel kayıtları temizle
-              </button>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">
+                  Ödenen (sistem): {bookingRows.length}
+                </span>
+                <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-800">
+                  Manuel: {manualRows.filter((r) => classFilter === 'all' || r.classId === classFilter).length}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleClearManual}
+                  className="rounded-full border border-amber-200 bg-white px-3 py-1 text-xs font-bold text-amber-700 hover:bg-amber-50"
+                >
+                  Manuel kayıtları temizle
+                </button>
+              </div>
+              <p className="text-xs text-zinc-400">
+                {totals.count} kayıt · {totals.pax} kişi · Kapora {formatMoney(totals.paid)} · Kapıda{' '}
+                {formatMoney(totals.remaining)}
+              </p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className={`${styles.printTable} w-full min-w-[800px] border-collapse text-sm`}>
+                <thead>
+                  <tr className="bg-zinc-50 text-left text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+                    <th className="border border-zinc-200 px-3 py-2">#</th>
+                    <th className="border border-zinc-200 px-3 py-2">Ad Soyad</th>
+                    <th className="border border-zinc-200 px-3 py-2">Sınıf</th>
+                    <th className="border border-zinc-200 px-3 py-2">Yetişkin</th>
+                    <th className="border border-zinc-200 px-3 py-2">Çocuk</th>
+                    <th className="border border-zinc-200 px-3 py-2">Bebek</th>
+                    <th className="border border-zinc-200 px-3 py-2">Kişi</th>
+                    <th className="border border-zinc-200 px-3 py-2">Ödenen (kapora)</th>
+                    <th className="border border-zinc-200 px-3 py-2">Kapıda ödenecek</th>
+                    <th className="border border-zinc-200 px-3 py-2">Oturacağı Yer</th>
+                    <th className={`${styles.noPrint} border border-zinc-200 px-3 py-2`}>Kaynak</th>
+                    <th className={`${styles.noPrint} border border-zinc-200 px-3 py-2`} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {allRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={12} className="border border-zinc-200 px-3 py-8 text-center text-zinc-400">
+                        {loading ? 'Liste yükleniyor…' : 'Bu tarih için kayıt yok.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    allRows.map((row, index) => (
+                      <tr key={`${row.source}-${row.id}`} className="text-[#131719]">
+                        <td className="border border-zinc-200 px-3 py-2">{index + 1}</td>
+                        <td className="border border-zinc-200 px-3 py-2 font-bold">
+                          {row.firstName} {row.lastName}
+                        </td>
+                        <td className="border border-zinc-200 px-3 py-2">{row.className}</td>
+                        <td className="border border-zinc-200 px-3 py-2 text-center">{row.adult}</td>
+                        <td className="border border-zinc-200 px-3 py-2 text-center">{row.child}</td>
+                        <td className="border border-zinc-200 px-3 py-2 text-center">{row.infant}</td>
+                        <td className="border border-zinc-200 px-3 py-2 text-center font-bold">
+                          {paxTotal(row)}
+                        </td>
+                        <td className="border border-zinc-200 px-3 py-2 text-right font-bold text-primary">
+                          {formatMoney(row.paidNow, row.currency)}
+                        </td>
+                        <td className="border border-zinc-200 px-3 py-2 text-right font-bold text-amber-700">
+                          {formatMoney(row.remainingAmount, row.currency)}
+                        </td>
+                        <td className="border border-zinc-200 px-3 py-2">{row.seatLabel || '—'}</td>
+                        <td className={`${styles.noPrint} border border-zinc-200 px-3 py-2`}>
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                              row.source === 'manual'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-blue-50 text-primary'
+                            }`}
+                          >
+                            {row.source === 'manual' ? 'Manuel' : 'Sistem'}
+                          </span>
+                        </td>
+                        <td className={`${styles.noPrint} border border-zinc-200 px-3 py-2`}>
+                          {row.source === 'manual' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveManual(row.id)}
+                              className="text-xs font-bold text-red-600 hover:text-red-700"
+                            >
+                              Sil
+                            </button>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </section>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className={`${styles.printTable} w-full min-w-[960px] border-collapse text-sm`}>
-            <thead>
-              <tr className="bg-zinc-50 text-left text-[11px] font-bold uppercase tracking-wide text-zinc-500">
-                <th className="border border-zinc-200 px-3 py-2">#</th>
-                <th className="border border-zinc-200 px-3 py-2">Ad Soyad</th>
-                <th className="border border-zinc-200 px-3 py-2">Sınıf</th>
-                <th className="border border-zinc-200 px-3 py-2">Yetişkin</th>
-                <th className="border border-zinc-200 px-3 py-2">Çocuk</th>
-                <th className="border border-zinc-200 px-3 py-2">Bebek</th>
-                <th className="border border-zinc-200 px-3 py-2">Kişi</th>
-                <th className="border border-zinc-200 px-3 py-2">Ödenen (kapora)</th>
-                <th className="border border-zinc-200 px-3 py-2">Kapıda ödenecek</th>
-                <th className="border border-zinc-200 px-3 py-2">Oturacağı Yer</th>
-                <th className={`${styles.noPrint} border border-zinc-200 px-3 py-2`}>Kaynak</th>
-                <th className={`${styles.noPrint} border border-zinc-200 px-3 py-2`} />
-              </tr>
-            </thead>
-            <tbody>
-              {allRows.length === 0 ? (
-                <tr>
-                  <td colSpan={12} className="border border-zinc-200 px-3 py-8 text-center text-zinc-400">
-                    {loading ? 'Liste yükleniyor…' : 'Bu tarih için kayıt yok.'}
-                  </td>
-                </tr>
-              ) : (
-                allRows.map((row, index) => (
-                  <tr key={`${row.source}-${row.id}`} className="text-[#131719]">
-                    <td className="border border-zinc-200 px-3 py-2">{index + 1}</td>
-                    <td className="border border-zinc-200 px-3 py-2 font-bold">
-                      {row.firstName} {row.lastName}
-                    </td>
-                    <td className="border border-zinc-200 px-3 py-2">{row.className}</td>
-                    <td className="border border-zinc-200 px-3 py-2 text-center">{row.adult}</td>
-                    <td className="border border-zinc-200 px-3 py-2 text-center">{row.child}</td>
-                    <td className="border border-zinc-200 px-3 py-2 text-center">{row.infant}</td>
-                    <td className="border border-zinc-200 px-3 py-2 text-center font-bold">
-                      {paxTotal(row)}
-                    </td>
-                    <td className="border border-zinc-200 px-3 py-2 text-right font-bold text-[#2168b8]">
-                      {formatMoney(row.paidNow, row.currency)}
-                    </td>
-                    <td className="border border-zinc-200 px-3 py-2 text-right font-bold text-amber-700">
-                      {formatMoney(row.remainingAmount, row.currency)}
-                    </td>
-                    <td className="border border-zinc-200 px-3 py-2">{row.seatLabel || '—'}</td>
-                    <td className={`${styles.noPrint} border border-zinc-200 px-3 py-2`}>
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                          row.source === 'manual'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-blue-50 text-[#2168b8]'
-                        }`}
-                      >
-                        {row.source === 'manual' ? 'Manuel' : 'Sistem'}
-                      </span>
-                    </td>
-                    <td className={`${styles.noPrint} border border-zinc-200 px-3 py-2`}>
-                      {row.source === 'manual' ? (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveManual(row.id)}
-                          className="text-xs font-bold text-red-600 hover:text-red-700"
-                        >
-                          Sil
-                        </button>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
