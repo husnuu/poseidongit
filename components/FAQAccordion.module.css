@@ -1,30 +1,9 @@
+/* Dış margin ve yatay 24px padding kaldırıldı: bileşen zaten yatay padding'i
+   olan <main> içinde render ediliyor, bu padding onu komşularından içeri
+   kaydırıyordu. Ritim page.tsx'te. Başlık (önceden 22→27px ile sayfadaki en
+   büyük sapma) .tourSectionHeading'e taşındı. */
 .faq {
   max-width: 980px;
-  margin: 64px auto 0;
-  padding: 0 24px;
-  padding-bottom: 28px;
-}
-
-/* Başlık: referans siteyle aynı — büyük, sade, siyah */
-.faqTitle,
-.faqTitleSection {
-  font-family: var(--font-family-title, var(--font-family)), sans-serif;
-  font-weight: 800;
-  font-size: 22px;
-  -webkit-text-stroke: 0.5px currentColor;
-  line-height: 1.25;
-  text-transform: uppercase;
-  color: var(--secondary, #131719);
-  margin: 0 0 20px 0;
-  padding: 0;
-  display: block;
-}
-
-@media (min-width: 640px) {
-  .faqTitle,
-  .faqTitleSection {
-    font-size: 27px;
-  }
 }
 
 .faqWrapper {

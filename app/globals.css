@@ -647,6 +647,44 @@ summary:focus-visible,
   }
 }
 
+/* Tur detay sayfası bölüm başlıkları (Öne Çıkanlar, Program, Dahil Olanlar,
+   Kaptan, SSS, Nereye, Yorumlar, Diğer Turlar, Açıklama) için TEK kaynak.
+   Önceden 9 ayrı CSS modülü aynı stili yeniden tanımlıyordu ve zamanla
+   kaymıştı (17/18/20/22px, konturlu/kontursuz, 0–40px margin). Kontur,
+   .pageHeroTitleStroke'taki gibi duyarlı: mobildeki küçük puntoda düz 0.5px
+   orantısız kalın görünüyordu. İnce alt vurgu çizgisi (::after) bölümleri
+   kutu/ayraç kullanmadan görsel olarak ayırır. */
+.tourSectionHeading {
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1.25;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--secondary, #131719);
+  -webkit-text-stroke: 0.4px currentColor;
+  margin: 0 0 20px 0;
+  padding-bottom: 10px;
+  position: relative;
+}
+.tourSectionHeading::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--primary, #2168b8);
+}
+@media (min-width: 640px) {
+  .tourSectionHeading {
+    font-size: 21px;
+    -webkit-text-stroke: 0.6px currentColor;
+    margin-bottom: 24px;
+  }
+}
+
 /* Sayfa ana başlıkları (İletişim, Koylar, Yardım Merkezi, Hakkımızda...) için
    duyarlı kontur kalınlığı: aynı stroke değeri mobildeki küçük puntoda
    masaüstündekinden orantısız kalın görünüyordu — mobilde inceltip 640px

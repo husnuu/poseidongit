@@ -1,12 +1,15 @@
+/* Dış margin kaldırıldı (ritim page.tsx'te). Tur başlığı .tourSectionHeading'e
+   bağlandı; kendi alt boşluğunu taşıdığı için satırın margin'i sıfırlandı ve
+   ikon, başlığın alt çizgisiyle çakışmasın diye üste hizalandı.
+   .headingYacht/.headingRowYacht bilinçli yat varyantı — dokunulmadı. */
 .section {
-  margin: 48px 0;
 }
 
 .headingRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 
 .headingRowYacht {
@@ -48,17 +51,6 @@
   letter-spacing: 0.02em;
 }
 
-.heading {
-  font-family: var(--font-family-title, var(--font-family)), sans-serif;
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 17px;
-  -webkit-text-stroke: 0.5px currentColor;
-  letter-spacing: normal;
-  line-height: 1.25;
-  color: var(--secondary, #131719);
-  margin: 0;
-}
 
 @media (min-width: 640px) {
   .heading {

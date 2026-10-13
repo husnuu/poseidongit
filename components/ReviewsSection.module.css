@@ -1,29 +1,11 @@
-/* ── Wrapper ── */
+/* ── Wrapper: dış margin kaldırıldı (ritim page.tsx'te); başlık
+   .tourSectionHeading'de — kendi alt boşluğunu taşıdığı için .header'ın
+   ek margin'i çift boşluk yaratmasın diye sıfırlandı. ── */
 .sectionWrapper {
-  margin-top: 56px;
-  margin-bottom: 32px;
 }
 
 .header {
-  margin-bottom: 24px;
-}
-
-.sectionHeading {
   margin: 0;
-  padding: 0;
-  font-family: var(--font-family-title, var(--font-family)), sans-serif;
-  font-weight: 800;
-  font-size: 17px;
-  -webkit-text-stroke: 0.5px currentColor;
-  line-height: 1.25;
-  text-transform: uppercase;
-  color: var(--secondary, #131719);
-}
-
-@media (min-width: 640px) {
-  .sectionHeading {
-    font-size: 21px;
-  }
 }
 
 /* ── Star row: referans siteyle birebir aynı, metin karakteri ── */

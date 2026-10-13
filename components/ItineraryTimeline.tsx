@@ -77,7 +77,7 @@ function ItineraryTimelineClient({
 
   return (
     <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>{sectionTitle}</h2>
+      <h2 className="tourSectionHeading">{sectionTitle}</h2>
       <div className={styles.timeline}>
         <ul className={styles.list}>
           {validItems.map((item, index) => (

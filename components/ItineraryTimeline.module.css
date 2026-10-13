@@ -1,23 +1,6 @@
+/* Dış margin kaldırıldı (ritim page.tsx'te); başlık .tourSectionHeading'e taşındı. */
 .section {
-  margin-top: 72px;
   max-width: 977px;
-}
-
-.sectionTitle {
-  font-family: var(--font-family-title, var(--font-family)), sans-serif;
-  font-weight: 800;
-  font-size: 17px;
-  -webkit-text-stroke: 0.5px currentColor;
-  line-height: 1.25;
-  text-transform: uppercase;
-  color: var(--secondary, #131719);
-  margin: 0 0 40px 0;
-}
-
-@media (min-width: 640px) {
-  .sectionTitle {
-    font-size: 21px;
-  }
 }
 
 .timeline {

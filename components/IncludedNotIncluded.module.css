@@ -1,5 +1,6 @@
+/* Dış margin kaldırıldı — ritim page.tsx'te. h3 bir bölüm başlığı DEĞİL,
+   200px sol sütunun etiketi; o yüzden .tourSectionHeading'e bağlanmadı. */
 .section {
-  margin: 32px 0 2.5rem;
   max-width: 977px;
 }
 

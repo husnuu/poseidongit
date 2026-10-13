@@ -32,7 +32,6 @@ import WhereSection from '@/components/tour/WhereSection'
 import TourReelsRail from '@/components/tour/TourReelsRail'
 import ScrollReveal from '@/components/ui/ScrollReveal'
 import JsonLd from '@/components/seo/JsonLd'
-import Breadcrumb from '@/components/common/Breadcrumb'
 import {
   buildBreadcrumbSchema,
   buildFAQSchema,
@@ -281,10 +280,10 @@ export default async function TourPage({
     { name: tourUi.breadcrumbTours, url: withLocalePath(locale, '/turlar') },
     { name: tour.title, url: tourPath },
   ]
+  // Yalnızca JSON-LD: görünür breadcrumb satırı kullanıcı isteğiyle kaldırıldı
+  // (başlığın üstünde görüntüyü bozuyordu). Şema kalıyor — Google arama
+  // sonucunda "cesmetekneturu.net › Turlar › ..." kırıntı yolunu bundan üretir.
   const breadcrumbSchema = buildBreadcrumbSchema(breadcrumbCrumbs)
-  // JSON-LD ile aynı veriden — önceden sayfada görünür bir breadcrumb yoktu,
-  // yalnızca structured data vardı (Google'ın tutarlılık kuralıyla çelişiyordu).
-  const breadcrumbItems = breadcrumbCrumbs.map((c) => ({ label: c.name, href: c.url }))
   const faqSchema =
     tour.faqs && tour.faqs.length > 0
       ? buildFAQSchema(tour.faqs.map((f) => ({ question: f.question, answer: f.answer })))
@@ -325,19 +324,27 @@ export default async function TourPage({
       )}
       <div className="container mx-auto px-4 pt-6 pb-16 lg:pt-12 max-w-[1360px]">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
-          <main className="flex-1 min-w-0">
-            <Breadcrumb items={breadcrumbItems} className="mb-4" />
-            <span id="reviews" className="block scroll-mt-24" aria-hidden />
-            <TourHeader
-          title={tour.title}
-          ratingLabel={tour.ratingLabel}
-          score={tour.rating}
-          reviewCount={tour.reviewCount}
-          reviewsUrl={tour.reviewsUrl}
-          durationText={tour.quickFacts?.durationText}
-          meetingLocation={tour.quickFacts?.meetingLocation}
-          locale={locale}
-        />
+          {/* Bölümler arası dikey ritim TEK yerden: önceden her bölüm kendi
+              CSS'inde ayrı bir dış margin tutuyordu (48/72/32/64px…) ve
+              üstüne buradaki mb-14/mt-14 yamaları biniyordu — altı ayrı
+              sistem. Artık bölümler dış margin taşımıyor, aralık burada. */}
+          <main className="flex-1 min-w-0 space-y-12 sm:space-y-16">
+            {/* "#reviews" çapası + başlık TEK çocuk olarak sarılı: aksi hâlde
+                space-y, sıfır yükseklikli çapanın iki yanına da margin basıp
+                başlığın üstünde gereksiz boşluk açıyor. */}
+            <div>
+              <span id="reviews" className="block scroll-mt-24" aria-hidden />
+              <TourHeader
+                title={tour.title}
+                ratingLabel={tour.ratingLabel}
+                score={tour.rating}
+                reviewCount={tour.reviewCount}
+                reviewsUrl={tour.reviewsUrl}
+                durationText={tour.quickFacts?.durationText}
+                meetingLocation={tour.quickFacts?.meetingLocation}
+                locale={locale}
+              />
+            </div>
 
         <ScrollReveal>
           <HighlightsDetailsRow
@@ -368,7 +375,7 @@ export default async function TourPage({
 
         {/* Video Section */}
         {tour.tourVideo?.enabled && (
-          <ScrollReveal className="mb-8">
+          <ScrollReveal>
             {videoEmbedUrl && tour.tourVideo.type !== 'upload' ? (
               <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-zinc-900">
                 {tour.tourVideo.type === 'youtube' && (
@@ -427,11 +434,11 @@ export default async function TourPage({
           <HostBlock host={tour.host} whyYouWillLove={tour.whyYouWillLove} tourUi={tourUi} />
         </ScrollReveal>
 
-        <ScrollReveal className="mb-14">
+        <ScrollReveal>
           <FAQAccordion faqs={tour.faqs} locale={locale} whatsappUrl={whatsappUrl} />
         </ScrollReveal>
 
-        <ScrollReveal className="mt-14 mb-14">
+        <ScrollReveal>
           <WhereSection
             data={tour.whereSection}
             headingFallback={tourUi.whereHeadingFallback}
@@ -439,7 +446,7 @@ export default async function TourPage({
           />
         </ScrollReveal>
 
-        <ScrollReveal className="mt-14">
+        <ScrollReveal>
           <ReviewsSection reviewsUrl={tour.reviewsUrl} reviewsSection={tour.reviewsSection} tourUi={tourUi} />
         </ScrollReveal>
 

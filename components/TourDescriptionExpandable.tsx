@@ -94,7 +94,7 @@ export default function TourDescriptionExpandable({
     headingVariant === 'yacht' ? styles.headingIconWrapYacht : styles.headingIconWrap
   const headingClass =
     headingClassName ??
-    (headingVariant === 'yacht' ? styles.headingYacht : styles.heading)
+    (headingVariant === 'yacht' ? styles.headingYacht : 'tourSectionHeading')
 
   const modal = portalEl
     ? createPortal(

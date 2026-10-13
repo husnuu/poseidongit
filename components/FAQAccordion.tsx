@@ -75,9 +75,7 @@ export default function FAQAccordion({
   return (
     <section className={styles.faq}>
       {(hasFaqs || hasTitle) && (
-      <h2
-        className={isSectionTitle ? styles.faqTitleSection : styles.faqTitle}
-      >
+      <h2 className="tourSectionHeading">
         {titleContent}
       </h2>
       )}

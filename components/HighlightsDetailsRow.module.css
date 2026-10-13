@@ -1,24 +1,9 @@
+/* Dış margin kaldırıldı: bölümler arası ritmi artık tur sayfası (page.tsx)
+   tek bir space-y ile yönetiyor. Başlık stili .tourSectionHeading'de
+   (globals.css) — buradaki kopya silindi. */
 .wrapper {
-  margin: 48px 0;
   width: 100%;
   max-width: none;
-}
-
-.heading {
-  font-family: var(--font-family-title, var(--font-family)), sans-serif;
-  font-weight: 800;
-  font-size: 17px;
-  -webkit-text-stroke: 0.5px currentColor;
-  line-height: 1.25;
-  text-transform: uppercase;
-  color: var(--secondary, #131719);
-  margin: 0 0 24px 0;
-}
-
-@media (min-width: 640px) {
-  .heading {
-    font-size: 21px;
-  }
 }
 
 /* 2-column grid on desktop */
@@ -80,16 +65,6 @@
 
 /* Mobile: single column */
 @media (max-width: 640px) {
-  .wrapper {
-    margin: 36px 0;
-  }
-
-  .heading {
-    font-size: 18px;
-    line-height: 1.4;
-    margin-bottom: 16px;
-  }
-
   .grid {
     grid-template-columns: 1fr;
   }

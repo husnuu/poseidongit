@@ -107,7 +107,7 @@ export default function HostBlock({ host, whyYouWillLove, tourUi: tourUiProp }: 
       )}
 
       {mainTitle && (
-        <h2 id="host-card-title" className={styles.mainTitle}>
+        <h2 id="host-card-title" className={`tourSectionHeading ${styles.mainTitle}`}>
           {mainTitle}
         </h2>
       )}

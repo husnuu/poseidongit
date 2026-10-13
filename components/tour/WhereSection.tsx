@@ -56,15 +56,9 @@ export default function WhereSection({
   const headingText = headingDisplayUpper(data.heading?.trim() || headingFallback, locale)
 
   return (
-    <section className="mb-8" aria-labelledby="where-section-heading">
-      <h2
-        id="where-section-heading"
-        className="mb-4 text-[20px] font-extrabold uppercase leading-tight sm:text-2xl"
-        style={{
-          fontFamily: 'var(--font-family-title, var(--font-family))',
-          color: 'var(--secondary, #131719)',
-        }}
-      >
+    <section aria-labelledby="where-section-heading">
+      {/* Önceden 20→24px ve kontursuz — sayfadaki tek sapma; artık paylaşımlı sınıf. */}
+      <h2 id="where-section-heading" className="tourSectionHeading">
         {headingText}
       </h2>
 

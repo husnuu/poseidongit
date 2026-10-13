@@ -110,7 +110,7 @@ export default function ReviewsSection({
       aria-labelledby="tour-reviews-heading"
     >
       <div className={styles.header}>
-        <h2 id="tour-reviews-heading" className={styles.sectionHeading}>
+        <h2 id="tour-reviews-heading" className="tourSectionHeading">
           {headingText}
         </h2>
       </div>

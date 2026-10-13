@@ -61,7 +61,7 @@ export default function HighlightsDetailsRow({
 
   return (
     <div className={styles.wrapper}>
-      <h2 className={styles.heading}>{tourUi.highlightsTitle}</h2>
+      <h2 className="tourSectionHeading">{tourUi.highlightsTitle}</h2>
       <ul className={styles.grid}>
         {highlights.map((highlight, index) => {
           const Icon = getIcon(highlight.icon)
