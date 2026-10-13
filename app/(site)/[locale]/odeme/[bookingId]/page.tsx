@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Hourglass, CheckCircle2 } from 'lucide-react'
+import type { Metadata } from 'next'
 import { validateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { getPaymentLinkSummary } from '@/lib/paymentLink'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
@@ -12,6 +13,12 @@ import PayNowButton from '@/components/payment-link/PayNowButton'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+
+// Tek bir rezervasyona özel ödeme linki sayfası — bilet sayfasıyla aynı
+// gerekçeyle noindex (bkz. bilet/[bookingId]/page.tsx).
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 function fmtPrice(amount: number, currency: string, locale: string) {
   try {

@@ -6,8 +6,10 @@ import { mapSanityYachtRowsToHomeCards } from '@/lib/mapYachtListItem'
 import type { SanityYachtCardRow } from '@/lib/yachtTypes'
 import YachtRentalListSection from '@/components/yacht/YachtRentalListSection'
 import listStyles from '../turlar/page.module.css'
-import { getSiteName } from '@/lib/seo'
+import { getSiteName, buildItemListSchema } from '@/lib/seo'
 import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
+import JsonLd from '@/components/seo/JsonLd'
+import { withLocalePath } from '@/lib/i18n/paths'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import { translateText } from '@/lib/i18n/runtimeTranslate'
 
@@ -139,8 +141,20 @@ export default async function YatKiralamaPage({
             : DEFAULT_EMPTY[locale],
         ])
 
+  const itemListSchema = buildItemListSchema(
+    yachts.map((yacht) => ({
+      name: yacht.name,
+      url: withLocalePath(
+        locale,
+        yacht.locationSlug ? `/yat-kiralama/${yacht.locationSlug}/${yacht.slug}` : `/yat-kiralama/${yacht.slug}`
+      ),
+      image: yacht.coverImageUrl ?? undefined,
+    }))
+  )
+
   return (
     <div className="min-h-screen bg-white">
+      <JsonLd data={itemListSchema} />
       <section className="w-full py-14 md:py-20" aria-labelledby="yachts-heading">
         <div className="mx-auto max-w-[1200px] px-4">
           <header className="mb-12 text-center">

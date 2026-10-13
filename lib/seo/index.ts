@@ -3,6 +3,7 @@
  * Site adı: NEXT_PUBLIC_SITE_NAME (örn. .env). Boş bırakılırsa JSON-LD/meta fallback boş veya generic olur.
  */
 
+import type { PortableTextBlock } from '@portabletext/react'
 import { buildFaqPageLd, faqPairsFromQuestionAnswer } from './faqStructuredData'
 
 /** Site adı: ortam değişkeninden. Hardcoded marka yok. */
@@ -24,7 +25,10 @@ export function absoluteUrl(path: string): string {
   return `${base}${p}`
 }
 
-/** Organization JSON-LD */
+/** Organization JSON-LD. `logo` verilmezse alan tamamen atlanır — `public/`
+ * içinde gerçek bir `/logo.png` yok, var olmayan bir dosyayı işaret eden
+ * kırık bir URL üretmektense alanı boş bırakmak daha doğru (bkz. SEO
+ * denetimi). Çağıran taraf varsa gerçek Sanity logosunu geçmeli. */
 export function buildOrganizationSchema(overrides?: {
   name?: string
   url?: string
@@ -37,7 +41,7 @@ export function buildOrganizationSchema(overrides?: {
     '@type': 'Organization',
     name: overrides?.name ?? (getSiteName() || undefined),
     url: overrides?.url ?? base,
-    logo: overrides?.logo ?? `${base}/logo.png`,
+    ...(overrides?.logo ? { logo: overrides.logo } : {}),
     sameAs: overrides?.sameAs ?? [],
   }
 }
@@ -83,6 +87,20 @@ export function buildBreadcrumbSchema(
 
 export type { FaqAnswerLd, FaqMainEntityInput, FaqPageLd, FaqQuestionLd } from './faqStructuredData'
 export { buildFaqPageLd, faqPairsFromQuestionAnswer }
+
+/** Portable Text → düz metin. FAQPage gibi JSON-LD alanları string beklediği
+ * için (yat SSS'leri PortableText, tur SSS'leri zaten düz string tutuyor). */
+export function portableTextToPlainText(blocks: PortableTextBlock[] | null | undefined): string {
+  if (!blocks?.length) return ''
+  const parts: string[] = []
+  for (const block of blocks) {
+    const children = (block as { children?: { text?: string }[] })?.children
+    if (!Array.isArray(children)) continue
+    const text = children.map((c) => c?.text ?? '').join('')
+    if (text.trim()) parts.push(text.trim())
+  }
+  return parts.join('\n\n')
+}
 
 /** FAQPage JSON-LD — şema modeli: {@link FaqPageLd} / schema.org Question + Answer */
 export function buildFAQSchema(
@@ -176,6 +194,26 @@ export function buildTourSchema(params: {
     }
   }
   return out
+}
+
+/**
+ * ItemList JSON-LD — liste sayfaları için (ör. /turlar, /yat-kiralama).
+ * Google'a sayfadaki kartların gerçek bir sıralı koleksiyon olduğunu bildirir.
+ */
+export function buildItemListSchema(
+  items: Array<{ name: string; url: string; image?: string }>
+): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: item.url.startsWith('http') ? item.url : absoluteUrl(item.url),
+      name: item.name,
+      ...(item.image ? { image: item.image } : {}),
+    })),
+  }
 }
 
 /** JSON-LD script tag içeriği */

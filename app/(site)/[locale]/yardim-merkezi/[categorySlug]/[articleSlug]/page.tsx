@@ -15,7 +15,7 @@ import {
   fetchHelpArticleStaticParams,
 } from '@/lib/sanity/fetchers/helpCenter'
 import type { HelpArticleDetail } from '@/lib/sanity/types/helpCenter'
-import { absoluteUrl, buildBreadcrumbSchema, getSiteName } from '@/lib/seo'
+import { absoluteUrl, buildBreadcrumbSchema, buildFAQSchema, getSiteName, portableTextToPlainText } from '@/lib/seo'
 import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
@@ -141,10 +141,20 @@ export default async function HelpArticlePage({
     },
   }
 
+  // Yardım merkezi makaleleri aslında soru-cevap formatında (başlık = soru,
+  // gövde = cevap) — sayfada tam olarak görünen bu içerikten FAQPage şeması
+  // üretiyoruz (Google FAQ zengin sonucu için). Kategori listeleme
+  // sayfasına EKLEMEDİK: orada yalnızca kısaltılmış özet görünüyor, tam
+  // cevap değil — structured data görünen içerikle eşleşmeli.
+  const answerText = portableTextToPlainText(body)
+  const faqSchema =
+    article.title && answerText ? buildFAQSchema([{ question: article.title, answer: answerText }]) : null
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-100/90 via-white to-zinc-50">
       <JsonLd data={buildBreadcrumbSchema(breadcrumbItems)} />
       <JsonLd data={articleLd} />
+      {faqSchema && <JsonLd data={faqSchema} />}
 
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         <Breadcrumb

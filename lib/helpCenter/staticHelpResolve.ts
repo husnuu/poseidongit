@@ -9,8 +9,8 @@ import type {
 import { STATIC_HELP_CATEGORIES, STATIC_HELP_PAGE } from './staticHelpData'
 import { translateText, translatePortableTextBlocks } from '@/lib/i18n/runtimeTranslate'
 
-/** İçerik güncellendiğinde (isteğe bağlı) tarih */
-const STATIC_UPDATED_AT = '2026-05-01T12:00:00.000Z'
+/** İçerik güncellendiğinde (isteğe bağlı) tarih — app/sitemap.ts da kullanıyor. */
+export const STATIC_UPDATED_AT = '2026-05-01T12:00:00.000Z'
 
 const ALL_LOCALES: SiteLocale[] = ['tr', 'en', 'de']
 

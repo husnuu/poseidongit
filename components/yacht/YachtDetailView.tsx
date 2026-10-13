@@ -1,6 +1,14 @@
 import dynamic from 'next/dynamic'
 import JsonLd from '@/components/seo/JsonLd'
-import { buildBreadcrumbSchema } from '@/lib/seo'
+import Breadcrumb from '@/components/common/Breadcrumb'
+import {
+  buildBreadcrumbSchema,
+  buildFAQSchema,
+  buildTourSchema,
+  absoluteUrl,
+  portableTextToPlainText,
+} from '@/lib/seo'
+import { withLocalePath } from '@/lib/i18n/paths'
 import { buildYachtPhotoGridImages, buildYachtSidebarGallery } from '@/lib/yachtImages'
 import type { YachtRentalDocument } from '@/lib/yachtTypes'
 import YachtHeader from '@/components/yacht/YachtHeader'
@@ -68,10 +76,32 @@ export default function YachtDetailView({ locale, yacht, path, whatsappUrl }: Ya
   crumbs.push({ name: yacht.name, url: path })
 
   const breadcrumbSchema = buildBreadcrumbSchema(crumbs)
+  // JSON-LD'deki crumbs listesi aynı zamanda görünür breadcrumb UI'ı için de
+  // kullanılıyor — ikisi farklı veriden üretilirse Google'ın structured-data
+  // tutarlılık kuralını ihlal eder (bkz. SEO denetimi: önceden yalnızca
+  // JSON-LD vardı, sayfada görünür bir breadcrumb yoktu).
+  const breadcrumbItems = crumbs.map((c) => ({ label: c.name, href: withLocalePath(locale, c.url) }))
+
+  const url = absoluteUrl(withLocalePath(locale, path))
+  const productSchema = buildTourSchema({
+    name: yacht.name,
+    description: yacht.shortDescription,
+    url,
+    image: images[0]?.src,
+    price: yacht.priceFrom,
+    priceCurrency: yacht.currency,
+  })
+
+  const faqPairs = (yacht.faqs ?? [])
+    .map((f) => ({ question: f.question?.trim() ?? '', answer: portableTextToPlainText(f.answer) }))
+    .filter((f) => f.question && f.answer)
+  const faqSchema = faqPairs.length > 0 ? buildFAQSchema(faqPairs) : null
 
   return (
     <div className="min-h-screen bg-white dark:bg-white">
       <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={productSchema} />
+      {faqSchema && <JsonLd data={faqSchema} />}
       {images.length > 0 && (
         <div className="relative w-full mb-0">
           <PhotoGrid
@@ -90,6 +120,7 @@ export default function YachtDetailView({ locale, yacht, path, whatsappUrl }: Ya
       <div className="container mx-auto px-4 py-16 max-w-[1360px]">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
           <main className="flex-1 min-w-0">
+            <Breadcrumb items={breadcrumbItems} className="mb-4" />
             <YachtHeader
               name={yacht.name}
               yachtType={yacht.yachtType}

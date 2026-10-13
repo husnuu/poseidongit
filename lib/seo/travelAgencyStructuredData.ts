@@ -54,9 +54,13 @@ const GEO = { latitude: 38.3237, longitude: 26.3030 } as const
 /** WhatsApp ReserveAction — E.164 ülke kodu ile, + olmadan */
 const WHATSAPP_E164 = '905321532814'
 
-/** Yedek görseller - public klasöründe varsa doldurun */
-const FALLBACK_LOGO_PUBLIC_PATH = '/favicon.png' 
-const FALLBACK_IMAGE_PUBLIC_PATHS = ['/og-image.png'] as const 
+/** Yedek görseller — `public/` klasöründe böyle dosyalar YOK (bkz. SEO
+ * denetimi: bu sabitler canlıda kırık `/favicon.png` ve `/og-image.png`
+ * bağlantıları üretiyordu). Sanity'den görsel gelmiyorsa `logo`/`image`
+ * alanları aşağıda zaten koşullu olarak atlanıyor — var olmayan bir dosyayı
+ * işaret etmektense alanı tamamen boş bırakmak Google için daha doğru. */
+const FALLBACK_LOGO_PUBLIC_PATH: string | null = null
+const FALLBACK_IMAGE_PUBLIC_PATHS: readonly string[] = []
 
 /** Sosyal medya ve gerçek Google Maps linkin eklendi */
 const SAME_AS = [

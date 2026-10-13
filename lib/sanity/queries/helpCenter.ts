@@ -103,5 +103,6 @@ export const helpArticleSlugsByLocaleQuery = `*[_type == "helpArticle" && isPubl
   "deCat": category->translations.de.slug.current,
   "deArt": translations.de.slug.current,
   "ruCat": category->translations.ru.slug.current,
-  "ruArt": translations.ru.slug.current
+  "ruArt": translations.ru.slug.current,
+  _updatedAt
 }`

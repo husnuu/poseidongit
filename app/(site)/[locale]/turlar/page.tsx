@@ -8,9 +8,11 @@ import ScrollReveal from '@/components/ui/ScrollReveal'
 import styles from './page.module.css'
 
 import type { Metadata } from 'next'
-import { getSiteName } from '@/lib/seo'
+import { getSiteName, buildItemListSchema } from '@/lib/seo'
 import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
 import { absoluteUrl } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
+import { withLocalePath } from '@/lib/i18n/paths'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
@@ -224,8 +226,19 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
     ? await translateText(pageData.titleBottom, locale)
     : DEFAULT_TITLE_BOTTOM[locale]
 
+  const itemListSchema = buildItemListSchema(
+    tours
+      .filter((tour): tour is typeof tour & { title: string } => Boolean(tour.title))
+      .map((tour) => ({
+        name: tour.title,
+        url: withLocalePath(locale, `/tur/${tour.slug}`),
+        image: tour.coverImageUrl ?? undefined,
+      }))
+  )
+
   return (
     <div className="min-h-screen bg-white">
+      <JsonLd data={itemListSchema} />
       <section className="w-full py-14 md:py-20" aria-labelledby="tours-heading">
         <div className="mx-auto max-w-[1200px] px-4">
           <header className="mb-12">

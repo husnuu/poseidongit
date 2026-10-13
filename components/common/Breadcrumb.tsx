@@ -5,12 +5,14 @@ export type BreadcrumbItem = { label: string; href?: string }
 type Props = {
   items: BreadcrumbItem[]
   className?: string
+  /** Ekran okuyucu etiketi — varsayılan TR; diğer locale'lerde çağıran taraf geçebilir. */
+  ariaLabel?: string
 }
 
-export default function Breadcrumb({ items, className = '' }: Props) {
+export default function Breadcrumb({ items, className = '', ariaLabel = 'Sayfa konumu' }: Props) {
   if (!items.length) return null
   return (
-    <nav aria-label="Sayfa konumu" className={className}>
+    <nav aria-label={ariaLabel} className={className}>
       <ol
         className="flex flex-wrap items-center gap-1.5 text-sm"
         style={{ fontFamily: 'var(--font-family), sans-serif', color: 'var(--muted, #81848b)' }}

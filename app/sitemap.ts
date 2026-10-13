@@ -2,7 +2,8 @@ import { MetadataRoute } from 'next'
 import { client } from '@/lib/sanity'
 import { getBaseUrl } from '@/lib/seo'
 import { tourSlugRowsForLocalesQuery } from '@/lib/queries'
-import { helpArticleSlugsByLocaleQuery } from '@/lib/sanity/queries/helpCenter'
+import { STATIC_HELP_CATEGORIES } from '@/lib/helpCenter/staticHelpData'
+import { STATIC_UPDATED_AT } from '@/lib/helpCenter/staticHelpResolve'
 import { canonicalRouteToPublicPath } from '@/lib/i18n/routeAliases'
 import type { SiteLocale } from '@/lib/i18n/config'
 
@@ -123,50 +124,6 @@ async function getFerryRouteEntries(): Promise<SitemapEntry[]> {
   }
 }
 
-/** Yardım merkezi kategorileri — TR/EN/DE çeviri slug'ları ayrı alanlarda tutuluyor. */
-async function getHelpCategorySitemapRows(): Promise<
-  {
-    trSlug?: string | null
-    enSlug?: string | null
-    deSlug?: string | null
-    ruSlug?: string | null
-    _updatedAt?: string
-  }[]
-> {
-  try {
-    return await client.fetch(
-      `*[_type == "helpCategory" && defined(slug.current)]{
-        "trSlug": slug.current,
-        "enSlug": translations.en.slug.current,
-        "deSlug": translations.de.slug.current,
-        "ruSlug": translations.ru.slug.current,
-        _updatedAt
-      }`
-    )
-  } catch {
-    return []
-  }
-}
-
-type HelpArticleLocaleRow = {
-  trCat?: string | null
-  trArt?: string | null
-  enCat?: string | null
-  enArt?: string | null
-  deCat?: string | null
-  deArt?: string | null
-  ruCat?: string | null
-  ruArt?: string | null
-}
-
-async function getHelpArticleSitemapRows(): Promise<HelpArticleLocaleRow[]> {
-  try {
-    return await client.fetch<HelpArticleLocaleRow[]>(helpArticleSlugsByLocaleQuery)
-  } catch {
-    return []
-  }
-}
-
 async function getLegalEntries(): Promise<SitemapEntry[]> {
   try {
     const list = await client.fetch<{ slug: string | null; _updatedAt: string }[]>(
@@ -191,8 +148,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     yachtLocRaw,
     yachtDetailRaw,
     ferryRouteEntriesRaw,
-    helpCategoryRows,
-    helpArticleRows,
   ] = await Promise.all([
     getTourSitemapRows(),
     getBlogEntries(),
@@ -200,8 +155,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getYachtLocationEntries(),
     getYachtDetailEntries(),
     getFerryRouteEntries(),
-    getHelpCategorySitemapRows(),
-    getHelpArticleSitemapRows(),
   ])
 
   const now = new Date()
@@ -215,8 +168,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/contact',
     '/menu',
     '/sik-sorulanlar',
-    '/rezervasyon',
+    // NOT: '/rezervasyon' BURAYA eklenmiyor — app/(site)/[locale]/rezervasyon/
+    // altında yalnızca [tourSlug]/ ve yonet/ var, kendi page.tsx'i yok;
+    // eskiden buradaki girdi 4 dilde 404 veren "soft-404" URL üretiyordu.
     '/yat-kiralama',
+    '/yat-kapora',
     '/yardim-merkezi',
     '/feribot',
   ] as const
@@ -227,15 +183,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (path === '/yat-kiralama') return 0.85
     if (path === '/feribot') return 0.8
     if (path === '/koylar' || path === '/blog' || path === '/menu') return 0.8
-    if (path === '/rezervasyon') return 0.7
+    if (path === '/yat-kapora') return 0.6
     if (path === '/yardim-merkezi') return 0.75
     return 0.6
   }
 
+  // Bu statik rotalar birden fazla Sanity bölümünün toplamı — tek bir
+  // gerçek "son güncelleme" zaman damgası yok. Her build'de "bugün
+  // güncellendi" demek (eskiden: lastModified: now) gerçeği yansıtmıyordu;
+  // bilinmeyen bir tarihi uydurmaktansa alanı boş bırakmak Google için
+  // daha dürüst bir sinyal.
   const staticPages: MetadataRoute.Sitemap = staticPaths.flatMap((path) =>
     locales.map((loc) => ({
       url: publicUrl(loc, path),
-      lastModified: now,
       changeFrequency: 'weekly' as const,
       priority: staticPriority(path),
     }))
@@ -319,70 +279,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
   )
 
-  const helpCategoryEntries: MetadataRoute.Sitemap = []
-  for (const row of helpCategoryRows ?? []) {
-    const lm = row._updatedAt ? new Date(row._updatedAt) : now
-    if (row.trSlug)
-      helpCategoryEntries.push({
-        url: publicUrl('tr', `/yardim-merkezi/kategori/${row.trSlug}`),
-        lastModified: lm,
-        changeFrequency: 'monthly',
-        priority: 0.5,
-      })
-    if (row.enSlug)
-      helpCategoryEntries.push({
-        url: publicUrl('en', `/yardim-merkezi/kategori/${row.enSlug}`),
-        lastModified: lm,
-        changeFrequency: 'monthly',
-        priority: 0.5,
-      })
-    if (row.deSlug)
-      helpCategoryEntries.push({
-        url: publicUrl('de', `/yardim-merkezi/kategori/${row.deSlug}`),
-        lastModified: lm,
-        changeFrequency: 'monthly',
-        priority: 0.5,
-      })
-    if (row.ruSlug)
-      helpCategoryEntries.push({
-        url: publicUrl('ru', `/yardim-merkezi/kategori/${row.ruSlug}`),
-        lastModified: lm,
-        changeFrequency: 'monthly',
-        priority: 0.5,
-      })
-  }
+  // Yardım merkezi içeriği Sanity'den DEĞİL, kod içi statik veriden geliyor
+  // (lib/helpCenter/staticHelpData.ts — bkz. lib/sanity/fetchers/helpCenter.ts
+  // yorumu) ve slug her dilde AYNI (yalnızca başlık/metin çalışma zamanında
+  // çevriliyor). Eskiden burada hâlâ kullanılmayan bir Sanity `helpCategory`/
+  // `helpArticle` koleksiyonu sorgulanıyordu — gerçek sayfalarla eşleşmeyen
+  // (muhtemelen boş) URL'ler üretiyordu.
+  const helpCategoryEntries: MetadataRoute.Sitemap = STATIC_HELP_CATEGORIES.flatMap((cat) =>
+    locales.map((loc) => ({
+      url: publicUrl(loc, `/yardim-merkezi/kategori/${cat.slug}`),
+      lastModified: new Date(STATIC_UPDATED_AT),
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    }))
+  )
 
-  const helpArticleEntries: MetadataRoute.Sitemap = []
-  for (const row of helpArticleRows ?? []) {
-    if (row.trCat && row.trArt)
-      helpArticleEntries.push({
-        url: publicUrl('tr', `/yardim-merkezi/${row.trCat}/${row.trArt}`),
-        lastModified: now,
-        changeFrequency: 'monthly',
+  const helpArticleEntries: MetadataRoute.Sitemap = STATIC_HELP_CATEGORIES.flatMap((cat) =>
+    cat.articles.flatMap((art) =>
+      locales.map((loc) => ({
+        url: publicUrl(loc, `/yardim-merkezi/${cat.slug}/${art.slug}`),
+        lastModified: new Date(STATIC_UPDATED_AT),
+        changeFrequency: 'monthly' as const,
         priority: 0.55,
-      })
-    if (row.enCat && row.enArt)
-      helpArticleEntries.push({
-        url: publicUrl('en', `/yardim-merkezi/${row.enCat}/${row.enArt}`),
-        lastModified: now,
-        changeFrequency: 'monthly',
-        priority: 0.55,
-      })
-    if (row.deCat && row.deArt)
-      helpArticleEntries.push({
-        url: publicUrl('de', `/yardim-merkezi/${row.deCat}/${row.deArt}`),
-        lastModified: now,
-        changeFrequency: 'monthly',
-        priority: 0.55,
-      })
-    if (row.ruCat && row.ruArt)
-      helpArticleEntries.push({
-        url: publicUrl('ru', `/yardim-merkezi/${row.ruCat}/${row.ruArt}`),
-        lastModified: now,
-        changeFrequency: 'monthly',
-        priority: 0.55,
-      })
-  }
+      }))
+    )
+  )
 
   return [
     ...staticPages,

@@ -32,6 +32,7 @@ import WhereSection from '@/components/tour/WhereSection'
 import TourReelsRail from '@/components/tour/TourReelsRail'
 import ScrollReveal from '@/components/ui/ScrollReveal'
 import JsonLd from '@/components/seo/JsonLd'
+import Breadcrumb from '@/components/common/Breadcrumb'
 import {
   buildBreadcrumbSchema,
   buildFAQSchema,
@@ -62,13 +63,16 @@ export async function generateStaticParams() {
     return []
   }
   const rows = await client.fetch<
-    { tSlug?: string | null; enSlug?: string | null; deSlug?: string | null }[]
+    { tSlug?: string | null; enSlug?: string | null; deSlug?: string | null; ruSlug?: string | null }[]
   >(tourSlugRowsForLocalesQuery)
   const out: { locale: string; slug: string }[] = []
   for (const r of rows ?? []) {
     if (r.tSlug) out.push({ locale: 'tr', slug: r.tSlug })
     if (r.enSlug) out.push({ locale: 'en', slug: r.enSlug })
     if (r.deSlug) out.push({ locale: 'de', slug: r.deSlug })
+    // RU önceden atlanıyordu — Rusça tur sayfaları ilk istekte SSR ile
+    // çalışıyordu ama build/ISR sırasında önceden üretilmiyordu.
+    if (r.ruSlug) out.push({ locale: 'ru', slug: r.ruSlug })
   }
   return out
 }
@@ -79,12 +83,18 @@ export async function generateMetadata({
   params: Promise<{ locale: string; slug: string }>
 }): Promise<Metadata> {
   const { slug, locale: loc } = await params
-  const tourUiMeta = getTourPageUi(isSiteLocale(loc) ? (loc as SiteLocale) : 'tr')
-  if (!isSiteLocale(loc)) return { title: tourUiMeta.metaTourNotFoundTitle }
+  // notFound() BURADA çağrılıyor (sayfa gövdesindeki notFound() yerine/ona ek
+  // olarak): bu segmentte loading.tsx olduğu için sayfa gövdesi Suspense
+  // içinde stream ediliyor — ilk baytlar (200) zaten gönderildikten SONRA
+  // gövdedeki notFound() tetiklendiğinden HTTP durumu 200'de kalıyordu
+  // (gerçek olmayan bir tur slug'ı bile 200 dönüyordu — "soft 404").
+  // generateMetadata, gövde render/stream edilmeden ÖNCE çözüldüğü için
+  // buradaki notFound() doğru 404 durum kodunu üretiyor.
+  if (!isSiteLocale(loc)) notFound()
   const locale = loc as SiteLocale
   const tourUi = getTourPageUi(locale)
   const tour = await getTour(slug, locale)
-  if (!tour) return { title: tourUi.metaTourNotFoundTitle }
+  if (!tour) notFound()
 
   const metaTitleSource = tour.seo?.metaTitle?.trim() || tour.title
   const title = `${metaTitleSource}${tourUi.metaTitleSuffix}`
@@ -97,6 +107,17 @@ export async function generateMetadata({
     descSource.replace(/\s+/g, ' ').slice(0, 160) || tourUi.metaDescriptionFallback(tour.title)
 
   const url = absoluteUrl(withLocalePath(locale, `/tur/${slug}`))
+
+  // hreflang: her dilin kendi slug'uyla (bkz. lib/queries.ts localeSlugs
+  // projeksiyonu) — aksi halde EN/DE slug'ı TR'den farklı turlarda
+  // 404 veren bir alternate üretilirdi.
+  const localePaths: Partial<Record<SiteLocale, string>> = {}
+  const ls = tour.localeSlugs
+  if (ls) {
+    for (const [loc, localeSlug] of Object.entries(ls) as [SiteLocale, string | null | undefined][]) {
+      if (localeSlug) localePaths[loc] = withLocalePath(loc, `/tur/${localeSlug}`)
+    }
+  }
 
   const ogImageAsset = tour.seo?.ogImage?.asset ?? tour.mainImage?.asset
   const image =
@@ -112,7 +133,10 @@ export async function generateMetadata({
     description,
     ...(keywords?.length ? { keywords } : {}),
     ...(tour.seo?.noIndex ? { robots: { index: false, follow: true as const } } : {}),
-    alternates: { canonical: url, languages: alternateLanguageAbsoluteUrls(`/tur/${slug}`) },
+    alternates: {
+      canonical: url,
+      languages: alternateLanguageAbsoluteUrls(`/tur/${slug}`, localePaths),
+    },
     openGraph: {
       title,
       description,
@@ -252,11 +276,15 @@ export default async function TourPage({
       : undefined
   const productSchemaDescription =
     tour.seo?.metaDescription?.trim() || tour.shortDescription?.trim() || undefined
-  const breadcrumbSchema = buildBreadcrumbSchema([
+  const breadcrumbCrumbs = [
     { name: tourUi.breadcrumbHome, url: withLocalePath(locale, '/') },
     { name: tourUi.breadcrumbTours, url: withLocalePath(locale, '/turlar') },
     { name: tour.title, url: tourPath },
-  ])
+  ]
+  const breadcrumbSchema = buildBreadcrumbSchema(breadcrumbCrumbs)
+  // JSON-LD ile aynı veriden — önceden sayfada görünür bir breadcrumb yoktu,
+  // yalnızca structured data vardı (Google'ın tutarlılık kuralıyla çelişiyordu).
+  const breadcrumbItems = breadcrumbCrumbs.map((c) => ({ label: c.name, href: c.url }))
   const faqSchema =
     tour.faqs && tour.faqs.length > 0
       ? buildFAQSchema(tour.faqs.map((f) => ({ question: f.question, answer: f.answer })))
@@ -298,6 +326,7 @@ export default async function TourPage({
       <div className="container mx-auto px-4 pt-6 pb-16 lg:pt-12 max-w-[1360px]">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
           <main className="flex-1 min-w-0">
+            <Breadcrumb items={breadcrumbItems} className="mb-4" />
             <span id="reviews" className="block scroll-mt-24" aria-hidden />
             <TourHeader
           title={tour.title}

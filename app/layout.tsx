@@ -56,7 +56,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteName = getSiteName()
   let defaultTitle = FALLBACK_TITLE
   let defaultDescription = FALLBACK_DESCRIPTION
-  let faviconUrl: string | undefined
+  let faviconAsset: { _ref?: string } | undefined
   try {
     const settings = await client.fetch<{
       siteName?: string | null
@@ -69,7 +69,7 @@ export async function generateMetadata(): Promise<Metadata> {
     else if (siteName) defaultTitle = `Tekne Turu | ${siteName}`
     if (descFromSanity) defaultDescription = descFromSanity
     if (settings?.favicon?.asset) {
-      faviconUrl = urlFor(settings.favicon.asset).width(32).height(32).url()
+      faviconAsset = settings.favicon.asset
     }
   } catch {
     if (siteName) defaultTitle = `Tekne Turu | ${siteName}`
@@ -81,10 +81,18 @@ export async function generateMetadata(): Promise<Metadata> {
       template: siteName ? `%s | ${siteName}` : '%s',
     },
     description: defaultDescription,
-    ...(faviconUrl && {
+    ...(faviconAsset && {
       icons: {
-        icon: faviconUrl,
-        apple: faviconUrl,
+        // Sanity'deki tek favicon görselinden gerçek boyutlar: sekme ikonu
+        // için 32/16, Apple'ın 180×180 istediği touch icon için ayrı boyut
+        // (eskiden apple icon da 32×32'ydi — iOS ana ekranında bulanık çıkar).
+        icon: [
+          { url: urlFor(faviconAsset).width(32).height(32).url(), sizes: '32x32', type: 'image/png' },
+          { url: urlFor(faviconAsset).width(16).height(16).url(), sizes: '16x16', type: 'image/png' },
+        ],
+        apple: [
+          { url: urlFor(faviconAsset).width(180).height(180).url(), sizes: '180x180', type: 'image/png' },
+        ],
       },
     }),
     openGraph: {

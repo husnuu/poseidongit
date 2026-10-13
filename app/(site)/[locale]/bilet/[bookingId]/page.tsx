@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import { validateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { getBookingConfirmationData } from '@/lib/bookingConfirmation'
 import BookingConfirmationView from '@/components/booking-confirmation/BookingConfirmationView'
@@ -9,6 +10,14 @@ import { boardingPassPageCopy } from '@/lib/i18n/bookingFlowLocale'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+
+// Tek bir rezervasyona özel, token ile erişilen bilet sayfası — arama
+// motorlarının taraması/indekslemesi için hiçbir değeri yok, tersine
+// müşteri verisini sızdırma riski var. robots.txt'teki disallow'a ek
+// olarak (savunma derinliği) burada da noindex.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 function AccessDenied({ locale }: { locale: SiteLocale }) {
   const copy = boardingPassPageCopy(locale)

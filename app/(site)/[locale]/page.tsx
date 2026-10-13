@@ -1027,7 +1027,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     homeFaqItems = null
   }
 
-  const organizationSchema = buildOrganizationSchema()
+  // Önceden logo override verilmiyordu ve kod kendiliğinden var olmayan
+  // `${base}/logo.png`'a düşüyordu (canlıda kırık bir "logo" URL'i üretiyordu
+  // — bkz. SEO denetimi). TravelAgency şeması için zaten hesaplanmış gerçek
+  // Sanity logosu burada da kullanılıyor.
+  const organizationSchema = buildOrganizationSchema(
+    travelAgencyImageOverrides.logoUrl ? { logo: travelAgencyImageOverrides.logoUrl } : undefined
+  )
   const websiteSchema = buildWebSiteSchema({
     description: data?.seo?.metaDescription?.trim() || DEFAULT_HOME_DESCRIPTION[locale],
   })

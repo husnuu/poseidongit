@@ -8,6 +8,7 @@ import { blogBySlugQuery } from '@/lib/queries'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
 import JsonLd from '@/components/seo/JsonLd'
+import Breadcrumb from '@/components/common/Breadcrumb'
 import {
   buildBreadcrumbSchema,
   buildBlogPostingSchema,
@@ -186,11 +187,14 @@ export default async function BlogPostPage({
   const postUrl = absoluteUrl(postPath)
   const homeLabel =
     locale === 'tr' ? 'Ana Sayfa' : locale === 'en' ? 'Home' : locale === 'de' ? 'Startseite' : 'Главная'
-  const breadcrumbSchema = buildBreadcrumbSchema([
+  const breadcrumbCrumbs = [
     { name: homeLabel, url: withLocalePath(locale, '/') },
     { name: ui.blogListTitleSuffix, url: blogListPath },
     { name: title, url: postPath },
-  ])
+  ]
+  const breadcrumbSchema = buildBreadcrumbSchema(breadcrumbCrumbs)
+  // JSON-LD ile aynı veriden görünür breadcrumb (bkz. tur/yat detay sayfaları).
+  const breadcrumbItems = breadcrumbCrumbs.map((c) => ({ label: c.name, href: c.url }))
   const blogPostingSchema = buildBlogPostingSchema({
     title,
     description: excerpt ?? undefined,
@@ -205,6 +209,7 @@ export default async function BlogPostPage({
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={blogPostingSchema} />
       <article className={styles.article}>
+        <Breadcrumb items={breadcrumbItems} className="mb-4" />
         <header className={styles.header}>
           <h1 className={`${styles.title} pageHeroTitleStroke`}>{title}</h1>
 

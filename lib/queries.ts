@@ -322,6 +322,15 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
   _id,
   title,
   "slug": slug.current,
+  // hreflang alternates için: her dilin KENDİ slug'u (EN/DE farklı
+  // slug kullanıyorsa /en/tour/<tr-slug> gibi 404 veren bir alternate
+  // üretilmesini önler — bkz. lib/seo/alternateLanguages.ts).
+  "localeSlugs": {
+    "tr": slug.current,
+    "en": coalesce(translations.en.slug.current, slug.current),
+    "de": coalesce(translations.de.slug.current, slug.current),
+    "ru": coalesce(translations.ru.slug.current, slug.current)
+  },
   shortDescription,
   seo{
     metaTitle,

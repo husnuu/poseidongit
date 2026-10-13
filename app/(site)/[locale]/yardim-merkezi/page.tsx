@@ -5,8 +5,9 @@ import { siteSettingsWhatsappQuery } from '@/lib/queries'
 import { buildWhatsAppHref } from '@/lib/buildWhatsAppHref'
 import { fetchHelpCategoriesWithArticles, fetchHelpCenterPage } from '@/lib/sanity/fetchers/helpCenter'
 import HelpCenterHome from '@/components/help-center/HelpCenterHome'
-import { getSiteName } from '@/lib/seo'
+import { getSiteName, buildItemListSchema } from '@/lib/seo'
 import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
+import JsonLd from '@/components/seo/JsonLd'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -52,13 +53,25 @@ export default async function YardimMerkeziPage({ params }: { params: Promise<{ 
   ])
   const whatsappHref = buildWhatsAppHref(whatsRow?.whatsapp ?? null)
 
+  const itemListSchema = buildItemListSchema(
+    categories
+      .filter((c): c is typeof c & { slug: string; title: string } => Boolean(c.slug && c.title))
+      .map((c) => ({
+        name: c.title,
+        url: withLocalePath(locale, `/yardim-merkezi/kategori/${c.slug}`),
+      }))
+  )
+
   return (
-    <HelpCenterHome
-      page={page}
-      categories={categories}
-      whatsappHref={whatsappHref}
-      locale={locale}
-      contactHref={contactHref}
-    />
+    <>
+      <JsonLd data={itemListSchema} />
+      <HelpCenterHome
+        page={page}
+        categories={categories}
+        whatsappHref={whatsappHref}
+        locale={locale}
+        contactHref={contactHref}
+      />
+    </>
   )
 }

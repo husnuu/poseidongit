@@ -8,6 +8,9 @@ const siteName = getSiteName()
 export const metadata = {
   title: siteName ? `Rezervasyonumu Yönet | ${siteName}` : 'Rezervasyonumu Yönet',
   description: 'Rezervasyonunuzu görüntüleyin, biletinizi sitede açın veya iptal edin.',
+  // Müşteriye özel rezervasyon sorgulama ekranı — arama sonuçlarında
+  // gösterilecek genel bir içerik değil.
+  robots: { index: false, follow: false },
 }
 
 export default async function RezervasyonYonetPage({

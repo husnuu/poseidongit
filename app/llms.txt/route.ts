@@ -21,16 +21,23 @@ export async function GET() {
 
 - [Ana Sayfa](${base}/)
 - [Turlar](${base}/turlar) – Tekne turları listesi ve fiyatlar
+- [Yat Kiralama](${base}/yat-kiralama) – Özel yat kiralama
+- [Feribot](${base}/feribot) – Feribot bileti hatları
 - [Koylar](${base}/koylar) – Koylar rehberi
-- [Rezervasyon](${base}/rezervasyon) – Tur seçimi ve online rezervasyon
+- [Menü](${base}/menu) – Tekne üstü menü
 - [Hakkımızda](${base}/hakkimizda)
 - [İletişim](${base}/contact) – İletişim formu
 - [Sık Sorulanlar](${base}/sik-sorulanlar) – SSS
+- [Yardım Merkezi](${base}/yardim-merkezi) – Rezervasyon, ödeme, iptal rehberleri
 - [Blog](${base}/blog) – Gezi ve tur yazıları
 
 ## Tekne Turları
 
-Tur detayları, fiyatlar ve rezervasyon her tur sayfasında mevcuttur. Tur listesi: ${base}/turlar
+Tur detayları, fiyatlar ve rezervasyon her tur sayfasında mevcuttur (ör. ${base}/tur/cesme-tekne-turu). Tur listesi: ${base}/turlar
+
+## Yat Kiralama
+
+Özel yat kiralama için kapora bilgisi: ${base}/yat-kapora
 
 ## Teknik
 

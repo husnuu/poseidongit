@@ -23,6 +23,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, './'),
+  // "X-Powered-By: Next.js" başlığı — gerekli değil, gereksiz teknoloji
+  // parmak izi bırakıyor.
+  poweredByHeader: false,
   async headers() {
     return [
       {
@@ -46,6 +49,12 @@ const nextConfig: NextConfig = {
         pathname: '/images/**',
       },
     ],
+    // Modern formatlar (CWV/LCP için daha küçük dosya boyutu).
+    formats: ['image/avif', 'image/webp'],
+    // lib/sanityImage.ts (SANITY_IMAGE_QUALITY) + birkaç sayfada elle
+    // kullanılan gerçek kalite değerleri — Next 16'da zorunlu olacak
+    // allowlist (bkz. dev uyarısı: "quality is not configured").
+    qualities: [75, 80, 85, 88, 90, 92],
   },
   // "Jest worker encountered child process exceptions" hatası için: build worker kapatılır,
   // derleme ana process'te yapılır (biraz daha yavaş ama worker çökmesi olmaz).

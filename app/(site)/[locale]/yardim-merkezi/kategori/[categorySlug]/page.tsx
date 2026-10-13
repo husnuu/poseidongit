@@ -8,8 +8,9 @@ import { client } from '@/lib/sanity'
 import { siteSettingsWhatsappQuery } from '@/lib/queries'
 import { buildWhatsAppHref } from '@/lib/buildWhatsAppHref'
 import { fetchHelpCategoryPage } from '@/lib/sanity/fetchers/helpCenter'
-import { getSiteName } from '@/lib/seo'
+import { getSiteName, buildItemListSchema } from '@/lib/seo'
 import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
+import JsonLd from '@/components/seo/JsonLd'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -65,8 +66,21 @@ export default async function HelpCategoryListingPage({
   const articles = cat.articles ?? []
   const helpHome = withLocalePath(locale, '/yardim-merkezi')
 
+  // FAQPage değil ItemList: bu sayfada yalnızca kısaltılmış özetler
+  // görünüyor, tam cevaplar değil — FAQPage burada görünen içerikle
+  // eşleşmezdi. Makale listesi için ItemList doğru şema.
+  const itemListSchema = buildItemListSchema(
+    articles
+      .filter((a): a is typeof a & { slug: string; title: string } => Boolean(a.slug && a.title))
+      .map((a) => ({
+        name: a.title,
+        url: withLocalePath(locale, `/yardim-merkezi/${categorySlug}/${a.slug}`),
+      }))
+  )
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-100/90 via-white to-zinc-50">
+      <JsonLd data={itemListSchema} />
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         <Breadcrumb
           className="mb-8"

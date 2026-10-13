@@ -217,6 +217,8 @@ export interface Tour {
   _id?: string
   title: string
   slug: string
+  /** hreflang alternates için — her dilin kendi slug'u (bkz. lib/queries.ts). */
+  localeSlugs?: { tr?: string | null; en?: string | null; de?: string | null; ru?: string | null }
   shortDescription?: string
   seo?: TourSeo | null
   description?: PortableTextBlock[] | null
