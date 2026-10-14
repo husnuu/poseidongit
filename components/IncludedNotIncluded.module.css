@@ -45,6 +45,34 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  /* Tikler, bölüm görünür olunca yukarıdan aşağı kademeli belirir
+     (Öne Çıkanlar ile aynı ritim). animation + animation-delay — gerekçe
+     için bkz. HighlightsDetailsRow.module.css. */
+  opacity: 0;
+}
+
+@keyframes incItemIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+:global(.scroll-reveal-visible) .item {
+  animation: incItemIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+:global(.scroll-reveal-visible) .item:nth-child(1) { animation-delay: 0.08s; }
+:global(.scroll-reveal-visible) .item:nth-child(2) { animation-delay: 0.14s; }
+:global(.scroll-reveal-visible) .item:nth-child(3) { animation-delay: 0.2s; }
+:global(.scroll-reveal-visible) .item:nth-child(4) { animation-delay: 0.26s; }
+:global(.scroll-reveal-visible) .item:nth-child(5) { animation-delay: 0.32s; }
+:global(.scroll-reveal-visible) .item:nth-child(n + 6) { animation-delay: 0.38s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    opacity: 1;
+  }
+  :global(.scroll-reveal-visible) .item {
+    animation: none;
+  }
 }
 
 .svgStroke {

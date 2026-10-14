@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useMemo } from 'react'
 import { openBookingModal } from '@/components/booking/bookingEvents'
+import DemandNotice from '@/components/booking/DemandNotice'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './StickyBookingCard.module.css'
@@ -56,10 +57,6 @@ function getDepositLabel(
   if (deposit.type === 'percentage') return ui.stickyDepositPercentage(deposit.value)
   if (deposit.type === 'fixed') return ui.stickyDepositFixed
   return ui.stickyDepositPercentage(deposit.value)
-}
-
-function DemandIcon() {
-  return <span className={styles.demandIcon} aria-hidden />
 }
 
 function CheckIcon() {
@@ -156,13 +153,9 @@ export default function StickyBookingCard({
           </Link>
         )}
 
-        <div className={styles.demand} role="note" aria-label={ui.stickyDemandAria}>
-          <DemandIcon />
-          <div className={styles.demandText}>
-            <p className={styles.demandTitle}>{ui.stickyDemandTitle}</p>
-            <p className={styles.demandSubtitle}>{ui.stickyDemandSubtitle}</p>
-          </div>
-        </div>
+        {/* Paylaşımlı bileşen — mobilde tur başlığının altında da aynısı
+            render ediliyor (bkz. tur sayfası). */}
+        <DemandNotice locale={locale} className="mt-4" />
       </div>
     </div>
   )

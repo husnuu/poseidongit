@@ -102,11 +102,18 @@ export default function FAQAccordion({
                     <span className={styles.accordionItemTitle}>{faq.question}</span>
                   </button>
 
-                  {isOpen && (
-                    <div className={styles.accordionItemContent}>
+                  {/* Cevap her zaman DOM'da (SEO + animasyon): açılış/kapanış
+                      grid-template-rows 0fr→1fr ile yumuşak; önceden koşullu
+                      render olduğu için "pat" diye beliriyordu. */}
+                  <div
+                    className={styles.accordionItemContent}
+                    data-open={isOpen ? 'true' : 'false'}
+                    aria-hidden={!isOpen}
+                  >
+                    <div className={styles.accordionItemContentInner}>
                       <p className={styles.accordionItemParagraph}>{faq.answer}</p>
                     </div>
-                  )}
+                  </div>
                 </div>
               )
             })}

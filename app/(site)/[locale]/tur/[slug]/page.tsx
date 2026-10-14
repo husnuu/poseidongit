@@ -344,6 +344,8 @@ export default async function TourPage({
                 meetingLocation={tour.quickFacts?.meetingLocation}
                 locale={locale}
               />
+              {/* Mobildeki "yoğun talep" şeridi TourHeader'ın meta satırları
+                  içinde (compact varyant) — bkz. TourHeader.tsx. */}
             </div>
 
         <ScrollReveal>

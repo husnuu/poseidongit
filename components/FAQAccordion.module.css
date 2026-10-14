@@ -33,7 +33,8 @@
   background: transparent;
   cursor: pointer;
   border: 0;
-  padding: 18px 0;
+  /* 18px → 12px: sorular birbirinden fazla uzaktı (satır başına 36px). */
+  padding: 12px 0;
   text-align: left;
 }
 
@@ -57,8 +58,33 @@
   transform: rotate(180deg);
 }
 
+/* Yumuşak açılış: max-height hilesi yerine grid satır oranı 0fr→1fr
+   (gerçek içerik yüksekliğine göre, sabit sınır yok). Padding iç
+   sarmalayıcıda — dışta olsaydı kapalıyken de boşluk bırakırdı. */
 .accordionItemContent {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.26s ease;
+}
+
+.accordionItemContent[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.accordionItemContentInner {
+  min-height: 0;
+  overflow: hidden;
   padding: 0 0 20px 34px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accordionItemContent {
+    transition: none;
+  }
 }
 
 .accordionItemParagraph {
@@ -206,7 +232,9 @@
   }
 
   .accordionItemLine {
-    padding: 16px 0;
+    /* Masaüstündeki 12px sıkılaştırmasının mobil karşılığı (önceden 16px,
+       sorular birbirinden fazla uzaktı). */
+    padding: 11px 0;
     gap: 12px;
   }
 
@@ -214,7 +242,11 @@
     font-size: 14px;
   }
 
-  .accordionItemContent {
+  /* Padding dış değil İÇ sarmalayıcıda (bkz. yukarıdaki grid-rows notu).
+     Eskiden burada dış sınıfa kalan 32px, iç sarmalayıcının 34px'iyle
+     üst üste binip cevabı mobilde soru metninden 34px sağa itiyordu.
+     32 = ok ikonu 20 + mobil gap 12 → cevap, soru metniyle aynı hizada. */
+  .accordionItemContentInner {
     padding: 0 0 18px 32px;
   }
 

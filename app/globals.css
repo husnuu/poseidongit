@@ -676,6 +676,21 @@ summary:focus-visible,
   height: 3px;
   border-radius: 2px;
   background: var(--primary, #2168b8);
+  /* Bölüm ekrana girince (ScrollReveal) çizgi soldan sağa "çizilir" —
+     sarmalayıcının kendi 0.7s belirmesi bittikten hemen sonra başlar.
+     Sadece transform: layout/paint yok, CLS sıfır. */
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.35s;
+}
+.scroll-reveal-visible .tourSectionHeading::after {
+  transform: scaleX(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tourSectionHeading::after {
+    transform: none;
+    transition: none;
+  }
 }
 @media (min-width: 640px) {
   .tourSectionHeading {

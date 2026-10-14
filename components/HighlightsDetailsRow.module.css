@@ -21,10 +21,55 @@
   align-items: flex-start;
   gap: 16px;
   padding: 14px 16px 14px 0;
+  border-radius: 10px;
+  /* Kademeli giriş: öğeler, ScrollReveal sarmalayıcısı görünür olunca
+     sırayla (70ms arayla) belirir — tek blok hâlinde "pat" diye değil.
+     transition + transition-delay DEĞİL, animation + animation-delay:
+     sınıf eklendiği anda yeni eşleşen bir kuraldaki transition-delay
+     Chromium'da güvenilir okunmuyordu (sonda: 320ms gecikmeli öğe 60ms'de
+     zaten 0.98 opaklıktaydı). `both` dolgu modu gecikme boyunca opacity:0'ı
+     kesin tutar. */
+  opacity: 0;
+  transition: background-color 0.2s ease;
 }
 
 .item:nth-child(even) {
   padding-left: 24px;
+}
+
+@keyframes hlItemIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+:global(.scroll-reveal-visible) .item {
+  animation: hlItemIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+:global(.scroll-reveal-visible) .item:nth-child(1) { animation-delay: 0.1s; }
+:global(.scroll-reveal-visible) .item:nth-child(2) { animation-delay: 0.17s; }
+:global(.scroll-reveal-visible) .item:nth-child(3) { animation-delay: 0.24s; }
+:global(.scroll-reveal-visible) .item:nth-child(4) { animation-delay: 0.31s; }
+:global(.scroll-reveal-visible) .item:nth-child(5) { animation-delay: 0.38s; }
+:global(.scroll-reveal-visible) .item:nth-child(6) { animation-delay: 0.45s; }
+:global(.scroll-reveal-visible) .item:nth-child(n + 7) { animation-delay: 0.5s; }
+
+/* Hover: ikon marka mavisine döner ve hafifçe büyür, satır çok açık bir
+   zemin alır — öğenin "canlı" olduğunu hissettirir, bağlantı değil. */
+.item:hover .iconBox {
+  color: var(--primary, #2168b8);
+  transform: scale(1.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    opacity: 1;
+  }
+  :global(.scroll-reveal-visible) .item {
+    animation: none;
+  }
+  .item:hover .iconBox {
+    transform: none;
+  }
 }
 
 /* Tur kartlarındaki süre/kalkış ikonlarıyla (TourCard.tsx META_ICON_COLOR)
@@ -38,6 +83,7 @@
   justify-content: center;
   color: #8a99ad;
   margin-top: 2px;
+  transition: color 0.2s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .textBlock {

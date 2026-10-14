@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { resolveTourRatingLabel } from '@/lib/i18n/ratingLabels'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
+import DemandNotice from '@/components/booking/DemandNotice'
 import styles from './TourHeader.module.css'
 
 /* ── Modern outline ikonlar ── */
@@ -167,6 +168,17 @@ export function TourHeader({
             </span>
           </div>
         )}
+
+        {/* ── Satır 4 (yalnızca mobil): yoğun talep — masaüstünde bu bilgi
+            sidebar kartında (DemandNotice card). Mobilde ayrı bir kutu fazla
+            yer kaplayıp hantal duruyordu; meta satırlarının devamı gibi tek
+            satırlık şerit. lg:hidden dış sarmalayıcıda: .metaItem modülden
+            display:flex aldığı için aynı elemandaki lg:hidden ezilirdi. ── */}
+        <div className="lg:hidden">
+          <div className={styles.metaItem}>
+            <DemandNotice variant="compact" locale={locale} />
+          </div>
+        </div>
 
         {/* ── Alt çizgi + iki özellik pill ── */}
         <div className={styles.featuresRow}>
