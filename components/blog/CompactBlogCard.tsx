@@ -47,7 +47,9 @@ export default function CompactBlogCard({
   const dateLabel = formatDate(post.publishDate, locale)
 
   return (
-    <article className="group flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e7eaee] bg-[#f1f3f5] shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.14)]">
+    /* Kart kabı tur/yat kartlarıyla aynı reçete (görünür yumuşak kenar + katmanlı
+       gölge); açık gri zemin bilinçli, korunuyor. */
+    <article className="group flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#dfe3e8] bg-[#f1f3f5] shadow-[0_1px_2px_rgba(19,23,25,0.06),0_6px_20px_-4px_rgba(19,23,25,0.14)] transition-all duration-300 hover:-translate-y-1 hover:border-[#cbd5e1] hover:shadow-[0_2px_4px_rgba(19,23,25,0.06),0_18px_36px_-10px_rgba(19,23,25,0.22)]">
       <Link
         href={href}
         className="flex min-h-0 flex-1 flex-col rounded-2xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#2168b8]"

@@ -139,7 +139,10 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
             role="region"
             aria-label="Özel tekneler listesi"
             tabIndex={0}
-            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 pl-0 pr-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:thin] scroll-smooth md:pl-14 md:pr-14 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-track]:bg-transparent"
+            /* Yatay kaydırma çubuğu gizli (kaydırma davranışı aynen duruyor):
+               kartların altındaki ince gri çizgi istenmedi; sayfalama zaten
+               noktalarla gösteriliyor. */
+            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 pl-0 pr-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth md:pl-14 md:pr-14 [&::-webkit-scrollbar]:hidden"
           >
             {items.map((yacht, index) => (
               <div
@@ -181,7 +184,11 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
         </div>
 
         {items.length > 1 ? (
-          <div className="mt-5 flex items-center justify-center gap-1.5" role="tablist" aria-label="Tekne sayfaları">
+          /* Sayfalama noktaları — PopularToursSection ile birebir aynı spec
+             (gap 10px, 8px nokta, aktif 24px marka mavisi). Renk sınıfta:
+             inline background hover'ı ezerdi; genişlik dinamik olduğu için
+             inline kaldı. */
+          <div className="mt-5 flex items-center justify-center gap-2.5" role="tablist" aria-label="Tekne sayfaları">
             {items.map((yacht, i) => (
               <button
                 key={yacht._id}
@@ -190,11 +197,11 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
                 aria-selected={i === activeDot}
                 aria-label={`${i + 1}. tekneye git`}
                 onClick={() => scrollToIndex(i)}
-                className="h-2 rounded-full transition-all duration-300"
-                style={{
-                  width: i === activeDot ? 22 : 8,
-                  background: i === activeDot ? 'var(--primary, #2168b8)' : '#d4d4d8',
-                }}
+                className={`h-2 rounded-full transition-all duration-300 ease-out ${
+                  i === activeDot
+                    ? 'w-6 bg-[var(--primary,#2168b8)]'
+                    : 'w-2 bg-[#d4d4d8] hover:bg-[#a1a1aa]'
+                }`}
               />
             ))}
           </div>

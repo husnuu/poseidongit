@@ -332,7 +332,8 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
             {SUBTEXT[locale](totalCount.toLocaleString(numLocale), avgRating.toFixed(1))}
           </p>
           {(googleReviewsUrl || instagramUrl) && (
-            <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
+            /* gap 12→16px mobil, 16→20px masaüstü: iki buton birbirine fazla yakındı. */
+            <div className="mt-5 flex flex-col items-center gap-4 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-5">
               {googleReviewsUrl && (
                 <a
                   href={googleReviewsUrl}
@@ -355,10 +356,12 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                   // Google butonuyla birebir aynı dil: şeffaf zemin + 2px tek renk (Instagram
                   // pembesi) çerçeve, üstüne gelince/basınca dolgu AYNI pembeye dönüyor + beyaz
                   // metin (gradyan yok — Google butonundaki gibi tek renk). Mobilde Google
-                  // butonunun altında, biraz daha küçük; masaüstünde yan yana ve aynı boyutta.
-                  className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-lg border-2 border-[#d62976] bg-transparent px-4 py-1.5 text-[12px] font-bold uppercase tracking-wide text-[#d62976] transition duration-200 hover:scale-105 hover:bg-[#d62976] hover:text-white sm:gap-2.5 sm:px-6 sm:py-2.5 sm:text-[15px]"
+                  // butonunun altında, hâlâ biraz daha küçük ama eskisinden bir tık büyük
+                  // (px-4/py-1.5/12px → px-5/py-2/13px, ikon 15→17); masaüstünde yan yana
+                  // ve aynı boyutta.
+                  className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-lg border-2 border-[#d62976] bg-transparent px-5 py-2 text-[13px] font-bold uppercase tracking-wide text-[#d62976] transition duration-200 hover:scale-105 hover:bg-[#d62976] hover:text-white sm:gap-2.5 sm:px-6 sm:py-2.5 sm:text-[15px]"
                 >
-                  <InstagramModern className="h-[15px] w-[15px] sm:h-[21px] sm:w-[21px]" />
+                  <InstagramModern className="h-[17px] w-[17px] sm:h-[21px] sm:w-[21px]" />
                   {instagramFollowerCount
                     ? INSTAGRAM_LABEL[locale](instagramFollowerCount)
                     : INSTAGRAM_FOLLOW_LABEL[locale]}

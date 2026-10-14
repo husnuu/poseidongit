@@ -112,8 +112,10 @@ export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionP
             return (
               <div
                 key={index}
-                className={`group overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-200 hover:shadow-md ${
-                  isOpen ? 'border-[var(--primary,#2168b8)]/30' : 'border-[#f1f5f9] hover:border-[var(--primary,#2168b8)]/20'
+                /* Kart: görünmez #f1f5f9 kenar + shadow-sm zeminle kaynaşıyordu; tur/yat
+                   kartlarıyla aynı reçete — görünür yumuşak kenar + katmanlı gölge. */
+                className={`group overflow-hidden rounded-2xl border bg-white shadow-[0_1px_2px_rgba(19,23,25,0.05),0_4px_14px_-4px_rgba(19,23,25,0.09)] transition-all duration-200 hover:shadow-[0_2px_4px_rgba(19,23,25,0.05),0_10px_24px_-8px_rgba(19,23,25,0.14)] ${
+                  isOpen ? 'border-[var(--primary,#2168b8)]/35' : 'border-[#e5e9ef] hover:border-[var(--primary,#2168b8)]/25'
                 }`}
               >
                 <button
@@ -122,8 +124,10 @@ export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionP
                   aria-expanded={isOpen}
                   className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
                 >
+                  {/* Soru: bold (belirginlik) ama 15/16px — bir üst deneme (16/17 +
+                      güçlü gölge) fazla bulundu, bir tık geri çekildi. */}
                   <span
-                    className={`text-[15px] font-semibold transition-colors duration-200 sm:text-base ${
+                    className={`text-[15px] font-bold leading-snug transition-colors duration-200 sm:text-[16px] ${
                       isOpen ? 'text-[var(--primary,#2168b8)]' : 'text-[var(--secondary,#131719)] group-hover:text-[var(--primary,#2168b8)]'
                     }`}
                   >

@@ -136,7 +136,9 @@ export default function BlogSection({
             role="region"
             aria-label="Blog yazıları listesi"
             tabIndex={0}
-            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 pl-0 pr-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:thin] scroll-smooth md:pr-14 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-track]:bg-transparent"
+            /* Yatay kaydırma çubuğu gizli (kaydırma aynen duruyor) — kartların
+               altındaki ince gri çizgi istenmedi; PopularYachtsSection ile aynı. */
+            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 pl-0 pr-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth md:pr-14 [&::-webkit-scrollbar]:hidden"
           >
             {posts.map((post, index) => (
               <div

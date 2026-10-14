@@ -328,11 +328,11 @@
 /* Mobil menüdeki "DİL" bölümü — referans siteki gibi hap şeklinde seçenekler,
    seçili olan beyaz zeminde onay işaretiyle öne çıkıyor. */
 .mobileMenuLangSection {
-  /* Üstteki menü linkleri artık flex:1 ile boş alanı yutmuyor, bu yüzden
-     linkler ile dil seçenekleri arasında ortada koca bir boşluk kalmıyor —
-     sabit, dengeli bir aralıkla hemen altında akıyor. Ekranda kalan boşluk
-     varsa (uzun telefonlarda) menünün en altında, içerikten sonra kalır —
-     içeriğin ORTASINDA değil. */
+  /* Üstteki menü linkleri flex:1 ile boş alanı yutmuyor, bu yüzden linkler
+     ile dil seçenekleri arasında ortada koca bir boşluk kalmıyor — sabit,
+     dengeli bir aralıkla hemen altında akıyor. Ekranda kalan boşluk varsa
+     (uzun telefonlarda) menünün en altında, içerikten sonra kalır. (Dikey
+     ortalama denendi ve geri alındı: linkler logodan fazla uzaklaşıyordu.) */
   margin-top: 2.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
@@ -1060,7 +1060,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  /* 24 → 40px: ilk link logoya yapışık duruyordu; ortalama denendi, fazla
+     uzak bulundu — üstten yığılı ama nefesli. */
+  margin-bottom: 40px;
   flex-shrink: 0;
 }
 
@@ -1123,7 +1125,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .mobileMenuNavItem {
@@ -1135,7 +1137,9 @@
   font-family: var(--font-family), 'Inter', system-ui, -apple-system, sans-serif;
   font-weight: 800;
   -webkit-text-stroke: 0.9px currentColor;
-  font-size: clamp(27px, 7vw, 35px);
+  /* 27–35px dev puntolar ekranı sıkıştırıyordu; ortalanmış düzende biraz
+     daha ölçülü. */
+  font-size: clamp(24px, 6.4vw, 30px);
   line-height: 1.2;
   text-transform: uppercase;
   color: #fff;

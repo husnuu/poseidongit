@@ -137,12 +137,15 @@ export default function PopularToursSection({
             ))}
           </div>
           {items.length > 1 && (
-            <div className="mt-4 flex justify-center gap-1.5" aria-hidden>
+            /* Sayfalama noktaları — PopularYachtsSection ile birebir aynı spec:
+               gap 10px (önceden 6, sıkışıktı), 8px nokta, aktif 24px marka
+               mavisi pill (önceden koyu siyah, daha ağır duruyordu). */
+            <div className="mt-5 flex items-center justify-center gap-2.5" aria-hidden>
               {items.map((_, i) => (
                 <span
                   key={i}
-                  className={`h-1.5 rounded-full transition-all duration-200 ${
-                    i === activeIndex ? 'w-5 bg-[var(--secondary,#131719)]' : 'w-1.5 bg-zinc-300'
+                  className={`h-2 rounded-full transition-all duration-300 ease-out ${
+                    i === activeIndex ? 'w-6 bg-[var(--primary,#2168b8)]' : 'w-2 bg-[#d4d4d8]'
                   }`}
                 />
               ))}
