@@ -47,6 +47,8 @@ interface StickyBookingCardProps {
   /** When set, opens modal instead of navigating to /rezervasyon/[slug] */
   onRezervasyonClick?: () => void
   locale?: SiteLocale
+  /** Yalnızca popüler turda "talepler yoğun" kutusu gösterilir. */
+  highDemand?: boolean
 }
 
 function getDepositLabel(
@@ -88,6 +90,7 @@ export default function StickyBookingCard({
   deposit,
   onRezervasyonClick,
   locale = 'tr',
+  highDemand = false,
 }: StickyBookingCardProps) {
   const ui = useMemo(() => getTourPageUi(locale), [locale])
   const reservePath = rezervasyonHref?.trim() || `/rezervasyon/${tourSlug}`
@@ -153,9 +156,9 @@ export default function StickyBookingCard({
           </Link>
         )}
 
-        {/* Paylaşımlı bileşen — mobilde tur başlığının altında da aynısı
-            render ediliyor (bkz. tur sayfası). */}
-        <DemandNotice locale={locale} className="mt-4" />
+        {/* Paylaşımlı bileşen — mobilde TourHeader'daki compact şerit aynısını
+            gösterir. Yalnızca Sanity'de "popüler" işaretli turda. */}
+        {highDemand && <DemandNotice locale={locale} className="mt-4" />}
       </div>
     </div>
   )

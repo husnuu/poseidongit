@@ -75,12 +75,10 @@ export default function YachtDetailView({ locale, yacht, path, whatsappUrl }: Ya
   }
   crumbs.push({ name: yacht.name, url: path })
 
+  // Yalnızca JSON-LD: görünür breadcrumb satırı kullanıcı isteğiyle kaldırıldı
+  // (tur sayfasında da aynısı yapılmıştı). Şema kalıyor — arama sonucundaki
+  // kırıntı yolunu o besliyor, sayfada hiçbir şey göstermiyor.
   const breadcrumbSchema = buildBreadcrumbSchema(crumbs)
-  // JSON-LD'deki crumbs listesi aynı zamanda görünür breadcrumb UI'ı için de
-  // kullanılıyor — ikisi farklı veriden üretilirse Google'ın structured-data
-  // tutarlılık kuralını ihlal eder (bkz. SEO denetimi: önceden yalnızca
-  // JSON-LD vardı, sayfada görünür bir breadcrumb yoktu).
-  const breadcrumbItems = crumbs.map((c) => ({ label: c.name, href: withLocalePath(locale, c.url) }))
 
   const url = absoluteUrl(withLocalePath(locale, path))
   const productSchema = buildTourSchema({
@@ -120,7 +118,6 @@ export default function YachtDetailView({ locale, yacht, path, whatsappUrl }: Ya
       <div className="container mx-auto px-4 py-16 max-w-[1360px]">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
           <main className="flex-1 min-w-0">
-            <Breadcrumb items={breadcrumbItems} className="mb-4" />
             <YachtHeader
               name={yacht.name}
               yachtType={yacht.yachtType}

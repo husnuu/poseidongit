@@ -1,6 +1,11 @@
 .sidebar {
   position: sticky;
-  top: 24px;
+  /* Header `position: fixed` ve ~83px yüksekliğinde; top:24px iken kartın üst
+     59px'i header'ın altında kalıyordu. --site-header-h'ı HeaderClient her
+     scroll/resize'da gerçek ölçümle yazıyor; yedek değer JS öncesi ilk boyama
+     için. Bu sınıfı tur (StickyBookingCard) ve yat (StickyInquiryCard)
+     kartlarının ikisi de kullanıyor. */
+  top: calc(var(--site-header-h, 83px) + 16px);
   align-self: start;
   width: 100%;
   max-width: 360px;
@@ -193,6 +198,52 @@
 
 /* "Yoğun talep" kutusu components/booking/DemandNotice.(tsx|module.css)'e
    taşındı — masaüstü kartı ve mobil başlık altı aynı bileşeni kullanıyor. */
+
+/* ── Bilgilendirme notu — yat kartındaki "Bu adımda ödeme alınmaz…" ──
+   REGRESYON DÜZELTMESİ: bu blok eskiden tur kartıyla paylaşılan .demand*
+   sınıflarını kullanıyordu; DemandNotice bileşeni ayrılırken o sınıflar bu
+   dosyadan kaldırılınca yat notu stilsiz kaldı (ikon tek başına bir satırda,
+   metin hizasız). Artık kendi sınıfları var. Semantiği de farklı: aciliyet
+   değil bilgi — o yüzden amber değil nötr slate. */
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.noteIcon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+}
+
+.noteText {
+  flex: 1;
+  min-width: 0;
+}
+
+.noteTitle {
+  font-family: var(--font-family), sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--secondary, #131719);
+  margin: 0 0 3px 0;
+}
+
+.noteSubtitle {
+  font-family: var(--font-family), sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-color, #58595b);
+  margin: 0;
+}
 
 @media (max-width: 1023px) {
   .sidebar {

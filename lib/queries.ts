@@ -331,6 +331,9 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
     "de": coalesce(translations.de.slug.current, slug.current),
     "ru": coalesce(translations.ru.slug.current, slug.current)
   },
+  // "Talepler yoğun" uyarısı yalnızca popüler turda gösterilsin diye —
+  // kartlardaki "EN POPÜLER" rozetini süren alanın aynısı.
+  isPopular,
   shortDescription,
   seo{
     metaTitle,
@@ -838,6 +841,21 @@ export const blogPageQuery = `*[_type == "blogPage"][0] {
   pageTranslations
 }`
 
+/**
+ * Blog yazılarının altındaki yazar/kaptan kartı. Sanity'de blog yazarı için
+ * yalnızca isim (string) var — fotoğraflı tek gerçek kişi kaydı turların
+ * `host` alanı, o yüzden kaynak orası. Popüler tur öne alınır.
+ * Biyografi: önce `host.note` (bu iş için doğru alan, şu an boş), yoksa
+ * turun birinci ağızdan "neden seveceksiniz" metni.
+ */
+export const blogAuthorCardQuery = `*[_type == "tour" && defined(host.name) && defined(host.photo.asset)]
+  | order(coalesce(isPopular, false) desc, _updatedAt desc)[0]{
+  "name": host.name,
+  "title": host.title,
+  "note": coalesce(host.note, whyYouWillLove.text),
+  "photoUrl": host.photo.asset->url
+}`
+
 export const blogBySlugQuery = `*[_type == "blog" && (
   slug.current == $slug ||
   translations.en.slug.current == $slug ||
@@ -998,6 +1016,9 @@ export const homePageHeroQuery = `*[_type == "homePage"][0] {
       "slug": slug.current,
       excerpt,
       "publishDate": coalesce(publishedAt, publishDate),
+      // Kartlarda "· 4 dk okuma" için — blog liste/detay sorgularında zaten vardı.
+      readingTime,
+      readTime,
       coverImage{ asset, alt },
       translations
     },

@@ -24,6 +24,12 @@ type BlogSectionProps = {
   data: BlogSectionData | null
   locale?: SiteLocale
   noImageLabel?: string
+  /** Başlık override — blog yazısı altındaki "Okumaya devam et" bölümü aynı
+      carousel'i kullanıyor. Verilmezse ana sayfadaki sabit başlık. */
+  heading?: string
+  /** 'home' = ana sayfadaki büyük ortalı mavi başlık + "tüm yazılar" butonu.
+      'compact' = blog yazısı altı: sola yaslı, küçük, koyu başlık; CTA yok. */
+  variant?: 'home' | 'compact'
 }
 
 function seeAllPostsLabel(locale: SiteLocale): string {
@@ -44,7 +50,10 @@ export default function BlogSection({
   data,
   locale = 'tr',
   noImageLabel = 'Görsel yok',
+  heading,
+  variant = 'home',
 }: BlogSectionProps) {
+  const compact = variant === 'compact'
   const sectionRef = useRef<HTMLElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
@@ -88,7 +97,7 @@ export default function BlogSection({
   if (!data?.enabled || !data?.posts?.length) return null
 
   const { subtitle, posts, ctaButton } = data
-  const titleUpper = SECTION_TITLE[locale]
+  const titleUpper = heading?.trim() || SECTION_TITLE[locale]
 
   const blogIndexPath = withLocalePath(locale, '/blog')
   const seeAllHref = (ctaButton?.href?.trim() || blogIndexPath) as string
@@ -98,7 +107,11 @@ export default function BlogSection({
   return (
     <section
       ref={sectionRef}
-      className="w-full bg-zinc-50/60 pt-14 pb-6 transition-all duration-300 ease-out md:pt-20 md:pb-8"
+      className={
+        compact
+          ? 'w-full bg-white pb-10 pt-10 transition-all duration-300 ease-out md:pb-14 md:pt-14'
+          : 'w-full bg-zinc-50/60 pt-14 pb-6 transition-all duration-300 ease-out md:pt-20 md:pb-8'
+      }
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(10px)',
@@ -106,15 +119,19 @@ export default function BlogSection({
       aria-labelledby="blog-section-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">
-        <header className="mb-8 text-center md:mb-10">
+        <header className={compact ? 'mb-6 text-left md:mb-7' : 'mb-8 text-center md:mb-10'}>
           <h2
             id="blog-section-heading"
-            className="mb-4 text-[28px] font-black uppercase leading-[1.15] sm:text-[32px] md:mb-3 md:text-[36px] lg:text-[40px]"
+            className={
+              compact
+                ? 'mb-0 text-[21px] font-extrabold uppercase leading-[1.2] tracking-[0.01em] sm:text-[23px] md:text-[26px]'
+                : 'mb-4 text-[28px] font-black uppercase leading-[1.15] sm:text-[32px] md:mb-3 md:text-[36px] lg:text-[40px]'
+            }
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
-              fontWeight: 900,
-              WebkitTextStroke: '0.6px currentColor',
-              color: 'var(--primary, #2168b8)',
+              fontWeight: compact ? 800 : 900,
+              WebkitTextStroke: compact ? undefined : '0.6px currentColor',
+              color: compact ? 'var(--secondary, #131719)' : 'var(--primary, #2168b8)',
             }}
           >
             {titleUpper}
@@ -183,7 +200,9 @@ export default function BlogSection({
           )}
         </div>
 
-        <div className="mt-8 flex justify-center md:mt-10">
+        {/* Referans tasarımda yazı altındaki bölüm kartlarla bitiyor; ayrıca
+            sayfa başında zaten "← Blog" bağlantısı var. */}
+        <div className={compact ? 'hidden' : 'mt-8 flex justify-center md:mt-10'}>
           <Link
             href={seeAllHref}
             className="inline-flex min-h-[44px] items-center justify-center rounded-lg border-2 px-8 py-2.5 text-xs font-bold uppercase tracking-wide transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06]"

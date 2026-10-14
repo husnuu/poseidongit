@@ -219,6 +219,9 @@ export interface Tour {
   slug: string
   /** hreflang alternates için — her dilin kendi slug'u (bkz. lib/queries.ts). */
   localeSlugs?: { tr?: string | null; en?: string | null; de?: string | null; ru?: string | null }
+  /** Sanity'de "popüler" işaretli mi — kart rozetini ve "talepler yoğun"
+      uyarısını sürer. */
+  isPopular?: boolean | null
   shortDescription?: string
   seo?: TourSeo | null
   description?: PortableTextBlock[] | null

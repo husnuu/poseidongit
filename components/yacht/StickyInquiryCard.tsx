@@ -35,7 +35,7 @@ function DemandIcon() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
-      className={styles.demandIcon}
+      className={styles.noteIcon}
     >
       <path
         d="M12 22C6.477 22 2 17.523 2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22Z"
@@ -115,11 +115,11 @@ export default function StickyInquiryCard({
           {ctaText}
         </button>
 
-        <div className={styles.demand} role="note">
+        <div className={styles.note} role="note">
           <DemandIcon />
-          <div className={styles.demandText}>
-            <p className={styles.demandTitle}>{noteTitle}</p>
-            <p className={styles.demandSubtitle}>{noteSubtitle}</p>
+          <div className={styles.noteText}>
+            <p className={styles.noteTitle}>{noteTitle}</p>
+            <p className={styles.noteSubtitle}>{noteSubtitle}</p>
           </div>
         </div>
       </div>

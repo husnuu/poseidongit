@@ -88,6 +88,8 @@ export interface TourHeaderProps {
   meetingLocation?: string | null
   meetingLocationUrl?: string | null
   locale: SiteLocale
+  /** Yalnızca popüler turda "talepler yoğun" şeridi gösterilir. */
+  highDemand?: boolean
 }
 
 export function TourHeader({
@@ -100,6 +102,7 @@ export function TourHeader({
   meetingLocation,
   meetingLocationUrl,
   locale,
+  highDemand = false,
 }: TourHeaderProps) {
   const tourUi = useMemo(() => getTourPageUi(locale), [locale])
   const displayRatingLabel = resolveTourRatingLabel(
@@ -174,11 +177,13 @@ export function TourHeader({
             yer kaplayıp hantal duruyordu; meta satırlarının devamı gibi tek
             satırlık şerit. lg:hidden dış sarmalayıcıda: .metaItem modülden
             display:flex aldığı için aynı elemandaki lg:hidden ezilirdi. ── */}
-        <div className="lg:hidden">
-          <div className={styles.metaItem}>
-            <DemandNotice variant="compact" locale={locale} />
+        {highDemand && (
+          <div className="lg:hidden">
+            <div className={styles.metaItem}>
+              <DemandNotice variant="compact" locale={locale} />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ── Alt çizgi + iki özellik pill ── */}
         <div className={styles.featuresRow}>

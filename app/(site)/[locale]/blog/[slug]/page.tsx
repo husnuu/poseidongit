@@ -2,13 +2,17 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { Clock } from 'lucide-react'
+import { Clock, ArrowLeft } from 'lucide-react'
 import { client, urlFor } from '@/lib/sanity'
-import { blogBySlugQuery } from '@/lib/queries'
+import { blogBySlugQuery, blogsListQuery, blogAuthorCardQuery } from '@/lib/queries'
+import BlogSection from '@/components/home/BlogSection'
+import PostFeedback from '@/components/blog/PostFeedback'
+import BlogAuthorCard, { type BlogAuthorCardData } from '@/components/blog/BlogAuthorCard'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
 import JsonLd from '@/components/seo/JsonLd'
-import Breadcrumb from '@/components/common/Breadcrumb'
+import ShareButton from '@/components/ui/ShareButton'
+import { formatBlogReadTime } from '@/lib/i18n/formatBlogReadTime'
 import {
   buildBreadcrumbSchema,
   buildBlogPostingSchema,
@@ -149,12 +153,37 @@ export default async function BlogPostPage({
   const ui = getBlogPageUiStrings(locale)
   const dateLocale = dateLocaleForSite(locale)
 
-  const post = await client.fetch<BlogPost | null>(blogBySlugQuery, { slug })
+  const [post, allPosts, authorCard] = await Promise.all([
+    client.fetch<BlogPost | null>(blogBySlugQuery, { slug }),
+    // "Okumaya devam et" carousel'i — ayrı bir "ilgili yazılar" alanı
+    // Sanity'de yok; en yeni yazılardan mevcut olan çıkarılarak besleniyor.
+    client.fetch<BlogPost[]>(blogsListQuery).catch(() => [] as BlogPost[]),
+    client.fetch<BlogAuthorCardData | null>(blogAuthorCardQuery).catch(() => null),
+  ])
 
   if (!post) notFound()
 
   const rawPost = post as unknown as Record<string, unknown>
   const merged = mergeBlogForLocale(rawPost, locale) as unknown as BlogPost
+
+  // Okunan yazı hariç, en yeni 4 yazı (başlık/özet locale'e göre birleştirilir).
+  const keepReadingPosts = (allPosts ?? [])
+    .filter((p) => p?.slug && p.slug !== slug)
+    .slice(0, 4)
+    .map((p) => {
+      const m = mergeBlogForLocale(p as unknown as Record<string, unknown>, locale) as unknown as BlogPost
+      return {
+        _id: m._id,
+        title: m.title ?? null,
+        slug: m.slug ?? null,
+        excerpt: m.excerpt ?? null,
+        publishDate: m.publishDate ?? null,
+        readingTime: m.readingTime ?? null,
+        readTime: m.readTime ?? null,
+        coverImageUrl: m.coverImage?.asset ? urlFor(m.coverImage.asset).width(800).height(600).url() : null,
+        coverImageAlt: m.coverImage?.alt ?? null,
+      }
+    })
 
   const title = tourFieldHasManualTranslation(rawPost, locale, 'title')
     ? merged.title
@@ -192,9 +221,10 @@ export default async function BlogPostPage({
     { name: ui.blogListTitleSuffix, url: blogListPath },
     { name: title, url: postPath },
   ]
+  // Yalnızca JSON-LD: sayfada tam breadcrumb yerine tek bir "← Blog"
+  // bağlantısı var (referans tasarım). Şema arama sonucundaki kırıntı
+  // yolunu beslemeye devam ediyor.
   const breadcrumbSchema = buildBreadcrumbSchema(breadcrumbCrumbs)
-  // JSON-LD ile aynı veriden görünür breadcrumb (bkz. tur/yat detay sayfaları).
-  const breadcrumbItems = breadcrumbCrumbs.map((c) => ({ label: c.name, href: c.url }))
   const blogPostingSchema = buildBlogPostingSchema({
     title,
     description: excerpt ?? undefined,
@@ -209,7 +239,11 @@ export default async function BlogPostPage({
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={blogPostingSchema} />
       <article className={styles.article}>
-        <Breadcrumb items={breadcrumbItems} className="mb-4" />
+        {/* Referansta tam breadcrumb yerine tek bir geri bağlantısı var. */}
+        <Link href={blogListPath} className={styles.backLink}>
+          <ArrowLeft className={styles.backIcon} size={16} strokeWidth={2} aria-hidden />
+          {ui.blogListTitleSuffix}
+        </Link>
         <header className={styles.header}>
           <h1 className={`${styles.title} pageHeroTitleStroke`}>{title}</h1>
 
@@ -225,14 +259,30 @@ export default async function BlogPostPage({
                   <span className={styles.authorName}>{merged.author}</span>
                 </>
               )}
-              {(merged._updatedAt || merged.publishDate) && (
+              {(merged.publishDate || merged._updatedAt) && (
                 <span className={styles.updatedWrap}>
                   <Clock className={styles.updatedIcon} size={15} strokeWidth={2} aria-hidden />
+                  {/* Referans: "24 Eylül 2026 · 4 dk okuma" — kartla aynı tarih
+                      ve biçim (önceden "Son güncelleme: …" yazıyor, karttaki
+                      yayın tarihinden farklı bir tarih gösteriyordu). */}
                   <span>
-                    {ui.updatedLabel}: {formatDate(merged._updatedAt ?? merged.publishDate, dateLocale)}
+                    {[
+                      formatDate(merged.publishDate ?? merged._updatedAt, dateLocale),
+                      formatBlogReadTime(merged, ui.readTimeSuffix),
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </span>
                 </span>
               )}
+              <ShareButton
+                title={title}
+                description={excerpt ?? undefined}
+                imageUrl={coverUrl ?? undefined}
+                path={postPath}
+                locale={locale}
+                className={styles.shareBtn}
+              />
             </div>
           )}
         </header>
@@ -268,24 +318,39 @@ export default async function BlogPostPage({
           </div>
         )}
 
-        <nav className={styles.relatedLinks} aria-label={ui.relatedPagesHeading}>
-          <h2 className={styles.relatedHeading}>{ui.relatedPagesHeading}</h2>
-          <ul className={styles.relatedList}>
-            <li>
-              <Link href={withLocalePath(locale, '/turlar')}>{ui.relatedTours}</Link>
-            </li>
-            <li>
-              <Link href={withLocalePath(locale, '/koylar')}>{ui.relatedCoves}</Link>
-            </li>
-          </ul>
-        </nav>
+        {/* Kullanıcı tercihiyle yalnızca görsel — oy kaydedilmiyor
+            (bkz. PostFeedback.tsx). */}
+        <PostFeedback slug={slug} locale={locale} />
 
-        <div className={styles.backLinkWrap}>
-          <Link href={blogListPath} className={styles.backLink}>
-            {ui.allPosts}
-          </Link>
+        {/* Yazının sonu: geniş paylaş butonu (kart köşesindekiyle aynı
+            SharePopup'ı açar, yalnızca etiketli ve tam genişlikte). */}
+        <div className={styles.shareRow}>
+          <ShareButton
+            title={title}
+            description={excerpt ?? undefined}
+            imageUrl={coverUrl ?? undefined}
+            path={postPath}
+            locale={locale}
+            label={ui.shareThisPost}
+            className={styles.shareWideBtn}
+          />
         </div>
+
+        {/* Yazar/kaptan kartı — içerik Sanity'deki gerçek host kaydından. */}
+        <BlogAuthorCard author={authorCard} locale={locale} />
       </article>
+
+      {/* "Okumaya devam et" — ana sayfadaki blog carousel'i, yazı altı için
+          sade varyantıyla (sola yaslı küçük koyu başlık, CTA yok). */}
+      {keepReadingPosts.length > 0 && (
+        <BlogSection
+          data={{ enabled: true, posts: keepReadingPosts }}
+          locale={locale}
+          noImageLabel={ui.noCoverImage}
+          heading={ui.keepReadingHeading}
+          variant="compact"
+        />
+      )}
     </main>
   )
 }

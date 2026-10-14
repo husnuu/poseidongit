@@ -1,0 +1,99 @@
+/* Yazar/kaptan kartı — dairesel fotoğraf üstten taşar (referans tasarım). */
+.card {
+  position: relative;
+  margin: 92px auto 0;
+  max-width: 760px;
+  padding: 76px 28px 28px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #e5e9ef;
+  text-align: center;
+}
+
+.avatarWrap {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 5px solid #fff;
+  box-shadow: 0 6px 20px -6px rgba(19, 23, 25, 0.25);
+  background: #fff;
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-weight: 800;
+  font-size: 19px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--secondary, #131719);
+}
+
+.role {
+  margin: 4px 0 0;
+  font-family: var(--font-family), sans-serif;
+  font-size: 14px;
+  color: var(--muted, #81848b);
+}
+
+.body {
+  margin: 16px auto 0;
+  max-width: 620px;
+  font-family: var(--font-family), sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-color, #58595b);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin-top: 24px;
+  padding: 0 32px;
+  border-radius: 10px;
+  background: var(--primary, #2168b8);
+  color: #fff;
+  font-family: var(--font-family), sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.cta:hover {
+  filter: brightness(1.07);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .card {
+    margin-top: 80px;
+    padding: 68px 18px 24px;
+  }
+  .avatarWrap {
+    top: -52px;
+    width: 104px;
+    height: 104px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta:hover {
+    transform: none;
+  }
+}

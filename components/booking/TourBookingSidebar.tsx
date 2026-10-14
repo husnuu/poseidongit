@@ -16,6 +16,8 @@ interface TourBookingSidebarProps {
   bookingCard?: { fromText?: string; ctaText?: string; urgencyText?: string; trustBadges?: string[] }
   /** Örn. withLocalePath(locale, `/rezervasyon/${slug}`) */
   rezervasyonHref?: string
+  /** Yalnızca popüler turda "talepler yoğun" kutusu gösterilir. */
+  highDemand?: boolean
 }
 
 export default function TourBookingSidebar({
@@ -24,6 +26,7 @@ export default function TourBookingSidebar({
   bookingCard,
   rezervasyonHref,
   locale = 'tr',
+  highDemand = false,
 }: TourBookingSidebarProps) {
   const [isBookingOpen, setIsBookingOpen] = useState(false)
 
@@ -44,6 +47,7 @@ export default function TourBookingSidebar({
           deposit={tour.deposit}
           onRezervasyonClick={() => setIsBookingOpen(true)}
           locale={locale}
+          highDemand={highDemand}
         />
       </aside>
       <MobileStickyBookingBar

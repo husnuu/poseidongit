@@ -8,6 +8,9 @@ export type BlogPageUiStrings = {
   backToList: string
   allPosts: string
   relatedPagesHeading: string
+  /** Yazı altındaki ilgili yazılar carousel'i (referans: "Okumaya devam et"). */
+  keepReadingHeading: string
+  shareThisPost: string
   relatedTours: string
   relatedCoves: string
   postNotFoundTitle: string
@@ -25,10 +28,12 @@ const TR: BlogPageUiStrings = {
   backToList: '← Blog listesine dön',
   allPosts: '← Tüm yazılar',
   relatedPagesHeading: 'İlgili sayfalar',
+  keepReadingHeading: 'OKUMAYA DEVAM ET',
+  shareThisPost: 'Bu yazıyı paylaş',
   relatedTours: 'Çeşme tekne turları',
   relatedCoves: 'Çeşme koyları',
   postNotFoundTitle: 'Yazı bulunamadı',
-  readTimeSuffix: 'dk',
+  readTimeSuffix: 'dk okuma',
   blogListTitleSuffix: 'Blog',
   blogListDefaultDescription:
     'Tekne turu ipuçları, koy rehberleri ve tatil yazıları.',
@@ -43,10 +48,12 @@ const EN: BlogPageUiStrings = {
   backToList: '← Back to blog',
   allPosts: '← All posts',
   relatedPagesHeading: 'Related pages',
+  keepReadingHeading: 'KEEP READING',
+  shareThisPost: 'Share this post',
   relatedTours: 'Boat tours in Çeşme',
   relatedCoves: 'Çeşme bays & coves',
   postNotFoundTitle: 'Post not found',
-  readTimeSuffix: 'min',
+  readTimeSuffix: 'min read',
   blogListTitleSuffix: 'Blog',
   blogListDefaultDescription:
     'Boat tour tips, cove guides, and travel stories.',
@@ -61,10 +68,12 @@ const DE: BlogPageUiStrings = {
   backToList: '← Zurück zum Blog',
   allPosts: '← Alle Beiträge',
   relatedPagesHeading: 'Weitere Seiten',
+  keepReadingHeading: 'WEITERLESEN',
+  shareThisPost: 'Diesen Beitrag teilen',
   relatedTours: 'Bootstouren in Çeşme',
   relatedCoves: 'Buchten in Çeşme',
   postNotFoundTitle: 'Beitrag nicht gefunden',
-  readTimeSuffix: 'Min.',
+  readTimeSuffix: 'Min. Lesezeit',
   blogListTitleSuffix: 'Blog',
   blogListDefaultDescription:
     'Tipps zu Bootstouren, Buchtenführer und Reisetexte.',
@@ -79,10 +88,12 @@ const RU: BlogPageUiStrings = {
   backToList: '← Назад к блогу',
   allPosts: '← Все статьи',
   relatedPagesHeading: 'Похожие страницы',
+  keepReadingHeading: 'ЧИТАТЬ ДАЛЬШЕ',
+  shareThisPost: 'Поделиться статьёй',
   relatedTours: 'Морские прогулки в Чешме',
   relatedCoves: 'Бухты Чешме',
   postNotFoundTitle: 'Статья не найдена',
-  readTimeSuffix: 'мин',
+  readTimeSuffix: 'мин чтения',
   blogListTitleSuffix: 'Блог',
   blogListDefaultDescription:
     'Советы по морским прогулкам, путеводители по бухтам и истории о путешествиях.',

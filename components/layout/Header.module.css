@@ -37,7 +37,16 @@
   padding: 14px 80px;
   height: auto;
   min-height: 83px;
-  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+  /* Kaydırma geçişi için TEK zamanlama kaynağı. Eskiden her parça kendi
+     süresindeydi (zemin 0.35s, logo/menü 0.25s, ikonlar 0.2s, .logoFallback
+     ise hiç) — hepsi farklı anlarda "varınca" geçişin bitişi göze çarpıyordu.
+     Artık hepsi aynı anda ve derin bir yavaşlama eğrisiyle iniyor; son %15
+     uzun bir kuyruğa yayıldığı için bitiş fark edilmiyor.
+     DİKKAT: yalnızca scroll'da değişen özelliklerde kullanılır (color, filter,
+     padding). Hover yalnızca opacity/background-color kullanıyor — onlar hızlı
+     kalmalı, yoksa fare tepkisi hantallaşır. */
+  --header-fade: 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background-color var(--header-fade), box-shadow var(--header-fade);
 }
 
 /*
@@ -84,7 +93,7 @@
     rgba(0, 0, 0, 0.35) 70%,
     transparent 100%
   );
-  transition: opacity 0.35s ease;
+  transition: opacity var(--header-fade);
 }
 
 .headerScrolled {
@@ -177,7 +186,7 @@
   max-width: 100%;
   max-height: 55px;
   display: block;
-  transition: filter 0.25s ease;
+  transition: filter var(--header-fade);
 }
 
 /* Lacivert / koyu zemin: tek renk logo → beyaz (mobil menü + footer) */
@@ -190,6 +199,9 @@
   font-weight: 700;
   font-size: 20px;
   color: var(--primary, #2168b8);
+  /* Geçişi hiç yoktu: scroll'da beyaza "zıplıyordu" (Sanity logosu yoksa
+     görünen yedek metin). */
+  transition: color var(--header-fade);
 }
 
 .desktopNav {
@@ -223,7 +235,8 @@
   color: var(--primary, #2168b8);
   text-decoration: none;
   letter-spacing: 0.5px;
-  transition: opacity 0.2s ease, color 0.25s ease;
+  /* opacity = hover (hızlı kalmalı), color = scroll (yavaş). */
+  transition: opacity 0.2s ease, color var(--header-fade);
 }
 
 /* Aktif/üzerine gelinen menüde belirgin alt çizgi — referans site ile birebir. */
@@ -238,7 +251,8 @@
   background: var(--primary, #2168b8);
   transform: scaleX(0);
   transform-origin: center;
-  transition: transform 0.2s ease;
+  /* transform = hover alt çizgisi (hızlı), background = scroll rengi (yavaş). */
+  transition: transform 0.2s ease, background-color var(--header-fade);
 }
 
 .desktopNavLink:hover {
@@ -257,7 +271,7 @@
   height: 24px;
   flex-shrink: 0;
   background: rgba(19, 23, 25, 0.14);
-  transition: background-color 0.25s ease;
+  transition: background-color var(--header-fade);
 }
 
 /* Footerdaki tıklanabilir öğeler (e-posta, telefon, tur/menü linkleri, rozetler
@@ -458,7 +472,7 @@
   padding: 0;
   cursor: pointer;
   color: var(--primary, #2168b8);
-  transition: color 0.25s ease;
+  transition: color var(--header-fade);
 }
 
 .mobileMenuBtn svg {
@@ -488,7 +502,10 @@
   border: none;
   background-color: transparent;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, padding 0.2s ease;
+  /* background/border-color = hover (hızlı); color + padding (compact boyut)
+     = scroll (yavaş, diğerleriyle aynı anda insin). */
+  transition: background 0.2s ease, border-color 0.2s ease, color var(--header-fade),
+    padding var(--header-fade), width var(--header-fade), height var(--header-fade);
   font-family: var(--font-family), sans-serif;
   /* Diğer header ikonlarıyla (favoriler kalbi, hamburger) aynı renk. */
   color: var(--secondary, #131719);
@@ -721,7 +738,7 @@
   padding: 0;
   cursor: pointer;
   color: var(--secondary, #131719);
-  transition: color 0.2s ease, opacity 0.2s ease;
+  transition: color var(--header-fade), opacity 0.2s ease;
 }
 
 .wishlistTrigger:hover {
@@ -1019,32 +1036,40 @@
   flex-direction: column;
   padding: 24px 28px;
   overflow-y: auto;
-  animation: menuSlideIn 200ms ease-out;
+  /* Soldan sağa kayarak açılır (önceden alttan yukarı + fade). Tam ekran
+     bir panel için saf kaydırma daha "çekmece" hissi veriyor. Süre 440ms:
+     200→260 denendi, hâlâ hızlı bulundu. Easing güçlü bir yavaşlama eğrisi —
+     panel sona doğru süzülerek yerleşir, "çat" diye oturmaz. */
+  animation: menuSlideIn 440ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .mobileMenuOverlay.closing {
-  animation: menuSlideOut 200ms ease-in forwards;
+  animation: menuSlideOut 360ms cubic-bezier(0.55, 0, 0.9, 0.3) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobileMenuOverlay,
+  .mobileMenuOverlay.closing {
+    animation: none;
+  }
 }
 
 @keyframes menuSlideIn {
   from {
-    opacity: 0;
-    transform: translateY(20px);
+    transform: translateX(-100%);
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
   }
 }
 
+/* Kapanış, açılışın aynadaki hâli — sola doğru çıkar. */
 @keyframes menuSlideOut {
   from {
-    opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
   }
   to {
-    opacity: 0;
-    transform: translateY(20px);
+    transform: translateX(-100%);
   }
 }
 

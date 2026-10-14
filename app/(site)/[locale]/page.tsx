@@ -314,6 +314,8 @@ type BlogSectionRaw = {
     slug: string | null
     excerpt?: string | null
     publishDate?: string | null
+    readingTime?: number | null
+    readTime?: string | null
     coverImage?: { asset?: { _ref: string }; alt?: string | null } | null
     translations?: unknown
   }> | null
@@ -593,6 +595,9 @@ async function mapBlogSection(raw: BlogSectionRaw | null, locale: SiteLocale): P
         slug: merged.slug,
         excerpt,
         publishDate: merged.publishDate,
+        // Kartta "· 4 dk okuma" — blog liste/detay kartlarıyla aynı biçim.
+        readingTime: merged.readingTime ?? null,
+        readTime: merged.readTime ?? null,
         coverImageUrl: merged.coverImage?.asset ? urlFor(merged.coverImage.asset).width(800).height(600).url() : null,
         coverImageAlt: merged.coverImage?.alt ?? null,
       }

@@ -524,6 +524,12 @@ export default function HeaderClient({
       const annH = announcementRef.current?.offsetHeight ?? 0
       const hdrH = headerRef.current?.offsetHeight ?? 0
       setHeaderHeight(hdrH)
+      // Sayfa içindeki `position: sticky` öğeler (tur/yat rezervasyon kartı)
+      // fixed header'ın ALTINA girmesin diye gerçek ölçülen yüksekliği CSS'e
+      // açıyoruz — sabit bir sayı yazmak yerine (logo/duyuru değişirse kayar).
+      if (hdrH > 0) {
+        document.documentElement.style.setProperty('--site-header-h', `${hdrH}px`)
+      }
       setHeaderTop(Math.max(0, annH - window.scrollY))
       setScrolled(window.scrollY > SCROLL_THRESHOLD)
     }

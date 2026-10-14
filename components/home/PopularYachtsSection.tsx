@@ -147,7 +147,9 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
             {items.map((yacht, index) => (
               <div
                 key={yacht._id}
-                className="w-[min(88vw,320px)] shrink-0 snap-start sm:w-[300px] md:w-[320px]"
+                /* Masaüstünde bir tık geniş: 320→350px (tur kartlarıyla
+                   orantılı kalsın diye aynı oranda artırıldı). */
+                className="w-[min(88vw,320px)] shrink-0 snap-start sm:w-[320px] md:w-[350px]"
                 style={{
                   opacity: visible ? 1 : 0,
                   transform: visible ? 'translateY(0)' : 'translateY(8px)',

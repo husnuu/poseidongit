@@ -162,7 +162,9 @@ export default function PopularToursSection({
             {items.map((tour, index) => (
               <div
                 key={tour._id}
-                className="w-[320px] flex-shrink-0 snap-start transition-all duration-300 ease-out lg:w-[350px]"
+                /* Masaüstünde bir tık geniş: 350→380px (kapsayıcı 1200px,
+                   32px boşlukla 3 kart + 4.'nün ucu hâlâ görünüyor). */
+                className="w-[320px] flex-shrink-0 snap-start transition-all duration-300 ease-out lg:w-[380px]"
                 style={{
                   opacity: visible ? 1 : 0,
                   transform: visible ? 'translateY(0)' : 'translateY(10px)',

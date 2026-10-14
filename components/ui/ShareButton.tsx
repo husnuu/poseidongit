@@ -20,13 +20,16 @@ interface ShareButtonProps {
   path: string
   locale: SiteLocale
   className?: string
+  /** Verilirse ikonun yanında metin gösterilir (blog yazısı altındaki geniş
+      "BU YAZIYI PAYLAŞ" butonu); verilmezse yalnızca ikon (kart köşesi). */
+  label?: string
 }
 
 /** Kart görselinin üstünde, favori (kalp) butonunun altında duran yuvarlak
     paylaşım butonu — tur sayfasındaki (PhotoGrid) paylaşım penceresiyle
     birebir aynı popup'ı açar (kopyala / WhatsApp / e-posta / Telegram /
     Facebook / X). */
-export default function ShareButton({ title, description, imageUrl, path, locale, className }: ShareButtonProps) {
+export default function ShareButton({ title, description, imageUrl, path, locale, className, label }: ShareButtonProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -44,7 +47,8 @@ export default function ShareButton({ title, description, imageUrl, path, locale
           'flex h-9 w-9 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/40'
         }
       >
-        <Share className="h-[17px] w-[17px]" strokeWidth={2} aria-hidden />
+        <Share className="h-[17px] w-[17px] shrink-0" strokeWidth={2} aria-hidden />
+        {label ? <span>{label}</span> : null}
       </button>
       {open && (
         <SharePopup

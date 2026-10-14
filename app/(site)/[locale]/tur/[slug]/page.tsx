@@ -343,6 +343,7 @@ export default async function TourPage({
                 durationText={tour.quickFacts?.durationText}
                 meetingLocation={tour.quickFacts?.meetingLocation}
                 locale={locale}
+                highDemand={!!tour.isPopular}
               />
               {/* Mobildeki "yoğun talep" şeridi TourHeader'ın meta satırları
                   içinde (compact varyant) — bkz. TourHeader.tsx. */}
@@ -459,6 +460,7 @@ export default async function TourPage({
             bookingCard={tour.bookingCard}
             rezervasyonHref={rezervasyonHref}
             locale={locale}
+            highDemand={!!tour.isPopular}
           />
         </div>
 

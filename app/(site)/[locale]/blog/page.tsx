@@ -102,17 +102,22 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
     console.error('Blog page fetch error:', err)
   }
 
+  // NOT: Bu üç alanın GERÇEK değeri Sanity'deki `blogPage` dokümanında
+  // (heroTitle / heroHighlightTitlePart / heroDescription). Aşağıdakiler
+  // yalnızca o alanlar boşsa devreye giren yedekler — "MAVİ HİKAYELER"
+  // başlığı Studio'dan girilmediği sürece sayfada görünmez.
   const line1 =
-    pageContent?.heroTitle ?? (locale === 'ru' ? 'БЛОГ' : 'BLOG')
+    pageContent?.heroTitle ??
+    (locale === 'en' ? 'BLUE' : locale === 'de' ? 'BLAUE' : locale === 'ru' ? 'СИНИЕ' : 'MAVİ')
   const line2 =
     pageContent?.heroHighlightTitlePart ??
     (locale === 'en'
-      ? 'POSTS'
+      ? 'STORIES'
       : locale === 'de'
-        ? 'BEITRÄGE'
+        ? 'GESCHICHTEN'
         : locale === 'ru'
-          ? 'СТАТЬИ'
-          : 'YAZILARI')
+          ? 'ИСТОРИИ'
+          : 'HİKAYELER')
   const leadText =
     pageContent?.heroDescription ??
     (locale === 'tr'
@@ -159,6 +164,8 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
           coverImageAlt: merged.coverImage?.alt ?? null,
           excerpt,
           publishDate: merged.publishDate ?? null,
+          readingTime: merged.readingTime ?? null,
+          readTime: merged.readTime ?? null,
         },
       }
     })
