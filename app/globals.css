@@ -706,3 +706,32 @@ summary:focus-visible,
    basamak büyüten site geneli bir kural vardı. Kullanıcı geri bildirimi —
    "her yer çok büyük oldu" — üzerine kaldırıldı; Tailwind'in kendi
    varsayılan boyutlarına dönüldü. */
+
+/* Yardım merkezi: kategori çipleri mobilde yatay kayıyor. Sağ kenardaki
+   mavimsi parlama "devamı var" sinyali; hafif nabız atışı fark edilmesini
+   sağlıyor, sona kaydırılınca bileşen onu kaldırıyor. */
+.help-chip-glow {
+  /* Beyaza eriyen kenar kesilen çipi yumuşatır, üstüne binen mavi tint
+     "devamı var" sinyalini verir. */
+  background:
+    linear-gradient(
+      to left,
+      rgba(var(--primary-rgb, 33, 104, 184), 0.38) 0%,
+      rgba(var(--primary-rgb, 33, 104, 184), 0.16) 45%,
+      rgba(var(--primary-rgb, 33, 104, 184), 0) 100%
+    ),
+    linear-gradient(to left, #fff 8%, rgba(255, 255, 255, 0) 100%);
+  animation: helpChipGlow 2.2s ease-in-out infinite;
+}
+
+@keyframes helpChipGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .help-chip-glow {
+    animation: none;
+    opacity: 0.8;
+  }
+}

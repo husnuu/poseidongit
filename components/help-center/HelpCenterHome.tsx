@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Search } from 'lucide-react'
 import HelpSupportCTA from '@/components/help-center/HelpSupportCTA'
 import type { HelpArticleListItem, HelpCategoryWithArticles, HelpCenterPageDoc } from '@/lib/sanity/types/helpCenter'
@@ -35,6 +35,23 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | 'all'>('all')
   const [openArticleId, setOpenArticleId] = useState<string | null>(null)
+
+  /* Kategori çipleri mobilde yatay kayıyor; sağ kenardaki mavi parlama
+     kaydırılacak çip kaldığını gösterir ve sona gelince kayboluyor. */
+  const chipRailRef = useRef<HTMLDivElement>(null)
+  const [chipsScrollable, setChipsScrollable] = useState(false)
+
+  const measureChipRail = useCallback(() => {
+    const el = chipRailRef.current
+    if (!el) return
+    setChipsScrollable(el.scrollLeft < el.scrollWidth - el.clientWidth - 4)
+  }, [])
+
+  useEffect(() => {
+    measureChipRail()
+    window.addEventListener('resize', measureChipRail)
+    return () => window.removeEventListener('resize', measureChipRail)
+  }, [measureChipRail, categories.length])
 
   const flatArticles = useMemo(() => {
     return categories.flatMap((c) =>
@@ -109,31 +126,25 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
       <section className="w-full pb-8 pt-12 md:pb-10 md:pt-16">
         <div className="mx-auto max-w-3xl px-4 text-center">
           <h1
-            className="text-[29px] font-extrabold uppercase leading-[1.15] sm:text-[33px] md:text-[37px] whitespace-nowrap pageHeroTitleStroke"
+            className="text-[29px] font-black uppercase leading-[1.15] sm:text-[33px] md:text-[37px] whitespace-nowrap pageHeroTitleStroke"
             style={{
               fontFamily: 'var(--font-family-title, var(--font-family))',
+              fontWeight: 900,
               color: 'var(--primary, #2168b8)',
             }}
           >
             {title}
           </h1>
-          {desc ? (
-            <p
-              className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed md:text-base"
-              style={{ color: 'var(--text-color, #58595b)' }}
-            >
-              {desc}
-            </p>
-          ) : null}
+          {/* Başlık altındaki açıklama istenmedi — arama kutusu doğrudan
+              başlığın altında. */}
 
-          <div className="mx-auto mt-8 max-w-xl">
+          <div className="mx-auto mt-7 max-w-xl">
             <label htmlFor="help-center-search" className="sr-only">
               {ui.searchLabelSrOnly}
             </label>
             <div className="relative">
               <Search
-                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2"
-                style={{ color: 'var(--muted, #81848b)' }}
+                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9aa0a6]"
                 aria-hidden
                 strokeWidth={2}
               />
@@ -145,10 +156,10 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
                 placeholder={ui.searchPlaceholder}
                 autoComplete="off"
                 spellCheck={false}
-                className="w-full rounded-xl border py-3.5 pl-12 pr-4 text-[15px] outline-none transition focus:ring-2 sm:py-4 sm:text-base"
+                className="w-full rounded-xl border bg-white py-3.5 pl-12 pr-4 text-[15px] outline-none transition placeholder:text-[#9aa0a6] focus:border-[#cdd4dc] focus:ring-2 sm:py-4 sm:text-base"
                 style={{
                   fontFamily: 'var(--font-family), sans-serif',
-                  borderColor: '#e2e8f0',
+                  borderColor: '#e5e9ef',
                   color: 'var(--secondary, #131719)',
                 }}
               />
@@ -159,7 +170,12 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
 
       <div className="mx-auto max-w-5xl px-4 pb-16 md:pb-20">
         {categories.length > 0 && (
-          <div className="mb-8 -mx-4 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] md:mx-0 md:overflow-visible md:px-0 md:pb-0 md:mb-10 [&::-webkit-scrollbar]:hidden">
+          <div className="relative mb-8 -mx-4 md:mx-0 md:mb-10">
+            <div
+              ref={chipRailRef}
+              onScroll={measureChipRail}
+              className="overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden"
+            >
             <div className="flex flex-nowrap gap-2.5 md:flex-wrap md:justify-center">
               <button
                 type="button"
@@ -189,6 +205,13 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
                 </button>
               ))}
             </div>
+            </div>
+            {chipsScrollable ? (
+              <span
+                className="help-chip-glow pointer-events-none absolute inset-y-0 right-0 w-20 md:hidden"
+                aria-hidden
+              />
+            ) : null}
           </div>
         )}
 

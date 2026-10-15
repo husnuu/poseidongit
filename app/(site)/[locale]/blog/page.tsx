@@ -11,7 +11,7 @@ import { isSiteLocale } from '@/lib/i18n/config'
 import { mergeBlogPageLocale, mergeBlogPageSeoForLocale } from '@/lib/i18n/mergeBlogPageLocale'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
 import { tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
-import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
+import { getBlogPageUiStrings, BLOG_SECTION_TITLE, BLOG_PAGE_LEAD } from '@/lib/i18n/strings/blogPage'
 import { translateText } from '@/lib/i18n/runtimeTranslate'
 
 const siteName = getSiteName()
@@ -102,31 +102,13 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
     console.error('Blog page fetch error:', err)
   }
 
-  // NOT: Bu üç alanın GERÇEK değeri Sanity'deki `blogPage` dokümanında
-  // (heroTitle / heroHighlightTitlePart / heroDescription). Aşağıdakiler
-  // yalnızca o alanlar boşsa devreye giren yedekler — "MAVİ HİKAYELER"
-  // başlığı Studio'dan girilmediği sürece sayfada görünmez.
-  const line1 =
-    pageContent?.heroTitle ??
-    (locale === 'en' ? 'BLUE' : locale === 'de' ? 'BLAUE' : locale === 'ru' ? 'СИНИЕ' : 'MAVİ')
-  const line2 =
-    pageContent?.heroHighlightTitlePart ??
-    (locale === 'en'
-      ? 'STORIES'
-      : locale === 'de'
-        ? 'GESCHICHTEN'
-        : locale === 'ru'
-          ? 'ИСТОРИИ'
-          : 'HİKAYELER')
-  const leadText =
-    pageContent?.heroDescription ??
-    (locale === 'tr'
-      ? 'Çeşme, tekne turları ve tatil ipuçları. Deneyimler ve rehberler.'
-      : locale === 'en'
-        ? 'Çeşme, boat tours, and travel tips — guides and stories.'
-        : locale === 'de'
-          ? 'Çeşme, Bootstouren und Reisetipps — Erlebnisse und Ratgeber.'
-          : 'Чешме, морские прогулки и советы для отдыха. Истории и путеводители.')
+  // Başlık ve spot artık sabit (bkz. blogPage.ts): kısa ve anasayfadaki
+  // blog bölümüyle aynı olması istendi. Sanity'deki heroTitle /
+  // heroHighlightTitlePart / heroDescription alanları artık okunmuyor —
+  // oradaki metin uzun bir paragraftı. emptyListMessage ve SEO alanları
+  // CMS'ten gelmeye devam ediyor.
+  const heroTitle = BLOG_SECTION_TITLE[locale]
+  const leadText = BLOG_PAGE_LEAD[locale]
 
   const emptyMsg =
     pageContent?.emptyListMessage ??
@@ -175,10 +157,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
     <main className={styles.main}>
       <section className={styles.hero}>
         <div className={styles.heroContainer}>
-          <h1 className={styles.heroH1}>
-            <span className={styles.heroH1Line1}>{line1}</span>
-            <span className={styles.heroH1Line2}>{line2}</span>
-          </h1>
+          <h1 className={styles.heroH1}>{heroTitle}</h1>
           <p className={styles.heroLead}>{leadText}</p>
         </div>
       </section>

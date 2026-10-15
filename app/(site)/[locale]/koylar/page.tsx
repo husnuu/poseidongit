@@ -113,12 +113,14 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
 
   return (
     // Diğer tüm liste sayfaları (/turlar, /yat-kiralama) gibi zemin beyaz;
-    // "Koylar" kimliği artık koca bir renk bandı yerine, sadece hero'nun
-    // arkasında göze batmayan yumuşak bir ışıltıyla veriliyor.
+    // "Koylar" kimliği koca bir renk bandı yerine hero'nun arkasındaki
+    // yumuşak bir ışıltıyla veriliyor. Işıltı eskiden nane yeşiliydi
+    // (#d6f7ec) ve kartların mavi butonlarıyla çakışıyordu; artık marka
+    // mavisinin çok açık tonu.
     <div className="relative min-h-screen overflow-hidden bg-white">
       <div
         className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[520px] w-[1100px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-70 blur-3xl"
-        style={{ background: 'radial-gradient(closest-side, #d6f7ec, rgba(214,247,236,0))' }}
+        style={{ background: 'radial-gradient(closest-side, #dbeafe, rgba(219,234,254,0))' }}
         aria-hidden
       />
       <div className="mx-auto max-w-[1400px] px-4 py-14 sm:py-16 md:py-20">

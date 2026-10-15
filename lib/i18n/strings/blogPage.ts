@@ -106,3 +106,22 @@ export function getBlogPageUiStrings(locale: SiteLocale): BlogPageUiStrings {
   if (locale === 'ru') return RU
   return TR
 }
+
+/** Blog bölümünün sabit başlığı ve kısa spotu — hem anasayfadaki
+    BlogSection hem /blog sayfası buradan okur, ikisi aynı kalsın diye.
+    Sanity'deki blogPage.heroTitle / heroHighlightTitlePart /
+    heroDescription alanları artık GÖRÜNTÜLENMİYOR: başlık kısa ve sabit
+    istendi, CMS'teki metin uzun bir cümleydi. */
+export const BLOG_SECTION_TITLE: Record<SiteLocale, string> = {
+  tr: 'MAVİ HİKAYELER',
+  en: 'BLUE STORIES',
+  de: 'BLAUE GESCHICHTEN',
+  ru: 'СИНИЕ ИСТОРИИ',
+}
+
+export const BLOG_PAGE_LEAD: Record<SiteLocale, string> = {
+  tr: 'Çeşme, tekne turları ve tatil ipuçları.',
+  en: 'Çeşme, boat tours and travel tips.',
+  de: 'Çeşme, Bootstouren und Reisetipps.',
+  ru: 'Чешме, морские прогулки и советы для отдыха.',
+}

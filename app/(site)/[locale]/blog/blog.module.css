@@ -28,64 +28,54 @@
   }
 }
 
-/* Başlık gerçek içerikte uzun bir cümle olabildiği için (CMS'ten geliyor)
-   satır satır zorla bölmek yerine tek bir akışta (row + wrap) diziyoruz:
-   kısa başlıklar tek satırda kalır, uzun olanlar ekranın dışına taşmadan
-   doğal kelime sınırından sarar. Mobilde taban punto biraz düşürüldü. */
+/* Başlık artık sabit ve kısa ("MAVİ HİKAYELER" — bkz. blogPage.ts), bu yüzden
+   eski iki parçalı flex düzenine gerek kalmadı. Kısaldığı için punto ve kontur
+   da bir kademe artırıldı. */
 .heroH1 {
   font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-weight: 900;
-  -webkit-text-stroke: 0.85px currentColor;
-  line-height: 1.2;
+  -webkit-text-stroke: 1px currentColor;
+  line-height: 1.15;
   text-transform: uppercase;
-  margin: 0 0 1.5rem;
-  font-size: 1.625rem;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: center;
-  gap: 0.3em;
+  text-align: center;
+  color: var(--primary, #2168b8);
+  margin: 0 0 1rem;
+  font-size: 1.75rem;
   letter-spacing: 0;
 }
 
 @media (min-width: 640px) {
   .heroH1 {
-    font-size: 1.875rem;
-    -webkit-text-stroke: 0.95px currentColor;
+    font-size: 2.125rem;
+    -webkit-text-stroke: 1.15px currentColor;
   }
 }
 
 @media (min-width: 768px) {
   .heroH1 {
-    font-size: 2.125rem;
+    font-size: 2.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .heroH1 {
-    font-size: 2.375rem;
+    font-size: 2.75rem;
   }
-}
-
-.heroH1Line1,
-.heroH1Line2 {
-  color: var(--primary, #2168b8);
 }
 
 .heroLead {
   font-family: var(--font-family), sans-serif;
-  font-size: 1.05rem;
-  line-height: 1.62;
+  font-size: 1rem;
+  line-height: 1.6;
   color: var(--text-color);
-  max-width: 900px;
+  max-width: 560px;
   margin: 0 auto;
   text-align: center;
 }
 
 @media (min-width: 768px) {
   .heroLead {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
   }
 }
 
@@ -94,8 +84,11 @@
   padding-bottom: 64px;
 }
 
+/* Anasayfadaki blog bölümüyle aynı kap genişliği (max-w-[1200px]) — 1400px'te
+   üç sütun 424px'e açılıyordu ve kartlar anasayfadakilerden belirgin biçimde
+   iri görünüyordu. */
 .gridContainer {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
 }

@@ -20,7 +20,7 @@ import { getContactPageUiStrings, mergeContactUiFromSanity } from '@/lib/i18n/st
 export const dynamic = 'force-dynamic'
 
 const CONTACT_HEADING_CLASS =
-  'text-[29px] font-extrabold uppercase leading-[1.15] mb-6 sm:text-[31px] md:text-[35px] lg:text-[39px]'
+  'text-[29px] font-black uppercase leading-[1.15] mb-6 sm:text-[31px] md:text-[35px] lg:text-[39px]'
 
 // Ana başlık (İletişim) dışındaki bölüm başlıkları (Konum, Popüler Turlar) için
 // daha ölçülü bir boyut — referans sitedeki alt başlık stiline uygun.
@@ -171,6 +171,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
           className={`${CONTACT_HEADING_CLASS} whitespace-nowrap pageHeroTitleStroke`}
           style={{
             fontFamily: 'var(--font-family-title, var(--font-family))',
+            fontWeight: 900,
             color: 'var(--primary, #2168b8)',
           }}
         >

@@ -64,7 +64,7 @@ const TR: HelpCenterUiStrings = {
   supportWhatsappMissing:
     'WhatsApp numarası yapılandırılmamış. İletişim sayfamızdan bize ulaşabilirsiniz.',
   supportContactCta: 'İletişim',
-  searchPlaceholder: 'Makale veya konu ara…',
+  searchPlaceholder: 'Soru ara…',
   searchLabelSrOnly: 'Yardım makalelerinde ara',
   searchCountNone: 'Eşleşen makale bulunamadı',
   searchCountListed: (n: number) => `${n} makale listeleniyor`,
@@ -104,7 +104,7 @@ const EN: HelpCenterUiStrings = {
   supportWhatsappMissing:
     'WhatsApp is not configured. You can reach us from the contact page.',
   supportContactCta: 'Contact',
-  searchPlaceholder: 'Search articles or topics…',
+  searchPlaceholder: 'Search questions…',
   searchLabelSrOnly: 'Search help articles',
   searchCountNone: 'No matching articles',
   searchCountListed: (n: number) => (n === 1 ? '1 article listed' : `${n} articles listed`),
@@ -144,7 +144,7 @@ const DE: HelpCenterUiStrings = {
   supportWhatsappMissing:
     'WhatsApp ist nicht konfiguriert. Sie erreichen uns über die Kontaktseite.',
   supportContactCta: 'Kontakt',
-  searchPlaceholder: 'Artikel oder Thema suchen…',
+  searchPlaceholder: 'Frage suchen…',
   searchLabelSrOnly: 'Hilfe-Artikel durchsuchen',
   searchCountNone: 'Keine passenden Artikel',
   searchCountListed: (n: number) => `${n} Artikel angezeigt`,
@@ -184,7 +184,7 @@ const RU: HelpCenterUiStrings = {
   supportWhatsappMissing:
     'WhatsApp не настроен. Вы можете связаться с нами через страницу контактов.',
   supportContactCta: 'Контакты',
-  searchPlaceholder: 'Поиск статей или тем…',
+  searchPlaceholder: 'Поиск вопросов…',
   searchLabelSrOnly: 'Поиск статей помощи',
   searchCountNone: 'Совпадающих статей не найдено',
   searchCountListed: (n: number) => (n === 1 ? '1 статья в списке' : `${n} статей в списке`),
