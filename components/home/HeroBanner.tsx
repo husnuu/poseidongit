@@ -161,9 +161,9 @@ export default function HeroBanner({
                 className="hero-primary-inner hero-btn-shine flex h-full w-full items-center justify-center rounded-lg text-white no-underline transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
                 style={{
                   fontFamily: 'var(--font-family)',
-                  fontWeight: 700,
-                  WebkitTextStroke: '0.5px currentColor',
-                  fontSize: '18px',
+                  fontWeight: 800,
+                  WebkitTextStroke: '0.4px currentColor',
+                  fontSize: '17px',
                   textTransform: 'uppercase',
                   background: 'linear-gradient(to right, var(--primary, #2168b8) 0%, #4f8dc7 51%, var(--primary, #2168b8) 100%)',
                 }}
@@ -176,8 +176,8 @@ export default function HeroBanner({
               className="flex h-14 w-full items-center justify-center rounded-lg bg-white no-underline transition duration-200 hover:scale-105 hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent sm:h-16 sm:w-[260px]"
               style={{
                 fontFamily: 'var(--font-family)',
-                fontWeight: 700,
-                fontSize: '17px',
+                fontWeight: 800,
+                fontSize: '16px',
                 textTransform: 'uppercase',
                 color: 'var(--primary, #2168b8)',
               }}

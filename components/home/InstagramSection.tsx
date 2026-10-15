@@ -109,7 +109,7 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
             rel="noopener noreferrer"
             // Üstüne gelince Instagram'ın kendi gradyan renklerine geçiyor (Google
             // Yorumları butonundaki dolu-renk hover deseniyle aynı mantık).
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 overflow-hidden rounded-lg border-2 border-[#2168b8] bg-white bg-clip-padding px-8 py-2.5 text-xs font-bold uppercase tracking-wide text-[#2168b8] transition duration-200 hover:scale-105 hover:border-transparent hover:bg-[linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)] hover:text-white"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 overflow-hidden rounded-lg border-2 border-[#2168b8] bg-white bg-clip-padding px-8 py-2.5 text-[13px] font-extrabold uppercase tracking-wide text-[#2168b8] transition duration-200 hover:scale-105 hover:border-transparent hover:bg-[linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)] hover:text-white sm:text-[14px]"
           >
             <Instagram className="h-4 w-4" strokeWidth={2} />
             {ctaText || 'Bizi takip et'}

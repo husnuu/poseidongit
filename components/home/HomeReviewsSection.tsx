@@ -342,7 +342,7 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                   // Referans: şeffaf zemin (gradyan görünür), 2px #366deb çerçeve, aynı mavi
                   // büyük harf metin, küçük köşe yuvarlaklığı — beyaz "hap" değil. Üstüne
                   // gelince dolgu maviye dönüyor + hafif büyüme efekti.
-                  className="inline-flex items-center gap-2.5 rounded-lg border-2 border-[#366deb] bg-transparent px-6 py-2.5 text-[15px] font-bold uppercase tracking-wide text-[#366deb] transition duration-200 hover:scale-105 hover:bg-[#366deb] hover:text-white"
+                  className="inline-flex items-center gap-2.5 rounded-lg border-2 border-[#366deb] bg-transparent px-6 py-2.5 text-[16px] font-extrabold uppercase tracking-wide text-[#366deb] transition duration-200 hover:scale-105 hover:bg-[#366deb] hover:text-white"
                 >
                   <GoogleMark size={21} />
                   {GOOGLE_LABEL[locale](totalCount.toLocaleString(numLocale))}
@@ -359,7 +359,7 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                   // butonunun altında, hâlâ biraz daha küçük ama eskisinden bir tık büyük
                   // (px-4/py-1.5/12px → px-5/py-2/13px, ikon 15→17); masaüstünde yan yana
                   // ve aynı boyutta.
-                  className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-lg border-2 border-[#d62976] bg-transparent px-5 py-2 text-[13px] font-bold uppercase tracking-wide text-[#d62976] transition duration-200 hover:scale-105 hover:bg-[#d62976] hover:text-white sm:gap-2.5 sm:px-6 sm:py-2.5 sm:text-[15px]"
+                  className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-lg border-2 border-[#d62976] bg-transparent px-5 py-2 text-[14px] font-extrabold uppercase tracking-wide text-[#d62976] transition duration-200 hover:scale-105 hover:bg-[#d62976] hover:text-white sm:gap-2.5 sm:px-6 sm:py-2.5 sm:text-[16px]"
                 >
                   <InstagramModern className="h-[17px] w-[17px] sm:h-[21px] sm:w-[21px]" />
                   {instagramFollowerCount

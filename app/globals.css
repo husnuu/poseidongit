@@ -652,8 +652,8 @@ summary:focus-visible,
    Önceden 9 ayrı CSS modülü aynı stili yeniden tanımlıyordu ve zamanla
    kaymıştı (17/18/20/22px, konturlu/kontursuz, 0–40px margin). Kontur,
    .pageHeroTitleStroke'taki gibi duyarlı: mobildeki küçük puntoda düz 0.5px
-   orantısız kalın görünüyordu. İnce alt vurgu çizgisi (::after) bölümleri
-   kutu/ayraç kullanmadan görsel olarak ayırır. */
+   orantısız kalın görünüyordu. Başlık altındaki mavi vurgu çizgisi
+   istenmedi; bölümler yalnızca boşlukla ayrılıyor. */
 .tourSectionHeading {
   font-family: var(--font-family-title, var(--font-family)), sans-serif;
   font-weight: 800;
@@ -664,33 +664,6 @@ summary:focus-visible,
   color: var(--secondary, #131719);
   -webkit-text-stroke: 0.4px currentColor;
   margin: 0 0 20px 0;
-  padding-bottom: 10px;
-  position: relative;
-}
-.tourSectionHeading::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 40px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--primary, #2168b8);
-  /* Bölüm ekrana girince (ScrollReveal) çizgi soldan sağa "çizilir" —
-     sarmalayıcının kendi 0.7s belirmesi bittikten hemen sonra başlar.
-     Sadece transform: layout/paint yok, CLS sıfır. */
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.35s;
-}
-.scroll-reveal-visible .tourSectionHeading::after {
-  transform: scaleX(1);
-}
-@media (prefers-reduced-motion: reduce) {
-  .tourSectionHeading::after {
-    transform: none;
-    transition: none;
-  }
 }
 @media (min-width: 640px) {
   .tourSectionHeading {

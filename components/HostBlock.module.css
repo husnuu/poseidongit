@@ -118,9 +118,8 @@
     right: 16px;
   }
 
-  .mainTitle {
-    font-size: 16px;
-  }
+  /* Mobil punto .tourSectionHeading'den (17px) geliyor — buradaki 16px
+     diğer bölüm başlıklarından 1px sapıyordu. */
 
   .paragraph {
     font-size: 13px;

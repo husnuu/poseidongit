@@ -18,6 +18,8 @@ interface TourDescriptionExpandableProps {
   headingIcon?: ReactNode
   headingVariant?: 'tour' | 'yacht'
   headingClassName?: string
+  /** "Daha fazla" bağlantısının metni; verilmezse tur metni kullanılır. */
+  showMoreLabel?: string
 }
 
 function AnchorIcon() {
@@ -54,10 +56,11 @@ export default function TourDescriptionExpandable({
   headingIcon,
   headingVariant = 'tour',
   headingClassName,
+  showMoreLabel,
 }: TourDescriptionExpandableProps) {
   const tourUi = useMemo(() => getTourPageUi(locale ?? 'tr'), [locale])
   const heading = headingProp ?? tourUi.tourDescriptionHeading
-  const showMore = tourUi.tourDescriptionShowMore
+  const showMore = showMoreLabel ?? tourUi.tourDescriptionShowMore
   const [modalOpen, setModalOpen] = useState(false)
   const [portalEl, setPortalEl] = useState<HTMLElement | null>(null)
 
@@ -150,10 +153,11 @@ export default function TourDescriptionExpandable({
           className={styles.toggle}
           onClick={() => setModalOpen(true)}
         >
-          <span>{showMore}</span>
+          <span className={styles.toggleLabel}>{showMore}</span>
           <span className={styles.toggleIcon} aria-hidden>
-            <svg width="20" height="21" viewBox="0 0 24 25" fill="none">
-              <path d="M19.293 7.793L20.707 9.207 12 17.914 3.293 9.207 4.707 7.793 12 15.086l7.293-7.293z" fill="currentColor" />
+            {/* Referanstaki ince "˅" — önceki dolu ok yerine. */}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9.5l6 6 6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
         </button>

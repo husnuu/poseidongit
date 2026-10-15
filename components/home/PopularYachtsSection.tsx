@@ -213,7 +213,7 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
           <p className="mt-10 text-center md:mt-12">
             <Link
               href={ctaHref}
-              className="inline-flex min-h-[48px] items-center justify-center rounded-lg border-2 bg-white px-8 py-3 text-sm font-bold uppercase tracking-wide shadow-sm transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06]"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-lg border-2 bg-white px-8 py-3 text-[14px] font-extrabold uppercase tracking-wide shadow-sm transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:text-[15px]"
               style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
             >
               {ctaLabel}

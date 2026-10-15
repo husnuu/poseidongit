@@ -48,7 +48,9 @@ export default function IncludedNotIncluded({
 
   if (!hasIncluded && !hasNotIncluded) return null
 
-  const headingClass = columnHeadingClassName ?? styles.heading
+  /* Diğer tur bölüm başlıklarıyla aynı kaynak; .heading yalnızca sütun
+     etiketi olduğu için dış boşluğu sıfırlıyor. */
+  const headingClass = columnHeadingClassName ?? `tourSectionHeading ${styles.heading}`
 
   const inner = (
     <div className={styles.row}>

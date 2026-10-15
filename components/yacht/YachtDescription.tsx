@@ -15,7 +15,9 @@ export default function YachtDescription({ description, locale = 'tr' }: YachtDe
   return (
     <TourDescriptionExpandable
       description={description}
+      locale={locale}
       heading={ui.descriptionHeading}
+      showMoreLabel={ui.descriptionShowMore}
       headingVariant="yacht"
       headingClassName={headingStyles.h2}
     />

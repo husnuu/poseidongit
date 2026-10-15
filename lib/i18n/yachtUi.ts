@@ -19,6 +19,7 @@ export type YachtUi = {
   personSuffix: string
   // Description / gallery
   descriptionHeading: string
+  descriptionShowMore: string
   galleryHeading: string
   galleryAriaLabel: string
   galleryEnlargeAriaSuffix: string
@@ -174,6 +175,7 @@ const TR: YachtUi = {
   specDeparture: 'Kalkış',
   personSuffix: 'kişi',
   descriptionHeading: 'Açıklama',
+  descriptionShowMore: 'Bu yat hakkında daha fazla bilgi edinin',
   galleryHeading: 'Galeri',
   galleryAriaLabel: 'Galeri, dahil olanlar ve dahil olmayanlar',
   galleryEnlargeAriaSuffix: 'büyüt',
@@ -320,6 +322,7 @@ const EN: YachtUi = {
   specDeparture: 'Departure',
   personSuffix: 'people',
   descriptionHeading: 'Description',
+  descriptionShowMore: 'Learn more about this yacht',
   galleryHeading: 'Gallery',
   galleryAriaLabel: 'Gallery, included and not included',
   galleryEnlargeAriaSuffix: 'enlarge',
@@ -466,6 +469,7 @@ const DE: YachtUi = {
   specDeparture: 'Abfahrt',
   personSuffix: 'Personen',
   descriptionHeading: 'Beschreibung',
+  descriptionShowMore: 'Mehr über diese Yacht erfahren',
   galleryHeading: 'Galerie',
   galleryAriaLabel: 'Galerie, inklusive und nicht inklusive Leistungen',
   galleryEnlargeAriaSuffix: 'vergrößern',
@@ -612,6 +616,7 @@ const RU: YachtUi = {
   specDeparture: 'Отправление',
   personSuffix: 'чел.',
   descriptionHeading: 'Описание',
+  descriptionShowMore: 'Узнать больше об этой яхте',
   galleryHeading: 'Галерея',
   galleryAriaLabel: 'Галерея, включено и не включено',
   galleryEnlargeAriaSuffix: 'увеличить',

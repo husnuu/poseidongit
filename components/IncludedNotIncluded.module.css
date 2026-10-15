@@ -1,5 +1,4 @@
-/* Dış margin kaldırıldı — ritim page.tsx'te. h3 bir bölüm başlığı DEĞİL,
-   200px sol sütunun etiketi; o yüzden .tourSectionHeading'e bağlanmadı. */
+/* Dış margin kaldırıldı — ritim page.tsx'te. */
 .section {
   max-width: 977px;
 }
@@ -21,14 +20,11 @@
      çizgiyle çakışıyordu. */
 }
 
-.heading {
-  font-family: var(--font-family-title, var(--font-family)), sans-serif;
-  font-size: 17px;
-  -webkit-text-stroke: 0.5px currentColor;
-  font-weight: 800;
-  line-height: 1.25;
-  text-transform: uppercase;
-  color: var(--secondary, #131719);
+/* Tipografi global .tourSectionHeading'den geliyor (diğer bölüm başlıklarıyla
+   tek kaynak); burada sadece sütun etiketi olduğu için alt boşluk siliniyor.
+   İki sınıflı seçici: global kuralın 640px'teki margin'ini yenmesi gerekiyor,
+   yüklenme sırasına güvenmiyoruz. */
+.row .heading {
   margin: 0;
 }
 
@@ -124,11 +120,6 @@
   .list {
     grid-template-columns: 1fr;
     gap: 10px;
-  }
-
-  .heading {
-    font-size: 18px;
-    line-height: 1.4;
   }
 
   .text {

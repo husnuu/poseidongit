@@ -205,7 +205,7 @@ export default function PopularToursSection({
           <div className="mt-8 flex justify-center md:mt-12">
             <Link
               href={withLocalePath(locale, '/turlar')}
-              className="inline-flex h-11 w-auto min-w-[180px] items-center justify-center rounded-lg border-2 bg-transparent px-6 text-[13px] font-bold uppercase tracking-wide no-underline transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:h-12 sm:w-[210px] sm:px-0"
+              className="inline-flex h-11 w-auto min-w-[180px] items-center justify-center rounded-lg border-2 bg-transparent px-6 text-[14px] font-extrabold uppercase tracking-wide no-underline transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:h-12 sm:w-[210px] sm:px-0 sm:text-[15px]"
               style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
             >
               {VIEW_ALL_LABEL[locale]}
