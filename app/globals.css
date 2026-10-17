@@ -619,6 +619,11 @@ summary:focus-visible,
   :root {
     --primary: #2168b8;
     --primary-rgb: 33, 104, 184;
+    /* Tam genişlikte renkli bölüm bantları (Mavi Hikayeler, Hakkımızda) —
+       referans tasarımdaki açık gök mavisi. --primary'den belirgin daha
+       açık; marka mavisi butonlar bu zeminde okunur kalsın diye ayrı token. */
+    --section-sky: #4facd8;
+    --section-sky-rgb: 79, 172, 216;
     --secondary: #131719;
     --muted: #81848b;
     --text-color: #58595b;
@@ -734,4 +739,47 @@ summary:focus-visible,
     animation: none;
     opacity: 0.8;
   }
+}
+
+/* Sayfa/bölüm ana başlığı (Koylar, Hakkımızda bölümleri, anasayfa blokları):
+   büyük, kalın, ince konturlu mavi. Tur detay sayfasındaki daha küçük
+   .tourSectionHeading'den farklı bir seviyedir. Önceden bu tipografi
+   CovesHero.module.css'te ve hakkımızda sayfasında birbirinden kaymış
+   kopyalar halindeydi (bold/extrabold/900, konturlu/kontursuz, büyük
+   harfli/değil); tek kaynak burası. */
+.pageSectionHeading {
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.15;
+  margin: 0 0 1rem;
+  font-size: 28px;
+  -webkit-text-stroke: 0.4px currentColor;
+  color: var(--primary, #2168b8);
+}
+
+@media (min-width: 640px) {
+  .pageSectionHeading { font-size: 32px; }
+}
+
+@media (min-width: 768px) {
+  .pageSectionHeading { font-size: 36px; }
+}
+
+@media (min-width: 1024px) {
+  .pageSectionHeading { font-size: 40px; }
+}
+
+/* Başlığın altındaki kısa açıklama. */
+.pageSectionLead {
+  font-family: var(--font-family), sans-serif;
+  font-size: 1rem;
+  line-height: 1.62;
+  color: var(--text-color, #58595b);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .pageSectionLead { font-size: 1.0625rem; }
 }

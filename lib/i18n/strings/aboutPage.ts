@@ -167,3 +167,14 @@ export function getAboutPageUiStrings(locale: SiteLocale): AboutPageUiStrings {
   if (locale === 'ru') return RU
   return TR
 }
+
+/** Filo zaman çizgisinin ara başlığı. Sanity'deki aboutPage.timelineTitle
+    ("GEÇMİŞTEN GÜNÜMÜZE TEKNELERİMİZ") artık görüntülenmiyor: başlığın kısa
+    olması ve sayfa ana başlığı gibi değil, koyu bir ara başlık gibi durması
+    istendi. timelineDescription CMS'ten gelmeye devam ediyor. */
+export const ABOUT_TIMELINE_HEADING: Record<SiteLocale, string> = {
+  tr: 'GEÇMİŞTEN GÜNÜMÜZE',
+  en: 'FROM THEN TO NOW',
+  de: 'VON DAMALS BIS HEUTE',
+  ru: 'ОТ ПРОШЛОГО К НАСТОЯЩЕМУ',
+}

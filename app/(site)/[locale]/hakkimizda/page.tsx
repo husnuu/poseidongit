@@ -16,7 +16,7 @@ import {
   mergeAboutPageLocale,
   mergeAboutPageSeoForLocale,
 } from '@/lib/i18n/mergeAboutPageLocale'
-import { getAboutPageUiStrings } from '@/lib/i18n/strings/aboutPage'
+import { getAboutPageUiStrings, ABOUT_TIMELINE_HEADING } from '@/lib/i18n/strings/aboutPage'
 import { translatePortableTextBlocks, translateText } from '@/lib/i18n/runtimeTranslate'
 import ScrollReveal from '@/components/ui/ScrollReveal'
 import FleetTimeline from '@/components/about/FleetTimeline'
@@ -293,6 +293,10 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
   const numberLocale =
     locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : locale === 'ru' ? 'ru-RU' : 'en-US'
 
+  /* Düz toUpperCase() Türkçe'de "Hikayemiz" -> "HIKAYEMIZ" yapıyor (noktalı İ
+     kayboluyor); iletişim sayfasındaki ile aynı dile duyarlı dönüşüm. */
+  const toHeadingUpper = (v: string) => v.trim().toLocaleUpperCase(numberLocale)
+
   // Hero altındaki kompakt istatistik şeridi — dördü de gerçek: kuruluş yılı
   // (filodaki en eski tekne), filo/tur/koy sayısı ise Sanity'den gelen gerçek
   // belge sayıları (uydurma yok).
@@ -319,61 +323,38 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
 
   return (
     <div className="min-h-screen bg-white">
-      <section className="relative w-full overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--primary, #2168b8) 0%, #123459 100%)' }}>
-        <div
-          className="pointer-events-none absolute -bottom-20 -left-16 h-64 w-64 rounded-full opacity-30"
-          style={{ background: 'radial-gradient(closest-side, rgba(255,255,255,0.5), transparent)' }}
-          aria-hidden
-        />
-        <div className="relative mx-auto max-w-[1300px] px-4 pb-12 pt-10 sm:pb-16 sm:pt-14 lg:grid lg:grid-cols-[1.25fr_1fr] lg:items-center lg:gap-12 lg:pb-20">
-          <div className="text-center lg:text-center">
-            {hasHeroLogo && heroLogoUrl ? (
-              <>
-                <h1 className="sr-only">{ui.metaTitleFallback}</h1>
-                <div className="hero-reveal hero-reveal-1 relative mx-auto h-[64px] w-[min(90vw,340px)] sm:h-[84px] sm:w-[min(80vw,420px)]">
-                  <Image src={heroLogoUrl} alt={heroLogoAlt} fill className="object-contain object-center brightness-0 invert" sizes="(max-width: 768px) 90vw, 420px" priority />
-                </div>
-              </>
-            ) : (
-              data.titleTop?.trim() && (
-                <h1
-                  className="hero-reveal hero-reveal-1 text-[2.3rem] leading-[1.05] font-bold text-white sm:text-[3.2rem] lg:text-[3.6rem]"
-                  style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
-                >
-                  {data.titleTop}
-                </h1>
-              )
-            )}
-            {data.titleBottom?.trim() && (
-              <p className="hero-reveal hero-reveal-2 mx-auto mt-4 max-w-md text-[15px] font-semibold text-white/80 sm:text-base">{data.titleBottom}</p>
-            )}
-          </div>
-
-          {heroPhotoUrl && (
-            <div className="hero-reveal hero-reveal-2 mt-8 hidden justify-self-center lg:block" style={{ animationDelay: '150ms' }}>
-              <div className="w-64 rotate-[5deg] rounded-sm bg-white p-2.5 shadow-[0_24px_48px_-16px_rgba(13,43,36,0.45)] transition-transform duration-500 hover:rotate-0 hover:scale-[1.03]">
-                <div className="relative aspect-[4/5] overflow-hidden">
-                  <Image src={heroPhotoUrl} alt={heroPhotoAlt} fill priority sizes="256px" className="object-cover transition-transform duration-700 hover:scale-110" />
-                </div>
+      {/* Hero, diğer liste/içerik sayfalarıyla (Koylar, Blog, Yardım Merkezi,
+          İletişim) aynı: beyaz zemin, ortalı, büyük harfli mavi başlık + kısa
+          spot. Önceki tam genişlikte koyu mavi gradyan bant ve eğik "polaroid"
+          fotoğraf sitenin geri kalanında hiçbir yerde yoktu. Filonun ilk
+          teknesinin fotoğrafı zaten aşağıdaki zaman çizgisinde duruyor. */}
+      <section className="w-full px-4 pb-6 pt-14 text-center sm:pt-16 md:pt-20">
+        <div className="mx-auto max-w-3xl">
+          {hasHeroLogo && heroLogoUrl ? (
+            <>
+              <h1 className="sr-only">{ui.metaTitleFallback}</h1>
+              <div className="relative mx-auto mb-4 h-[56px] w-[min(90vw,300px)] sm:h-[72px] sm:w-[min(80vw,380px)]">
+                <Image
+                  src={heroLogoUrl}
+                  alt={heroLogoAlt}
+                  fill
+                  className="object-contain object-center"
+                  sizes="(max-width: 768px) 90vw, 380px"
+                  priority
+                />
               </div>
-            </div>
+            </>
+          ) : (
+            <h1 className="pageSectionHeading">
+              {toHeadingUpper(data.titleTop?.trim() || ui.metaTitleFallback)}
+            </h1>
           )}
+          {data.titleBottom?.trim() && <p className="pageSectionLead">{data.titleBottom}</p>}
         </div>
-
-        {/* Mobilde polaroid fotoğraf, metnin altında, yatay akışta */}
-        {heroPhotoUrl && (
-          <div className="relative px-4 pb-10 lg:hidden">
-            <div className="mx-auto w-48 rotate-[-4deg] rounded-sm bg-white p-2 shadow-[0_16px_32px_-14px_rgba(13,43,36,0.45)]">
-              <div className="relative aspect-[4/5] overflow-hidden">
-                <Image src={heroPhotoUrl} alt={heroPhotoAlt} fill sizes="192px" className="object-cover" />
-              </div>
-            </div>
-          </div>
-        )}
       </section>
 
       {statStripItems.length > 0 && (
-        <div className="mx-auto max-w-[1300px] border-b border-[#eef0f1] px-4">
+        <div className="mx-auto max-w-[1200px] border-y border-[#eef0f1] px-4">
           <div className="grid grid-cols-2 sm:grid-cols-4">
             {statStripItems.map((item, i) => {
               // divide-x + satır-bazlı border-t kombinasyonu çok satırlı
@@ -415,15 +396,13 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
 
       {data.intro && data.intro.length > 0 && (
         <ScrollReveal>
-          <section className="w-full pb-4 pt-12 md:pt-16">
-            <div className="mx-auto max-w-2xl px-4 text-center">
-              <span
-                className="text-3xl font-bold sm:text-4xl"
-                style={{ color: 'var(--primary, #2168b8)', fontFamily: 'var(--font-family-title, var(--font-family))' }}
-              >
-                {ui.introEyebrow}
-              </span>
-              <div className="mt-6 text-left">
+          {/* Hikaye bloğu: ana başlık yerine koyu ara başlık (zaman çizgisiyle
+              aynı seviye) ve çıplak metin yerine sayfadaki diğer kartlarla aynı
+              reçeteye sahip bir kart. Kap genişliği de diğer bölümlerle aynı. */}
+          <section className="w-full py-12 md:py-16">
+            <div className="mx-auto max-w-[1200px] px-4">
+              <h2 className="tourSectionHeading text-center">{toHeadingUpper(ui.introEyebrow)}</h2>
+              <div className="mx-auto max-w-3xl rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-[0_1px_2px_rgba(19,23,25,0.06),0_6px_20px_-4px_rgba(19,23,25,0.14)] sm:p-8">
                 <ExpandableBlock clampClassName="line-clamp-5" moreLabel={ui.readMore} lessLabel={ui.readLess}>
                   <PortableText value={data.intro} components={defaultBlockComponents} />
                 </ExpandableBlock>
@@ -437,16 +416,11 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
         <ScrollReveal>
           <section className="w-full py-12 md:py-16">
             <div className="mx-auto max-w-[1200px] px-4">
-              <h2
-                className="mb-6 text-[20px] font-bold leading-tight sm:text-[24px] md:mb-8"
-                style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--secondary, #131719)' }}
-              >
-                {ui.trustGridTitle}
-              </h2>
+              {/* Başlık istenmedi; kartlar kendi başlarına zaten anlaşılıyor. */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {trustGridItems.map(({ Icon, title, body }, i) => (
                   <ScrollReveal key={i} delayMs={i * 90}>
-                    <div className="h-full rounded-2xl border border-[#f1f5f9] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.12)] sm:p-7">
+                    <div className="h-full rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-[0_1px_2px_rgba(19,23,25,0.06),0_6px_20px_-4px_rgba(19,23,25,0.14)] transition-all duration-300 hover:-translate-y-1 hover:border-[#cbd5e1] hover:shadow-[0_2px_4px_rgba(19,23,25,0.06),0_18px_36px_-10px_rgba(19,23,25,0.22)] sm:p-7">
                       <span className="grid h-12 w-12 place-items-center rounded-xl transition-transform duration-300 hover:rotate-[-6deg]" style={{ background: 'rgba(33, 104, 184, 0.1)' }}>
                         <Icon className="h-6 w-6" style={{ color: 'var(--primary, #2168b8)' }} strokeWidth={1.75} aria-hidden />
                       </span>
@@ -473,24 +447,13 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
         <section className="w-full py-12 md:py-16">
           <div className="mx-auto max-w-[1200px] px-4">
             {data.sectionTitle && (
-              <h2
-                className="mb-2 text-[28px] font-extrabold uppercase md:text-[34px]"
-                style={{
-                  color: 'var(--primary, #2168b8)',
-                  fontFamily: 'var(--font-family-title)',
-                  WebkitTextStroke: '0.4px currentColor',
-                }}
-              >
-                {data.sectionTitle}
-              </h2>
+              <h2 className="pageSectionHeading text-center">{toHeadingUpper(data.sectionTitle)}</h2>
             )}
             {data.sectionSubtitle && (
-              <p className="text-lg font-semibold mb-6" style={{ color: 'var(--text-color, #58595b)' }}>
-                {data.sectionSubtitle}
-              </p>
+              <p className="pageSectionLead mb-8 text-center">{data.sectionSubtitle}</p>
             )}
             {data.sectionBody && data.sectionBody.length > 0 && (
-              <div className="max-w-3xl">
+              <div className="mx-auto max-w-3xl">
                 <ExpandableBlock clampClassName="line-clamp-6" moreLabel={ui.readMore} lessLabel={ui.readLess}>
                   <PortableText value={data.sectionBody} components={defaultBlockComponents} />
                 </ExpandableBlock>
@@ -505,28 +468,11 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
         // Rengi zaten zaman çizgisi (mavi noktalı hat + büyüyen yıl rozetleri)
         // taşıyor — ayrıca büyük bir renkli bant eklemek "modern" durmuyordu.
         <section className="w-full py-14 md:py-20">
-          <div className="mx-auto max-w-[1300px] px-4">
+          <div className="mx-auto max-w-[1200px] px-4">
             <ScrollReveal>
             <header className="mx-auto mb-12 max-w-2xl text-center">
-              {data.timelineTitle && (
-                <h2
-                  className="text-[28px] font-bold leading-[1.15] md:text-[34px]"
-                  style={{
-                    fontFamily: 'var(--font-family-title, var(--font-family))',
-                    color: 'var(--primary, #2168b8)',
-                  }}
-                >
-                  {data.timelineTitle}
-                </h2>
-              )}
-              {data.timelineDescription && (
-                <p
-                  className="mt-4 text-base leading-relaxed md:text-lg"
-                  style={{ color: 'var(--text-color, #58595b)' }}
-                >
-                  {data.timelineDescription}
-                </p>
-              )}
+              <h2 className="tourSectionHeading">{ABOUT_TIMELINE_HEADING[locale]}</h2>
+              {data.timelineDescription && <p className="pageSectionLead">{data.timelineDescription}</p>}
             </header>
             </ScrollReveal>
 

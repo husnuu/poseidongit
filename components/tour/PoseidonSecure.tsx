@@ -21,37 +21,36 @@ export default function PoseidonSecure({
   const t = getPoseidonSecureStrings(locale)
   const sectionClass = layout === 'contained' ? styles.contained : styles.fullBleed
   const shellClass = layout === 'contained' ? styles.shellContained : styles.maxWidth
-  const innerClass = layout === 'contained' ? styles.innerContained : styles.inner
   return (
     <section className={sectionClass} aria-label={t.ariaLabel}>
       <div className={shellClass}>
-        <div className={innerClass}>
-          <div className={styles.logoRow}>
-            <ShieldCheck size={19} strokeWidth={2} className={styles.shieldIcon} aria-hidden />
-            <span className={styles.logoText}>
-              <span className={styles.logoBold}>Poseidon</span>
-              <span className={styles.logoAccent}>Secure</span>
-            </span>
+        <div className={styles.panel}>
+          <div className={styles.intro}>
+            <div className={styles.logoRow}>
+              <ShieldCheck strokeWidth={2} className={styles.shieldIcon} aria-hidden />
+              <span className={styles.logoText}>
+                <span className={styles.logoBold}>Poseidon</span>
+                <span className={styles.logoAccent}>Secure</span>
+              </span>
+            </div>
+            <p className={styles.description}>{t.description}</p>
           </div>
 
-          {/* İki garanti artık düz metnin içine gömülü değil, taranabilir ayrı
-              rozetler — sitenin geri kalanındaki ikon+etiket diliyle (FeatureBar,
-              Öne Çıkanlar) tutarlı. */}
-          <div className={styles.badgesRow}>
+          {/* Her garanti ayrı bir kart: ikon + başlık + açıklama. */}
+          <div className={styles.cards}>
             {t.badges.map((badge) => {
               const Icon = BADGE_ICON[badge.icon]
               return (
-                <span key={badge.icon} className={styles.badge}>
-                  <span className={styles.badgeIconWrap} aria-hidden>
-                    <Icon size={15} strokeWidth={2.25} />
+                <div key={badge.icon} className={styles.card}>
+                  <span className={styles.cardIconWrap} aria-hidden>
+                    <Icon size={19} strokeWidth={2} />
                   </span>
-                  <span className={styles.badgeLabel}>{badge.label}</span>
-                </span>
+                  <p className={styles.cardTitle}>{badge.label}</p>
+                  <p className={styles.cardBody}>{badge.body}</p>
+                </div>
               )
             })}
           </div>
-
-          <p className={styles.description}>{t.description}</p>
         </div>
       </div>
     </section>

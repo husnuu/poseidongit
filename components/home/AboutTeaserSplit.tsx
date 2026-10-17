@@ -43,12 +43,12 @@ function isInternalHref(href: string | null | undefined): boolean {
 const bodyComponents = {
   block: {
     normal: ({ children }: { children?: React.ReactNode }) => (
-      <p className="mb-3 text-base font-normal leading-relaxed text-[#2b1d05]/80 last:mb-0 md:text-lg">
+      <p className="mb-3 text-base font-normal leading-relaxed text-white last:mb-0 md:text-lg">
         {children}
       </p>
     ),
     blockquote: ({ children }: { children?: React.ReactNode }) => (
-      <p className="mb-3 text-base font-normal italic leading-relaxed text-[#2b1d05]/70 md:text-lg">
+      <p className="mb-3 text-base font-normal italic leading-relaxed text-white/90 md:text-lg">
         {children}
       </p>
     ),
@@ -84,11 +84,19 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
 
   return (
     <section
-      className="w-full"
-      style={{ background: 'linear-gradient(90deg, #ffd200, #f7971e)' }}
+      /* Blog bölümüyle aynı dil: marka mavisi zemin + aynı mavinin bir ton
+         açığıyla çizilmiş yumuşak kavisler. Önceki sarı-turuncu gradyan
+         sitenin hiçbir yerinde kullanılmıyordu. */
+      className="relative w-full overflow-hidden bg-[var(--section-sky,#4facd8)]"
       aria-labelledby="about-teaser-heading"
     >
-      <div className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-6 py-14 lg:grid-cols-2 lg:gap-16 lg:px-10 lg:py-20">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+        <span className="absolute -left-[38%] -top-[18%] block h-[420px] w-[420px] rounded-full bg-white/[0.14] md:-left-[18%] md:-top-[55%] md:h-[760px] md:w-[760px] md:bg-white/[0.1]" />
+        <span className="absolute -bottom-[26%] -left-[42%] block h-[460px] w-[460px] rounded-full bg-white/[0.12] md:-bottom-[62%] md:-left-[6%] md:h-[820px] md:w-[820px] md:bg-white/[0.085]" />
+        <span className="absolute -right-[36%] top-[26%] block h-[360px] w-[360px] rounded-full border-[40px] border-white/[0.13] md:-right-[24%] md:top-[18%] md:h-[680px] md:w-[680px] md:border-[60px] md:border-white/[0.09]" />
+      </div>
+
+      <div className="relative z-10 mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-6 py-14 lg:grid-cols-2 lg:gap-16 lg:px-10 lg:py-20">
         {/* Metin - solda (referans: koyu başlık, sol hizalı, iki buton) */}
         <div
           ref={contentRef}
@@ -101,7 +109,7 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
           {heading && (
             <h2
               id="about-teaser-heading"
-              className="mb-4 text-center text-[28px] font-black uppercase leading-[1.15] text-[#1a1305] sm:text-[32px] md:text-[36px] lg:text-[40px]"
+              className="mb-4 text-center text-[28px] font-black uppercase leading-[1.15] text-white sm:text-[32px] md:text-[36px] lg:text-[40px]"
               style={{
                 fontFamily: 'var(--font-family-title, var(--font-family))',
                 fontWeight: 900,
@@ -123,7 +131,7 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
                   {primaryPath ? (
                     <Link
                       href={primaryPath}
-                      className="inline-flex h-[50px] items-center justify-center rounded-lg bg-[#1a1305] px-8 text-[15px] font-bold uppercase text-white transition duration-200 hover:scale-105 hover:brightness-110"
+                      className="inline-flex h-[50px] items-center justify-center rounded-lg border-2 border-white bg-white px-8 text-[15px] font-extrabold uppercase text-[var(--primary,#2168b8)] shadow-sm transition duration-200 hover:scale-105"
                       style={{ fontFamily: 'var(--font-family)' }}
                     >
                       {primaryCta.label}
@@ -133,7 +141,7 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
                       href={primaryCta.href || '#'}
                       target={primaryCta.href?.startsWith('http') ? '_blank' : undefined}
                       rel={primaryCta.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="inline-flex h-[50px] items-center justify-center rounded-lg bg-[#1a1305] px-8 text-[15px] font-bold uppercase text-white transition duration-200 hover:scale-105 hover:brightness-110"
+                      className="inline-flex h-[50px] items-center justify-center rounded-lg border-2 border-white bg-white px-8 text-[15px] font-extrabold uppercase text-[var(--primary,#2168b8)] shadow-sm transition duration-200 hover:scale-105"
                       style={{ fontFamily: 'var(--font-family)' }}
                     >
                       {primaryCta.label}
@@ -146,7 +154,7 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
                   {secondaryPath ? (
                     <Link
                       href={secondaryPath}
-                      className="inline-flex h-[50px] items-center justify-center rounded-lg bg-white px-8 text-[15px] font-bold uppercase text-[#1a1305] transition duration-200 hover:scale-105 hover:brightness-95"
+                      className="inline-flex h-[50px] items-center justify-center rounded-lg border-2 border-white px-8 text-[15px] font-extrabold uppercase text-white transition duration-200 hover:scale-105 hover:bg-white hover:text-[var(--primary,#2168b8)]"
                       style={{ fontFamily: 'var(--font-family)' }}
                     >
                       {secondaryCta.label}
@@ -156,7 +164,7 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
                       href={secondaryCta.href || '#'}
                       target={secondaryCta.href?.startsWith('http') ? '_blank' : undefined}
                       rel={secondaryCta.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="inline-flex h-[50px] items-center justify-center rounded-lg bg-white px-8 text-[15px] font-bold uppercase text-[#1a1305] transition duration-200 hover:scale-105 hover:brightness-95"
+                      className="inline-flex h-[50px] items-center justify-center rounded-lg border-2 border-white px-8 text-[15px] font-extrabold uppercase text-white transition duration-200 hover:scale-105 hover:bg-white hover:text-[var(--primary,#2168b8)]"
                       style={{ fontFamily: 'var(--font-family)' }}
                     >
                       {secondaryCta.label}
@@ -171,7 +179,7 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
         {/* Görsel - sağda (referans: yuvarlak köşeli tek fotoğraf) */}
         <div className="order-1 w-full lg:order-2">
           <div
-            className="relative w-full overflow-hidden rounded-[28px] bg-black/5 shadow-[0_20px_45px_-20px_rgba(26,19,5,0.35)]"
+            className="relative w-full overflow-hidden rounded-[28px] bg-white/10 shadow-[0_24px_50px_-20px_rgba(10,32,60,0.55)]"
             style={{ aspectRatio: naturalRatio ?? 4 / 3 }}
           >
             {imageUrl ? (
@@ -187,13 +195,13 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
                 priority={false}
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/10 text-[#1a1305]/60">
+              <div className="absolute inset-0 flex items-center justify-center bg-white/10 text-white/90">
                 Görsel yok
               </div>
             )}
           </div>
           {imageUrl && (
-            <p className="mt-3 text-center text-sm italic text-[#1a1305]/60 lg:text-left" style={{ fontFamily: 'var(--font-family)' }}>
+            <p className="mt-3 text-center text-sm italic text-white/90 lg:text-left" style={{ fontFamily: 'var(--font-family)' }}>
               {PHOTO_CAPTION[locale]}
             </p>
           )}

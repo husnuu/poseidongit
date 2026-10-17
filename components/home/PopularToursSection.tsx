@@ -85,7 +85,8 @@ export default function PopularToursSection({
     const el = desktopScrollRef.current
     if (!el) return
     const card = el.children[0] as HTMLElement | undefined
-    const amount = card ? card.offsetWidth + 32 : el.clientWidth * 0.8
+    // +16: şerit boşluğu (gap-4) — kart genişliğiyle birlikte güncellenmeli.
+    const amount = card ? card.offsetWidth + 16 : el.clientWidth * 0.8
     el.scrollBy({ left: amount * dir, behavior: 'smooth' })
   }
 
@@ -157,14 +158,14 @@ export default function PopularToursSection({
         <div className="relative hidden md:block">
           <div
             ref={desktopScrollRef}
-            className="flex snap-x snap-mandatory gap-8 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {items.map((tour, index) => (
               <div
                 key={tour._id}
-                /* Masaüstünde bir tık geniş: 350→380px (kapsayıcı 1200px,
-                   32px boşlukla 3 kart + 4.'nün ucu hâlâ görünüyor). */
-                className="w-[320px] flex-shrink-0 snap-start transition-all duration-300 ease-out lg:w-[380px]"
+                /* Masaüstü ölçüleri "Özel Tekne Kiralama" şeridiyle birebir
+                   aynı: 350px kart + 16px boşluk (önceden 380px + 32px idi). */
+                className="w-[320px] flex-shrink-0 snap-start transition-all duration-300 ease-out md:w-[350px]"
                 style={{
                   opacity: visible ? 1 : 0,
                   transform: visible ? 'translateY(0)' : 'translateY(10px)',
@@ -205,7 +206,7 @@ export default function PopularToursSection({
           <div className="mt-8 flex justify-center md:mt-12">
             <Link
               href={withLocalePath(locale, '/turlar')}
-              className="inline-flex h-11 w-auto min-w-[180px] items-center justify-center rounded-lg border-2 bg-transparent px-6 text-[14px] font-extrabold uppercase tracking-wide no-underline transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:h-12 sm:w-[210px] sm:px-0 sm:text-[15px]"
+              className="inline-flex h-11 w-auto min-w-[180px] items-center justify-center rounded-lg border-2 bg-transparent px-6 text-[14px] font-extrabold uppercase tracking-wide no-underline transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:h-12 sm:px-8 sm:text-[15px]"
               style={{ borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }}
             >
               {VIEW_ALL_LABEL[locale]}

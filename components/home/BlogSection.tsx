@@ -2,10 +2,11 @@
 
 import { useRef, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import CompactBlogCard, { type CompactBlogCardPost } from '@/components/blog/CompactBlogCard'
+import { BLOG_PAGE_LEAD } from '@/lib/i18n/strings/blogPage'
 
 export type BlogPostItem = CompactBlogCardPost & {
   excerpt?: string | null
@@ -99,6 +100,10 @@ export default function BlogSection({
   const { subtitle, posts, ctaButton } = data
   const titleUpper = heading?.trim() || SECTION_TITLE[locale]
 
+  // Referanstaki başlık altı spotu; Sanity'de subtitle boş olduğunda
+  // /blog sayfasındaki kısa cümleyle aynı metin kullanılıyor.
+  const leadText = compact ? subtitle?.trim() || '' : subtitle?.trim() || BLOG_PAGE_LEAD[locale]
+
   const blogIndexPath = withLocalePath(locale, '/blog')
   const seeAllHref = (ctaButton?.href?.trim() || blogIndexPath) as string
   const seeAllLabel =
@@ -107,10 +112,12 @@ export default function BlogSection({
   return (
     <section
       ref={sectionRef}
+      /* Anasayfada referans tasarımdaki tam genişlikte mavi bant; yazı altı
+         ("Okumaya devam et") sade beyaz kalıyor. */
       className={
         compact
           ? 'w-full bg-white pb-10 pt-10 transition-all duration-300 ease-out md:pb-14 md:pt-14'
-          : 'w-full bg-zinc-50/60 pt-14 pb-6 transition-all duration-300 ease-out md:pt-20 md:pb-8'
+          : 'relative w-full overflow-hidden bg-[var(--section-sky,#4facd8)] pb-14 pt-14 transition-all duration-300 ease-out md:pb-20 md:pt-20'
       }
       style={{
         opacity: visible ? 1 : 0,
@@ -118,32 +125,86 @@ export default function BlogSection({
       }}
       aria-labelledby="blog-section-heading"
     >
-      <div className="mx-auto max-w-[1200px] px-4">
-        <header className={compact ? 'mb-6 text-left md:mb-7' : 'mb-8 text-center md:mb-10'}>
-          <h2
-            id="blog-section-heading"
-            className={
-              compact
-                ? 'mb-0 text-[21px] font-extrabold uppercase leading-[1.2] tracking-[0.01em] sm:text-[23px] md:text-[26px]'
-                : 'mb-4 text-[28px] font-black uppercase leading-[1.15] sm:text-[32px] md:mb-3 md:text-[36px] lg:text-[40px]'
-            }
-            style={{
-              fontFamily: 'var(--font-family-title, var(--font-family))',
-              fontWeight: compact ? 800 : 900,
-              WebkitTextStroke: compact ? undefined : '0.6px currentColor',
-              color: compact ? 'var(--secondary, #131719)' : 'var(--primary, #2168b8)',
-            }}
-          >
-            {titleUpper}
-          </h2>
-          {subtitle ? (
-            <p
-              className="mx-auto max-w-2xl text-base font-normal leading-relaxed md:text-lg"
-              style={{ color: 'var(--text-color)' }}
+      {/* Referanstaki gibi düz mavi değil: zeminin üstünde aynı mavinin bir
+          ton açığıyla çizilmiş büyük yumuşak kavisler. Beyazın çok düşük
+          alfası kullanılıyor, böylece --primary değişirse desen de uyumlu
+          kalıyor. */}
+      {!compact && (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+          {/* Mobilde bölüm hem dar hem kısa: masaüstü ölçüleri ekranın
+              tamamen dışında kalıp desen görünmez oluyordu. Dar ekranda daha
+              küçük çaplar, görünür alanı kesen konumlar ve bir tık yüksek
+              alfa kullanılıyor. */}
+          <span className="absolute -left-[38%] -top-[18%] block h-[420px] w-[420px] rounded-full bg-white/[0.14] md:-left-[18%] md:-top-[55%] md:h-[760px] md:w-[760px] md:bg-white/[0.1]" />
+          <span className="absolute -bottom-[26%] -left-[42%] block h-[460px] w-[460px] rounded-full bg-white/[0.12] md:-bottom-[62%] md:-left-[6%] md:h-[820px] md:w-[820px] md:bg-white/[0.085]" />
+          <span className="absolute -right-[36%] top-[26%] block h-[360px] w-[360px] rounded-full border-[40px] border-white/[0.13] md:-right-[24%] md:top-[18%] md:h-[680px] md:w-[680px] md:border-[60px] md:border-white/[0.09]" />
+        </div>
+      )}
+
+      <div className="relative z-10 mx-auto max-w-[1200px] px-4">
+        <header
+          className={
+            compact
+              ? 'mb-6 text-left md:mb-7'
+              /* Başlık ortalı; oklar aynı satırda sağda duruyor (mutlak
+                 konum, yoksa flex düzeni başlığı merkezden kaydırıyordu). */
+              : 'relative mb-8 flex flex-col items-center text-center md:mb-10'
+          }
+        >
+          <div className={compact ? undefined : 'min-w-0 max-w-2xl'}>
+            <h2
+              id="blog-section-heading"
+              className={
+                compact
+                  ? 'mb-0 text-[21px] font-extrabold uppercase leading-[1.2] tracking-[0.01em] sm:text-[23px] md:text-[26px]'
+                  : 'mb-2 text-[26px] font-black uppercase leading-[1.15] sm:text-[30px] md:text-[34px] lg:text-[38px]'
+              }
+              style={{
+                fontFamily: 'var(--font-family-title, var(--font-family))',
+                fontWeight: compact ? 800 : 900,
+                WebkitTextStroke: compact ? undefined : '0.6px currentColor',
+                color: compact ? 'var(--secondary, #131719)' : '#fff',
+              }}
             >
-              {subtitle}
-            </p>
-          ) : null}
+              {titleUpper}
+            </h2>
+            {leadText ? (
+              <p
+                className={
+                  compact
+                    ? 'max-w-2xl text-base font-normal leading-relaxed md:text-lg'
+                    : 'mx-auto max-w-2xl text-[15px] font-normal leading-relaxed text-white md:text-base'
+                }
+                style={compact ? { color: 'var(--text-color)' } : undefined}
+              >
+                {leadText}
+              </p>
+            ) : null}
+          </div>
+
+          {/* Referansta oklar başlığın sağında, şeridin yanlarında değil. */}
+          {!compact && (
+            <div className="absolute right-0 top-1/2 hidden -translate-y-1/2 shrink-0 items-center gap-3 md:flex">
+              <button
+                type="button"
+                onClick={scrollPrev}
+                disabled={!canScrollPrev}
+                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/60 text-white transition duration-200 hover:bg-white hover:text-[var(--primary,#2168b8)] disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-white"
+                aria-label="Önceki yazılar"
+              >
+                <ChevronLeft className="h-5 w-5" strokeWidth={2.2} aria-hidden />
+              </button>
+              <button
+                type="button"
+                onClick={scrollNext}
+                disabled={!canScrollNext}
+                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white bg-white text-[var(--primary,#2168b8)] transition duration-200 hover:scale-105 disabled:cursor-default disabled:opacity-35 disabled:hover:scale-100"
+                aria-label="Sonraki yazılar"
+              >
+                <ChevronRight className="h-5 w-5" strokeWidth={2.2} aria-hidden />
+              </button>
+            </div>
+          )}
         </header>
 
         <div className="relative">
@@ -160,7 +221,7 @@ export default function BlogSection({
             {posts.map((post, index) => (
               <div
                 key={post._id}
-                className="w-[min(86vw,300px)] shrink-0 snap-start sm:w-[280px] md:w-[300px]"
+                className="w-[min(86vw,320px)] shrink-0 snap-start sm:w-[320px] md:w-[350px]"
                 style={{
                   opacity: visible ? 1 : 0,
                   transform: visible ? 'translateY(0)' : 'translateY(8px)',
@@ -170,12 +231,12 @@ export default function BlogSection({
                   transitionTimingFunction: 'ease-out',
                 }}
               >
-                <CompactBlogCard post={post} locale={locale} noImageLabel={noImageLabel} imageSizes="300px" />
+                <CompactBlogCard post={post} locale={locale} noImageLabel={noImageLabel} imageSizes="350px" />
               </div>
             ))}
           </div>
 
-          {canScrollPrev && (
+          {compact && canScrollPrev && (
             <button
               type="button"
               onClick={scrollPrev}
@@ -187,7 +248,7 @@ export default function BlogSection({
             </button>
           )}
 
-          {canScrollNext && (
+          {compact && canScrollNext && (
             <button
               type="button"
               onClick={scrollNext}
@@ -205,10 +266,14 @@ export default function BlogSection({
         <div className={compact ? 'hidden' : 'mt-8 flex justify-center md:mt-10'}>
           <Link
             href={seeAllHref}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-lg border-2 px-8 py-2.5 text-[13px] font-extrabold uppercase tracking-wide transition duration-200 hover:scale-105 hover:bg-[var(--primary)]/[0.06] sm:text-[14px]"
-            style={{ background: '#fff', color: 'var(--primary, #2168b8)', borderColor: 'var(--primary, #2168b8)' }}
+            /* Sitedeki diğer bölüm butonlarıyla aynı: köşeli, 2px çerçeve,
+               aynı punto/boşluk. Zemin mavi olduğu için çerçeve ve dolgu
+               beyaz, metin marka mavisi. */
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-lg border-2 border-white bg-white px-8 py-2.5 text-[14px] font-extrabold uppercase tracking-wide shadow-sm transition duration-200 hover:scale-105 sm:text-[15px]"
+            style={{ color: 'var(--primary, #2168b8)' }}
           >
             {seeAllLabel}
+            <ArrowRight className="h-4 w-4" strokeWidth={2.4} aria-hidden />
           </Link>
         </div>
       </div>
