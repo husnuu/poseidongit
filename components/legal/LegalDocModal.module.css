@@ -1,0 +1,138 @@
+/* Ekranda ortalı pop-up — rezervasyon penceresinin de üstünde açılır. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(10, 18, 30, 0.55);
+  animation: legalOverlayIn 160ms ease;
+}
+
+@keyframes legalOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sheet {
+  width: 100%;
+  max-width: 640px;
+  max-height: 86dvh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 30px 70px -30px rgba(10, 18, 30, 0.6);
+  animation: legalSheetIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes legalSheetIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 14px;
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+  min-height: 1.3em;
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--secondary, #131719);
+  -webkit-text-stroke: 0.3px currentColor;
+}
+
+.closeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #f1f3f5;
+  color: var(--secondary, #131719);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: #e2e8f0;
+}
+
+.body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 24px 28px;
+}
+
+.status {
+  margin: 8px 0 0;
+  font-family: var(--font-family), sans-serif;
+  font-size: 15px;
+  color: var(--text-color, #58595b);
+}
+
+.fallbackLink {
+  color: var(--primary, #2168b8);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Mobil: alttan yükselen panel (tutamaçlı) — tekne penceresiyle aynı dil. */
+.handle {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .sheet {
+    max-width: 100%;
+    max-height: 90dvh;
+    border-radius: 18px 18px 0 0;
+    animation: legalSheetUp 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .handle {
+    display: block;
+    width: 44px;
+    height: 4px;
+    margin: 10px auto 0;
+    border-radius: 999px;
+    background: #d7dde5;
+    flex-shrink: 0;
+  }
+
+  .header { padding: 12px 18px 12px; }
+  .body { padding: 4px 18px calc(22px + env(safe-area-inset-bottom, 0px)); }
+  .title { font-size: 16px; }
+}
+
+@keyframes legalSheetUp {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .sheet { animation: none; }
+}

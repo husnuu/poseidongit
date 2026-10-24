@@ -41,6 +41,14 @@ interface YachtInquiryModalProps {
   resolveDayPrice?: (iso: string) => number | undefined
 }
 
+/** Misafir sayacı satırı (tur sihirbazındaki "Yetişkin / 11–99 yaş" düzeni). */
+const GUEST_ROW: Record<string, { label: string; max: (n: number) => string }> = {
+  tr: { label: 'Misafir', max: (n) => `En fazla ${n} kişi` },
+  en: { label: 'Guests', max: (n) => `Up to ${n} guests` },
+  de: { label: 'Gäste', max: (n) => `Bis zu ${n} Gäste` },
+  ru: { label: 'Гости', max: (n) => `До ${n} гостей` },
+}
+
 export default function YachtInquiryModal({
   open,
   onClose,
@@ -92,7 +100,6 @@ export default function YachtInquiryModal({
   if (!open) return null
 
   const locLabel = [yacht.locationTitle, yacht.marina].filter(Boolean).join(' · ') || null
-  const modalSubtitle = step === 1 ? ui.step1Subtitle : ui.step2Subtitle
 
   const rangeOk =
     overnightRange.checkIn && overnightRange.checkOut
@@ -127,7 +134,7 @@ export default function YachtInquiryModal({
       onClick={onClose}
     >
       <div
-        className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl rounded-b-none shadow-2xl flex flex-col overflow-hidden max-sm:h-[92dvh] max-sm:max-h-[92dvh] sm:max-h-[min(92vh,720px)] sm:h-auto"
+        className="bg-white w-full sm:max-w-[600px] sm:rounded-2xl rounded-t-2xl rounded-b-none shadow-2xl flex flex-col overflow-hidden max-sm:h-[92dvh] max-sm:max-h-[92dvh] sm:max-h-[min(92vh,720px)] sm:h-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="shrink-0 z-20 overflow-hidden sm:rounded-t-2xl">
@@ -198,13 +205,9 @@ export default function YachtInquiryModal({
 
         {step === 1 ? (
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-4 sm:px-6 sm:pt-6">
-              <p
-                className="text-xs font-semibold text-zinc-500 m-0 mb-4"
-                style={{ fontFamily: 'var(--font-family)' }}
-              >
-                {modalSubtitle}
-              </p>
+            {/* Tur rezervasyon sihirbazının 1. adımıyla aynı dil: kartsız
+                takvim, büyük başlık + kısa mavi çizgi, sağda +/− olan satır. */}
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-5 pb-4 sm:px-6 sm:pt-6">
               {showRentalModeTabs ? (
                 <YachtRentalModeTabs value={rentalMode} onChange={onRentalModeChange} locale={locale} />
               ) : null}
@@ -217,16 +220,21 @@ export default function YachtInquiryModal({
                 onRangeChange={onOvernightRangeChange}
                 resolveDayPrice={resolveDayPrice}
                 locale={locale}
+                sectionTitle
               />
 
-              <div className="mt-6 mb-2">
-                <p
-                  className="text-sm font-semibold text-zinc-700 mb-2"
-                  style={{ fontFamily: 'var(--font-family)' }}
-                >
-                  {ui.guestCountLabel}
-                </p>
-                <div className={bookingStyles.counterControls} style={{ width: 'fit-content' }}>
+              <div className="mt-8">
+                <div className={bookingStyles.sectionHeaderPlain}>
+                  <h3 className={bookingStyles.sectionTitlePlain}>{ui.guestCountLabel}</h3>
+                </div>
+                <div className={bookingStyles.counterRow}>
+                  <div>
+                    <div className={bookingStyles.counterLabel}>{GUEST_ROW[locale]?.label ?? GUEST_ROW.tr.label}</div>
+                    <div className={bookingStyles.counterSub}>
+                      {(GUEST_ROW[locale] ?? GUEST_ROW.tr).max(maxGuests)}
+                    </div>
+                  </div>
+                <div className={bookingStyles.counterControls}>
                   <button
                     type="button"
                     className={bookingStyles.counterBtn}
@@ -246,6 +254,7 @@ export default function YachtInquiryModal({
                   >
                     +
                   </button>
+                </div>
                 </div>
               </div>
             </div>
@@ -284,13 +293,6 @@ export default function YachtInquiryModal({
               <ChevronLeft className="w-4 h-4 shrink-0" strokeWidth={2.5} aria-hidden />
               {ui.backToDateGuests}
             </button>
-            <p
-              className="text-xs font-semibold text-zinc-500 m-0 mb-4"
-              style={{ fontFamily: 'var(--font-family)' }}
-            >
-              {modalSubtitle}
-            </p>
-
             <YachtInquiryForm
               yachtSlug={yacht.slug}
               yachtName={yacht.name}

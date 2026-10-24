@@ -229,6 +229,67 @@ summary:focus-visible,
   }
 }
 
+/* Hero'daki "Hantal Turizm – Belge No" kurdelesi: açılışta soldan sağa
+   açılarak (clip-path) ve hafifçe kayarak belirir, hemen ardından üzerinden
+   tek seferlik bir parlama geçer. Kurdelenin kendi şekli span'deki clip-path
+   ile çizildiği için açılma animasyonu sarmalayıcı div'de; parlama ise span'in
+   içinde, böylece kurdele şeklinin dışına taşmıyor. */
+@keyframes hero-creds-unroll {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    transform: translateX(-14px);
+  }
+  55% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    transform: translateX(0);
+  }
+}
+
+@keyframes hero-creds-shine {
+  to {
+    transform: translateX(130%);
+  }
+}
+
+.hero-creds-reveal {
+  opacity: 0;
+  animation: hero-creds-unroll 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards;
+}
+
+.hero-creds-reveal .hero-creds-badge {
+  position: relative;
+}
+
+.hero-creds-reveal .hero-creds-badge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  transform: translateX(-130%);
+  animation: hero-creds-shine 1.1s ease-out 1.05s forwards;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-creds-reveal {
+    animation: none;
+    opacity: 1;
+  }
+  .hero-creds-reveal .hero-creds-badge::after {
+    display: none;
+  }
+}
+
 /* Sayfa kaydırıldıkça anasayfa bölümlerinin (IntersectionObserver ile
    tetiklenen) yumuşak belirme efekti — bkz. components/ui/ScrollReveal.tsx. */
 .scroll-reveal {

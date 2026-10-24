@@ -184,16 +184,21 @@ async function sendToAdminRecipients(
     attachments?: ResendAttachment[]
     logContext?: string
   }
-): Promise<void> {
+): Promise<number> {
+  /* Dönüş: başarıyla gönderilen alıcı sayısı. Çağıranların çoğu sonucu
+     yok sayıyor (bildirim ikincil); iletişim formu ise 0 dönerse hata
+     veriyor — aksi halde ziyaretçi "mesajınız alındı" görüp mesaj
+     hiçbir admine ulaşmıyordu. */
   const recipients = getAdminNotificationEmails()
   if (recipients.length === 0) {
     console.warn(
       '[email] Admin bildirimi gönderilmedi: ADMIN_EMAIL veya ADMIN_EMAIL_2 tanımlı değil.',
       options.logContext ?? ''
     )
-    return
+    return 0
   }
 
+  let delivered = 0
   for (const to of recipients) {
     const { error } = await resend.emails.send({
       from: options.from,
@@ -206,9 +211,11 @@ async function sendToAdminRecipients(
     if (error) {
       console.error('[email] Admin e-postası gönderilemedi:', to, options.logContext ?? '', error)
     } else {
+      delivered += 1
       console.info('[email] Admin bildirimi gönderildi:', to, options.logContext ?? '')
     }
   }
+  return delivered
 }
 
 function formatDate(dateStr: string): string {
@@ -1810,19 +1817,24 @@ export interface ContactFormPayload {
 }
 
 function buildContactFormEmailHtml(p: ContactFormPayload): string {
-  const phoneLine = p.phone ? `<p style="margin: 0 0 8px;"><strong>Telefon:</strong> ${escapeHtml(p.phone)}</p>` : ''
+  const telHref = p.phone ? p.phone.replace(/[^\d+]/g, '') : ''
+  const phoneLine = p.phone
+    ? `<p style="margin: 0 0 8px;"><strong>Telefon:</strong> <a href="tel:${escapeHtml(telHref)}" style="color: ${EMAIL_NAVY};">${escapeHtml(p.phone)}</a></p>`
+    : ''
+  const sentAt = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul', dateStyle: 'long', timeStyle: 'short' })
   return `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>İletişim Formu</title></head>
 <body style="font-family: 'Inter', system-ui, sans-serif; line-height: 1.5; color: ${EMAIL_TEXT_BODY}; max-width: 560px; margin: 0 auto; padding: 28px 20px; background: ${EMAIL_BG_PAGE};">
   <h1 style="margin: 0 0 10px; color: ${EMAIL_NAVY}; font-size: 22px; font-weight: 700;">Yeni İletişim Formu Mesajı</h1>
-  <p style="margin: 0 0 18px; color: ${EMAIL_MUTED}; font-size: 14px;">Web sitesinden bir mesaj gönderildi.</p>
+  <p style="margin: 0 0 18px; color: ${EMAIL_MUTED}; font-size: 14px;">Web sitesinden bir mesaj gönderildi. Bu e-postayı yanıtlarsanız cevabınız doğrudan ziyaretçiye gider.</p>
   <div style="background: ${EMAIL_SURFACE}; border-radius: 10px; padding: 18px 20px; margin: 0; border: 1px solid ${EMAIL_BORDER};">
     <p style="margin: 0 0 8px;"><strong>Ad Soyad:</strong> ${escapeHtml(p.name)}</p>
     <p style="margin: 0 0 8px;"><strong>Grup Büyüklüğü:</strong> ${p.groupSize}</p>
-    <p style="margin: 0 0 8px;"><strong>E-posta:</strong> ${escapeHtml(p.email)}</p>
+    <p style="margin: 0 0 8px;"><strong>E-posta:</strong> <a href="mailto:${escapeHtml(p.email)}" style="color: ${EMAIL_NAVY};">${escapeHtml(p.email)}</a></p>
     ${phoneLine}
+    <p style="margin: 0 0 8px; color: ${EMAIL_MUTED}; font-size: 13px;"><strong>Gönderim:</strong> ${escapeHtml(sentAt)}</p>
     <hr style="border: none; border-top: 1px solid ${EMAIL_BORDER}; margin: 12px 0;">
     <p style="margin: 0 0 8px;"><strong>Mesaj:</strong></p>
     <p style="margin: 0; white-space: pre-wrap;">${escapeHtml(p.message)}</p>
@@ -2024,13 +2036,16 @@ export async function sendContactFormEmail(payload: ContactFormPayload): Promise
   const recipients = getAdminNotificationEmails()
   if (recipients.length === 0) return { ok: false, error: 'Alıcı e-posta yok (ADMIN_EMAIL tanımlayın)' }
   const from = getFrom()
-  await sendToAdminRecipients(resend, {
+  const delivered = await sendToAdminRecipients(resend, {
     from,
     subject: `İletişim formu: ${payload.name}`,
     html: buildContactFormEmailHtml(payload),
     replyTo: payload.email,
     logContext: payload.email,
   })
+  if (delivered === 0) {
+    return { ok: false, error: 'Mesaj iletilemedi. Lütfen daha sonra tekrar deneyin veya WhatsApp üzerinden yazın.' }
+  }
   return { ok: true }
 }
 

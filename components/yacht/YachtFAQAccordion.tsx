@@ -9,6 +9,7 @@ import type { SiteLocale } from '@/lib/i18n/config'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import { withLocalePath } from '@/lib/i18n/paths'
 import styles from '@/components/FAQAccordion.module.css'
+import headingStyles from '@/components/yacht/yachtDetailHeading.module.css'
 
 export interface YachtFaqItem {
   question?: string
@@ -60,7 +61,10 @@ export default function YachtFAQAccordion({ items, locale = 'tr', whatsappUrl }:
 
   return (
     <section className={styles.faq} aria-labelledby={`${baseId}-faq-h`}>
-      <h2 id={`${baseId}-faq-h`} className={styles.faqTitle}>
+      {/* Tur SSS'sindeki .faqTitle sınıfı .tourSectionHeading'e taşındığı için
+          artık yok — başlık stilsiz kalıyordu. Yat sayfasının diğer bölüm
+          başlıklarıyla (Olanaklar, Galeri…) aynı sınıf. */}
+      <h2 id={`${baseId}-faq-h`} className={headingStyles.h2}>
         {tourUi.faqDefaultTitle}
       </h2>
 

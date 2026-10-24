@@ -4,6 +4,7 @@ import blog from './blog'
 import blogPage from './blogPage'
 import blogPageLocaleOverlay from './blogPageLocaleOverlay'
 import blogTranslation from './blogTranslation'
+import boat from './boat'
 import boatTimelineItem from './boatTimelineItem'
 import contactPage from './contactPage'
 import contactPageLocaleOverlay from './contactPageLocaleOverlay'
@@ -44,6 +45,7 @@ export const schemaTypes = [
   blogPage,
   blogPageLocaleOverlay,
   blogTranslation,
+  boat,
   boatTimelineItem,
   contactPage,
   contactPageLocaleOverlay,

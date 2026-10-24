@@ -35,6 +35,28 @@ export interface TourVideo {
   }
 }
 
+/** "Tekneniz" bölümü — tura bağlı tekne dokümanından gelir (boat.ts). */
+export interface TourBoatImage {
+  url?: string | null
+  alt?: string | null
+  metadata?: { lqip?: string }
+}
+
+export interface TourBoat {
+  name?: string | null
+  coverImage?: TourBoatImage | null
+  gallery?: TourBoatImage[] | null
+  amenities?: string[] | null
+  specs?: {
+    buildYear?: number | null
+    capacity?: number | null
+    cabins?: number | null
+    wc?: number | null
+    length?: string | null
+    crew?: number | null
+  } | null
+}
+
 export interface GalleryImage {
   asset?: { _ref?: string; _type?: string }
   url?: string
@@ -240,6 +262,7 @@ export interface Tour {
   notIncluded?: string[]
   faqs?: FAQ[]
   host?: Host
+  boat?: TourBoat | null
   whyYouWillLove?: WhyYouWillLove
   ticketClasses?: TicketClass[]
   seasonRules?: SeasonRule[]
@@ -292,6 +315,7 @@ export const getTour = cache(async function getTour(
       itinerary,
       included,
       notIncluded,
+      boatAmenities,
       host,
       whyYouWillLove,
       ticketClasses,
@@ -343,6 +367,10 @@ export const getTour = cache(async function getTour(
         : translateArrayFields(merged.itinerary, ['title', 'description', 'tag'], locale),
       has('included') ? merged.included : translateTextArray(merged.included, locale),
       has('notIncluded') ? merged.notIncluded : translateTextArray(merged.notIncluded, locale),
+      /* Tekne ayrı bir doküman olduğu için tur çeviri overlay'inde yer almıyor;
+         yalnızca olanak maddeleri çevriliyor (tekne adı ve sayısal özellikler
+         zaten dilden bağımsız). */
+      translateTextArray(merged.boat?.amenities ?? undefined, locale),
       has('host') ? merged.host : translateFields(merged.host, ['title', 'note'], locale),
       has('whyYouWillLove')
         ? merged.whyYouWillLove
@@ -423,6 +451,9 @@ export const getTour = cache(async function getTour(
       included: included ?? undefined,
       notIncluded: notIncluded ?? undefined,
       host: host ?? undefined,
+      boat: merged.boat
+        ? { ...merged.boat, amenities: boatAmenities ?? merged.boat.amenities }
+        : merged.boat,
       whyYouWillLove: whyYouWillLove ?? undefined,
       ticketClasses: ticketClasses ?? undefined,
       extras: extras ?? undefined,

@@ -109,7 +109,9 @@ export default function HeroBanner({
       />
 
       {(hero.topBadgeText?.trim() || hero.heroBadgeEnabled) && (
-        <div className="pointer-events-none absolute left-4 top-[12px] z-10 md:left-6 md:top-[24px]">
+        /* Açılışta kurdele soldan "açılarak" belirir, ardından üzerinden tek
+           bir parlama geçer (bkz. globals.css .hero-creds-reveal). */
+        <div className="hero-creds-reveal pointer-events-none absolute left-4 top-[12px] z-10 md:left-6 md:top-[24px]">
           <span
             className="hero-creds-badge"
             style={{ fontFamily: 'var(--font-family)', fontWeight: 500 }}

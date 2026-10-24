@@ -302,22 +302,28 @@ export default function YachtInquiryForm({
         </ul>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Tur rezervasyonundaki "Bilgiler" adımıyla aynı: büyük başlık + mavi
+          çizgi, her alan tam genişlikte, etiket kutunun içinde. Alanlar aynı. */}
+      <div className={`${bookingStyles.sectionHeaderPlain} mt-6`}>
+        <h3 className={bookingStyles.sectionTitlePlain}>{ui.step2Label}</h3>
+      </div>
+
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className={`${bookingStyles.customerForm} flex flex-col gap-3`}
+        noValidate
+      >
+        <div className="grid grid-cols-1 gap-3">
           <FloatingInput
             label={ui.labelFirstName}
             autoComplete="given-name"
             error={errors.firstName?.message}
-            compact
-            variant="outlined"
             {...register('firstName')}
           />
           <FloatingInput
             label={ui.labelLastName}
             autoComplete="family-name"
             error={errors.lastName?.message}
-            compact
-            variant="outlined"
             {...register('lastName')}
           />
         </div>
@@ -326,8 +332,6 @@ export default function YachtInquiryForm({
           type="email"
           autoComplete="email"
           error={errors.email?.message}
-          compact
-          variant="outlined"
           {...register('email')}
         />
         <PhoneField
@@ -338,14 +342,11 @@ export default function YachtInquiryForm({
           onBlur={() => {}}
           error={errors.phone?.message}
           defaultCountry="TR"
-          compact
-          variant="outlined"
         />
         <FloatingTextarea
           label={ui.labelMessage}
           rows={4}
           error={errors.message?.message}
-          variant="outlined"
           {...register('message')}
         />
 

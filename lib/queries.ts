@@ -123,6 +123,21 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
     question,
     answer
   },
+  boat->{
+    name,
+    coverImage{
+      "url": asset->url,
+      alt,
+      "metadata": asset->metadata { lqip }
+    },
+    gallery[]{
+      "url": asset->url,
+      alt,
+      "metadata": asset->metadata { lqip }
+    },
+    amenities,
+    specs{ buildYear, capacity, cabins, wc, length, crew }
+  },
   host{
     name,
     title,
@@ -442,6 +457,21 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
   faqs[]{
     question,
     answer
+  },
+  boat->{
+    name,
+    coverImage{
+      "url": asset->url,
+      alt,
+      "metadata": asset->metadata { lqip }
+    },
+    gallery[]{
+      "url": asset->url,
+      alt,
+      "metadata": asset->metadata { lqip }
+    },
+    amenities,
+    specs{ buildYear, capacity, cabins, wc, length, crew }
   },
   host{
     name,

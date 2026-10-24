@@ -3859,3 +3859,46 @@
 .extraNoteInput:focus {
   border-color: var(--primary, #2168b8);
 }
+
+/* ── Bilgileriniz adımı — referans tasarım ──────────────────────────────
+   Alanların kendisi aynı; yalnızca görünüm: her alan tam genişlikte kendi
+   satırında, kutular daha yüksek ve etiket kutunun içinde (FloatingInput
+   "default" varyantı, compact değil), girilen değer koyu. Misafir kartları
+   kenarlıksız açık gri panel, başlıkları koyu ve büyük harf. */
+.customerForm .formGrid2 {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.customerForm .travelerCardsStack {
+  gap: 14px;
+}
+
+.customerForm .travelerCard {
+  background: #f6f7f9;
+  border-color: transparent;
+  box-shadow: none;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.customerForm .travelerCardTitle {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--secondary, #131719);
+  -webkit-text-stroke: 0.3px currentColor;
+  margin-bottom: 14px;
+}
+
+.customerForm input,
+.customerForm textarea,
+.customerForm select {
+  color: var(--secondary, #131719);
+}
+
+@media (max-width: 480px) {
+  .customerForm .travelerCard {
+    padding: 16px;
+  }
+}

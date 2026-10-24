@@ -24,6 +24,8 @@ interface YachtCalendarProps {
   resolveDayPrice?: (isoDate: string) => number | undefined
   /** Kart içinde daha kompakt başlık */
   compactTitle?: boolean
+  /** Tur rezervasyon sihirbazındaki gibi: kart yok, başlık büyük + mavi çizgi. */
+  sectionTitle?: boolean
   locale?: SiteLocale
   /** Başlık metni (yoksa dile göre varsayılan) */
   title?: string
@@ -45,6 +47,7 @@ export default function YachtCalendar({
   onRangeChange,
   resolveDayPrice,
   compactTitle,
+  sectionTitle,
   locale = 'tr',
   title: titleOverride,
 }: YachtCalendarProps) {
@@ -148,10 +151,14 @@ export default function YachtCalendar({
   const title = titleOverride?.trim() || defaultTitle
 
   return (
-    <div className={compactTitle ? undefined : styles.card}>
-      {!compactTitle && (
+    <div className={compactTitle || sectionTitle ? undefined : styles.card}>
+      {sectionTitle ? (
+        <div className={styles.sectionHeaderPlain}>
+          <h3 className={styles.sectionTitlePlain}>{title}</h3>
+        </div>
+      ) : !compactTitle ? (
         <h3 className={`${styles.cardTitle} ${styles.wizardMainStepTitle}`}>{title}</h3>
-      )}
+      ) : null}
       {/* Tur rezervasyon takvimiyle (Step1PeopleDate) birebir aynı desen:
           "Ay › Yıl ›" etiketleri solda (tıklanabilir native select kapağı),
           yuvarlak ‹ › ok butonları sağda. */}

@@ -75,6 +75,22 @@ export type TourPageUi = {
   photoGridPrev: string
   photoGridNext: string
   tourCardViewTour: string
+  /** "Tekneniz" bölümü (tur sayfası) — satır kartı ve detay penceresi. */
+  boatEyebrow: string
+  boatViewDetails: string
+  boatGuestsSuffix: (n: string) => string
+  boatBuildYearShort: (year: string) => string
+  boatSeeAllPhotos: (n: string) => string
+  boatGalleryAria: string
+  boatAmenitiesHeading: string
+  boatSpecsHeading: string
+  boatSpecBuildYear: string
+  boatSpecCapacity: string
+  boatSpecCabins: string
+  boatSpecWc: string
+  boatSpecLength: string
+  boatSpecCrew: string
+  boatCloseAria: string
   tourCardPopularBadge: string
   tourCardPerPersonFrom: (priceFormatted: string) => string
   /** Kart fiyat satırı: tutardan önce (küçük gri). */
@@ -189,6 +205,21 @@ const UI: Record<SiteLocale, TourPageUi> = {
     photoGridPrev: 'Önceki',
     photoGridNext: 'Sonraki',
     tourCardViewTour: 'Turu görüntüle',
+    boatEyebrow: 'TEKNENİZ',
+    boatViewDetails: 'Detayları gör',
+    boatGuestsSuffix: (n) => `${n} Misafir`,
+    boatBuildYearShort: (year) => `Yapım Yılı ${year}`,
+    boatSeeAllPhotos: (n) => `Tüm fotoğrafları gör (+${n})`,
+    boatGalleryAria: 'Tekne fotoğrafları',
+    boatAmenitiesHeading: 'Teknedeki olanaklar',
+    boatSpecsHeading: 'Teknik özellikler',
+    boatSpecBuildYear: 'Yapım Yılı',
+    boatSpecCapacity: 'Yolcu Kapasitesi',
+    boatSpecCabins: 'Kabin',
+    boatSpecWc: 'WC',
+    boatSpecLength: 'Uzunluk',
+    boatSpecCrew: 'Mürettebat',
+    boatCloseAria: 'Kapat',
     tourCardPopularBadge: 'En Popüler',
     tourCardPerPersonFrom: (p) => `Kişi başı ${p}’den başlayan fiyatlarla`,
     tourCardPriceMutedBefore: 'Kişi başı ',
@@ -293,6 +324,21 @@ const UI: Record<SiteLocale, TourPageUi> = {
     photoGridPrev: 'Previous',
     photoGridNext: 'Next',
     tourCardViewTour: 'View tour',
+    boatEyebrow: 'YOUR BOAT',
+    boatViewDetails: 'View details',
+    boatGuestsSuffix: (n) => `${n} Guests`,
+    boatBuildYearShort: (year) => `Built ${year}`,
+    boatSeeAllPhotos: (n) => `See all photos (+${n})`,
+    boatGalleryAria: 'Boat photos',
+    boatAmenitiesHeading: 'Onboard amenities',
+    boatSpecsHeading: 'Specifications',
+    boatSpecBuildYear: 'Year built',
+    boatSpecCapacity: 'Guest capacity',
+    boatSpecCabins: 'Cabins',
+    boatSpecWc: 'WC',
+    boatSpecLength: 'Length',
+    boatSpecCrew: 'Crew',
+    boatCloseAria: 'Close',
     tourCardPopularBadge: 'Most popular',
     tourCardPerPersonFrom: (p) => `From ${p} per person — starting prices`,
     tourCardPriceMutedBefore: 'From ',
@@ -397,6 +443,21 @@ const UI: Record<SiteLocale, TourPageUi> = {
     photoGridPrev: 'Zurück',
     photoGridNext: 'Weiter',
     tourCardViewTour: 'Tour ansehen',
+    boatEyebrow: 'IHR BOOT',
+    boatViewDetails: 'Details ansehen',
+    boatGuestsSuffix: (n) => `${n} Gäste`,
+    boatBuildYearShort: (year) => `Baujahr ${year}`,
+    boatSeeAllPhotos: (n) => `Alle Fotos ansehen (+${n})`,
+    boatGalleryAria: 'Bootsfotos',
+    boatAmenitiesHeading: 'Ausstattung an Bord',
+    boatSpecsHeading: 'Technische Daten',
+    boatSpecBuildYear: 'Baujahr',
+    boatSpecCapacity: 'Gästekapazität',
+    boatSpecCabins: 'Kabinen',
+    boatSpecWc: 'WC',
+    boatSpecLength: 'Länge',
+    boatSpecCrew: 'Besatzung',
+    boatCloseAria: 'Schließen',
     tourCardPopularBadge: 'Am beliebtesten',
     tourCardPerPersonFrom: (p) => `Ab ${p} pro Person — Startpreise`,
     tourCardPriceMutedBefore: 'Ab ',
@@ -501,6 +562,21 @@ const UI: Record<SiteLocale, TourPageUi> = {
     photoGridPrev: 'Назад',
     photoGridNext: 'Далее',
     tourCardViewTour: 'Смотреть тур',
+    boatEyebrow: 'ВАШЕ СУДНО',
+    boatViewDetails: 'Подробнее',
+    boatGuestsSuffix: (n) => `${n} гостей`,
+    boatBuildYearShort: (year) => `Год постройки ${year}`,
+    boatSeeAllPhotos: (n) => `Смотреть все фото (+${n})`,
+    boatGalleryAria: 'Фотографии судна',
+    boatAmenitiesHeading: 'Оснащение на борту',
+    boatSpecsHeading: 'Технические характеристики',
+    boatSpecBuildYear: 'Год постройки',
+    boatSpecCapacity: 'Вместимость',
+    boatSpecCabins: 'Каюты',
+    boatSpecWc: 'Санузлы',
+    boatSpecLength: 'Длина',
+    boatSpecCrew: 'Экипаж',
+    boatCloseAria: 'Закрыть',
     tourCardPopularBadge: 'Популярно',
     tourCardPerPersonFrom: (p) => `От ${p} за человека — стартовые цены`,
     tourCardPriceMutedBefore: 'От ',

@@ -1075,6 +1075,14 @@ export default defineType({
 
     // 10) Kaptan/Host Bölümü
     defineField({
+      name: 'boat',
+      title: 'Tekneniz',
+      description:
+        'Bu turun yapıldığı tekne. Tekne bilgileri ayrı "Tekne" dokümanında tutulur; aynı tekneyi birden çok tura bağlayabilirsiniz. Boş bırakılırsa tur sayfasında "Tekneniz" bölümü hiç görünmez.',
+      type: 'reference',
+      to: [{ type: 'boat' }],
+    }),
+    defineField({
       name: 'host',
       title: 'Kaptan / Host',
       type: 'object',

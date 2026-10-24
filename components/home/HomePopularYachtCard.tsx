@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
-import { Heart, Star, Users, Calendar, BedDouble, Ruler, Info } from 'lucide-react'
+import { Heart, Star, Users, Calendar, BedDouble, Ruler, Info, Zap } from 'lucide-react'
 import type { YachtSpecifications } from '@/lib/yachtTypes'
 import { formatYachtMobileOvernightTotal } from '@/lib/yachtFormat'
 import tourCardStyles from '@/components/tours/TourCard.module.css'
@@ -62,6 +62,14 @@ const FEATURED_LABEL: Record<SiteLocale, string> = {
   en: 'Featured',
   de: 'Empfohlen',
   ru: 'Рекомендуем',
+}
+
+/** Görselin sol üstündeki rozet (referans: şimşek ikonu + büyük harf metin). */
+const INSTANT_LABEL: Record<SiteLocale, string> = {
+  tr: 'Anında Rezervasyon',
+  en: 'Instant Booking',
+  de: 'Sofort buchen',
+  ru: 'Мгновенное бронирование',
 }
 
 const PER_DAY_LABEL: Record<SiteLocale, string> = { tr: 'Günlük', en: 'Per day', de: 'Pro Tag', ru: 'В день' }
@@ -192,14 +200,28 @@ export default function HomePopularYachtCard({
       ) : (
         <div className="flex h-full items-center justify-center text-sm text-zinc-400">Görsel yok</div>
       )}
-      {yacht.isFeatured && (
-        <div
-          className="absolute left-3 top-3 z-10 rounded-md px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[#1a1a1a] shadow-sm"
-          style={{ background: '#ffc736' }}
-        >
-          {FEATURED_LABEL[locale]}
-        </div>
-      )}
+      {/* Sol üst rozetler: "Anında Rezervasyon" her kartta; "Öne çıkan"
+          varsa onun altında. */}
+      <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1.5 text-[11px] font-extrabold uppercase tracking-wide text-[var(--secondary,#131719)] shadow-[0_2px_8px_rgba(19,23,25,0.18)] sm:text-[12px]">
+          <Zap
+            className="h-3.5 w-3.5 shrink-0"
+            style={{ color: 'var(--primary, #2168b8)' }}
+            fill="currentColor"
+            strokeWidth={2}
+            aria-hidden
+          />
+          {INSTANT_LABEL[locale]}
+        </span>
+        {yacht.isFeatured && (
+          <span
+            className="rounded-md px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[#1a1a1a] shadow-sm"
+            style={{ background: '#ffc736' }}
+          >
+            {FEATURED_LABEL[locale]}
+          </span>
+        )}
+      </div>
       <div className="absolute right-3 top-3 z-10 flex flex-col items-center gap-2">
         <button
           type="button"

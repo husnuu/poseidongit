@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { User, ChevronLeft, ArrowRight } from 'lucide-react'
+import { ChevronLeft, ArrowRight } from 'lucide-react'
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
 import ReservationTicket, { formatTicketDateLabel, boatNameForTour } from '../ReservationTicket'
 import FloatingInput from '@/components/ui/FloatingInput'
@@ -15,6 +15,7 @@ import PhoneField from '@/components/ui/PhoneField'
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
 import { useBookingPassengerValidation } from '../hooks/useBookingPassengerValidation'
 import { isFirstClassKey } from '@/lib/sanity/bookingPricing'
+import LegalDocModal from '@/components/legal/LegalDocModal'
 import styles from '../booking.module.css'
 
 /** Kullanıcı isteğiyle sadeleştirildi: sadece "Özel istekler" (alerji ibaresi kaldırıldı). */
@@ -56,6 +57,16 @@ export default function Step3CustomerInfo({
   termsAndConditionsHref = '/yasal/sartlar-ve-kosullar',
 }: Step3CustomerInfoProps) {
   const [termsAccepted, setTermsAccepted] = useState(false)
+  /** Sözleşme bağlantısına tıklanınca yeni sekme yerine pop-up'ta açılan metin. */
+  const [legalHref, setLegalHref] = useState<string | null>(null)
+
+  /* Ctrl/Cmd/orta tık ile yeni sekmede açma davranışı korunuyor. */
+  const openLegal = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.stopPropagation()
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+    e.preventDefault()
+    setLegalHref(href)
+  }
   const { visibleErrors, touch, attemptSubmit } = useBookingPassengerValidation(
     state,
     ui,
@@ -181,12 +192,12 @@ export default function Step3CustomerInfo({
         />
       </div>
 
-      <div className={styles.sectionFlat}>
-        <div className={styles.sectionHeader}>
-          <div className={styles.sectionHeaderLeft}>
-            <User width={18} height={18} className={styles.sectionIcon} aria-hidden />
-            <h3 className={styles.sectionTitle}>{ui.yourDetailsTitle}</h3>
-          </div>
+      {/* Referans tasarım: büyük başlık + kısa mavi çizgi, alanlar tam
+          genişlikte ve etiket kutunun içinde (bkz. .customerForm). Alanların
+          kendisi değişmedi — yalnızca görünüm. */}
+      <div className={`${styles.sectionFlat} ${styles.customerForm}`}>
+        <div className={styles.sectionHeaderPlain}>
+          <h3 className={styles.sectionTitlePlain}>{ui.yourDetailsTitle}</h3>
         </div>
 
         <div className={styles.travelerCardsStack}>
@@ -201,8 +212,6 @@ export default function Step3CustomerInfo({
                 onChange={(e) => handleField('firstName', e.target.value)}
                 onBlur={() => touch('firstName')}
                 error={visibleErrors.firstName}
-                compact
-                variant="outlined"
               />
               <FloatingInput
                 id="booking-lastName"
@@ -212,8 +221,6 @@ export default function Step3CustomerInfo({
                 onChange={(e) => handleField('lastName', e.target.value)}
                 onBlur={() => touch('lastName')}
                 error={visibleErrors.lastName}
-                compact
-                variant="outlined"
               />
             </div>
             <TravelerGenderRow
@@ -236,8 +243,6 @@ export default function Step3CustomerInfo({
                 onChange={(e) => handleField('email', e.target.value)}
                 onBlur={() => touch('email')}
                 error={visibleErrors.email}
-                compact
-                variant="outlined"
               />
               <PhoneField
                 label={ui.labelPhone}
@@ -247,8 +252,6 @@ export default function Step3CustomerInfo({
                 onBlur={() => touch('phone')}
                 error={visibleErrors.phone}
                 defaultCountry="TR"
-                compact
-                variant="outlined"
               />
             </div>
           </article>
@@ -259,8 +262,8 @@ export default function Step3CustomerInfo({
           onUpdate={onUpdate}
           errors={visibleErrors}
           onTouch={touch}
-          compact
-          variant="outlined"
+          compact={false}
+          variant="default"
           ui={ui}
         />
 
@@ -304,7 +307,6 @@ export default function Step3CustomerInfo({
             rows={3}
             value={state.customer.note ?? ''}
             onChange={(e) => handleField('note', e.target.value)}
-            variant="outlined"
           />
         </div>
 
@@ -334,7 +336,7 @@ export default function Step3CustomerInfo({
               target="_blank"
               rel="noopener noreferrer"
               className={styles.termsLink}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => openLegal(e, termsHref)}
             >
               {ui.distanceSalesAgreementLinkText}
             </a>
@@ -344,7 +346,7 @@ export default function Step3CustomerInfo({
               target="_blank"
               rel="noopener noreferrer"
               className={styles.termsLink}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => openLegal(e, termsAndConditionsHref)}
             >
               {ui.distanceSalesAgreementLinkText2}
             </a>
@@ -352,6 +354,10 @@ export default function Step3CustomerInfo({
           </span>
         </label>
       </div>
+
+      {legalHref && (
+        <LegalDocModal href={legalHref} locale={ui.locale} onClose={() => setLegalHref(null)} />
+      )}
 
       <div className={styles.ctaSection}>
         <div className={styles.stepActionsRow}>
