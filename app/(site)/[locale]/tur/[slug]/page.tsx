@@ -366,10 +366,6 @@ export default async function TourPage({
           <ItineraryTimeline items={itineraryTimelineItems} sectionTitle={tourUi.itineraryTitle} locale={locale} />
         </ScrollReveal>
 
-        {/* "Tekneniz" — referanstaki gibi programın hemen altında. Tura bir
-            tekne bağlanmamışsa bileşen hiç render etmiyor. */}
-        {/* "Tekneniz" — referanstaki gibi programın hemen altında. Tura bir
-            tekne bağlanmamışsa bileşen hiç render etmiyor. */}
         {reelsSlides.length > 0 ? (
           <ScrollReveal>
             <TourReelsRail slides={reelsSlides} locale={locale} />
