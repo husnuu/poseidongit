@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Star, ChevronDown, ChevronLeft, ChevronRight, Info, ArrowRight } from 'lucide-react'
+import { Star, ChevronDown, ChevronLeft, ChevronRight, Info, ArrowRight, Check } from 'lucide-react'
 import type { TourForBooking, BookingWizardState } from '@/lib/sanity/bookingTypes'
 import { getEarliestBookableDateStr, todayStrLocal } from '@/lib/booking/bookingWindow'
 import { buildCalendarDaysForMonth, getFirstAvailableYearMonth } from '@/lib/sanity/bookingPricing'
@@ -30,6 +30,14 @@ interface Step1PeopleDateProps {
   ctaLabel: string
   ctaDisabled: boolean
   ui: BookingWizardUi
+}
+
+/** "4 kural" — açılır kartın alt satırı. */
+const RULES_COUNT_LABEL: Record<string, (n: number) => string> = {
+  tr: (n) => `${n} kural · okumak için dokunun`,
+  en: (n) => `${n} rules · tap to read`,
+  de: (n) => `${n} Regeln · zum Lesen tippen`,
+  ru: (n) => `Правил: ${n} · нажмите, чтобы прочитать`,
 }
 
 export default function Step1PeopleDate({
@@ -132,36 +140,56 @@ export default function Step1PeopleDate({
   return (
     <div className={styles.stepContent}>
 
-      {/* Rezervasyon kuralları accordion */}
+      {/* Rezervasyon kuralları — sitenin kart dilinde açılır kart: solda ikon
+          kutusu, başlık + kural sayısı, sağda dönen ok. İçerik Sanity'den
+          (tour.bookingRules); açılınca maddeler mavi onay işaretiyle. */}
       {showRules && (
-        <div className={styles.rulesAccordionWrap}>
-          <button
-            type="button"
-            className={styles.rulesAccordionToggle}
-            onClick={() => setRulesOpen((v) => !v)}
-            aria-expanded={rulesOpen}
-          >
-            <Info width={13} height={13} aria-hidden />
-            {ui.bookingRulesToggle}
-            <ChevronDown
-              width={14}
-              height={14}
-              className={`${styles.rulesAccordionChevron} ${rulesOpen ? styles.rulesAccordionChevronOpen : ''}`}
-              aria-hidden
-            />
-          </button>
-          {rulesOpen && (
-            <div className={styles.rulesAccordionContent} role="region">
-              {rules?.title && (
-                <p className={styles.rulesAccordionTitle}>{rules.title}</p>
-              )}
-              <ul className={styles.rulesAccordionList}>
+        <div className={styles.rulesCardWrap}>
+          <div className={`${styles.rulesCard} ${rulesOpen ? styles.rulesCardOpen : ''}`}>
+            <button
+              type="button"
+              className={styles.rulesCardToggle}
+              onClick={() => setRulesOpen((v) => !v)}
+              aria-expanded={rulesOpen}
+              aria-controls="booking-rules-panel"
+            >
+              <span className={styles.rulesCardIcon} aria-hidden>
+                <Info width={18} height={18} strokeWidth={2.2} />
+              </span>
+              <span className={styles.rulesCardText}>
+                <span className={styles.rulesCardTitle}>
+                  {rules?.title?.trim() || ui.bookingRulesToggle}
+                </span>
+                <span className={styles.rulesCardMeta}>
+                  {RULES_COUNT_LABEL[ui.locale]?.(rules?.bullets?.length ?? 0) ??
+                    RULES_COUNT_LABEL.tr((rules?.bullets?.length ?? 0))}
+                </span>
+              </span>
+              <span className={styles.rulesCardChevronWrap} aria-hidden>
+                <ChevronDown
+                  width={18}
+                  height={18}
+                  strokeWidth={2.2}
+                  className={`${styles.rulesCardChevron} ${rulesOpen ? styles.rulesCardChevronOpen : ''}`}
+                />
+              </span>
+            </button>
+            <div
+              id="booking-rules-panel"
+              role="region"
+              className={`${styles.rulesCardPanel} ${rulesOpen ? styles.rulesCardPanelOpen : ''}`}
+              hidden={!rulesOpen}
+            >
+              <ul className={styles.rulesCardList}>
                 {(rules?.bullets ?? []).map((text, i) => (
-                  <li key={i}>{text}</li>
+                  <li key={i}>
+                    <Check width={16} height={16} strokeWidth={2.6} className={styles.rulesCardCheck} aria-hidden />
+                    <span>{text}</span>
+                  </li>
                 ))}
               </ul>
             </div>
-          )}
+          </div>
         </div>
       )}
 

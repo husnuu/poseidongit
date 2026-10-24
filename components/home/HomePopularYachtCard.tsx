@@ -292,7 +292,7 @@ export default function HomePopularYachtCard({
   // Kart kabı TourCard ile birebir aynı — gerekçe orada (zeminle kaynaşan
   // silik kenarlık/gölge yerine görünür, yumuşak yükseklik).
   const articleClass =
-    'group flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_1px_2px_rgba(19,23,25,0.06),0_6px_20px_-4px_rgba(19,23,25,0.14)] transition-all duration-300 hover:-translate-y-1 hover:border-[#cbd5e1] hover:shadow-[0_2px_4px_rgba(19,23,25,0.06),0_18px_36px_-10px_rgba(19,23,25,0.22)]'
+    'group flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#bfcbd8] bg-white transition-colors duration-300 hover:border-[#8a9db3]'
 
   const ctaInner = (
     <span

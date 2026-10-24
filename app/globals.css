@@ -103,7 +103,9 @@ summary:focus-visible,
   inset: 0;
   z-index: 2;
   border-radius: inherit;
-  padding: 2px;
+  /* Halkanın kalınlığı = padding (mask içeriği dışarıda bırakıyor). 2px'te
+     kalın duruyordu; 1px ince bir kenar parıltısı. */
+  padding: 1px;
   pointer-events: none;
   background: conic-gradient(
     from var(--hero-angle),

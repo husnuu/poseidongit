@@ -18,13 +18,8 @@
   gap: 6px;
 }
 
+/* Tipografi global .tourSectionHeading'den (diğer bölüm başlıklarıyla aynı). */
 .label {
-  font-family: var(--font-family-title, var(--font-family)), sans-serif;
-  font-weight: 800;
-  font-size: 13px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted, #81848b);
   margin: 0;
 }
 
@@ -175,5 +170,147 @@
   /* Mobilde tek kart yeterli — şerit kompakt kalsın. */
   .cardExtra {
     display: none;
+  }
+}
+
+/* ══ Modern görünüm ══════════════════════════════════════════════════════
+   Başlık diğer bölüm başlıklarıyla aynı (.tourSectionHeading); sağda puan
+   rozeti + "tüm yorumlar" bağlantısı. Kartlar aşağıdaki yorum kartlarıyla
+   aynı dil: beyaz, ince kenarlık, yıldızlar, düz (italik değil) metin.
+   Mobilde ikinci kart gizlenmiyor; yana kaydırmalı şerit. */
+.headerRow {
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: 10px;
+  margin-bottom: 16px;
+}
+
+.label {
+  margin: 0 !important;
+}
+
+.headerRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ratingPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  background: #fff7e6;
+  border: 1px solid #fde4ae;
+  font-family: var(--font-family), sans-serif;
+  font-size: 13px;
+  color: var(--secondary, #131719);
+  white-space: nowrap;
+}
+
+.ratingPill strong {
+  font-weight: 800;
+}
+
+.ratingStar {
+  color: rgb(245, 166, 35);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.ratingCount {
+  color: var(--text-color, #58595b);
+  font-weight: 600;
+}
+
+.card {
+  gap: 12px;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid #d3dce6;
+  border-radius: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.card:hover {
+  border-color: #8a9db3;
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cardStars {
+  display: inline-flex;
+  gap: 2px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.quoteIcon {
+  width: 22px;
+  height: 22px;
+  opacity: 0.25;
+}
+
+.quoteText {
+  flex: 1;
+  font-style: normal;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.footer {
+  padding-top: 12px;
+  border-top: 1px solid #eef2f6;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+
+.name {
+  font-weight: 800;
+  color: var(--secondary, #131719);
+}
+
+@media (max-width: 640px) {
+  .headerRight {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Tek kart gizlemek yerine yana kaydırmalı şerit (ikinci kartın ucu
+     görünür, kaydırılabildiği anlaşılır). */
+  .grid {
+    display: flex;
+    gap: 12px;
+    margin: 0 -14px;
+    padding: 0 14px 4px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    /* Kartlar ekran kenarına değil, sayfa kenar boşluğuna hizalansın. */
+    scroll-padding: 0 14px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .card,
+  .cardExtra {
+    display: flex;
+    flex: 0 0 86%;
+    scroll-snap-align: start;
   }
 }

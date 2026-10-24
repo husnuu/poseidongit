@@ -19,6 +19,10 @@ interface ReviewExcerptStripProps {
   reviewsSection?: {
     enabled?: boolean
     items?: ReviewExcerptItem[]
+    /** Başlık yanındaki puan rozeti için (Sanity reviewsSection). */
+    ratingValue?: number
+    reviewCount?: number
+    sourceLabel?: string
   }
   /** RSC sınırında `tourUi` geçirilemez (fonksiyon alanları var); verilmezse `tr`. */
   locale?: SiteLocale
@@ -202,13 +206,20 @@ export default function ReviewExcerptStrip({
         )
       : null
 
+  const numLocale = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : locale === 'ru' ? 'ru-RU' : 'en-US'
+  const ratingValue = typeof reviewsSection.ratingValue === 'number' && reviewsSection.ratingValue > 0
+    ? reviewsSection.ratingValue
+    : null
+  const reviewCount = typeof reviewsSection.reviewCount === 'number' ? reviewsSection.reviewCount : null
+
   return (
     <div className={styles.wrapper} aria-labelledby="review-excerpt-heading">
       <div className={styles.headerRow}>
         <div className={styles.labelGroup}>
-          <h3 id="review-excerpt-heading" className={styles.label}>
+          {/* Diğer bölüm başlıklarıyla aynı (küçük gri etiket yerine). */}
+          <h2 id="review-excerpt-heading" className={`tourSectionHeading ${styles.label}`}>
             {tourUi.reviewExcerptLabel}
-          </h3>
+          </h2>
           <button
             type="button"
             className={styles.infoBtn}
@@ -219,9 +230,25 @@ export default function ReviewExcerptStrip({
             <Info className={styles.infoIcon} aria-hidden />
           </button>
         </div>
-        <Link href={allReviewsHref} className={styles.readAllLink}>
-          {tourUi.reviewExcerptReadAll}
-        </Link>
+        <div className={styles.headerRight}>
+          {ratingValue != null && (
+            <span className={styles.ratingPill}>
+              <span className={styles.ratingStar} aria-hidden>★</span>
+              <strong>
+                {ratingValue.toLocaleString(numLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+              </strong>
+              {reviewCount != null && (
+                <span className={styles.ratingCount}>
+                  · {reviewCount.toLocaleString(numLocale)}
+                  {reviewsSection.sourceLabel?.trim() ? ` ${reviewsSection.sourceLabel.trim()}` : ''}
+                </span>
+              )}
+            </span>
+          )}
+          <Link href={allReviewsHref} className={styles.readAllLink}>
+            {tourUi.reviewExcerptReadAll}
+          </Link>
+        </div>
       </div>
 
       <div className={styles.grid}>
@@ -234,7 +261,16 @@ export default function ReviewExcerptStrip({
               key={`${item.name}-${index}`}
               className={`${styles.card} ${index > 0 ? styles.cardExtra : ''}`}
             >
-              <Quote className={styles.quoteIcon} aria-hidden />
+              <div className={styles.cardTop}>
+                <span className={styles.cardStars} aria-label={`${Math.round(item.rating ?? 5)} / 5`}>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <span key={i} style={{ color: i < Math.round(item.rating ?? 5) ? 'rgb(245, 166, 35)' : '#dcdce6' }}>
+                      ★
+                    </span>
+                  ))}
+                </span>
+                <Quote className={styles.quoteIcon} aria-hidden />
+              </div>
               <p className={styles.quoteText}>
                 &ldquo;{short}&rdquo;
                 {hasMore && (

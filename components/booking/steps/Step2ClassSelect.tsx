@@ -201,11 +201,9 @@ export default function Step2ClassSelect({
 
       {/* Sınıf seçim bölümü — flat */}
       <div className={styles.sectionFlat} style={{ paddingTop: 0 }}>
-        <div className={styles.sectionHeader}>
-          <div className={styles.sectionHeaderLeft}>
-            <Ticket width={18} height={18} className={styles.sectionIcon} aria-hidden />
-            <h3 className={styles.sectionTitle}>{ui.classSelectTitle}</h3>
-          </div>
+        {/* Diğer adımlarla aynı başlık dili: büyük başlık + kısa mavi çizgi. */}
+        <div className={styles.sectionHeaderPlain}>
+          <h3 className={styles.sectionTitlePlain}>{ui.classSelectTitle}</h3>
         </div>
 
         <div className={styles.classCardGrid}>
@@ -302,6 +300,7 @@ export default function Step2ClassSelect({
 
                 {/* Görsel */}
                 <div
+                  className={styles.classCardPremiumInner}
                   style={{
                     filter: isFirstClassRestricted ? 'blur(4px)' : undefined,
                     pointerEvents: isFirstClassRestricted ? 'none' : undefined,

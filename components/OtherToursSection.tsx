@@ -40,7 +40,13 @@ export default function OtherToursSection({ items, locale = 'tr' }: OtherToursSe
 
   return (
     <section
-      className="bg-white px-4 pt-8 pb-12 sm:px-6 md:pt-10 md:pb-16 lg:px-10"
+      /* Yatay iç boşluk yok: bölüm zaten tur sayfasının kabının (px-4,
+         max-w-[1360px]) içinde. Önceki px-4/6/10 başlığı ve kartları diğer
+         bölümlerden 16–40px içeri itiyordu. */
+      /* Zemin rengi yok: sayfa zaten beyaz. bg-white, scroll-reveal katmanı
+         yüzünden hemen üstteki kartların (yorumlar, rezervasyon kartı) alt
+         kenar pikselini örtüyordu. */
+      className="pt-8 pb-12 md:pt-10 md:pb-16"
       aria-labelledby="other-tours-heading"
     >
       <h2 id="other-tours-heading" className="tourSectionHeading">

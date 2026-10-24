@@ -91,28 +91,33 @@ function ItineraryTimelineClient({
                 <span className={styles.stepCircle}>{index + 1}</span>
                 {index < validItems.length - 1 && <span className={styles.stepLine} />}
               </div>
-              <div className={styles.left}>
+              {/* Kompakt durak kartı: solda yatay küçük resim, sağda saat/etiket
+                  çipleri + başlık + açıklama. Önceki 200×252 dikey fotoğraf
+                  her durağı ~300px yapıyordu. */}
+              <div className={styles.card}>
                 <div className={styles.thumb}>
                   <Image
                     src={item.imageUrl!}
                     alt={item.title}
                     fill
+                    sizes="(max-width: 768px) 104px, 168px"
                     className={styles.image}
                     placeholder={item.imageBlurDataURL ? 'blur' : 'empty'}
                     blurDataURL={item.imageBlurDataURL ?? undefined}
                   />
-                  {item.time && <span className={styles.badgeTime}>{item.time}</span>}
-                  {item.tag && (
-                    <span className={styles.badgeTag}>
-                      {translateItineraryTag(item.tag, locale)}
-                    </span>
-                  )}
                 </div>
-
-              </div>
-              <div className={styles.right}>
-                <h3 className={styles.itemTitle}>{item.title}</h3>
-                {item.description && <p className={styles.itemDesc}>{item.description}</p>}
+                <div className={styles.body}>
+                  {(item.time || item.tag) && (
+                    <div className={styles.metaRow}>
+                      {item.time && <span className={styles.timeChip}>{item.time}</span>}
+                      {item.tag && (
+                        <span className={styles.tagChip}>{translateItineraryTag(item.tag, locale)}</span>
+                      )}
+                    </div>
+                  )}
+                  <h3 className={styles.itemTitle}>{item.title}</h3>
+                  {item.description && <p className={styles.itemDesc}>{item.description}</p>}
+                </div>
               </div>
             </li>
           ))}

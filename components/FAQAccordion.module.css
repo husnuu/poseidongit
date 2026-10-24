@@ -133,15 +133,13 @@
   gap: 14px;
 }
 
-/* ── "Bize Ulaşın": sitenin ana mavi degrade butonu ── */
+/* ── "Bize Ulaşın": sitenin düz mavi butonu (kart CTA'larıyla aynı) ── */
 .contactBtn {
   appearance: none;
   position: relative;
-  overflow: hidden;
-  background-image: linear-gradient(90deg, var(--primary, #2168b8) 0%, #4f8dc7 51%, var(--primary, #2168b8) 100%);
-  background-size: 200% auto;
+  background: var(--primary, #2168b8);
   border: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   box-sizing: border-box;
   color: #fff;
   cursor: pointer;
@@ -150,61 +148,59 @@
   justify-content: center;
   width: auto;
   font-family: var(--font-family), sans-serif;
-  font-weight: 700;
-  font-size: 12.5px;
-  height: 40px;
+  font-weight: 800;
+  font-size: 13px;
+  height: 44px;
   margin: 0;
-  padding: 0 18px;
+  padding: 0 20px;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
-  transition: background-position 0.5s ease, transform 0.15s ease;
+  letter-spacing: 0.04em;
+  transition: filter 0.2s ease, transform 0.15s ease;
   text-decoration: none;
-  box-shadow: 0 4px 18px rgba(var(--primary-rgb, 33, 104, 184), 0.35);
+  box-shadow: none;
 }
 
 .contactBtn:hover {
-  background-position: right center;
+  filter: brightness(1.08);
 }
 
 .contactBtn:active {
   transform: scale(0.98);
 }
 
-/* ── WhatsApp'tan Yazın: referans siteyle birebir aynı yeşil degrade ── */
+/* ── WhatsApp'tan Yazın: düz WhatsApp yeşili, aynı ölçüler ── */
 .whatsappBtn {
   appearance: none;
   position: relative;
-  overflow: hidden;
-  background-image: linear-gradient(90deg, #25d366 0%, #128c7e 51%, #25d366 100%);
-  background-size: 200% auto;
+  background: #1fb85a;
   border: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   box-sizing: border-box;
   color: #fff;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
   width: auto;
   font-family: var(--font-family), sans-serif;
-  font-weight: 700;
-  font-size: 12.5px;
-  height: 40px;
+  font-weight: 800;
+  font-size: 13px;
+  height: 44px;
   margin: 0;
-  padding: 0 18px;
+  padding: 0 20px;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
-  transition: background-position 0.5s ease, transform 0.15s ease;
+  letter-spacing: 0.04em;
+  transition: filter 0.2s ease, transform 0.15s ease;
   outline: none;
   text-decoration: none;
-  box-shadow: 0 4px 18px rgba(37, 211, 102, 0.4);
+  box-shadow: none;
 }
 
 .whatsappBtn:hover {
-  background-position: right center;
+  filter: brightness(1.06);
 }
 
 .whatsappBtn:active {
@@ -225,9 +221,12 @@
 }
 
 @media (max-width: 768px) {
+  /* Yatay iç boşluk yok: SSS her kullanıldığı sayfada zaten kenar boşluklu
+     bir kabın içinde. 16px'lik ek boşluk başlığı ve soruları sayfanın geri
+     kalanından içeri itiyordu (tur sayfası, sık sorulanlar). */
   .faq {
     margin: 32px auto 0;
-    padding: 0 16px;
+    padding: 0;
     max-width: 100%;
   }
 

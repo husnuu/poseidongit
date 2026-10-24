@@ -78,9 +78,26 @@ function closeLabel(locale: TourPageUi['locale']): string {
   return 'Kapat'
 }
 
+/** Puan özeti satırı ("Google'da 2.971 yorum") ve dış bağlantının etiketi. */
+function summaryCountLabel(count: string, source: string | undefined, locale: TourPageUi['locale']): string {
+  const src = source?.trim()
+  if (locale === 'en') return src ? `${count} reviews on ${src}` : `${count} reviews`
+  if (locale === 'de') return src ? `${count} Bewertungen auf ${src}` : `${count} Bewertungen`
+  if (locale === 'ru') return src ? `${count} отзывов в ${src}` : `${count} отзывов`
+  return src ? `${src}'da ${count} yorum` : `${count} yorum`
+}
+
+function allReviewsLabel(locale: TourPageUi['locale']): string {
+  if (locale === 'en') return 'See all reviews'
+  if (locale === 'de') return 'Alle Bewertungen ansehen'
+  if (locale === 'ru') return 'Все отзывы'
+  return 'Tüm yorumları gör'
+}
+
 export default function ReviewsSection({
   tourUi: tourUiProp,
   reviewsSection,
+  reviewsUrl,
 }: ReviewsSectionProps) {
   const tourUi = tourUiProp ?? getTourPageUi('tr')
   if (!reviewsSection) return null
@@ -93,6 +110,8 @@ export default function ReviewsSection({
     typeof reviewsSection.reviewCount === 'number' ? reviewsSection.reviewCount : undefined
   const numLocale = localeTagForNumbers(tourUi.locale)
   const headingText = reviewsCountHeading(reviewCount, tourUi.locale, numLocale)
+  const ratingValue = typeof reviewsSection.ratingValue === 'number' ? reviewsSection.ratingValue : undefined
+  const allReviewsHref = reviewsSection.moreLinkUrl?.trim() || reviewsUrl?.trim() || null
 
   const listItems = allItems.map((it) => ({
     name: it.name,
@@ -114,6 +133,38 @@ export default function ReviewsSection({
           {headingText}
         </h2>
       </div>
+
+      {/* Puan özeti — yalnızca Sanity'de dolu alanlar (ratingValue,
+          reviewCount, sourceLabel, moreLinkUrl). Yıldız dağılımı verisi
+          olmadığı için dağılım çubuğu gösterilmiyor. */}
+      {typeof ratingValue === 'number' && ratingValue > 0 && (
+        <div className={styles.summary}>
+          <div className={styles.summaryScore}>
+            <span className={styles.summaryValue}>
+              {ratingValue.toLocaleString(numLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+            </span>
+            <div className={styles.summaryText}>
+              <span className={styles.stars} aria-label={`${ratingValue} / 5`}>
+                {Array.from({ length: 5 }, (_, i) => (
+                  <span key={i} style={{ color: i < Math.round(ratingValue) ? 'rgb(245, 166, 35)' : '#dcdce6' }}>
+                    ★
+                  </span>
+                ))}
+              </span>
+              {reviewCount != null && (
+                <span className={styles.summaryCount}>
+                  {summaryCountLabel(reviewCount.toLocaleString(numLocale), reviewsSection.sourceLabel, tourUi.locale)}
+                </span>
+              )}
+            </div>
+          </div>
+          {allReviewsHref && (
+            <a href={allReviewsHref} target="_blank" rel="noopener noreferrer" className={styles.summaryLink}>
+              {reviewsSection.moreLinkText?.trim() || allReviewsLabel(tourUi.locale)}
+            </a>
+          )}
+        </div>
+      )}
 
       <ReviewsList
         items={listItems}

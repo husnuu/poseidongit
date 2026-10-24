@@ -1,4 +1,8 @@
-/* Dış margin kaldırıldı (ritim page.tsx'te); başlık .tourSectionHeading'e taşındı. */
+/* "Neler yapacaksınız?" — kompakt zaman çizgisi. Her durak sitenin kart
+   dilinde bir satır (gölge yok, ince kenarlık): solda yatay küçük resim,
+   sağda saat + etiket çipleri, başlık ve açıklama. Solda numaralı adım
+   rozetleri tek bir kesik çizgiyle birbirine bağlı. Dış margin page.tsx'te;
+   başlık .tourSectionHeading'de. */
 .section {
   max-width: 977px;
 }
@@ -13,45 +17,43 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 44px;
+  gap: 22px;
 }
 
-/* ── Scroll animasyonu ───────────────────────────── */
+/* ── Scroll animasyonu ── */
 .itemHidden {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.55s ease, transform 0.55s ease;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 .itemVisible {
   opacity: 1;
   transform: translateY(0);
-  transition: opacity 0.55s ease, transform 0.55s ease;
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
-/* ── Item layout ─────────────────────────────────── */
 .item {
   display: grid;
-  grid-template-columns: 28px 220px 1fr;
-  column-gap: 20px;
-  align-items: start;
+  grid-template-columns: 30px 1fr;
+  column-gap: 16px;
+  align-items: stretch;
   position: relative;
 }
 
-/* ── Numaralı adım rozeti + bağlantı çizgisi — bir sonraki adıma kadar
-     uzanıp "rota" hissi versin diye (bkz. .list'teki 44px gap). ── */
+/* ── Adım rozeti + bir sonraki adıma uzanan çizgi ── */
 .stepCol {
-  align-self: stretch;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
+  padding-top: 8px;
 }
 
 .stepCircle {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -61,125 +63,113 @@
   font-family: var(--font-family), sans-serif;
   font-weight: 800;
   font-size: 13px;
-  box-shadow: 0 2px 8px rgba(33, 104, 184, 0.35);
+  box-shadow: 0 0 0 4px #fff;
   z-index: 2;
 }
 
 .stepLine {
   position: absolute;
-  top: 28px;
-  bottom: -44px;
+  top: 38px;
+  bottom: -30px;
   left: 50%;
   width: 2px;
   transform: translateX(-50%);
   background: repeating-linear-gradient(
     to bottom,
-    rgba(33, 104, 184, 0.25) 0,
-    rgba(33, 104, 184, 0.25) 4px,
+    rgba(var(--primary-rgb, 33, 104, 184), 0.3) 0,
+    rgba(var(--primary-rgb, 33, 104, 184), 0.3) 4px,
     transparent 4px,
     transparent 9px
   );
   z-index: 1;
 }
 
-.left {
-  position: relative;
+/* ── Durak kartı ── */
+/* Kartsız satır: kenarlık/zemin yok; küçük resim + çipler + başlık. */
+.card {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  align-items: center;
+  gap: 18px;
+  padding: 4px 0;
 }
 
 .thumb {
-  width: 200px;
-  height: 252px;
-  border-radius: 20px;
-  overflow: hidden;
   position: relative;
-  background: #f3f4f6;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  z-index: 1;
-  transition: box-shadow 0.3s ease;
-}
-
-.item:hover .thumb {
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+  flex-shrink: 0;
+  width: 168px;
+  height: 116px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f1f5f9;
 }
 
 .image {
   object-fit: cover;
-  transition: transform 0.4s ease;
+  transition: transform 0.45s ease;
 }
 
 .item:hover .image {
-  transform: scale(1.06);
+  transform: scale(1.05);
 }
 
-/* Sol köşe: saat — mavi tonlu kutucuk */
-.badgeTime {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: rgba(33, 104, 184, 0.92);
-  color: #fff;
-  font-family: var(--font-family), sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: 0.02em;
-  box-shadow: 0 2px 8px rgba(33, 104, 184, 0.35);
+.body {
+  min-width: 0;
+  flex: 1;
+  padding-right: 6px;
 }
 
-/* Sağ köşe: etiket */
-.badgeTag {
-  position: absolute;
-  right: 12px;
-  top: 12px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: rgba(var(--primary-rgb, 33, 104, 184), 0.95);
-  color: #fff;
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.timeChip,
+.tagChip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 7px;
   font-family: var(--font-family), sans-serif;
   font-size: 12px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-weight: 800;
   letter-spacing: 0.02em;
-  box-shadow: 0 2px 8px rgba(var(--primary-rgb, 33, 104, 184), 0.35);
-  text-align: right;
-  max-width: 70%;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
+.timeChip {
+  background: var(--primary, #2168b8);
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
 
-/* ── Sağ içerik ──────────────────────────────────── */
-.right {
-  position: relative;
-  z-index: 1;
+.tagChip {
+  background: rgba(var(--primary-rgb, 33, 104, 184), 0.1);
+  color: var(--primary, #2168b8);
 }
 
 .itemTitle {
-  font-family: var(--font-family), sans-serif;
-  font-weight: 700;
-  font-size: 15px;
-  line-height: 1.5;
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  line-height: 1.35;
   color: var(--secondary, #131719);
-  margin: 0 0 6px;
-  letter-spacing: 0;
+  margin: 0 0 4px;
 }
 
 .itemDesc {
   font-family: var(--font-family), sans-serif;
   font-weight: 400;
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.6;
   color: var(--text-color, #58595b);
   margin: 0;
 }
 
-/* ── Mobil ───────────────────────────────────────── */
+/* ── Mobil ── */
 @media (max-width: 768px) {
   .section {
     margin-top: 36px;
@@ -187,63 +177,77 @@
     max-width: none !important;
   }
 
-  .sectionTitle {
-    font-size: 18px !important;
-    line-height: 1.4 !important;
-    margin-bottom: 28px !important;
+  .list {
+    gap: 20px;
   }
 
   .item {
-    grid-template-columns: 22px 140px 1fr;
-    column-gap: 12px;
-    margin-bottom: 28px;
+    grid-template-columns: 24px 1fr;
+    column-gap: 10px;
+  }
+
+  .stepCol {
+    padding-top: 6px;
   }
 
   .stepCircle {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     font-size: 11px;
+    box-shadow: 0 0 0 3px #fff;
   }
 
   .stepLine {
-    top: 22px;
-    bottom: -28px;
+    top: 30px;
+    bottom: -30px;
+  }
+
+  .card {
+    align-items: flex-start;
+    gap: 12px;
+    padding: 2px 0;
   }
 
   .thumb {
-    width: 140px;
-    height: 176px;
-    border-radius: 16px;
+    width: 96px;
+    height: 84px;
+    border-radius: 10px;
   }
 
-  .badgeTime {
-    left: 8px;
-    top: 8px;
-    padding: 6px 10px;
-    font-size: 12px;
+  .body {
+    padding-right: 2px;
   }
 
-  .badgeTag {
-    right: 8px;
-    top: 8px;
-    padding: 6px 10px;
+  .metaRow {
+    margin-bottom: 4px;
+  }
+
+  .timeChip,
+  .tagChip {
+    height: 22px;
+    padding: 0 7px;
     font-size: 11px;
-    max-width: 65%;
   }
 
   .itemTitle {
-    font-size: 14px !important;
-    line-height: 1.5 !important;
-    margin: 0 0 5px !important;
+    font-size: 14.5px;
+    margin-bottom: 3px;
   }
 
   .itemDesc {
-    font-size: 13px !important;
-    line-height: 1.7 !important;
+    font-size: 13px;
+    line-height: 1.55;
     word-break: break-word;
   }
+}
 
-  .list {
-    gap: 28px;
+@media (prefers-reduced-motion: reduce) {
+  .itemHidden,
+  .itemVisible {
+    transition: none;
+    transform: none;
+    opacity: 1;
   }
+  .image { transition: none; }
+  .item:hover .image { transform: none; }
 }
