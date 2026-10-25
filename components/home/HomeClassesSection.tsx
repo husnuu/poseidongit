@@ -54,7 +54,7 @@ export default function HomeClassesSection({ data, locale }: Props) {
   return (
     <section
       ref={sectionRef}
-      className="w-full transition-all duration-300 ease-out pt-8 pb-6 md:pt-10 md:pb-8"
+      className="w-full bg-[#f4f7fb] transition-all duration-300 ease-out pt-8 pb-6 md:pt-10 md:pb-8"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(10px)',

@@ -42,7 +42,7 @@ export default function InstagramSection({ data }: InstagramSectionProps) {
     // Üstündeki Blog bölümüyle (bg-zinc-50/60) karışmasın diye kendi renk kimliği:
     // Instagram'ın marka tonlarından hafif bir pembe-mor yıkama.
     <section
-      className="w-full bg-[#fdf2f8] pt-7 pb-14 md:pt-9 md:pb-20"
+      className="w-full bg-white pt-7 pb-14 md:pt-9 md:pb-20"
       aria-labelledby="instagram-section-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">

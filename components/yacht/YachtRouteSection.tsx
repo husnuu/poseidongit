@@ -1,4 +1,4 @@
-import { MapPin, Navigation } from 'lucide-react'
+import { ArrowRight, MapPin } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getYachtUi } from '@/lib/i18n/yachtUi'
 import headingStyles from '@/components/yacht/yachtDetailHeading.module.css'
@@ -19,23 +19,21 @@ export default function YachtRouteSection({ routes, locale = 'tr' }: YachtRouteS
       <h2 id="yacht-routes-heading" className={headingStyles.h2}>
         {ui.routeHeading}
       </h2>
-      <ol className={styles.journey}>
+      {/* Yatay rota şeridi: duraklar hap şeklinde, aralarında ok; dar
+          ekranda alt satıra sarar. Önceki dikey liste 3 durak için ~300px
+          yer kaplıyordu. */}
+      <ol className={styles.routeStrip}>
         {list.map((text, i) => (
-          <li key={`${text}-${i}`} className={styles.leg}>
-            <div className={styles.stop}>
-              <span className={styles.pinWrap} aria-hidden>
-                <MapPin className={styles.pin} strokeWidth={2} />
+          <li key={`${text}-${i}`} className={styles.routeItem}>
+            <span className={styles.routeStop}>
+              <span className={styles.routeIndex} aria-hidden>
+                {i + 1}
               </span>
-              <span className={styles.stopText}>{text}</span>
-            </div>
+              <MapPin className={styles.routePin} strokeWidth={2.2} aria-hidden />
+              <span className={styles.routeText}>{text}</span>
+            </span>
             {i < list.length - 1 ? (
-              <div className={styles.connector} aria-hidden>
-                <span className={styles.connectorLine} />
-                <span className={styles.navWrap}>
-                  <Navigation className={styles.navIcon} strokeWidth={2} />
-                </span>
-                <span className={styles.connectorLine} />
-              </div>
+              <ArrowRight className={styles.routeArrow} strokeWidth={2.2} aria-hidden />
             ) : null}
           </li>
         ))}

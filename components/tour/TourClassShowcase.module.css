@@ -424,3 +424,46 @@
   color: var(--primary, #2168b8);
   flex-shrink: 0;
 }
+
+/* ══ Sekme stili — yat penceresindeki Günlük/Konaklamalı seçicisiyle aynı dil
+   Mavi çerçeveli birleşik kutular yerine segment kontrol: açık gri kapsayıcı,
+   sekmeler şeffaf + gri yazı, seçili sekme beyaz zemin + marka mavisi kalın
+   yazı + hafif gölge. Koy seçicisi (RouteSection) aynı sınıfları kullanıyor. */
+.tabs {
+  gap: 4px;
+  padding: 4px;
+  border: 0;
+  border-radius: 14px;
+  background: #e9eef4;
+}
+
+.tab,
+.tab:first-child,
+.tab:last-child,
+.tab:only-child {
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #64748b;
+  -webkit-text-stroke: 0;
+  padding: 0.75rem 1.4rem;
+  transition: background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--secondary, #131719);
+}
+
+.tab.tabActive,
+.tab.tabActive:hover,
+.tab.tabActive:first-child,
+.tab.tabActive:last-child {
+  background: #fff;
+  color: var(--primary, #2168b8);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab { transition: none; }
+}

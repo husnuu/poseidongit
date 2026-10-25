@@ -1291,6 +1291,53 @@ export const covesListQuery = `*[_type == "cove"] | order(coalesce(order, 999) a
   translations
 }`
 
+/** Koy detay sayfası: herhangi bir dildeki slug ile eşleşir (TR veya çeviri slug'ı). */
+export const coveBySlugQuery = `*[_type == "cove" && (
+  slug.current == $slug ||
+  translations.en.slug.current == $slug ||
+  translations.de.slug.current == $slug ||
+  translations.ru.slug.current == $slug
+)][0] {
+  _id,
+  _updatedAt,
+  title,
+  "slug": slug.current,
+  description,
+  image { asset, alt },
+  locationTag,
+  content,
+  gallery[] { asset, alt },
+  highlights,
+  activities,
+  travelTime,
+  bestTime,
+  location,
+  faqs[] { question, answer },
+  "relatedTourIds": relatedTours[]._ref,
+  seo { metaTitle, metaDescription, ogImage { asset } },
+  translations
+}`
+
+/** Koy detay sayfasının altındaki "Diğer koylar" şeridi. */
+export const otherCovesQuery = `*[_type == "cove" && defined(slug.current) && _id != $id] | order(coalesce(order, 999) asc, title asc)[0...3] {
+  _id,
+  title,
+  "slug": slug.current,
+  description,
+  image { asset, alt },
+  locationTag,
+  translations
+}`
+
+/** Sitemap: koy slug'ları dile göre. */
+export const coveSlugRowsForLocalesQuery = `*[_type == "cove" && defined(slug.current)] {
+  "tSlug": slug.current,
+  "enSlug": translations.en.slug.current,
+  "deSlug": translations.de.slug.current,
+  "ruSlug": translations.ru.slug.current,
+  _updatedAt
+}`
+
 export const footerQuery = `*[_type == "homePage"][0] {
   contactQuick{
     email,

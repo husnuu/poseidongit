@@ -17,7 +17,7 @@ export function mergeCoveForLocale<T extends Record<string, unknown>>(cove: T, l
   if (locale === 'tr') return cove
   const translations = cove.translations as Record<string, unknown> | undefined
   if (!translations) return cove
-  const raw = (locale === 'en' ? translations.en : locale === 'de' ? translations.de : undefined) as Record<string, unknown> | undefined
+  const raw = translations[locale] as Record<string, unknown> | undefined
   if (!raw || typeof raw !== 'object') return cove
 
   const patch = { ...raw } as Record<string, unknown>
@@ -35,4 +35,29 @@ export function mergeCoveForLocale<T extends Record<string, unknown>>(cove: T, l
     m.image = { ...(m.image as Record<string, unknown>), alt: imageAlt }
   }
   return merged as T
+}
+
+/** Çevirmen o dil için alanı elle doldurmuş mu? (boş string / boş dizi sayılmaz) */
+export function coveFieldHasManualTranslation(
+  cove: Record<string, unknown> | null | undefined,
+  locale: SiteLocale,
+  field: string,
+): boolean {
+  if (!cove || locale === 'tr') return false
+  const translations = cove.translations as Record<string, unknown> | undefined
+  const raw = translations?.[locale] as Record<string, unknown> | undefined
+  const v = raw?.[field]
+  if (typeof v === 'string') return v.trim().length > 0
+  if (Array.isArray(v)) return v.length > 0
+  if (isPlainObject(v)) return Object.values(v).some((x) => typeof x === 'string' ? x.trim().length > 0 : x != null)
+  return false
+}
+
+/** Koyun verilen dildeki slug'ı (çeviri slug'ı yoksa Türkçe slug). */
+export function coveSlugForLocale(cove: Record<string, unknown>, locale: SiteLocale): string | undefined {
+  const base = flattenSlug(cove.slug)
+  if (locale === 'tr') return base
+  const translations = cove.translations as Record<string, unknown> | undefined
+  const raw = translations?.[locale] as Record<string, unknown> | undefined
+  return flattenSlug(raw?.slug) ?? base
 }

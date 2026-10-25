@@ -100,7 +100,7 @@ export default function PopularToursSection({
     <section
       ref={sectionRef}
       // Referans: bölümün kendi açık nane zemini (rgb 234,251,247) + altta "Tüm turları görüntüle"
-      className={`w-full ${sectionBgClassName ?? 'bg-[#eafbf7]'} transition-all duration-300 ease-out pt-14 pb-12 md:pt-20 md:pb-16`}
+      className={`w-full ${sectionBgClassName ?? 'bg-white'} transition-all duration-300 ease-out pt-14 pb-12 md:pt-20 md:pb-16`}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(10px)',

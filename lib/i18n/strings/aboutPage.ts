@@ -35,6 +35,10 @@ export type AboutPageUiStrings = {
   /** Kapanış CTA bandı. */
   ctaTitle: string
   ctaButton: string
+  pairTodayLabel: string
+  pairYearsLabel: (years: number) => string
+  ctaEyebrow: (year: number) => string
+  ctaLead: string
 }
 
 const TR: AboutPageUiStrings = {
@@ -66,6 +70,10 @@ const TR: AboutPageUiStrings = {
   trustGridFleetBody: (fleetCount) => `${fleetCount} tekneyle gruplara, ailelere ve çiftlere uygun seçenekler sunuyoruz.`,
   ctaTitle: 'Denize açılmaya hazır mısınız?',
   ctaButton: 'Turları Gör',
+  pairTodayLabel: 'Bugün',
+  pairYearsLabel: (n) => `${n} yıl`,
+  ctaEyebrow: (y) => `${y} yılından beri Çeşme'de`,
+  ctaLead: "Çeşme'nin koylarını Poseidon filosuyla keşfedin; yerinizi birkaç adımda ayırtın.",
 }
 
 const EN: AboutPageUiStrings = {
@@ -97,6 +105,10 @@ const EN: AboutPageUiStrings = {
   trustGridFleetBody: (fleetCount) => `${fleetCount} boats, with options for groups, families and couples.`,
   ctaTitle: 'Ready to set sail?',
   ctaButton: 'See Tours',
+  pairTodayLabel: 'Today',
+  pairYearsLabel: (n) => `${n} years`,
+  ctaEyebrow: (y) => `In Çeşme since ${y}`,
+  ctaLead: 'Explore the coves of Çeşme with the Poseidon fleet and book your spot in a few steps.',
 }
 
 const DE: AboutPageUiStrings = {
@@ -128,6 +140,10 @@ const DE: AboutPageUiStrings = {
   trustGridFleetBody: (fleetCount) => `${fleetCount} Boote, passend für Gruppen, Familien und Paare.`,
   ctaTitle: 'Bereit, in See zu stechen?',
   ctaButton: 'Touren ansehen',
+  pairTodayLabel: 'Heute',
+  pairYearsLabel: (n) => `${n} Jahre`,
+  ctaEyebrow: (y) => `Seit ${y} in Çeşme`,
+  ctaLead: 'Entdecken Sie die Buchten von Çeşme mit der Poseidon-Flotte und buchen Sie in wenigen Schritten.',
 }
 
 const RU: AboutPageUiStrings = {
@@ -159,6 +175,10 @@ const RU: AboutPageUiStrings = {
   trustGridFleetBody: (fleetCount) => `${fleetCount} катеров — варианты для групп, семей и пар.`,
   ctaTitle: 'Готовы выйти в море?',
   ctaButton: 'Смотреть туры',
+  pairTodayLabel: 'Сегодня',
+  pairYearsLabel: (n) => `${n} лет`,
+  ctaEyebrow: (y) => `В Чешме с ${y} года`,
+  ctaLead: 'Откройте бухты Чешме вместе с флотом Poseidon и забронируйте место за пару шагов.',
 }
 
 export function getAboutPageUiStrings(locale: SiteLocale): AboutPageUiStrings {

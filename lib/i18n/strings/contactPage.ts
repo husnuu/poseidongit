@@ -44,6 +44,12 @@ export type ContactPageUiStrings = {
   instagramFallbackLabel: string
   /** Sanity'de youtubeLabel boşsa gösterilecek varsayılan metin. */
   youtubeFallbackLabel: string
+  formTitle: string
+  formLead: string
+  officeTitle: string
+  directionsCta: string
+  socialTitle: string
+  quickTitle: string
 }
 
 const TR: ContactPageUiStrings = {
@@ -83,6 +89,12 @@ const TR: ContactPageUiStrings = {
   defaultPopularToursTitle: 'VEYA POPÜLER TURLARIMIZI BURADA BULABİLİRSİNİZ!',
   instagramFallbackLabel: "Instagram'da bizi takip edin",
   youtubeFallbackLabel: "Bizi YouTube'da bulun",
+  formTitle: "Bize mesaj gönderin",
+  formLead: "Tur, rezervasyon veya özel istekleriniz için formu doldurun.",
+  officeTitle: "Ofisimiz",
+  directionsCta: "Yol tarifi al",
+  socialTitle: "Bizi takip edin",
+  quickTitle: "Hızlı iletişim",
 }
 
 const EN: ContactPageUiStrings = {
@@ -122,6 +134,12 @@ const EN: ContactPageUiStrings = {
   defaultPopularToursTitle: 'OR YOU CAN FIND OUR MOST POPULAR TOURS HERE!',
   instagramFallbackLabel: 'Follow us on Instagram',
   youtubeFallbackLabel: 'Find us on Youtube',
+  formTitle: "Send us a message",
+  formLead: "Fill in the form for tours, bookings or special requests.",
+  officeTitle: "Our office",
+  directionsCta: "Get directions",
+  socialTitle: "Follow us",
+  quickTitle: "Quick contact",
 }
 
 const DE: ContactPageUiStrings = {
@@ -161,6 +179,12 @@ const DE: ContactPageUiStrings = {
   defaultPopularToursTitle: 'HIER FINDEN SIE UNSERE BELIEBTESTEN TOUREN!',
   instagramFallbackLabel: 'Folgen Sie uns auf Instagram',
   youtubeFallbackLabel: 'Finden Sie uns auf YouTube',
+  formTitle: "Schreiben Sie uns",
+  formLead: "Füllen Sie das Formular für Touren, Buchungen oder besondere Wünsche aus.",
+  officeTitle: "Unser Büro",
+  directionsCta: "Route planen",
+  socialTitle: "Folgen Sie uns",
+  quickTitle: "Schnellkontakt",
 }
 
 const RU: ContactPageUiStrings = {
@@ -200,6 +224,12 @@ const RU: ContactPageUiStrings = {
   defaultPopularToursTitle: 'ИЛИ ВЫБЕРИТЕ ОДИН ИЗ НАШИХ САМЫХ ПОПУЛЯРНЫХ ТУРОВ!',
   instagramFallbackLabel: 'Подписывайтесь на нас в Instagram',
   youtubeFallbackLabel: 'Найдите нас на YouTube',
+  formTitle: "Напишите нам",
+  formLead: "Заполните форму по вопросам туров, бронирования или особых пожеланий.",
+  officeTitle: "Наш офис",
+  directionsCta: "Проложить маршрут",
+  socialTitle: "Мы в соцсетях",
+  quickTitle: "Быстрая связь",
 }
 
 export function getContactPageUiStrings(locale: SiteLocale): ContactPageUiStrings {

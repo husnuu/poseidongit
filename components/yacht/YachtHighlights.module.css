@@ -93,3 +93,88 @@
     column-gap: 14px;
   }
 }
+
+/* ══ Modern görünüm: kompakt teknik özellik ızgarası ═════════════════════
+   Satır + ayraç çizgili uzun liste yerine: desktop 4, tablet 3, mobil 2
+   sütun; her özellik açık mavi ikon kutusu + küçük etiket + koyu değer.
+   Kart/kenarlık yok (sayfadaki kart dengesini korumak için). */
+.flatGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 16px;
+  margin-top: 4px;
+}
+
+@media (min-width: 640px) {
+  .flatGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .flatGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.item,
+.item:last-child,
+.item:nth-last-child(2):nth-child(odd),
+.item:first-child,
+.item:nth-child(2) {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+/* İkon sade: zemin kutusu yok, koyu renk. */
+.iconBox {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: none;
+  color: var(--secondary, #131719);
+}
+
+.iconBox .rowIcon {
+  width: 22px;
+  height: 22px;
+  color: inherit;
+  margin: 0;
+}
+
+.textCol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.label {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.value {
+  margin: 0;
+  padding-left: 0;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 380px) {
+  .value {
+    font-size: 15px;
+    padding-left: 0;
+  }
+}

@@ -88,11 +88,15 @@ export default function YachtHighlights({
         key={`${row.label}-${row.value}-${idx}`}
         className={styles.item}
       >
-        <div className={styles.itemTop}>
+        {/* Kompakt özellik: açık mavi ikon kutusu + küçük etiket, altında
+            koyu değer (tur sayfasındaki "Öne çıkanlar" ile aynı dil). */}
+        <span className={styles.iconBox} aria-hidden>
           <RowIcon iconKey={row.iconKey} />
+        </span>
+        <span className={styles.textCol}>
           <span className={styles.label}>{row.label}</span>
-        </div>
-        <span className={styles.value}>{row.value}</span>
+          <span className={styles.value}>{row.value}</span>
+        </span>
       </li>
     )
   }

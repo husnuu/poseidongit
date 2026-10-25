@@ -92,7 +92,7 @@ export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionP
   return (
     <section
       className="w-full py-14 md:py-16"
-      style={{ background: '#eafbf7' }}
+      style={{ background: '#f4f7fb' }}
       aria-labelledby="home-faq-heading"
     >
       <div className="mx-auto max-w-[900px] px-4">

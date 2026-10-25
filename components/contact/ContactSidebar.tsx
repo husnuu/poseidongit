@@ -1,5 +1,3 @@
-'use client'
-
 import type { ContactPageUiStrings } from '@/lib/i18n/strings/contactPage'
 import { buildWhatsAppHref } from '@/lib/buildWhatsAppHref'
 
@@ -8,14 +6,13 @@ import { buildWhatsAppHref } from '@/lib/buildWhatsAppHref'
 // instagramText/youtubeText hesaplaması.
 const PLACEHOLDER_INSTAGRAM_LABEL = 'Follow us on Instagram'
 const PLACEHOLDER_YOUTUBE_LABEL = 'Find us on Youtube'
-const TITLE_COLOR = 'var(--secondary, #131719)'
-const VALUE_COLOR = 'var(--secondary, #131719)'
-const ACCENT_COLOR = 'var(--primary, #2168b8)'
-// Referans siteyle birebir: satır ikonları mavi değil, koyu/siyah çizgi ikon
+// İkonlar mavi kutu içinde değil, sade koyu çizgi ikon (sitenin genel dili).
 const ICON_COLOR = 'var(--secondary, #131719)'
-const ICON_SIZE = 26
+const ICON_SIZE = 24
 
 export interface ContactSidebarData {
+  mapEmbedUrl?: string | null
+  locationMapLink?: string | null
   email?: string | null
   businessHours?: string | null
   address?: string | null
@@ -98,86 +95,12 @@ function InstagramIcon() {
   )
 }
 
-function Row({
-  title,
-  children,
-  icon,
-}: {
-  title: string
-  children: React.ReactNode
-  icon: React.ReactNode
-}) {
+function ArrowUpRightIcon() {
   return (
-    <li className="flex" style={{ gap: 18 }}>
-      <span className="flex-shrink-0 flex items-center justify-center" style={{ width: ICON_SIZE, height: ICON_SIZE }}>
-        {icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div
-          className="uppercase tracking-wide font-extrabold"
-          style={{ fontSize: 12, color: TITLE_COLOR, lineHeight: 1.3, fontWeight: 800 }}
-        >
-          {title}
-        </div>
-        <div
-          className="mt-1 text-[15px] leading-snug font-bold"
-          style={{ color: VALUE_COLOR, fontSize: 14, fontWeight: 700 }}
-        >
-          {children}
-        </div>
-      </div>
-    </li>
-  )
-}
-
-function AccentLink({
-  href,
-  children,
-  ariaLabel,
-}: {
-  href: string
-  children: React.ReactNode
-  ariaLabel?: string
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={ariaLabel}
-      className="hover:underline transition-colors hover:opacity-90 font-bold"
-      style={{ color: ACCENT_COLOR, fontWeight: 700 }}
-    >
-      {children}
-    </a>
-  )
-}
-
-/** Instagram satırı: referans siteyle birebir — düz mavi değil, markanın
-    turuncu/pembe/mor gradyanıyla renklendirilmiş kalın metin. */
-function InstagramGradientLink({
-  href,
-  children,
-  ariaLabel,
-}: {
-  href: string
-  children: React.ReactNode
-  ariaLabel?: string
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={ariaLabel}
-      className="inline-block bg-clip-text font-bold text-transparent transition-opacity hover:opacity-85"
-      style={{
-        backgroundImage: 'linear-gradient(90deg, #f9a34b 0%, #e0507a 45%, #8b3bb8 100%)',
-        fontWeight: 700,
-      }}
-    >
-      {children}
-    </a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width={18} height={18} aria-hidden>
+      <path d="M7 17 17 7" />
+      <path d="M7 7h10v10" />
+    </svg>
   )
 }
 
@@ -199,8 +122,91 @@ export type ContactSidebarLabels = Pick<
   | 'ariaInstagram'
   | 'instagramFallbackLabel'
   | 'youtubeFallbackLabel'
+  | 'officeTitle'
+  | 'directionsCta'
+  | 'socialTitle'
+  | 'mapIframeTitle'
 >
 
+/** Büyük harfli etiketleri ("BİZİ ARAYIN") kutularda cümle düzeninde göstermek
+    yerine olduğu gibi küçük, aralıklı başlık olarak kullanıyoruz. */
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--muted,#81848b)]">{children}</span>
+  )
+}
+
+/** Sayfanın üstündeki hızlı iletişim kutuları: Ara / WhatsApp / E-posta.
+    Her biri tek dokunuşla ilgili uygulamayı açan büyük bir bağlantı. */
+export function ContactQuickActions({ data, labels }: { data: ContactSidebarData; labels: ContactSidebarLabels }) {
+  const whatsappHref = buildWhatsAppHref(data.whatsapp)
+  const items = [
+    data.phone
+      ? {
+          key: 'phone',
+          href: `tel:${data.phone.replace(/\s/g, '')}`,
+          label: labels.rowPhone,
+          value: data.phone,
+          aria: `${labels.ariaCall}: ${data.phone}`,
+          icon: <PhoneIcon />,
+          external: false,
+        }
+      : null,
+    whatsappHref
+      ? {
+          key: 'whatsapp',
+          href: whatsappHref,
+          label: labels.rowWhatsapp,
+          value: data.whatsapp || data.phone || '',
+          aria: labels.ariaWhatsapp,
+          icon: <WhatsappIcon />,
+          external: true,
+        }
+      : null,
+    data.email
+      ? {
+          key: 'email',
+          href: `mailto:${data.email}`,
+          label: labels.rowEmail,
+          value: data.email,
+          aria: `${labels.ariaEmailSend}: ${data.email}`,
+          icon: <EmailIcon />,
+          external: false,
+        }
+      : null,
+  ].filter((x): x is NonNullable<typeof x> => x != null)
+
+  if (items.length === 0) return null
+
+  return (
+    <ul
+      className={`m-0 grid list-none grid-cols-1 gap-3 p-0 sm:gap-4 ${items.length === 3 ? 'sm:grid-cols-3' : items.length === 2 ? 'sm:grid-cols-2' : ''}`}
+    >
+      {items.map((it) => (
+        <li key={it.key}>
+          <a
+            href={it.href}
+            aria-label={it.aria}
+            {...(it.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            className="group flex h-full items-center gap-4 rounded-2xl border border-[#d3dce6] bg-white px-5 py-4 transition-colors duration-200 hover:border-[#8a9db3] sm:py-5"
+          >
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center">{it.icon}</span>
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <Eyebrow>{it.label}</Eyebrow>
+              <span className="truncate text-[16px] font-extrabold text-[var(--secondary,#131719)]">{it.value}</span>
+            </span>
+            <span className="shrink-0 text-[var(--muted,#81848b)] transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--primary,#2168b8)]">
+              <ArrowUpRightIcon />
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Sağ sütun: ofis adresi, çalışma saatleri, küçük harita + yol tarifi ve
+    sosyal medya bağlantıları. Kart yok — açık gri zemin üzerinde tek panel. */
 export default function ContactSidebar({
   data,
   labels,
@@ -208,27 +214,16 @@ export default function ContactSidebar({
   data: ContactSidebarData
   labels: ContactSidebarLabels
 }) {
-  const hasAny =
-    data.email ||
-    data.businessHours ||
-    data.address ||
-    data.phone ||
-    data.whatsapp ||
-    data.youtubeUrl ||
-    data.instagramUrl
-
+  const hasAny = data.businessHours || data.address || data.mapEmbedUrl || data.youtubeUrl || data.instagramUrl
   if (!hasAny) return null
 
-  const mapsHref = data.address
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.address)}`
-    : null
-  const whatsappHref = buildWhatsAppHref(data.whatsapp)
+  const directionsHref =
+    data.locationMapLink?.trim() ||
+    (data.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.address)}` : null)
 
   // Sanity alanı boşken şemanın kendi İngilizce placeholder metnini ("Follow
   // us on Instagram" / "Find us on Youtube") gerçek içerik sanıp olduğu gibi
-  // basmayalım — bu, hiç değiştirilmemiş varsayılan değer olduğu için Türkçe
-  // sayfada da İngilizce görünüyordu. Editör gerçekten özel bir metin girerse
-  // (varsayılandan farklıysa) o metne saygı gösterilir.
+  // basmayalım — editör gerçekten özel bir metin girerse ona saygı gösterilir.
   const instagramText =
     data.instagramLabel && data.instagramLabel.trim() !== PLACEHOLDER_INSTAGRAM_LABEL
       ? data.instagramLabel
@@ -239,74 +234,96 @@ export default function ContactSidebar({
       : labels.youtubeFallbackLabel
 
   return (
-    <aside
-      className="w-full lg:sticky lg:self-start"
-      style={{ top: 32 }}
-      aria-label={labels.sidebarAria}
-    >
-      <div
-        className="w-full"
-        style={{
-          backgroundColor: '#f7f7fa',
-          borderRadius: 14,
-          padding: '26px 22px',
-          marginInline: 8,
-          width: 'calc(100% - 16px)',
-        }}
-      >
-        <ul className="list-none flex flex-col p-0 m-0" style={{ gap: 30 }}>
-          {data.email && (
-            <Row title={labels.rowEmail} icon={<EmailIcon />}>
-              <AccentLink href={`mailto:${data.email}`} ariaLabel={`${labels.ariaEmailSend}: ${data.email}`}>
-                {data.email}
-              </AccentLink>
-            </Row>
+    <aside className="w-full lg:sticky lg:top-28 lg:self-start" aria-label={labels.sidebarAria}>
+      <div className="overflow-hidden rounded-2xl border border-[#d3dce6] bg-[#f7f8fa]">
+        <div className="p-6">
+          <h2
+            className="m-0 mb-5 text-[19px] font-extrabold uppercase leading-snug text-[var(--secondary,#131719)]"
+            style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
+          >
+            {labels.officeTitle}
+          </h2>
+          <ul className="m-0 flex list-none flex-col gap-5 p-0">
+            {data.address && (
+              <li className="flex gap-4">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center"><MapPinIcon /></span>
+                <div className="min-w-0">
+                  <Eyebrow>{labels.rowAddress}</Eyebrow>
+                  <p className="m-0 mt-0.5 text-[15px] font-bold leading-snug text-[var(--secondary,#131719)]">{data.address}</p>
+                </div>
+              </li>
+            )}
+            {data.businessHours && (
+              <li className="flex gap-4">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center"><ClockIcon /></span>
+                <div className="min-w-0">
+                  <Eyebrow>{labels.rowHours}</Eyebrow>
+                  <p className="m-0 mt-0.5 text-[15px] font-bold leading-snug text-[var(--secondary,#131719)]">{data.businessHours}</p>
+                </div>
+              </li>
+            )}
+          </ul>
+        </div>
+
+        {data.mapEmbedUrl && (
+          <div className="border-y border-[#d3dce6] bg-zinc-100">
+            <iframe
+              src={data.mapEmbedUrl}
+              title={labels.mapIframeTitle}
+              className="block h-[240px] w-full"
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        )}
+
+        <div className="flex flex-col gap-5 p-6">
+          {directionsHref && (
+            <a
+              href={directionsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={labels.ariaOpenMaps}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border-2 border-[var(--primary,#2168b8)] bg-white text-[14px] font-extrabold uppercase tracking-wide text-[var(--primary,#2168b8)] transition hover:bg-[var(--primary,#2168b8)]/[0.06]"
+            >
+              {labels.directionsCta}
+              <ArrowUpRightIcon />
+            </a>
           )}
-          {data.businessHours && (
-            <Row title={labels.rowHours} icon={<ClockIcon />}>
-              <span>{data.businessHours}</span>
-            </Row>
+
+          {(data.instagramUrl || data.youtubeUrl) && (
+            <div>
+              <Eyebrow>{labels.socialTitle}</Eyebrow>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {data.instagramUrl && (
+                  <a
+                    href={data.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={labels.ariaInstagram}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#d3dce6] bg-white py-1.5 pl-1.5 pr-4 text-[13px] font-bold text-[var(--secondary,#131719)] transition-colors hover:border-[#8a9db3]"
+                  >
+                    <InstagramIcon />
+                    {instagramText}
+                  </a>
+                )}
+                {data.youtubeUrl && (
+                  <a
+                    href={data.youtubeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={labels.ariaYoutube}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#d3dce6] bg-white py-1.5 pl-3 pr-4 text-[13px] font-bold text-[var(--secondary,#131719)] transition-colors hover:border-[#8a9db3]"
+                  >
+                    <YoutubeIcon />
+                    {youtubeText}
+                  </a>
+                )}
+              </div>
+            </div>
           )}
-          {data.address && (
-            <Row title={labels.rowAddress} icon={<MapPinIcon />}>
-              {mapsHref ? (
-                <AccentLink href={mapsHref} ariaLabel={labels.ariaOpenMaps}>
-                  {data.address}
-                </AccentLink>
-              ) : (
-                <span>{data.address}</span>
-              )}
-            </Row>
-          )}
-          {data.phone && (
-            <Row title={labels.rowPhone} icon={<PhoneIcon />}>
-              <AccentLink href={`tel:${data.phone.replace(/\s/g, '')}`} ariaLabel={`${labels.ariaCall}: ${data.phone}`}>
-                {data.phone}
-              </AccentLink>
-            </Row>
-          )}
-          {whatsappHref && (
-            <Row title={labels.rowWhatsapp} icon={<WhatsappIcon />}>
-              <AccentLink href={whatsappHref} ariaLabel={labels.ariaWhatsapp}>
-                {data.phone || data.whatsapp}
-              </AccentLink>
-            </Row>
-          )}
-          {data.instagramUrl && (
-            <Row title={labels.rowInspired} icon={<InstagramIcon />}>
-              <InstagramGradientLink href={data.instagramUrl} ariaLabel={labels.ariaInstagram}>
-                {instagramText}
-              </InstagramGradientLink>
-            </Row>
-          )}
-          {data.youtubeUrl && (
-            <Row title={labels.rowFriends} icon={<YoutubeIcon />}>
-              <AccentLink href={data.youtubeUrl} ariaLabel={labels.ariaYoutube}>
-                {youtubeText}
-              </AccentLink>
-            </Row>
-          )}
-        </ul>
+        </div>
       </div>
     </aside>
   )

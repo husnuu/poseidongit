@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin } from 'lucide-react'
+import { ArrowRight, MapPin } from 'lucide-react'
 // Sınıflar (TourClassShowcase) bölümüyle birebir aynı toggle/panel görünümü için
 // aynı CSS modülü reuse ediliyor — iki bileşen de görsel olarak aynı dili konuşsun.
 import showcaseStyles from '@/components/tour/TourClassShowcase.module.css'
@@ -18,6 +18,8 @@ export type RouteSectionLocation = {
   /** /koylar'daki eşleşen koy dokümanının açıklaması — sadece gerçekten
    * yazılmışsa dolu gelir. */
   description?: string | null
+  /** Eşleşen koyun detay sayfası (/koylar/<slug>) — eşleşme yoksa boş. */
+  href?: string | null
 }
 
 export type RouteSectionProps = {
@@ -33,6 +35,13 @@ const SELECT_ARIA: Record<string, string> = {
   en: 'Select a cove',
   de: 'Bucht auswählen',
   ru: 'Выбрать бухту',
+}
+
+const COVE_LINK_LABEL: Record<string, string> = {
+  tr: 'Koyu keşfet',
+  en: 'Explore the cove',
+  de: 'Bucht entdecken',
+  ru: 'Подробнее о бухте',
 }
 
 const NO_IMAGE_LABEL: Record<string, string> = {
@@ -77,7 +86,7 @@ export default function RouteSection({
   return (
     <section
       ref={sectionRef}
-      className="w-full overflow-hidden bg-[#eafbf7]"
+      className="w-full overflow-hidden bg-white"
       aria-labelledby="route-section-heading"
     >
       <div
@@ -177,6 +186,15 @@ export default function RouteSection({
                   )}
                   {activeLoc.description && (
                     <p className={showcaseStyles.description}>{activeLoc.description}</p>
+                  )}
+                  {activeLoc.href && (
+                    <Link
+                      href={activeLoc.href}
+                      className="mt-1 inline-flex items-center gap-1.5 text-[13px] font-extrabold uppercase tracking-wide text-[var(--primary,#2168b8)] hover:underline"
+                    >
+                      {COVE_LINK_LABEL[locale] ?? COVE_LINK_LABEL.tr}
+                      <ArrowRight className="h-4 w-4" strokeWidth={2.4} aria-hidden />
+                    </Link>
                   )}
                 </div>
               </div>

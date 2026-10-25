@@ -102,7 +102,7 @@ export default function PopularYachtsSection({ data, locale = 'tr' }: PopularYac
   return (
     <section
       ref={sectionRef}
-      className="w-full transition-all duration-300 ease-out pt-14 pb-12 md:pt-20 md:pb-16 bg-zinc-50/60"
+      className="w-full transition-all duration-300 ease-out pt-14 pb-12 md:pt-20 md:pb-16 bg-white"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(10px)',

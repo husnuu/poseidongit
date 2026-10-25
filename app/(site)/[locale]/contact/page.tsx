@@ -4,8 +4,8 @@ import { contactPageQuery } from '@/lib/queries'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
 import ContactFormClient from '@/components/contact/ContactFormClient'
-import ContactSidebar from '@/components/contact/ContactSidebar'
-import type { ContactSidebarData } from '@/components/contact/ContactSidebar'
+import ContactSidebar, { ContactQuickActions } from '@/components/contact/ContactSidebar'
+import type { ContactSidebarData, ContactSidebarLabels } from '@/components/contact/ContactSidebar'
 import PopularToursSection from '@/components/home/PopularToursSection'
 import type { TourListItem } from '@/components/tours/TourCard'
 import { getSiteName } from '@/lib/seo'
@@ -19,10 +19,7 @@ import { getContactPageUiStrings, mergeContactUiFromSanity } from '@/lib/i18n/st
 
 export const dynamic = 'force-dynamic'
 
-const CONTACT_HEADING_CLASS =
-  'text-[29px] font-black uppercase leading-[1.15] mb-6 sm:text-[31px] md:text-[35px] lg:text-[39px]'
-
-// Ana başlık (İletişim) dışındaki bölüm başlıkları (Konum, Popüler Turlar) için
+// Popüler Turlar bölüm başlığı için
 // daha ölçülü bir boyut — referans sitedeki alt başlık stiline uygun.
 const CONTACT_SUBHEADING_CLASS =
   'text-[20px] font-extrabold uppercase leading-[1.2] mb-6 sm:text-[22px] md:text-[24px]'
@@ -163,112 +160,93 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
     successMessage: form.successMessage ?? ui.defaultSuccessMessage,
   }
 
+  const sidebarLabels: ContactSidebarLabels = {
+    sidebarAria: ui.sidebarAria,
+    rowEmail: ui.rowEmail,
+    rowHours: ui.rowHours,
+    rowAddress: ui.rowAddress,
+    rowPhone: ui.rowPhone,
+    rowWhatsapp: ui.rowWhatsapp,
+    rowFriends: ui.rowFriends,
+    rowInspired: ui.rowInspired,
+    ariaEmailSend: ui.ariaEmailSend,
+    ariaOpenMaps: ui.ariaOpenMaps,
+    ariaCall: ui.ariaCall,
+    ariaWhatsapp: ui.ariaWhatsapp,
+    ariaYoutube: ui.ariaYoutube,
+    ariaInstagram: ui.ariaInstagram,
+    instagramFallbackLabel: ui.instagramFallbackLabel,
+    youtubeFallbackLabel: ui.youtubeFallbackLabel,
+    officeTitle: data?.locationTitle?.trim() || ui.officeTitle,
+    directionsCta: ui.directionsCta,
+    socialTitle: ui.socialTitle,
+    mapIframeTitle: data?.locationTitle ?? ui.mapIframeTitle,
+  }
+  const sidebarData: ContactSidebarData = {
+    email: data?.email ?? null,
+    businessHours: data?.businessHours ?? null,
+    address: data?.officeAddress ?? null,
+    phone: data?.phone ?? null,
+    whatsapp: data?.whatsapp ?? null,
+    youtubeUrl: data?.youtubeUrl ?? null,
+    youtubeLabel: data?.youtubeLabel ?? null,
+    instagramUrl: data?.instagramUrl ?? null,
+    instagramLabel: data?.instagramLabel ?? null,
+    mapEmbedUrl: data?.mapEmbedUrl ?? null,
+    locationMapLink: data?.locationMapLink ?? null,
+  }
+
   return (
-    <main className="min-h-screen bg-white">
-      {/* Bembeyaz zemin, ortalanmış başlık + alt metin. */}
-      <div className="w-full px-4 pb-6 pt-16 text-center sm:pb-8 sm:pt-20">
-        <h1
-          className={`${CONTACT_HEADING_CLASS} whitespace-nowrap pageHeroTitleStroke`}
-          style={{
-            fontFamily: 'var(--font-family-title, var(--font-family))',
-            fontWeight: 900,
-            color: 'var(--primary, #2168b8)',
-          }}
-        >
-          {toHeadingUpper(title || ui.defaultTitle)}
-        </h1>
+    <main className="relative min-h-screen overflow-hidden bg-white">
+      {/* Koylar sayfasındaki gibi başlığın arkasında çok açık mavi bir ışıltı. */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[460px] w-[1000px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-70 blur-3xl"
+        style={{ background: 'radial-gradient(closest-side, #dbeafe, rgba(219,234,254,0))' }}
+        aria-hidden
+      />
+
+      {/* ── Başlık ── */}
+      <div className="w-full px-4 pb-8 pt-14 text-center sm:pb-10 sm:pt-16 md:pt-20">
+        <h1 className="pageSectionHeading">{toHeadingUpper(title || ui.defaultTitle)}</h1>
         {intro.length > 0 && (
-          <div
-            className="mx-auto max-w-2xl text-base leading-relaxed space-y-4"
-            style={{ fontFamily: 'var(--font-family)', color: '#475569' }}
-          >
+          <div className="pageSectionLead mx-auto max-w-2xl">
             <PortableText value={intro} />
           </div>
         )}
       </div>
 
-      <div className="mx-auto max-w-[1400px] px-4 pb-12 pt-0 sm:pb-16 sm:pt-0">
-        <div className="grid grid-cols-1 lg:grid-cols-[2.5fr_1fr] gap-10 lg:gap-12 w-full max-w-[1400px] mx-auto">
+      <div className="mx-auto max-w-[1200px] px-4 pb-12 sm:pb-16">
+        {/* ── Hızlı iletişim ── */}
+        <h2 className="sr-only">{ui.quickTitle}</h2>
+        <ContactQuickActions data={sidebarData} labels={sidebarLabels} />
+
+        {/* ── Form + ofis paneli ── */}
+        <div className="mt-10 grid w-full grid-cols-1 gap-10 md:mt-12 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)] lg:gap-12">
           <section className="min-w-0" aria-labelledby="form-heading">
-            <h2 id="form-heading" className="sr-only">
-              {ui.formSectionAria}
+            <h2 id="form-heading" className="tourSectionHeading mb-2">
+              {toHeadingUpper(ui.formTitle)}
             </h2>
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
-              <ContactFormClient {...formProps} />
-            </div>
+            <p className="mb-6 text-[15px] leading-relaxed text-[var(--text-color,#58595b)]">{ui.formLead}</p>
+            <ContactFormClient {...formProps} />
           </section>
 
           <div className="min-w-0">
-            <ContactSidebar
-              labels={{
-                sidebarAria: ui.sidebarAria,
-                rowEmail: ui.rowEmail,
-                rowHours: ui.rowHours,
-                rowAddress: ui.rowAddress,
-                rowPhone: ui.rowPhone,
-                rowWhatsapp: ui.rowWhatsapp,
-                rowFriends: ui.rowFriends,
-                rowInspired: ui.rowInspired,
-                ariaEmailSend: ui.ariaEmailSend,
-                ariaOpenMaps: ui.ariaOpenMaps,
-                ariaCall: ui.ariaCall,
-                ariaWhatsapp: ui.ariaWhatsapp,
-                ariaYoutube: ui.ariaYoutube,
-                ariaInstagram: ui.ariaInstagram,
-                instagramFallbackLabel: ui.instagramFallbackLabel,
-                youtubeFallbackLabel: ui.youtubeFallbackLabel,
-              }}
-              data={{
-                email: data?.email ?? null,
-                businessHours: data?.businessHours ?? null,
-                address: data?.officeAddress ?? null,
-                phone: data?.phone ?? null,
-                whatsapp: data?.whatsapp ?? null,
-                youtubeUrl: data?.youtubeUrl ?? null,
-                youtubeLabel: data?.youtubeLabel ?? null,
-                instagramUrl: data?.instagramUrl ?? null,
-                instagramLabel: data?.instagramLabel ?? null,
-              } as ContactSidebarData}
-            />
+            <ContactSidebar labels={sidebarLabels} data={sidebarData} />
           </div>
         </div>
 
-        {data?.mapEmbedUrl && (
-          <section className="mt-16" aria-labelledby="contact-location-heading">
-            <h2
-              id="contact-location-heading"
-              className={CONTACT_SUBHEADING_CLASS}
-              style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--secondary, #131719)' }}
-            >
-              {toHeadingUpper(
-                data.locationTitle?.trim() ||
-                  (locale === 'tr' ? 'Konum' : locale === 'de' ? 'Standort' : 'Location'),
-              )}
-            </h2>
-            <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 shadow-sm">
-              <iframe
-                src={data.mapEmbedUrl}
-                title={data?.locationTitle ?? ui.mapIframeTitle}
-                className="h-[420px] w-full min-h-[320px] sm:h-[480px]"
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
-          </section>
-        )}
+      </div>
 
-        <div className="mt-16">
-          <PopularToursSection
-            data={popularToursSectionData}
-            locale={locale}
-            headingClassName={CONTACT_SUBHEADING_CLASS}
-            headingAlign="left"
-            headingColor="var(--secondary, #131719)"
-            sectionBgClassName="bg-white"
-            hideViewAllButton
-          />
-        </div>
+      <div className="pb-4">
+        <PopularToursSection
+          data={popularToursSectionData}
+          locale={locale}
+          headingClassName={CONTACT_SUBHEADING_CLASS}
+          headingAlign="left"
+          headingColor="var(--secondary, #131719)"
+          sectionBgClassName="bg-white"
+          hideViewAllButton
+        />
       </div>
     </main>
   )

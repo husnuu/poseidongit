@@ -15,8 +15,6 @@ import type { YachtSortMode } from '@/lib/yachtListSort'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getYachtUi, type YachtUi } from '@/lib/i18n/yachtUi'
 
-const ACCENT = '#2168b8'
-const ACCENT_RING = 'rgba(33, 104, 184, 0.35)'
 
 function sortRows(ui: YachtUi): { value: YachtSortMode; label: string; Icon: LucideIcon }[] {
   return [
@@ -89,7 +87,7 @@ export default function YachtRentalSortSheet({
         <div className="flex shrink-0 flex-col border-b border-zinc-100 px-5 pt-4 pb-4 sm:px-6">
           <span className="mx-auto mb-3 h-1 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" aria-hidden />
           <div className="flex items-center justify-between gap-3">
-            <h2 id={titleId} className="m-0 text-lg font-black uppercase tracking-tight text-zinc-900">
+            <h2 id={titleId} className="m-0 text-[18px] font-extrabold uppercase tracking-tight text-[var(--secondary,#131719)]">
               {ui.sortTitle}
             </h2>
             <button
@@ -103,44 +101,43 @@ export default function YachtRentalSortSheet({
           </div>
         </div>
 
-        <ul className="m-0 list-none overflow-y-auto overscroll-contain p-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        {/* Seçim satırları: kenarlıklı yuvarlak satırlar, ikonlar sade siyah
+            (zemin dairesi yok). Seçili satır mavi kenarlık + hafif mavi zemin
+            ve sağda onay işareti. */}
+        <ul className="m-0 flex list-none flex-col gap-2 overflow-y-auto overscroll-contain p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6">
           {ROWS.map(({ value: v, label, Icon }) => {
             const selected = value === v
             return (
-              <li key={v} className="border-b border-zinc-100 last:border-b-0">
+              <li key={v}>
                 <button
                   type="button"
                   onClick={() => handlePick(v)}
-                  className="flex w-full items-center gap-4 px-4 py-4 text-left transition hover:bg-zinc-50 active:bg-zinc-100"
+                  aria-pressed={selected}
+                  className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition duration-150 ${
+                    selected
+                      ? 'border-[var(--primary,#2168b8)] bg-[var(--primary,#2168b8)]/[0.05]'
+                      : 'border-[#d3dce6] bg-white hover:border-[#8a9db3]'
+                  }`}
+                  style={selected ? { boxShadow: 'inset 0 0 0 1px var(--primary, #2168b8)' } : undefined}
                 >
+                  <Icon className="h-5 w-5 shrink-0 text-[var(--secondary,#131719)]" strokeWidth={2} aria-hidden />
                   <span
-                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-                      selected ? 'bg-blue-50 text-[#2168b8]' : 'bg-zinc-100 text-zinc-600'
+                    className={`min-w-0 flex-1 text-[15px] leading-snug text-[var(--secondary,#131719)] ${
+                      selected ? 'font-extrabold' : 'font-semibold'
                     }`}
-                    aria-hidden
                   >
-                    <Icon className="h-5 w-5" strokeWidth={2} />
-                  </span>
-                  <span className="min-w-0 flex-1 text-[15px] font-medium leading-snug text-zinc-900">
                     {label}
                   </span>
                   <span
-                    className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition"
-                    style={
-                      selected
-                        ? {
-                            borderColor: ACCENT,
-                            boxShadow: `0 0 0 3px ${ACCENT_RING}`,
-                          }
-                        : { borderColor: '#d4d4d8' }
-                    }
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition ${
+                      selected ? 'border-[var(--primary,#2168b8)] bg-[var(--primary,#2168b8)] text-white' : 'border-[#d3dce6] bg-white'
+                    }`}
                     aria-hidden
                   >
                     {selected ? (
-                      <span
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: ACCENT }}
-                      />
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
                     ) : null}
                   </span>
                 </button>

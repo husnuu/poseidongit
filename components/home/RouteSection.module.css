@@ -34,32 +34,14 @@
   }
 }
 
-.tabGridItem {
-  border-right: 2px solid var(--primary, #2168b8) !important;
-  border-bottom: 2px solid var(--primary, #2168b8) !important;
-  border-radius: 0 !important;
-}
-
-/* Sağ sütun: sağ kenarlık yok (dış kenar zaten .tabsGrid'in border'ında var) */
-.tabGridItem:nth-child(2n) {
-  border-right: 0 !important;
-}
-
-/* Alt sıra: alt kenarlık yok */
-.tabGridItem:nth-child(n + 3) {
-  border-bottom: 0 !important;
-}
-
-/* Dört köşe yuvarlama — first/last-child yerine konuma göre */
-.tabGridItem:nth-child(1) {
-  border-radius: 9px 0 0 0 !important;
-}
-.tabGridItem:nth-child(2) {
-  border-radius: 0 9px 0 0 !important;
-}
-.tabGridItem:nth-child(3) {
-  border-radius: 0 0 0 9px !important;
-}
+/* Segment kontrol diline geçildi (bkz. TourClassShowcase.module.css):
+   hücreler arası çizgi yok, her hücre kendi yuvarlak köşesiyle; aralık
+   kapsayıcının gap'inden geliyor. */
+.tabGridItem,
+.tabGridItem:nth-child(1),
+.tabGridItem:nth-child(2),
+.tabGridItem:nth-child(3),
 .tabGridItem:nth-child(4) {
-  border-radius: 0 0 9px 0 !important;
+  border: 0 !important;
+  border-radius: 10px !important;
 }

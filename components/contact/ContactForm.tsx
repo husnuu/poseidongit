@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Script from 'next/script'
 import { Turnstile } from '@marsidev/react-turnstile'
-import { Check } from 'lucide-react'
+import { Check, Loader2, Send } from 'lucide-react'
 import FloatingInput from '@/components/ui/FloatingInput'
 import FloatingTextarea from '@/components/ui/FloatingTextarea'
 import PhoneField from '@/components/ui/PhoneField'
@@ -131,13 +131,14 @@ export default function ContactForm(props: ContactFormProps) {
   if (status === 'success') {
     return (
       <div
-        className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 flex items-center gap-3 text-emerald-800"
+        className="flex flex-col items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-10 text-center text-emerald-800"
         style={{ fontFamily: 'var(--font-family)' }}
+        role="status"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-200">
-          <Check className="h-5 w-5" strokeWidth={2.5} />
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white">
+          <Check className="h-7 w-7" strokeWidth={2.8} />
         </span>
-        <p className="font-medium">{successMessage}</p>
+        <p className="m-0 max-w-md text-[16px] font-semibold leading-relaxed">{successMessage}</p>
       </div>
     )
   }
@@ -224,18 +225,19 @@ export default function ContactForm(props: ContactFormProps) {
         <button
           type="submit"
           disabled={status === 'sending' || (!!siteKey && !turnstileToken)}
-          className="w-full font-bold uppercase text-white transition disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.98]"
-          style={{
-            height: 48,
-            borderRadius: 10,
-            fontSize: 14,
-            letterSpacing: '0.02em',
-            backgroundImage:
-              'linear-gradient(to right, var(--primary, #2168b8) 0%, #4f8dc7 51%, var(--primary, #2168b8) 100%)',
-            boxShadow: '0 4px 18px rgba(var(--primary-rgb, 33, 104, 184), 0.35)',
-          }}
+          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary,#2168b8)] px-8 text-[14px] font-extrabold uppercase tracking-wide text-white transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[220px]"
         >
-          {status === 'sending' ? sending : submitLabel}
+          {status === 'sending' ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              {sending}
+            </>
+          ) : (
+            <>
+              {submitLabel}
+              <Send className="h-4 w-4" strokeWidth={2.2} aria-hidden />
+            </>
+          )}
         </button>
 
         {submitError && (

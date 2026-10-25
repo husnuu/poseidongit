@@ -54,7 +54,7 @@ import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
-import { mergeCoveForLocale } from '@/lib/i18n/mergeCoveForLocale'
+import { coveSlugForLocale, mergeCoveForLocale } from '@/lib/i18n/mergeCoveForLocale'
 import { mergeHomePageLocale, mergeHomePageSeoForLocale, homeFieldHasManualTranslation } from '@/lib/i18n/mergeHomePageLocale'
 import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
 import {
@@ -698,6 +698,9 @@ async function mapRouteSection(
       // metni SADECE gerçekten Sanity'de yazılmışsa gösterilir, uydurulmaz.
       const matchedCoveRaw = coveRows.find((c) => normalize(c.title) === normalize(loc.name))
       let description: string | null = null
+      const coveSlug = matchedCoveRaw
+        ? coveSlugForLocale(matchedCoveRaw as unknown as Record<string, unknown>, locale)
+        : undefined
       if (matchedCoveRaw) {
         const merged = mergeCoveForLocale(
           matchedCoveRaw as unknown as Record<string, unknown>,
@@ -718,6 +721,7 @@ async function mapRouteSection(
         imageUrl: loc.image?.asset ? urlFor(loc.image.asset).width(960).height(720).url() : null,
         alt: loc.image?.alt ?? null,
         description,
+        href: coveSlug ? withLocalePath(locale, `/koylar/${coveSlug}`) : null,
       }
     })
   )

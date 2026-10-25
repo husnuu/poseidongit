@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 import { client } from '@/lib/sanity'
 import { getBaseUrl } from '@/lib/seo'
-import { tourSlugRowsForLocalesQuery } from '@/lib/queries'
+import { coveSlugRowsForLocalesQuery, tourSlugRowsForLocalesQuery } from '@/lib/queries'
 import { STATIC_HELP_CATEGORIES } from '@/lib/helpCenter/staticHelpData'
 import { STATIC_UPDATED_AT } from '@/lib/helpCenter/staticHelpResolve'
 import { canonicalRouteToPublicPath } from '@/lib/i18n/routeAliases'
@@ -39,6 +39,14 @@ type TourLocaleRow = {
 async function getTourSitemapRows(): Promise<TourLocaleRow[]> {
   try {
     return await client.fetch<TourLocaleRow[]>(tourSlugRowsForLocalesQuery)
+  } catch {
+    return []
+  }
+}
+
+async function getCoveSitemapRows(): Promise<TourLocaleRow[]> {
+  try {
+    return await client.fetch<TourLocaleRow[]>(coveSlugRowsForLocalesQuery)
   } catch {
     return []
   }
@@ -148,6 +156,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     yachtLocRaw,
     yachtDetailRaw,
     ferryRouteEntriesRaw,
+    coveRows,
   ] = await Promise.all([
     getTourSitemapRows(),
     getBlogEntries(),
@@ -155,6 +164,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getYachtLocationEntries(),
     getYachtDetailEntries(),
     getFerryRouteEntries(),
+    getCoveSitemapRows(),
   ])
 
   const now = new Date()
@@ -234,6 +244,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       })
   }
 
+  // Koy detay sayfaları — çeviri slug'ı yoksa o dilde de Türkçe slug kullanılır.
+  const coveEntries: MetadataRoute.Sitemap = (coveRows ?? []).flatMap((row) => {
+    if (!row.tSlug) return []
+    const lastModified = row._updatedAt ? new Date(row._updatedAt) : now
+    const slugs: Record<SiteLocaleKey, string> = {
+      tr: row.tSlug,
+      en: row.enSlug || row.tSlug,
+      de: row.deSlug || row.tSlug,
+      ru: row.ruSlug || row.tSlug,
+    }
+    return locales.map((loc) => ({
+      url: publicUrl(loc, `/koylar/${slugs[loc]}`),
+      lastModified,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }))
+  })
+
   const blogEntries: MetadataRoute.Sitemap = blogEntriesRaw.flatMap(({ slug, lastModified }) =>
     locales.map((loc) => ({
       url: publicUrl(loc, `/blog/${slug}`),
@@ -308,6 +336,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticPages,
     ...tourEntries,
+    ...coveEntries,
     ...blogEntries,
     ...legalEntries,
     ...yachtLocationEntries,
