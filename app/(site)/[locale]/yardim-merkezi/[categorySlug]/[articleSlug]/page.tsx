@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { PortableText } from '@portabletext/react'
@@ -151,12 +152,12 @@ export default async function HelpArticlePage({
     article.title && answerText ? buildFAQSchema([{ question: article.title, answer: answerText }]) : null
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-100/90 via-white to-zinc-50">
+    <div className="min-h-screen bg-white">
       <JsonLd data={buildBreadcrumbSchema(breadcrumbItems)} />
       <JsonLd data={articleLd} />
       {faqSchema && <JsonLd data={faqSchema} />}
 
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+      <div className="mx-auto max-w-[820px] px-4 pb-16 pt-8 sm:pt-10 md:pb-24">
         <Breadcrumb
           className="mb-8"
           items={[
@@ -170,66 +171,51 @@ export default async function HelpArticlePage({
           ]}
         />
 
-        <article className="overflow-hidden rounded-2xl border border-zinc-100/90 bg-white/90 shadow-[0_4px_32px_-10px_rgba(15,23,42,0.09)] backdrop-blur-sm">
-          <header className="border-b border-zinc-100/90 bg-gradient-to-br from-white to-slate-50/80 px-5 pb-8 pt-7 sm:px-8 sm:pb-10 sm:pt-9">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1e3a8a]">
-              <Link
-                href={categoryPath}
-                className="rounded-sm transition-colors hover:text-[#172554] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a8a] focus-visible:ring-offset-2"
-                style={{ fontFamily: 'var(--font-family), sans-serif' }}
-              >
-                {article.category?.title ?? ui.breadcrumbCategoryFallback}
-              </Link>
-            </p>
+        <article>
+          <header className="border-b border-[#e8edf3] pb-8">
+            <Link
+              href={categoryPath}
+              className="inline-flex items-center rounded-full border border-[#d3dce6] px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-[var(--secondary,#131719)] transition-colors hover:border-[#8a9db3]"
+            >
+              {article.category?.title ?? ui.breadcrumbCategoryFallback}
+            </Link>
             <h1
-              className="mt-3 text-balance text-[1.65rem] font-bold tracking-tight text-[#1e3a5f] sm:text-3xl md:text-[2rem]"
+              className="mb-0 mt-4 text-balance text-[28px] font-black leading-[1.15] tracking-[-0.01em] text-[var(--secondary,#131719)] sm:text-[36px] md:text-[40px]"
               style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
             >
               {article.title}
             </h1>
             {article.shortDescription ? (
-              <p
-                className="mt-4 text-[15px] leading-relaxed text-zinc-700 sm:text-lg"
-                style={{ fontFamily: 'var(--font-family), sans-serif' }}
-              >
+              <p className="mb-0 mt-4 text-[16px] leading-relaxed text-[var(--text-color,#58595b)] sm:text-[18px]">
                 {article.shortDescription}
               </p>
             ) : null}
           </header>
 
           {body.length > 0 ? (
-            <div className="prose-help max-w-none px-5 pb-10 pt-8 sm:px-8 sm:pb-12">
+            <div className="prose-help max-w-none pt-8">
               <PortableText value={body} components={helpArticlePortableComponents} />
             </div>
           ) : (
-            <p
-              className="px-5 pb-10 pt-8 text-zinc-500 sm:px-8"
-              style={{ fontFamily: 'var(--font-family), sans-serif' }}
-            >
-              {ui.articleBodyEmpty}
-            </p>
+            <p className="pt-8 text-[var(--muted,#81848b)]">{ui.articleBodyEmpty}</p>
           )}
         </article>
 
         {related.length > 0 ? (
-          <section className="mt-12 rounded-2xl border border-zinc-100/90 bg-white/85 px-5 py-8 shadow-[0_4px_24px_-10px_rgba(15,23,42,0.07)] sm:mt-14 sm:px-7 sm:py-9" aria-labelledby="related-help">
-            <h2
-              id="related-help"
-              className="text-base font-black uppercase tracking-wide text-[#1e3a5f] sm:text-lg"
-              style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
-            >
-              {ui.relatedArticlesHeading}
+          <section className="mt-14" aria-labelledby="related-help">
+            <h2 id="related-help" className="tourSectionHeading">
+              {ui.relatedArticlesHeading.toLocaleUpperCase(locale === 'tr' ? 'tr-TR' : locale)}
             </h2>
-            <ul className="mt-5 divide-y divide-zinc-100/90 overflow-hidden rounded-xl border border-zinc-100/80 bg-white">
+            <ul className="m-0 list-none border-t border-[#e8edf3] p-0">
               {related.map((r) =>
                 r.slug && r.categorySlug ? (
-                  <li key={r._id}>
+                  <li key={r._id} className="border-b border-[#e8edf3]">
                     <Link
                       href={withLocalePath(locale, `/yardim-merkezi/${r.categorySlug}/${r.slug}`)}
-                      className="block px-4 py-3.5 text-[15px] text-zinc-900 transition-colors hover:bg-slate-50/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1e3a8a] sm:px-5"
-                      style={{ fontFamily: 'var(--font-family), sans-serif' }}
+                      className="group flex items-center justify-between gap-4 py-4 text-[15.5px] font-bold text-[var(--secondary,#131719)] transition-colors hover:text-[var(--primary,#2168b8)]"
                     >
-                      <span className="font-medium transition-colors hover:text-[#1e3a8a]">{r.title}</span>
+                      <span>{r.title}</span>
+                      <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" strokeWidth={2.4} aria-hidden />
                     </Link>
                   </li>
                 ) : null,
@@ -240,7 +226,7 @@ export default async function HelpArticlePage({
 
         <HelpSupportCTA
           whatsappHref={whatsappHref}
-          className="mt-12 sm:mt-16"
+          className="mt-14 sm:mt-16"
           heading={ui.supportHeading}
           description={ui.supportBody}
           whatsappCta={ui.supportWhatsappCta}

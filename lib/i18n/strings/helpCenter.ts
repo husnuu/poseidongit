@@ -34,6 +34,10 @@ export type HelpCenterUiStrings = {
   homeEmptySearch: string
   homeEmptyNoArticles: string
   filterAllLabel: string
+  topicsTitle: string
+  questionCount: (n: number) => string
+  openArticle: string
+  clearSearch: string
 }
 
 const TR: HelpCenterUiStrings = {
@@ -74,6 +78,10 @@ const TR: HelpCenterUiStrings = {
   homeEmptySearch: 'Aramanızla eşleşen makale bulunamadı. Farklı bir kelime deneyin.',
   homeEmptyNoArticles: 'Henüz gösterilecek makale yok. Lütfen daha sonra tekrar deneyin.',
   filterAllLabel: 'Tümü',
+  topicsTitle: "Konular",
+  questionCount: (n) => `${n} soru`,
+  openArticle: "Ayrı sayfada aç",
+  clearSearch: "Aramayı temizle",
 }
 
 const EN: HelpCenterUiStrings = {
@@ -114,6 +122,10 @@ const EN: HelpCenterUiStrings = {
   homeEmptySearch: 'No articles matched your search. Try a different keyword.',
   homeEmptyNoArticles: 'There are no articles to show yet. Please check back later.',
   filterAllLabel: 'All',
+  topicsTitle: "Topics",
+  questionCount: (n) => `${n} question${n === 1 ? '' : 's'}`,
+  openArticle: "Open as a page",
+  clearSearch: "Clear search",
 }
 
 const DE: HelpCenterUiStrings = {
@@ -154,6 +166,10 @@ const DE: HelpCenterUiStrings = {
   homeEmptySearch: 'Keine Artikel zu Ihrer Suche. Bitte anderen Begriff versuchen.',
   homeEmptyNoArticles: 'Es gibt noch keine Artikel. Bitte später erneut vorbeischauen.',
   filterAllLabel: 'Alle',
+  topicsTitle: "Themen",
+  questionCount: (n) => `${n} ${n === 1 ? 'Frage' : 'Fragen'}`,
+  openArticle: "Als Seite öffnen",
+  clearSearch: "Suche löschen",
 }
 
 const RU: HelpCenterUiStrings = {
@@ -194,6 +210,10 @@ const RU: HelpCenterUiStrings = {
   homeEmptySearch: 'По вашему запросу не найдено статей. Попробуйте другое слово.',
   homeEmptyNoArticles: 'Пока нет статей для отображения. Загляните позже.',
   filterAllLabel: 'Все',
+  topicsTitle: "Темы",
+  questionCount: (n) => `Вопросов: ${n}`,
+  openArticle: "Открыть страницу",
+  clearSearch: "Очистить поиск",
 }
 
 export function getHelpCenterUiStrings(locale: SiteLocale): HelpCenterUiStrings {

@@ -9,31 +9,24 @@ type Props = {
 
 export default function HelpArticleItem({ href, title, shortDescription }: Props) {
   return (
-    <li>
+    <li className="border-b border-[#e8edf3]">
       <Link
         href={href}
-        className="group flex w-full items-start gap-3 rounded-xl border border-transparent px-2 py-2.5 transition-all duration-200 hover:border-zinc-100/80 hover:bg-slate-50/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a8a] focus-visible:ring-offset-2 sm:px-3 sm:py-3.5"
+        className="group flex w-full items-start gap-4 py-5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary,#2168b8)] focus-visible:ring-offset-2"
       >
         <span className="min-w-0 flex-1">
-          <span
-            className="block font-medium text-zinc-900 transition-colors group-hover:text-[#1e3a8a]"
-            style={{ fontFamily: 'var(--font-family), sans-serif' }}
-          >
+          <span className="block text-[16px] font-bold leading-snug text-[var(--secondary,#131719)] transition-colors group-hover:text-[var(--primary,#2168b8)]">
             {title}
           </span>
           {shortDescription ? (
-            <span
-              className="mt-1 line-clamp-2 text-[13px] leading-snug text-zinc-600 sm:text-sm"
-            >
+            <span className="mt-1.5 line-clamp-2 block text-[14px] leading-relaxed text-[var(--text-color,#58595b)]">
               {shortDescription}
             </span>
           ) : null}
         </span>
-        <ChevronRight
-          className="mt-1 h-5 w-5 shrink-0 text-[#1e3a5f] transition-transform group-hover:translate-x-0.5 group-hover:text-[#1e3a8a]"
-          aria-hidden
-          strokeWidth={2}
-        />
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d3dce6] text-[var(--secondary,#131719)] transition-all group-hover:border-[var(--primary,#2168b8)] group-hover:bg-[var(--primary,#2168b8)] group-hover:text-white">
+          <ChevronRight className="h-4 w-4" aria-hidden strokeWidth={2.4} />
+        </span>
       </Link>
     </li>
   )

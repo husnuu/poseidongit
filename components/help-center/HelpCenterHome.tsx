@@ -1,7 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, Search } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowRight, LayoutGrid, Plus, Search, X } from 'lucide-react'
+import { HelpIcon } from '@/components/help-center/helpIcons'
+import { withLocalePath } from '@/lib/i18n/paths'
 import HelpSupportCTA from '@/components/help-center/HelpSupportCTA'
 import type { HelpArticleListItem, HelpCategoryWithArticles, HelpCenterPageDoc } from '@/lib/sanity/types/helpCenter'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -72,15 +75,16 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
     )
   }, [flatArticles, search, activeCategory, locale])
 
-  /** "Tümü" seçiliyken ~35 soruyu tek bir ayrışmasız yığın yerine kategori
-      başlıklarıyla gruplu gösterir — filtre çiplerinin zaten taşıdığı yapıyı
-      listede de görünür kılar, taranabilirliği artırır. */
-  const groupedFiltered = useMemo(() => {
-    if (activeCategory !== 'all') return null
+  /** Sorular her zaman kategori başlıklarıyla gruplu: "Tümü"nde hepsi,
+      bir konu seçiliyken yalnızca o konu. Arama her iki durumda da süzer. */
+  const groups = useMemo(() => {
     const q = search.trim()
     return categories
+      .filter((c) => activeCategory === 'all' || c._id === activeCategory)
       .map((c) => ({
         id: c._id,
+        slug: c.slug ?? null,
+        iconName: c.iconName ?? null,
         title: c.title ?? ui.categoryFallbackTitle,
         articles: (c.articles ?? []).filter((a) => articleMatches(q, locale, a.title, a.shortDescription)),
       }))
@@ -88,65 +92,95 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
   }, [categories, activeCategory, search, locale, ui.categoryFallbackTitle])
 
   const title = ui.metaHelpTitleFallback
-  const desc = page?.shortDescription
+  const totalCount = flatArticles.length
+  const query = search.trim()
 
-  const renderArticle = (a: HelpArticleListItem) => {
+  const selectCategory = (id: string | 'all') => {
+    setActiveCategory(id)
+    setOpenArticleId(null)
+  }
+
+  const renderArticle = (a: HelpArticleListItem, categorySlug: string | null) => {
     const isOpen = openArticleId === a._id
+    const panelId = `help-answer-${a._id}`
+    const articleHref = categorySlug && a.slug ? withLocalePath(locale, `/yardim-merkezi/${categorySlug}/${a.slug}`) : null
     return (
-      <div key={a._id} className="overflow-hidden rounded-xl border bg-white" style={{ borderColor: '#e2e8f0' }}>
+      <div key={a._id} className="border-b border-[#e8edf3]">
         <button
           type="button"
           onClick={() => setOpenArticleId(isOpen ? null : a._id)}
           aria-expanded={isOpen}
-          className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
+          aria-controls={panelId}
+          className="group flex w-full items-center justify-between gap-5 py-5 text-left"
         >
-          <span className="text-[15px] font-semibold sm:text-base" style={{ color: 'var(--secondary, #131719)' }}>
+          <span
+            className={`text-[15.5px] font-bold leading-snug transition-colors sm:text-[16px] ${isOpen ? 'text-[var(--primary,#2168b8)]' : 'text-[var(--secondary,#131719)] group-hover:text-[var(--primary,#2168b8)]'}`}
+          >
             {a.title ?? ui.articleFallbackTitle}
           </span>
-          <ChevronDown
-            className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-            style={{ color: 'var(--muted, #81848b)' }}
-            strokeWidth={2}
+          <span
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${isOpen ? 'rotate-45 border-[var(--primary,#2168b8)] bg-[var(--primary,#2168b8)] text-white' : 'border-[#d3dce6] text-[var(--secondary,#131719)] group-hover:border-[#8a9db3]'}`}
             aria-hidden
-          />
+          >
+            <Plus className="h-4 w-4" strokeWidth={2.4} />
+          </span>
         </button>
-        {isOpen && (
-          <div className="px-5 pb-5 sm:px-6">
-            <p className="text-sm leading-relaxed sm:text-[15px]" style={{ color: 'var(--text-color, #58595b)' }}>
-              {a.shortDescription?.trim() || ui.articleBodyEmpty}
-            </p>
+        {/* grid-rows 0fr → 1fr: yüksekliği bilinmeyen içerik için yumuşak açılış. */}
+        <div
+          id={panelId}
+          className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+        >
+          <div className="overflow-hidden">
+            <div className="pb-6 pr-0 sm:pr-14">
+              <p className="m-0 text-[15px] leading-[1.7] text-[var(--text-color,#58595b)]">
+                {a.shortDescription?.trim() || ui.articleBodyEmpty}
+              </p>
+              {articleHref && (
+                <Link
+                  href={articleHref}
+                  tabIndex={isOpen ? 0 : -1}
+                  className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-extrabold uppercase tracking-wide text-[var(--primary,#2168b8)] hover:underline"
+                >
+                  {ui.openArticle}
+                  <ArrowRight className="h-4 w-4" strokeWidth={2.4} aria-hidden />
+                </Link>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     )
   }
 
-  return (
-    <div className="min-h-screen bg-white">
-      <section className="w-full pb-8 pt-12 md:pb-10 md:pt-16">
-        <div className="mx-auto max-w-3xl px-4 text-center">
-          <h1
-            className="text-[29px] font-black uppercase leading-[1.15] sm:text-[33px] md:text-[37px] whitespace-nowrap pageHeroTitleStroke"
-            style={{
-              fontFamily: 'var(--font-family-title, var(--font-family))',
-              fontWeight: 900,
-              color: 'var(--primary, #2168b8)',
-            }}
-          >
-            {title}
-          </h1>
-          {/* Başlık altındaki açıklama istenmedi — arama kutusu doğrudan
-              başlığın altında. */}
+  const topicButtonClass = (active: boolean) =>
+    `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] font-bold transition-colors ${
+      active
+        ? 'bg-[rgba(33,104,184,0.08)] text-[var(--primary,#2168b8)]'
+        : 'text-[var(--secondary,#131719)] hover:bg-[#f4f7fb]'
+    }`
 
-          <div className="mx-auto mt-7 max-w-xl">
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-white">
+      <div
+        className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[460px] w-[1000px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-70 blur-3xl"
+        style={{ background: 'radial-gradient(closest-side, #dbeafe, rgba(219,234,254,0))' }}
+        aria-hidden
+      />
+
+      {/* ── Başlık + arama ── */}
+      <section className="w-full pb-10 pt-14 md:pb-14 md:pt-20">
+        <div className="mx-auto max-w-3xl px-4 text-center">
+          <h1 className="pageSectionHeading">{title}</h1>
+
+          <div className="mx-auto mt-6 max-w-2xl">
             <label htmlFor="help-center-search" className="sr-only">
               {ui.searchLabelSrOnly}
             </label>
             <div className="relative">
               <Search
-                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9aa0a6]"
+                className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--secondary,#131719)]"
                 aria-hidden
-                strokeWidth={2}
+                strokeWidth={2.2}
               />
               <input
                 id="help-center-search"
@@ -156,110 +190,144 @@ export default function HelpCenterHome({ page, categories, whatsappHref, locale,
                 placeholder={ui.searchPlaceholder}
                 autoComplete="off"
                 spellCheck={false}
-                className="w-full rounded-xl border bg-white py-3.5 pl-12 pr-4 text-[15px] outline-none transition placeholder:text-[#9aa0a6] focus:border-[#cdd4dc] focus:ring-2 sm:py-4 sm:text-base"
-                style={{
-                  fontFamily: 'var(--font-family), sans-serif',
-                  borderColor: '#e5e9ef',
-                  color: 'var(--secondary, #131719)',
-                }}
+                className="h-14 w-full rounded-2xl border border-[#d3dce6] bg-white pl-14 pr-12 text-[16px] font-medium text-[var(--secondary,#131719)] outline-none transition placeholder:font-normal placeholder:text-[#9aa0a6] focus:border-[var(--primary,#2168b8)] focus:ring-4 focus:ring-[rgba(33,104,184,0.12)] [&::-webkit-search-cancel-button]:hidden sm:h-[60px]"
+                style={{ fontFamily: 'var(--font-family), sans-serif' }}
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  aria-label={ui.clearSearch}
+                  className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--muted,#81848b)] transition hover:bg-[#f4f7fb] hover:text-[var(--secondary,#131719)]"
+                >
+                  <X className="h-4 w-4" strokeWidth={2.4} aria-hidden />
+                </button>
+              )}
             </div>
+            <p className="mt-3 min-h-[20px] text-[13px] font-semibold text-[var(--muted,#81848b)]" aria-live="polite">
+              {query ? (filtered.length > 0 ? ui.searchCountListed(filtered.length) : ui.searchCountNone) : ''}
+            </p>
           </div>
         </div>
       </section>
 
-      <div className="mx-auto max-w-5xl px-4 pb-16 md:pb-20">
-        {categories.length > 0 && (
-          <div className="relative mb-8 -mx-4 md:mx-0 md:mb-10">
-            <div
-              ref={chipRailRef}
-              onScroll={measureChipRail}
-              className="overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden"
-            >
-            <div className="flex flex-nowrap gap-2.5 md:flex-wrap md:justify-center">
-              <button
-                type="button"
-                onClick={() => setActiveCategory('all')}
-                className="shrink-0 whitespace-nowrap rounded-lg border-2 px-5 py-2.5 text-sm font-bold uppercase tracking-wide transition duration-200 hover:scale-105"
-                style={
-                  activeCategory === 'all'
-                    ? { background: 'var(--primary, #2168b8)', borderColor: 'var(--primary, #2168b8)', color: '#fff' }
-                    : { background: '#fff', borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }
-                }
-              >
-                {ui.filterAllLabel}
-              </button>
-              {categories.map((c) => (
-                <button
-                  key={c._id}
-                  type="button"
-                  onClick={() => setActiveCategory(c._id)}
-                  className="shrink-0 whitespace-nowrap rounded-lg border-2 px-5 py-2.5 text-sm font-bold uppercase tracking-wide transition duration-200 hover:scale-105"
-                  style={
-                    activeCategory === c._id
-                      ? { background: 'var(--primary, #2168b8)', borderColor: 'var(--primary, #2168b8)', color: '#fff' }
-                      : { background: '#fff', borderColor: 'var(--primary, #2168b8)', color: 'var(--primary, #2168b8)' }
-                  }
-                >
-                  {c.title ?? ui.categoryFallbackTitle}
-                </button>
-              ))}
-            </div>
-            </div>
-            {chipsScrollable ? (
-              <span
-                className="help-chip-glow pointer-events-none absolute inset-y-0 right-0 w-20 md:hidden"
-                aria-hidden
-              />
-            ) : null}
-          </div>
-        )}
-
-        {groupedFiltered ? (
-          groupedFiltered.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-zinc-200/90 bg-white/90 px-6 py-16 text-center">
-              <p className="mx-auto max-w-md text-[15px] leading-relaxed text-zinc-600">
-                {search.trim() ? ui.homeEmptySearch : ui.homeEmptyNoArticles}
+      <div className="mx-auto max-w-[1200px] px-4 pb-16 md:pb-24">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-14">
+          {/* ── Konular: masaüstünde yapışkan menü, mobilde yatay çipler ── */}
+          {categories.length > 0 && (
+            <nav aria-label={ui.topicsTitle} className="min-w-0 lg:sticky lg:top-28 lg:self-start">
+              <p className="mb-3 hidden px-3 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--muted,#81848b)] lg:block">
+                {ui.topicsTitle}
               </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-10">
-              {groupedFiltered.map((group) => (
-                <div key={group.id}>
-                  <div className="mb-4 flex items-center gap-3">
-                    <h2
-                      className="text-[13px] font-extrabold uppercase tracking-wide sm:text-sm"
-                      style={{ color: 'var(--primary, #2168b8)', fontFamily: 'var(--font-family), sans-serif' }}
-                    >
-                      {group.title}
-                    </h2>
-                    <span className="h-px flex-1" style={{ background: '#e2e8f0' }} aria-hidden />
-                  </div>
-                  <div className="flex flex-col gap-3">{group.articles.map(renderArticle)}</div>
-                </div>
-              ))}
-            </div>
-          )
-        ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-zinc-200/90 bg-white/90 px-6 py-16 text-center">
-            <p className="mx-auto max-w-md text-[15px] leading-relaxed text-zinc-600">
-              {search.trim() ? ui.homeEmptySearch : ui.homeEmptyNoArticles}
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">{filtered.map(renderArticle)}</div>
-        )}
+              <ul className="m-0 hidden list-none flex-col gap-1 p-0 lg:flex">
+                <li>
+                  <button type="button" onClick={() => selectCategory('all')} className={topicButtonClass(activeCategory === 'all')}>
+                    <LayoutGrid className="h-5 w-5 shrink-0" strokeWidth={1.9} aria-hidden />
+                    <span className="flex-1">{ui.filterAllLabel}</span>
+                    <span className="text-[12px] font-bold tabular-nums text-[var(--muted,#81848b)]">{totalCount}</span>
+                  </button>
+                </li>
+                {categories.map((c) => (
+                  <li key={c._id}>
+                    <button type="button" onClick={() => selectCategory(c._id)} className={topicButtonClass(activeCategory === c._id)}>
+                      <HelpIcon name={c.iconName} className="h-5 w-5 shrink-0" strokeWidth={1.9} />
+                      <span className="flex-1 leading-snug">{c.title ?? ui.categoryFallbackTitle}</span>
+                      <span className="text-[12px] font-bold tabular-nums text-[var(--muted,#81848b)]">{c.articles?.length ?? 0}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
 
-        <HelpSupportCTA
-          whatsappHref={whatsappHref}
-          className="mt-16 lg:mt-20"
-          heading={ui.supportHeading}
-          description={ui.supportBody}
-          whatsappCta={ui.supportWhatsappCta}
-          whatsappUnavailable={ui.supportWhatsappMissing}
-          contactLabel={ui.supportContactCta}
-          contactHref={contactHref}
-        />
+              <div className="relative -mx-4 lg:hidden">
+                <div
+                  ref={chipRailRef}
+                  onScroll={measureChipRail}
+                  className="overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                >
+                  <div className="flex flex-nowrap gap-2">
+                    {[{ _id: 'all' as const, title: ui.filterAllLabel, iconName: null as string | null }, ...categories].map((c) => {
+                      const active = activeCategory === c._id
+                      return (
+                        <button
+                          key={c._id}
+                          type="button"
+                          onClick={() => selectCategory(c._id)}
+                          className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-[13px] font-bold transition-colors ${
+                            active
+                              ? 'border-[var(--primary,#2168b8)] bg-[var(--primary,#2168b8)] text-white'
+                              : 'border-[#d3dce6] bg-white text-[var(--secondary,#131719)]'
+                          }`}
+                        >
+                          {c._id === 'all' ? (
+                            <LayoutGrid className="h-4 w-4" strokeWidth={2} aria-hidden />
+                          ) : (
+                            <HelpIcon name={c.iconName} className="h-4 w-4" strokeWidth={2} />
+                          )}
+                          {c.title ?? ui.categoryFallbackTitle}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+                {chipsScrollable ? (
+                  <span className="help-chip-glow pointer-events-none absolute inset-y-0 right-0 w-20" aria-hidden />
+                ) : null}
+              </div>
+            </nav>
+          )}
+
+          {/* ── Sorular ── */}
+          <div className="min-w-0">
+            {groups.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-[#d3dce6] px-6 py-16 text-center">
+                <p className="mx-auto max-w-md text-[15px] leading-relaxed text-[var(--text-color,#58595b)]">
+                  {query ? ui.homeEmptySearch : ui.homeEmptyNoArticles}
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-12">
+                {groups.map((group) => (
+                  <section key={group.id} aria-labelledby={`help-group-${group.id}`}>
+                    <div className="mb-1 flex items-center gap-3">
+                      <HelpIcon name={group.iconName} className="h-6 w-6 shrink-0 text-[var(--secondary,#131719)]" strokeWidth={1.9} />
+                      <h2
+                        id={`help-group-${group.id}`}
+                        className="m-0 flex-1 text-[18px] font-extrabold uppercase leading-snug text-[var(--secondary,#131719)] sm:text-[20px]"
+                        style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
+                      >
+                        {group.slug ? (
+                          <Link href={withLocalePath(locale, `/yardim-merkezi/kategori/${group.slug}`)} className="hover:text-[var(--primary,#2168b8)]">
+                            {group.title}
+                          </Link>
+                        ) : (
+                          group.title
+                        )}
+                      </h2>
+                      <span className="text-[12px] font-bold uppercase tracking-wide text-[var(--muted,#81848b)]">
+                        {ui.questionCount(group.articles.length)}
+                      </span>
+                    </div>
+                    <div className="border-t border-[#e8edf3]">
+                      {group.articles.map((a) => renderArticle(a, group.slug))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )}
+
+            <HelpSupportCTA
+              whatsappHref={whatsappHref}
+              className="mt-16 lg:mt-20"
+              heading={ui.supportHeading}
+              description={ui.supportBody}
+              whatsappCta={ui.supportWhatsappCta}
+              whatsappUnavailable={ui.supportWhatsappMissing}
+              contactLabel={ui.supportContactCta}
+              contactHref={contactHref}
+              layout="row"
+            />
+          </div>
+        </div>
       </div>
     </div>
   )

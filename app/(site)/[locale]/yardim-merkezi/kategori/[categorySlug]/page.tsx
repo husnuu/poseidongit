@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Breadcrumb from '@/components/common/Breadcrumb'
+import { HelpIcon } from '@/components/help-center/helpIcons'
 import HelpArticleItem from '@/components/help-center/HelpArticleItem'
 import HelpSupportCTA from '@/components/help-center/HelpSupportCTA'
 import { client } from '@/lib/sanity'
@@ -79,9 +80,9 @@ export default async function HelpCategoryListingPage({
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-100/90 via-white to-zinc-50">
+    <div className="min-h-screen bg-white">
       <JsonLd data={itemListSchema} />
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+      <div className="mx-auto max-w-[820px] px-4 pb-16 pt-8 sm:pt-10 md:pb-24">
         <Breadcrumb
           className="mb-8"
           items={[
@@ -91,41 +92,38 @@ export default async function HelpCategoryListingPage({
           ]}
         />
 
-        <header className="rounded-2xl border border-zinc-100/90 bg-white/85 px-5 py-7 shadow-[0_4px_28px_-8px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:px-7 sm:py-8">
+        <header className="pb-8">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d3dce6] text-[var(--secondary,#131719)]">
+            <HelpIcon name={cat.iconName} className="h-6 w-6" strokeWidth={1.9} />
+          </span>
           <h1
-            className="text-balance text-[1.65rem] font-bold tracking-tight text-[#1e3a5f] sm:text-3xl md:text-[2rem]"
+            className="mb-0 mt-5 text-balance text-[28px] font-black leading-[1.15] tracking-[-0.01em] text-[var(--secondary,#131719)] sm:text-[36px] md:text-[40px]"
             style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
           >
             {cat.title}
           </h1>
           {cat.shortDescription ? (
-            <p
-              className="mt-4 text-[15px] leading-relaxed text-zinc-700 sm:text-lg"
-              style={{ fontFamily: 'var(--font-family), sans-serif' }}
-            >
+            <p className="mb-0 mt-4 text-[16px] leading-relaxed text-[var(--text-color,#58595b)] sm:text-[18px]">
               {cat.shortDescription}
             </p>
           ) : null}
-          <p className="mt-5">
+          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+            <span className="text-[12px] font-bold uppercase tracking-wide text-[var(--muted,#81848b)]">
+              {ui.questionCount(articles.length)}
+            </span>
             <Link
               href={helpHome}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1e3a8a] underline-offset-[5px] transition-colors hover:text-[#172554] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a8a] focus-visible:ring-offset-2"
-              style={{ fontFamily: 'var(--font-family), sans-serif' }}
+              className="text-[13px] font-extrabold uppercase tracking-wide text-[var(--primary,#2168b8)] hover:underline"
             >
               {ui.allHelpTopicsLink}
             </Link>
-          </p>
+          </div>
         </header>
 
         {articles.length === 0 ? (
-          <p
-            className="py-12 text-center"
-            style={{ fontFamily: 'var(--font-family), sans-serif', color: 'var(--muted, #81848b)' }}
-          >
-            {ui.noArticlesInCategory}
-          </p>
+          <p className="py-12 text-center text-[var(--muted,#81848b)]">{ui.noArticlesInCategory}</p>
         ) : (
-          <ul className="mt-10 divide-y divide-zinc-100/90 overflow-hidden rounded-2xl border border-zinc-100/90 bg-white px-1 py-1 shadow-[0_4px_24px_-10px_rgba(15,23,42,0.07)] sm:px-2">
+          <ul className="m-0 list-none border-t border-[#e8edf3] p-0">
             {articles.map((a) =>
               a.slug ? (
                 <HelpArticleItem

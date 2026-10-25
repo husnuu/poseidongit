@@ -10,6 +10,8 @@ type Props = {
   whatsappUnavailable: string
   contactLabel: string
   contactHref: string
+  /** Geniş sütunlarda metin solda, butonlar sağda (yatay bant). */
+  layout?: 'row' | 'stack'
 }
 
 function WhatsAppIcon() {
@@ -29,40 +31,43 @@ export default function HelpSupportCTA({
   whatsappUnavailable,
   contactLabel,
   contactHref,
+  layout = 'stack',
 }: Props) {
+  const row = layout === 'row'
   return (
     <aside
-      className={`rounded-2xl border bg-white p-6 sm:p-8 ${className}`}
-      style={{ borderColor: '#e2e8f0' }}
+      className={`relative overflow-hidden rounded-2xl border border-[#d3dce6] bg-[#f7f8fa] p-6 sm:p-8 ${row ? 'md:flex md:items-center md:justify-between md:gap-10' : ''} ${className}`}
       aria-labelledby="help-support-cta-heading"
     >
-      <h2
-        id="help-support-cta-heading"
-        className="text-lg font-extrabold uppercase leading-snug sm:text-xl"
-        style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--secondary, #131719)' }}
-      >
-        {heading}
-      </h2>
-      <p
-        className="mt-3 max-w-xl text-[15px] leading-relaxed sm:text-base"
-        style={{ fontFamily: 'var(--font-family), sans-serif', color: 'var(--text-color, #58595b)' }}
-      >
-        {description}
-      </p>
-      <div className="mt-6 flex flex-col gap-3 sm:max-w-sm">
-        <Link href={contactHref} className={faqStyles.contactBtn}>
-          <span>{contactLabel}</span>
-        </Link>
+      <div className="min-w-0">
+        <h2
+          id="help-support-cta-heading"
+          className="m-0 text-lg font-extrabold uppercase leading-snug sm:text-xl"
+          style={{ fontFamily: 'var(--font-family-title, var(--font-family))', color: 'var(--secondary, #131719)' }}
+        >
+          {heading}
+        </h2>
+        <p
+          className="mb-0 mt-2 max-w-xl text-[15px] leading-relaxed"
+          style={{ fontFamily: 'var(--font-family), sans-serif', color: 'var(--text-color, #58595b)' }}
+        >
+          {description}
+        </p>
+      </div>
+      <div className={`mt-6 flex shrink-0 flex-col gap-3 sm:flex-row [&>a]:sm:min-w-[200px] ${row ? 'md:mt-0' : ''}`}>
         {whatsappHref ? (
           <Link href={whatsappHref} target="_blank" rel="noopener noreferrer" className={faqStyles.whatsappBtn}>
             <WhatsAppIcon />
             <span>{whatsappCta}</span>
           </Link>
         ) : (
-          <p className="text-sm" style={{ color: 'var(--muted, #81848b)' }}>
+          <p className="m-0 max-w-xs text-sm" style={{ color: 'var(--muted, #81848b)' }}>
             {whatsappUnavailable}
           </p>
         )}
+        <Link href={contactHref} className={faqStyles.contactBtn}>
+          <span>{contactLabel}</span>
+        </Link>
       </div>
     </aside>
   )
