@@ -1,0 +1,279 @@
+/* Rezervasyon özeti — biniş kartı (boarding pass) görünümü.
+   Çentikler gerçek kesik: kartın kendisi mask ile delinir, böylece hangi
+   zemin üzerinde durursa dursun (beyaz modal, gri sayfa) doğru görünür. */
+.ticket {
+  position: relative;
+  margin-top: 4px;
+  font-family: var(--font-family), sans-serif;
+  /* Kenarlık yerine gölge: mask'lı çentiklerin kenarını da takip etsin diye
+     (border mask'la birlikte kesilir, drop-shadow ise şekli izler). */
+  filter: drop-shadow(0 0 0.75px rgba(17, 53, 107, 0.6)) drop-shadow(0 14px 20px rgba(17, 53, 107, 0.13));
+}
+
+/* Üst parça: başlık bandı + bilgi alanları. Alt köşelerinde çentik. */
+.top {
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+  background: #fff;
+  -webkit-mask-image:
+    radial-gradient(circle 14px at 0 100%, transparent 13.5px, #000 14px),
+    radial-gradient(circle 14px at 100% 100%, transparent 13.5px, #000 14px);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(circle 14px at 0 100%, transparent 13.5px, #000 14px),
+    radial-gradient(circle 14px at 100% 100%, transparent 13.5px, #000 14px);
+  mask-composite: intersect;
+}
+
+/* ── Başlık bandı ── */
+.head {
+  position: relative;
+  padding: 16px 20px 18px;
+  color: #fff;
+  background:
+    radial-gradient(420px 160px at 100% 0%, rgba(127, 196, 234, 0.35), rgba(127, 196, 234, 0) 70%),
+    linear-gradient(120deg, #11356b 0%, var(--primary, #2168b8) 70%, #3f97d1 100%);
+}
+
+.headWave {
+  position: absolute;
+  inset: auto 0 0 0;
+  width: 100%;
+  height: 40px;
+  pointer-events: none;
+}
+
+.headTop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.logo {
+  display: block;
+  height: 30px;
+  width: auto;
+  max-width: 170px;
+  object-fit: contain;
+  /* Renkli logoyu lacivert bantta beyaz göster (footer'daki gibi). */
+  filter: brightness(0) invert(1);
+}
+
+.logoPlaceholder {
+  display: block;
+  height: 30px;
+}
+
+.title {
+  position: relative;
+  margin: 0;
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-transform: uppercase;
+  letter-spacing: -0.005em;
+  -webkit-text-stroke: 0.3px currentColor;
+}
+
+.durationChip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* ── Bilgi alanları ── */
+.fields {
+  margin: 0;
+  padding: 18px 20px 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+
+.field {
+  min-width: 0;
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+}
+
+.fieldLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted, #81848b);
+}
+
+.fieldValue {
+  margin: 3px 0 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--secondary, #131719);
+  overflow-wrap: anywhere;
+}
+
+.fieldPending {
+  font-weight: 600;
+  color: #b4bcc7;
+}
+
+/* ── Alt parça: üst köşelerinde çentik, en üstte kesik çizgi ── */
+.stub {
+  padding: 0 20px 18px;
+  border-radius: 0 0 20px 20px;
+  background: linear-gradient(180deg, #fff 0%, #f7f9fc 100%);
+  -webkit-mask-image:
+    radial-gradient(circle 14px at 0 0, transparent 13.5px, #000 14px),
+    radial-gradient(circle 14px at 100% 0, transparent 13.5px, #000 14px);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(circle 14px at 0 0, transparent 13.5px, #000 14px),
+    radial-gradient(circle 14px at 100% 0, transparent 13.5px, #000 14px);
+  mask-composite: intersect;
+}
+
+.perforation {
+  height: 0;
+  margin: 0 2px 16px;
+  border-top: 2px dashed #d3dce6;
+}
+
+.totalRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.totalBlock {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.totalLabel {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted, #81848b);
+}
+
+.totalValue {
+  margin-top: 2px;
+  font-family: var(--font-family-title, var(--font-family)), sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--primary, #2168b8);
+  font-variant-numeric: tabular-nums;
+  -webkit-text-stroke: 0.4px currentColor;
+}
+
+.totalPending {
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #b4bcc7;
+}
+
+/* Dekoratif barkod — gerçek bir kod taşımıyor, bilet hissi için. */
+.barcode {
+  flex-shrink: 0;
+  width: 112px;
+  height: 40px;
+  border-radius: 4px;
+  opacity: 0.85;
+  background: repeating-linear-gradient(
+    90deg,
+    #131719 0 2px,
+    transparent 2px 4px,
+    #131719 4px 5px,
+    transparent 5px 8px,
+    #131719 8px 11px,
+    transparent 11px 12px,
+    #131719 12px 13px,
+    transparent 13px 16px
+  );
+}
+
+.breakdown {
+  margin-top: 14px;
+  border-top: 1px solid #e8edf3;
+}
+
+.breakdownRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.breakdownRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.breakdownLabel {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.breakdownValue {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--secondary, #131719);
+  font-variant-numeric: tabular-nums;
+}
+
+.breakdownRowEmphasis .breakdownLabel {
+  color: var(--primary, #2168b8);
+  font-weight: 700;
+}
+
+.breakdownRowEmphasis .breakdownValue {
+  color: var(--primary, #2168b8);
+  font-size: 17px;
+}
+
+.emailNote {
+  margin: 12px 4px 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #71717a;
+  text-align: center;
+}
+
+.emailValue {
+  font-weight: 700;
+  color: var(--secondary, #131719);
+}
+
+@media (max-width: 420px) {
+  .head { padding: 14px 16px 16px; }
+  .fields { padding: 16px; gap: 12px 14px; }
+  .stub { padding: 0 16px 16px; }
+  .title { font-size: 16px; }
+  .totalValue { font-size: 24px; }
+  .barcode { width: 84px; height: 34px; }
+}

@@ -838,11 +838,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   let loyaltyBanner: { imageUrl?: string | null; imageAlt?: string | null; href?: string | null } | null = null
   let travelAgencyImageOverrides: TravelAgencyStructuredDataImageOverrides = {}
   try {
-    const [raw, settingsRow, heroRow, coveRows] = await Promise.all([
+    const [raw, settingsRow, heroRow, coveRows, aboutBoatYears] = await Promise.all([
       client.fetch<HomePageHeroResult>(homePageHeroQuery, {}, { useCdn: false }),
       client.fetch(siteSettingsTravelAgencyImagesQuery, {}, { useCdn: false }),
       client.fetch(homePageHeroImageUrlsQuery, {}, { useCdn: false }),
       client.fetch<CoveListRow[]>(covesListQuery, {}, { useCdn: false }).catch(() => []),
+      // Hakkımızda bandındaki istatistikler için filonun gerçek yılları
+      // (Hakkımızda sayfasındaki tekne zaman çizgisiyle aynı kaynak).
+      client
+        .fetch<(string | null)[] | null>(`*[_type == "aboutPage"][0].boats[isActive != false].year`, {}, { useCdn: false })
+        .catch(() => null),
     ])
     travelAgencyImageOverrides = travelAgencyImageOverridesFromSanity({
       settings: settingsRow,
@@ -920,6 +925,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         }
       : null
     aboutTeaser = await localizeAboutTeaser(data?.aboutTeaser ?? null, locale, rawHomeRecord)
+    if (aboutTeaser) {
+      const years = (aboutBoatYears ?? [])
+        .map((y) => parseInt(y ?? '', 10))
+        .filter((y) => Number.isFinite(y) && y > 1900)
+      aboutTeaser = {
+        ...aboutTeaser,
+        foundingYear: years.length ? Math.min(...years) : null,
+        fleetCount: years.length || null,
+      }
+    }
     const blogMapped = await mapBlogSection(data?.blogSection ?? null, locale)
     if (blogMapped) {
       const blogCtaNext = localizeCta(blogMapped.ctaButton, locale) ?? blogMapped.ctaButton
@@ -1146,7 +1161,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <BlogSection data={blogSection} locale={locale} noImageLabel={blogUi.noCoverImage} />
       </ScrollReveal>
       <ScrollReveal>
-        <InstagramSection data={instagramSection} />
+        <InstagramSection data={instagramSection} locale={locale} />
       </ScrollReveal>
     </div>
   )

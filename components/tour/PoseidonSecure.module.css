@@ -2,12 +2,30 @@
    Dekoratif kavis/desen istenmedi. Solda marka + açıklama, sağda her
    garanti için ayrı kart. */
 .fullBleed {
+  position: relative;
+  overflow: hidden;
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
-  background: #11356b;
+  background:
+    radial-gradient(900px 420px at 85% -10%, rgba(79, 172, 216, 0.28), rgba(79, 172, 216, 0) 70%),
+    radial-gradient(700px 380px at -5% 110%, rgba(33, 104, 184, 0.35), rgba(33, 104, 184, 0) 70%),
+    #11356b;
   padding: 56px 16px;
 }
+
+/* Anasayfa: arka planda dev, çok silik kalkan. */
+.watermark {
+  position: absolute;
+  right: -60px;
+  bottom: -80px;
+  width: 380px;
+  height: 380px;
+  color: rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+
+.maxWidth { position: relative; }
 
 .maxWidth {
   max-width: 1200px;
@@ -151,4 +169,60 @@
   .fullBleed { padding: 40px 16px; }
   .panel { gap: 24px; }
   .contained { margin-top: 40px; margin-bottom: 40px; padding: 32px 20px; }
+}
+
+/* ══ Anasayfa (fullBleed) iki sütunlu düzen ══════════════════════════════
+   Solda marka + açıklama (sola hizalı), sağda alt alta güvence satırları:
+   ikon solda, metin sağda; ince kenarlıklı yarı saydam satırlar. */
+.cardText { min-width: 0; }
+
+@media (min-width: 1024px) {
+  .panelSplit {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: 64px;
+  }
+  .panelSplit .intro {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .panelSplit .logoRow { justify-content: flex-start; }
+  .panelSplit .description { font-size: 17px; max-width: 46ch; }
+}
+
+.cardsSplit {
+  grid-template-columns: 1fr !important;
+  gap: 12px;
+}
+
+.cardsSplit .card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+}
+
+.cardsSplit .card:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateX(4px);
+}
+
+.cardsSplit .cardIconWrap {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 0;
+  border-radius: 999px;
+  background: rgba(127, 196, 234, 0.14);
+  color: #9ed4f2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardsSplit .card { transition: none; }
+  .cardsSplit .card:hover { transform: none; }
 }

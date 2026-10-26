@@ -1,5 +1,6 @@
 import styles from './PoseidonSecure.module.css'
-import { ShieldCheck, Undo2, CloudSun } from 'lucide-react'
+import { BadgeCheck, ShieldCheck, Undo2, CloudSun } from 'lucide-react'
+import { getAboutPageUiStrings } from '@/lib/i18n/strings/aboutPage'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getPoseidonSecureStrings, type PoseidonSecureBadge } from '@/lib/i18n/strings/poseidonSecure'
 
@@ -19,12 +20,23 @@ export default function PoseidonSecure({
   layout?: PoseidonSecureLayout
 }) {
   const t = getPoseidonSecureStrings(locale)
+  const split = layout !== 'contained'
   const sectionClass = layout === 'contained' ? styles.contained : styles.fullBleed
   const shellClass = layout === 'contained' ? styles.shellContained : styles.maxWidth
+  // Anasayfa varyantında üçüncü güvence: sitede zaten yer alan lisans/üyelik
+  // bilgisi (Hakkımızda sayfasındaki güven maddesiyle aynı metin).
+  const about = getAboutPageUiStrings(locale)
+  const items = [
+    ...t.badges.map((b) => ({ key: b.icon, Icon: BADGE_ICON[b.icon], label: b.label, body: b.body })),
+    ...(split
+      ? [{ key: 'licensed', Icon: BadgeCheck, label: about.trustGridLicensedTitle, body: about.trustGridLicensedBody }]
+      : []),
+  ]
   return (
     <section className={sectionClass} aria-label={t.ariaLabel}>
+      {split && <ShieldCheck className={styles.watermark} strokeWidth={1} aria-hidden />}
       <div className={shellClass}>
-        <div className={styles.panel}>
+        <div className={`${styles.panel} ${split ? styles.panelSplit : ''}`}>
           <div className={styles.intro}>
             <div className={styles.logoRow}>
               <ShieldCheck strokeWidth={2} className={styles.shieldIcon} aria-hidden />
@@ -37,19 +49,18 @@ export default function PoseidonSecure({
           </div>
 
           {/* Her garanti ayrı bir kart: ikon + başlık + açıklama. */}
-          <div className={styles.cards}>
-            {t.badges.map((badge) => {
-              const Icon = BADGE_ICON[badge.icon]
-              return (
-                <div key={badge.icon} className={styles.card}>
-                  <span className={styles.cardIconWrap} aria-hidden>
-                    <Icon size={19} strokeWidth={2} />
-                  </span>
-                  <p className={styles.cardTitle}>{badge.label}</p>
-                  <p className={styles.cardBody}>{badge.body}</p>
+          <div className={`${styles.cards} ${split ? styles.cardsSplit : ''}`}>
+            {items.map(({ key, Icon, label, body }) => (
+              <div key={key} className={styles.card}>
+                <span className={styles.cardIconWrap} aria-hidden>
+                  <Icon size={split ? 22 : 19} strokeWidth={2} />
+                </span>
+                <div className={styles.cardText}>
+                  <p className={styles.cardTitle}>{label}</p>
+                  <p className={styles.cardBody}>{body}</p>
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -1,54 +1,63 @@
 'use client'
 
 import type { BookingWizardUi } from '@/lib/i18n/bookingWizardUi'
-import styles from './booking.module.css'
+import { useEffect, useState } from 'react'
+import { CalendarDays, Clock, Crown, MapPin, Ship, Users } from 'lucide-react'
+import styles from './ReservationTicket.module.css'
 
-const TOTAL_PRICE_LABEL: Record<string, string> = {
-  tr: 'Toplam Ücret:',
-  en: 'Total price:',
-  de: 'Gesamtpreis:',
+type L = Record<string, string>
+
+const TOTAL_PRICE_LABEL: L = { tr: 'Toplam ücret', en: 'Total price', de: 'Gesamtpreis', ru: 'Итого' }
+const MEETING_POINT_LABEL: L = { tr: 'Hareket noktası', en: 'Departure point', de: 'Abfahrtsort', ru: 'Место отправления' }
+const BOAT_LABEL: L = { tr: 'Tekne', en: 'Boat', de: 'Boot', ru: 'Лодка' }
+const CLASS_LABEL: L = { tr: 'Sınıf', en: 'Class', de: 'Klasse', ru: 'Класс' }
+const LOCA_LABEL: L = { tr: 'Loca', en: 'Booth', de: 'Loge', ru: 'Ложа' }
+const GUEST_LABEL: L = { tr: 'Misafir', en: 'Guests', de: 'Gäste', ru: 'Гости' }
+const DATE_LABEL: L = { tr: 'Tarih', en: 'Date', de: 'Datum', ru: 'Дата' }
+const TIME_LABEL: L = { tr: 'Kalkış saati', en: 'Departure', de: 'Abfahrt', ru: 'Отправление' }
+const PENDING_LABEL: L = { tr: 'Seçilmedi', en: 'Not selected', de: 'Nicht gewählt', ru: 'Не выбрано' }
+const PRICE_PENDING_LABEL: L = {
+  tr: 'Sınıf seçiminden sonra',
+  en: 'After choosing a class',
+  de: 'Nach Klassenwahl',
+  ru: 'После выбора класса',
+}
+/** Sitenin logosu (header/footer ile aynı kaynak: siteSettings.logo), aynı
+    origin'deki /api/site-logo üzerinden. Bilet birden fazla adımda tekrar
+    çizildiği için tek bir istekle çekilip modül düzeyinde saklanıyor. */
+type SiteLogo = { url: string; alt: string } | null
+let logoPromise: Promise<SiteLogo> | null = null
+function loadSiteLogo(): Promise<SiteLogo> {
+  if (!logoPromise) {
+    logoPromise = fetch('/api/site-logo')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((row: { url?: string | null; alt?: string | null } | null) =>
+        row?.url ? { url: row.url, alt: row.alt || 'Poseidon' } : null,
+      )
+      .catch(() => null)
+  }
+  return logoPromise
 }
 
-const MEETING_POINT_LABEL: Record<string, string> = {
-  tr: 'Hareket noktası',
-  en: 'Departure point',
-  de: 'Abfahrtsort',
+function useSiteLogo(): SiteLogo {
+  const [logo, setLogo] = useState<SiteLogo>(null)
+  useEffect(() => {
+    let alive = true
+    loadSiteLogo().then((l) => {
+      if (alive) setLogo(l)
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+  return logo
 }
 
-const BOAT_LABEL: Record<string, string> = {
-  tr: 'Tekneniz',
-  en: 'Your boat',
-  de: 'Ihr Boot',
-}
-
-const CLASS_LABEL: Record<string, string> = {
-  tr: 'Sınıf',
-  en: 'Class',
-  de: 'Klasse',
-}
-
-const LOCA_LABEL: Record<string, string> = {
-  tr: 'Loca',
-  en: 'Booth',
-  de: 'Loge',
-}
-
-const GUEST_LABEL: Record<string, string> = {
-  tr: 'Misafir:',
-  en: 'Guests:',
-  de: 'Gäste:',
-}
-
-const TEAR_HERE_LABEL: Record<string, string> = {
-  tr: 'Buradan yırtın',
-  en: 'Tear here',
-  de: 'Hier abtrennen',
-}
-
-const CONFIRMATION_EMAIL_LABEL: Record<string, string> = {
+const CONFIRMATION_EMAIL_LABEL: L = {
   tr: 'Onay e-postası şu adrese gönderilecek:',
   en: 'A confirmation email will be sent to:',
   de: 'Eine Bestätigungs-E-Mail wird gesendet an:',
+  ru: 'Подтверждение будет отправлено на:',
 }
 
 /** "YYYY-MM-DD" tarihini biletteki gibi "Pazar, 27 Eylül 2026" biçimine çevirir
@@ -123,8 +132,11 @@ export interface ReservationTicketProps {
   confirmationEmail?: string | null
 }
 
-/** Referans siteki bilet kesiği ile birebir: dikey kesik çizgi + "Buradan yırtın" etiketi,
-    solda tur/lojistik bilgisi, sağda saat/tarih/toplam ücret. */
+/** Biniş kartı (boarding pass) görünümlü rezervasyon özeti: üstte degrade
+    başlık bandı (E-Bilet + tur adı + süre), ortada ikonlu bilgi alanları,
+    yan çentikli kesik çizgi ve altta toplam ücret + dekoratif barkod.
+    Henüz seçilmemiş alanlar (tarih/fiyat) uydurma değer yerine "Seçilmedi"
+    gibi soluk bir yer tutucuyla gösterilir. */
 export default function ReservationTicket({
   ui,
   tourTitle,
@@ -140,139 +152,110 @@ export default function ReservationTicket({
   breakdownRows,
   confirmationEmail,
 }: ReservationTicketProps) {
-  const totalPriceLabel = TOTAL_PRICE_LABEL[ui.locale] ?? TOTAL_PRICE_LABEL.tr
-  const meetingPointLabel = MEETING_POINT_LABEL[ui.locale] ?? MEETING_POINT_LABEL.tr
-  const classLabelText = CLASS_LABEL[ui.locale] ?? CLASS_LABEL.tr
-  const locaLabelText = LOCA_LABEL[ui.locale] ?? LOCA_LABEL.tr
+  const t = (m: L) => m[ui.locale] ?? m.tr
+  const logo = useSiteLogo()
   const locaIdsClean = (locaIds ?? []).filter((x) => x?.trim())
-  const boatLabel = BOAT_LABEL[ui.locale] ?? BOAT_LABEL.tr
-  const guestLabel = GUEST_LABEL[ui.locale] ?? GUEST_LABEL.tr
-  const tearHereLabel = TEAR_HERE_LABEL[ui.locale] ?? TEAR_HERE_LABEL.tr
-  const confirmationEmailLabel = CONFIRMATION_EMAIL_LABEL[ui.locale] ?? CONFIRMATION_EMAIL_LABEL.tr
+  const guestText = guestLines
+    .map((g) => `${g.label}${g.unitPriceText ? ` × ${g.unitPriceText}` : ''}`)
+    .join(', ')
+
+  const fields: { key: string; Icon: typeof Clock; label: string; value: string | null; wide?: boolean }[] = [
+    { key: 'date', Icon: CalendarDays, label: t(DATE_LABEL), value: dateLabel ?? null },
+    { key: 'time', Icon: Clock, label: t(TIME_LABEL), value: dateLabel ? (timeLabel ?? null) : null },
+    ...(meetingLocation ? [{ key: 'meet', Icon: MapPin, label: t(MEETING_POINT_LABEL), value: meetingLocation }] : []),
+    ...(hostName ? [{ key: 'boat', Icon: Ship, label: t(BOAT_LABEL), value: hostName }] : []),
+    ...(classLabel
+      ? [
+          {
+            key: 'class',
+            Icon: Crown,
+            label: t(CLASS_LABEL),
+            value: `${classLabel}${locaIdsClean.length > 0 ? ` · ${t(LOCA_LABEL)} ${locaIdsClean.join(', ')}` : ''}`,
+          },
+        ]
+      : []),
+    { key: 'guests', Icon: Users, label: t(GUEST_LABEL), value: guestText || null, wide: guestText.length > 18 },
+  ]
+  // Saat yalnızca tur için tanımlıysa ve tarih seçildiyse gösterilir; tarih
+  // seçiliyken saat tanımsızsa alanı hiç göstermiyoruz.
+  const visibleFields = fields.filter((f) => !(f.key === 'time' && dateLabel && !timeLabel))
 
   return (
     <>
-    <div className={styles.reservationTicketStackWrap}>
-      {/* Referanstaki "arkada bir bilet daha duruyor" görünümü — tek dekoratif
-          kart dilimi (toplam 2 bilet). Kendi çentikleri de GERÇEKTEN kesik
-          (mask ile) — arkadaki asıl sayfa arka planı görünüyor. */}
-      <div className={styles.reservationTicketStackLayer} aria-hidden />
-      <div className={styles.reservationTicket}>
-      <div className={styles.reservationTicketBodyCell}>
-      <div className={styles.reservationTicketBodyBg} aria-hidden />
-      <div>
-      <div className={styles.reservationTicketStub}>
-        <div className={styles.reservationTicketStubLeft}>
-          <p className={styles.summaryTourName}>{tourTitle}</p>
+      <div className={styles.ticket}>
+        <div className={styles.top}>
+        {/* ── Başlık bandı ── */}
+        <div className={styles.head}>
+          <svg className={styles.headWave} viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden>
+            <path d="M0 35 C 100 10, 200 55, 300 32 S 500 8, 600 30 V60 H0 Z" fill="rgba(255,255,255,0.08)" />
+          </svg>
+          <div className={styles.headTop}>
+            {/* Logo yüklenene kadar aynı yükseklikte boş yer — bant zıplamasın. */}
+            {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo.url} alt={logo.alt} className={styles.logo} />
+            ) : (
+              <span className={styles.logoPlaceholder} aria-hidden />
+            )}
+          </div>
+          <p className={styles.title}>{tourTitle}</p>
+          {durationText && (
+            <span className={styles.durationChip}>
+              <Clock size={13} strokeWidth={2.4} aria-hidden />
+              {durationText}
+            </span>
+          )}
+        </div>
 
-          <div className={styles.ticketInfoGroup}>
-            {durationText && (
-              <p className={styles.ticketInfoLineBold}>{durationText}</p>
-            )}
-            {hostName && (
-              <p className={styles.ticketInfoLine}>
-                <span className={styles.ticketInfoLabel}>{boatLabel}</span>{' '}
-                <span className={styles.ticketInfoLink}>{hostName}</span>
-              </p>
-            )}
-            {meetingLocation && (
-              <p className={styles.ticketInfoLine}>
-                <span className={styles.ticketInfoLabel}>{meetingPointLabel}</span>{' '}
-                <span className={styles.ticketInfoLink}>{meetingLocation}</span>
-              </p>
-            )}
-            {classLabel && (
-              <p className={styles.ticketInfoLine}>
-                <span className={styles.ticketInfoLabel}>{classLabelText}:</span>{' '}
-                <span className={styles.ticketInfoLink}>
-                  {classLabel}
-                  {locaIdsClean.length > 0 ? ` · ${locaLabelText} ${locaIdsClean.join(', ')}` : ''}
-                </span>
-              </p>
-            )}
-            <p className={styles.ticketInfoLineBold}>
-              {guestLabel}{' '}
-              {guestLines.map((g, i) => (
-                <span key={i}>
-                  {i > 0 && ', '}
-                  {g.label}
-                  {g.unitPriceText ? ` × ${g.unitPriceText}` : ''}
-                </span>
+        {/* ── Bilgi alanları ── */}
+        <dl className={styles.fields}>
+          {visibleFields.map(({ key, Icon, label, value, wide }) => (
+            <div key={key} className={`${styles.field} ${wide ? styles.fieldWide : ''}`}>
+              <dt className={styles.fieldLabel}>
+                <Icon size={13} strokeWidth={2.4} aria-hidden />
+                {label}
+              </dt>
+              <dd className={`${styles.fieldValue} ${value ? '' : styles.fieldPending}`}>
+                {value ?? t(PENDING_LABEL)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        </div>
+
+        {/* ── Alt kısım: kesik çizgi + toplam + barkod. Üst/alt parçaların
+            birleştiği köşeler mask ile gerçekten kesik (çentik). ── */}
+        <div className={styles.stub}>
+          <div className={styles.perforation} aria-hidden />
+          <div className={styles.totalRow}>
+            <div className={styles.totalBlock}>
+              <span className={styles.totalLabel}>{t(TOTAL_PRICE_LABEL)}</span>
+              {totalValue != null ? (
+                <span className={styles.totalValue}>{totalValue.toLocaleString(ui.numberLocale)} ₺</span>
+              ) : (
+                <span className={styles.totalPending}>{t(PRICE_PENDING_LABEL)}</span>
+              )}
+            </div>
+            <span className={styles.barcode} aria-hidden />
+          </div>
+
+          {breakdownRows && breakdownRows.length > 0 && (
+            <div className={styles.breakdown}>
+              {breakdownRows.map((row, i) => (
+                <div key={i} className={`${styles.breakdownRow} ${row.emphasis ? styles.breakdownRowEmphasis : ''}`}>
+                  <span className={styles.breakdownLabel}>{row.label}</span>
+                  <span className={styles.breakdownValue}>{row.value}</span>
+                </div>
               ))}
-            </p>
-          </div>
-        </div>
-
-        <div className={styles.reservationTicketStubRight}>
-          <div>
-            {/* Tarih henüz seçilmediyse referanstaki gibi gri iskelet kutular gösterilir
-                (saat de tarihe bağlı gösteriliyor — hangi gün olduğu belli olmadan
-                "kaçta" sorusu da netleşmiyor). */}
-            {dateLabel ? (
-              <>
-                {timeLabel && <p className={styles.ticketTimeLabel}>{timeLabel}</p>}
-                <p className={styles.ticketDateLabel}>{dateLabel}</p>
-              </>
-            ) : (
-              <>
-                <span className={styles.ticketSkeletonBox} style={{ width: 58, height: 26 }} aria-hidden />
-                <span
-                  className={styles.ticketSkeletonBox}
-                  style={{ width: 118, height: 16, marginTop: 8 }}
-                  aria-hidden
-                />
-              </>
-            )}
-          </div>
-          <div className={styles.ticketTotalWrap}>
-            <span className={styles.ticketTotalLabel}>{totalPriceLabel}</span>
-            {totalValue != null ? (
-              <span className={styles.ticketTotalValue}>
-                {totalValue.toLocaleString(ui.numberLocale)} ₺
-              </span>
-            ) : (
-              <span className={styles.ticketSkeletonBox} style={{ width: 76, height: 18 }} aria-hidden />
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
-
-      {breakdownRows && breakdownRows.length > 0 && (
-        <>
-          {/* Bilgi (stub) kısmı ile kapora/kalan dökümü arasındaki ince ayraç —
-              gerçek yırtılma/çentik noktası artık kartın EN ALTINA taşındı
-              (bkz. .reservationTicketBodyBg), burası sade bir çizgi. */}
-          <div className={styles.reservationTicketTornEdge} aria-hidden />
-          <div className={styles.reservationTicketBreakdownRows}>
-            {breakdownRows.map((row, i) => (
-              <div
-                key={i}
-                className={`${styles.ticketBreakdownRow} ${row.emphasis ? styles.ticketBreakdownRowEmphasis : ''}`}
-              >
-                <span className={styles.ticketBreakdownLabel}>{row.label}</span>
-                <span className={styles.ticketBreakdownValue}>{row.value}</span>
-              </div>
-            ))}
-          </div>
-        </>
+      {confirmationEmail && (
+        <p className={styles.emailNote}>
+          {t(CONFIRMATION_EMAIL_LABEL)} <span className={styles.emailValue}>{confirmationEmail}</span>
+        </p>
       )}
-      </div>
-      {/* Tek parça, baştan sona (kapora dökümü olsa da olmasa da) kesintisiz
-          kesik çizgi — üstteki/alttaki yuvarlak çentiklerle AYNI %55 noktasında,
-          .reservationTicketBodyCell'in tam yüksekliğine otomatik uzanır. Bu
-          katman bilerek EN SONDA (en üstte boyanacak şekilde) duruyor — kapora
-          dökümünün kendi opak beyaz arka planı, altındaki çizgiyi örtmesin diye. */}
-      <div className={styles.reservationTicketTearLine} aria-hidden>
-        <span className={styles.reservationTicketTearLabel}>{tearHereLabel}</span>
-      </div>
-      </div>
-      </div>
-    </div>
-    {confirmationEmail && (
-      <p className={styles.reservationTicketEmailNote}>
-        {confirmationEmailLabel} <span className={styles.reservationTicketEmailValue}>{confirmationEmail}</span>
-      </p>
-    )}
     </>
   )
 }
