@@ -1,28 +1,22 @@
 /* Rezervasyon özeti — biniş kartı (boarding pass) görünümü.
-   Çentikler gerçek kesik: kartın kendisi mask ile delinir, böylece hangi
-   zemin üzerinde durursa dursun (beyaz modal, gri sayfa) doğru görünür. */
+   Not: CSS mask / filter KULLANILMIYOR — Safari (iOS) mask + drop-shadow
+   birleşiminde maskeli katmanları hiç çizmeyebiliyordu (biletin içeriği
+   görünmüyordu). Çentikler, kartın kenarından taşan ve kartın overflow'u ile
+   yarıya kesilen beyaz dairelerle çiziliyor; her tarayıcıda aynı görünür. */
 .ticket {
   position: relative;
   margin-top: 4px;
+  border: 1px solid #c9d4e1;
+  border-radius: 20px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 16px 30px -14px rgba(17, 53, 107, 0.28), 0 2px 6px -2px rgba(17, 53, 107, 0.08);
   font-family: var(--font-family), sans-serif;
-  /* Kenarlık yerine gölge: mask'lı çentiklerin kenarını da takip etsin diye
-     (border mask'la birlikte kesilir, drop-shadow ise şekli izler). */
-  filter: drop-shadow(0 0 0.75px rgba(17, 53, 107, 0.6)) drop-shadow(0 14px 20px rgba(17, 53, 107, 0.13));
+  isolation: isolate;
 }
 
-/* Üst parça: başlık bandı + bilgi alanları. Alt köşelerinde çentik. */
 .top {
-  border-radius: 20px 20px 0 0;
-  overflow: hidden;
   background: #fff;
-  -webkit-mask-image:
-    radial-gradient(circle 14px at 0 100%, transparent 13.5px, #000 14px),
-    radial-gradient(circle 14px at 100% 100%, transparent 13.5px, #000 14px);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    radial-gradient(circle 14px at 0 100%, transparent 13.5px, #000 14px),
-    radial-gradient(circle 14px at 100% 100%, transparent 13.5px, #000 14px);
-  mask-composite: intersect;
 }
 
 /* ── Başlık bandı ── */
@@ -135,24 +129,33 @@
   color: #b4bcc7;
 }
 
-/* ── Alt parça: üst köşelerinde çentik, en üstte kesik çizgi ── */
+/* ── Alt parça: en üstte kesik çizgi + iki yanda çentik ── */
 .stub {
+  position: relative;
   padding: 0 20px 18px;
-  border-radius: 0 0 20px 20px;
   background: linear-gradient(180deg, #fff 0%, #f7f9fc 100%);
-  -webkit-mask-image:
-    radial-gradient(circle 14px at 0 0, transparent 13.5px, #000 14px),
-    radial-gradient(circle 14px at 100% 0, transparent 13.5px, #000 14px);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    radial-gradient(circle 14px at 0 0, transparent 13.5px, #000 14px),
-    radial-gradient(circle 14px at 100% 0, transparent 13.5px, #000 14px);
-  mask-composite: intersect;
 }
+
+.stub::before,
+.stub::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #c9d4e1;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.stub::before { left: -15px; }
+.stub::after { right: -15px; }
 
 .perforation {
   height: 0;
-  margin: 0 2px 16px;
+  margin: 0 18px 16px;
   border-top: 2px dashed #d3dce6;
 }
 
