@@ -56,7 +56,7 @@ export default function FooterLegal({ data, inline, regionAriaLabel = 'Legal and
           {logos.map((item, index) => {
             const asset = item?.asset
             if (!asset) return null
-            const src = urlFor(asset).width(32).height(22).url()
+            const src = urlFor(asset).width(32).height(22).auto('format').url()
             const alt = item?.alt || 'Payment method'
             return (
               <span

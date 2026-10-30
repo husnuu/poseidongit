@@ -588,9 +588,9 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
 
           {popularTourLinks.length > 0 && (
             <div>
-              <h3 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl lg:whitespace-nowrap">
+              <h2 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl lg:whitespace-nowrap">
                 {POPULAR_TOURS_TITLE[locale]}
-              </h3>
+              </h2>
               <ul className="space-y-4">
                 {popularTourLinks.map((item) => (
                   <li key={item.href} className="flex items-start gap-2.5">
@@ -608,9 +608,9 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
           )}
 
           <div className="lg:pl-6 xl:pl-10">
-            <h3 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
+            <h2 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
               {exploreTitle}
-            </h3>
+            </h2>
             <ul className="space-y-4">
               {exploreLinks.map((item, index) => (
                 <li key={index}>
@@ -635,9 +635,9 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
 
           {showBragSection ? (
             <div>
-              <h3 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
+              <h2 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
                 {bragTitle}
-              </h3>
+              </h2>
               <div className="grid grid-cols-2 gap-5">
                 {awardImages.map((item, index) => {
                   const content = (
@@ -672,9 +672,9 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
             </div>
           ) : null}
           <div>
-            <h3 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
+            <h2 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
               {MEMBERSHIPS_TITLE[locale]}
-            </h3>
+            </h2>
             <div className="grid grid-cols-2 gap-4">
               <a
                 href="https://www.tursab.org.tr"

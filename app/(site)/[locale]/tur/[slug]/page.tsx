@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { client, urlFor } from '@/lib/sanity'
 import { tourCoverImageUrl } from '@/lib/sanityImage'
@@ -46,6 +46,7 @@ import {
   buildItineraryTimelineItems,
   getVideoEmbedUrl,
 } from '@/lib/sanity/getTourFull'
+import { withBrandSuffix } from '@/lib/seo/brand'
 
 function parseMetaKeywords(raw: string | null | undefined): string[] | undefined {
   if (!raw?.trim()) return undefined
@@ -66,14 +67,36 @@ export async function generateStaticParams() {
   >(tourSlugRowsForLocalesQuery)
   const out: { locale: string; slug: string }[] = []
   for (const r of rows ?? []) {
-    if (r.tSlug) out.push({ locale: 'tr', slug: r.tSlug })
-    if (r.enSlug) out.push({ locale: 'en', slug: r.enSlug })
-    if (r.deSlug) out.push({ locale: 'de', slug: r.deSlug })
-    // RU önceden atlanıyordu — Rusça tur sayfaları ilk istekte SSR ile
-    // çalışıyordu ama build/ISR sırasında önceden üretilmiyordu.
-    if (r.ruSlug) out.push({ locale: 'ru', slug: r.ruSlug })
+    if (!r.tSlug) continue
+    out.push({ locale: 'tr', slug: r.tSlug })
+    // Çeviri slug'ı yoksa o dilde Türkçe slug kullanılır (sayfa anlık çeviriyle açılır).
+    out.push({ locale: 'en', slug: r.enSlug || r.tSlug })
+    out.push({ locale: 'de', slug: r.deSlug || r.tSlug })
+    out.push({ locale: 'ru', slug: r.ruSlug || r.tSlug })
   }
   return out
+}
+
+/**
+ * /en/tour/<türkçe-slug> gibi, o dilin kendi slug'u varken Türkçe slug ile
+ * gelen istekleri doğru adrese kalıcı yönlendirir. Eskiden bu adresler 200
+ * dönen boş bir "bulunamadı" sayfası (soft 404) üretiyordu.
+ */
+async function redirectToLocalizedTourSlug(slug: string, locale: SiteLocale): Promise<void> {
+  if (locale === 'tr') return
+  const localized = await client
+    .fetch<string | null>(
+      `*[_type == "tour" && slug.current == $slug][0]{
+        "s": select(
+          $locale == "en" => translations.en.slug.current,
+          $locale == "de" => translations.de.slug.current,
+          $locale == "ru" => translations.ru.slug.current
+        )
+      }.s`,
+      { slug, locale }
+    )
+    .catch(() => null)
+  if (localized && localized !== slug) permanentRedirect(withLocalePath(locale, `/tur/${localized}`))
 }
 
 export async function generateMetadata({
@@ -93,10 +116,14 @@ export async function generateMetadata({
   const locale = loc as SiteLocale
   const tourUi = getTourPageUi(locale)
   const tour = await getTour(slug, locale)
-  if (!tour) notFound()
+  if (!tour) {
+    await redirectToLocalizedTourSlug(slug, locale)
+    notFound()
+  }
 
   const metaTitleSource = tour.seo?.metaTitle?.trim() || tour.title
-  const title = `${metaTitleSource}${tourUi.metaTitleSuffix}`
+  // Marka soneki yalnızca başlık ~62 karakteri aşmayacaksa eklenir (Google kesmesin).
+  const title = withBrandSuffix(metaTitleSource, locale)
 
   const descSource =
     tour.seo?.metaDescription?.trim() ||
@@ -104,8 +131,6 @@ export async function generateMetadata({
     tour.title
   const description =
     descSource.replace(/\s+/g, ' ').slice(0, 160) || tourUi.metaDescriptionFallback(tour.title)
-
-  const url = absoluteUrl(withLocalePath(locale, `/tur/${slug}`))
 
   // hreflang: her dilin kendi slug'uyla (bkz. lib/queries.ts localeSlugs
   // projeksiyonu) — aksi halde EN/DE slug'ı TR'den farklı turlarda
@@ -118,6 +143,9 @@ export async function generateMetadata({
     }
   }
 
+  // Kanonik adres her zaman o dilin kendi slug'u (aynı tur iki adresten açılsa da tek URL indekslenir).
+  const url = absoluteUrl(localePaths[locale] ?? withLocalePath(locale, `/tur/${slug}`))
+
   const ogImageAsset = tour.seo?.ogImage?.asset ?? tour.mainImage?.asset
   const image =
     ogImageAsset != null ? urlFor(ogImageAsset).width(1200).height(630).url() : undefined
@@ -128,7 +156,7 @@ export async function generateMetadata({
   const ogLocale = locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : locale === 'ru' ? 'ru_RU' : 'en_US'
 
   return {
-    title,
+    title: { absolute: title },
     description,
     ...(keywords?.length ? { keywords } : {}),
     ...(tour.seo?.noIndex ? { robots: { index: false, follow: true as const } } : {}),
@@ -222,6 +250,7 @@ export default async function TourPage({
   const tour = await getTour(slug, locale)
 
   if (!tour) {
+    await redirectToLocalizedTourSlug(slug, locale)
     notFound()
   }
 
@@ -260,7 +289,7 @@ export default async function TourPage({
           .map((it) => ({
             videoUrl: it.videoUrl!.trim(),
             posterUrl: it.poster?.asset
-              ? urlFor(it.poster.asset).width(720).height(1280).quality(80).url()
+              ? urlFor(it.poster.asset).width(720).height(1280).quality(80).auto('format').url()
               : it.poster?.url?.trim() || undefined,
           }))
       : []
@@ -409,6 +438,7 @@ export default async function TourPage({
                       ? urlFor(tour.tourVideo.poster.asset)
                           .width(1280)
                           .height(720)
+                          .auto('format')
                           .url()
                       : tour.tourVideo.poster?.url
                         ? tour.tourVideo.poster.url

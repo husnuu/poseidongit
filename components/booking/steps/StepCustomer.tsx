@@ -62,7 +62,7 @@ export default function StepCustomer({
   const unitPrice =
     state.pricingSummary?.unitPrices?.find((u) => u.ageKey === 'adult')?.unitPrice ?? 0
   const tourImageUrl = tour.mainImage?.asset
-    ? urlFor(tour.mainImage.asset).width(600).height(340).quality(90).fit('crop').url()
+    ? urlFor(tour.mainImage.asset).width(600).height(340).quality(90).fit('crop').auto('format').url()
     : tour.mainImage?.url
       ? `${tour.mainImage.url}?w=600&h=340&fit=crop&q=90`
       : null

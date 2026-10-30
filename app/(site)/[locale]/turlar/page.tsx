@@ -11,6 +11,7 @@ import type { Metadata } from 'next'
 import { getSiteName, buildItemListSchema } from '@/lib/seo'
 import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
 import { absoluteUrl } from '@/lib/seo'
+import { ogImageUrl } from '@/lib/seo/brand'
 import JsonLd from '@/components/seo/JsonLd'
 import { withLocalePath } from '@/lib/i18n/paths'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -18,6 +19,8 @@ import { isSiteLocale } from '@/lib/i18n/config'
 import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
 import { mergeHomePageLocale } from '@/lib/i18n/mergeHomePageLocale'
 import { translateText } from '@/lib/i18n/runtimeTranslate'
+import { LISTING_HEADINGS } from '@/lib/i18n/strings/listingHeadings'
+import StandardPageLd from '@/components/seo/StandardPageLd'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,17 +55,17 @@ const EMPTY_TOURS_MESSAGE: Record<SiteLocale, string> = {
 }
 
 const META_TITLE: Record<SiteLocale, string> = {
-  tr: siteName ? `Tekne Turları | ${siteName}` : 'Tekne Turları | Turlar ve Fiyatlar',
-  en: siteName ? `Boat Tours | ${siteName}` : 'Boat Tours | Tours and Prices',
-  de: siteName ? `Bootstouren | ${siteName}` : 'Bootstouren | Touren und Preise',
-  ru: siteName ? `Морские прогулки | ${siteName}` : 'Морские прогулки | Туры и цены',
+  tr: 'Çeşme Tekne Turları | Fiyatlar ve Online Rezervasyon',
+  en: 'Çeşme Boat Tours | Prices and Online Booking',
+  de: 'Bootstouren in Çeşme | Preise und Online-Buchung',
+  ru: 'Морские прогулки в Чешме | Цены и онлайн-бронирование',
 }
 
 const META_DESCRIPTION: Record<SiteLocale, string> = {
-  tr: 'Tekne turu seçenekleri: adalar ve koylar turu, BBQ turları, günlük turlar. Fiyatlar ve rezervasyon.',
-  en: 'Boat tour options: islands and bays tour, BBQ tours, daily tours. Prices and booking.',
-  de: 'Bootstour-Optionen: Insel- und Buchtentour, BBQ-Touren, Tagestouren. Preise und Buchung.',
-  ru: 'Варианты морских прогулок: тур по островам и бухтам, BBQ-туры, однодневные туры. Цены и бронирование.',
+  tr: 'Çeşme tekne turu seçenekleri: adalar ve koylar turu, gün batımı turu, tüplü dalış ve İzmir çıkışlı turlar. Fiyatları karşılaştırın, online bilet alın.',
+  en: 'Çeşme boat tour options: islands and coves tour, sunset cruise, scuba diving and tours from İzmir. Compare prices and book your ticket online.',
+  de: 'Bootstouren in Çeşme: Inseln- und Buchtentour, Sonnenuntergangstour, Tauchen und Touren ab İzmir. Preise vergleichen und online buchen.',
+  ru: 'Морские прогулки в Чешме: тур по островам и бухтам, закатный тур, дайвинг и туры из Измира. Сравните цены и купите билет онлайн.',
 }
 
 const OG_META_TITLE: Record<SiteLocale, string> = {
@@ -91,8 +94,9 @@ export async function generateMetadata({
     languages[locale === 'tr' ? 'tr' : locale === 'en' ? 'en' : locale === 'de' ? 'de' : 'ru'] ??
     absoluteUrl('/turlar')
   const ogLocale = locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : locale === 'ru' ? 'ru_RU' : 'en_US'
+  const ogImage = ogImageUrl({ title: OG_META_TITLE[locale], locale })
   return {
-    title: META_TITLE[locale],
+    title: { absolute: META_TITLE[locale] },
     description: META_DESCRIPTION[locale],
     alternates: { canonical, languages },
     openGraph: {
@@ -102,11 +106,13 @@ export async function generateMetadata({
       type: 'website',
       locale: ogLocale,
       ...(siteName ? { siteName } : {}),
+      images: [{ url: ogImage, width: 1200, height: 630, alt: OG_META_TITLE[locale] }],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title: OG_META_TITLE[locale],
       description: OG_META_DESCRIPTION[locale],
+      images: [ogImage],
     },
   }
 }
@@ -239,11 +245,13 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
   return (
     <div className="min-h-screen bg-white">
       <JsonLd data={itemListSchema} />
+      <StandardPageLd type="CollectionPage" locale={locale} path="/turlar" name={META_TITLE[locale]} description={META_DESCRIPTION[locale]} />
       <section className="w-full py-14 md:py-20" aria-labelledby="tours-heading">
         <div className="mx-auto max-w-[1200px] px-4">
           <header className="mb-12">
             <h1 id="tours-heading" className={styles.heading}>
               {titleTop && <span className={styles.headingLine1}>{titleTop}</span>}
+              {titleTop && titleBottom ? ' ' : null}
               {titleBottom && <span className={styles.headingLine2}>{titleBottom}</span>}
             </h1>
             <p
@@ -254,6 +262,7 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
             </p>
           </header>
 
+          <h2 className="sr-only">{LISTING_HEADINGS.tours[locale]}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {tours.map((tour, i) => (
               <ScrollReveal key={tour._id} delayMs={(i % 3) * 80}>

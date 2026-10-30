@@ -12,6 +12,7 @@ import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getHelpCenterUiStrings } from '@/lib/i18n/strings/helpCenter'
+import StandardPageLd from '@/components/seo/StandardPageLd'
 
 export const revalidate = 300
 
@@ -65,6 +66,7 @@ export default async function YardimMerkeziPage({ params }: { params: Promise<{ 
   return (
     <>
       <JsonLd data={itemListSchema} />
+      <StandardPageLd type="CollectionPage" locale={locale} path="/yardim-merkezi" name={getHelpCenterUiStrings(locale).breadcrumbHelp} />
       <HelpCenterHome
         page={page}
         categories={categories}

@@ -10,8 +10,7 @@ import { getYachtDepositPageUi } from '@/lib/i18n/strings/yachtDepositPage'
 import { getYachtDepositPageContent } from '@/lib/yachtDepositDefaults'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
-import { getBaseUrl, getSiteName } from '@/lib/seo'
-import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import {
   buildYachtDepositCharterConfig,
   yachtDepositContextLine,
@@ -43,20 +42,15 @@ export async function generateMetadata({
   const content = getYachtDepositPageContent(locale)
   const title = content.seo.title
   const description = content.seo.description
-  const site = getSiteName()
-  // NOT: Önceki sürümde EN için var olmayan `/en/yacht-deposit` yoluna işaret
-  // eden hatalı bir canonical vardı (404). Gerçek rota her locale için de
-  // `/yat-kapora` (yalnızca locale önekiyle) — bkz. LOCALE_PATH_PREFIX.
-  const path = withLocalePath(locale, '/yat-kapora')
-  return {
-    title: site ? `${title} | ${site}` : title,
+  // Kapora ödeme formu: arama sonucunda değeri olmayan bir işlem sayfası.
+  // İndekslenmez (bağlantıları takip edilir) ve sitemap'te yer almaz.
+  return buildPageMetadata({
+    locale,
+    path: '/yat-kapora',
+    title,
     description,
-    alternates: {
-      canonical: `${getBaseUrl()}${path}`,
-      languages: alternateLanguageAbsoluteUrls('/yat-kapora'),
-    },
-    robots: page?.enabled === false ? { index: false, follow: false } : undefined,
-  }
+    noIndex: true,
+  })
 }
 
 export default async function YachtDepositPage({
@@ -112,6 +106,7 @@ export default async function YachtDepositPage({
           <header className="mb-8 max-w-2xl">
             <h1 id="yacht-deposit-heading" className={listStyles.heading}>
               <span className={listStyles.headingLine1}>{titleTop}</span>
+              {' '}
               <span className={listStyles.headingLine2}>{titleBottom}</span>
             </h1>
             <p

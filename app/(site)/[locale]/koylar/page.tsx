@@ -15,6 +15,9 @@ import { isSiteLocale } from '@/lib/i18n/config'
 import { coveSlugForLocale, mergeCoveForLocale } from '@/lib/i18n/mergeCoveForLocale'
 import { mergeCovesPageLocale, mergeCovesPageSeoForLocale } from '@/lib/i18n/mergeCovesPageLocale'
 import { getCovesPageUiStrings } from '@/lib/i18n/strings/covesPage'
+import { ensureLocalized } from '@/lib/i18n/ensureLocalized'
+import { LISTING_HEADINGS } from '@/lib/i18n/strings/listingHeadings'
+import StandardPageLd from '@/components/seo/StandardPageLd'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,7 +52,6 @@ export async function generateMetadata({
   const { locale: loc } = await params
   const locale: SiteLocale = isSiteLocale(loc) ? loc : 'tr'
   const ui = getCovesPageUiStrings(locale)
-  const siteName = getSiteName()
 
   try {
     const data = await client.fetch<CovesPageData | null>(covesPageQuery, {}, opts)
@@ -60,18 +62,27 @@ export async function generateMetadata({
       data?.pageTranslations,
       locale,
     )
-    const titleBase =
-      seo.metaTitle?.trim() || merged?.title?.trim() || data?.title?.trim() || ui.metaTitleFallback
-    const description =
-      (seo.metaDescription?.trim() ||
-        merged?.description?.trim() ||
-        data?.description?.trim() ||
-        ui.metaDescriptionFallback)?.slice(0, 160) ?? ui.metaDescriptionFallback
-    const title = titleBase.includes('|') || !siteName ? titleBase : `${titleBase} | ${siteName}`
-    return buildPageMetadata({ locale, path: '/koylar', title, description })
+    const trTitle = data?.metaTitle?.trim() || data?.title?.trim()
+    const trDesc = data?.metaDescription?.trim() || data?.description?.trim()
+    const titleBase = await ensureLocalized(
+      seo.metaTitle?.trim() || merged?.title?.trim() || data?.title?.trim() || ui.metaTitleFallback,
+      trTitle,
+      locale,
+      ui.metaTitleFallback,
+    )
+    const description = (
+      await ensureLocalized(
+        seo.metaDescription?.trim() ||
+          merged?.description?.trim() ||
+          data?.description?.trim() ||
+          ui.metaDescriptionFallback,
+        trDesc,
+        locale,
+      )
+    ).slice(0, 160)
+    return buildPageMetadata({ locale, path: '/koylar', title: titleBase, description })
   } catch {
-    const title = siteName ? `${ui.metaTitleFallback} | ${siteName}` : ui.metaTitleFallback
-    return buildPageMetadata({ locale, path: '/koylar', title, description: ui.metaDescriptionFallback })
+    return buildPageMetadata({ locale, path: '/koylar', title: ui.metaTitleFallback, description: ui.metaDescriptionFallback })
   }
 }
 
@@ -90,6 +101,7 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
   const locale = loc as SiteLocale
   const ui = getCovesPageUiStrings(locale)
 
+  let pageTr: CovesPageData | null = null
   let pageRaw: CovesPageData | null = null
   let allCoves: CoveItem[] = []
   try {
@@ -97,6 +109,7 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
       client.fetch<CovesPageData | null>(covesPageQuery, {}, opts),
       client.fetch<CoveItem[]>(covesListQuery, {}, opts),
     ])
+    pageTr = page
     pageRaw = mergeCovesPageLocale(page as unknown as Record<string, unknown>, locale) as CovesPageData | null
     allCoves = Array.isArray(coves) ? coves.filter((i): i is CoveItem => i != null) : []
   } catch {
@@ -105,8 +118,11 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
   }
 
   const pageData = pageRaw
-  const title = pageData?.title?.trim() || ui.pageTitleFallback
-  const description = pageData?.description?.trim() ?? null
+  const [title, descriptionLocalized] = await Promise.all([
+    ensureLocalized(pageData?.title?.trim() || ui.pageTitleFallback, pageTr?.title, locale, ui.pageTitleFallback),
+    ensureLocalized(pageData?.description, pageTr?.description, locale),
+  ])
+  const description = descriptionLocalized || null
   const pageItems = Array.isArray(pageData?.items) ? pageData.items.filter((i): i is CoveItem => i != null) : []
   const source = pageItems.length > 0 ? pageItems : allCoves
   const items = sortCoves(source).map((c) => {
@@ -127,6 +143,7 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
     // (#d6f7ec) ve kartların mavi butonlarıyla çakışıyordu; artık marka
     // mavisinin çok açık tonu.
     <div className="relative min-h-screen overflow-hidden bg-white">
+      <StandardPageLd type="CollectionPage" locale={locale} path="/koylar" name={title} description={description ?? undefined} />
       {items.length > 0 && (
         <JsonLd
           data={buildItemListSchema(
@@ -153,6 +170,7 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
           numberLocale={numberLocale}
         />
 
+        <h2 className="sr-only">{LISTING_HEADINGS.coves[locale]}</h2>
         <CovesGrid
           items={items.filter((cove) => cove.slug).map((cove) => {
             const resolvedTitle = cove.title ?? ui.defaultCoveTitle
@@ -161,7 +179,7 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
               title: resolvedTitle,
               description: cove.description,
               imageUrl: cove.image?.asset
-                ? urlFor(cove.image.asset).width(900).height(675).url()
+                ? urlFor(cove.image.asset).width(900).height(675).auto('format').url()
                 : null,
               alt: cove.image?.alt,
               locationTag: cove.locationTag,

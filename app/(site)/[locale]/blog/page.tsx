@@ -13,6 +13,8 @@ import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
 import { tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
 import { getBlogPageUiStrings, BLOG_SECTION_TITLE, BLOG_PAGE_LEAD } from '@/lib/i18n/strings/blogPage'
 import { translateText } from '@/lib/i18n/runtimeTranslate'
+import { LISTING_HEADINGS } from '@/lib/i18n/strings/listingHeadings'
+import StandardPageLd from '@/components/seo/StandardPageLd'
 
 const siteName = getSiteName()
 
@@ -126,7 +128,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
       const merged = mergeBlogForLocale(rawBlog, locale) as unknown as BlogItem
       const coverImageUrl =
         merged.coverImage?.asset != null
-          ? urlFor(merged.coverImage.asset).width(800).height(600).url()
+          ? urlFor(merged.coverImage.asset).width(800).height(600).auto('format').url()
           : null
       const title = tourFieldHasManualTranslation(rawBlog, locale, 'title')
         ? merged.title
@@ -155,6 +157,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
 
   return (
     <main className={styles.main}>
+      <StandardPageLd type="CollectionPage" locale={locale} path="/blog" name={heroTitle} description={leadText || undefined} />
       <section className={styles.hero}>
         <div className={styles.heroContainer}>
           <h1 className={styles.heroH1}>{heroTitle}</h1>
@@ -164,6 +167,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
 
       <section className={styles.gridSection}>
         <div className={styles.gridContainer}>
+          <h2 className="sr-only">{LISTING_HEADINGS.blog[locale]}</h2>
           {blogCards.length > 0 ? (
             <div className={styles.blogsGrid}>
               {blogCards.map(({ id, post }) => (

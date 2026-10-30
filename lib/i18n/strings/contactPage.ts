@@ -54,7 +54,8 @@ export type ContactPageUiStrings = {
 
 const TR: ContactPageUiStrings = {
   defaultTitle: 'İletişim',
-  defaultMetaDescription: 'Bizimle iletişime geçin.',
+  defaultMetaDescription:
+    'Çeşme tekne turu rezervasyonu, özel tur ve grup talepleriniz için bize telefon, WhatsApp veya e-posta ile ulaşın; sorularınızı hızla yanıtlıyoruz.',
   formSectionAria: 'İletişim formu',
   labelFullName: 'Adınız *',
   labelGroupSize: 'Kaç Kişi *',
@@ -99,7 +100,8 @@ const TR: ContactPageUiStrings = {
 
 const EN: ContactPageUiStrings = {
   defaultTitle: 'Contact',
-  defaultMetaDescription: 'Get in touch with us.',
+  defaultMetaDescription:
+    'Contact us by phone, WhatsApp or email for Çeşme boat tour bookings, private tours and group requests — we reply to your questions quickly.',
   formSectionAria: 'Contact form',
   labelFullName: 'Your Name *',
   labelGroupSize: 'Group Size *',
@@ -144,7 +146,8 @@ const EN: ContactPageUiStrings = {
 
 const DE: ContactPageUiStrings = {
   defaultTitle: 'Kontakt',
-  defaultMetaDescription: 'Nehmen Sie Kontakt mit uns auf.',
+  defaultMetaDescription:
+    'Kontaktieren Sie uns per Telefon, WhatsApp oder E-Mail für Bootstour-Buchungen in Çeşme, private Touren und Gruppenanfragen – wir antworten schnell.',
   formSectionAria: 'Kontaktformular',
   labelFullName: 'Ihr Name *',
   labelGroupSize: 'Personenanzahl *',
@@ -189,7 +192,8 @@ const DE: ContactPageUiStrings = {
 
 const RU: ContactPageUiStrings = {
   defaultTitle: 'Контакты',
-  defaultMetaDescription: 'Свяжитесь с нами.',
+  defaultMetaDescription:
+    'Свяжитесь с нами по телефону, WhatsApp или e-mail для бронирования морских прогулок в Чешме, частных туров и групповых заявок — ответим быстро.',
   formSectionAria: 'Контактная форма',
   labelFullName: 'Ваше имя *',
   labelGroupSize: 'Количество человек *',

@@ -492,7 +492,7 @@ export function buildItineraryTimelineItems(tour: Tour): ItineraryTimelineItem[]
       time: item.time ?? null,
       tag: item.tag ?? null,
       imageUrl: item.image?.asset
-        ? urlFor(item.image.asset).width(500).height(630).url()
+        ? urlFor(item.image.asset).width(500).height(630).auto('format').url()
         : null,
       imageBlurDataURL: item.image?.metadata?.lqip ?? null,
     }))

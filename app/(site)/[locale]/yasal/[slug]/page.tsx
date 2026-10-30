@@ -6,18 +6,21 @@ import { legalPageBySlugQuery } from '@/lib/queries'
 import { PortableText } from '@portabletext/react'
 import type { PortableTextBlock } from '@portabletext/react'
 import {
-  legalPageComponents,
+  legalPageComponentsForContent,
   TITLE_FONT,
   BODY_FONT,
   TEXT_COLOR,
 } from '@/components/legal/legalPortableComponents'
-import { getSiteName, absoluteUrl } from '@/lib/seo'
+import { absoluteUrl, portableTextToPlainText } from '@/lib/seo'
+import { ogImageUrl, withBrandSuffix } from '@/lib/seo/brand'
+import { OG_LOCALE } from '@/lib/seo/buildPageMetadata'
 import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
 import type { SiteLocale } from '@/lib/i18n/config'
-import { isSiteLocale } from '@/lib/i18n/config'
+import { isSiteLocale, SITE_LOCALES } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { mergeLegalPageForLocale } from '@/lib/i18n/mergeLegalPageForLocale'
 import { dateLocaleForSiteLocale, getLegalPageUiStrings } from '@/lib/i18n/strings/legalPage'
+import StandardPageLd from '@/components/seo/StandardPageLd'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -46,6 +49,26 @@ function formatDate(dateString: string | null | undefined, locale: SiteLocale): 
   }
 }
 
+type LegalTranslation = { title?: string | null; slug?: { current?: string | null } | string | null }
+
+/** Elle çevirisi girilmiş diller ve her dilin kendi slug'u. Yasal metinler
+ * makine çevirisiyle gösterilmez; çevirisi olmayan dilde Türkçe metin
+ * görünür, bu yüzden o sürüm kanonik olarak Türkçe sayfayı işaret eder. */
+function legalLocaleInfo(page: LegalPage): { translated: SiteLocale[]; paths: Partial<Record<SiteLocale, string>> } {
+  const tr = (page.translations ?? {}) as Partial<Record<SiteLocale, LegalTranslation | undefined>>
+  const translated: SiteLocale[] = ['tr']
+  const paths: Partial<Record<SiteLocale, string>> = { tr: withLocalePath('tr', `/yasal/${page.slug}`) }
+  for (const loc of SITE_LOCALES) {
+    if (loc === 'tr') continue
+    const t = tr[loc]
+    if (!t?.title?.trim()) continue
+    const raw = typeof t.slug === 'string' ? t.slug : t.slug?.current
+    translated.push(loc)
+    paths[loc] = withLocalePath(loc, `/yasal/${raw?.trim() || page.slug}`)
+  }
+  return { translated, paths }
+}
+
 function normalizeSlug(slug: string): string {
   return decodeURIComponent(slug).trim().toLowerCase().replace(/\s+/g, '-')
 }
@@ -63,24 +86,31 @@ export async function generateMetadata({
   const page = await client.fetch<LegalPage | null>(legalPageBySlugQuery, { slug: slugNorm }, { useCdn: false })
   if (!page) return { title: ui.metaNotFoundTitle }
   const merged = mergeLegalPageForLocale(page as unknown as Record<string, unknown>, locale) as unknown as LegalPage
-  const siteName = getSiteName()
-  const title = merged.seoTitle?.trim() || (siteName ? `${merged.title} | ${siteName}` : merged.title)
-  const description =
-    (merged.seoDescription ?? merged.title).replace(/\s+/g, ' ').slice(0, 160) || title
-  const path = withLocalePath(locale, `/yasal/${slug}`)
-  const url = absoluteUrl(path)
+  const { translated, paths } = legalLocaleInfo(page)
+  const title = withBrandSuffix(merged.seoTitle?.trim() || merged.title, locale)
+  const bodyText = portableTextToPlainText(merged.content).replace(/\s+/g, ' ').trim()
+  const descSource = merged.seoDescription?.trim() || bodyText || merged.title
+  const description = descSource.length > 160 ? `${descSource.slice(0, 157).replace(/\s+\S*$/, '')}…` : descSource
+  const url = absoluteUrl(withLocalePath(locale, `/yasal/${slug}`))
+  // Çevirisi yoksa bu sürüm Türkçe sayfanın kopyası: kanonik Türkçe sayfa.
+  const canonical = translated.includes(locale) ? url : absoluteUrl(paths.tr!)
+  const image = ogImageUrl({ title: merged.title, locale })
   return {
-    title,
+    title: { absolute: title },
     description,
-    alternates: { canonical: url, languages: alternateLanguageAbsoluteUrls(`/yasal/${slug}`) },
+    alternates: {
+      canonical,
+      languages: alternateLanguageAbsoluteUrls(`/yasal/${page.slug}`, paths, translated),
+    },
     openGraph: {
       title,
       description,
-      url,
+      url: canonical,
       type: 'website',
-      ...(siteName ? { siteName } : {}),
+      locale: OG_LOCALE[locale],
+      images: [{ url: image, width: 1200, height: 630, alt: merged.title }],
     },
-    twitter: { card: 'summary', title, description },
+    twitter: { card: 'summary_large_image', title, description, images: [image] },
   }
 }
 
@@ -118,6 +148,7 @@ export default async function YasalSayfaPage({
 
   return (
     <main className="min-h-screen bg-zinc-50">
+      <StandardPageLd type="WebPage" locale={locale} path={`/yasal/${slug}`} name={page.title} />
       <article className="mx-auto max-w-3xl px-4 py-10 md:py-16">
         <header className="mb-10 text-center">
           <h1
@@ -138,7 +169,7 @@ export default async function YasalSayfaPage({
 
         {contentBlocks ? (
           <div className="[&_.pt-list]:mb-4">
-            <PortableText value={contentBlocks} components={legalPageComponents} />
+            <PortableText value={contentBlocks} components={legalPageComponentsForContent(contentBlocks as { style?: string }[])} />
           </div>
         ) : (
           <p className="text-[17px] italic" style={{ fontFamily: BODY_FONT, color: TEXT_COLOR }}>

@@ -33,7 +33,36 @@ type TourLocaleRow = {
   enSlug?: string | null
   deSlug?: string | null
   ruSlug?: string | null
+  image?: string | null
+  noIndex?: boolean | null
   _updatedAt?: string
+}
+
+/** Sitemap'teki her URL için hreflang alternatifleri (Google bunu sayfadaki
+ * <link rel="alternate"> ile birlikte değerlendirir). */
+function languageAlternates(paths: Partial<Record<SiteLocaleKey, string>>): { languages: Record<string, string> } {
+  const languages: Record<string, string> = {}
+  for (const [loc, path] of Object.entries(paths) as [SiteLocaleKey, string | undefined][]) {
+    if (path) languages[loc] = publicUrl(loc, path)
+  }
+  if (paths.tr) languages['x-default'] = publicUrl('tr', paths.tr)
+  return { languages }
+}
+
+/** Slug'ı her dilde aynı olan sayfalar (blog, yat, feribot, yardım merkezi). */
+function samePathAlternates(path: string) {
+  return languageAlternates({ tr: path, en: path, de: path, ru: path })
+}
+
+/** Her dilin kendi slug'u; çevirisi yoksa Türkçe slug (sayfa anlık çeviriyle açılır). */
+function slugsWithFallback(row: TourLocaleRow): Record<SiteLocaleKey, string> | null {
+  if (!row.tSlug) return null
+  return {
+    tr: row.tSlug,
+    en: row.enSlug || row.tSlug,
+    de: row.deSlug || row.tSlug,
+    ru: row.ruSlug || row.tSlug,
+  }
 }
 
 async function getTourSitemapRows(): Promise<TourLocaleRow[]> {
@@ -132,17 +161,35 @@ async function getFerryRouteEntries(): Promise<SitemapEntry[]> {
   }
 }
 
-async function getLegalEntries(): Promise<SitemapEntry[]> {
+type LegalSitemapRow = {
+  slug: string | null
+  enTitle?: string | null
+  enSlug?: string | null
+  deTitle?: string | null
+  deSlug?: string | null
+  _updatedAt: string
+}
+
+/** Yasal sayfalar makine çevirisiyle gösterilmez: yalnızca elle çevrilmiş
+ * diller listelenir (çevrilmemiş sürüm Türkçe sayfayı kanonik gösterir). */
+async function getLegalEntries(): Promise<{ paths: Partial<Record<SiteLocaleKey, string>>; lastModified: Date }[]> {
   try {
-    const list = await client.fetch<{ slug: string | null; _updatedAt: string }[]>(
-      `*[_type == "legalPage" && defined(slug.current)]{ "slug": slug.current, _updatedAt }`
+    const list = await client.fetch<LegalSitemapRow[]>(
+      `*[_type == "legalPage" && defined(slug.current)]{
+        "slug": slug.current,
+        "enTitle": translations.en.title, "enSlug": translations.en.slug.current,
+        "deTitle": translations.de.title, "deSlug": translations.de.slug.current,
+        _updatedAt
+      }`
     )
     return (list ?? [])
-      .filter((l): l is { slug: string; _updatedAt: string } => Boolean(l.slug))
-      .map((l) => ({
-        slug: l.slug,
-        lastModified: l._updatedAt ? new Date(l._updatedAt) : new Date(),
-      }))
+      .filter((l): l is LegalSitemapRow & { slug: string } => Boolean(l.slug))
+      .map((l) => {
+        const paths: Partial<Record<SiteLocaleKey, string>> = { tr: `/yasal/${l.slug}` }
+        if (l.enTitle?.trim()) paths.en = `/yasal/${l.enSlug || l.slug}`
+        if (l.deTitle?.trim()) paths.de = `/yasal/${l.deSlug || l.slug}`
+        return { paths, lastModified: l._updatedAt ? new Date(l._updatedAt) : new Date() }
+      })
   } catch {
     return []
   }
@@ -182,7 +229,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // altında yalnızca [tourSlug]/ ve yonet/ var, kendi page.tsx'i yok;
     // eskiden buradaki girdi 4 dilde 404 veren "soft-404" URL üretiyordu.
     '/yat-kiralama',
-    '/yat-kapora',
     '/yardim-merkezi',
     '/feribot',
   ] as const
@@ -193,7 +239,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (path === '/yat-kiralama') return 0.85
     if (path === '/feribot') return 0.8
     if (path === '/koylar' || path === '/blog' || path === '/menu') return 0.8
-    if (path === '/yat-kapora') return 0.6
     if (path === '/yardim-merkezi') return 0.75
     return 0.6
   }
@@ -208,81 +253,61 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: publicUrl(loc, path),
       changeFrequency: 'weekly' as const,
       priority: staticPriority(path),
+      alternates: samePathAlternates(path),
     }))
   )
 
-  const tourEntries: MetadataRoute.Sitemap = []
-  for (const row of tourRows ?? []) {
-    const lm = row._updatedAt ? new Date(row._updatedAt) : now
-    if (row.tSlug)
-      tourEntries.push({
-        url: publicUrl('tr', `/tur/${row.tSlug}`),
-        lastModified: lm,
-        changeFrequency: 'weekly',
-        priority: 0.85,
-      })
-    if (row.enSlug)
-      tourEntries.push({
-        url: publicUrl('en', `/tur/${row.enSlug}`),
-        lastModified: lm,
-        changeFrequency: 'weekly',
-        priority: 0.85,
-      })
-    if (row.deSlug)
-      tourEntries.push({
-        url: publicUrl('de', `/tur/${row.deSlug}`),
-        lastModified: lm,
-        changeFrequency: 'weekly',
-        priority: 0.85,
-      })
-    if (row.ruSlug)
-      tourEntries.push({
-        url: publicUrl('ru', `/tur/${row.ruSlug}`),
-        lastModified: lm,
-        changeFrequency: 'weekly',
-        priority: 0.85,
-      })
-  }
+  // Tur ve koy detayları — çeviri slug'ı yoksa o dilde Türkçe slug kullanılır
+  // (sayfalar anlık çeviriyle açılıyor; eskiden DE/RU tur sayfaları hiç listelenmiyordu).
+  const detailEntries = (
+    rows: TourLocaleRow[],
+    segment: string,
+    priority: number,
+    changeFrequency: 'weekly' | 'monthly'
+  ): MetadataRoute.Sitemap =>
+    rows.flatMap((row) => {
+      if (row.noIndex) return []
+      const slugs = slugsWithFallback(row)
+      if (!slugs) return []
+      const lastModified = row._updatedAt ? new Date(row._updatedAt) : now
+      const paths = Object.fromEntries(locales.map((l) => [l, `/${segment}/${slugs[l]}`])) as Record<SiteLocaleKey, string>
+      return locales.map((loc) => ({
+        url: publicUrl(loc, paths[loc]),
+        lastModified,
+        changeFrequency,
+        priority,
+        alternates: languageAlternates(paths),
+        ...(row.image ? { images: [row.image] } : {}),
+      }))
+    })
 
-  // Koy detay sayfaları — çeviri slug'ı yoksa o dilde de Türkçe slug kullanılır.
-  const coveEntries: MetadataRoute.Sitemap = (coveRows ?? []).flatMap((row) => {
-    if (!row.tSlug) return []
-    const lastModified = row._updatedAt ? new Date(row._updatedAt) : now
-    const slugs: Record<SiteLocaleKey, string> = {
-      tr: row.tSlug,
-      en: row.enSlug || row.tSlug,
-      de: row.deSlug || row.tSlug,
-      ru: row.ruSlug || row.tSlug,
-    }
-    return locales.map((loc) => ({
-      url: publicUrl(loc, `/koylar/${slugs[loc]}`),
-      lastModified,
-      changeFrequency: 'monthly' as const,
-      priority: 0.7,
-    }))
-  })
+  const tourEntries = detailEntries(tourRows ?? [], 'tur', 0.9, 'weekly')
+  const coveEntries = detailEntries(coveRows ?? [], 'koylar', 0.7, 'monthly')
 
   const blogEntries: MetadataRoute.Sitemap = blogEntriesRaw.flatMap(({ slug, lastModified }) =>
     locales.map((loc) => ({
       url: publicUrl(loc, `/blog/${slug}`),
+      alternates: samePathAlternates(`/blog/${slug}`),
       lastModified,
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     }))
   )
 
-  const legalEntries: MetadataRoute.Sitemap = legalEntriesRaw.flatMap(({ slug, lastModified }) =>
-    locales.map((loc) => ({
-      url: publicUrl(loc, `/yasal/${slug}`),
+  const legalEntries: MetadataRoute.Sitemap = legalEntriesRaw.flatMap(({ paths, lastModified }) =>
+    (Object.entries(paths) as [SiteLocaleKey, string][]).map(([loc, path]) => ({
+      url: publicUrl(loc, path),
       lastModified,
-      changeFrequency: 'monthly' as const,
-      priority: 0.5,
+      changeFrequency: 'yearly' as const,
+      priority: 0.3,
+      alternates: languageAlternates(paths),
     }))
   )
 
   const yachtLocationEntries: MetadataRoute.Sitemap = yachtLocRaw.flatMap(({ slug, lastModified }) =>
     locales.map((loc) => ({
       url: publicUrl(loc, `/yat-kiralama/${slug}`),
+      alternates: samePathAlternates(`/yat-kiralama/${slug}`),
       lastModified,
       changeFrequency: 'weekly' as const,
       priority: 0.8,
@@ -292,6 +317,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const yachtDetailEntries: MetadataRoute.Sitemap = yachtDetailRaw.flatMap(({ path, lastModified }) =>
     locales.map((loc) => ({
       url: publicUrl(loc, path),
+      alternates: samePathAlternates(path),
       lastModified,
       changeFrequency: 'weekly' as const,
       priority: 0.82,
@@ -301,6 +327,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const ferryRouteEntries: MetadataRoute.Sitemap = ferryRouteEntriesRaw.flatMap(({ slug, lastModified }) =>
     locales.map((loc) => ({
       url: publicUrl(loc, `/feribot/${slug}`),
+      alternates: samePathAlternates(`/feribot/${slug}`),
       lastModified,
       changeFrequency: 'weekly' as const,
       priority: 0.75,
@@ -316,6 +343,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const helpCategoryEntries: MetadataRoute.Sitemap = STATIC_HELP_CATEGORIES.flatMap((cat) =>
     locales.map((loc) => ({
       url: publicUrl(loc, `/yardim-merkezi/kategori/${cat.slug}`),
+      alternates: samePathAlternates(`/yardim-merkezi/kategori/${cat.slug}`),
       lastModified: new Date(STATIC_UPDATED_AT),
       changeFrequency: 'monthly' as const,
       priority: 0.5,
@@ -326,6 +354,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     cat.articles.flatMap((art) =>
       locales.map((loc) => ({
         url: publicUrl(loc, `/yardim-merkezi/${cat.slug}/${art.slug}`),
+      alternates: samePathAlternates(`/yardim-merkezi/${cat.slug}/${art.slug}`),
         lastModified: new Date(STATIC_UPDATED_AT),
         changeFrequency: 'monthly' as const,
         priority: 0.55,

@@ -1,56 +1,122 @@
-import { getBaseUrl, getSiteName } from '@/lib/seo'
 import { NextResponse } from 'next/server'
+import { client } from '@/lib/sanity'
+import { getBaseUrl } from '@/lib/seo'
+import { BUSINESS_FACTS } from '@/lib/seo/travelAgencyStructuredData'
+import { SITE_BRAND } from '@/lib/seo/brand'
+import { STATIC_HELP_CATEGORIES } from '@/lib/helpCenter/staticHelpData'
 
-export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
+type Row = { title?: string | null; slug?: string | null; summary?: string | null; price?: number | null }
+
+/** Tek satır, gerekirse kelime sınırında kısaltılmış metin. */
+function one(v: string | null | undefined, max = 220): string {
+  const t = (v ?? '').replace(/\s+/g, ' ').trim()
+  return t.length <= max ? t : `${t.slice(0, max).replace(/\s+\S*$/, '')}…`
+}
+
+async function fetchRows(query: string): Promise<Row[]> {
+  try {
+    return (await client.fetch<Row[]>(query)) ?? []
+  } catch {
+    return []
+  }
+}
+
 /**
- * llms.txt — AI/LLM crawler'lar için site özeti (llmstxt.org benzeri format).
- * SEO ve AI referansları için /llms.txt adresinde sunulur.
+ * /llms.txt — yapay zekâ asistanları (ChatGPT, Claude, Perplexity, Gemini)
+ * için sitenin düz metin özeti (llmstxt.org biçimi). İçerik Sanity'den canlı
+ * üretilir: turlar, koylar, blog yazıları ve yardım merkezi her zaman güncel.
  */
 export async function GET() {
   const base = getBaseUrl()
-  const siteName = getSiteName()
-  const heading = siteName ? `${siteName} – Tekne Turları ve Rezervasyon` : 'Tekne Turları ve Rezervasyon'
+  const [tours, coves, posts, yachtLocations, ferries] = await Promise.all([
+    fetchRows(`*[_type == "tour" && defined(slug.current) && seo.noIndex != true] | order(title asc){
+      title, "slug": slug.current, "summary": coalesce(seo.metaDescription, shortDescription),
+      "price": ticketClasses[0].pricesByAge[0].price
+    }`),
+    fetchRows(`*[_type == "cove" && defined(slug.current)] | order(title asc){
+      title, "slug": slug.current, "summary": coalesce(seo.metaDescription, shortDescription, description)
+    }`),
+    fetchRows(`*[_type == "blog" && defined(slug.current)] | order(publishDate desc)[0...30]{
+      title, "slug": slug.current, "summary": coalesce(seo.metaDescription, excerpt)
+    }`),
+    fetchRows(`*[_type == "yachtLocation" && defined(slug.current)] | order(title asc){ title, "slug": slug.current }`),
+    fetchRows(`*[_type == "ferryRoute" && isActive != false && defined(slug.current)] | order(title asc){
+      title, "slug": slug.current, "summary": cardDescription
+    }`),
+  ])
 
-  const body = `# ${heading}
+  const list = (rows: Row[], path: (slug: string) => string, withPrice = false) =>
+    rows
+      .filter((r) => r.slug && r.title)
+      .map((r) => {
+        const price = withPrice && r.price && r.price > 0 ? ` (kişi başı ${Math.round(r.price).toLocaleString('tr-TR')} ₺'den)` : ''
+        const summary = one(r.summary)
+        return `- [${one(r.title, 120)}](${base}${path(r.slug!)})${price}${summary ? `: ${summary}` : ''}`
+      })
+      .join('\n')
 
-> Tekne turları, adalar ve koylar gezisi, online bilet ve rezervasyon. Günlük turlar, özel kiralama ve kurumsal etkinlikler.
+  const help = STATIC_HELP_CATEGORIES.map((c) => `- [${c.title}](${base}/yardim-merkezi/kategori/${c.slug})`).join('\n')
 
-## Ana Sayfalar
+  const body = `# ${SITE_BRAND.tr} — Poseidon
 
-- [Ana Sayfa](${base}/)
-- [Turlar](${base}/turlar) – Tekne turları listesi ve fiyatlar
-- [Yat Kiralama](${base}/yat-kiralama) – Özel yat kiralama
-- [Feribot](${base}/feribot) – Feribot bileti hatları
-- [Koylar](${base}/koylar) – Koylar rehberi
-- [Menü](${base}/menu) – Tekne üstü menü
+> Çeşme (İzmir) çıkışlı günlük tekne turları, gün batımı turu, tüplü dalış, özel yat kiralama ve Sakız feribot biletleri için online rezervasyon ve bilet satış sitesi. Biletler online alınır; rezervasyon onayı e-posta ile gönderilir.
+
+İşletme: ${BUSINESS_FACTS.name}
+Adres: ${BUSINESS_FACTS.address}
+Telefon: ${BUSINESS_FACTS.telephone}
+E-posta: ${BUSINESS_FACTS.email}
+WhatsApp: ${BUSINESS_FACTS.whatsappUrl}
+Diller: Türkçe (${base}), English (${base}/en), Deutsch (${base}/de), Русский (${base}/ru)
+
+## Tekne turları
+
+${list(tours, (s) => `/tur/${s}`, true) || `- [Tüm turlar](${base}/turlar)`}
+
+Tüm turlar ve fiyatlar: ${base}/turlar
+
+## Özel yat kiralama
+
+- [Yat kiralama](${base}/yat-kiralama): Çeşme ve çevresinde özel tekne ve yat kiralama
+${list(yachtLocations, (s) => `/yat-kiralama/${s}`)}
+
+## Feribot
+
+${list(ferries, (s) => `/feribot/${s}`) || `- [Feribot biletleri](${base}/feribot)`}
+
+## Koylar ve adalar rehberi
+
+${list(coves, (s) => `/koylar/${s}`) || `- [Koylar](${base}/koylar)`}
+
+## Yardım merkezi (rezervasyon, ödeme, iptal, ulaşım)
+
+${help}
+- [Sık sorulan sorular](${base}/sik-sorulanlar)
+
+## Blog
+
+${list(posts, (s) => `/blog/${s}`) || `- [Blog](${base}/blog)`}
+
+## Kurumsal
+
 - [Hakkımızda](${base}/hakkimizda)
-- [İletişim](${base}/contact) – İletişim formu
-- [Sık Sorulanlar](${base}/sik-sorulanlar) – SSS
-- [Yardım Merkezi](${base}/yardim-merkezi) – Rezervasyon, ödeme, iptal rehberleri
-- [Blog](${base}/blog) – Gezi ve tur yazıları
+- [İletişim](${base}/contact)
+- [Teknedeki menü ve fiyatlar](${base}/menu)
 
-## Tekne Turları
+## Optional
 
-Tur detayları, fiyatlar ve rezervasyon her tur sayfasında mevcuttur (ör. ${base}/tur/cesme-tekne-turu). Tur listesi: ${base}/turlar
-
-## Yat Kiralama
-
-Özel yat kiralama için kapora bilgisi: ${base}/yat-kapora
-
-## Teknik
-
-- Sitemap (tüm sayfalar): ${base}/sitemap.xml
-${siteName ? `- Site adı: ${siteName}\n` : ''}- Dil: Türkçe (TR)
-- Konum: İzmir, Türkiye
+- [Sitemap](${base}/sitemap.xml)
+- [English site](${base}/en)
+- [Deutsche Seite](${base}/de)
+- [Русская версия](${base}/ru)
 `
 
   return new NextResponse(body, {
     status: 200,
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate',
+      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
     },
   })
 }

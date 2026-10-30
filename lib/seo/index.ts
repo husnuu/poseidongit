@@ -39,6 +39,7 @@ export function buildOrganizationSchema(overrides?: {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
+    '@id': `${base}/#organization`,
     name: overrides?.name ?? (getSiteName() || undefined),
     url: overrides?.url ?? base,
     ...(overrides?.logo ? { logo: overrides.logo } : {}),
@@ -52,14 +53,15 @@ export function buildWebSiteSchema(overrides?: { name?: string; url?: string; de
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
+    '@id': `${base}/#website`,
+    inLanguage: ['tr', 'en', 'de', 'ru'],
+    publisher: { '@id': `${base}/#business` },
     name: overrides?.name ?? (getSiteName() || undefined),
     url: overrides?.url ?? base,
     description: overrides?.description ?? 'Tekne turları ve rezervasyon.',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: { '@type': 'EntryPoint', urlTemplate: `${base}/turlar?q={search_term_string}` },
-      'query-input': 'required name=search_term_string',
-    },
+    // SearchAction yok: /turlar sayfasında arama (?q=) desteklenmiyor; çalışmayan
+    // bir arama kutusu bildirmek yerine alan atlandı (Google da Kasım 2024'te
+    // sitelinks arama kutusunu kaldırdı).
   }
 }
 

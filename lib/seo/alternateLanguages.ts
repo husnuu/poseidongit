@@ -14,11 +14,15 @@ import { getBaseUrl } from '@/lib/seo'
  */
 export function alternateLanguageAbsoluteUrls(
   path: string,
-  localePaths?: Partial<Record<SiteLocale, string>>
+  localePaths?: Partial<Record<SiteLocale, string>>,
+  /** Yalnızca gerçekten çevrilmiş diller — çevrilmemiş (Türkçe kopya) sürümler
+   * hreflang'e girmesin. Verilmezse tüm diller listelenir. */
+  onlyLocales?: readonly SiteLocale[]
 ): Record<string, string> {
   const base = getBaseUrl().replace(/\/$/, '')
   const out: Record<string, string> = {}
   for (const loc of SITE_LOCALES) {
+    if (onlyLocales && !onlyLocales.includes(loc)) continue
     const p = localePaths?.[loc] ?? withLocalePath(loc, path)
     const abs = p === '/' ? base : `${base}${p}`
     const hreflang = loc === 'tr' ? 'tr' : loc === 'en' ? 'en' : loc === 'de' ? 'de' : 'ru'

@@ -24,6 +24,7 @@ import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
+import { ogImageUrl } from '@/lib/seo/brand'
 import { mergeBlogForLocale } from '@/lib/i18n/mergeBlogForLocale'
 import { tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
 import { getBlogPageUiStrings } from '@/lib/i18n/strings/blogPage'
@@ -113,9 +114,9 @@ export async function generateMetadata({
     ? urlFor(ogFromSeo).width(1200).height(630).url()
     : merged.coverImage?.asset
       ? urlFor(merged.coverImage.asset).width(1200).height(630).url()
-      : merged.coverImage?.url ?? undefined
+      : merged.coverImage?.url || ogImageUrl({ title: translatedTitle, locale, kicker: ui.blogListTitleSuffix })
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: {
       canonical: url,
@@ -134,7 +135,7 @@ export async function generateMetadata({
       images: image ? [{ url: image, width: 1200, height: 630, alt: translatedTitle }] : undefined,
     },
     twitter: {
-      card: image ? 'summary_large_image' : 'summary',
+      card: 'summary_large_image',
       title,
       description,
       ...(image ? { images: [image] } : {}),
@@ -180,7 +181,7 @@ export default async function BlogPostPage({
         publishDate: m.publishDate ?? null,
         readingTime: m.readingTime ?? null,
         readTime: m.readTime ?? null,
-        coverImageUrl: m.coverImage?.asset ? urlFor(m.coverImage.asset).width(800).height(600).url() : null,
+        coverImageUrl: m.coverImage?.asset ? urlFor(m.coverImage.asset).width(800).height(600).auto('format').url() : null,
         coverImageAlt: m.coverImage?.alt ?? null,
       }
     })

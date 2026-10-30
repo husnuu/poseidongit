@@ -17,7 +17,7 @@ import {
 } from '@/lib/sanity/fetchers/helpCenter'
 import type { HelpArticleDetail } from '@/lib/sanity/types/helpCenter'
 import { absoluteUrl, buildBreadcrumbSchema, buildFAQSchema, getSiteName, portableTextToPlainText } from '@/lib/seo'
-import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
+import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -43,39 +43,21 @@ export async function generateMetadata({
   const ui = getHelpCenterUiStrings(locale)
   const article = await fetchHelpArticleDetail(categorySlug, articleSlug, locale)
   if (!article) return { title: ui.metaArticleNotFoundTitle }
-  const site = getSiteName()
-  const titleBase =
-    article.seoTitle?.trim() || article.title?.trim() || ui.articleFallbackTitle
-  const title = site && !titleBase.includes('|') ? `${titleBase} | ${site}` : titleBase
-  const description =
+  const title = article.seoTitle?.trim() || article.title?.trim() || ui.articleFallbackTitle
+  const description = (
     article.seoDescription?.trim() ||
     article.shortDescription?.trim() ||
     article.title?.trim() ||
     ''
-  const path = withLocalePath(locale, `/yardim-merkezi/${categorySlug}/${articleSlug}`)
-  const url = absoluteUrl(path)
-  const ogLocale = locale === 'tr' ? 'tr_TR' : locale === 'de' ? 'de_DE' : locale === 'ru' ? 'ru_RU' : 'en_US'
-  return {
+  ).slice(0, 160)
+  return buildPageMetadata({
+    locale,
+    path: `/yardim-merkezi/${categorySlug}/${articleSlug}`,
     title,
-    description: description.slice(0, 160),
-    alternates: {
-      canonical: url,
-      languages: alternateLanguageAbsoluteUrls(`/yardim-merkezi/${categorySlug}/${articleSlug}`),
-    },
-    openGraph: {
-      title,
-      description: description.slice(0, 160),
-      url,
-      type: 'article',
-      locale: ogLocale,
-      ...(site ? { siteName: site } : {}),
-    },
-    twitter: {
-      card: 'summary',
-      title,
-      description: description.slice(0, 160),
-    },
-  }
+    description,
+    type: 'article',
+    ogKicker: ui.breadcrumbHelp,
+  })
 }
 
 function buildRelatedList(article: HelpArticleDetail, categorySlug: string, articleSlug: string) {

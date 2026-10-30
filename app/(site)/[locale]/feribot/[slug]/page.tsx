@@ -10,12 +10,12 @@ import type { PhotoGridImage } from '@/components/PhotoGrid'
 import FAQAccordion from '@/components/FAQAccordion'
 import FerryBookingSidebar from '@/components/ferry/FerryBookingSidebar'
 import { buildWhatsAppHref } from '@/lib/buildWhatsAppHref'
-import { getSiteName } from '@/lib/seo'
 import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { getFerryPageUiStrings } from '@/lib/i18n/strings/ferryPage'
 import { mergeFerryRouteLocale } from '@/lib/i18n/mergeFerryRouteLocale'
+import StandardPageLd from '@/components/seo/StandardPageLd'
 
 export const dynamic = 'force-dynamic'
 
@@ -117,11 +117,11 @@ export async function generateMetadata({
   const { locale: loc, slug } = await params
   const locale: SiteLocale = isSiteLocale(loc) ? loc : 'tr'
   const ui = getFerryPageUiStrings(locale)
-  const siteName = getSiteName()
   const data = await getFerryRoute(slug, locale)
-  const rawTitle = data?.seo?.metaTitle?.trim() || data?.title || ui.defaultTitle
-  const title = siteName ? `${rawTitle} | ${siteName}` : rawTitle
-  const description = data?.seo?.metaDescription?.trim() || ui.defaultMetaDescription
+  const title = data?.seo?.metaTitle?.trim() || data?.title || ui.defaultTitle
+  // Sanity'deki açıklama çok kısaysa (ör. 26 karakter) dilin genel feribot metni.
+  const seoDescription = data?.seo?.metaDescription?.trim() ?? ''
+  const description = seoDescription.length >= 70 ? seoDescription : ui.defaultMetaDescription
   const image = data?.mainImage?.asset
     ? tourGalleryHeroImageUrl(data.mainImage.asset)
     : undefined
@@ -188,6 +188,13 @@ export default async function FerryRoutePage({
 
   return (
     <main className="min-h-screen bg-white">
+      <StandardPageLd
+        type="WebPage"
+        locale={locale}
+        path={`/feribot/${slug}`}
+        name={data.title}
+        crumbs={[{ name: ui.listMetaTitle, path: '/feribot' }]}
+      />
       {galleryImages.length > 0 && (
         <div className="w-full mb-0">
           <PhotoGrid images={galleryImages} tourTitle={data.title} locale={locale} />

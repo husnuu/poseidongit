@@ -2,11 +2,13 @@
 export const tourSlugsQuery = `*[_type == "tour" && defined(slug.current)]{ "slug": slug.current }`
 
 /** TR + EN + DE slug satırları (locale’li static params / sitemap) */
-export const tourSlugRowsForLocalesQuery = `*[_type == "tour"]{
+export const tourSlugRowsForLocalesQuery = `*[_type == "tour" && defined(slug.current)]{
   "tSlug": slug.current,
   "enSlug": translations.en.slug.current,
   "deSlug": translations.de.slug.current,
   "ruSlug": translations.ru.slug.current,
+  "image": mainImage.asset->url,
+  "noIndex": seo.noIndex == true,
   _updatedAt
 }`
 
@@ -1335,6 +1337,7 @@ export const coveSlugRowsForLocalesQuery = `*[_type == "cove" && defined(slug.cu
   "enSlug": translations.en.slug.current,
   "deSlug": translations.de.slug.current,
   "ruSlug": translations.ru.slug.current,
+  "image": image.asset->url,
   _updatedAt
 }`
 

@@ -569,7 +569,7 @@ export default function HeaderClient({
   }, [mobileOpen])
 
   const logoUrl = settings.logo?.asset
-    ? urlFor(settings.logo.asset).width(220).height(60).url()
+    ? urlFor(settings.logo.asset).width(220).height(60).auto('format').url()
     : settings.logo?.url ?? null
 
   const wishlistGroups: { label: string; items: WishlistItem[] }[] = [

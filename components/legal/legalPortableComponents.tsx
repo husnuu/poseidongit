@@ -87,3 +87,34 @@ export const legalPageComponents: PortableTextComponents = {
     ),
   },
 }
+
+const HEADING_STYLES = ['h1', 'h2', 'h3'] as const
+type HeadingStyle = (typeof HEADING_STYLES)[number]
+type HeadingTag = 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+
+const HEADING_LOOK: Record<HeadingStyle, { className: string; fontWeight: number }> = {
+  h1: { className: 'mb-3 mt-10 text-[1.5rem] uppercase leading-tight first:mt-0', fontWeight: 900 },
+  h2: { className: 'mb-2 mt-8 text-[1.35rem] uppercase leading-tight', fontWeight: 800 },
+  h3: { className: 'mb-2 mt-6 text-[1.15rem] uppercase leading-snug', fontWeight: 800 },
+}
+
+/**
+ * Yasal sayfa (/yasal/[slug]) için: sayfanın kendi H1'i olduğundan içerikteki
+ * başlıklar H2'den başlayıp sırayla iner (editör yalnızca "Başlık 3"
+ * kullandıysa bile H1 → H3 atlaması olmaz, ikinci bir H1 de oluşmaz).
+ * Görünüm editörde seçilen stile göre aynı kalır; yalnızca etiket değişir.
+ */
+export function legalPageComponentsForContent(blocks: { style?: string }[] | null | undefined): PortableTextComponents {
+  const used = HEADING_STYLES.filter((s) => (blocks ?? []).some((b) => b?.style === s))
+  const block = { ...(legalPageComponents.block as Record<string, unknown>) }
+  used.forEach((style, i) => {
+    const Tag = `h${Math.min(2 + i, 6)}` as HeadingTag
+    const look = HEADING_LOOK[style]
+    block[style] = ({ children }: { children?: React.ReactNode }) => (
+      <Tag className={look.className} style={{ fontFamily: TITLE_FONT, fontWeight: look.fontWeight, color: SECONDARY_COLOR }}>
+        {children}
+      </Tag>
+    )
+  })
+  return { ...legalPageComponents, block: block as PortableTextComponents['block'] }
+}

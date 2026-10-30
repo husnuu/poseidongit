@@ -96,7 +96,7 @@ export default async function RezervasyonPage({
           .map((it) => ({
             videoUrl: it.videoUrl!.trim(),
             posterUrl: it.poster?.asset
-              ? urlFor(it.poster.asset).width(720).height(1280).quality(80).url()
+              ? urlFor(it.poster.asset).width(720).height(1280).quality(80).auto('format').url()
               : it.poster?.url?.trim() || undefined,
           }))
       : []
@@ -194,7 +194,7 @@ export default async function RezervasyonPage({
                       controls
                       poster={
                         tour.tourVideo.poster?.asset
-                          ? urlFor(tour.tourVideo.poster.asset).width(1280).height(720).url()
+                          ? urlFor(tour.tourVideo.poster.asset).width(1280).height(720).auto('format').url()
                           : tour.tourVideo.poster?.url
                             ? tour.tourVideo.poster.url
                             : undefined

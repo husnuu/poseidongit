@@ -500,7 +500,7 @@ async function mapPopularYachtsSection(
         slug: y.slug ?? null,
         locationTitle: locationTitle || y.locationTitle || null,
         locationSlug: y.locationSlug ?? null,
-        coverImageUrl: y.mainImage?.asset ? urlFor(y.mainImage.asset).width(900).height(720).url() : null,
+        coverImageUrl: y.mainImage?.asset ? urlFor(y.mainImage.asset).width(900).height(720).auto('format').url() : null,
         coverImageAlt: y.mainImage?.alt ?? null,
         // yachtType teknik bir enum anahtarı (gulet/motoryacht/sailing/…) — ikon seçiminde
         // kullanılıyor, ekranda gösterilmiyor; çevrilirse değer bozulup ikon eşleşmesi kırılır.
@@ -598,7 +598,7 @@ async function mapBlogSection(raw: BlogSectionRaw | null, locale: SiteLocale): P
         // Kartta "· 4 dk okuma" — blog liste/detay kartlarıyla aynı biçim.
         readingTime: merged.readingTime ?? null,
         readTime: merged.readTime ?? null,
-        coverImageUrl: merged.coverImage?.asset ? urlFor(merged.coverImage.asset).width(800).height(600).url() : null,
+        coverImageUrl: merged.coverImage?.asset ? urlFor(merged.coverImage.asset).width(800).height(600).auto('format').url() : null,
         coverImageAlt: merged.coverImage?.alt ?? null,
       }
     })
@@ -718,7 +718,7 @@ async function mapRouteSection(
       return {
         name: name || loc.name || '',
         location: location || loc.location || '',
-        imageUrl: loc.image?.asset ? urlFor(loc.image.asset).width(960).height(720).url() : null,
+        imageUrl: loc.image?.asset ? urlFor(loc.image.asset).width(960).height(720).auto('format').url() : null,
         alt: loc.image?.alt ?? null,
         description,
         href: coveSlug ? withLocalePath(locale, `/koylar/${coveSlug}`) : null,

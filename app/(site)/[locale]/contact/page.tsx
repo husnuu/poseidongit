@@ -8,7 +8,11 @@ import ContactSidebar, { ContactQuickActions } from '@/components/contact/Contac
 import type { ContactSidebarData, ContactSidebarLabels } from '@/components/contact/ContactSidebar'
 import PopularToursSection from '@/components/home/PopularToursSection'
 import type { TourListItem } from '@/components/tours/TourCard'
-import { getSiteName } from '@/lib/seo'
+import { absoluteUrl, getSiteName } from '@/lib/seo'
+import { buildStandardPageLd } from '@/lib/seo/pageSchemas'
+import { buildBusinessContactStructuredData } from '@/lib/seo/travelAgencyStructuredData'
+import JsonLd from '@/components/seo/JsonLd'
+import { withLocalePath } from '@/lib/i18n/paths'
 import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import { notFound } from 'next/navigation'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -99,8 +103,10 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
   const locale = loc as SiteLocale
 
   let data: ContactPageData | null = null
+  let trTitle: string | null = null
   try {
     const raw = await client.fetch<ContactPageData | null>(contactPageQuery, {}, { useCdn: false })
+    trTitle = raw?.title?.trim() || null
     data = mergeContactPageLocale(raw as unknown as Record<string, unknown>, locale) as ContactPageData | null
   } catch {
     data = null
@@ -111,7 +117,19 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
   const localeUpper = locale === 'tr' ? 'tr-TR' : locale === 'de' ? 'de-DE' : 'en-US'
   const toHeadingUpper = (s: string) => s.trim().toLocaleUpperCase(localeUpper)
 
-  const title = data?.title ?? ui.defaultTitle
+  // O dilde çeviri girilmemişse Türkçe başlık yerine dilin kendi "İletişim" karşılığı.
+  const mergedTitle = data?.title?.trim() || ''
+  const title =
+    !mergedTitle || (locale !== 'tr' && mergedTitle === trTitle) ? ui.defaultTitle : mergedTitle
+  const pageUrl = absoluteUrl(withLocalePath(locale, '/contact'))
+  const pageLd = buildStandardPageLd({
+    type: 'ContactPage',
+    locale,
+    url: pageUrl,
+    homeUrl: withLocalePath(locale, '/'),
+    name: title,
+    description: ui.defaultMetaDescription,
+  })
   const intro = data?.intro ?? []
   const form = data?.form ?? {}
   const showPopularTours = data?.showPopularTours ?? false
@@ -198,6 +216,10 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-white">
+      {pageLd.map((d, i) => (
+        <JsonLd key={i} data={d} />
+      ))}
+      <JsonLd data={buildBusinessContactStructuredData()} />
       {/* Koylar sayfasındaki gibi başlığın arkasında çok açık mavi bir ışıltı. */}
       <div
         className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[460px] w-[1000px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-70 blur-3xl"

@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import { client, urlFor } from '@/lib/sanity'
 import { faqPageQuery, siteFooterQuery } from '@/lib/queries'
-import { absoluteUrl, buildFAQSchema, getSiteName } from '@/lib/seo'
+import { absoluteUrl, buildFAQSchema } from '@/lib/seo'
 import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import JsonLd from '@/components/seo/JsonLd'
 import FAQAccordion from '@/components/FAQAccordion'
@@ -9,6 +9,8 @@ import { withLocalePath } from '@/lib/i18n/paths'
 import type { FAQItem } from '@/components/FAQAccordion'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
+import { translateText } from '@/lib/i18n/runtimeTranslate'
+import StandardPageLd from '@/components/seo/StandardPageLd'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,23 +42,78 @@ function splitHeadingForBlogStyle(heading: string): [string, string] {
   return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')]
 }
 
+/** Sanity'de SSS sayfası tek dilde tutuluyor; diğer dillerde anlık makine
+ * çevirisiyle gösterilir (Sanity'e yazılmaz). Aksi halde /en/faq, /de/faq
+ * ve /ru/faq aynı metni taşıyan kopya sayfalar olarak indekslenir. */
+async function localizeFaqPage(data: FaqPageData | null, locale: SiteLocale): Promise<FaqPageData | null> {
+  if (!data || locale === 'tr') return data
+  const tr = (v: string | null | undefined) => (v?.trim() ? translateText(v, locale) : Promise.resolve(v ?? null))
+  const [metaTitle, metaDescription, heading, description, sections] = await Promise.all([
+    tr(data.seo?.metaTitle),
+    tr(data.seo?.metaDescription),
+    tr(data.cover?.heading),
+    tr(data.cover?.description),
+    Promise.all(
+      (data.sections ?? []).map(async (section) => ({
+        sectionTitle: await tr(section.sectionTitle),
+        items: await Promise.all(
+          (section.items ?? []).map(async (it) => ({
+            question: await tr(it.question),
+            answer: await tr(it.answer),
+          }))
+        ),
+      }))
+    ),
+  ])
+  return {
+    seo: data.seo ? { metaTitle, metaDescription } : data.seo,
+    cover: data.cover ? { ...data.cover, heading, description } : data.cover,
+    sections,
+  }
+}
+
+const FAQ_FALLBACK: Record<SiteLocale, { title: string; description: string }> = {
+  tr: {
+    title: 'Sık Sorulan Sorular',
+    description:
+      'Çeşme tekne turları hakkında merak edilenler: rezervasyon, ödeme, iptal, kalkış saatleri, yemek ve teknede neler olduğu.',
+  },
+  en: {
+    title: 'Frequently Asked Questions',
+    description:
+      'Everything about our Çeşme boat tours: booking, payment, cancellation, departure times, meals and what to expect on board.',
+  },
+  de: {
+    title: 'Häufig gestellte Fragen',
+    description:
+      'Alles zu unseren Bootstouren in Çeşme: Buchung, Zahlung, Stornierung, Abfahrtszeiten, Essen und was Sie an Bord erwartet.',
+  },
+  ru: {
+    title: 'Часто задаваемые вопросы',
+    description:
+      'Всё о морских прогулках в Чешме: бронирование, оплата, отмена, время отправления, питание и что ждёт вас на борту.',
+  },
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: loc } = await params
   const locale: SiteLocale = isSiteLocale(loc) ? loc : 'tr'
+  const fallback = FAQ_FALLBACK[locale]
   try {
-    const data = await client.fetch<FaqPageData | null>(faqPageQuery, {}, { useCdn: false })
-    const rawTitle = data?.seo?.metaTitle ?? data?.cover?.heading ?? 'Sık Sorulanlar'
-    const title = rawTitle.includes('|') ? rawTitle : getSiteName() ? `${rawTitle} | ${getSiteName()}` : rawTitle
-    const description = data?.seo?.metaDescription ?? data?.cover?.description ?? 'Sıkça sorulan sorular ve cevapları.'
+    const raw = await client.fetch<FaqPageData | null>(faqPageQuery, {}, { useCdn: false })
+    const data = await localizeFaqPage(raw, locale)
+    // Çeviri servisi yanıt vermezse metin Türkçe kalır; o durumda dilin kendi hazır metni.
+    const untranslated = (v: string | undefined, src: string | null | undefined) =>
+      !v || (locale !== 'tr' && v === src?.trim())
+    const t = data?.seo?.metaTitle?.trim() || data?.cover?.heading?.trim()
+    const d = data?.seo?.metaDescription?.trim() || data?.cover?.description?.trim()
+    const title = untranslated(t, raw?.seo?.metaTitle?.trim() || raw?.cover?.heading) ? fallback.title : t!
+    const description = (
+      untranslated(d, raw?.seo?.metaDescription?.trim() || raw?.cover?.description) ? fallback.description : d!
+    ).slice(0, 160)
     return buildPageMetadata({ locale, path: '/sik-sorulanlar', title, description })
   } catch {
-    const title = getSiteName() ? `Sık Sorulanlar | ${getSiteName()}` : 'Sık Sorulanlar'
-    return buildPageMetadata({
-      locale,
-      path: '/sik-sorulanlar',
-      title,
-      description: 'Sıkça sorulan sorular ve cevapları.',
-    })
+    return buildPageMetadata({ locale, path: '/sik-sorulanlar', title: fallback.title, description: fallback.description })
   }
 }
 
@@ -76,7 +133,15 @@ export default async function SikSorulanlarPage({
       client.fetch<FaqPageData | null>(faqPageQuery, {}, { useCdn: false }),
       client.fetch<{ contact?: { chatValue?: string | null } | null } | null>(siteFooterQuery, {}, { useCdn: false }),
     ])
-    data = pageData
+    data = await localizeFaqPage(pageData, locale)
+    // Çeviri servisi yanıt vermediyse kapak başlığı Türkçe kalır: dilin hazır başlığı gösterilsin.
+    if (
+      locale !== 'tr' &&
+      data?.cover?.heading &&
+      data.cover.heading.trim() === pageData?.cover?.heading?.trim()
+    ) {
+      data = { ...data, cover: { ...data.cover, heading: FAQ_FALLBACK[locale].title } }
+    }
     const raw = footer?.contact?.chatValue ?? ''
     if (raw && /^[0-9+\s]+$/.test(raw.replace(/\s/g, ''))) {
       const num = raw.replace(/\D/g, '')
@@ -114,7 +179,7 @@ export default async function SikSorulanlarPage({
       : null
 
   const coverImageUrl = cover?.image?.asset
-    ? urlFor(cover.image.asset).width(1920).height(720).url()
+    ? urlFor(cover.image.asset).width(1920).height(720).auto('format').url()
     : null
   const coverImageAlt = cover?.image?.alt ?? 'Sık Sorulanlar kapak'
 
@@ -125,6 +190,7 @@ export default async function SikSorulanlarPage({
   return (
     <div className="min-h-screen bg-white">
       {faqPageSchema && <JsonLd data={faqPageSchema} />}
+      <StandardPageLd type="WebPage" locale={locale} path="/sik-sorulanlar" name={cover?.heading?.trim() || FAQ_FALLBACK[locale].title} />
       {/* Kapak – blog sayfası gibi: başlık kelimelerin yarısı lacivert, yarısı siyah */}
       <section
         className="relative w-full min-h-[320px] md:min-h-[400px] flex flex-col justify-end overflow-hidden"
@@ -158,6 +224,8 @@ export default async function SikSorulanlarPage({
               }}
             >
               <span style={{ color: coverImageUrl ? 'white' : 'var(--primary)' }}>{headingLine1}</span>
+              {/* Arama motorları başlığı "Güvenle Planlayın" diye okusun (flex gap görsel boşluk, metin boşluğu değil). */}
+              {headingLine2 ? ' ' : null}
               {headingLine2 && (
                 <span style={{ color: coverImageUrl ? 'rgba(255,255,255,0.92)' : 'white' }}>{headingLine2}</span>
               )}

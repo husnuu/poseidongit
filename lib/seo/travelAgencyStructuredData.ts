@@ -203,3 +203,44 @@ export function buildTravelAgencyStructuredData(
     },
   }
 }
+/**
+ * İletişim sayfası için işletmenin iletişim kimliği — ana sayfadaki
+ * TravelAgency ile aynı @id ve aynı gerçek bilgiler (tek kaynak bu dosya).
+ */
+export function buildBusinessContactStructuredData(): Record<string, unknown> {
+  const base = getBaseUrl()
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'TravelAgency',
+    '@id': `${base}/#business`,
+    name: BUSINESS_NAME,
+    alternateName: BUSINESS_ALTERNATE_NAME,
+    url: base,
+    telephone: TELEPHONE,
+    email: EMAIL,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: ADDRESS.streetAddress,
+      addressLocality: ADDRESS.addressLocality,
+      addressRegion: ADDRESS.addressRegion,
+      postalCode: ADDRESS.postalCode,
+      addressCountry: 'TR',
+    },
+    geo: { '@type': 'GeoCoordinates', latitude: GEO.latitude, longitude: GEO.longitude },
+    contactPoint: [
+      { '@type': 'ContactPoint', telephone: TELEPHONE, email: EMAIL, contactType: 'customer service' },
+      { '@type': 'ContactPoint', telephone: TELEPHONE, contactType: 'reservations', url: `https://wa.me/${WHATSAPP_E164}` },
+    ],
+    sameAs: [...SAME_AS],
+  }
+}
+
+/** llms.txt gibi düz metin özetler için işletme bilgileri (tek kaynak). */
+export const BUSINESS_FACTS = {
+  name: BUSINESS_NAME,
+  telephone: TELEPHONE,
+  email: EMAIL,
+  whatsappUrl: `https://wa.me/${WHATSAPP_E164}`,
+  address: FULL_ADDRESS_LINE,
+  sameAs: [...SAME_AS],
+} as const

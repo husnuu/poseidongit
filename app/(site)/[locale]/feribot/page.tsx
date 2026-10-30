@@ -13,6 +13,11 @@ import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import styles from './page.module.css'
+import { LISTING_HEADINGS } from '@/lib/i18n/strings/listingHeadings'
+import StandardPageLd from '@/components/seo/StandardPageLd'
+import JsonLd from '@/components/seo/JsonLd'
+import { buildItemListSchema } from '@/lib/seo'
+import { withLocalePath } from '@/lib/i18n/paths'
 
 export const dynamic = 'force-dynamic'
 
@@ -97,16 +102,26 @@ export default async function FeribotListPage({ params }: { params: Promise<{ lo
 
   return (
     <div className="min-h-screen bg-white">
+      <StandardPageLd type="CollectionPage" locale={locale} path="/feribot" name={ui.listMetaTitle} description={ui.listMetaDescription} />
+      <JsonLd
+        data={buildItemListSchema(
+          routes
+            .filter((r) => r.slug)
+            .map((r) => ({ name: r.title ?? '', url: withLocalePath(locale, `/feribot/${r.slug}`) }))
+        )}
+      />
       <section className="w-full py-14 md:py-20" aria-labelledby="ferry-routes-heading">
         <div className="mx-auto max-w-[1200px] px-4">
           <header className="mb-12">
             <h1 id="ferry-routes-heading" className={styles.heading}>
               <span className={styles.headingLine1}>{ui.listHeadingTop}</span>
+              {' '}
               <span className={styles.headingLine2}>{ui.listHeadingBottom}</span>
             </h1>
             <p className={styles.subtitle}>{ui.listSubtitle}</p>
           </header>
 
+          <h2 className="sr-only">{LISTING_HEADINGS.ferries[locale]}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {routes.map((route) => (
               <FerryRouteCard key={route._id} route={route} locale={locale} />

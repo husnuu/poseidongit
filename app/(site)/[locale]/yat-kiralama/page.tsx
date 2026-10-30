@@ -12,6 +12,8 @@ import JsonLd from '@/components/seo/JsonLd'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import { translateText } from '@/lib/i18n/runtimeTranslate'
+import { LISTING_HEADINGS } from '@/lib/i18n/strings/listingHeadings'
+import StandardPageLd from '@/components/seo/StandardPageLd'
 
 export const revalidate = 3600
 
@@ -155,11 +157,13 @@ export default async function YatKiralamaPage({
   return (
     <div className="min-h-screen bg-white">
       <JsonLd data={itemListSchema} />
+      <StandardPageLd type="CollectionPage" locale={locale} path="/yat-kiralama" name={LISTING_HEADINGS.yachts[locale]} description={intro || undefined} />
       <section className="w-full py-14 md:py-20" aria-labelledby="yachts-heading">
         <div className="mx-auto max-w-[1200px] px-4">
           <header className="mb-12 text-center">
             <h1 id="yachts-heading" className={listStyles.heading}>
               {titleTop && <span className={listStyles.headingLine1}>{titleTop}</span>}
+              {titleTop && titleBottom ? ' ' : null}
               {titleBottom && <span className={listStyles.headingLine2}>{titleBottom}</span>}
             </h1>
             <p
@@ -170,6 +174,7 @@ export default async function YatKiralamaPage({
             </p>
           </header>
 
+          <h2 className="sr-only">{LISTING_HEADINGS.yachts[locale]}</h2>
           <YachtRentalListSection
             yachts={yachts}
             emptyStateMessage={emptyStateMessage}

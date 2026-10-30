@@ -85,7 +85,7 @@ export default function HostBlock({ host, whyYouWillLove, tourUi: tourUiProp }: 
       {avatarAsset && (
         <div className={styles.avatarWrap}>
           <Image
-            src={urlFor(avatarAsset).width(320).height(320).url()}
+            src={urlFor(avatarAsset).width(320).height(320).auto('format').url()}
             alt={host?.name ?? tourUi.captainAvatarAltFallback}
             width={140}
             height={140}

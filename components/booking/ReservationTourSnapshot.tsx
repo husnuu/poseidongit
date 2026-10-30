@@ -19,7 +19,7 @@ interface ReservationTourSnapshotProps {
 function imageUrl(img: TourImageForBooking | undefined, width: number, height: number): string | null {
   if (img?.asset) {
     try {
-      return urlFor(img.asset).width(width).height(height).fit('crop').url()
+      return urlFor(img.asset).width(width).height(height).fit('crop').auto('format').url()
     } catch {
       /* fall through */
     }

@@ -127,6 +127,9 @@ export default function MenuPageClient({ items, locale = 'tr' }: { items: MenuIt
             {ui.emptyCategory}
           </p>
         ) : (
+          <>
+          {/* Başlık hiyerarşisi H1 → H2 → H3 kalsın (ürün adları H3). */}
+          <h2 className="sr-only">{CATEGORY_TABS.find((t) => t.value === active)?.tabLabel ?? ui.categoriesAriaLabel}</h2>
           <ul className="flex flex-col">
             {filtered.map((item, index) => (
               <li key={item._id}>
@@ -199,6 +202,7 @@ export default function MenuPageClient({ items, locale = 'tr' }: { items: MenuIt
               </li>
             ))}
           </ul>
+          </>
         )}
       </div>
     </div>

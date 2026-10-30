@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
+import { SITE_BRAND } from '@/lib/seo/brand'
 
 const DEFAULT_TOP_BADGE_TEXT = 'Hantal Turizm - Belge No: 18888'
 
@@ -45,7 +46,8 @@ export default function HeroBanner({
   hero: HeroData | null
   locale?: SiteLocale
 }) {
-  if (!hero?.heading) return null
+  // Hero içeriği gelmezse (Sanity hatası/boş alan) sayfa yine tek bir H1 taşısın.
+  if (!hero?.heading) return <h1 className="sr-only">{SITE_BRAND[locale] ?? SITE_BRAND.tr}</h1>
 
   const desktopImageUrl = hero.heroImageUrl ?? ''
   const mobileImageUrl = hero.heroImageMobileUrl ?? hero.heroImageUrl ?? ''

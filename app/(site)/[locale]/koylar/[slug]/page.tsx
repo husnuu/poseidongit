@@ -322,8 +322,8 @@ export default async function CoveDetailPage({ params }: { params: Promise<{ loc
     imageList.push({ asset: img.asset, alt: img.alt?.trim() || title })
   }
   const galleryImages = imageList.map((img) => ({
-    url: urlFor(img.asset).width(1400).height(1000).url(),
-    fullUrl: urlFor(img.asset).width(2000).fit('max').url(),
+    url: urlFor(img.asset).width(1400).height(1000).auto('format').url(),
+    fullUrl: urlFor(img.asset).width(2000).fit('max').auto('format').url(),
     alt: img.alt,
   }))
 
@@ -388,7 +388,7 @@ export default async function CoveDetailPage({ params }: { params: Promise<{ loc
         id: m._id,
         title: t,
         description: m.description ?? null,
-        imageUrl: m.image?.asset ? urlFor(m.image.asset).width(900).height(675).url() : null,
+        imageUrl: m.image?.asset ? urlFor(m.image.asset).width(900).height(675).auto('format').url() : null,
         alt: m.image?.alt,
         locationTag: m.locationTag,
         href: withLocalePath(locale, `/koylar/${s}`),

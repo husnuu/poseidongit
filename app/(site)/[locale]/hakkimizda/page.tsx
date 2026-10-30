@@ -8,6 +8,8 @@ import Link from 'next/link'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getSiteName } from '@/lib/seo'
 import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
+import { buildStandardPageLd } from '@/lib/seo/pageSchemas'
+import JsonLd from '@/components/seo/JsonLd'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -270,12 +272,12 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     .map((b) => ({
       ...b,
-      imageUrl: b.image?.asset ? urlFor(b.image.asset).width(800).height(600).url() : null,
+      imageUrl: b.image?.asset ? urlFor(b.image.asset).width(800).height(600).auto('format').url() : null,
       imageAlt: b.image?.alt ?? b.name ?? ui.defaultBoatImageAlt,
     }))
 
   const hasHeroLogo = Boolean(data.heroLogo?.asset)
-  const heroLogoUrl = hasHeroLogo && data.heroLogo?.asset ? urlFor(data.heroLogo.asset).width(900).quality(90).url() : null
+  const heroLogoUrl = hasHeroLogo && data.heroLogo?.asset ? urlFor(data.heroLogo.asset).width(900).quality(90).auto('format').url() : null
   const heroLogoAlt = (data.heroLogo?.alt?.trim() || ui.metaTitleFallback).slice(0, 200)
 
   /* Hikaye bölümündeki "o zaman / bugün" çifti: filonun en eski ve en yeni
@@ -285,8 +287,8 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
     .sort((a, b) => (parseInt(a.year ?? '0', 10) || 0) - (parseInt(b.year ?? '0', 10) || 0))
   const oldestBoat = boatsByYear[0] ?? null
   const newestBoat = boatsByYear.length > 1 ? boatsByYear[boatsByYear.length - 1] : null
-  const pairOldUrl = oldestBoat?.image?.asset ? urlFor(oldestBoat.image.asset).width(900).height(1100).url() : null
-  const pairNewUrl = newestBoat?.image?.asset ? urlFor(newestBoat.image.asset).width(900).height(1100).url() : null
+  const pairOldUrl = oldestBoat?.image?.asset ? urlFor(oldestBoat.image.asset).width(900).height(1100).auto('format').url() : null
+  const pairNewUrl = newestBoat?.image?.asset ? urlFor(newestBoat.image.asset).width(900).height(1100).auto('format').url() : null
   const toursHref = withLocalePath(locale, '/turlar')
   const contactHref = withLocalePath(locale, '/iletisim')
 
@@ -340,9 +342,20 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
       : null,
   ].filter((item): item is { Icon: typeof BadgeCheck; title: string; body: string } => item != null)
 
+  const pageLd = buildStandardPageLd({
+    type: 'AboutPage',
+    locale,
+    url: withLocalePath(locale, '/hakkimizda'),
+    homeUrl: withLocalePath(locale, '/'),
+    name: ui.metaTitleFallback,
+    description: ui.metaDescriptionFallback,
+  })
 
   return (
     <div className="min-h-screen bg-white">
+      {pageLd.map((d, i) => (
+        <JsonLd key={i} data={d} />
+      ))}
       {/* ── 1. Hero: diğer sayfalarla aynı ortalı mavi başlık + kısa spot;
           altında istatistik şeridi. ── */}
       <section className="w-full px-4 pb-0 pt-14 text-center sm:pt-16 md:pt-20">

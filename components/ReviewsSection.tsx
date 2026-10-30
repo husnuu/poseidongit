@@ -118,7 +118,7 @@ export default function ReviewsSection({
     dateLabel: it.title || '',
     description: it.description,
     rating: typeof it.rating === 'number' ? it.rating : 5,
-    avatarSrc: it.avatar?.asset ? urlFor(it.avatar.asset).width(88).height(88).url() : it.avatar?.url ?? null,
+    avatarSrc: it.avatar?.asset ? urlFor(it.avatar.asset).width(88).height(88).auto('format').url() : it.avatar?.url ?? null,
     avatarLqip: it.avatar?.metadata?.lqip,
   }))
 

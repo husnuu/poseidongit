@@ -29,7 +29,8 @@ export type FerryPageUiStrings = {
 
 const TR: FerryPageUiStrings = {
   defaultTitle: 'Feribot Bileti',
-  defaultMetaDescription: 'Feribot bileti satın alın.',
+  defaultMetaDescription:
+    'Feribot sefer saatlerini, bilet fiyatlarını ve yolculuk öncesi bilmeniz gerekenleri inceleyin; feribot biletinizi online olarak güvenle satın alın.',
   notFoundTitle: 'Sayfa bulunamadı',
   notFoundDesc: 'Aradığınız feribot hattı mevcut değil veya kaldırılmış olabilir.',
   backHome: 'Ana sayfaya dön',
@@ -47,7 +48,8 @@ const TR: FerryPageUiStrings = {
   listHeadingBottom: 'BİLETLERİ',
   listSubtitle: 'Türkiye - Yunanistan arası feribot biletlerinizi kolayca alabilirsiniz.',
   listMetaTitle: 'Feribot Biletleri',
-  listMetaDescription: 'Feribot hatlarımıza göz atın ve biletinizi dakikalar içinde alın.',
+  listMetaDescription:
+    'Çeşme çıkışlı feribot hatlarını, sefer saatlerini ve fiyatları inceleyin; feribot biletinizi online olarak dakikalar içinde güvenle satın alın.',
   listEmptyMessage: 'Henüz feribot hattı eklenmemiş.',
   viewRouteButton: 'Seferi Görüntüle',
   perPersonLabel: 'Kişi Başı',
@@ -56,7 +58,8 @@ const TR: FerryPageUiStrings = {
 
 const EN: FerryPageUiStrings = {
   defaultTitle: 'Ferry Ticket',
-  defaultMetaDescription: 'Buy your ferry ticket.',
+  defaultMetaDescription:
+    'Check ferry schedules, ticket prices and what to know before you travel, then buy your ferry ticket securely online in a few minutes.',
   notFoundTitle: 'Page not found',
   notFoundDesc: 'The ferry route you are looking for may not exist or has been removed.',
   backHome: 'Back to homepage',
@@ -74,7 +77,8 @@ const EN: FerryPageUiStrings = {
   listHeadingBottom: 'TICKETS',
   listSubtitle: 'Easily get your ferry tickets between Turkey and Greece.',
   listMetaTitle: 'Ferry Tickets',
-  listMetaDescription: 'Browse our ferry routes and get your ticket in minutes.',
+  listMetaDescription:
+    'Browse ferry routes from Çeşme with schedules and fares, and buy your ferry ticket securely online in just a few minutes.',
   listEmptyMessage: 'No ferry routes have been added yet.',
   viewRouteButton: 'View Route',
   perPersonLabel: 'Per Person',
@@ -83,7 +87,8 @@ const EN: FerryPageUiStrings = {
 
 const DE: FerryPageUiStrings = {
   defaultTitle: 'Fährticket',
-  defaultMetaDescription: 'Kaufen Sie Ihr Fährticket.',
+  defaultMetaDescription:
+    'Fahrplan, Ticketpreise und Reisehinweise der Fähre ansehen und das Fährticket in wenigen Minuten sicher online kaufen.',
   notFoundTitle: 'Seite nicht gefunden',
   notFoundDesc: 'Die gesuchte Fährverbindung existiert nicht mehr oder wurde entfernt.',
   backHome: 'Zurück zur Startseite',
@@ -110,7 +115,8 @@ const DE: FerryPageUiStrings = {
 
 const RU: FerryPageUiStrings = {
   defaultTitle: 'Билет на паром',
-  defaultMetaDescription: 'Купите билет на паром.',
+  defaultMetaDescription:
+    'Расписание парома, цены на билеты и что нужно знать перед поездкой — купите билет на паром онлайн за несколько минут.',
   notFoundTitle: 'Страница не найдена',
   notFoundDesc: 'Паромный маршрут, который вы ищете, не существует или был удалён.',
   backHome: 'Вернуться на главную',

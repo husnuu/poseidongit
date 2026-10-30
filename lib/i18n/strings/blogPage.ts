@@ -36,7 +36,7 @@ const TR: BlogPageUiStrings = {
   readTimeSuffix: 'dk okuma',
   blogListTitleSuffix: 'Blog',
   blogListDefaultDescription:
-    'Tekne turu ipuçları, koy rehberleri ve tatil yazıları.',
+    'Çeşme tekne turu rehberleri, en güzel koylar, tatil ipuçları ve gezi önerileri: tekne turunuzu planlamadan önce okumanız gereken yazılar.',
   updatedLabel: 'Son güncelleme',
 }
 
@@ -56,7 +56,7 @@ const EN: BlogPageUiStrings = {
   readTimeSuffix: 'min read',
   blogListTitleSuffix: 'Blog',
   blogListDefaultDescription:
-    'Boat tour tips, cove guides, and travel stories.',
+    'Çeşme boat tour guides, the most beautiful coves, holiday tips and travel ideas — everything worth reading before you plan your boat trip.',
   updatedLabel: 'Last updated',
 }
 
@@ -76,7 +76,7 @@ const DE: BlogPageUiStrings = {
   readTimeSuffix: 'Min. Lesezeit',
   blogListTitleSuffix: 'Blog',
   blogListDefaultDescription:
-    'Tipps zu Bootstouren, Buchtenführer und Reisetexte.',
+    'Ratgeber zu Bootstouren in Çeşme, die schönsten Buchten, Urlaubstipps und Reiseideen – alles, was Sie vor Ihrer Bootstour wissen sollten.',
   updatedLabel: 'Letzte Aktualisierung',
 }
 
@@ -96,7 +96,7 @@ const RU: BlogPageUiStrings = {
   readTimeSuffix: 'мин чтения',
   blogListTitleSuffix: 'Блог',
   blogListDefaultDescription:
-    'Советы по морским прогулкам, путеводители по бухтам и истории о путешествиях.',
+    'Гиды по морским прогулкам в Чешме, самые красивые бухты, советы для отпуска и идеи для поездок — всё, что стоит прочитать перед прогулкой.',
   updatedLabel: 'Последнее обновление',
 }
 

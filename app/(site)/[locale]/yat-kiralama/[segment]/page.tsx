@@ -13,13 +13,14 @@ import YachtDetailView from '@/components/yacht/YachtDetailView'
 import YachtRentalListSection from '@/components/yacht/YachtRentalListSection'
 import { buildYachtDetailMetadata } from '@/lib/yachtMetadata'
 import listStyles from '../../turlar/page.module.css'
-import { getSiteName } from '@/lib/seo'
 import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import { getYachtUi } from '@/lib/i18n/yachtUi'
 import { translateYachtRentalDocument } from '@/lib/yachtTranslate'
 import { siteFooterQuery } from '@/lib/queries'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
+import { LISTING_HEADINGS } from '@/lib/i18n/strings/listingHeadings'
+import StandardPageLd from '@/components/seo/StandardPageLd'
 
 /** Root layout `headers()` ile uyum (prod: DYNAMIC_SERVER_USAGE). */
 export const dynamic = 'force-dynamic'
@@ -63,6 +64,30 @@ const getYachtsByLocation = cache(async (locationSlug: string) => {
   }
 })
 
+/** Yat kiralama bölge sayfası meta metinleri (Sanity'de bölge tanıtımı kısaysa). */
+const LOCATION_META: Record<SiteLocale, { title: (place: string) => string; description: (place: string) => string }> = {
+  tr: {
+    title: (p) => `${p} Yat ve Tekne Kiralama`,
+    description: (p) =>
+      `${p} bölgesinde günlük özel yat ve tekne kiralama: teknelerin kapasitesini, fiyatlarını ve fotoğraflarını inceleyin, online kapora ile yerinizi ayırtın.`,
+  },
+  en: {
+    title: (p) => `Yacht & Boat Rental in ${p}`,
+    description: (p) =>
+      `Private daily yacht and boat rental in ${p}: compare capacity, prices and photos of each boat and secure your date online with a deposit.`,
+  },
+  de: {
+    title: (p) => `Yacht- und Bootsverleih in ${p}`,
+    description: (p) =>
+      `Private Yacht- und Bootsvermietung in ${p}: Kapazität, Preise und Fotos der Boote vergleichen und den Termin online per Anzahlung sichern.`,
+  },
+  ru: {
+    title: (p) => `Аренда яхт и лодок: ${p}`,
+    description: (p) =>
+      `Частная аренда яхт и лодок на день в районе ${p}: сравните вместимость, цены и фото и забронируйте дату онлайн с предоплатой.`,
+  },
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -85,13 +110,12 @@ export async function generateMetadata({
   }
   const loc = await getLocationBySlug(segment)
   if (loc?.title) {
-    const site = getSiteName()
-    const title = site ? `${loc.title} yat kiralama | ${site}` : `${loc.title} | Yat kiralama`
+    const intro = (loc as { intro?: string | null }).intro?.replace(/\s+/g, ' ').trim()
     return buildPageMetadata({
       locale,
       path: `/yat-kiralama/${segment}`,
-      title,
-      description: `${loc.title} bölgesinde özel yat ve charter seçenekleri.`,
+      title: LOCATION_META[locale].title(loc.title),
+      description: intro && intro.length >= 70 ? intro.slice(0, 160) : LOCATION_META[locale].description(loc.title),
     })
   }
   return { title: 'Sayfa bulunamadı' }
@@ -142,11 +166,19 @@ export default async function YatKiralamaSegmentPage({
 
     return (
       <div className="min-h-screen bg-white">
+        <StandardPageLd
+          type="CollectionPage"
+          locale={locale}
+          path={`/yat-kiralama/${segment}`}
+          name={LOCATION_META[locale].title(location.title ?? segment)}
+          crumbs={[{ name: LISTING_HEADINGS.yachts[locale], path: '/yat-kiralama' }]}
+        />
         <section className="w-full py-14 md:py-20" aria-labelledby="loc-yachts-heading">
           <div className="mx-auto max-w-[1200px] px-4">
             <header className="mb-12">
               <h1 id="loc-yachts-heading" className={listStyles.heading}>
                 <span className={listStyles.headingLine1}>{location.title}</span>
+                {' '}
                 <span className={listStyles.headingLine2}>{ui.locationHeadingSuffix}</span>
               </h1>
               {location.intro?.trim() && (
@@ -158,6 +190,7 @@ export default async function YatKiralamaSegmentPage({
                 </p>
               )}
             </header>
+            <h2 className="sr-only">{LISTING_HEADINGS.yachts[locale]}</h2>
             <YachtRentalListSection
               yachts={yachts}
               emptyStateMessage={ui.locationEmptyStateMessage}

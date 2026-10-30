@@ -53,6 +53,7 @@
     "react-phone-number-input": "^3.4.16",
     "resend": "^6.9.3",
     "sanity": "^3.99.0",
+    "sharp": "0.35.5",
     "styled-components": "^6.3.11",
     "zod": "^4.3.6"
   },
