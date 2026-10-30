@@ -936,7 +936,13 @@ export default function AdminBookingsPage() {
     <div className="p-3 sm:p-4 lg:p-6">
       <div className="mx-auto max-w-[1600px]">
         <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-lg font-black text-[#131719] sm:text-xl">Rezervasyonlar & Kapasite</h1>
+          <div className="min-w-0">
+            {/* Yalnızca admin panelinde görünür (vergi levhasındaki ticaret unvanı). */}
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#2168b8]">
+              PS Tour Turizm Seyahat Limited Şirketi
+            </p>
+            <h1 className="text-lg font-black text-[#131719] sm:text-xl">Rezervasyonlar & Kapasite</h1>
+          </div>
           <button
             type="button"
             onClick={() => setManualDrawerOpen(true)}
