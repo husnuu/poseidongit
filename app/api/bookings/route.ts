@@ -231,6 +231,9 @@ export async function POST(request: Request) {
       customer_last_name: customer.lastName,
       customer_email: customer.email,
       customer_phone: customer.phone,
+      // Sütun yoksa (docs/supabase-whatsapp.sql çalıştırılmadıysa) aşağıdaki
+      // eksik-sütun döngüsü bu alanı düşürüp kaydı yine oluşturur.
+      whatsapp_opt_in: payload.customer.whatsappOptIn !== false,
       ...(customer.note ? { customer_note: customer.note } : {}),
       adult_count: payload.counts.adult,
       child_count: payload.counts.child,
@@ -312,6 +315,13 @@ export async function POST(request: Request) {
         })
       } catch (emailErr) {
         console.error('[bookings] Nakit rezervasyon e-postası gönderilemedi:', emailErr)
+      }
+      // Kapıda ödemeli rezervasyon: ödeme beklemeden WhatsApp onayı (bilet görselli).
+      try {
+        const { sendBookingConfirmationWhatsApp } = await import('@/lib/whatsapp/notifications')
+        await sendBookingConfirmationWhatsApp(insertedRow.id, { allowPending: true })
+      } catch (waErr) {
+        console.error('[bookings] Nakit rezervasyon WhatsApp onayı gönderilemedi:', waErr)
       }
     }
 

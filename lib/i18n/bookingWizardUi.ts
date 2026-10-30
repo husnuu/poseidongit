@@ -137,6 +137,8 @@ export type BookingWizardUi = {
   /** İkinci link: Şartlar ve Koşullar */
   distanceSalesAgreementLinkText2: string
   distanceSalesAgreementTrail: string
+  /** WhatsApp bildirim izni kutusu. */
+  whatsappOptInLabel: string
   back: string
   backAria: string
   closeAria: string
@@ -338,6 +340,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     distanceSalesAgreementMiddle: ' ve ',
     distanceSalesAgreementLinkText2: 'Şartlar ve Koşullar',
     distanceSalesAgreementTrail: ' okudum, anladım ve kabul ediyorum.',
+    whatsappOptInLabel: "Rezervasyon onayım, bilet görselim, tur hatırlatmaları ve sefer duyuruları (hava durumu, saat değişikliği) WhatsApp üzerinden bana gönderilsin.",
     back: 'Geri',
     backAria: 'Önceki adıma dön',
     closeAria: 'Kapat',
@@ -540,6 +543,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     distanceSalesAgreementMiddle: ' and ',
     distanceSalesAgreementLinkText2: 'Terms and Conditions',
     distanceSalesAgreementTrail: '.',
+    whatsappOptInLabel: "Send my booking confirmation, ticket image, tour reminders and trip updates (weather, time changes) to me on WhatsApp.",
     back: 'Back',
     backAria: 'Go to previous step',
     closeAria: 'Close',
@@ -741,6 +745,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     distanceSalesAgreementMiddle: ' und die ',
     distanceSalesAgreementLinkText2: 'Allgemeinen Geschäftsbedingungen',
     distanceSalesAgreementTrail: ' gelesen, verstanden und akzeptiere sie.',
+    whatsappOptInLabel: "Buchungsbestätigung, Ticketbild, Tour-Erinnerungen und Fahrtinfos (Wetter, Zeitänderungen) per WhatsApp an mich senden.",
     back: 'Zurück',
     backAria: 'Zum vorherigen Schritt',
     closeAria: 'Schließen',
@@ -942,6 +947,7 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     distanceSalesAgreementMiddle: ' и ',
     distanceSalesAgreementLinkText2: 'Условия использования',
     distanceSalesAgreementTrail: '.',
+    whatsappOptInLabel: "Отправлять мне в WhatsApp подтверждение бронирования, изображение билета, напоминания и новости о рейсе (погода, изменение времени).",
     back: 'Назад',
     backAria: 'Вернуться к предыдущему шагу',
     closeAria: 'Закрыть',

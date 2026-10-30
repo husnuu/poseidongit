@@ -307,6 +307,7 @@ export default function BookingWizardModal({
               email: state.customer.email?.trim() ?? '',
               phone: phoneDisplay ?? '',
               note: state.customer.note?.trim() || undefined,
+              whatsappOptIn: state.customer.whatsappOptIn !== false,
               ...(state.customer.gender === 'male' || state.customer.gender === 'female'
                 ? { gender: state.customer.gender }
                 : {}),

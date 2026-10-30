@@ -88,6 +88,8 @@ export interface BookingCreatePayload {
     phone: string
     note?: string
     gender?: 'male' | 'female'
+    /** WhatsApp bildirim izni (varsayılan true). */
+    whatsappOptIn?: boolean
   }
   additionalTravelers?: Array<{
     firstName: string

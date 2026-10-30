@@ -57,6 +57,8 @@ const customerSchema = z.object({
     .optional()
     .transform((v) => (typeof v === 'string' ? sanitizeCustomerNote(v, 2000) : undefined)),
   gender: z.union([z.string(), z.undefined(), z.null()]).optional(),
+  /** WhatsApp ile rezervasyon bildirimi izni (onay, hatırlatma, sefer duyurusu). */
+  whatsappOptIn: z.union([z.boolean(), z.undefined(), z.null()]).optional(),
 })
 
 const bookingWebJsonSchema = z.object({
@@ -237,6 +239,7 @@ export function parseBookingWebPayload(body: unknown): ParseWebBookingResult {
       email: v.customer.email,
       phone: v.customer.phone,
       gender: customerGender,
+      whatsappOptIn: v.customer.whatsappOptIn !== false,
       ...(v.customer.note !== undefined && v.customer.note !== '' && { note: v.customer.note }),
     },
     ...(extraN > 0

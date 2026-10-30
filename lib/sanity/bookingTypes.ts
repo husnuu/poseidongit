@@ -300,6 +300,8 @@ export interface BookingWizardState {
     note?: string
     /** Ana yolcu cinsiyeti (bay/bayan). */
     gender?: 'male' | 'female' | ''
+    /** WhatsApp ile rezervasyon bildirimi izni (varsayılan açık). */
+    whatsappOptIn?: boolean
   }
   /** Ana rezervasyon sahibi dışındaki yolcular (sıra: kalan yetişkinler, çocuklar; bebekler counts.baby ile). */
   additionalTravelers: {
@@ -322,7 +324,7 @@ export const DEFAULT_BOOKING_STATE: Omit<BookingWizardState, 'tourSlug'> = {
   extraNotes: {},
   extraQuantities: {},
   firstClassLocas: [],
-  customer: { firstName: '', lastName: '', email: '', phoneCountryCode: '90', phone: '', note: '', gender: '' },
+  customer: { firstName: '', lastName: '', email: '', phoneCountryCode: '90', phone: '', note: '', gender: '', whatsappOptIn: true },
   additionalTravelers: [],
   infantGenders: [],
   pricingSummary: null,

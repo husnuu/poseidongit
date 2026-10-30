@@ -355,6 +355,20 @@ export default function Step3CustomerInfo({
         </label>
       </div>
 
+      {/* WhatsApp bildirim izni — Meta kuralı gereği açık onay; varsayılan işaretli,
+          müşteri kaldırabilir. Ödeme butonunu etkilemez. */}
+      <div className={styles.termsCard}>
+        <label className={styles.termsRow}>
+          <input
+            type="checkbox"
+            className={styles.termsCheckbox}
+            checked={state.customer.whatsappOptIn !== false}
+            onChange={(e) => onUpdate({ customer: { ...state.customer, whatsappOptIn: e.target.checked } })}
+          />
+          <span className={styles.termsText}>{ui.whatsappOptInLabel}</span>
+        </label>
+      </div>
+
       {legalHref && (
         <LegalDocModal href={legalHref} locale={ui.locale} onClose={() => setLegalHref(null)} />
       )}

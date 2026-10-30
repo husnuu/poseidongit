@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import type { SupabaseBookingRow } from '@/lib/bookingsSupabase'
 import { isYachtDepositBooking } from '@/lib/yachtDepositBooking'
 import { yachtDepositBookingLocale } from '@/lib/yachtDepositDefaults'
+import { sendBookingConfirmationWhatsApp } from '@/lib/whatsapp/notifications'
 
 /**
  * Rezervasyon `paid` olduktan sonra: paid_now / access_token tamamlama ve müşteri + operasyon e-postaları.
@@ -154,4 +155,15 @@ export async function runBookingPaidEmailSideEffects(
     ...(mealPreference && { mealPreference }),
     ...(additionalTravelers.length > 0 && { additionalTravelers }),
   })
+
+  // WhatsApp onay mesajı (bilet görselli). Anahtarlar tanımlı değilse sessizce atlanır;
+  // hata e-posta akışını etkilemesin diye ayrı yakalanır.
+  try {
+    const wa = await sendBookingConfirmationWhatsApp(bookingId)
+    if (wa.result !== 'skipped' || wa.reason !== 'not_configured') {
+      console.info('[whatsapp] confirmation', { bookingId, ...wa })
+    }
+  } catch (e) {
+    console.error('[whatsapp] confirmation threw', { bookingId, message: e instanceof Error ? e.message : String(e) })
+  }
 }

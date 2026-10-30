@@ -8,6 +8,7 @@ import {
   CalendarCheck,
   ClipboardList,
   MessageSquare,
+  MessageCircle,
   Ticket,
   LogOut,
   Menu,
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { href: '/admin/bookings', label: 'Rezervasyonlar', icon: CalendarCheck },
   { href: '/admin/cikti-listesi', label: 'Çıktı Listesi', icon: ClipboardList },
   { href: '/admin/yacht-inquiries', label: 'Motoryat Mesajları', icon: MessageSquare },
+  { href: '/admin/whatsapp', label: 'WhatsApp Bildirimleri', icon: MessageCircle },
   { href: '/biletci', label: 'Biletçi', icon: Ticket },
 ] as const
 
