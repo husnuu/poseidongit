@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity'
+import { translationSlugOptions } from './translationSlugOptions'
 
 /** EN/DE overlay for a tour: same URL slug per locale is stored under translations.{en|de}.slug */
 export default defineType({
@@ -16,7 +17,7 @@ export default defineType({
       title: 'URL slug',
       type: 'slug',
       description: 'Bu dildeki tur adresi: Türkçe /tur/…, İngilizce /en/tour/…, Almanca /de/tour/…',
-      options: { maxLength: 96 },
+      options: translationSlugOptions,
     }),
     defineField({
       name: 'shortDescription',

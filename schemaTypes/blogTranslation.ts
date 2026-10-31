@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity'
+import { translationSlugOptions } from './translationSlugOptions'
 
 /** EN/DE overlay: ayrı slug ile /en/blog/… ve /de/blog/… */
 export default defineType({
@@ -16,7 +17,7 @@ export default defineType({
       title: 'URL slug (bu dil)',
       type: 'slug',
       description: 'Örn. İngilizce yazı adresi: /en/blog/your-post-slug',
-      options: { maxLength: 96 },
+      options: translationSlugOptions,
     }),
     defineField({
       name: 'excerpt',

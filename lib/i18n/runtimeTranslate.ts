@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import type { SiteLocale } from './config'
 import { DE_TRANSLATION_MEMORY, EN_TRANSLATION_MEMORY } from './translationMemory'
 
@@ -5,8 +6,10 @@ import { DE_TRANSLATION_MEMORY, EN_TRANSLATION_MEMORY } from './translationMemor
  * Anlık (runtime) makine çevirisi — Sanity'e hiçbir çeviri yazılmaz.
  * DEEPL_API_KEY tanımlıysa DeepL (yüksek kalite) kullanılır; yoksa anahtar
  * gerektirmeyen MyMemory'ye düşer (düşük/orta kalite, ücretsiz, günlük kotalı).
- * Next.js'in fetch veri önbelleği (CACHE_TTL_SECONDS) sayesinde aynı metin
- * ikinci istekte tekrar API'ye gitmez — hız ve maliyet için kritik.
+ * Başarılı çeviriler Next.js veri önbelleğinde (unstable_cache, CACHE_TTL_SECONDS)
+ * saklanır; Vercel'de tüm sunucu örnekleri ve deploy'lar bu önbelleği paylaşır,
+ * böylece aynı metin bir kez çevrildikten sonra tekrar API'ye gitmez — hız ve
+ * maliyet için kritik.
  */
 
 const CACHE_TTL_SECONDS = 60 * 60 * 24 * 30 // 30 gün
@@ -32,6 +35,9 @@ const MYMEMORY_CONTACT_EMAIL = process.env.SUPPORT_EMAIL?.trim() || 'turkeycesme
  */
 const PROTECTED_TERMS = [
   'Hantal Turizm',
+  // Tek başına soyadı da ("Hantal ailesi") sıfat sanılıp "sperrige Familie" diye çevriliyordu.
+  'Hantal',
+  'Hüsnü',
   'Poseidon',
   // Yer adları — çeviri motoru bunları sıradan Türkçe kelime sanıp yanlış çevirebilir
   // (örn. "Çeşme" = fountain/well demek, ama burada bir ilçe adı).
@@ -122,7 +128,10 @@ async function translateWithDeepL(text: string, target: SiteLocale, apiKey: stri
   })
   if (!res.ok) throw new Error(`DeepL ${res.status}`)
   const json = (await res.json()) as { translations?: { text?: string }[] }
-  return json?.translations?.[0]?.text?.trim() || text
+  const translated = json?.translations?.[0]?.text?.trim()
+  // Boş yanıt önbelleğe "çeviri" diye girmesin.
+  if (!translated) throw new Error('DeepL boş yanıt')
+  return translated
 }
 
 /**
@@ -205,8 +214,13 @@ async function fetchMyMemoryChunk(chunk: string, target: SiteLocale, attempt = 0
     throw new Error('MyMemory 429')
   }
   if (!res.ok) throw new Error(`MyMemory ${res.status}`)
-  const json = (await res.json()) as { responseData?: { translatedText?: string }; responseStatus?: number }
+  const json = (await res.json()) as { responseData?: { translatedText?: string }; responseStatus?: number | string }
   const translated = json?.responseData?.translatedText
+  // MyMemory kota uyarısını bazen HTTP 200 + gövdede responseStatus 429 ile, uyarı
+  // metnini "çeviri" olarak döndürüyor — bu kalıcı önbelleğe asla girmemeli.
+  if (Number(json?.responseStatus ?? 200) !== 200 || (typeof translated === 'string' && /^MYMEMORY WARNING/i.test(translated))) {
+    throw new Error(`MyMemory ${json?.responseStatus ?? 'uyarı'}`)
+  }
   return typeof translated === 'string' && translated.trim() ? translated : chunk
 }
 
@@ -239,6 +253,37 @@ async function translateWithMyMemory(text: string, target: SiteLocale): Promise<
  */
 const translationResultCache = new Map<string, string>()
 
+/** Çeviri servisine giden asıl çağrı; başarısızsa hata fırlatır (önbelleğe girmez). */
+function translateRemote(protectedText: string, target: SiteLocale): Promise<string> {
+  const apiKey = process.env.DEEPL_API_KEY?.trim()
+  return apiKey ? translateWithDeepL(protectedText, target, apiKey) : translateWithMyMemory(protectedText, target)
+}
+
+/**
+ * Kalıcı, sunucu örnekleri arasında paylaşılan önbellek. Neden gerekli: sayfaların
+ * çoğu `force-dynamic`; Next.js bu sayfalarda POST + Authorization başlıklı fetch'leri
+ * (DeepL isteği tam olarak bu) otomatik olarak önbelleksiz yapıyor. Süreç içi Map de
+ * her yeni Vercel örneğinde / deploy'da boş başladığı için yabancı dildeki her sayfanın
+ * ilk açılışı yüzlerce metni baştan çeviriyordu (/ru ilk açılış ~20 sn).
+ * Hata fırlatan çağrılar unstable_cache tarafından saklanmaz.
+ */
+const translateRemotePersistent = unstable_cache(translateRemote, ['runtime-translate-v1'], {
+  revalidate: CACHE_TTL_SECONDS,
+  tags: ['runtime-translate'],
+})
+
+async function translateRemoteCached(protectedText: string, target: SiteLocale): Promise<string> {
+  try {
+    return await translateRemotePersistent(protectedText, target)
+  } catch (err) {
+    // Next istek bağlamı dışında (betikler vb.) veri önbelleği yok — doğrudan çevir.
+    if (err instanceof Error && /incrementalCache missing/.test(err.message)) {
+      return translateRemote(protectedText, target)
+    }
+    throw err
+  }
+}
+
 /** Tek bir metni hedef dile çevirir. target === 'tr' ise veya metin boşsa dokunmadan döner. */
 export async function translateText(text: string | null | undefined, target: SiteLocale): Promise<string> {
   const trimmed = text?.trim()
@@ -257,11 +302,7 @@ export async function translateText(text: string | null | undefined, target: Sit
   if (cached !== undefined) return cached
   const { protectedText, restore } = protectTerms(trimmed)
   try {
-    const apiKey = process.env.DEEPL_API_KEY?.trim()
-    const translated = apiKey
-      ? await translateWithDeepL(protectedText, target, apiKey)
-      : await translateWithMyMemory(protectedText, target)
-    const result = restore(translated)
+    const result = restore(await translateRemoteCached(protectedText, target))
     translationResultCache.set(cacheKey, result)
     return result
   } catch (err) {

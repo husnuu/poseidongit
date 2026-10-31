@@ -1,4 +1,5 @@
 import { defineArrayMember, defineField, defineType } from 'sanity'
+import { translationSlugOptions } from './translationSlugOptions'
 
 export default defineType({
   name: 'coveTranslation',
@@ -16,7 +17,7 @@ export default defineType({
       title: 'URL slug (bu dil)',
       type: 'slug',
       description: 'Boşsa Türkçe slug kullanılır.',
-      options: { maxLength: 96 },
+      options: translationSlugOptions,
     }),
     defineField({
       name: 'description',

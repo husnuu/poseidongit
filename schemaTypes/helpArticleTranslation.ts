@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity'
+import { translationSlugOptions } from './translationSlugOptions'
 
 export default defineType({
   name: 'helpArticleTranslation',
@@ -10,7 +11,7 @@ export default defineType({
       name: 'slug',
       title: 'Slug (bu dilde makale URL’si)',
       type: 'slug',
-      options: { maxLength: 96 },
+      options: translationSlugOptions,
     }),
     defineField({ name: 'shortDescription', title: 'Kısa açıklama', type: 'text', rows: 3 }),
     defineField({

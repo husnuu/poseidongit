@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity'
+import { translationSlugOptions } from './translationSlugOptions'
 
 /** Yasal sayfa portable text — ana `legalPage.content` ile aynı stiller */
 const legalBlocks = {
@@ -45,7 +46,7 @@ export default defineType({
       name: 'slug',
       title: 'URL slug (bu dil)',
       type: 'slug',
-      options: { maxLength: 96 },
+      options: translationSlugOptions,
     }),
     defineField({ name: 'seoTitle', title: 'SEO başlık', type: 'string' }),
     defineField({ name: 'seoDescription', title: 'SEO açıklama', type: 'text', rows: 3 }),

@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity'
+import { translationSlugOptions } from './translationSlugOptions'
 
 /** Feribot hattı için EN/DE çeviri overlay'i — görseller ve fiyat Türkçe kayıttan gelir. */
 export default defineType({
@@ -13,7 +14,7 @@ export default defineType({
       title: 'URL slug',
       type: 'slug',
       description: 'Bu dildeki adres: /feribot/…',
-      options: { maxLength: 96 },
+      options: translationSlugOptions,
     }),
     defineField({
       name: 'seo',
