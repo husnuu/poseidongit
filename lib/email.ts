@@ -2026,6 +2026,154 @@ export async function sendYachtInquiryEmail(
   return { ok: true }
 }
 
+/** Özel tur rezervasyon talebi (ödeme yok) — bkz. lib/sanity/privateTour.ts. */
+export type PrivateTourRequestEmailPayload = {
+  bookingId: string
+  tourTitle: string
+  date: string
+  time?: string
+  counts: { adult: number; child: number; infant: number }
+  groupPrice: number
+  currency: string
+  customer: { firstName: string; lastName: string; email: string; phone: string; note?: string }
+  siteLocale?: SiteLocale
+}
+
+function privateTourRequestStrings(loc: SiteLocale) {
+  switch (loc) {
+    case 'en':
+      return {
+        subject: 'We received your private tour request',
+        title: 'Your request has been received',
+        intro: (name: string) =>
+          `Hello ${name}, thank you for your private tour request. Our team will check availability and contact you shortly to confirm. No payment is taken at this stage.`,
+        tour: 'Tour', date: 'Date', time: 'Time', guests: 'Guests', price: 'Group price',
+        priceNote: 'Total for the whole group, regardless of the number of guests.',
+        ref: 'Request no.', dateTag: 'en-GB',
+        guestsLine: (n: number) => `${n} ${n === 1 ? 'guest' : 'guests'}`,
+      }
+    case 'de':
+      return {
+        subject: 'Wir haben Ihre Anfrage für eine Privattour erhalten',
+        title: 'Ihre Anfrage ist eingegangen',
+        intro: (name: string) =>
+          `Hallo ${name}, vielen Dank für Ihre Anfrage für eine Privattour. Unser Team prüft die Verfügbarkeit und meldet sich in Kürze zur Bestätigung bei Ihnen. In diesem Schritt wird keine Zahlung erhoben.`,
+        tour: 'Tour', date: 'Datum', time: 'Uhrzeit', guests: 'Personen', price: 'Gruppenpreis',
+        priceNote: 'Gesamtpreis für die ganze Gruppe, unabhängig von der Personenzahl.',
+        ref: 'Anfrage-Nr.', dateTag: 'de-DE',
+        guestsLine: (n: number) => `${n} ${n === 1 ? 'Person' : 'Personen'}`,
+      }
+    case 'ru':
+      return {
+        subject: 'Мы получили ваш запрос на индивидуальный тур',
+        title: 'Ваш запрос получен',
+        intro: (name: string) =>
+          `Здравствуйте, ${name}! Спасибо за запрос на индивидуальный тур. Наша команда проверит наличие мест и в ближайшее время свяжется с вами для подтверждения. На этом этапе оплата не взимается.`,
+        tour: 'Тур', date: 'Дата', time: 'Время', guests: 'Гости', price: 'Цена за группу',
+        priceNote: 'Общая стоимость для всей группы, независимо от количества гостей.',
+        ref: 'Номер запроса', dateTag: 'ru-RU',
+        guestsLine: (n: number) => `Гостей: ${n}`,
+      }
+    default:
+      return {
+        subject: 'Özel tur talebinizi aldık',
+        title: 'Talebiniz alındı',
+        intro: (name: string) =>
+          `Merhaba ${name}, özel tur talebiniz için teşekkür ederiz. Ekibimiz uygunluğu kontrol edip onay için en kısa sürede sizinle iletişime geçecek. Bu aşamada ödeme alınmaz.`,
+        tour: 'Tur', date: 'Tarih', time: 'Saat', guests: 'Kişi sayısı', price: 'Grup fiyatı',
+        priceNote: 'Kişi sayısından bağımsız, tüm grup için toplam fiyattır.',
+        ref: 'Talep no', dateTag: 'tr-TR',
+        guestsLine: (n: number) => `${n} kişi`,
+      }
+  }
+}
+
+function privateTourDateLabel(dateStr: string, tag: string): string {
+  const raw = /^\d{4}-\d{2}-\d{2}/.test(dateStr) ? dateStr.slice(0, 10) : dateStr
+  const d = new Date(`${raw}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return dateStr
+  return d.toLocaleDateString(tag, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function privateTourRow(label: string, value: string): string {
+  return `<tr><td style="padding:6px 0;color:${EMAIL_MUTED};font-size:13px;width:42%;vertical-align:top;">${escapeHtml(label)}</td><td style="padding:6px 0;color:${EMAIL_NAVY};font-size:14px;font-weight:600;">${escapeHtml(value)}</td></tr>`
+}
+
+function buildPrivateTourRequestHtml(p: PrivateTourRequestEmailPayload, audience: 'customer' | 'admin'): string {
+  const loc: SiteLocale = audience === 'admin' ? 'tr' : (p.siteLocale ?? 'tr')
+  const t = privateTourRequestStrings(loc)
+  const guests = p.counts.adult + p.counts.child + p.counts.infant
+  const price = `${p.groupPrice.toLocaleString(t.dateTag)} ${p.currency === 'TRY' ? '₺' : p.currency}`
+  const ref = shortReservationCode(p.bookingId)
+  const rows = [
+    privateTourRow(t.tour, p.tourTitle),
+    privateTourRow(t.date, privateTourDateLabel(p.date, t.dateTag)),
+    ...(p.time ? [privateTourRow(t.time, p.time)] : []),
+    privateTourRow(t.guests, t.guestsLine(guests)),
+    privateTourRow(t.price, price),
+    privateTourRow(t.ref, ref),
+  ]
+  const adminRows =
+    audience === 'admin'
+      ? [
+          privateTourRow('Müşteri', `${p.customer.firstName} ${p.customer.lastName}`.trim()),
+          privateTourRow('Telefon', p.customer.phone || '—'),
+          privateTourRow('E-posta', p.customer.email),
+          privateTourRow(
+            'Yetişkin / Çocuk / Bebek',
+            `${p.counts.adult} / ${p.counts.child} / ${p.counts.infant}`
+          ),
+          ...(p.customer.note ? [privateTourRow('Not', p.customer.note)] : []),
+        ]
+      : []
+  const heading =
+    audience === 'admin' ? 'Yeni özel tur talebi' : t.title
+  const intro =
+    audience === 'admin'
+      ? 'Ödeme alınmadı. Talep, admin panelindeki Rezervasyonlar listesinde “Beklemede” durumunda, sınıfı “Özel tur (grup)” olarak görünüyor. Müşteriyle iletişime geçip onaylayın.'
+      : t.intro(p.customer.firstName || '')
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>${escapeHtml(heading)}</title></head>
+<body style="font-family: 'Inter', system-ui, sans-serif; line-height: 1.5; color: ${EMAIL_TEXT_BODY}; max-width: 560px; margin: 0 auto; padding: 28px 20px; background: ${EMAIL_BG_PAGE};">
+  <h1 style="margin: 0 0 10px; color: ${EMAIL_NAVY}; font-size: 22px; font-weight: 700;">${escapeHtml(heading)}</h1>
+  <p style="margin: 0 0 18px; font-size: 14px;">${escapeHtml(intro)}</p>
+  <div style="background: ${EMAIL_SURFACE}; border-radius: 10px; padding: 16px 20px; border: 1px solid ${EMAIL_BORDER};">
+    <table role="presentation" style="width:100%;border-collapse:collapse;">${[...rows, ...adminRows].join('')}</table>
+    <p style="margin: 10px 0 0; font-size: 12px; color: ${EMAIL_MUTED};">${escapeHtml(t.priceNote)}</p>
+  </div>
+  <p style="margin: 18px 0 0; font-size: 12px; color: ${EMAIL_MUTED};">${escapeHtml(getSiteName() || 'Poseidon')}</p>
+</body>
+</html>
+`.trim()
+}
+
+/** Özel tur talebi: müşteriye "talebiniz alındı", adminlere bildirim. Hata fırlatmaz. */
+export async function sendPrivateTourRequestEmails(payload: PrivateTourRequestEmailPayload): Promise<void> {
+  const resend = getResend()
+  if (!resend) {
+    console.warn('[email] Özel tur talebi e-postası gönderilmedi: RESEND_API_KEY tanımlı değil.')
+    return
+  }
+  const from = getFrom()
+  const t = privateTourRequestStrings(payload.siteLocale ?? 'tr')
+  const { error } = await resend.emails.send({
+    from,
+    to: [payload.customer.email],
+    subject: `${t.subject} – ${payload.tourTitle}`,
+    html: buildPrivateTourRequestHtml(payload, 'customer'),
+  })
+  if (error) console.error('[email] Özel tur talebi müşteri e-postası gönderilemedi:', payload.bookingId, error)
+  await sendToAdminRecipients(resend, {
+    from,
+    subject: `Özel tur talebi: ${payload.tourTitle} – ${payload.date}`,
+    html: buildPrivateTourRequestHtml(payload, 'admin'),
+    replyTo: payload.customer.email,
+    logContext: payload.bookingId,
+  })
+}
+
 /**
  * İletişim formu gönderiminde admin'e e-posta atar.
  * RESEND_API_KEY ve ADMIN_EMAIL ayarlı olmalı.

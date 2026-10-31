@@ -10,6 +10,8 @@ import styles from './MobileStickyBookingBar.module.css'
 
 interface MobileStickyBookingBarProps {
   ticketClasses?: TourForBooking['ticketClasses']
+  /** Özel tur grup fiyatı — verilirse "Kişi başı" yerine "Grup fiyatı". */
+  groupPrice?: number | null
   bookingCard?: { ctaText?: string }
   deposit?: DepositConfig | null
   onReserve: () => void
@@ -40,14 +42,15 @@ export default function MobileStickyBookingBar({
   ticketClasses,
   bookingCard,
   deposit,
+  groupPrice = null,
   onReserve,
   isModalOpen,
   locale = 'tr',
 }: MobileStickyBookingBarProps) {
   const ui = useMemo(() => getTourPageUi(locale), [locale])
-  const adultPrice = getAdultPrice(ticketClasses)
+  const adultPrice = groupPrice ?? getAdultPrice(ticketClasses)
   const ctaText = bookingCard?.ctaText || ui.stickyBookCtaMobile
-  const depositLabel = deposit ? getDepositLabel(deposit, ui) : null
+  const depositLabel = groupPrice != null ? ui.privateTourPaymentNote : deposit ? getDepositLabel(deposit, ui) : null
 
   if (isModalOpen) return null
 
@@ -55,7 +58,7 @@ export default function MobileStickyBookingBar({
     <div id={MOBILE_BOTTOM_CTA_BAR_ID} className={styles.bookingBar}>
       <div className={styles.bookingBarInner}>
         <div className={styles.priceBlock}>
-          <span className={styles.priceFrom}>{ui.pricePerPerson}</span>
+          <span className={styles.priceFrom}>{groupPrice != null ? ui.priceGroup : ui.pricePerPerson}</span>
           {adultPrice ? (
             <span className={styles.priceValue}>
               {adultPrice.toLocaleString(ui.numberLocale)} ₺

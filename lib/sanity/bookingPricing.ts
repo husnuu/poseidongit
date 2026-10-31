@@ -3,6 +3,7 @@
  * Safe to import from client components.
  */
 import { getEarliestBookableDateStr } from '@/lib/booking/bookingWindow'
+import { privateTourGroupPrice } from '@/lib/sanity/privateTour'
 import type {
   TourForBooking,
   TicketClassForBooking,
@@ -380,6 +381,21 @@ export function computePricingForSelection(
   extraNotes?: Record<string, string>,
   extraQuantities?: Record<string, number>
 ): PricingSummary | null {
+  // Özel tur: kişi sayısından bağımsız tek grup fiyatı; sınıf, ekstra ve kapora yok.
+  const groupPrice = privateTourGroupPrice(tour)
+  if (tour && dateStr && groupPrice !== null) {
+    return {
+      unitPrices: [],
+      extras: [],
+      extrasTotal: 0,
+      total: groupPrice,
+      depositPercent: 0,
+      depositAmount: 0,
+      remainingAmount: groupPrice,
+      currency: 'TRY',
+      privateTour: true,
+    }
+  }
   if (!tour || !dateStr || !classKey) return null
   const cls = tour.ticketClasses?.find((c) => c.key === classKey)
   if (!cls?.pricesByAge?.length) return null
@@ -466,7 +482,8 @@ export function buildCalendarDaysForMonth(
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     result.push({
       date: dateStr,
-      minPrice: getMinPriceForDate(tour, dateStr),
+      // Özel turda gün başına kişi fiyatı yok (grup fiyatı tur kartında/özetinde gösterilir).
+      minPrice: privateTourGroupPrice(tour) !== null ? null : getMinPriceForDate(tour, dateStr),
       isAvailable: isDateAvailable(tour, dateStr),
       capacityByClass: getCapacityForDate(tour, dateStr),
     })

@@ -14,6 +14,7 @@ import type { TourForBooking, ExtraLineItem } from '@/lib/sanity/bookingTypes'
 import { genderLabel } from '@/lib/bookingPassengerGender'
 import { supabase } from '@/lib/supabase'
 import { applySinglePriceMode, singlePriceClass } from '@/lib/sanity/singlePrice'
+import { PRIVATE_TOUR_CLASS_ID, PRIVATE_TOUR_CLASS_NAME, privateTourGroupPrice } from '@/lib/sanity/privateTour'
 import {
   BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY,
   firstClassLocasFromRow,
@@ -65,11 +66,26 @@ async function computePrices(
   extrasTotal: number
   /** Tek fiyat turu: istemci ne gönderirse göndersin kullanılacak sınıf. */
   singleClass: { key: string; label: string } | null
+  /** Özel tur: grup fiyatı, ödeme yok — kayıt yalnızca rezervasyon talebidir. */
+  privateTour: boolean
 }> {
   try {
     const fetched = await client.fetch<TourForBooking | null>(tourForBookingBySanityIdQuery, {
       id: tourId,
     })
+    const groupPrice = privateTourGroupPrice(fetched)
+    if (groupPrice !== null) {
+      return {
+        unitPrice: groupPrice,
+        totalPrice: groupPrice,
+        depositAmount: 0,
+        cashPaymentEnabled: false,
+        extras: [],
+        extrasTotal: 0,
+        singleClass: null,
+        privateTour: true,
+      }
+    }
     const singleClass = singlePriceClass(fetched)
     const tour = applySinglePriceMode(fetched)
     const dateStr = date.slice(0, 10)
@@ -85,7 +101,7 @@ async function computePrices(
     const totalPax = counts.adult + counts.child + counts.infant
     const cashPaymentEnabled = Boolean(tour?.cashPaymentEnabled)
     if (!summary || totalPax <= 0) {
-      return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled, extras: [], extrasTotal: 0, singleClass }
+      return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled, extras: [], extrasTotal: 0, singleClass, privateTour: false }
     }
     const unitPrice = Math.round(summary.total / totalPax)
     return {
@@ -98,9 +114,10 @@ async function computePrices(
       extras: summary.extras,
       extrasTotal: summary.extrasTotal,
       singleClass,
+      privateTour: false,
     }
   } catch {
-    return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled: false, extras: [], extrasTotal: 0, singleClass: null }
+    return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled: false, extras: [], extrasTotal: 0, singleClass: null, privateTour: false }
   }
 }
 
@@ -129,7 +146,7 @@ export async function POST(request: Request) {
       lastName: t.lastName,
       ...(t.gender && { gender: t.gender }),
     }))
-    const { unitPrice, totalPrice, depositAmount, cashPaymentEnabled, extras, extrasTotal, singleClass } = await computePrices(
+    const { unitPrice, totalPrice, depositAmount, cashPaymentEnabled, extras, extrasTotal, singleClass, privateTour } = await computePrices(
       firestoreTourId,
       payload.date,
       payload.classId,
@@ -142,6 +159,13 @@ export async function POST(request: Request) {
     if (singleClass) {
       payload.classId = singleClass.key
       payload.className = singleClass.label
+      payload.firstClassLocas = undefined
+    }
+    // Özel tur: sınıf yok, grup fiyatı. Kayıt "Beklemede" bir rezervasyon talebidir
+    // (kapasiteyi düşmez); listede sınıf alanından ayırt edilir.
+    if (privateTour) {
+      payload.classId = PRIVATE_TOUR_CLASS_ID
+      payload.className = PRIVATE_TOUR_CLASS_NAME
       payload.firstClassLocas = undefined
     }
     // Kalkış saati: istekte varsa onu kullan, yoksa turun quickFacts.startTime (voucher/bilet sayfasında gösterilir)
@@ -233,7 +257,7 @@ export async function POST(request: Request) {
       ...(extras.length > 0 && { selected_extras: extras }),
       unit_price: unitPrice,
       total_price: totalPrice,
-      ...(cashPaymentEnabled
+      ...(cashPaymentEnabled || privateTour
         ? { paid_now: 0 }
         : depositAmount > 0
           ? { paid_now: depositAmount }
@@ -295,6 +319,46 @@ export async function POST(request: Request) {
     }
     if (!insertedRow?.id) {
       throw new Error('Supabase booking insert failed: No id returned')
+    }
+
+    // Özel tur talebi: size bildirim + müşteriye "talebiniz alındı" e-postası; ödeme/bilet yok.
+    if (privateTour) {
+      try {
+        const { sendPrivateTourRequestEmails } = await import('@/lib/email')
+        await sendPrivateTourRequestEmails({
+          bookingId: insertedRow.id,
+          tourTitle: payload.tourTitle,
+          date: /^\d{4}-\d{2}-\d{2}$/.test(dateNorm) ? dateNorm : payload.date,
+          ...(timeToSave && { time: timeToSave }),
+          counts: payload.counts,
+          groupPrice: totalPrice,
+          currency: CURRENCY,
+          customer: {
+            firstName: customer.firstName,
+            lastName: customer.lastName,
+            email: customer.email,
+            phone: customer.phone,
+            ...(customer.note ? { note: customer.note } : {}),
+          },
+          siteLocale: payload.uiLocale ?? 'tr',
+        })
+      } catch (emailErr) {
+        console.error('[bookings] Özel tur talebi e-postası gönderilemedi:', emailErr)
+      }
+      return NextResponse.json({
+        bookingId: insertedRow.id,
+        privateRequest: true,
+        summary: {
+          tourTitle: payload.tourTitle,
+          date: payload.date,
+          className: payload.className,
+          totalPrice,
+          currency: CURRENCY,
+          status: 'pending',
+          paidNow: 0,
+          remainingAmount: totalPrice,
+        },
+      })
     }
 
     // Online kapora: e-posta ödeme sonrası. Nakit (kapıda): rezervasyon anında bildirim.

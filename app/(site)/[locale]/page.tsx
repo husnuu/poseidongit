@@ -562,6 +562,7 @@ async function mapPopularToursToCardItems(
         durationLabel: durationLabel || durationLabelRaw,
         departureLabel: departureLabel || departureLabelRaw,
         priceFrom: merged.priceFrom,
+        privateTour: Boolean((merged as { privateTour?: boolean | null }).privateTour),
         rating: merged.rating,
         reviewCount: merged.reviewCount,
         reviewsUrl: merged.reviewsUrl ?? null,

@@ -274,6 +274,8 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
   },
   cashPaymentEnabled,
   singlePrice,
+  privateTour,
+  privateTourPrice,
   extras[]{
     "key": _key,
     title,
@@ -610,6 +612,8 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
   },
   cashPaymentEnabled,
   singlePrice,
+  privateTour,
+  privateTourPrice,
   extras[]{
     "key": _key,
     title,
@@ -951,7 +955,9 @@ export const homePageHeroQuery = `*[_type == "homePage"][0] {
       shortDescription,
       "durationLabel": quickFacts.durationText,
       "departureLabel": quickFacts.meetingLocation,
-      "priceFrom": ticketClasses[0].pricesByAge[0].price,
+      // Özel turda kart fiyatı grup fiyatıdır (bkz. lib/sanity/privateTour.ts).
+      "priceFrom": select(privateTour == true && privateTourPrice > 0 => privateTourPrice, ticketClasses[0].pricesByAge[0].price),
+      "privateTour": privateTour == true && privateTourPrice > 0,
       cardDiscount{ enabled, percentage },
       rating,
       reviewCount,
@@ -1134,7 +1140,9 @@ export const contactPageQuery = `coalesce(
     shortDescription,
     "durationLabel": quickFacts.durationText,
     "departureLabel": quickFacts.meetingLocation,
-    "priceFrom": ticketClasses[0].pricesByAge[0].price,
+    // Özel turda kart fiyatı grup fiyatıdır (bkz. lib/sanity/privateTour.ts).
+    "priceFrom": select(privateTour == true && privateTourPrice > 0 => privateTourPrice, ticketClasses[0].pricesByAge[0].price),
+    "privateTour": privateTour == true && privateTourPrice > 0,
     cardDiscount{ enabled, percentage },
     rating,
     reviewCount,
@@ -1166,7 +1174,9 @@ export const toursListQuery = `*[_type == "tour"] | order(title asc) {
   },
   "departureLabel": quickFacts.meetingLocation,
   "durationLabel": quickFacts.durationText,
-  "priceFrom": ticketClasses[0].pricesByAge[0].price,
+  // Özel turda kart fiyatı grup fiyatıdır (bkz. lib/sanity/privateTour.ts).
+  "priceFrom": select(privateTour == true && privateTourPrice > 0 => privateTourPrice, ticketClasses[0].pricesByAge[0].price),
+  "privateTour": privateTour == true && privateTourPrice > 0,
   cardDiscount{ enabled, percentage },
   translations
 }`
@@ -1587,7 +1597,9 @@ export const otherToursForTourPageQuery = `*[_type == "tour" && slug.current != 
   shortDescription,
   "durationLabel": quickFacts.durationText,
   "departureLabel": quickFacts.meetingLocation,
-  "priceFrom": ticketClasses[0].pricesByAge[0].price,
+  // Özel turda kart fiyatı grup fiyatıdır (bkz. lib/sanity/privateTour.ts).
+  "priceFrom": select(privateTour == true && privateTourPrice > 0 => privateTourPrice, ticketClasses[0].pricesByAge[0].price),
+  "privateTour": privateTour == true && privateTourPrice > 0,
   cardDiscount{ enabled, percentage },
   rating,
   reviewCount,

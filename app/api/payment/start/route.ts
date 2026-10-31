@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { loadPendingBookingForPayment } from '@/lib/services/bookingService'
 import { buildPaymentFormFields, loadNestpayConfig } from '@/lib/nestpay/hash'
 import { rateLimitResponse } from '@/lib/rateLimit'
+import { PRIVATE_TOUR_CLASS_ID } from '@/lib/sanity/privateTour'
 
 export const runtime = 'nodejs'
 
@@ -63,9 +64,16 @@ export async function POST(request: NextRequest) {
     const { supabase } = await import('@/lib/supabase')
     const { data: bookingRow } = await supabase
       .from('bookings')
-      .select('tour_id')
+      .select('tour_id, class_id')
       .eq('id', id)
       .maybeSingle()
+    // Özel tur talepleri ödeme almaz (bkz. lib/sanity/privateTour.ts).
+    if (bookingRow?.class_id === PRIVATE_TOUR_CLASS_ID) {
+      return NextResponse.json(
+        { error: 'Özel tur talepleri için online ödeme yoktur. Ekibimiz sizinle iletişime geçecek.' },
+        { status: 400 }
+      )
+    }
     const tourId = typeof bookingRow?.tour_id === 'string' ? bookingRow.tour_id.trim() : ''
     if (tourId) {
       const tourCash = await client.fetch<{ cashPaymentEnabled?: boolean } | null>(

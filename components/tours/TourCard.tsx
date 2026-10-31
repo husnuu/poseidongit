@@ -72,6 +72,8 @@ export type TourListItem = {
   reviewCount?: number | null
   reviewsUrl?: string | null
   priceFrom?: number | null
+  /** Özel tur: priceFrom grup fiyatıdır — "Kişi başı" yerine "Grup fiyatı" yazılır. */
+  privateTour?: boolean | null
   isPopular?: boolean | null
   /** Sanity'de "İndirim Rozeti" alanı — sadece kart görünümünü etkiler. */
   cardDiscount?: TourCardDiscount | null
@@ -100,6 +102,13 @@ const PER_PERSON_LABEL: Record<SiteLocale, string> = {
   en: 'Per person',
   de: 'Pro Person',
   ru: 'За человека',
+}
+
+const GROUP_PRICE_LABEL: Record<SiteLocale, string> = {
+  tr: 'Grup fiyatı',
+  en: 'Group price',
+  de: 'Gruppenpreis',
+  ru: 'Цена за группу',
 }
 
 const FAVORITE_LABEL: Record<SiteLocale, string> = {
@@ -283,7 +292,11 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
     tour.priceFrom != null ? (
       <p
         className="leading-tight"
-        aria-label={tourUi.tourCardPerPersonFrom(hasDiscount ? discountedPriceFormatted : priceFormatted)}
+        aria-label={
+          tour.privateTour
+            ? `${GROUP_PRICE_LABEL[locale]}: ${hasDiscount ? discountedPriceFormatted : priceFormatted}`
+            : tourUi.tourCardPerPersonFrom(hasDiscount ? discountedPriceFormatted : priceFormatted)
+        }
       >
         {hasDiscount ? (
           <span className="flex flex-wrap items-baseline gap-1.5 whitespace-nowrap">
@@ -300,7 +313,7 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
           </span>
         )}
         <span className="mt-0.5 block text-[11px] font-semibold uppercase tracking-wide" style={{ color: ICON_MUTED }}>
-          {PER_PERSON_LABEL[locale]}
+          {tour.privateTour ? GROUP_PRICE_LABEL[locale] : PER_PERSON_LABEL[locale]}
         </span>
       </p>
     ) : null

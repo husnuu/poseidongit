@@ -1150,6 +1150,28 @@ export default defineType({
       initialValue: false,
     }),
 
+    defineField({
+      name: 'privateTour',
+      title: 'Özel tur (grup fiyatı, ödeme yok)',
+      type: 'boolean',
+      description:
+        'Açıksa fiyat kişi başı değil, aşağıdaki tek grup fiyatıdır. Müşteri ödemeye gitmez; yalnızca rezervasyon talebi gönderir. Talep, admin panelindeki Rezervasyonlar listesine "Özel tur (grup)" olarak düşer ve size e-posta gelir.',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'privateTourPrice',
+      title: 'Grup fiyatı (₺)',
+      type: 'number',
+      description: 'Tüm grup için toplam fiyat — kişi sayısından bağımsız.',
+      hidden: ({ document }) => !document?.privateTour,
+      validation: (Rule) =>
+        Rule.min(1).custom((value, context) => {
+          const doc = context.document as { privateTour?: boolean } | undefined
+          if (doc?.privateTour && (value == null || value <= 0)) return 'Özel tur için grup fiyatı zorunludur'
+          return true
+        }),
+    }),
+
     // 12) Bilet Sınıfları ve Yaşa Göre Fiyat
     defineField({
       name: 'ticketClasses',

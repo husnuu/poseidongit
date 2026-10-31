@@ -150,6 +150,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         durationLabel: durationLabel ?? null,
         departureLabel: departureLabel ?? null,
         priceFrom: merged.priceFrom ?? null,
+        privateTour: Boolean((merged as { privateTour?: boolean | null }).privateTour),
         rating: merged.rating ?? null,
         reviewCount: merged.reviewCount ?? null,
         reviewsUrl: merged.reviewsUrl ?? null,

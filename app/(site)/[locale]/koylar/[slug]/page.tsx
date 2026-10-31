@@ -378,6 +378,7 @@ export default async function CoveDetailPage({ params }: { params: Promise<{ loc
           departureLabel: departureLabel || null,
           durationLabel: durationLabel || null,
           priceFrom: merged.priceFrom,
+          privateTour: Boolean((merged as { privateTour?: boolean | null }).privateTour),
           coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
           coverImageAlt: merged.mainImage?.alt ?? null,
         }

@@ -137,6 +137,13 @@ export default function Step3CustomerInfo({
   const ticketBreakdownRows = (() => {
     const p = state.pricingSummary
     if (!p) return []
+    // Özel tur: grup fiyatı (toplam), kapora/online ödeme yok.
+    if (p.privateTour) {
+      return [
+        { label: ui.privateTourGroupPriceLabel, value: `${p.total.toLocaleString(ui.numberLocale)} ₺` },
+        { label: ui.privateTourPaymentLabel, value: ui.privateTourPaymentValue, emphasis: true },
+      ]
+    }
     const rows: { label: string; value: string; emphasis?: boolean }[] = (p.extras ?? []).map((e) => ({
       label: e.note ? `${e.title} · ${e.note}` : e.title,
       value: `${e.lineTotal.toLocaleString(ui.numberLocale)} ₺`,

@@ -211,6 +211,7 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
           departureLabel: departureLabel || departureLabelRaw,
           durationLabel: durationLabel || durationLabelRaw,
           priceFrom: merged.priceFrom,
+          privateTour: Boolean((merged as { privateTour?: boolean | null }).privateTour),
           coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
           coverImageAlt: merged.mainImage?.alt ?? null,
         }

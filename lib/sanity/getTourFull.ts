@@ -268,6 +268,9 @@ export interface Tour {
   ticketClasses?: TicketClass[]
   /** Tek fiyat: sınıf seçimi yok; ticketClasses yalnızca ilk sınıfı içerir. */
   singlePrice?: boolean | null
+  /** Özel tur: grup fiyatı (privateTourPrice), ödeme yok — yalnızca talep. */
+  privateTour?: boolean | null
+  privateTourPrice?: number | null
   seasonRules?: SeasonRule[]
   deposit?: Deposit
   extras?: Extra[]

@@ -7,6 +7,7 @@ import BookingWizardModal from '@/components/booking/BookingWizardModal'
 import { BOOKING_MODAL_OPEN_EVENT } from '@/components/booking/bookingEvents'
 import type { TourForBooking } from '@/lib/sanity/bookingTypes'
 import type { SiteLocale } from '@/lib/i18n/config'
+import { privateTourGroupPrice } from '@/lib/sanity/privateTour'
 
 interface TourBookingSidebarProps {
   tour: TourForBooking
@@ -29,6 +30,8 @@ export default function TourBookingSidebar({
   highDemand = false,
 }: TourBookingSidebarProps) {
   const [isBookingOpen, setIsBookingOpen] = useState(false)
+  /** Özel tur: kartlarda kişi başı yerine grup fiyatı. */
+  const groupPrice = privateTourGroupPrice(tour)
 
   useEffect(() => {
     const handleOpen = () => setIsBookingOpen(true)
@@ -45,6 +48,7 @@ export default function TourBookingSidebar({
           ticketClasses={ticketClasses}
           bookingCard={bookingCard}
           deposit={tour.deposit}
+          groupPrice={groupPrice}
           onRezervasyonClick={() => setIsBookingOpen(true)}
           locale={locale}
           highDemand={highDemand}
@@ -54,6 +58,7 @@ export default function TourBookingSidebar({
         ticketClasses={ticketClasses}
         bookingCard={bookingCard}
         deposit={tour.deposit}
+        groupPrice={groupPrice}
         onReserve={() => setIsBookingOpen(true)}
         isModalOpen={isBookingOpen}
         locale={locale}

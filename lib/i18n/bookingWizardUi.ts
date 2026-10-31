@@ -74,6 +74,13 @@ export type BookingWizardUi = {
   classCapacityShortage: () => string
   /** Tek fiyat turu (sınıf yok): seçilen tarihte yeterli yer yok. */
   singlePriceCapacityShortage: string
+  /** Özel tur (grup fiyatı, ödeme yok) metinleri. */
+  privateTourSubmitCta: string
+  privateTourGroupPriceLabel: string
+  privateTourPaymentLabel: string
+  privateTourPaymentValue: string
+  privateTourSuccessTitle: string
+  privateTourSuccessBody: string
   locaSelectTitle: string
   locaSelectAria: string
   summaryTitle: string
@@ -285,6 +292,12 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       'Bu sınıf için yeterli kapasite yok. Başka sınıf seçin veya kişi sayısını azaltın.',
     singlePriceCapacityShortage:
       'Bu tarihte seçtiğiniz kişi sayısına yetecek yer kalmamış. Başka bir tarih seçin veya kişi sayısını azaltın.',
+    privateTourSubmitCta: 'Rezervasyon talebi gönder',
+    privateTourGroupPriceLabel: 'Grup fiyatı',
+    privateTourPaymentLabel: 'Ödeme',
+    privateTourPaymentValue: 'Onaydan sonra',
+    privateTourSuccessTitle: 'Talebiniz alındı',
+    privateTourSuccessBody: 'Özel tur talebinizi aldık. Ekibimiz uygunluğu kontrol edip en kısa sürede sizinle iletişime geçecek. Bu aşamada ödeme alınmaz; talebinizin özeti e-posta adresinize gönderildi.',
     locaSelectTitle: 'Loca Seçimi',
     locaSelectAria: 'First Class loca seçimi',
     summaryTitle: 'Rezervasyon özeti',
@@ -490,6 +503,12 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       'Not enough capacity in this class. Choose another class or reduce the number of guests.',
     singlePriceCapacityShortage:
       "There aren't enough places left on this date for your group. Choose another date or reduce the number of guests.",
+    privateTourSubmitCta: 'Send booking request',
+    privateTourGroupPriceLabel: 'Group price',
+    privateTourPaymentLabel: 'Payment',
+    privateTourPaymentValue: 'After confirmation',
+    privateTourSuccessTitle: 'Request received',
+    privateTourSuccessBody: "We've received your private tour request. Our team will check availability and contact you shortly. No payment is taken at this stage; a summary has been sent to your email.",
     locaSelectTitle: 'Booth selection',
     locaSelectAria: 'First Class booth selection',
     summaryTitle: 'Reservation summary',
@@ -694,6 +713,12 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       'In dieser Klasse reicht die Kapazität nicht. Wählen Sie eine andere Klasse oder reduzieren Sie die Personenzahl.',
     singlePriceCapacityShortage:
       'Für dieses Datum sind nicht mehr genügend Plätze für Ihre Gruppe frei. Bitte wählen Sie ein anderes Datum oder reduzieren Sie die Personenzahl.',
+    privateTourSubmitCta: 'Buchungsanfrage senden',
+    privateTourGroupPriceLabel: 'Gruppenpreis',
+    privateTourPaymentLabel: 'Zahlung',
+    privateTourPaymentValue: 'Nach Bestätigung',
+    privateTourSuccessTitle: 'Anfrage erhalten',
+    privateTourSuccessBody: 'Wir haben Ihre Anfrage für eine Privattour erhalten. Unser Team prüft die Verfügbarkeit und meldet sich in Kürze bei Ihnen. In diesem Schritt wird keine Zahlung erhoben; eine Zusammenfassung wurde an Ihre E-Mail gesendet.',
     locaSelectTitle: 'Logenwahl',
     locaSelectAria: 'First-Class-Logenwahl',
     summaryTitle: 'Reservierungsübersicht',
@@ -898,6 +923,12 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
       'Недостаточно мест в этом классе. Выберите другой класс или уменьшите число гостей.',
     singlePriceCapacityShortage:
       'На эту дату недостаточно свободных мест для вашей группы. Выберите другую дату или уменьшите количество гостей.',
+    privateTourSubmitCta: 'Отправить запрос на бронирование',
+    privateTourGroupPriceLabel: 'Цена за группу',
+    privateTourPaymentLabel: 'Оплата',
+    privateTourPaymentValue: 'После подтверждения',
+    privateTourSuccessTitle: 'Запрос получен',
+    privateTourSuccessBody: 'Мы получили ваш запрос на индивидуальный тур. Наша команда проверит наличие мест и скоро свяжется с вами. На этом этапе оплата не взимается; сводка отправлена на вашу почту.',
     locaSelectTitle: 'Выбор ложи',
     locaSelectAria: 'Выбор ложи First Class',
     summaryTitle: 'Итоги бронирования',

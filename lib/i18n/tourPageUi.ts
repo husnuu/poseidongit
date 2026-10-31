@@ -14,6 +14,9 @@ export type TourPageUi = {
   foodMenuFallbackTitle: string
   extrasSectionTitle: string
   pricePerPerson: string
+  /** Özel tur: kişi başı yerine grup fiyatı etiketi + ödeme notu. */
+  priceGroup: string
+  privateTourPaymentNote: string
   priceTotal: string
   itineraryTitle: string
   highlightsTitle: string
@@ -152,6 +155,8 @@ const UI: Record<SiteLocale, TourPageUi> = {
     foodMenuFallbackTitle: 'Yemek menüsü',
     extrasSectionTitle: 'Ekstra Hizmetler',
     pricePerPerson: 'Kişi başı',
+    priceGroup: 'Grup fiyatı',
+    privateTourPaymentNote: 'Ödeme yok — talep gönderin',
     priceTotal: 'Toplam',
     itineraryTitle: 'Neler yapacaksınız?',
     highlightsTitle: 'ÖNE ÇIKANLAR',
@@ -271,6 +276,8 @@ const UI: Record<SiteLocale, TourPageUi> = {
     foodMenuFallbackTitle: 'Food menu',
     extrasSectionTitle: 'Optional extras',
     pricePerPerson: 'Per person',
+    priceGroup: 'Group price',
+    privateTourPaymentNote: 'No payment — send a request',
     priceTotal: 'Total',
     itineraryTitle: 'What you will do',
     highlightsTitle: 'HIGHLIGHTS',
@@ -390,6 +397,8 @@ const UI: Record<SiteLocale, TourPageUi> = {
     foodMenuFallbackTitle: 'Speisekarte',
     extrasSectionTitle: 'Zusatzleistungen',
     pricePerPerson: 'Pro Person',
+    priceGroup: 'Gruppenpreis',
+    privateTourPaymentNote: 'Keine Zahlung — Anfrage senden',
     priceTotal: 'Gesamt',
     itineraryTitle: 'Das erwartet Sie',
     highlightsTitle: 'HIGHLIGHTS',
@@ -509,6 +518,8 @@ const UI: Record<SiteLocale, TourPageUi> = {
     foodMenuFallbackTitle: 'Меню',
     extrasSectionTitle: 'Дополнительные услуги',
     pricePerPerson: 'За человека',
+    priceGroup: 'Цена за группу',
+    privateTourPaymentNote: 'Без оплаты — отправьте запрос',
     priceTotal: 'Итого',
     itineraryTitle: 'Что вас ждёт',
     highlightsTitle: 'ОСОБЕННОСТИ',

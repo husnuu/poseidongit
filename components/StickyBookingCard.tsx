@@ -42,6 +42,8 @@ interface StickyBookingCardProps {
   /** Tam path; /en/rezervasyon/... gibi. Boşsa `/rezervasyon/${tourSlug}` */
   rezervasyonHref?: string
   ticketClasses?: TicketClass[]
+  /** Özel tur grup fiyatı — verilirse "Kişi başı" yerine "Grup fiyatı" gösterilir, kapora satırı olmaz. */
+  groupPrice?: number | null
   bookingCard?: BookingCard
   deposit?: DepositConfig | null
   /** When set, opens modal instead of navigating to /rezervasyon/[slug] */
@@ -88,6 +90,7 @@ export default function StickyBookingCard({
   ticketClasses,
   bookingCard,
   deposit,
+  groupPrice = null,
   onRezervasyonClick,
   locale = 'tr',
   highDemand = false,
@@ -105,8 +108,8 @@ export default function StickyBookingCard({
     return null
   }
 
-  const adultPrice = getAdultPrice()
-  const depositLabel = deposit ? getDepositLabel(deposit, ui) : null
+  const adultPrice = groupPrice ?? getAdultPrice()
+  const depositLabel = groupPrice != null ? ui.privateTourPaymentNote : deposit ? getDepositLabel(deposit, ui) : null
   const trustBadges =
     bookingCard?.trustBadges?.length ? bookingCard.trustBadges : ui.stickyTrustBadges
   const ctaText = bookingCard?.ctaText || ui.stickyBookCtaDesktop
@@ -117,7 +120,7 @@ export default function StickyBookingCard({
         <h2 className={styles.title}>{ui.stickyBookTitle}</h2>
 
         <div className={styles.priceBlock}>
-          <span className={styles.priceFrom}>{ui.pricePerPerson}</span>
+          <span className={styles.priceFrom}>{groupPrice != null ? ui.priceGroup : ui.pricePerPerson}</span>
           {adultPrice ? (
             <span className={styles.priceValue}>
               {adultPrice.toLocaleString(ui.numberLocale)} ₺

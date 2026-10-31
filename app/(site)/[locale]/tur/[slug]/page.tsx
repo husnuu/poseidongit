@@ -1,4 +1,5 @@
 import { notFound, permanentRedirect } from 'next/navigation'
+import { privateTourGroupPrice } from '@/lib/sanity/privateTour'
 import type { Metadata } from 'next'
 import { client, urlFor } from '@/lib/sanity'
 import { tourCoverImageUrl } from '@/lib/sanityImage'
@@ -223,6 +224,7 @@ async function mapOtherTours(raw: OtherTourRaw[], locale: SiteLocale): Promise<T
         durationLabel: durationLabel || merged.durationLabel || null,
         departureLabel: departureLabel || merged.departureLabel || null,
         priceFrom: merged.priceFrom ?? null,
+        privateTour: Boolean((merged as { privateTour?: boolean | null }).privateTour),
         rating: merged.rating ?? null,
         reviewCount: merged.reviewCount ?? null,
         reviewsUrl: merged.reviewsUrl ?? null,
@@ -315,7 +317,9 @@ export default async function TourPage({
     tour.faqs && tour.faqs.length > 0
       ? buildFAQSchema(tour.faqs.map((f) => ({ question: f.question, answer: f.answer })))
       : null
+  // Özel turda fiyat tek grup fiyatıdır; aksi halde sınıfların en düşük kişi fiyatı.
   const lowestPrice =
+    privateTourGroupPrice(tour) ??
     tour.ticketClasses?.flatMap((c) => c.pricesByAge ?? [])
       .map((p) => p.price)
       .filter((n): n is number => typeof n === 'number')

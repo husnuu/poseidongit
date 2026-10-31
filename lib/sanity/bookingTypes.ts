@@ -213,6 +213,9 @@ export interface TourForBooking {
   cashPaymentEnabled?: boolean
   /** Sanity: tek fiyat — sınıf seçimi yok, ilk bilet sınıfı kullanılır (bkz. lib/sanity/singlePrice.ts). */
   singlePrice?: boolean
+  /** Sanity: özel tur — grup fiyatı, ödeme yok, yalnızca talep (bkz. lib/sanity/privateTour.ts). */
+  privateTour?: boolean
+  privateTourPrice?: number
   quickFacts?: TourQuickFactsForBooking
   /** Tur kaptanı/host — gerçek veri varsa biletin "Tekneniz" satırında gösterilir. */
   host?: TourHostForBooking
@@ -271,6 +274,8 @@ export interface PricingSummary {
   remainingAmount: number
   currency?: string
   cashPaymentEnabled?: boolean
+  /** Özel tur: total = grup fiyatı, kapora/ödeme yok. */
+  privateTour?: boolean
 }
 
 export interface BookingWizardState {

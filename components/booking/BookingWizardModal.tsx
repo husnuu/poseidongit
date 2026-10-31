@@ -14,6 +14,7 @@ import { allPassengersAreMale, resizeInfantGenders } from '@/lib/bookingPassenge
 import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey, resolveExtraNoteConfig } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
 import { singlePriceClass } from '@/lib/sanity/singlePrice'
+import { isPrivateTour, PRIVATE_TOUR_CLASS_ID, PRIVATE_TOUR_CLASS_NAME } from '@/lib/sanity/privateTour'
 import {
   Step1PeopleDate,
   Step2ClassSelect,
@@ -81,6 +82,8 @@ export default function BookingWizardModal({
   } | null>(null)
   const [step3Valid, setStep3Valid] = useState(false)
   const [step3TermsAccepted, setStep3TermsAccepted] = useState(false)
+  /** Özel tur talebi başarıyla gönderildi (ödeme yok — teşekkür ekranı). */
+  const [privateRequestSent, setPrivateRequestSent] = useState(false)
   /** Rezervasyon başarılı olunca anlık kalan kontenjan = Sanity kapasitesi - (API used + bu). */
   const [optimisticUsed, setOptimisticUsed] = useState<UsedByDateAndClass | null>(null)
   /** Modal her açıldığında güncellenir; useAvailability bu sayede önceki rezervasyonları yeniden çeker. */
@@ -115,9 +118,11 @@ export default function BookingWizardModal({
 
   /* Tek fiyat turu: sınıf seçimi yok — turun tek sınıfı her zaman seçili. Ekstra
      hizmet yoksa sınıf/ekstra adımı (2) tamamen atlanır: kişi & tarih → bilgiler. */
-  const singleClass = useMemo(() => singlePriceClass(tour), [tour])
+  /* Özel tur: grup fiyatı, sınıf/ekstra yok, ödeme yok — kişi & tarih → bilgiler → talep gönder. */
+  const isPrivate = useMemo(() => isPrivateTour(tour), [tour])
+  const singleClass = useMemo(() => (isPrivate ? null : singlePriceClass(tour)), [tour, isPrivate])
   const singlePrice = singleClass !== null
-  const skipClassStep = singlePrice && !(tour.extras?.length)
+  const skipClassStep = isPrivate || (singlePrice && !(tour.extras?.length))
   useEffect(() => {
     if (singleClass && state.selectedClassKey !== singleClass.key) {
       setState((prev) => ({ ...prev, selectedClassKey: singleClass.key, firstClassLocas: [] }))
@@ -133,7 +138,7 @@ export default function BookingWizardModal({
 
   // Sınıf/tarih/kişi değişince fiyatı her zaman güncelle (geri gelip başka sınıf seçince doğru fiyat görünsün)
   useEffect(() => {
-    if (!state.selectedDate || !state.selectedClassKey) {
+    if (!state.selectedDate || (!isPrivate && !state.selectedClassKey)) {
       setState((prev) => (prev.pricingSummary == null ? prev : { ...prev, pricingSummary: null }))
       return
     }
@@ -152,6 +157,7 @@ export default function BookingWizardModal({
     })
   }, [
     tour,
+    isPrivate,
     state.selectedDate,
     state.selectedClassKey,
     state.counts.adult,
@@ -164,6 +170,7 @@ export default function BookingWizardModal({
 
   const handleClose = useCallback(() => {
     setSubmitted(false)
+    setPrivateRequestSent(false)
     setBookingResult(null)
     setSubmitError(null)
     setOptimisticUsed(null)
@@ -314,8 +321,10 @@ export default function BookingWizardModal({
               child: state.counts.child,
               infant: state.counts.baby,
             },
-            classId: state.selectedClassKey ?? '',
-            className: tour.ticketClasses?.find((c) => c.key === state.selectedClassKey)?.label ?? state.selectedClassKey ?? '',
+            classId: isPrivate ? PRIVATE_TOUR_CLASS_ID : state.selectedClassKey ?? '',
+            className: isPrivate
+              ? PRIVATE_TOUR_CLASS_NAME
+              : tour.ticketClasses?.find((c) => c.key === state.selectedClassKey)?.label ?? state.selectedClassKey ?? '',
             ...(requiresFirstClassLoca && (state.firstClassLocas?.length ?? 0) > 0 && { firstClassLocas: state.firstClassLocas!.map((id) => id.trim().toUpperCase()) }),
             ...((state.selectedExtraKeys?.length ?? 0) > 0 && {
               selectedExtraKeys: state.selectedExtraKeys,
@@ -353,6 +362,7 @@ export default function BookingWizardModal({
           bookingId?: string
           accessToken?: string
           cashPayment?: boolean
+          privateRequest?: boolean
           summary?: unknown
         } = {}
         try {
@@ -371,6 +381,13 @@ export default function BookingWizardModal({
         }
         if (!data.bookingId || !data.summary) {
           setSubmitError(ui.invalidServerResponse)
+          setSubmitting(false)
+          return
+        }
+        // Özel tur: ödeme yok — talep kaydedildi, teşekkür ekranı.
+        if (data.privateRequest) {
+          setPrivateRequestSent(true)
+          setSubmitted(true)
           setSubmitting(false)
           return
         }
@@ -420,13 +437,14 @@ export default function BookingWizardModal({
         setSubmitting(false)
       }
     }
-  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext, ui, locale])
+  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext, ui, locale, isPrivate])
 
   const { ctaLabel, ctaDisabled } = useMemo(() => {
     let label: string
     if (state.step === 1) label = ui.continue
     else if (state.step === 2) label = ui.continue
     else if (submitting) label = ui.processing
+    else if (isPrivate) label = ui.privateTourSubmitCta
     else if (tour.cashPaymentEnabled) label = ui.confirmCashReservation
     else label = ui.toPayment
 
@@ -437,7 +455,7 @@ export default function BookingWizardModal({
     else disabled = false
 
     return { ctaLabel: label, ctaDisabled: disabled }
-  }, [state.step, submitting, canProceedStep1, canProceedStep2, state, tour.cashPaymentEnabled, ui])
+  }, [state.step, submitting, canProceedStep1, canProceedStep2, state, tour.cashPaymentEnabled, ui, isPrivate])
 
   /** Adım göstergesi: tek fiyatta 2. adım "Ekstralar" olur ya da (ekstra yoksa) hiç gösterilmez. */
   const visibleSteps = [
@@ -454,7 +472,8 @@ export default function BookingWizardModal({
 
   if (!open) return null
 
-  if (submitting) return <PaymentLoadingOverlay />
+  // Özel turda bankaya yönlendirme yok — düğme "İşleniyor…" gösterir.
+  if (submitting && !isPrivate) return <PaymentLoadingOverlay />
 
   const wizardPane = (
       <div
@@ -543,7 +562,22 @@ export default function BookingWizardModal({
         <main className={styles.wizardModalContent} key={submitted ? 'done' : state.step}>
           {submitted ? (
             <div className={styles.card} style={{ padding: 28, maxWidth: 420, margin: '0 auto' }}>
-              {bookingResult ? (
+              {privateRequestSent ? (
+                <div role="status" style={{ textAlign: 'center' }}>
+                  <div
+                    className={styles.stepCircleDone}
+                    style={{ width: 48, height: 48, borderRadius: 9999, margin: '0 auto 14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    aria-hidden
+                  >
+                    <Check className="w-6 h-6" />
+                  </div>
+                  <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800 }}>{ui.privateTourSuccessTitle}</h2>
+                  <p className={styles.successText} style={{ margin: '0 0 20px' }}>{ui.privateTourSuccessBody}</p>
+                  <button type="button" className={styles.ctaButton} onClick={handleClose} style={{ width: '100%' }}>
+                    {ui.close}
+                  </button>
+                </div>
+              ) : bookingResult ? (
                 <PaymentSuccessPanel
                   bookingId={bookingResult.bookingId}
                   accessToken={bookingResult.accessToken}
