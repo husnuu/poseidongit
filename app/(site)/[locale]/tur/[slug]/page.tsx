@@ -54,8 +54,6 @@ function parseMetaKeywords(raw: string | null | undefined): string[] | undefined
   return list.length ? list : undefined
 }
 
-export const revalidate = 3600 // ISR: tur sayfaları en fazla 1 saat sonra güncellenir
-
 /** Yayımlanmış turların slug'ları — 404 önlemek için sayfaların build/ISR'da bilinmesi gerekir */
 export async function generateStaticParams() {
   if (process.env.NODE_ENV === 'development') {

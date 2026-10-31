@@ -11,9 +11,6 @@ import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
 import { translateYachtRentalDocument } from '@/lib/yachtTranslate'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
 
-/** Root layout `headers()` kullandığı için ISR/statik ön üretim ile çakışmayı önler (prod: DYNAMIC_SERVER_USAGE). */
-export const dynamic = 'force-dynamic'
-
 const getYacht = cache(async (locationSlug: string, yachtSlug: string) => {
   try {
     return await client.fetch<YachtRentalDocument | null>(
@@ -26,6 +23,21 @@ const getYacht = cache(async (locationSlug: string, yachtSlug: string) => {
     return null
   }
 })
+
+/** Yat detay sayfaları build'de üretilir. [segment] klasöründe layout olmadığı için
+ *  üst parametre buraya gelmez — lokasyon + yat slug'ı birlikte döndürülür. */
+export async function generateStaticParams() {
+  const rows = await client
+    .fetch<{ segment?: string | null; yachtSlug?: string | null }[]>(
+      `*[_type == "yachtRental" && isActive == true && defined(slug.current) && defined(location->slug.current)]{
+        "segment": location->slug.current, "yachtSlug": slug.current
+      }`
+    )
+    .catch(() => [] as { segment?: string | null; yachtSlug?: string | null }[])
+  return rows
+    .filter((r): r is { segment: string; yachtSlug: string } => Boolean(r.segment && r.yachtSlug))
+    .map(({ segment, yachtSlug }) => ({ segment, yachtSlug }))
+}
 
 export async function generateMetadata({
   params,

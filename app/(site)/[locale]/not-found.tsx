@@ -1,5 +1,7 @@
+'use client'
+
 import Link from 'next/link'
-import { headers } from 'next/headers'
+import { usePathname } from 'next/navigation'
 import { parseLocaleFromPathname, withLocalePath } from '@/lib/i18n/paths'
 import type { SiteLocale } from '@/lib/i18n/config'
 
@@ -8,8 +10,9 @@ import type { SiteLocale } from '@/lib/i18n/config'
  * Header/Footer'sız ve TR-only render ediyordu (bkz. SEO denetimi). Bu dosya
  * aynı segmentte olduğu için üst layout'un Header/Footer'ı ile sarmalanır —
  * yalnızca içerik metnini locale'e göre seçmemiz yeterli. not-found.tsx
- * `params` almadığı için locale'i middleware'in ayarladığı `x-pathname`
- * header'ından (layout.tsx'teki chromeless tespitiyle aynı teknik) çıkarıyoruz.
+ * `params` prop'u almadığı için locale adres yolundan (`usePathname`) okunur —
+ * `headers()` tüm sayfaları dinamik yapıp önbelleği kapatıyordu; `useParams()`
+ * ise notFound() sonrası bu sınırda dil parametresini vermiyor.
  */
 const COPY: Record<SiteLocale, { title: string; body: string; home: string; tours: string }> = {
   tr: {
@@ -38,15 +41,8 @@ const COPY: Record<SiteLocale, { title: string; body: string; home: string; tour
   },
 }
 
-export default async function LocaleNotFound() {
-  let locale: SiteLocale = 'tr'
-  try {
-    const h = await headers()
-    const pathname = h.get('x-pathname') ?? ''
-    locale = parseLocaleFromPathname(pathname).locale
-  } catch {
-    /* headers() bazı edge durumlarda patlayabilir — TR varsayılanına düş */
-  }
+export default function LocaleNotFound() {
+  const locale: SiteLocale = parseLocaleFromPathname(usePathname() ?? '/').locale
 
   const copy = COPY[locale]
   const homePath = withLocalePath(locale, '/')

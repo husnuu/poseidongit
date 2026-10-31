@@ -6,6 +6,7 @@ import { HelpIcon } from '@/components/help-center/helpIcons'
 import HelpArticleItem from '@/components/help-center/HelpArticleItem'
 import HelpSupportCTA from '@/components/help-center/HelpSupportCTA'
 import { client } from '@/lib/sanity'
+import { STATIC_HELP_CATEGORIES } from '@/lib/helpCenter/staticHelpData'
 import { siteSettingsWhatsappQuery } from '@/lib/queries'
 import { buildWhatsAppHref } from '@/lib/buildWhatsAppHref'
 import { fetchHelpCategoryPage } from '@/lib/sanity/fetchers/helpCenter'
@@ -18,6 +19,11 @@ import { withLocalePath } from '@/lib/i18n/paths'
 import { getHelpCenterUiStrings } from '@/lib/i18n/strings/helpCenter'
 
 export const revalidate = 300
+
+/** Yardım merkezi kategorileri build'de üretilir (kategori slug'ları her dilde aynı). */
+export function generateStaticParams() {
+  return STATIC_HELP_CATEGORIES.map((c) => ({ categorySlug: c.slug }))
+}
 
 export async function generateMetadata({
   params,

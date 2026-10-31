@@ -47,8 +47,6 @@ import type { TourListItem } from '@/components/tours/TourCard'
 import CoveGallery from '@/components/coves/CoveGallery'
 import CovesGrid from '@/components/coves/CovesGrid'
 
-export const dynamic = 'force-dynamic'
-
 const opts = { useCdn: false as const }
 
 type SanityImage = { asset?: { _ref?: string }; alt?: string | null } | null
@@ -182,6 +180,15 @@ async function localizeCove(raw: CoveDetail, locale: SiteLocale): Promise<CoveDe
     content: (content as PortableTextBlock[] | null | undefined) ?? merged.content,
     faqs: faqs as CoveFaq[],
   }
+}
+
+/** Koy sayfaları build'de her dil için önceden üretilir (o dilin slug'ıyla; otomatik slug'lar middleware'de Türkçeye çevrilir). */
+export async function generateStaticParams({ params }: { params: { locale: string } }) {
+  const locale: SiteLocale = isSiteLocale(params.locale) ? params.locale : 'tr'
+  const rows = await client
+    .fetch<Record<string, unknown>[]>(`*[_type == "cove" && defined(slug.current)]{ slug, translations }`)
+    .catch(() => [] as Record<string, unknown>[])
+  return rows.map((r) => coveSlugForLocale(r, locale)).filter((s): s is string => Boolean(s)).map((slug) => ({ slug }))
 }
 
 export async function generateMetadata({

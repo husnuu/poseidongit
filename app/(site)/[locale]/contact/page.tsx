@@ -21,8 +21,6 @@ import { mergeContactPageLocale, mergeContactPageSeoForLocale } from '@/lib/i18n
 import { mergeTourForLocale } from '@/lib/i18n/mergeTourForLocale'
 import { getContactPageUiStrings, mergeContactUiFromSanity } from '@/lib/i18n/strings/contactPage'
 
-export const dynamic = 'force-dynamic'
-
 // Popüler Turlar bölüm başlığı için
 // daha ölçülü bir boyut — referans sitedeki alt başlık stiline uygun.
 const CONTACT_SUBHEADING_CLASS =

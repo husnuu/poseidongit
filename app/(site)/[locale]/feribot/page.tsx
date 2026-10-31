@@ -19,8 +19,6 @@ import JsonLd from '@/components/seo/JsonLd'
 import { buildItemListSchema } from '@/lib/seo'
 import { withLocalePath } from '@/lib/i18n/paths'
 
-export const dynamic = 'force-dynamic'
-
 export async function generateMetadata({
   params,
 }: {

@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { unstable_noStore as noStore } from 'next/cache'
 import { client, safeSanityImageUrl } from '@/lib/sanity'
 import { footerPopularToursQuery, siteFooterQuery, siteSettingsLogoQuery } from '@/lib/queries'
 import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
@@ -191,7 +190,6 @@ const SOCIAL_HOVER_CLASS: Record<string, string> = {
 }
 
 async function getFooterData(): Promise<SiteFooterData | null> {
-  noStore()
   try {
     return await client.fetch<SiteFooterData | null>(siteFooterQuery, {}, { useCdn: false })
   } catch {
@@ -200,7 +198,6 @@ async function getFooterData(): Promise<SiteFooterData | null> {
 }
 
 async function getSiteSettingsLogo(): Promise<SiteSettingsLogo> {
-  noStore()
   try {
     return await client.fetch<SiteSettingsLogo>(siteSettingsLogoQuery, {}, { useCdn: false })
   } catch {
@@ -215,7 +212,6 @@ type FooterPopularToursRaw = {
 
 /** Ana sayfadaki "En Popüler Turlarımız" seçkisinin aynısı — footer sütunu için. */
 async function getFooterPopularTours(): Promise<FooterPopularToursRaw> {
-  noStore()
   try {
     return await client.fetch<FooterPopularToursRaw>(footerPopularToursQuery, {}, { useCdn: false })
   } catch {
@@ -227,7 +223,6 @@ async function getFooterPopularTours(): Promise<FooterPopularToursRaw> {
     birinin gerçek Google yorumları linkini al — hepsi aynı işletme profiline
     gittiği için footerdaki puan rozetini buraya yönlendirmek için kullanılır. */
 async function getFooterGoogleReviewsUrl(): Promise<string | null> {
-  noStore()
   try {
     const url = await client.fetch<string | null>(
       `*[_type == "tour" && defined(reviewsUrl)][0].reviewsUrl`,

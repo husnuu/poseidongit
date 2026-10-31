@@ -19,8 +19,6 @@ import YachtDepositCheckoutForm from '@/components/yacht/YachtDepositCheckoutFor
 import YachtDepositCharterSummary from '@/components/yacht/YachtDepositCharterSummary'
 import listStyles from '../turlar/page.module.css'
 
-export const dynamic = 'force-dynamic'
-
 type PageData = YachtDepositPageData & {
   formOverlay?: Record<string, unknown> | null
 }

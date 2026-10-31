@@ -22,8 +22,6 @@ import { translateText } from '@/lib/i18n/runtimeTranslate'
 import { LISTING_HEADINGS } from '@/lib/i18n/strings/listingHeadings'
 import StandardPageLd from '@/components/seo/StandardPageLd'
 
-export const dynamic = 'force-dynamic'
-
 const siteName = getSiteName()
 
 const DEFAULT_TITLE_TOP: Record<SiteLocale, string> = {

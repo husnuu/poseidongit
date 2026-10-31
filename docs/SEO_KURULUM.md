@@ -16,7 +16,9 @@ Sanity'de doldurulması gereken içerikler var.
 | llms.txt (yapay zekâ asistanları için canlı site özeti) | `app/llms.txt/route.ts` |
 | Markalı paylaşım görseli (og:image), görseli olmayan her sayfa için | `app/api/og/route.ts`, `lib/og/ogImage.tsx` |
 | JSON-LD: TravelAgency, WebSite, Organization, Product, FAQPage, BreadcrumbList, ItemList, CollectionPage, AboutPage, ContactPage, Menu, BlogPosting, TouristAttraction | `lib/seo/*`, `components/seo/*` |
-| Sanity değişince anında yenileme + IndexNow bildirimi | `app/api/revalidate/route.ts` |
+| Sanity değişince anında yenileme (`revalidateTag('sanity')`) + IndexNow bildirimi | `app/api/revalidate/route.ts` |
+| Sayfalar önbellekten (ISR, 10 dk) sunulur; 4 dil build'de önceden üretilir | `app/(site)/[locale]/layout.tsx` |
+| Tur/koy/blog/feribot adresleri her dilde otomatik çevrilir (ör. `/en/tour/sunset-tour`) | `lib/i18n/generated/localeSlugs.json`, `scripts/generate-locale-slugs.mjs` |
 | AVIF/WebP: `next/image` + Sanity `auto=format` | `next.config.ts`, sayfalardaki `urlFor(...).auto('format')` |
 
 Yapılandırılmış veriyi kontrol etmek için: <https://search.google.com/test/rich-results> ve
@@ -88,7 +90,20 @@ MyMemory servisi kullanılıyor; onun günlük kotası dolunca EN/DE/RU sayfalar
 (yani kopya içerikle) gösterilir. Vercel'de `DEEPL_API_KEY` tanımlı olduğundan emin olun
 (DeepL API Free: ayda 500.000 karakter ücretsiz).
 
-## 6. Ölçüm
+## 6. Çevrilmiş adresler (URL slug'ları)
+
+Sanity'de bir şey yapmanız gerekmez. Her build öncesi (`npm run build` → `prebuild`)
+`scripts/generate-locale-slugs.mjs` yeni tur, koy, blog ve feribot sayfaları için o dildeki
+başlıktan EN/DE/RU adres üretip `lib/i18n/generated/localeSlugs.json` dosyasına ekler.
+
+- Var olan adresler **asla değişmez** (Google'daki linkler kırılmasın). Bir adresi beğenmezseniz
+  dosyadaki değeri elle düzeltip commit edebilirsiniz — yalnızca henüz yayında değilse.
+- Türkçe adresle gelen ziyaretçi (ör. `/en/tour/guenbatimi-turu`) çevrilmiş adrese 301 ile yönlenir.
+- Sanity'de bir dil için elle slug girilirse o kullanılır; eski otomatik adres yönlenmeye devam eder.
+- Yeni eklenen içerik bir sonraki deploy'a kadar Türkçe adresle (ve önbelleksiz) açılır.
+- Elle çalıştırmak için: `npm run slugs`.
+
+## 7. Ölçüm
 
 - Search Console → **Sayfa deneyimi / Core Web Vitals** ve **Kapsam** raporları haftalık.
 - Rich Results Test ile tur sayfası (Product + FAQ + Breadcrumb) ve ana sayfa (TravelAgency).

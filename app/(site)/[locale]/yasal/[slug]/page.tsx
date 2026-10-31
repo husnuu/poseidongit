@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { unstable_noStore as noStore } from 'next/cache'
 import { client } from '@/lib/sanity'
 import { legalPageBySlugQuery } from '@/lib/queries'
 import { PortableText } from '@portabletext/react'
@@ -21,9 +20,6 @@ import { withLocalePath } from '@/lib/i18n/paths'
 import { mergeLegalPageForLocale } from '@/lib/i18n/mergeLegalPageForLocale'
 import { dateLocaleForSiteLocale, getLegalPageUiStrings } from '@/lib/i18n/strings/legalPage'
 import StandardPageLd from '@/components/seo/StandardPageLd'
-
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
 
 interface LegalPage {
   _id: string
@@ -73,6 +69,25 @@ function normalizeSlug(slug: string): string {
   return decodeURIComponent(slug).trim().toLowerCase().replace(/\s+/g, '-')
 }
 
+/** Yasal sayfalar build'de üretilir: her dilde Türkçe slug + varsa o dilin kendi slug'ı. */
+export async function generateStaticParams({ params }: { params: { locale: string } }) {
+  const rows = await client
+    .fetch<{ tr?: string | null; local?: string | null }[]>(
+      `*[_type == "legalPage" && defined(slug.current)]{
+        "tr": slug.current,
+        "local": select(
+          $locale == "en" => translations.en.slug.current,
+          $locale == "de" => translations.de.slug.current,
+          $locale == "ru" => translations.ru.slug.current
+        )
+      }`,
+      { locale: params.locale }
+    )
+    .catch(() => [] as { tr?: string | null; local?: string | null }[])
+  const slugs = new Set(rows.flatMap((r) => [r.tr, r.local]).filter((s): s is string => Boolean(s)))
+  return Array.from(slugs, (slug) => ({ slug }))
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -119,7 +134,6 @@ export default async function YasalSayfaPage({
 }: {
   params: Promise<{ locale: string; slug: string }>
 }) {
-  noStore()
   const { slug, locale: loc } = await params
   if (!isSiteLocale(loc)) notFound()
   const locale = loc as SiteLocale

@@ -1,5 +1,6 @@
 import type { SiteLocale } from './config'
 import { DEFAULT_LOCALE } from './config'
+import { canonicalDetailSlug, detailSlugNeedingRedirect, localizeDetailSlug } from './localeSlugMap'
 
 /**
  * Dosya sistemi / App Router segmentleri (Türkçe kök).
@@ -20,6 +21,7 @@ const CANONICAL_FIRST_SEGMENTS = new Set([
   'blog',
   'tur',
   'menu',
+  'feribot',
 ])
 
 const EN_FIRST_IN: Record<string, string> = {
@@ -34,6 +36,7 @@ const EN_FIRST_IN: Record<string, string> = {
   legal: 'yasal',
   booking: 'rezervasyon',
   ticket: 'bilet',
+  ferry: 'feribot',
   // NOT: 'iletisim' BURAYA eklenmiyor — 'contact' zaten kanonik segment adı
   // (İngilizce çevirisi yok/gerekmiyor). Eskiden buradaki `iletisim: 'contact'`
   // girdisi geri döndürüldüğünde (EN_FIRST_OUT) yanlışlıkla İngilizce genel
@@ -56,6 +59,7 @@ const DE_FIRST_IN: Record<string, string> = {
   kontakt: 'contact',
   yachtkaution: 'yat-kapora',
   speisekarte: 'menu',
+  faehre: 'feribot',
 }
 
 /** Rusça (Kiril) URL segmentleri — EN/DE ile aynı kural: o dildeki gerçek kelime. */
@@ -195,6 +199,11 @@ export function incomingPathToCanonicalRoute(locale: SiteLocale, pathWithoutLoca
       out.push(normalizeRezSubIn(locale, seg))
       continue
     }
+    if (i === 1) {
+      // Otomatik çevrilmiş detay slug'ı → Türkçe slug (örn. en /tour/sunset-tour → /tur/guenbatimi-turu)
+      out.push(canonicalDetailSlug(locale, prevCanonical, seg))
+      continue
+    }
     out.push(seg)
   }
   return `/${out.join('/')}`
@@ -227,7 +236,26 @@ export function canonicalRouteToPublicPath(locale: SiteLocale, canonicalPath: st
       out.push(localizeRezSubOut(locale, seg))
       continue
     }
+    if (i === 1) {
+      out.push(localizeDetailSlug(locale, prevCanonical, seg))
+      continue
+    }
     out.push(seg)
   }
   return `/${out.join('/')}`
+}
+
+/**
+ * Yabancı dildeki bir istek için olması gereken kamuya açık path'in KANONİK
+ * iç karşılığı (çağıran `withLocalePath` ile adrese çevirip gelenle karşılaştırır):
+ * Türkçe bölüm adı (/en/turlar), Türkçe detay slug'ı (/en/tour/guenbatimi-turu)
+ * veya emekli otomatik slug'la gelinmişse fark oluşur ve middleware 301 verir.
+ */
+export function expectedCanonicalRoute(locale: SiteLocale, pathWithoutLocale: string): string {
+  const canonical = incomingPathToCanonicalRoute(locale, pathWithoutLocale)
+  const segments = pathWithoutLocale.split('/').filter(Boolean).map(safeDecodeSegment)
+  if (locale === DEFAULT_LOCALE || segments.length !== 2) return canonical
+  const first = normalizeFirstSegmentIn(locale, segments[0])
+  const slug = detailSlugNeedingRedirect(locale, first, segments[1])
+  return slug ? `/${first}/${slug}` : canonical
 }

@@ -1,7 +1,8 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { getBaseUrl } from '@/lib/seo'
+import { SANITY_CACHE_TAG } from '@/lib/sanity'
 import { localizedUrls, submitIndexNow } from '@/lib/seo/indexNow'
 
 export const runtime = 'nodejs'
@@ -105,9 +106,12 @@ export async function POST(req: NextRequest) {
     /* projeksiyon boş olabilir — yine de her şey yenilenir */
   }
 
-  // Tüm site (tüm diller, sitemap, llms.txt) — içerik sayfalar arasında
-  // paylaşıldığı için (ör. tur kartları ana sayfada da) seçici yenileme yerine tamamı.
-  revalidatePath('/', 'layout')
+  // Sanity verisiyle üretilmiş tüm sayfalar (tüm diller, sitemap, llms.txt) —
+  // içerik sayfalar arasında paylaşıldığı için (ör. tur kartları ana sayfada da)
+  // seçici yenileme yerine tamamı. revalidatePath('/', 'layout') KULLANILMIYOR:
+  // o, sayfa yollarına bağlı çeviri önbelleğini de silip tüm siteyi yeniden
+  // makine çevirisine (DeepL kotası + yavaş ilk açılış) gönderiyordu.
+  revalidateTag(SANITY_CACHE_TAG)
   revalidatePath('/sitemap.xml')
   revalidatePath('/llms.txt')
 

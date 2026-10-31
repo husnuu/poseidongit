@@ -9,6 +9,20 @@ export const client = createClient({
   token: process.env.SANITY_API_READ_TOKEN || undefined,
 })
 
+/** Sanity verisi kullanan önbellekli sayfaların ortak etiketi (bkz. app/api/revalidate). */
+export const SANITY_CACHE_TAG = 'sanity'
+
+/* Her sorguya `next.tags: ['sanity']` eklenir. Etiket önbellek davranışını
+   DEĞİŞTİRMEZ (istek yine önbelleksiz gider); yalnızca o veriyle üretilen
+   sayfalar etiketlenir. Webhook `revalidateTag('sanity')` ile sadece bu
+   sayfaları yeniler — `revalidatePath('/', 'layout')` çeviri önbelleğini de
+   siliyor, her yayından sonra tüm site baştan çevriliyordu. */
+const fetchWithoutTag = client.fetch.bind(client) as (...args: unknown[]) => Promise<unknown>
+client.fetch = ((query: string, params?: unknown, options?: { next?: { tags?: string[] } & Record<string, unknown> } & Record<string, unknown>) => {
+  const tags = Array.from(new Set([...(options?.next?.tags ?? []), SANITY_CACHE_TAG]))
+  return fetchWithoutTag(query, params ?? {}, { ...options, next: { ...options?.next, tags } })
+}) as typeof client.fetch
+
 const builder = imageUrlBuilder(client)
 
 export function urlFor(source: Parameters<typeof builder.image>[0]) {

@@ -12,8 +12,6 @@ import { isSiteLocale } from '@/lib/i18n/config'
 import { translateText } from '@/lib/i18n/runtimeTranslate'
 import StandardPageLd from '@/components/seo/StandardPageLd'
 
-export const dynamic = 'force-dynamic'
-
 type FaqItemRaw = {
   question?: string | null
   answer?: string | null

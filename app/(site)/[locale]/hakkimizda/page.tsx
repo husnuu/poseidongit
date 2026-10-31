@@ -32,8 +32,6 @@ import ExpandableBlock from '@/components/about/ExpandableBlock'
 const tourCountQuery = `count(*[_type == "tour" && defined(slug.current)])`
 const coveCountQuery = `count(*[_type == "cove"])`
 
-export const dynamic = 'force-dynamic'
-
 type BoatItem = {
   year?: string | null
   name?: string | null

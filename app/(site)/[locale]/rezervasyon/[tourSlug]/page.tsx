@@ -31,6 +31,24 @@ import {
   getVideoEmbedUrl,
 } from '@/lib/sanity/getTourFull'
 
+/** Rezervasyon sayfaları build'de üretilir (linklerdeki slug: o dilin Sanity slug'ı, yoksa Türkçe). */
+export async function generateStaticParams({ params }: { params: { locale: string } }) {
+  const slugs = await client
+    .fetch<(string | null)[]>(
+      `*[_type == "tour" && defined(slug.current)]{
+        "s": select(
+          $locale == "en" => coalesce(translations.en.slug.current, slug.current),
+          $locale == "de" => coalesce(translations.de.slug.current, slug.current),
+          $locale == "ru" => coalesce(translations.ru.slug.current, slug.current),
+          slug.current
+        )
+      }.s`,
+      { locale: params.locale }
+    )
+    .catch(() => [] as (string | null)[])
+  return slugs.filter((s): s is string => Boolean(s)).map((tourSlug) => ({ tourSlug }))
+}
+
 export async function generateMetadata({
   params,
 }: {

@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { ADMIN_SESSION_COOKIE } from '@/lib/adminSessionConstants'
 import { verifyAdminSessionTokenEdge } from '@/lib/adminJwtVerifyEdge'
-import { parseLocaleFromPathname } from '@/lib/i18n/paths'
-import { isSiteLocale } from '@/lib/i18n/config'
-import { incomingPathToCanonicalRoute } from '@/lib/i18n/routeAliases'
+import { parseLocaleFromPathname, withLocalePath } from '@/lib/i18n/paths'
+import { htmlLangForLocale, isSiteLocale } from '@/lib/i18n/config'
+import { expectedCanonicalRoute, incomingPathToCanonicalRoute } from '@/lib/i18n/routeAliases'
 
 /** Eski / kaldırılmış sayfalar — 410 Gone (arama motorları indeksten çıkarır). */
 const gonePaths = new Set([
@@ -15,6 +15,14 @@ const gonePaths = new Set([
   '/contact-2',
   '/category/uncategorized',
 ])
+
+function safeDecodePath(pathname: string): string {
+  try {
+    return decodeURIComponent(pathname)
+  } catch {
+    return pathname
+  }
+}
 
 /**
  * Canonical host: www vs non-www
@@ -91,6 +99,17 @@ export async function middleware(request: NextRequest) {
       }
       return NextResponse.redirect(url, 301)
     }
+    // Yabancı dilde adres o dilin kanonik adresi değilse 301 (tek adres = kopya içerik yok):
+    // /en/turlar → /en/tours, /en/tour/guenbatimi-turu → /en/tour/sunset-tour,
+    // /de/contact → /de/kontakt. Yalnızca GET/HEAD (form gönderimleri bozulmasın).
+    if (locale !== 'tr' && (request.method === 'GET' || request.method === 'HEAD')) {
+      const expected = withLocalePath(locale, expectedCanonicalRoute(locale, pathWithoutLocale))
+      if (expected !== safeDecodePath(pathname)) {
+        const url = request.nextUrl.clone()
+        url.pathname = expected
+        return NextResponse.redirect(url, 301)
+      }
+    }
     const canonicalPath = incomingPathToCanonicalRoute(locale, pathWithoutLocale)
     const internalPath = `/${locale}${canonicalPath === '/' ? '' : canonicalPath}`
     // Sunucu bileşenlerinin (ör. [locale]/layout.tsx) geçerli yolu headers() ile
@@ -101,6 +120,8 @@ export async function middleware(request: NextRequest) {
     if (internalPath === pathname) {
       const res = NextResponse.next({ request: { headers: requestHeaders } })
       res.headers.set('x-site-locale', locale)
+      // Sayfalar önbellekten gelse de dil bilgisi her yanıtta (Bing/Yandex sinyali).
+      res.headers.set('Content-Language', htmlLangForLocale(locale))
       return res
     }
     // clone + pathname: `new URL(internalPath, request.url)` strips ?query (bilet ?token= kaybolur)
@@ -108,6 +129,7 @@ export async function middleware(request: NextRequest) {
     rewriteUrl.pathname = internalPath
     const res = NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } })
     res.headers.set('x-site-locale', locale)
+    res.headers.set('Content-Language', htmlLangForLocale(locale))
     return res
   }
 

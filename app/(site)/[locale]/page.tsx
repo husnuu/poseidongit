@@ -63,8 +63,6 @@ import {
   translatePortableTextBlocks,
 } from '@/lib/i18n/runtimeTranslate'
 
-export const dynamic = 'force-dynamic'
-
 const siteName = getSiteName()
 const DEFAULT_HOME_TITLE: Record<SiteLocale, string> = {
   tr: siteName ? `Tekne Turu | Adalar ve Koylar – ${siteName}` : 'Tekne Turu | Adalar ve Koylar',

@@ -1,0 +1,101 @@
+{
+  "auto": {
+    "blog": {
+      "cesme-de-tekne-turu-mu-beach-club-mi": {
+        "de": "bootstour-oder-beach-club-bei-cesme",
+        "en": "boat-tour-or-beach-club-at-cesme",
+        "ru": "lodochnaya-progulka-ili-plyazhnyy-klub-v-cesme"
+      },
+      "cesme-nin-en-guzel-koylari": {
+        "de": "die-schoensten-buchten-von-cesme",
+        "en": "the-most-beautiful-bays-of-cesme",
+        "ru": "samye-krasivye-bukhty-cesme"
+      },
+      "cesme-tekne-turu-rehberi-bilmeniz-gerekenler": {
+        "de": "cesme-bootstour-ratgeber-alles-was-sie-wissen-muessen",
+        "en": "cesme-boat-tour-guide-everything-you-need-to-know",
+        "ru": "ekskursiya-na-lodke-cesme-vse-chto-vam-nuzhno-znat"
+      }
+    },
+    "feribot": {
+      "cesme-sakiz": {
+        "de": "cesme-chios-faehrticket",
+        "en": "cesme-chios-ferry-ticket",
+        "ru": "bilet-na-parom-cesme-khios"
+      }
+    },
+    "koylar": {
+      "esek-adasi": {
+        "de": "eselinsel",
+        "ru": "oslinyy-ostrov"
+      },
+      "kis-limani": {
+        "de": "winterhafen",
+        "ru": "zimnyaya-gavan"
+      },
+      "magaralar": {
+        "de": "hoehlen",
+        "ru": "peshchery"
+      },
+      "makri-adasi": {
+        "de": "makri-insel",
+        "en": "macri-island",
+        "ru": "ostrov-makri"
+      },
+      "mavi-koy-akvaryum": {
+        "de": "blaue-bucht-aquarium",
+        "ru": "goluboy-zaliv-akvarium"
+      },
+      "mercan-adasi": {
+        "de": "koralleninsel",
+        "ru": "korallovyy-ostrov"
+      }
+    },
+    "tur": {
+      "cesme-tekne-turu": {
+        "de": "cesme-inseln-und-buchten-tour-mittagessen-inklusive",
+        "ru": "ekskursiya-po-ostrovam-i-zalivam-cesme-obed-vklyuchen"
+      },
+      "cesme-tuplu-dalis-turu": {
+        "de": "cesme-unterwasser-abenteuer-tauchen-schnorcheln",
+        "en": "cesme-underwater-adventure-scuba-diving-snorkeling",
+        "ru": "cesme-podvodnoe-plavanie-i-snorkeling"
+      },
+      "guenbatimi-turu": {
+        "de": "sonnenuntergangstour",
+        "en": "sunset-tour",
+        "ru": "ekskursiya-na-zakate"
+      },
+      "izmir-cikisli-cesme-tekne-turu": {
+        "de": "ganztaegige-cesme-bootsfahrt-von-izmir",
+        "en": "full-day-cesme-boat-trip-from-izmir",
+        "ru": "ekskursiya-na-lodke-cesme-na-ves-den-ot-izmir"
+      }
+    }
+  },
+  "manual": {
+    "koylar": {
+      "esek-adasi": {
+        "en": "donkey-island"
+      },
+      "kis-limani": {
+        "en": "winter-harbour"
+      },
+      "magaralar": {
+        "en": "caves"
+      },
+      "mavi-koy-akvaryum": {
+        "en": "aquarium"
+      },
+      "mercan-adasi": {
+        "en": "coral-island"
+      }
+    },
+    "tur": {
+      "cesme-tekne-turu": {
+        "en": "cesme-boat-tour"
+      }
+    }
+  },
+  "retired": {}
+}

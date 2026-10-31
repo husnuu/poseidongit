@@ -272,6 +272,27 @@ const translateRemotePersistent = unstable_cache(translateRemote, ['runtime-tran
   tags: ['runtime-translate'],
 })
 
+/** Çeviri başarısız olduğunda sayfanın önbellek ömrü (saniye). */
+const FAILED_TRANSLATION_PAGE_TTL_SECONDS = 60
+
+/**
+ * Sayfalar önbellekten (ISR, 10 dk) sunulduğu için, çeviri servisi o an hata
+ * verirse Türkçe metinli sayfa 10 dakika boyunca yabancı dilde görünürdü.
+ * Daha kısa `revalidate` ile çağrılan unstable_cache, render edilen sayfanın
+ * ömrünü o değere indirir — böylece sayfa en geç 1 dakikada yeniden denenir.
+ */
+const markPageForQuickRefresh = unstable_cache(async () => true, ['translation-failed-page-ttl'], {
+  revalidate: FAILED_TRANSLATION_PAGE_TTL_SECONDS,
+})
+
+async function shortenPageCacheAfterFailure(): Promise<void> {
+  try {
+    await markPageForQuickRefresh()
+  } catch {
+    /* istek bağlamı dışında (betikler) önemsiz */
+  }
+}
+
 async function translateRemoteCached(protectedText: string, target: SiteLocale): Promise<string> {
   try {
     return await translateRemotePersistent(protectedText, target)
@@ -316,6 +337,7 @@ export async function translateText(text: string | null | undefined, target: Sit
     } else {
       console.error('[runtimeTranslate] translateText failed, orijinal metin kullanılıyor:', err)
     }
+    await shortenPageCacheAfterFailure()
     return text ?? ''
   }
 }

@@ -17,8 +17,6 @@ import { getFerryPageUiStrings } from '@/lib/i18n/strings/ferryPage'
 import { mergeFerryRouteLocale } from '@/lib/i18n/mergeFerryRouteLocale'
 import StandardPageLd from '@/components/seo/StandardPageLd'
 
-export const dynamic = 'force-dynamic'
-
 type SanityImageish = {
   asset?: { _ref?: string }
   url?: string
@@ -107,6 +105,14 @@ async function getFerryRoute(slug: string, locale: SiteLocale): Promise<FerryRou
   } catch {
     return null
   }
+}
+
+/** Feribot hattı sayfaları build'de önceden üretilir (iç rota her dilde Türkçe slug). */
+export async function generateStaticParams() {
+  const slugs = await client
+    .fetch<string[]>(`*[_type == "ferryRoute" && isActive != false && defined(slug.current)].slug.current`)
+    .catch(() => [] as string[])
+  return slugs.map((slug) => ({ slug }))
 }
 
 export async function generateMetadata({

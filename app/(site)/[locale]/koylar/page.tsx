@@ -19,8 +19,6 @@ import { ensureLocalized } from '@/lib/i18n/ensureLocalized'
 import { LISTING_HEADINGS } from '@/lib/i18n/strings/listingHeadings'
 import StandardPageLd from '@/components/seo/StandardPageLd'
 
-export const dynamic = 'force-dynamic'
-
 type CoveItem = {
   _id: string
   title: string | null

@@ -1,14 +1,11 @@
 import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
-import { headers } from 'next/headers'
 import './globals.css'
 import ChunkLoadErrorHandler from '@/components/ChunkLoadErrorHandler'
 import CookieConsentBannerRoot from '@/components/CookieConsentBannerRoot'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 import GoogleTagManager, { GoogleTagManagerNoScript } from '@/components/GoogleTagManager'
-import NoScriptSeoFallback from '@/components/seo/NoScriptSeoFallback'
-import { htmlLangForLocale, isSiteLocale } from '@/lib/i18n/config'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -108,17 +105,11 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  let htmlLang = 'tr'
-  try {
-    const h = await headers()
-    const loc = h.get('x-site-locale')
-    if (loc && isSiteLocale(loc)) htmlLang = htmlLangForLocale(loc)
-  } catch {
-    /* headers() bazı edge durumlarda veya bozuk dev build’de patlayabilir; sayfa yine açılsın */
-  }
-
+  // Kök layout istek başlığı OKUMAZ (headers() tüm siteyi dinamik yapıp önbelleği
+  // kapatıyordu). Site sayfalarının dili [locale]/layout.tsx'te <div lang> +
+  // HtmlLangSync ile, middleware'de Content-Language başlığıyla verilir.
   return (
-    <html lang={htmlLang} className={`${inter.variable} ${plusJakartaSans.variable}`}>
+    <html lang="tr" className={`${inter.variable} ${plusJakartaSans.variable}`}>
       <head>
         <GoogleTagManager />
       </head>
@@ -133,7 +124,6 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <CookieConsentBannerRoot />
         </Suspense>
-        <NoScriptSeoFallback />
       </body>
     </html>
   )

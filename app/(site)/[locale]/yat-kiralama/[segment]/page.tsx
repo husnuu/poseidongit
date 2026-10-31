@@ -22,9 +22,6 @@ import { buildWhatsAppLink } from '@/lib/whatsapp'
 import { LISTING_HEADINGS } from '@/lib/i18n/strings/listingHeadings'
 import StandardPageLd from '@/components/seo/StandardPageLd'
 
-/** Root layout `headers()` ile uyum (prod: DYNAMIC_SERVER_USAGE). */
-export const dynamic = 'force-dynamic'
-
 const getYachtBySlug = cache(async (slug: string) => {
   try {
     return await client.fetch<YachtRentalDocument | null>(
@@ -86,6 +83,14 @@ const LOCATION_META: Record<SiteLocale, { title: (place: string) => string; desc
     description: (p) =>
       `Частная аренда яхт и лодок на день в районе ${p}: сравните вместимость, цены и фото и забронируйте дату онлайн с предоплатой.`,
   },
+}
+
+/** Yat kiralama lokasyon sayfaları build'de üretilir. */
+export async function generateStaticParams() {
+  const slugs = await client
+    .fetch<string[]>(`*[_type == "yachtLocation" && defined(slug.current)].slug.current`)
+    .catch(() => [] as string[])
+  return slugs.map((segment) => ({ segment }))
 }
 
 export async function generateMetadata({

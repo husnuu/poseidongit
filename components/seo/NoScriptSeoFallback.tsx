@@ -1,5 +1,4 @@
-import { headers } from 'next/headers'
-import { htmlLangForLocale, isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
+import { htmlLangForLocale, type SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getSiteName } from '@/lib/seo'
 
@@ -94,15 +93,7 @@ const COPY: Record<SiteLocale, NoScriptCopy> = {
   },
 }
 
-export default async function NoScriptSeoFallback() {
-  let locale: SiteLocale = 'tr'
-  try {
-    const h = await headers()
-    const raw = h.get('x-site-locale')
-    if (raw && isSiteLocale(raw)) locale = raw
-  } catch {
-    return null
-  }
+export default function NoScriptSeoFallback({ locale }: { locale: SiteLocale }) {
   const t = COPY[locale]
   const site = getSiteName().trim()
   const siteTitle = site ? `${t.h2Site} — ${site}` : t.h2Site

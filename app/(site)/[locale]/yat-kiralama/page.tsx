@@ -15,8 +15,6 @@ import { translateText } from '@/lib/i18n/runtimeTranslate'
 import { LISTING_HEADINGS } from '@/lib/i18n/strings/listingHeadings'
 import StandardPageLd from '@/components/seo/StandardPageLd'
 
-export const revalidate = 3600
-
 const siteName = getSiteName()
 
 type YachtRentalsPageData = {

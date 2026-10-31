@@ -80,6 +80,23 @@ function formatDate(dateString: string | undefined, dateLocale: string): string 
   }
 }
 
+/** Blog yazıları build'de her dil için önceden üretilir (o dilin slug'ıyla; otomatik slug'lar middleware'de Türkçeye çevrilir). */
+export async function generateStaticParams({ params }: { params: { locale: string } }) {
+  const slugs = await client
+    .fetch<(string | null)[]>(
+      `*[_type == "blog" && defined(slug.current)]{
+        "s": select(
+          $locale == "en" => coalesce(translations.en.slug.current, slug.current),
+          $locale == "de" => coalesce(translations.de.slug.current, slug.current),
+          slug.current
+        )
+      }.s`,
+      { locale: params.locale }
+    )
+    .catch(() => [] as (string | null)[])
+  return slugs.filter((s): s is string => Boolean(s)).map((slug) => ({ slug }))
+}
+
 export async function generateMetadata({
   params,
 }: {
