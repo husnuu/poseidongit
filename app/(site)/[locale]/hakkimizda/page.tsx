@@ -48,6 +48,13 @@ type AboutPageData = {
   titleTop?: string | null
   titleBottom?: string | null
   heroLogo?: { asset?: { _ref: string }; alt?: string | null } | null
+  coverImage?: {
+    asset?: { _ref: string }
+    hotspot?: { x?: number; y?: number } | null
+    crop?: unknown
+    alt?: string | null
+    caption?: string | null
+  } | null
   intro?: PortableTextBlock[] | null
   sectionTitle?: string | null
   sectionSubtitle?: string | null
@@ -204,6 +211,8 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
       intro,
       sectionBody,
       boats,
+      coverCaption,
+      coverAlt,
     ] = await Promise.all([
       aboutFieldHasManualTranslation(rawForTranslation, locale, 'titleTop')
         ? data.titleTop
@@ -240,6 +249,8 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
             : await translateText(b.description, locale),
         }))
       ),
+      translateText(data.coverImage?.caption, locale),
+      translateText(data.coverImage?.alt, locale),
     ])
     data = {
       ...data,
@@ -252,6 +263,9 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
       intro: intro ?? data.intro,
       sectionBody: sectionBody ?? data.sectionBody,
       boats,
+      coverImage: data.coverImage
+        ? { ...data.coverImage, caption: coverCaption || data.coverImage.caption, alt: coverAlt || data.coverImage.alt }
+        : data.coverImage,
     }
   }
 
@@ -277,6 +291,15 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
   const hasHeroLogo = Boolean(data.heroLogo?.asset)
   const heroLogoUrl = hasHeroLogo && data.heroLogo?.asset ? urlFor(data.heroLogo.asset).width(900).quality(90).auto('format').url() : null
   const heroLogoAlt = (data.heroLogo?.alt?.trim() || ui.metaTitleFallback).slice(0, 200)
+  /* Kapak fotoğrafı (ör. tarihi gemi) — Sanity'deki hotspot odak noktası olarak kullanılır. */
+  const cover = data.coverImage?.asset ? data.coverImage : null
+  const coverUrl = cover ? urlFor(cover).width(2400).quality(85).auto('format').url() : null
+  const coverAlt = (cover?.alt?.trim() || ui.metaTitleFallback).slice(0, 200)
+  const coverCaption = cover?.caption?.trim() || null
+  const coverPosition =
+    cover?.hotspot && typeof cover.hotspot.x === 'number' && typeof cover.hotspot.y === 'number'
+      ? `${Math.round(cover.hotspot.x * 100)}% ${Math.round(cover.hotspot.y * 100)}%`
+      : '50% 50%'
 
   /* Hikaye bölümündeki "o zaman / bugün" çifti: filonun en eski ve en yeni
      teknesi (gerçek görseller). */
@@ -354,9 +377,31 @@ export default async function HakkimizdaPage({ params }: { params: Promise<{ loc
       {pageLd.map((d, i) => (
         <JsonLd key={i} data={d} />
       ))}
+      {/* ── 0. Kapak fotoğrafı (Sanity'de doluysa) ── */}
+      {coverUrl && (
+        <figure className="mx-auto max-w-[1200px] px-4 pt-6 md:pt-8">
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-[#e8edf3] sm:aspect-[21/9]">
+            <Image
+              src={coverUrl}
+              alt={coverAlt}
+              fill
+              priority
+              sizes="(max-width: 1232px) 100vw, 1200px"
+              className="object-cover"
+              style={{ objectPosition: coverPosition }}
+            />
+          </div>
+          {coverCaption && (
+            <figcaption className="mt-2 text-center text-[13px] italic" style={{ color: 'var(--muted, #81848b)' }}>
+              {coverCaption}
+            </figcaption>
+          )}
+        </figure>
+      )}
+
       {/* ── 1. Hero: diğer sayfalarla aynı ortalı mavi başlık + kısa spot;
           altında istatistik şeridi. ── */}
-      <section className="w-full px-4 pb-0 pt-14 text-center sm:pt-16 md:pt-20">
+      <section className={`w-full px-4 pb-0 text-center ${coverUrl ? 'pt-10 md:pt-12' : 'pt-14 sm:pt-16 md:pt-20'}`}>
         <div className="mx-auto max-w-3xl">
           {hasHeroLogo && heroLogoUrl ? (
             <>

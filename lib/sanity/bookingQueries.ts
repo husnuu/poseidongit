@@ -136,6 +136,7 @@ export const tourForBookingProjection = `{
   },
   cashPaymentEnabled,
   singlePrice,
+  ticketBoatName,
   privateTour,
   privateTourPrice,
   extras[]{

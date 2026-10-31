@@ -187,7 +187,7 @@ export default function Step3CustomerInfo({
           ui={ui}
           tourTitle={tour.title ?? ''}
           durationText={tour.quickFacts?.durationText}
-          hostName={boatNameForTour(tour.slug)}
+          hostName={boatNameForTour(tour)}
           meetingLocation={tourAddress}
           classLabel={summaryClassLabel}
           locaIds={summaryLocaIds}

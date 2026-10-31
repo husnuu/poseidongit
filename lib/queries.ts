@@ -274,6 +274,7 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
   },
   cashPaymentEnabled,
   singlePrice,
+  ticketBoatName,
   privateTour,
   privateTourPrice,
   extras[]{
@@ -612,6 +613,7 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
   },
   cashPaymentEnabled,
   singlePrice,
+  ticketBoatName,
   privateTour,
   privateTourPrice,
   extras[]{
@@ -1177,6 +1179,8 @@ export const toursListQuery = `*[_type == "tour"] | order(title asc) {
   // Özel turda kart fiyatı grup fiyatıdır (bkz. lib/sanity/privateTour.ts).
   "priceFrom": select(privateTour == true && privateTourPrice > 0 => privateTourPrice, ticketClasses[0].pricesByAge[0].price),
   "privateTour": privateTour == true && privateTourPrice > 0,
+  // Kategori seçilmemiş eski turlar: özel tur açıksa "private", değilse "daily".
+  "category": coalesce(category, select(privateTour == true => "private", "daily")),
   cardDiscount{ enabled, percentage },
   translations
 }`
@@ -1503,6 +1507,7 @@ export const aboutPageQuery = `*[_type == "aboutPage"][0] {
   titleTop,
   titleBottom,
   heroLogo { asset, alt },
+  coverImage { asset, hotspot, crop, alt, caption },
   intro,
   sectionTitle,
   sectionSubtitle,

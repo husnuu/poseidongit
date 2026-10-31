@@ -1,11 +1,27 @@
 import { defineField, defineType } from 'sanity'
 import { TourIdField } from './components/TourIdField'
+import { TOUR_CATEGORIES, TOUR_CATEGORY_STUDIO_TITLES } from '../lib/tourCategories'
 
 export default defineType({
   name: 'tour',
   title: 'Tur',
   type: 'document',
   fields: [
+    // 0) Kategori — turlar sayfasındaki filtre butonları (Günlük / Özel / Özel günler)
+    defineField({
+      name: 'category',
+      title: 'Tur kategorisi',
+      type: 'string',
+      description: 'Turlar sayfasında müşteri bu kategoriye göre filtreleyebilir.',
+      options: {
+        list: TOUR_CATEGORIES.map((value) => ({ value, title: TOUR_CATEGORY_STUDIO_TITLES[value] })),
+        layout: 'radio',
+        direction: 'horizontal',
+      },
+      initialValue: 'daily',
+      validation: (Rule) => Rule.required().error('Tur kategorisi seçin'),
+    }),
+
     // 1) Temel Bilgiler
     defineField({
       name: 'title',
@@ -1139,6 +1155,13 @@ export default defineType({
           rows: 4,
         }),
       ],
+    }),
+
+    defineField({
+      name: 'ticketBoatName',
+      title: 'Biletteki tekne adı',
+      type: 'string',
+      description: 'Rezervasyon biletindeki “Tekne” satırında görünür. Boş bırakılırsa “Poseidon 2” yazar.',
     }),
 
     defineField({

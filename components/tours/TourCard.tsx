@@ -11,6 +11,7 @@ import styles from './TourCard.module.css'
 import { SANITY_DISPLAY_IMAGE_PROPS } from '@/lib/sanityImage'
 import { useWishlist } from '@/lib/wishlist/WishlistContext'
 import ShareButton from '@/components/ui/ShareButton'
+import type { TourCategory } from '@/lib/tourCategories'
 
 const ICON_MUTED = 'var(--muted, #81848b)'
 /** Süre/kalkış satırındaki çizgi ikonlar (saat, konum) — referans örnekteki
@@ -74,6 +75,8 @@ export type TourListItem = {
   priceFrom?: number | null
   /** Özel tur: priceFrom grup fiyatıdır — "Kişi başı" yerine "Grup fiyatı" yazılır. */
   privateTour?: boolean | null
+  /** Turlar sayfası filtresi (bkz. lib/tourCategories.ts). */
+  category?: TourCategory | null
   isPopular?: boolean | null
   /** Sanity'de "İndirim Rozeti" alanı — sadece kart görünümünü etkiler. */
   cardDiscount?: TourCardDiscount | null

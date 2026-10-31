@@ -50,6 +50,28 @@ export default defineType({
       ],
     }),
     defineField({
+      name: 'coverImage',
+      title: 'Kapak fotoğrafı',
+      type: 'image',
+      description:
+        'Sayfanın en üstünde geniş kapak olarak gösterilir (ör. tarihi gemi fotoğrafı). Boş bırakılırsa gösterilmez. Yatay ve yüksek çözünürlüklü fotoğraf önerilir; “Hotspot” ile fotoğrafın odak noktasını seçebilirsiniz.',
+      options: { hotspot: true },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alternatif metin',
+          type: 'string',
+          description: 'Fotoğrafta ne olduğunu anlatan kısa cümle (ekran okuyucular ve Google için).',
+        }),
+        defineField({
+          name: 'caption',
+          title: 'Fotoğraf altı yazısı (opsiyonel)',
+          type: 'string',
+          description: 'Fotoğrafın altında küçük yazı olarak görünür. Ör. “1960’lar — Hüsnü Kaptan’ın kum gemisi”.',
+        }),
+      ],
+    }),
+    defineField({
       name: 'intro',
       title: 'Giriş Metni (Portable Text)',
       type: 'array',

@@ -2,9 +2,9 @@ import { notFound } from 'next/navigation'
 import { client } from '@/lib/sanity'
 import { tourCoverImageUrl } from '@/lib/sanityImage'
 import { homePopularToursOrderQuery, toursListQuery, toursPageQuery } from '@/lib/queries'
-import TourCard from '@/components/tours/TourCard'
+import TourCategoryFilter from '@/components/tours/TourCategoryFilter'
+import { isTourCategory, type TourCategory } from '@/lib/tourCategories'
 import type { TourListItem } from '@/components/tours/TourCard'
-import ScrollReveal from '@/components/ui/ScrollReveal'
 import styles from './page.module.css'
 
 import type { Metadata } from 'next'
@@ -212,6 +212,9 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
           durationLabel: durationLabel || durationLabelRaw,
           priceFrom: merged.priceFrom,
           privateTour: Boolean((merged as { privateTour?: boolean | null }).privateTour),
+          category: isTourCategory((merged as { category?: unknown }).category)
+            ? ((merged as { category?: unknown }).category as TourCategory)
+            : 'daily',
           coverImageUrl: tourCoverImageUrl(merged.mainImage?.asset ?? null),
           coverImageAlt: merged.mainImage?.alt ?? null,
         }
@@ -262,13 +265,7 @@ export default async function TurlarPage({ params }: { params: Promise<{ locale:
           </header>
 
           <h2 className="sr-only">{LISTING_HEADINGS.tours[locale]}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {tours.map((tour, i) => (
-              <ScrollReveal key={tour._id} delayMs={(i % 3) * 80}>
-                <TourCard tour={tour} locale={locale} />
-              </ScrollReveal>
-            ))}
-          </div>
+          {tours.length > 0 && <TourCategoryFilter tours={tours} locale={locale} />}
 
           {tours.length === 0 && (
             <p className="text-center text-black/60 py-12">{EMPTY_TOURS_MESSAGE[locale]}</p>

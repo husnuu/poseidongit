@@ -79,15 +79,17 @@ export function formatTicketDateLabel(dateStr: string, ui: BookingWizardUi): str
     kaptan/host alanı kişi ismi taşıdığı için "Tekneniz" satırında bunun yerine kullanılır). */
 export const DEFAULT_BOAT_NAME = 'Poseidon 2'
 
-/** Bazı turlar filonun farklı bir teknesiyle yapılıyor — tur slug'ına göre
-    override. Eşleşme yoksa DEFAULT_BOAT_NAME kullanılır. */
+/** Sanity'de tekne adı girilmemiş eski turlar için önceki sabit eşleme
+    (Sanity'deki "Biletteki tekne adı" doldurulunca o kullanılır). */
 const BOAT_NAME_BY_TOUR_SLUG: Record<string, string> = {
   'cesme-tuplu-dalis-turu': 'Güneşim',
 }
 
-/** Biletteki "Tekneniz" satırında gösterilecek tekne adını tur slug'ına göre döndürür. */
-export function boatNameForTour(tourSlug?: string | null): string {
-  if (tourSlug && BOAT_NAME_BY_TOUR_SLUG[tourSlug]) return BOAT_NAME_BY_TOUR_SLUG[tourSlug]
+/** Biletteki "Tekne" satırı: Sanity'deki "Biletteki tekne adı" → (eski eşleme) → Poseidon 2. */
+export function boatNameForTour(tour?: { slug?: string | null; ticketBoatName?: string | null } | null): string {
+  const fromSanity = tour?.ticketBoatName?.trim()
+  if (fromSanity) return fromSanity
+  if (tour?.slug && BOAT_NAME_BY_TOUR_SLUG[tour.slug]) return BOAT_NAME_BY_TOUR_SLUG[tour.slug]
   return DEFAULT_BOAT_NAME
 }
 

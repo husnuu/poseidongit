@@ -427,7 +427,7 @@ export default function Step1PeopleDate({
           ui={ui}
           tourTitle={tour.title ?? ''}
           durationText={tour.quickFacts?.durationText}
-          hostName={boatNameForTour(tour.slug)}
+          hostName={boatNameForTour(tour)}
           meetingLocation={tour.quickFacts?.meetingLocation}
           guestLines={[{ label: String(total) }]}
           dateLabel={dateWithWeekday}
