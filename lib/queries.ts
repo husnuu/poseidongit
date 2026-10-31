@@ -273,6 +273,7 @@ export const tourBySlugQuery = `*[_type == "tour" && slug.current == $slug][0] {
     value
   },
   cashPaymentEnabled,
+  singlePrice,
   extras[]{
     "key": _key,
     title,
@@ -608,6 +609,7 @@ export const tourByLocaleSlugQuery = `*[_type == "tour" && (
     value
   },
   cashPaymentEnabled,
+  singlePrice,
   extras[]{
     "key": _key,
     title,

@@ -72,6 +72,8 @@ export type BookingWizardUi = {
   insufficientCapLine: () => string
   firstClassAdultsOnly: string
   classCapacityShortage: () => string
+  /** Tek fiyat turu (sınıf yok): seçilen tarihte yeterli yer yok. */
+  singlePriceCapacityShortage: string
   locaSelectTitle: string
   locaSelectAria: string
   summaryTitle: string
@@ -281,6 +283,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     firstClassAdultsOnly: 'First class için sadece 16 yaş üstü misafirler kabul edilmektedir.',
     classCapacityShortage: () =>
       'Bu sınıf için yeterli kapasite yok. Başka sınıf seçin veya kişi sayısını azaltın.',
+    singlePriceCapacityShortage:
+      'Bu tarihte seçtiğiniz kişi sayısına yetecek yer kalmamış. Başka bir tarih seçin veya kişi sayısını azaltın.',
     locaSelectTitle: 'Loca Seçimi',
     locaSelectAria: 'First Class loca seçimi',
     summaryTitle: 'Rezervasyon özeti',
@@ -484,6 +488,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     firstClassAdultsOnly: 'First class is for guests aged 16 and over only.',
     classCapacityShortage: () =>
       'Not enough capacity in this class. Choose another class or reduce the number of guests.',
+    singlePriceCapacityShortage:
+      "There aren't enough places left on this date for your group. Choose another date or reduce the number of guests.",
     locaSelectTitle: 'Booth selection',
     locaSelectAria: 'First Class booth selection',
     summaryTitle: 'Reservation summary',
@@ -686,6 +692,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     firstClassAdultsOnly: 'First Class ist nur für Gäste ab 16 Jahren.',
     classCapacityShortage: () =>
       'In dieser Klasse reicht die Kapazität nicht. Wählen Sie eine andere Klasse oder reduzieren Sie die Personenzahl.',
+    singlePriceCapacityShortage:
+      'Für dieses Datum sind nicht mehr genügend Plätze für Ihre Gruppe frei. Bitte wählen Sie ein anderes Datum oder reduzieren Sie die Personenzahl.',
     locaSelectTitle: 'Logenwahl',
     locaSelectAria: 'First-Class-Logenwahl',
     summaryTitle: 'Reservierungsübersicht',
@@ -888,6 +896,8 @@ const UI: Record<SiteLocale, BookingWizardUi> = {
     firstClassAdultsOnly: 'В First Class принимаются только гости старше 16 лет.',
     classCapacityShortage: () =>
       'Недостаточно мест в этом классе. Выберите другой класс или уменьшите число гостей.',
+    singlePriceCapacityShortage:
+      'На эту дату недостаточно свободных мест для вашей группы. Выберите другую дату или уменьшите количество гостей.',
     locaSelectTitle: 'Выбор ложи',
     locaSelectAria: 'Выбор ложи First Class',
     summaryTitle: 'Итоги бронирования',

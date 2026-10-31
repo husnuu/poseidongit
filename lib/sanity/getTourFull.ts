@@ -3,6 +3,7 @@ import type { PortableTextBlock } from '@portabletext/react'
 import { client, urlFor } from '@/lib/sanity'
 import { tourGalleryHeroImageUrl } from '@/lib/sanityImage'
 import { tourByLocaleSlugQuery } from '@/lib/queries'
+import { applySinglePriceMode } from '@/lib/sanity/singlePrice'
 import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
 import {
   translateText,
@@ -265,6 +266,8 @@ export interface Tour {
   boat?: TourBoat | null
   whyYouWillLove?: WhyYouWillLove
   ticketClasses?: TicketClass[]
+  /** Tek fiyat: sınıf seçimi yok; ticketClasses yalnızca ilk sınıfı içerir. */
+  singlePrice?: boolean | null
   seasonRules?: SeasonRule[]
   deposit?: Deposit
   extras?: Extra[]
@@ -288,7 +291,8 @@ export const getTour = cache(async function getTour(
   })
   if (!raw) return null
   const rawRecord = raw as unknown as Record<string, unknown>
-  const merged = mergeTourForLocale(rawRecord, locale) as unknown as Tour
+  // Tek fiyat turlarında yalnızca ilk bilet sınıfı kalır (fiyat/kapasite gösterimleri buna göre).
+  const merged = applySinglePriceMode(mergeTourForLocale(rawRecord, locale) as unknown as Tour)
 
   // Editör manuel çeviri girmemişse (translations.en/de boşsa), anlık makine
   // çevirisiyle Türkçe içeriği doldur — Sanity'e hiçbir şey yazılmaz.

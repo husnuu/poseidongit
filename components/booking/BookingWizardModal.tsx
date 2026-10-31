@@ -13,6 +13,7 @@ import { additionalTravelerSlotCount, resizeAdditionalTravelers } from '@/lib/bo
 import { allPassengersAreMale, resizeInfantGenders } from '@/lib/bookingPassengerGender'
 import { getRemainingCapacityForDate, computePricingForSelection, isFirstClassKey, resolveExtraNoteConfig } from '@/lib/sanity/bookingPricing'
 import { useAvailability, type UsedByDateAndClass } from '@/lib/hooks/useAvailability'
+import { singlePriceClass } from '@/lib/sanity/singlePrice'
 import {
   Step1PeopleDate,
   Step2ClassSelect,
@@ -111,6 +112,17 @@ export default function BookingWizardModal({
       return next
     })
   }, [])
+
+  /* Tek fiyat turu: sınıf seçimi yok — turun tek sınıfı her zaman seçili. Ekstra
+     hizmet yoksa sınıf/ekstra adımı (2) tamamen atlanır: kişi & tarih → bilgiler. */
+  const singleClass = useMemo(() => singlePriceClass(tour), [tour])
+  const singlePrice = singleClass !== null
+  const skipClassStep = singlePrice && !(tour.extras?.length)
+  useEffect(() => {
+    if (singleClass && state.selectedClassKey !== singleClass.key) {
+      setState((prev) => ({ ...prev, selectedClassKey: singleClass.key, firstClassLocas: [] }))
+    }
+  }, [singleClass, state.selectedClassKey])
 
   const onPricingComputed = useCallback((pricingSummary: PricingSummary | null) => {
     setState((prev) => {
@@ -225,12 +237,20 @@ export default function BookingWizardModal({
   }, [open, state.step, variant])
 
   const goNext = useCallback(() => {
-    if (state.step < 4) setState((prev) => ({ ...prev, step: (prev.step + 1) as 1 | 2 | 3 | 4 }))
-  }, [state.step])
+    if (state.step >= 4) return
+    setState((prev) => {
+      const next = skipClassStep && prev.step === 1 ? 3 : prev.step + 1
+      return { ...prev, step: next as 1 | 2 | 3 | 4 }
+    })
+  }, [state.step, skipClassStep])
 
   const goBack = useCallback(() => {
-    if (state.step > 1) setState((prev) => ({ ...prev, step: (prev.step - 1) as 1 | 2 | 3 | 4 }))
-  }, [state.step])
+    if (state.step <= 1) return
+    setState((prev) => {
+      const next = skipClassStep && prev.step === 3 ? 1 : prev.step - 1
+      return { ...prev, step: next as 1 | 2 | 3 | 4 }
+    })
+  }, [state.step, skipClassStep])
 
   const datesForAvailability = useMemo(
     () => (state.selectedDate ? [state.selectedDate] : []),
@@ -247,9 +267,12 @@ export default function BookingWizardModal({
     state.selectedDate && state.selectedClassKey && capacityForSelectedDate
       ? (capacityForSelectedDate[state.selectedClassKey] ?? 0)
       : 0
-  const canProceedStep1 = totalPax >= 1 && state.counts.adult >= 1 && totalPax <= maxPax && !!state.selectedDate
   const hasEnoughCapacityStep2 = capacityForSelectedClass >= totalPax
-  const requiresFirstClassLoca = isFirstClassKey(tour, state.selectedClassKey)
+  /** Tek fiyatta sınıf adımı atlanabildiği için kapasite 1. adımda da denetlenir. */
+  const singlePriceCapacityShort = singlePrice && !!state.selectedDate && totalPax >= 1 && !hasEnoughCapacityStep2
+  const canProceedStep1 =
+    totalPax >= 1 && state.counts.adult >= 1 && totalPax <= maxPax && !!state.selectedDate && !singlePriceCapacityShort
+  const requiresFirstClassLoca = !singlePrice && isFirstClassKey(tour, state.selectedClassKey)
   const requiredFirstClassLocas = requiresFirstClassLoca ? Math.ceil(totalPax / 2) : 0
   const hasRequiredLocas = (state.firstClassLocas?.length ?? 0) === requiredFirstClassLocas
   const missingRequiredExtraNotes = (state.selectedExtraKeys ?? []).some((key) => {
@@ -416,6 +439,14 @@ export default function BookingWizardModal({
     return { ctaLabel: label, ctaDisabled: disabled }
   }, [state.step, submitting, canProceedStep1, canProceedStep2, state, tour.cashPaymentEnabled, ui])
 
+  /** Adım göstergesi: tek fiyatta 2. adım "Ekstralar" olur ya da (ekstra yoksa) hiç gösterilmez. */
+  const visibleSteps = [
+    { step: 1, label: ui.guestCountTitle },
+    ...(skipClassStep ? [] : [{ step: 2, label: singlePrice ? ui.extrasTitle : ui.classSelectTitle }]),
+    { step: 3, label: ui.yourDetailsTitle },
+  ]
+  const visibleStepIndex = Math.max(1, visibleSteps.findIndex((s) => s.step === state.step) + 1)
+
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (variant === 'page') return
     if (e.target === e.currentTarget) handleClose()
@@ -463,23 +494,17 @@ export default function BookingWizardModal({
 
         <div className={styles.wizardModalStepArea} id="booking-wizard-desc">
           <p className={styles.wizardStepProgressMeta} aria-live="polite">
-            {ui.stepProgressAria(state.step, 3)}
+            {ui.stepProgressAria(visibleStepIndex, visibleSteps.length)}
           </p>
           <div
             className={styles.wizardStepper}
             role="progressbar"
-            aria-valuenow={state.step}
+            aria-valuenow={visibleStepIndex}
             aria-valuemin={1}
-            aria-valuemax={3}
-            aria-label={ui.stepProgressAria(state.step, 3)}
+            aria-valuemax={visibleSteps.length}
+            aria-label={ui.stepProgressAria(visibleStepIndex, visibleSteps.length)}
           >
-            {(
-              [
-                { step: 1, label: ui.guestCountTitle },
-                { step: 2, label: ui.classSelectTitle },
-                { step: 3, label: ui.yourDetailsTitle },
-              ] as const
-            ).map(({ step: s, label }, index) => (
+            {visibleSteps.map(({ step: s, label }, index) => (
               <div key={s} className={styles.wizardStepperSegment}>
                 <div className={styles.wizardStepColumn}>
                   <div
@@ -492,7 +517,7 @@ export default function BookingWizardModal({
                     }`}
                     aria-current={state.step === s ? 'step' : undefined}
                   >
-                    {state.step > s ? <Check className="w-3.5 h-3.5" aria-hidden /> : s}
+                    {state.step > s ? <Check className="w-3.5 h-3.5" aria-hidden /> : index + 1}
                   </div>
                   <span
                     className={
@@ -502,7 +527,7 @@ export default function BookingWizardModal({
                     {label}
                   </span>
                 </div>
-                {index < 2 && (
+                {index < visibleSteps.length - 1 && (
                   <div
                     className={`${styles.wizardStepConnector} ${
                       state.step > s ? styles.wizardStepConnectorDone : ''
@@ -540,6 +565,11 @@ export default function BookingWizardModal({
             </div>
           ) : (
             <>
+              {state.step === 1 && singlePriceCapacityShort && (
+                <p className={styles.errorText} style={{ marginBottom: 12 }} role="alert">
+                  {ui.singlePriceCapacityShortage}
+                </p>
+              )}
               {state.step === 1 && Step1PeopleDate && (
                 <Step1PeopleDate
                   tour={tour}
@@ -569,6 +599,7 @@ export default function BookingWizardModal({
                   optimisticUsed={optimisticUsed}
                   availabilityFromParent={availability}
                   ui={ui}
+                  singlePrice={singlePrice}
                 />
               )}
               {state.step === 3 && Step3CustomerInfo && (

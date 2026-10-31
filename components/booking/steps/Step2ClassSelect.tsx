@@ -39,6 +39,8 @@ interface Step2ClassSelectProps {
   optimisticUsed?: UsedByDateAndClass | null
   availabilityFromParent?: Availability | null
   ui: BookingWizardUi
+  /** Tek fiyat turu: sınıf kartları gösterilmez (sınıf sihirbazda otomatik seçili), yalnızca ekstralar. */
+  singlePrice?: boolean
 }
 
 export default function Step2ClassSelect({
@@ -54,6 +56,7 @@ export default function Step2ClassSelect({
   optimisticUsed,
   availabilityFromParent,
   ui,
+  singlePrice = false,
 }: Step2ClassSelectProps) {
   const locaSectionRef = useRef<HTMLDivElement>(null)
   const advance = onStepNext ?? onNext
@@ -99,6 +102,8 @@ export default function Step2ClassSelect({
     !isSelectedClassFirst || (state.firstClassLocas?.length ?? 0) === requiredFirstClassLocas
 
   useEffect(() => {
+    // Tek fiyatta sınıf sabittir; sıfırlanırsa sihirbaz yeniden seçer ve döngüye girer.
+    if (singlePrice) return
     const total = state.counts.adult + state.counts.child + state.counts.baby
     if (state.selectedClassKey === 'first' && (state.counts.child > 0 || state.counts.baby > 0)) {
       onUpdate({ selectedClassKey: null, firstClassLocas: [] })
@@ -120,6 +125,7 @@ export default function Step2ClassSelect({
     state.counts.child,
     state.counts.baby,
     onUpdate,
+    singlePrice,
   ])
 
   // First Class: gerekli loca sayısına ulaşılınca ekstra penceresini otomatik aç (yalnızca eksikken → tamamlanma geçişinde).
@@ -199,7 +205,15 @@ export default function Step2ClassSelect({
         </span>
       </div>
 
+      {/* Tek fiyat turu: sınıf seçimi yok — yalnızca kapasite uyarısı (ekstralar aşağıda). */}
+      {singlePrice && state.selectedClassKey && capForClass(state.selectedClassKey) < totalPax && (
+        <p className={styles.errorText} style={{ marginTop: 12 }} role="alert">
+          {ui.singlePriceCapacityShortage}
+        </p>
+      )}
+
       {/* Sınıf seçim bölümü — flat */}
+      {!singlePrice && (
       <div className={styles.sectionFlat} style={{ paddingTop: 0 }}>
         {/* Diğer adımlarla aynı başlık dili: büyük başlık + kısa mavi çizgi. */}
         <div className={styles.sectionHeaderPlain}>
@@ -515,9 +529,11 @@ export default function Step2ClassSelect({
           </p>
         )}
       </div>
+      )}
 
       {/* First Class loca seçimi */}
-      {state.selectedClassKey &&
+      {!singlePrice &&
+        state.selectedClassKey &&
         isFirstClassKey(tour, state.selectedClassKey) &&
         (() => {
           const requiredLocas = Math.ceil(totalPax / 2)

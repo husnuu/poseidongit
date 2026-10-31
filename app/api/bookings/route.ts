@@ -13,6 +13,7 @@ import { computePricingForSelection } from '@/lib/sanity/bookingPricing'
 import type { TourForBooking, ExtraLineItem } from '@/lib/sanity/bookingTypes'
 import { genderLabel } from '@/lib/bookingPassengerGender'
 import { supabase } from '@/lib/supabase'
+import { applySinglePriceMode, singlePriceClass } from '@/lib/sanity/singlePrice'
 import {
   BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY,
   firstClassLocasFromRow,
@@ -62,16 +63,20 @@ async function computePrices(
   cashPaymentEnabled: boolean
   extras: ExtraLineItem[]
   extrasTotal: number
+  /** Tek fiyat turu: istemci ne gönderirse göndersin kullanılacak sınıf. */
+  singleClass: { key: string; label: string } | null
 }> {
   try {
-    const tour = await client.fetch<TourForBooking | null>(tourForBookingBySanityIdQuery, {
+    const fetched = await client.fetch<TourForBooking | null>(tourForBookingBySanityIdQuery, {
       id: tourId,
     })
+    const singleClass = singlePriceClass(fetched)
+    const tour = applySinglePriceMode(fetched)
     const dateStr = date.slice(0, 10)
     const summary = computePricingForSelection(
       tour,
       dateStr,
-      classId,
+      singleClass?.key ?? classId,
       { adult: counts.adult, child: counts.child, baby: counts.infant },
       selectedExtraKeys,
       extraNotes,
@@ -80,7 +85,7 @@ async function computePrices(
     const totalPax = counts.adult + counts.child + counts.infant
     const cashPaymentEnabled = Boolean(tour?.cashPaymentEnabled)
     if (!summary || totalPax <= 0) {
-      return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled, extras: [], extrasTotal: 0 }
+      return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled, extras: [], extrasTotal: 0, singleClass }
     }
     const unitPrice = Math.round(summary.total / totalPax)
     return {
@@ -92,9 +97,10 @@ async function computePrices(
       cashPaymentEnabled,
       extras: summary.extras,
       extrasTotal: summary.extrasTotal,
+      singleClass,
     }
   } catch {
-    return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled: false, extras: [], extrasTotal: 0 }
+    return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled: false, extras: [], extrasTotal: 0, singleClass: null }
   }
 }
 
@@ -123,7 +129,7 @@ export async function POST(request: Request) {
       lastName: t.lastName,
       ...(t.gender && { gender: t.gender }),
     }))
-    const { unitPrice, totalPrice, depositAmount, cashPaymentEnabled, extras, extrasTotal } = await computePrices(
+    const { unitPrice, totalPrice, depositAmount, cashPaymentEnabled, extras, extrasTotal, singleClass } = await computePrices(
       firestoreTourId,
       payload.date,
       payload.classId,
@@ -132,6 +138,12 @@ export async function POST(request: Request) {
       payload.extraNotes ?? {},
       payload.extraQuantities ?? {}
     )
+    // Tek fiyat turu: sınıf her zaman turun tek sınıfıdır (kayıt, e-posta, kapasite buna göre).
+    if (singleClass) {
+      payload.classId = singleClass.key
+      payload.className = singleClass.label
+      payload.firstClassLocas = undefined
+    }
     // Kalkış saati: istekte varsa onu kullan, yoksa turun quickFacts.startTime (voucher/bilet sayfasında gösterilir)
     let timeToSave: string | undefined = payload.time?.trim() || undefined
     if (!timeToSave) {

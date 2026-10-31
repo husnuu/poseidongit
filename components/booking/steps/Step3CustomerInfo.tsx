@@ -112,7 +112,8 @@ export default function Step3CustomerInfo({
 
   /** Rezervasyon özetinde (bilet) gösterilecek sınıf adı + First Class ise seçilen loca(lar). */
   const selectedTicketClass = tour.ticketClasses?.find((c) => c.key === state.selectedClassKey) ?? null
-  const summaryClassLabel = selectedTicketClass?.label?.trim() || null
+  // Tek fiyat turunda sınıf kavramı yok — özet biletinde sınıf satırı gösterilmez.
+  const summaryClassLabel = tour.singlePrice ? null : selectedTicketClass?.label?.trim() || null
   const summaryLocaIds =
     summaryClassLabel && isFirstClassKey(tour, state.selectedClassKey)
       ? (state.firstClassLocas ?? []).filter((x) => x?.trim())

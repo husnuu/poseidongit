@@ -3,6 +3,7 @@ import type { SiteLocale } from '@/lib/i18n/config'
 import { mergeTourForLocale } from '@/lib/i18n/mergeTourForLocale'
 import type { TourForBooking, CalendarDay, PricingSummary } from './bookingTypes'
 import { buildCalendarDaysForMonth, computePricingForSelection } from './bookingPricing'
+import { applySinglePriceMode } from './singlePrice'
 
 /** Rezervasyon sihirbazı + fiyat hesabı için tur projeksiyonu (slug veya _id sorgularında ortak). */
 export const tourForBookingProjection = `{
@@ -134,6 +135,7 @@ export const tourForBookingProjection = `{
     value
   },
   cashPaymentEnabled,
+  singlePrice,
   extras[]{
     "key": _key,
     title,
@@ -188,8 +190,10 @@ export async function fetchTourForBooking(
       { slug }
     )
     if (!tour) return null
-    if (locale === 'tr') return tour
-    return mergeTourForLocale(tour as unknown as Record<string, unknown>, locale) as unknown as TourForBooking
+    if (locale === 'tr') return applySinglePriceMode(tour)
+    return applySinglePriceMode(
+      mergeTourForLocale(tour as unknown as Record<string, unknown>, locale) as unknown as TourForBooking
+    )
   } catch (err) {
     console.error('fetchTourForBooking error:', err)
     return null

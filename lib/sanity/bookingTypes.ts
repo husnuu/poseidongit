@@ -211,6 +211,8 @@ export interface TourForBooking {
   deposit?: DepositConfig
   /** Sanity: nakit / kapıda ödeme — online NestPay atlanır. */
   cashPaymentEnabled?: boolean
+  /** Sanity: tek fiyat — sınıf seçimi yok, ilk bilet sınıfı kullanılır (bkz. lib/sanity/singlePrice.ts). */
+  singlePrice?: boolean
   quickFacts?: TourQuickFactsForBooking
   /** Tur kaptanı/host — gerçek veri varsa biletin "Tekneniz" satırında gösterilir. */
   host?: TourHostForBooking

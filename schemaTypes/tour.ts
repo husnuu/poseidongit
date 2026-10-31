@@ -1141,6 +1141,15 @@ export default defineType({
       ],
     }),
 
+    defineField({
+      name: 'singlePrice',
+      title: 'Tek fiyat (sınıf seçimi yok)',
+      type: 'boolean',
+      description:
+        'Açıksa müşteri bilet sınıfı (Eco/Premium/First) seçmez, tur tek fiyatla satılır. Fiyat ve kapasite olarak aşağıdaki Bilet Sınıfları listesindeki İLK sınıf kullanılır; diğer sınıflar yok sayılır.',
+      initialValue: false,
+    }),
+
     // 12) Bilet Sınıfları ve Yaşa Göre Fiyat
     defineField({
       name: 'ticketClasses',
