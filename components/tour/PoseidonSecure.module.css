@@ -1,16 +1,12 @@
-/* Referans tasarım: lacivert panel — ama kenardan kenara, tek düz renk.
-   Dekoratif kavis/desen istenmedi. Solda marka + açıklama, sağda her
-   garanti için ayrı kart. */
+/* Kenardan kenara düz marka mavisi (öne çıkanlar şeridiyle aynı renk).
+   Solda marka + açıklama, sağda her garanti için ayrı kart. */
 .fullBleed {
   position: relative;
   overflow: hidden;
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
-  background:
-    radial-gradient(900px 420px at 85% -10%, rgba(79, 172, 216, 0.28), rgba(79, 172, 216, 0) 70%),
-    radial-gradient(700px 380px at -5% 110%, rgba(33, 104, 184, 0.35), rgba(33, 104, 184, 0) 70%),
-    #11356b;
+  background: var(--primary, #2168b8);
   padding: 56px 16px;
 }
 
@@ -21,7 +17,7 @@
   bottom: -80px;
   width: 380px;
   height: 380px;
-  color: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.06);
   pointer-events: none;
 }
 
@@ -57,7 +53,7 @@
 }
 
 .shieldIcon {
-  color: #7fc4ea;
+  color: #fff;
   flex-shrink: 0;
   width: 26px;
   height: 26px;
@@ -76,13 +72,13 @@
 }
 
 .logoAccent {
-  color: #7fc4ea;
+  color: #bfe0ff;
 }
 
 .description {
   font-size: 15px;
   line-height: 1.65;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
   max-width: 62ch;
 }
@@ -129,7 +125,7 @@
   font-family: var(--font-family), sans-serif;
   font-size: 14px;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
 }
 
@@ -150,10 +146,10 @@
   .logoText { font-size: 38px; -webkit-text-stroke: 0.5px currentColor; }
 }
 
-/* Tur sayfası varyantı — aynı lacivert zemin, içerik kolonu genişliğinde. */
+/* Tur sayfası varyantı — aynı mavi zemin, içerik kolonu genişliğinde. */
 .contained {
   width: 100%;
-  background: #11356b;
+  background: var(--primary, #2168b8);
   border-radius: 16px;
   padding: 40px 28px;
   margin-top: 56px;
@@ -201,14 +197,14 @@
   align-items: flex-start;
   gap: 16px;
   padding: 18px 20px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
 }
 
 .cardsSplit .card:hover {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
   transform: translateX(4px);
 }
 
@@ -218,8 +214,8 @@
   height: 44px;
   margin-bottom: 0;
   border-radius: 999px;
-  background: rgba(127, 196, 234, 0.14);
-  color: #9ed4f2;
+  background: #fff;
+  color: var(--primary, #2168b8);
 }
 
 @media (prefers-reduced-motion: reduce) {

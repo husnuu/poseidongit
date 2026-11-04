@@ -63,7 +63,6 @@ function resolveFeatureLink(title: string, index: number): string | null {
 
 const FEATURE_BAR_BG = {
   backgroundColor: 'var(--primary, #2168b8)',
-  backgroundImage: 'linear-gradient(to right, var(--primary, #2168b8), #a17fe0, #59c173)',
   boxShadow: 'var(--shadow-md, 0 6px 24px rgba(19, 23, 25, 0.08))',
 } as const
 

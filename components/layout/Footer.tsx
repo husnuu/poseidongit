@@ -251,6 +251,13 @@ const MEMBERSHIPS_TITLE: Record<SiteLocale, string> = {
   ru: 'Наши сертификаты',
 }
 
+const PARTNER_LOGIN_LABEL: Record<SiteLocale, string> = {
+  tr: 'Partner Girişi',
+  en: 'Partner Login',
+  de: 'Partner-Login',
+  ru: 'Вход для партнёров',
+}
+
 function locHref(locale: SiteLocale, href: string | null | undefined): string {
   return localizeNavHref(locale, href)
 }
@@ -736,6 +743,9 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                   {item.label}
                 </Link>
               ))}
+              <a href="/partner/giris" className={`${headerStyles.footerLink} transition-colors hover:text-white`}>
+                {PARTNER_LOGIN_LABEL[locale]}
+              </a>
             </div>
           </div>
 

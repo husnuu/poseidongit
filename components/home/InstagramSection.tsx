@@ -1,9 +1,9 @@
 'use client'
 
-import Image from 'next/image'
-import Link from 'next/link'
-import { ArrowUpRight, Instagram } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight, ExternalLink, Instagram, Play } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
+import type { InstagramFeed } from '@/lib/instagram/feed'
 
 export type InstagramPostItem = {
   imageUrl?: string | null
@@ -22,141 +22,233 @@ export type InstagramSectionData = {
 
 type InstagramSectionProps = {
   data: InstagramSectionData | null
+  /** Instagram API'den gelen güncel akış; yoksa Sanity gönderileri gösterilir. */
+  feed?: InstagramFeed | null
+  /** API yokken Sanity footer'daki elle girilmiş takipçi sayısı (ör. "12K"). */
+  fallbackFollowerCount?: string | null
   locale?: SiteLocale
 }
 
-const VIEW_POST: Record<SiteLocale, string> = {
-  tr: 'Gönderiyi gör',
-  en: 'View post',
-  de: 'Beitrag ansehen',
-  ru: 'Смотреть пост',
+type Card = { key: string; imageUrl: string; href: string; caption: string | null; alt: string; isVideo: boolean }
+
+const HEADING: Record<SiteLocale, string> = {
+  tr: 'Denizden kareler',
+  en: 'Moments from the sea',
+  de: 'Momente vom Meer',
+  ru: 'Мгновения у моря',
 }
 
-const POST_ARIA: Record<SiteLocale, string> = {
-  tr: 'Instagram gönderisi',
-  en: 'Instagram post',
-  de: 'Instagram-Beitrag',
-  ru: 'Пост в Instagram',
+const FOLLOW: Record<SiteLocale, string> = {
+  tr: "Instagram'da takip edin",
+  en: 'Follow us on Instagram',
+  de: 'Folgen Sie uns auf Instagram',
+  ru: 'Подписывайтесь в Instagram',
 }
 
-const FOLLOW_FALLBACK: Record<SiteLocale, string> = {
-  tr: 'Bizi takip et',
-  en: 'Follow us',
-  de: 'Folgen Sie uns',
-  ru: 'Подписаться',
+const WATCH: Record<SiteLocale, { video: string; post: string }> = {
+  tr: { video: "Instagram'da izle", post: "Instagram'da gör" },
+  en: { video: 'Watch on Instagram', post: 'View on Instagram' },
+  de: { video: 'Auf Instagram ansehen', post: 'Auf Instagram ansehen' },
+  ru: { video: 'Смотреть в Instagram', post: 'Открыть в Instagram' },
 }
 
-const IG_GRADIENT = 'linear-gradient(45deg, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%)'
+const FOLLOWERS: Record<SiteLocale, string> = { tr: 'takipçi', en: 'followers', de: 'Follower', ru: 'подписчиков' }
 
-/** Hashtag'li kısımları küçük harfe çevirip baştaki "#"ı "@"ya çevirir:
-    #CesmePoseidon → @cesmeposeidon — buton zaten hesabı takip etmeye
-    yönlendirdiği için hashtag değil, kullanıcı adı (handle) olarak gösterilir.
-    Sanity'deki gerçek metin (#cesmeposeidon) değişmez, sadece ekranda böyle görünür. */
-function formatInstagramHeading(text: string): string {
-  return text.replace(/#(\w+)/g, (_, tag) => `@${tag.toLowerCase()}`)
+const NAV_ARIA: Record<SiteLocale, { prev: string; next: string }> = {
+  tr: { prev: 'Önceki gönderiler', next: 'Sonraki gönderiler' },
+  en: { prev: 'Previous posts', next: 'Next posts' },
+  de: { prev: 'Vorherige Beiträge', next: 'Nächste Beiträge' },
+  ru: { prev: 'Предыдущие публикации', next: 'Следующие публикации' },
 }
 
-/** Instagram profil başlığı gibi: solda renk halkalı ikon + handle + açıklama,
-    sağda Instagram renkli "Takip et"; altında yuvarlatılmış gönderi kareleri
-    (mobilde yatay kaydırmalı şerit). */
-export default function InstagramSection({ data, locale = 'tr' }: InstagramSectionProps) {
-  if (!data?.enabled || !data?.instagramUrl) return null
+const NUMBER_LOCALE: Record<SiteLocale, string> = { tr: 'tr-TR', en: 'en-US', de: 'de-DE', ru: 'ru-RU' }
 
-  const { heading, description, instagramUrl, ctaText, posts } = data
-  const hasPosts = posts && posts.length > 0
-  const displayHeading = formatInstagramHeading(heading || 'Instagram')
+/** 147300 → "147K" (tr: "147 B" yerine okunması kolay "147K"). */
+function compactCount(n: number, locale: SiteLocale): string {
+  return new Intl.NumberFormat(locale === 'tr' ? 'en-US' : NUMBER_LOCALE[locale], {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(n)
+}
 
-  const followButton = (extra = '') => (
-    <Link
-      href={instagramUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`group/follow inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-[14px] font-extrabold uppercase tracking-wide text-white transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_-12px_rgba(214,41,118,0.7)] ${extra}`}
-      style={{ backgroundImage: IG_GRADIENT }}
-    >
-      <Instagram className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden />
-      {ctaText || FOLLOW_FALLBACK[locale]}
-      <ArrowUpRight className="h-4 w-4 transition-transform group-hover/follow:-translate-y-0.5 group-hover/follow:translate-x-0.5" strokeWidth={2.4} aria-hidden />
-    </Link>
-  )
+function usernameFromUrl(url: string): string | null {
+  const m = url.match(/instagram\.com\/([A-Za-z0-9._]+)/i)
+  return m?.[1] ?? null
+}
+
+/** Referans tasarım: ortalı başlık, profil hapı, dikey kart şeridi, altta çerçeveli takip butonu. */
+export default function InstagramSection({ data, feed, fallbackFollowerCount, locale = 'tr' }: InstagramSectionProps) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [canPrev, setCanPrev] = useState(false)
+  const [canNext, setCanNext] = useState(false)
+
+  const updateArrows = useCallback(() => {
+    const el = trackRef.current
+    if (!el) return
+    setCanPrev(el.scrollLeft > 4)
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+  }, [])
+
+  useEffect(() => {
+    updateArrows()
+    window.addEventListener('resize', updateArrows)
+    return () => window.removeEventListener('resize', updateArrows)
+  }, [updateArrows])
+
+  if (!data?.enabled) return null
+  const username = feed?.profile.username ?? (data.instagramUrl ? usernameFromUrl(data.instagramUrl) : null)
+  if (!username) return null
+  const profileUrl = `https://www.instagram.com/${username}/`
+
+  const cards: Card[] = feed?.posts.length
+    ? feed.posts.map((p) => ({
+        key: p.id,
+        imageUrl: p.imageUrl,
+        href: p.permalink,
+        caption: p.caption,
+        alt: p.caption?.slice(0, 120) || `@${username}`,
+        isVideo: p.isVideo,
+      }))
+    : (data.posts ?? [])
+        .filter((p): p is InstagramPostItem & { imageUrl: string } => Boolean(p.imageUrl))
+        .map((p, i) => ({
+          key: `${i}-${p.imageUrl}`,
+          imageUrl: p.imageUrl,
+          href: p.postUrl || profileUrl,
+          caption: null,
+          alt: p.imageAlt || `@${username}`,
+          isVideo: false,
+        }))
+
+  const followers =
+    feed?.profile.followersCount != null
+      ? compactCount(feed.profile.followersCount, locale)
+      : fallbackFollowerCount?.trim() || null
+
+  // 4 veya daha az gönderide şerit kaydırılmaz: kartlar genişliği doldurur.
+  const desktopWidth = cards.length > 4 ? 'md:w-[calc((100%-4rem)/4.5)]' : 'md:w-[calc((100%-3rem)/4)]'
+
+  const scrollByCards = (dir: 1 | -1) => {
+    const el = trackRef.current
+    if (!el) return
+    const card = el.querySelector<HTMLElement>('[data-ig-card]')
+    el.scrollBy({ left: dir * ((card?.offsetWidth ?? 300) + 16) * 2, behavior: 'smooth' })
+  }
+
+  const arrowClass =
+    'absolute top-1/2 z-10 hidden h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#131719] shadow-[0_6px_20px_rgba(19,23,25,0.18)] transition hover:scale-105 md:flex'
 
   return (
-    <section className="w-full bg-white pb-14 pt-10 md:pb-20 md:pt-14" aria-labelledby="instagram-section-heading">
+    <section className="w-full bg-[#eefaf6] py-14 md:py-20" aria-labelledby="instagram-section-heading">
       <div className="mx-auto max-w-[1200px] px-4">
-        <header className="mb-8 flex flex-col items-center gap-5 text-center md:mb-10 md:flex-row md:items-center md:justify-between md:text-left">
-          <div className="flex flex-col items-center gap-4 md:flex-row md:gap-5">
-            {/* Instagram hikaye halkası gibi renk geçişli çerçeve */}
-            <a
-              href={instagramUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={displayHeading}
-              className="shrink-0 rounded-full p-[3px] transition-transform duration-300 hover:rotate-6 hover:scale-105"
-              style={{ backgroundImage: IG_GRADIENT }}
-            >
-              <span className="flex h-16 w-16 items-center justify-center rounded-full border-[3px] border-white bg-white md:h-[72px] md:w-[72px]">
-                <Instagram className="h-8 w-8 text-[#d62976]" strokeWidth={2} aria-hidden />
-              </span>
-            </a>
-            <div>
-              <h2
-                id="instagram-section-heading"
-                className="m-0 text-[26px] font-black leading-[1.1] text-[var(--secondary,#131719)] sm:text-[30px] md:text-[34px]"
-                style={{ fontFamily: 'var(--font-family-title, var(--font-family))', WebkitTextStroke: '0.4px currentColor' }}
-              >
-                {displayHeading}
-              </h2>
-              {description && (
-                <p className="mb-0 mt-1.5 max-w-xl text-[15px] leading-relaxed text-[var(--text-color,#58595b)] md:text-base">
-                  {description}
-                </p>
-              )}
-            </div>
-          </div>
-          {followButton('hidden md:inline-flex')}
-        </header>
+        <h2
+          id="instagram-section-heading"
+          className="m-0 text-center text-[28px] font-black uppercase leading-[1.15] text-[var(--primary,#2168b8)] sm:text-[32px] md:text-[36px] lg:text-[40px]"
+          style={{ fontFamily: 'var(--font-family-title, var(--font-family))', WebkitTextStroke: '0.6px currentColor' }}
+        >
+          {HEADING[locale]}
+        </h2>
 
-        {hasPosts && (
-          <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden">
-            {posts.map((post, i) => (
-              <a
-                key={i}
-                href={post.postUrl || instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative block aspect-square w-[70%] shrink-0 snap-start overflow-hidden rounded-2xl bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary,#2168b8)] focus-visible:ring-offset-2 sm:w-[44%] md:w-auto"
-                aria-label={post.imageAlt || POST_ARIA[locale]}
-              >
-                {post.imageUrl ? (
-                  <Image
-                    src={post.imageUrl}
-                    alt={post.imageAlt || 'Instagram'}
-                    fill
-                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
-                    sizes="(max-width: 768px) 70vw, 300px"
-                  />
+        <div className="mt-6 flex justify-center md:mt-8">
+          <a
+            href={profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex max-w-full items-center gap-2.5 rounded-full border border-zinc-100 bg-white py-1.5 pl-1.5 pr-4 text-[13px] shadow-[0_2px_10px_rgba(19,23,25,0.06)] transition hover:shadow-[0_6px_18px_rgba(19,23,25,0.12)] sm:text-[15px]"
+          >
+            <span
+              className="shrink-0 rounded-full p-[2px]"
+              style={{ backgroundImage: 'linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5)' }}
+            >
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white sm:h-10 sm:w-10">
+                {feed?.profile.profilePictureUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- Instagram CDN, imzalı adres
+                  <img src={feed.profile.profilePictureUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-sm text-zinc-400">Instagram</div>
+                  <Instagram className="h-5 w-5 text-[#d62976]" strokeWidth={2} aria-hidden />
                 )}
-                {/* Sağ üstte küçük Instagram işareti — her karenin bir gönderi olduğunu belli eder. */}
-                <span className="absolute right-2.5 top-2.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-0">
-                  <Instagram className="h-4 w-4" strokeWidth={2.2} aria-hidden />
-                </span>
-                {/* Hover: alttan yükselen koyu geçiş + "Gönderiyi gör" */}
-                <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" aria-hidden />
-                <span className="pointer-events-none absolute inset-x-3 bottom-3 flex translate-y-2 items-center justify-between text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                  <span className="inline-flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-wide">
-                    <Instagram className="h-4 w-4" strokeWidth={2.2} aria-hidden />
-                    {VIEW_POST[locale]}
+              </span>
+            </span>
+            <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-[#131719]">
+              {feed?.profile.name && <span className="truncate font-extrabold">{feed.profile.name}</span>}
+              {feed?.profile.name && <span className="text-zinc-400" aria-hidden>·</span>}
+              <span className="truncate text-zinc-500">@{username}</span>
+              {followers && (
+                <>
+                  <span className="text-zinc-400" aria-hidden>·</span>
+                  <span className="whitespace-nowrap font-extrabold">
+                    {followers} {FOLLOWERS[locale]}
                   </span>
-                  <ArrowUpRight className="h-4 w-4" strokeWidth={2.4} aria-hidden />
-                </span>
-              </a>
-            ))}
+                </>
+              )}
+            </span>
+            <ExternalLink className="h-4 w-4 shrink-0 text-zinc-500" aria-hidden />
+          </a>
+        </div>
+
+        {cards.length > 0 && (
+          <div className="relative mt-10 md:mt-12">
+            <div
+              ref={trackRef}
+              onScroll={updateArrows}
+              className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:scroll-px-0 md:px-0 [&::-webkit-scrollbar]:hidden"
+            >
+              {cards.map((card) => (
+                <a
+                  key={card.key}
+                  data-ig-card
+                  href={card.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`group relative block aspect-[3/4] w-[72%] shrink-0 snap-start overflow-hidden rounded-2xl bg-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary,#2168b8)] focus-visible:ring-offset-2 sm:w-[44%] ${desktopWidth}`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- Instagram CDN veya Sanity; boyut kart kadar */}
+                  <img
+                    src={card.imageUrl}
+                    alt={card.alt}
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                  />
+                  {card.isVideo && (
+                    <Play className="absolute right-3 top-3 h-6 w-6 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]" strokeWidth={2} aria-hidden />
+                  )}
+                  {card.caption && (
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-4 pt-12">
+                      <span className="line-clamp-2 text-[13px] font-semibold leading-snug text-white sm:text-[14px]">{card.caption}</span>
+                    </span>
+                  )}
+                  <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <span className="inline-flex items-center gap-2 text-[15px] font-extrabold text-white">
+                      <ExternalLink className="h-5 w-5" aria-hidden />
+                      {card.isVideo ? WATCH[locale].video : WATCH[locale].post}
+                    </span>
+                  </span>
+                </a>
+              ))}
+            </div>
+            {canPrev && (
+              <button type="button" onClick={() => scrollByCards(-1)} aria-label={NAV_ARIA[locale].prev} className={`${arrowClass} -left-7`}>
+                <ChevronLeft className="h-6 w-6" aria-hidden />
+              </button>
+            )}
+            {canNext && (
+              <button type="button" onClick={() => scrollByCards(1)} aria-label={NAV_ARIA[locale].next} className={`${arrowClass} -right-7`}>
+                <ChevronRight className="h-6 w-6" aria-hidden />
+              </button>
+            )}
           </div>
         )}
 
-        <div className="mt-8 flex justify-center md:hidden">{followButton('w-full sm:w-auto')}</div>
+        <div className="mt-10 flex justify-center md:mt-12">
+          <a
+            href={profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center rounded-lg border-2 border-[var(--primary,#2168b8)] bg-transparent px-6 py-2.5 text-[16px] font-extrabold uppercase tracking-wide text-[var(--primary,#2168b8)] transition duration-200 hover:scale-105 hover:bg-[var(--primary,#2168b8)] hover:text-white"
+          >
+            {FOLLOW[locale]}
+          </a>
+        </div>
       </div>
     </section>
   )

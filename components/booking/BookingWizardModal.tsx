@@ -22,6 +22,7 @@ import {
   Step4Payment,
 } from './steps'
 import PaymentSuccessPanel from './PaymentSuccessPanel'
+import { readPartnerRef } from '@/lib/partner/attribution'
 import PaymentLoadingOverlay from './PaymentLoadingOverlay'
 import ReservationTourSnapshot from './ReservationTourSnapshot'
 import styles from './booking.module.css'
@@ -312,6 +313,7 @@ export default function BookingWizardModal({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             locale,
+            partnerRef: readPartnerRef(),
             tourId,
             tourTitle: tour.title ?? '',
             date: state.selectedDate ?? '',

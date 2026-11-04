@@ -14,6 +14,7 @@ export type RateLimitBucket =
   | 'qr'
   | 'ticketPdf'
   | 'crewLogin'
+  | 'partnerLogin'
   | 'crewAction'
 
 type UpstashWindow = '15 m' | '10 m' | '1 h'
@@ -36,6 +37,7 @@ const UPSTASH_WINDOWS: Record<RateLimitBucket, { max: number; window: UpstashWin
   // Genel PDF üretim endpoint'i için koruma.
   ticketPdf: { max: 25, window: '10 m' },
   crewLogin: { max: 15, window: '15 m' },
+  partnerLogin: { max: 10, window: '15 m' },
   crewAction: { max: 300, window: '10 m' },
 }
 
@@ -52,6 +54,7 @@ const MEMORY_MS: Record<RateLimitBucket, { max: number; windowMs: number }> = {
   qr: { max: 90, windowMs: 10 * 60 * 1000 },
   ticketPdf: { max: 25, windowMs: 10 * 60 * 1000 },
   crewLogin: { max: 15, windowMs: 15 * 60 * 1000 },
+  partnerLogin: { max: 10, windowMs: 15 * 60 * 1000 },
   crewAction: { max: 300, windowMs: 10 * 60 * 1000 },
 }
 

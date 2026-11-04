@@ -9,6 +9,7 @@ import {
   ClipboardList,
   MessageSquare,
   MessageCircle,
+  Handshake,
   Ticket,
   LogOut,
   Menu,
@@ -29,6 +30,7 @@ const COLLAPSED_STORAGE_KEY = 'poseidon_admin_sidebar_collapsed'
 const NAV_ITEMS = [
   { href: '/admin/bookings', label: 'Rezervasyonlar', icon: CalendarCheck },
   { href: '/admin/cikti-listesi', label: 'Çıktı Listesi', icon: ClipboardList },
+  { href: '/admin/partners', label: 'Partnerler', icon: Handshake },
   { href: '/admin/yacht-inquiries', label: 'Motoryat Mesajları', icon: MessageSquare },
   { href: '/admin/whatsapp', label: 'WhatsApp Bildirimleri', icon: MessageCircle },
   { href: '/biletci', label: 'Biletçi', icon: Ticket },
@@ -143,7 +145,7 @@ export default function AdminSidebar() {
   return (
     <>
       {/* Mobil üst çubuk: sabit sidebar yerine açılır menü */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-[#f1f5f9] bg-white px-3 md:hidden">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-[#f1f5f9] bg-white px-3 md:hidden print:hidden">
         <div className="flex items-center gap-2.5">
           <div
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white"
@@ -165,7 +167,7 @@ export default function AdminSidebar() {
 
       {/* Masaüstü: kalıcı, kapatılabilir sol sidebar */}
       <aside
-        className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-[#f1f5f9] bg-white transition-[width] duration-150 md:flex ${
+        className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-[#f1f5f9] bg-white transition-[width] duration-150 md:flex print:hidden ${
           collapsed ? 'w-16' : 'w-60'
         }`}
       >

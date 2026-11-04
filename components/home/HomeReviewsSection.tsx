@@ -116,7 +116,7 @@ function avatarPalette(name: string): { bg: string; fg: string } {
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 360
   const hue = hash
   return {
-    bg: `linear-gradient(135deg, hsl(${hue}, 70%, 94%), hsl(${hue}, 60%, 89%))`,
+    bg: `hsl(${hue}, 65%, 91%)`,
     fg: `hsl(${hue}, 55%, 28%)`,
   }
 }
@@ -313,7 +313,7 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
     <>
     <section
       className="w-full py-16 md:py-20"
-      style={{ background: 'linear-gradient(90deg, #29ffc6, #20e3b2, #0cebeb)' }}
+      style={{ background: '#b4efe0' }}
       aria-labelledby="home-reviews-heading"
     >
       <div className="mx-auto max-w-[1200px] px-4">
@@ -339,7 +339,7 @@ export default function HomeReviewsSection({ data, locale = 'tr' }: HomeReviewsS
                   href={googleReviewsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  // Referans: şeffaf zemin (gradyan görünür), 2px #366deb çerçeve, aynı mavi
+                  // Referans: şeffaf zemin (mint görünür), 2px #366deb çerçeve, aynı mavi
                   // büyük harf metin, küçük köşe yuvarlaklığı — beyaz "hap" değil. Üstüne
                   // gelince dolgu maviye dönüyor + hafif büyüme efekti.
                   className="inline-flex items-center gap-2.5 rounded-lg border-2 border-[#366deb] bg-transparent px-6 py-2.5 text-[16px] font-extrabold uppercase tracking-wide text-[#366deb] transition duration-200 hover:scale-105 hover:bg-[#366deb] hover:text-white"

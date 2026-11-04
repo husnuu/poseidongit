@@ -28,6 +28,7 @@ import RouteSection from '@/components/home/RouteSection'
 import PoseidonSecure from '@/components/tour/PoseidonSecure'
 import Image from 'next/image'
 import InstagramSection from '@/components/home/InstagramSection'
+import { getInstagramFeed } from '@/lib/instagram/feed'
 import type { AboutTeaserData } from '@/components/home/AboutTeaserSplit'
 import type { BlogSectionData } from '@/components/home/BlogSection'
 import type { InstagramSectionData } from '@/components/home/InstagramSection'
@@ -1081,6 +1082,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   const loyaltyProgramLabel = locale === 'en' ? 'Loyalty Program' : locale === 'de' ? 'Treueprogramm' : 'Sadakat Programı'
 
+  const instagramFeed = instagramSection?.enabled ? await getInstagramFeed() : null
+
   return (
     <div className="min-h-screen bg-white">
       <JsonLd data={organizationSchema} />
@@ -1160,7 +1163,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <BlogSection data={blogSection} locale={locale} noImageLabel={blogUi.noCoverImage} />
       </ScrollReveal>
       <ScrollReveal>
-        <InstagramSection data={instagramSection} locale={locale} />
+        <InstagramSection
+          data={instagramSection}
+          feed={instagramFeed}
+          fallbackFollowerCount={homeReviews?.instagramFollowerCount ?? null}
+          locale={locale}
+        />
       </ScrollReveal>
     </div>
   )

@@ -8,13 +8,11 @@ import { parseBookingWebPayload } from '@/lib/bookingWebPayload'
 import { generateBookingAccessToken } from '@/lib/bookingAccessToken'
 import { client } from '@/lib/sanity'
 import { tourForAvailabilityQuery } from '@/lib/queries'
-import { tourForBookingBySanityIdQuery } from '@/lib/sanity/bookingQueries'
-import { computePricingForSelection } from '@/lib/sanity/bookingPricing'
-import type { TourForBooking, ExtraLineItem } from '@/lib/sanity/bookingTypes'
+import { computeBookingPrices } from '@/lib/booking/computeBookingPrices'
 import { genderLabel } from '@/lib/bookingPassengerGender'
 import { supabase } from '@/lib/supabase'
-import { applySinglePriceMode, singlePriceClass } from '@/lib/sanity/singlePrice'
-import { PRIVATE_TOUR_CLASS_ID, PRIVATE_TOUR_CLASS_NAME, privateTourGroupPrice } from '@/lib/sanity/privateTour'
+import { PRIVATE_TOUR_CLASS_ID, PRIVATE_TOUR_CLASS_NAME } from '@/lib/sanity/privateTour'
+import { resolvePartnerBookingFields } from '@/lib/partner/partners'
 import {
   BOOKING_STATUSES_COUNTING_TOWARD_CAPACITY,
   firstClassLocasFromRow,
@@ -48,79 +46,6 @@ function parseMissingColumnFromSupabaseError(message: string): string | null {
   return m2?.[1] ?? null
 }
 
-/** Sanity turu + tarih: sezon, özel gün sınıf/genel fiyatları (classPriceOverrides → priceOverrides) ile toplam. */
-async function computePrices(
-  tourId: string,
-  date: string,
-  classId: string,
-  counts: { adult: number; child: number; infant: number },
-  selectedExtraKeys: string[],
-  extraNotes: Record<string, string>,
-  extraQuantities: Record<string, number>
-): Promise<{
-  unitPrice: number
-  totalPrice: number
-  depositAmount: number
-  cashPaymentEnabled: boolean
-  extras: ExtraLineItem[]
-  extrasTotal: number
-  /** Tek fiyat turu: istemci ne gönderirse göndersin kullanılacak sınıf. */
-  singleClass: { key: string; label: string } | null
-  /** Özel tur: grup fiyatı, ödeme yok — kayıt yalnızca rezervasyon talebidir. */
-  privateTour: boolean
-}> {
-  try {
-    const fetched = await client.fetch<TourForBooking | null>(tourForBookingBySanityIdQuery, {
-      id: tourId,
-    })
-    const groupPrice = privateTourGroupPrice(fetched)
-    if (groupPrice !== null) {
-      return {
-        unitPrice: groupPrice,
-        totalPrice: groupPrice,
-        depositAmount: 0,
-        cashPaymentEnabled: false,
-        extras: [],
-        extrasTotal: 0,
-        singleClass: null,
-        privateTour: true,
-      }
-    }
-    const singleClass = singlePriceClass(fetched)
-    const tour = applySinglePriceMode(fetched)
-    const dateStr = date.slice(0, 10)
-    const summary = computePricingForSelection(
-      tour,
-      dateStr,
-      singleClass?.key ?? classId,
-      { adult: counts.adult, child: counts.child, baby: counts.infant },
-      selectedExtraKeys,
-      extraNotes,
-      extraQuantities
-    )
-    const totalPax = counts.adult + counts.child + counts.infant
-    const cashPaymentEnabled = Boolean(tour?.cashPaymentEnabled)
-    if (!summary || totalPax <= 0) {
-      return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled, extras: [], extrasTotal: 0, singleClass, privateTour: false }
-    }
-    const unitPrice = Math.round(summary.total / totalPax)
-    return {
-      unitPrice,
-      totalPrice: summary.total,
-      depositAmount: cashPaymentEnabled
-        ? 0
-        : Math.max(0, Math.min(summary.total, summary.depositAmount)),
-      cashPaymentEnabled,
-      extras: summary.extras,
-      extrasTotal: summary.extrasTotal,
-      singleClass,
-      privateTour: false,
-    }
-  } catch {
-    return { unitPrice: 0, totalPrice: 0, depositAmount: 0, cashPaymentEnabled: false, extras: [], extrasTotal: 0, singleClass: null, privateTour: false }
-  }
-}
-
 export async function POST(request: Request) {
   try {
     const limited = await rateLimitResponse(request, 'booking')
@@ -146,7 +71,7 @@ export async function POST(request: Request) {
       lastName: t.lastName,
       ...(t.gender && { gender: t.gender }),
     }))
-    const { unitPrice, totalPrice, depositAmount, cashPaymentEnabled, extras, extrasTotal, singleClass, privateTour } = await computePrices(
+    const { unitPrice, totalPrice, depositAmount, cashPaymentEnabled, extras, extrasTotal, singleClass, privateTour } = await computeBookingPrices(
       firestoreTourId,
       payload.date,
       payload.classId,
@@ -243,6 +168,7 @@ export async function POST(request: Request) {
       customer.note = payload.customer.note
     }
     const accessToken = generateBookingAccessToken()
+    const partnerFields = await resolvePartnerBookingFields((body as { partnerRef?: unknown }).partnerRef)
     const insertPayload = {
       created_at: new Date().toISOString(),
       status: 'pending',
@@ -290,10 +216,11 @@ export async function POST(request: Request) {
       source: 'web',
       access_token: accessToken,
       ui_locale: payload.uiLocale ?? 'tr',
+      ...partnerFields,
     }
     let mutableInsertPayload: Record<string, unknown> = { ...insertPayload }
     let insertedRow: { id: string } | null = null
-    for (let attempt = 0; attempt < 4; attempt += 1) {
+    for (let attempt = 0; attempt < 7; attempt += 1) {
       const { data, error } = await supabase
         .from('bookings')
         .insert(mutableInsertPayload)

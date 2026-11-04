@@ -43,6 +43,7 @@ export default function robots(): MetadataRoute.Robots {
 const DISALLOW: string[] = [
   '/api/',
   '/admin/',
+  '/partner',
   // NOT: '/_next/' eskiden burada engelliydi — Google sayfayı render ederken
   // JS/CSS (/_next/static) ve optimize görselleri (/_next/image) indiremiyordu.
   // Rezervasyon yönetimi (token ile erişilen, kişiye özel) — tüm
