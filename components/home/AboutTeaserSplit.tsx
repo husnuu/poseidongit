@@ -4,7 +4,7 @@ import { useRef, useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { PortableText } from '@portabletext/react'
-import { Anchor, ArrowRight, Camera } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { sameSitePathFromHref } from '@/lib/siteUrls'
 import type { PortableTextBlock } from '@portabletext/react'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -112,10 +112,11 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
   ].filter((x): x is { value: string; label: string } => x != null)
 
   const ctaClass = {
+    // Mobilde iki buton yan yana (eşit genişlik), sm ve üstünde doğal genişlik.
     primary:
-      'inline-flex h-[52px] min-w-[180px] items-center justify-center gap-2 rounded-lg bg-[var(--secondary,#131719)] px-8 text-[15px] font-extrabold uppercase tracking-wide text-white transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-12px_rgba(19,23,25,0.6)]',
+      'inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-[var(--secondary,#131719)] bg-[var(--secondary,#131719)] px-3 text-[13px] font-extrabold uppercase tracking-wide text-white transition-colors duration-200 hover:bg-[#2a2f32] sm:h-[52px] sm:min-w-[180px] sm:flex-none sm:gap-2 sm:px-8 sm:text-[15px]',
     secondary:
-      'inline-flex h-[52px] min-w-[180px] items-center justify-center rounded-lg bg-white px-8 text-[15px] font-extrabold uppercase tracking-wide text-[var(--secondary,#131719)] shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-12px_rgba(19,23,25,0.35)]',
+      'inline-flex h-12 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--secondary,#131719)] bg-transparent px-3 text-[13px] font-extrabold uppercase tracking-wide text-[var(--secondary,#131719)] transition-colors duration-200 hover:bg-[var(--secondary,#131719)] hover:text-white sm:h-[52px] sm:min-w-[180px] sm:flex-none sm:px-8 sm:text-[15px]',
   }
 
   const renderCta = (
@@ -127,7 +128,7 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
     const inner = (
       <>
         {cta.label}
-        {kind === 'primary' && <ArrowRight className="h-4 w-4" strokeWidth={2.4} aria-hidden />}
+        {kind === 'primary' && <ArrowRight className="h-4 w-4 shrink-0" strokeWidth={2.2} aria-hidden />}
       </>
     )
     if (path) {
@@ -166,9 +167,11 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
         }}
       >
         <header className="mb-10 flex flex-col items-center text-center lg:mb-14">
-          <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/70 px-3.5 py-1.5 text-[12px] font-extrabold uppercase tracking-wider text-[var(--secondary,#131719)]">
-            <Anchor className="h-3.5 w-3.5" strokeWidth={2.4} aria-hidden />
+          {/* İnce çizgili, ikonsuz üst başlık. */}
+          <span className="mb-4 flex items-center gap-3 text-[12px] font-semibold uppercase tracking-[0.3em] text-[#7a6c3a]">
+            <span className="h-px w-8 bg-current opacity-50" aria-hidden />
             {EYEBROW[locale]}
+            <span className="h-px w-8 bg-current opacity-50" aria-hidden />
           </span>
           {heading && (
             <h2
@@ -185,12 +188,13 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
           <div className="order-2 w-full text-left lg:order-1">
             {body && body.length > 0 && <PortableText value={body} components={bodyComponents} />}
             {stats.length > 0 && (
-              <dl className="mt-8 grid grid-cols-3 gap-3 sm:gap-4">
+              /* Kutusuz istatistikler: ince ayraç çizgileriyle bölünmüş tek satır. */
+              <dl className="mt-8 grid grid-cols-3 divide-x divide-[#13171926] border-y border-[#13171926]">
                 {stats.map((st) => (
-                  <div key={st.label} className="flex flex-col-reverse rounded-2xl bg-white/70 px-4 py-4 shadow-[0_2px_10px_rgba(19,23,25,0.05)] sm:px-5">
-                    <dt className="mt-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#6b6650]">{st.label}</dt>
+                  <div key={st.label} className="flex flex-col-reverse items-center px-2 py-4 text-center sm:py-5">
+                    <dt className="mt-1.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.06em] text-[#6b6650] sm:text-[11px] sm:tracking-[0.14em]">{st.label}</dt>
                     <dd
-                      className="m-0 text-[28px] font-black leading-none tabular-nums text-[var(--secondary,#131719)] sm:text-[34px]"
+                      className="m-0 text-[26px] font-black leading-none tabular-nums text-[var(--secondary,#131719)] sm:text-[34px]"
                       style={{ fontFamily: 'var(--font-family-title, var(--font-family))' }}
                     >
                       {st.value}
@@ -200,7 +204,7 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
               </dl>
             )}
             {(primaryCta?.label || secondaryCta?.label) && (
-              <div className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
+              <div className="mt-8 flex flex-nowrap items-center gap-3 sm:gap-4">
                 {renderCta(primaryCta, primaryPath, 'primary')}
                 {renderCta(secondaryCta, secondaryPath, 'secondary')}
               </div>
@@ -224,8 +228,7 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
                 )}
               </div>
               {imageUrl && (
-                <figcaption className="mt-3 flex items-center justify-center gap-1.5 text-[13px] font-semibold text-[#6b6650] sm:mt-4">
-                  <Camera className="h-3.5 w-3.5" strokeWidth={2.2} aria-hidden />
+                <figcaption className="mt-3 text-center text-[13px] italic tracking-wide text-[#6b6650] sm:mt-4">
                   {PHOTO_CAPTION[locale]}
                 </figcaption>
               )}
