@@ -5,13 +5,14 @@ import path from 'path'
  * Site geneli güvenlik başlıkları — önceden hiç ayarlanmamıştı (Vercel/Next.js
  * bunları varsayılan olarak eklemiyor). Clickjacking, MIME-sniffing ve
  * referrer sızıntısına karşı düşük riskli, geriye dönük uyumlu bir taban.
- * Not: Content-Security-Policy kasıtlı olarak eklenmedi — GTM, Supabase,
- * Sanity CDN, Cloudflare Turnstile, Google Fonts gibi üçüncü taraf
- * kaynakların tam listesi çıkarılıp dikkatle test edilmeden eklenirse canlı
- * siteyi (özellikle analytics/CAPTCHA'yı) kolayca bozabilir.
+ * Not: Content-Security-Policy bilerek kaynak (script-src/img-src…) kısıtlamaz —
+ * GTM, Supabase, Sanity CDN, Turnstile, banka 3D formu gibi üçüncü tarafların
+ * tam listesi olmadan kısıtlama canlı siteyi bozar; sıkı script-src için nonce
+ * gerekir, o da her sayfayı dinamik yapıp önbelleği (ISR) kapatır. Aşağıdaki
+ * taban politika hiçbir kaynağı engellemeden <base> enjeksiyonunu, eklenti
+ * (object/embed) yüklemeyi ve http alt kaynakları kapatır.
  */
 const securityHeaders = [
-  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   {
@@ -31,6 +32,22 @@ const nextConfig: NextConfig = {
       {
         source: '/:path*',
         headers: securityHeaders,
+      },
+      // Clickjacking koruması: /embed (partner widget'ı) dışında site başka
+      // sitelerde iframe içinde açılamaz. /embed için izinli siteler
+      // middleware'de CSP frame-ancestors ile belirlenir.
+      {
+        source: '/((?!embed(?:/|$)).*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          {
+            key: 'Content-Security-Policy',
+            value: "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; upgrade-insecure-requests",
+          },
+          // Başka sitenin açtığı pencereyle bağlamı ayırır; kendi açtığımız
+          // pencereler (ödeme, paylaşım) çalışmaya devam eder.
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
+        ],
       },
     ]
   },

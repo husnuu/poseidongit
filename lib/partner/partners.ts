@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { parseWidgetDomains } from '@/lib/embed/frameAncestors'
 import {
   PARTNER_BOOKING_COLUMNS,
   type PartnerBookingRow,
@@ -112,7 +113,7 @@ export async function fetchPartnerPayouts(partnerId?: string): Promise<PartnerPa
   return (data ?? []) as PartnerPayoutRow[]
 }
 
-const CHANNELS = ['qr', 'link', 'reception'] as const
+const CHANNELS = ['qr', 'link', 'reception', 'widget'] as const
 export type PartnerChannel = (typeof CHANNELS)[number]
 
 /**
@@ -121,25 +122,40 @@ export type PartnerChannel = (typeof CHANNELS)[number]
  * asla engellemez.
  */
 export async function resolvePartnerBookingFields(ref: unknown): Promise<Record<string, unknown>> {
-  if (!ref || typeof ref !== 'object') return {}
+  const partner = await resolvePartnerRef(ref)
+  return partner ? partnerBookingFields(partner.id, partner.commissionRate, partner.channel) : {}
+}
+
+/** Tarayıcıdan gelen { slug, channel } → aktif partner; bulunamazsa/hata olursa null. */
+export async function resolvePartnerRef(
+  ref: unknown
+): Promise<{ id: string; name: string; commissionRate: number; channel: PartnerChannel } | null> {
+  if (!ref || typeof ref !== 'object') return null
   const { slug, channel } = ref as { slug?: unknown; channel?: unknown }
-  if (typeof slug !== 'string' || !PARTNER_SLUG_REGEX.test(slug)) return {}
+  if (typeof slug !== 'string' || !PARTNER_SLUG_REGEX.test(slug)) return null
   try {
     const { data, error } = await supabase
       .from('partners')
-      .select('id, commission_rate')
+      .select('id, name, commission_rate')
       .eq('slug', slug)
       .eq('is_active', true)
       .maybeSingle()
-    if (error || !data) return {}
-    return partnerBookingFields(
-      String(data.id),
-      Number(data.commission_rate ?? 0),
-      CHANNELS.includes(channel as PartnerChannel) ? (channel as PartnerChannel) : 'link'
-    )
+    if (error || !data) return null
+    return {
+      id: String(data.id),
+      name: String(data.name ?? slug),
+      commissionRate: Number(data.commission_rate ?? 0),
+      channel: CHANNELS.includes(channel as PartnerChannel) ? (channel as PartnerChannel) : 'link',
+    }
   } catch {
-    return {}
+    return null
   }
+}
+
+/** Yat teklif talebi: komisyon yok (fiyat henüz belli değil), yalnızca hangi partnerden geldiği. */
+export async function resolvePartnerInquiryFields(ref: unknown): Promise<Record<string, unknown>> {
+  const partner = await resolvePartnerRef(ref)
+  return partner ? { partner_id: partner.id, partner_name: partner.name, partner_channel: partner.channel } : {}
 }
 
 export function partnerBookingFields(partnerId: string, commissionRate: number, channel: PartnerChannel) {
@@ -152,4 +168,24 @@ export function partnerSetupErrorMessage(e: unknown): string {
   return /partners|partner_id|partner_payouts/.test(msg) && /does not exist|Could not find|schema cache/i.test(msg)
     ? 'Partner tabloları kurulu değil: docs/supabase-partners.sql dosyasını Supabase SQL Editor’da çalıştırın.'
     : 'Sunucu hatası'
+}
+
+/** Widget alan adları ayrı sorgulanır: sütun (widget_domains) henüz yoksa partner hesabı yine okunabilsin. */
+export async function getPartnerWidgetDomains(partnerId: string): Promise<{ domains: string[]; configured: boolean }> {
+  const { data, error } = await supabase.from('partners').select('widget_domains').eq('id', partnerId).maybeSingle()
+  if (error) return { domains: [], configured: false }
+  return { domains: parseWidgetDomains((data as { widget_domains?: unknown } | null)?.widget_domains), configured: true }
+}
+
+export async function setPartnerWidgetDomains(partnerId: string, domains: string[]): Promise<void> {
+  const { error } = await supabase
+    .from('partners')
+    .update({ widget_domains: domains.length > 0 ? domains.join('\n') : null })
+    .eq('id', partnerId)
+  if (error) {
+    if (/widget_domains/.test(error.message)) {
+      throw new Error('widget_domains sütunu yok: docs/supabase-partners.sql dosyasını Supabase SQL Editor\'da tekrar çalıştırın.')
+    }
+    throw new Error(`Supabase partners update failed: ${error.message}`)
+  }
 }

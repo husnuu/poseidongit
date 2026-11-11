@@ -100,6 +100,9 @@ export default function AdminPartnerDetailPage({ params }: { params: Promise<{ i
             <a href={partnerPagePath(partner.slug)} target="_blank" rel="noopener noreferrer" className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs font-bold hover:bg-zinc-50">
               Mini sayfayı aç
             </a>
+            <Link href={`/admin/widget?partner=${partner.id}`} className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs font-bold hover:bg-zinc-50">
+              Web sitesi widget&apos;ı
+            </Link>
             <button
               type="button"
               onClick={() => void patch({ isActive: !partner.isActive })}

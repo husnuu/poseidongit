@@ -5,6 +5,7 @@ import { ChromeGate, HtmlLangSync } from '@/components/layout/LocaleChrome'
 import NoScriptSeoFallback from '@/components/seo/NoScriptSeoFallback'
 import { htmlLangForLocale, isSiteLocale, SITE_LOCALES, type SiteLocale } from '@/lib/i18n/config'
 import { WishlistProvider } from '@/lib/wishlist/WishlistContext'
+import PartnerRefFromUrl from '@/components/partner/PartnerRefFromUrl'
 
 /**
  * Site sayfaları önbellekten (ISR) sunulur: ziyaretçi her zaman hazır HTML'i
@@ -44,6 +45,7 @@ export default async function LocaleSiteLayout({
   return (
     <WishlistProvider>
       <HtmlLangSync lang={lang} />
+      <PartnerRefFromUrl />
       {/* display:contents — yerleşimi etkilemeden içeriğin dilini sunucu HTML'inde belirtir. */}
       <div lang={lang} className="contents">
         <a href="#main-content" className="skip-link">
@@ -53,13 +55,13 @@ export default async function LocaleSiteLayout({
         <ChromeGate>
           <Header locale={locale} />
         </ChromeGate>
-        {/* Sayfaların çoğu kendi <main> öğesini tanımlıyor; burada ikinci bir
-            <main> açmak yerine atlama linkinin hedeflediği bir odak noktası
-            veriyoruz (tabIndex=-1: programatik olarak odaklanabilir ama Tab
-            sırasına girmez). */}
-        <div id="main-content" tabIndex={-1}>
+        {/* Sayfanın tek <main> öğesi burada (arama motorları ve ekran okuyucular
+            ana içeriği header/footer'dan bununla ayırır); sayfalar kendi içinde
+            <main> açmaz. Atlama linkinin hedefi (tabIndex=-1: programatik olarak
+            odaklanabilir ama Tab sırasına girmez). */}
+        <main id="main-content" tabIndex={-1}>
           {children}
-        </div>
+        </main>
         <ChromeGate>
           <Footer locale={locale} />
         </ChromeGate>

@@ -4,6 +4,7 @@ import { verifyTurnstileToken } from '@/lib/turnstile'
 import { sendYachtInquiryEmail } from '@/lib/email'
 import { overnightNights } from '@/lib/yachtRentalModes'
 import { supabase } from '@/lib/supabase'
+import { resolvePartnerInquiryFields } from '@/lib/partner/partners'
 import {
   sanitizeMultilineText,
   sanitizePersonName,
@@ -106,7 +107,7 @@ function parseBody(body: unknown): {
   }
 }
 
-async function saveToSupabase(data: Record<string, unknown>) {
+async function saveToSupabase(data: Record<string, unknown>, partnerFields: Record<string, unknown> = {}) {
   let payload: Record<string, unknown> = {
     yacht_slug: data.yachtSlug,
     yacht_name: data.yachtName,
@@ -129,6 +130,8 @@ async function saveToSupabase(data: Record<string, unknown>) {
     is_read: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    // Sütunlar yoksa (docs/supabase-partners.sql çalıştırılmadıysa) aşağıdaki döngü düşürür.
+    ...partnerFields,
   }
 
   for (let attempt = 0; attempt < 6; attempt += 1) {
@@ -264,7 +267,7 @@ export async function POST(request: Request) {
     if (priceFrom != null && Number.isFinite(priceFrom)) payload.priceFrom = priceFrom
     if (currency) payload.currency = currency
 
-    await saveToSupabase(payload)
+    await saveToSupabase(payload, await resolvePartnerInquiryFields((body as { partnerRef?: unknown }).partnerRef))
 
     const emailSummaryDate =
       mode === 'overnight' && checkIn && checkOut && nightsComputed != null

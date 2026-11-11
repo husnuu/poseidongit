@@ -44,6 +44,8 @@ const DISALLOW: string[] = [
   '/api/',
   '/admin/',
   '/partner',
+  // Partner widget'ı (başka sitelere gömülen iframe sayfaları).
+  '/embed/',
   // NOT: '/_next/' eskiden burada engelliydi — Google sayfayı render ederken
   // JS/CSS (/_next/static) ve optimize görselleri (/_next/image) indiremiyordu.
   // Rezervasyon yönetimi (token ile erişilen, kişiye özel) — tüm

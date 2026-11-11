@@ -8,6 +8,7 @@ const TABS = [
   { href: '/partner', label: 'Özet' },
   { href: '/partner/yeni', label: 'Yeni rezervasyon' },
   { href: '/partner/paylas', label: 'QR ve bağlantı' },
+  { href: '/partner/widget', label: 'Web sitesi widget\'ı' },
   { href: '/partner/ayarlar', label: 'Ayarlar' },
 ]
 

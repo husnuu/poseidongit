@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase'
 import { insertBookingWithColumnFallback } from '@/lib/supabaseInsertRetry'
 import { buildPaymentFormFields, loadNestpayConfig } from '@/lib/nestpay/hash'
 import { YACHT_DEPOSIT_TOUR_ID } from '@/lib/yachtDepositBooking'
+import { resolvePartnerBookingFields } from '@/lib/partner/partners'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getYachtDepositApiMessages } from '@/lib/yachtDepositDefaults'
 import {
@@ -203,6 +204,8 @@ export async function POST(request: Request) {
       infant_count: 0,
       access_token: accessToken,
       ui_locale: locale,
+      // Partner sitesinden/widget'ından gelen müşterinin kaporası partnere yazılır.
+      ...(await resolvePartnerBookingFields(b.partnerRef)),
     }
 
     let inserted: { id: string }

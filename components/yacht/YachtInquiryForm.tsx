@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { readPartnerRef } from '@/lib/partner/attribution'
 import Script from 'next/script'
 import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -125,6 +126,7 @@ export default function YachtInquiryForm({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          partnerRef: readPartnerRef(),
           yachtSlug,
           yachtName,
           location: locationLabel ?? undefined,

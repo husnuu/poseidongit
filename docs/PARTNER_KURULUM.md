@@ -1,6 +1,6 @@
 # Partner sistemi kurulumu
 
-Oteller, pansiyonlar ve acenteler için: kişiye özel mini sayfa (`/p/otel-adi`), QR kod, partner paneli (`/partner`) ve aylık komisyon takibi. Websitesi gerektirmez.
+Oteller, pansiyonlar ve acenteler için: kişiye özel mini sayfa (`/p/otel-adi`), QR kod, partner paneli (`/partner`) aylık komisyon takibi ve web sitesi olanlar için gömülebilir widget. Mini sayfa ve QR için web sitesi gerekmez.
 
 ## Canlıya alma (bir kez)
 
@@ -38,6 +38,31 @@ Partner paneli → **Yeni rezervasyon**. Fiyat sunucuda hesaplanır, kapasite ko
 
 Admin rezervasyon listesinde bu kayıtlar `Acente` kaynağıyla görünür; admin notunda partner adı yazar.
 
+## Web sitesi widget'ı
+
+Web sitesi olan partnerler turları kendi sitelerinde gösterebilir. Kod, partner panelinde **Web sitesi widget'ı** sekmesinden ve admin panelinde **Widget** sayfasından alınır:
+
+```html
+<script src="https://cesmetekneturu.net/widget.js" data-partner="otel-adi" data-lang="tr" data-mode="list" async></script>
+```
+
+| Ayar | Değerler |
+| --- | --- |
+| `data-mode` | `list` (tur listesi), `tour` (tek tur), `button` (tıklanınca pencerede açılan buton) |
+| `data-content` | `all` (turlar + tekne kiralama, sekmeli), `tours`, `yachts` |
+| `data-lang` | `tr`, `en`, `de`, `ru` |
+| `data-tour` | Tek tur modunda turun kimliği |
+| `data-tours` | Listede yalnızca bu turlar (virgülle ayrılmış kimlikler); boşsa hepsi |
+| `data-color` | Ana renk, örn. `#0f766e` |
+| `data-prices` | `0` → fiyatlar gizlenir |
+| `data-label` | Buton modunda buton yazısı |
+
+- Tur rezervasyon formu widget içinde doldurulur. Ödeme adımında misafirin bulunduğu sayfa sitemize yönlenir: online ödemeli turlarda ödeme sayfası (`/odeme/...`), nakit turlarda onay sayfası. Banka 3D Secure ekranı iframe içinde açılmaz.
+- **Tekne kiralama:** Tekneler widget'ta listelenir; tıklanınca misafir sitemizdeki tekne sayfasına gider (`?pref=otel-adi&k=widget`). Partner tarayıcıda 7 gün saklanır: teklif talebi admin **Motoryat Mesajları** listesinde partner adıyla görünür (komisyon yok, fiyat teklifle belirlenir); kapora ödenirse kapora tutarı partnerin rezervasyonlarına komisyonlu olarak yazılır.
+- Widget'tan gelen tur rezervasyonları partnere `widget` kanalıyla yazılır ve raporlarda **Web sitesi widget** olarak görünür.
+- **Alan adı kısıtlaması (isteğe bağlı):** Admin → Widget sayfasında partnerin alan adları girilirse (örn. `otel.com`) widget yalnızca o sitede ve alt alan adlarında açılır. Boşsa her sitede açılır. Sütun `docs/supabase-partners.sql` içindedir (`widget_domains`; yat talepleri için `yacht_inquiries.partner_*`).
+- Widget sayfaları (`/embed/...`) noindex'tir ve robots.txt'de kapalıdır. Sitenin geri kalanı iframe içinde açılamaz (`X-Frame-Options: SAMEORIGIN`).
+
 ## Kapsam dışı
 
-Yat kiralama/kapora rezervasyonları partnere yazılmaz. Widget (otel sitesine gömme) ikinci aşamadır.
+Yat kiralama/kapora rezervasyonları partnere yazılmaz.

@@ -45,7 +45,23 @@ alter table public.bookings
   add column if not exists partner_channel text;
 
 comment on column public.bookings.partner_commission_rate is 'Rezervasyon anındaki oran; partnerin oranı değişse de eski kayıtlar etkilenmez.';
-comment on column public.bookings.partner_channel is 'qr | link | reception';
+comment on column public.bookings.partner_channel is 'qr | link | reception | widget';
+
+-- Web sitesi widget'ı: widget'ın açılabileceği alan adları (satır/virgül ile ayrılmış,
+-- örn. "otel.com"). Boşsa widget her sitede açılır.
+alter table public.partners add column if not exists widget_domains text;
+
+-- Yat teklif talepleri: partner sitesinden/widget'ından geldiyse hangi partner (komisyon yok,
+-- fiyat teklifle belirlenir; admin listesinde partner adı görünür).
+do $$
+begin
+  if to_regclass('public.yacht_inquiries') is not null then
+    alter table public.yacht_inquiries
+      add column if not exists partner_id uuid references public.partners(id) on delete set null,
+      add column if not exists partner_name text,
+      add column if not exists partner_channel text;
+  end if;
+end $$;
 
 create index if not exists bookings_partner_id_idx on public.bookings (partner_id) where partner_id is not null;
 

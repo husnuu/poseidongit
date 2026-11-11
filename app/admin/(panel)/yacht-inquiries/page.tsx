@@ -28,6 +28,8 @@ interface AdminYachtInquiry {
   currency: string | null
   status: InquiryStatus
   source: string
+  /** Partner sitesinden/widget'ından geldiyse partnerin adı. */
+  partnerName?: string | null
   adminNote: string | null
   isRead: boolean
   contactedAt: string | null
@@ -360,7 +362,14 @@ export default function AdminYachtInquiriesPage() {
                         <div className="font-bold text-[#131719]">{item.firstName} {item.lastName}</div>
                         <div className="text-zinc-400">{item.email}</div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-zinc-600">{item.yachtName || item.yachtSlug}</td>
+                      <td className="px-4 py-3 text-sm text-zinc-600">
+                        {item.yachtName || item.yachtSlug}
+                        {item.partnerName && (
+                          <span className="ml-1.5 inline-block rounded bg-violet-50 px-1.5 py-0.5 text-[11px] font-bold text-violet-700">
+                            {item.partnerName}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm text-zinc-600">
                         {item.rentalType === 'overnight' && item.checkIn && item.checkOut
                           ? `${item.checkIn} → ${item.checkOut}${item.nights != null ? ` (${item.nights} gece)` : ''}`
@@ -439,6 +448,9 @@ export default function AdminYachtInquiriesPage() {
               <div className="rounded-lg border border-[#f1f5f9] bg-zinc-50 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">Yat</p>
                 <p className="mt-1 text-sm font-bold text-[#131719]">{selectedInquiry.yachtName || selectedInquiry.yachtSlug}</p>
+                {selectedInquiry.partnerName && (
+                  <p className="mt-1 text-xs font-semibold text-violet-700">Partner: {selectedInquiry.partnerName}</p>
+                )}
                 <p className="text-sm text-zinc-500">{selectedInquiry.location || 'Konum yok'}</p>
               </div>
               <div className="rounded-lg border border-[#f1f5f9] bg-zinc-50 p-4">

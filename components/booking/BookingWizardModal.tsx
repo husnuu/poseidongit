@@ -23,6 +23,8 @@ import {
 } from './steps'
 import PaymentSuccessPanel from './PaymentSuccessPanel'
 import { readPartnerRef } from '@/lib/partner/attribution'
+import EmbedHandoffPanel, { type EmbedHandoff } from '@/components/embed/EmbedHandoffPanel'
+import { navigateEmbedTop, postToEmbedParent } from '@/components/embed/EmbedShell'
 import PaymentLoadingOverlay from './PaymentLoadingOverlay'
 import ReservationTourSnapshot from './ReservationTourSnapshot'
 import styles from './booking.module.css'
@@ -44,6 +46,11 @@ export interface BookingWizardModalProps {
   locale?: SiteLocale
   /** Dedicated /rezervasyon/[slug] page: same wizard UI, no dimmed dismissible overlay */
   variant?: 'modal' | 'page'
+  /**
+   * Partner sitesine gömülü widget: rezervasyon bu partnere `widget` kanalıyla
+   * yazılır; ödeme/onay sayfası iframe içinde değil yeni sekmede açılır.
+   */
+  embedPartnerSlug?: string
 }
 
 export default function BookingWizardModal({
@@ -53,11 +60,12 @@ export default function BookingWizardModal({
   initialTourData: tour,
   locale = 'tr',
   variant = 'modal',
+  embedPartnerSlug,
 }: BookingWizardModalProps) {
   const ui = useMemo(() => getBookingWizardUi(locale), [locale])
   const pageTourTitle = useMemo(
-    () => (variant === 'page' ? shortTourHeading(tour.title) : ''),
-    [variant, tour.title]
+    () => (variant === 'page' && !embedPartnerSlug ? shortTourHeading(tour.title) : ''),
+    [variant, tour.title, embedPartnerSlug]
   )
   const [portalEl, setPortalEl] = useState<HTMLElement | null>(null)
 
@@ -85,6 +93,8 @@ export default function BookingWizardModal({
   const [step3TermsAccepted, setStep3TermsAccepted] = useState(false)
   /** Özel tur talebi başarıyla gönderildi (ödeme yok — teşekkür ekranı). */
   const [privateRequestSent, setPrivateRequestSent] = useState(false)
+  /** Widget: rezervasyon kaydedildi, ödeme/bilet yeni sekmede açılacak. */
+  const [embedHandoff, setEmbedHandoff] = useState<EmbedHandoff | null>(null)
   /** Rezervasyon başarılı olunca anlık kalan kontenjan = Sanity kapasitesi - (API used + bu). */
   const [optimisticUsed, setOptimisticUsed] = useState<UsedByDateAndClass | null>(null)
   /** Modal her açıldığında güncellenir; useAvailability bu sayede önceki rezervasyonları yeniden çeker. */
@@ -100,6 +110,7 @@ export default function BookingWizardModal({
   useEffect(() => {
     const prev = prevStepRef.current
     prevStepRef.current = state.step
+    if (embedPartnerSlug && prev !== state.step) postToEmbedParent('scrollTop')
     if (prev !== 2 && state.step === 2) setAvailabilityInvalidateKey(String(Date.now()))
   }, [state.step])
 
@@ -172,6 +183,7 @@ export default function BookingWizardModal({
   const handleClose = useCallback(() => {
     setSubmitted(false)
     setPrivateRequestSent(false)
+    setEmbedHandoff(null)
     setBookingResult(null)
     setSubmitError(null)
     setOptimisticUsed(null)
@@ -313,7 +325,7 @@ export default function BookingWizardModal({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             locale,
-            partnerRef: readPartnerRef(),
+            partnerRef: embedPartnerSlug ? { slug: embedPartnerSlug, channel: 'widget' } : readPartnerRef(),
             tourId,
             tourTitle: tour.title ?? '',
             date: state.selectedDate ?? '',
@@ -407,6 +419,24 @@ export default function BookingWizardModal({
         }
 
         const useCashPayment = Boolean(data.cashPayment || tour.cashPaymentEnabled)
+        // Widget: iframe içinden bankaya gidilmez (3D Secure çerçevede engellenir);
+        // misafir ödeme/onay sayfası için sitemize yönlendirilir.
+        if (embedPartnerSlug) {
+          const handoff: EmbedHandoff = useCashPayment
+            ? { kind: 'cash', href: withLocalePath(locale, `/rezervasyon/onaylandi?bookingId=${encodeURIComponent(data.bookingId)}`) }
+            : {
+                kind: 'pay',
+                href: withLocalePath(
+                  locale,
+                  `/odeme/${encodeURIComponent(data.bookingId)}?token=${encodeURIComponent(data.accessToken ?? '')}`
+                ),
+              }
+          setEmbedHandoff(handoff)
+          setSubmitted(true)
+          setSubmitting(false)
+          navigateEmbedTop(handoff.href)
+          return
+        }
         if (useCashPayment) {
           window.location.assign(
             withLocalePath(locale, `/rezervasyon/onaylandi?bookingId=${encodeURIComponent(data.bookingId)}`)
@@ -439,7 +469,7 @@ export default function BookingWizardModal({
         setSubmitting(false)
       }
     }
-  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext, ui, locale, isPrivate])
+  }, [state, tour, canProceedStep1, canProceedStep2, canProceedStep3, goNext, ui, locale, isPrivate, embedPartnerSlug])
 
   const { ctaLabel, ctaDisabled } = useMemo(() => {
     let label: string
@@ -475,7 +505,7 @@ export default function BookingWizardModal({
   if (!open) return null
 
   // Özel turda bankaya yönlendirme yok — düğme "İşleniyor…" gösterir.
-  if (submitting && !isPrivate) return <PaymentLoadingOverlay />
+  if (submitting && !isPrivate && !embedPartnerSlug) return <PaymentLoadingOverlay />
 
   const wizardPane = (
       <div
@@ -561,10 +591,12 @@ export default function BookingWizardModal({
           </div>
         </div>
 
-        <main className={styles.wizardModalContent} key={submitted ? 'done' : state.step}>
+        <div className={styles.wizardModalContent} key={submitted ? 'done' : state.step}>
           {submitted ? (
             <div className={styles.card} style={{ padding: 28, maxWidth: 420, margin: '0 auto' }}>
-              {privateRequestSent ? (
+              {embedHandoff ? (
+                <EmbedHandoffPanel handoff={embedHandoff} locale={locale} onNewBooking={handleClose} />
+              ) : privateRequestSent ? (
                 <div role="status" style={{ textAlign: 'center' }}>
                   <div
                     className={styles.stepCircleDone}
@@ -679,13 +711,17 @@ export default function BookingWizardModal({
               )}
             </>
           )}
-        </main>
+        </div>
       </div>
   )
 
   const modalContent = (
     <div
-      className={variant === 'page' ? styles.pageOverlay : styles.modalOverlay}
+      className={
+        variant === 'page'
+          ? `${styles.pageOverlay} ${embedPartnerSlug ? styles.pageOverlayEmbed : ''}`
+          : styles.modalOverlay
+      }
       {...(variant === 'page'
         ? {}
         : {
@@ -696,7 +732,10 @@ export default function BookingWizardModal({
       aria-labelledby="booking-wizard-title"
       aria-describedby="booking-wizard-desc"
     >
-      {variant === 'page' ? (
+      {variant === 'page' && embedPartnerSlug ? (
+        // Widget: tur özeti sayfanın üstünde ayrıca gösteriliyor; burada yalnızca form.
+        <div className={`${styles.pageLayout} ${styles.pageLayoutEmbed}`}>{wizardPane}</div>
+      ) : variant === 'page' ? (
         <div className={styles.pageLayout}>
           <ReservationTourSnapshot tour={tour} locale={locale} />
           {wizardPane}

@@ -19,7 +19,7 @@ const STATE_BADGES: Record<CommissionState, string> = {
   void: 'bg-zinc-100 text-zinc-500 border-zinc-200',
 }
 
-const CHANNEL_LABELS: Record<string, string> = { qr: 'QR', link: 'Bağlantı', reception: 'Resepsiyon' }
+const CHANNEL_LABELS: Record<string, string> = { qr: 'QR', link: 'Bağlantı', reception: 'Resepsiyon', widget: 'Web sitesi widget' }
 
 export function PartnerCard({ title, children, action }: { title?: string; children: ReactNode; action?: ReactNode }) {
   return (

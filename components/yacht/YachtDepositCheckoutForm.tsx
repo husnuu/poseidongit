@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { readPartnerRef } from '@/lib/partner/attribution'
 import Script from 'next/script'
 import Link from 'next/link'
 import { useForm, type Resolver } from 'react-hook-form'
@@ -116,6 +117,7 @@ export default function YachtDepositCheckoutForm({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          partnerRef: readPartnerRef(),
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,

@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
         currency: typeof d.currency === 'string' ? d.currency : null,
         status: typeof d.status === 'string' ? d.status : 'new',
         source: typeof d.source === 'string' ? d.source : 'web',
+        partnerName: typeof d.partner_name === 'string' ? d.partner_name : null,
         adminNote: typeof d.admin_note === 'string' ? d.admin_note : null,
         isRead: Boolean(d.is_read),
         contactedAt: toIso(d.contacted_at),

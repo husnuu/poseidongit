@@ -5,6 +5,7 @@ import { verifyAdminSessionTokenEdge } from '@/lib/adminJwtVerifyEdge'
 import { parseLocaleFromPathname, withLocalePath } from '@/lib/i18n/paths'
 import { htmlLangForLocale, isSiteLocale } from '@/lib/i18n/config'
 import { expectedCanonicalRoute, incomingPathToCanonicalRoute } from '@/lib/i18n/routeAliases'
+import { frameAncestorsForPartner } from '@/lib/embed/frameAncestors'
 
 /** Eski / kaldırılmış sayfalar — 410 Gone (arama motorları indeksten çıkarır). */
 const gonePaths = new Set([
@@ -58,10 +59,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Partner widget'ı (iframe): başka sitelerde açılabilen tek bölüm. Hangi
+  // sitelerde açılacağı partnerin kayıtlı alan adlarına göre belirlenir.
+  if (pathname === '/embed' || pathname.startsWith('/embed/')) {
+    const slug = pathname.split('/')[3] ?? ''
+    const res = NextResponse.next()
+    res.headers.set('Content-Security-Policy', await frameAncestorsForPartner(slug))
+    return res
+  }
+
   const skipLocaleRewrite =
     pathname.startsWith('/api') ||
     pathname.startsWith('/payment') ||
-    pathname.startsWith('/odeme') ||
     pathname.startsWith('/rezervasyon/basarisiz') ||
     pathname.startsWith('/rezervasyon/onaylandi') ||
     pathname.startsWith('/admin') ||
