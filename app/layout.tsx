@@ -118,7 +118,12 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <GoogleTagManagerNoScript />
-        <Suspense fallback={null}>{children}</Suspense>
+        {/* Sayfa içeriği Suspense ile SARILMAZ: sarılınca statik HTML'de içerik
+            (header/footer dahil) <div hidden> içinde, en sonda geliyor ve ancak
+            JavaScript ile yerine taşınıyordu — JS çalıştırmayan tarayıcılar
+            (GPTBot, ClaudeBot, PerplexityBot, SEO denetim araçları) sayfayı boş
+            görüyordu. useSearchParams kullanan sayfa kendi sınırını taşır (bkz. app/login/layout.tsx). */}
+        {children}
         <ChunkLoadErrorHandler />
         <GoogleAnalytics />
         <Suspense fallback={null}>

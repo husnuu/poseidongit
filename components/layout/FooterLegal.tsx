@@ -10,8 +10,30 @@ export type FooterLegalData = {
   paymentLogos?: Array<{
     asset?: { _ref?: string } | null
     alt?: string | null
+    filename?: string | null
   }> | null
+  /** ETBİS doğrulama adresi (Sanity'de doldurulunca rozet görünür). */
+  etbisUrl?: string | null
+  etbisQr?: { _ref?: string } | null
+  etbisLabel?: string | null
 } | null
+
+const CARD_BRAND_NAMES: Record<string, string> = {
+  visa: 'Visa',
+  mastercard: 'Mastercard',
+  amex: 'American Express',
+  discover: 'Discover',
+  troy: 'Troy',
+  maestro: 'Maestro',
+}
+
+/** Alt metni boş logolar için yüklenen dosyanın adından marka adı (visa.svg → Visa). */
+function paymentLogoAlt(alt: string | null | undefined, filename: string | null | undefined): string {
+  if (alt?.trim()) return alt.trim()
+  const stem = (filename ?? '').replace(/\.[a-z0-9]+$/i, '').trim().toLowerCase()
+  if (!stem) return 'Payment method'
+  return CARD_BRAND_NAMES[stem] ?? stem.charAt(0).toUpperCase() + stem.slice(1)
+}
 
 type FooterLegalProps = {
   data: FooterLegalData
@@ -28,7 +50,9 @@ export default function FooterLegal({ data, inline, regionAriaLabel = 'Legal and
   const hasSecureLabel = data.secure3dLabel
   const logos = data.paymentLogos?.filter((item) => item?.asset) ?? []
 
-  if (!hasText && !hasSecureLabel && logos.length === 0) return null
+  const etbisUrl = data.etbisUrl && /^https?:\/\//i.test(data.etbisUrl) ? data.etbisUrl : null
+
+  if (!hasText && !hasSecureLabel && logos.length === 0 && !etbisUrl) return null
 
   const content = (
     <>
@@ -57,7 +81,7 @@ export default function FooterLegal({ data, inline, regionAriaLabel = 'Legal and
             const asset = item?.asset
             if (!asset) return null
             const src = urlFor(asset).width(32).height(22).auto('format').url()
-            const alt = item?.alt || 'Payment method'
+            const alt = paymentLogoAlt(item?.alt, item?.filename)
             return (
               <span
                 key={index}
@@ -74,6 +98,26 @@ export default function FooterLegal({ data, inline, regionAriaLabel = 'Legal and
             )
           })}
         </div>
+      )}
+
+      {etbisUrl && (
+        <a
+          href={etbisUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex items-center gap-3 rounded-lg bg-white py-1.5 pl-1.5 pr-3 text-[11px] font-bold uppercase leading-tight tracking-wide text-[#131719] shadow-sm transition-opacity hover:opacity-90"
+        >
+          {data.etbisQr?._ref ? (
+            <Image
+              src={urlFor(data.etbisQr).width(112).height(112).url()}
+              alt="ETBİS"
+              width={56}
+              height={56}
+              className="h-14 w-14 object-contain"
+            />
+          ) : null}
+          <span>{data.etbisLabel || "ETBİS'e kayıtlıdır"}</span>
+        </a>
       )}
     </>
   )

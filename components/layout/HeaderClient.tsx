@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { isSiteLocale, type SiteLocale } from '@/lib/i18n/config'
-import { withLocalePath } from '@/lib/i18n/paths'
+import { localeSwitchPath, withLocalePath } from '@/lib/i18n/paths'
 import { localizeNavHref } from '@/lib/i18n/localizeNavHref'
 import { comingSoonLabelForLanguageCode, headerAria, pickCtaText, pickNavLabel } from '@/lib/i18n/localizedLabels'
 import {
@@ -178,6 +178,24 @@ interface HeaderClientProps {
   announcementFallbackHeightPx?: number
 }
 
+/**
+ * Dil değiştirince aynı sayfanın o dildeki karşılığına git (eskiden her zaman o
+ * dilin ana sayfasına gidiyordu). Önce sayfanın <head>'indeki hreflang bağlantısı
+ * (Sanity'den gelen çevrilmiş slug'lar dahil), yoksa yol eşlemesi kullanılır.
+ */
+function alternateLocaleHref(pathname: string, target: SiteLocale): string {
+  const link = document.querySelector<HTMLLinkElement>(`link[rel="alternate"][hreflang="${target}"]`)
+  if (link?.href) {
+    try {
+      const u = new URL(link.href)
+      return `${u.pathname}${u.search}`
+    } catch {
+      // geçersiz href → yol eşlemesine düş
+    }
+  }
+  return localeSwitchPath(pathname, target)
+}
+
 /** Geçerli bir path veya URL ise döndür, değilse "#" (RSC/serialization hatalarını önler). */
 function safeHref(href: unknown): string {
   if (typeof href !== 'string' || !href) return '#'
@@ -208,6 +226,7 @@ function LanguageDropdown({
   compact?: boolean
 }) {
   const router = useRouter()
+  const pathname = usePathname() ?? '/'
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const aria = headerAria(locale)
@@ -301,8 +320,8 @@ function LanguageDropdown({
                 className={`${styles.languageOption} ${isSelected ? styles.languageOptionSelected : ''}`}
                 onClick={() => {
                   setOpen(false)
-                  if (!isSiteLocale(key)) return
-                  router.push(withLocalePath(key, '/'))
+                  if (!isSiteLocale(key) || key === current) return
+                  router.push(alternateLocaleHref(pathname, key))
                 }}
               >
                 <span className={styles.languageOptionFlag}>
@@ -343,6 +362,7 @@ function MobileLanguageList({
   onNavigate?: () => void
 }) {
   const router = useRouter()
+  const pathname = usePathname() ?? '/'
   const list = normalizeLanguages(languages)
   const sectionLabel = LANG_SECTION_LABEL[locale] ?? LANG_SECTION_LABEL.tr
 
@@ -394,8 +414,8 @@ function MobileLanguageList({
               className={`${styles.mobileMenuLangOption} ${isSelected ? styles.mobileMenuLangOptionSelected : ''}`}
               onClick={() => {
                 onNavigate?.()
-                if (!isSiteLocale(key)) return
-                router.push(withLocalePath(key, '/'))
+                if (!isSiteLocale(key) || isSelected) return
+                router.push(alternateLocaleHref(pathname, key))
               }}
             >
               <span className={styles.mobileMenuLangFlag}>{flag}</span>

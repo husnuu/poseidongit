@@ -10,7 +10,45 @@ import {
   type CookieConsentPreferences,
 } from '@/lib/cookieConsent'
 import { COOKIE_CONSENT_BANNER_ID } from '@/lib/cookieBannerId'
+import type { SiteLocale } from '@/lib/i18n/config'
+import { parseLocaleFromPathname, withLocalePath } from '@/lib/i18n/paths'
 import styles from './CookieConsentBanner.module.css'
+
+/** Bant kök layout'ta: dil, adres çubuğundaki önekten (/en, /de, /ru) okunur. */
+const COPY: Record<SiteLocale, { region: string; title: string; text: string; more: string; reject: string; accept: string }> = {
+  tr: {
+    region: 'Çerez tercihleri',
+    title: 'Gizliliğinize değer veriyoruz',
+    text: 'Ziyaretçilerin sitemizi nasıl kullandığını anlamak ve deneyiminizi iyileştirmek için çerezleri kullanıyoruz. Kabul edebilir veya reddedebilirsiniz.',
+    more: 'Daha fazla bilgi',
+    reject: 'Reddet',
+    accept: 'Kabul Et',
+  },
+  en: {
+    region: 'Cookie preferences',
+    title: 'We value your privacy',
+    text: 'We use cookies to understand how visitors use our site and to improve your experience. You can accept or reject them.',
+    more: 'Learn more',
+    reject: 'Reject',
+    accept: 'Accept',
+  },
+  de: {
+    region: 'Cookie-Einstellungen',
+    title: 'Ihre Privatsphäre ist uns wichtig',
+    text: 'Wir verwenden Cookies, um zu verstehen, wie Besucher unsere Website nutzen, und um Ihr Erlebnis zu verbessern. Sie können sie akzeptieren oder ablehnen.',
+    more: 'Mehr erfahren',
+    reject: 'Ablehnen',
+    accept: 'Akzeptieren',
+  },
+  ru: {
+    region: 'Настройки cookie',
+    title: 'Мы ценим вашу конфиденциальность',
+    text: 'Мы используем файлы cookie, чтобы понять, как посетители пользуются сайтом, и улучшить ваш опыт. Вы можете принять или отклонить их.',
+    more: 'Подробнее',
+    reject: 'Отклонить',
+    accept: 'Принять',
+  },
+}
 
 type Props = {
   policyHref: string
@@ -51,22 +89,26 @@ export default function CookieConsentBanner({ policyHref }: Props) {
   }, [])
 
   if (pathname?.startsWith('/ekip')) return null
+  // Partner sitelerine gömülen widget: çerez bildirimi dış sitenin sorumluluğunda.
+  if (pathname?.startsWith('/embed/')) return null
   if (!ready || !showBanner) return null
+
+  const locale = parseLocaleFromPathname(pathname ?? '/').locale
+  const copy = COPY[locale]
 
   return (
     <div
       id={COOKIE_CONSENT_BANNER_ID}
       className={`${styles.banner} ${visible ? styles.bannerVisible : ''}`}
       role="region"
-      aria-label="Çerez tercihleri"
+      aria-label={copy.region}
     >
       <div className={styles.card}>
-        <h3 className={styles.cardTitle}>Gizliliğinize değer veriyoruz</h3>
+        <p className={styles.cardTitle}>{copy.title}</p>
         <p className={styles.cardText}>
-          Ziyaretçilerin sitemizi nasıl kullandığını anlamak ve deneyiminizi iyileştirmek için
-          çerezleri kullanıyoruz. Kabul edebilir veya reddedebilirsiniz.{' '}
-          <Link href={policyHref} className={styles.policyLink}>
-            Daha fazla bilgi
+          {copy.text}{' '}
+          <Link href={withLocalePath(locale, policyHref)} className={styles.policyLink}>
+            {copy.more}
           </Link>
         </p>
         <div className={styles.btnRow}>
@@ -75,14 +117,14 @@ export default function CookieConsentBanner({ policyHref }: Props) {
             className={styles.btnReject}
             onClick={() => persistAndClose({ analytics: false, ads: false })}
           >
-            Reddet
+            {copy.reject}
           </button>
           <button
             type="button"
             className={styles.btnAccept}
             onClick={() => persistAndClose({ analytics: true, ads: true })}
           >
-            Kabul Et
+            {copy.accept}
           </button>
         </div>
       </div>

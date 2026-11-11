@@ -121,26 +121,25 @@ export function buildBlogPostingSchema(params: {
   datePublished?: string
   dateModified?: string
   author?: string
+  /** Yayıncı (ve yazar yoksa yazar) olarak görünen işletme adı. */
+  publisherName?: string
 }): Record<string, unknown> {
   const base = getBaseUrl()
   const url = params.url.startsWith('http') ? params.url : absoluteUrl(params.url)
+  const publisherName = params.publisherName || getSiteName() || undefined
+  const publisher = { '@type': 'Organization', name: publisherName, url: base }
   return {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: params.title,
     description: params.description ?? undefined,
     url,
+    mainEntityOfPage: url,
     image: params.image ?? undefined,
     datePublished: params.datePublished ?? undefined,
     dateModified: params.dateModified ?? params.datePublished ?? undefined,
-    author: params.author
-      ? { '@type': 'Person', name: params.author }
-      : { '@type': 'Organization', name: getSiteName() || undefined },
-    publisher: {
-      '@type': 'Organization',
-      name: getSiteName() || undefined,
-      url: base,
-    },
+    author: params.author ? { '@type': 'Person', name: params.author } : publisher,
+    publisher,
   }
 }
 

@@ -193,7 +193,7 @@ export default async function FerryRoutePage({
     .filter((t): t is string => !!t)
 
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <StandardPageLd
         type="WebPage"
         locale={locale}
@@ -369,6 +369,6 @@ export default async function FerryRoutePage({
           />
         </div>
       </div>
-    </main>
+    </div>
   )
 }

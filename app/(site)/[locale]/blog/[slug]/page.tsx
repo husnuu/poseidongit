@@ -50,6 +50,7 @@ interface BlogPost {
   readingTime?: number | null
   category?: string
   tags?: string[]
+  _createdAt?: string
   _updatedAt?: string
   translations?: unknown
   seo?: {
@@ -65,6 +66,16 @@ function authorInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   const letters = parts.slice(0, 2).map((p) => p[0]?.toLocaleUpperCase('tr') ?? '')
   return letters.join('') || '?'
+}
+
+/** Yazar alanı boş yazıların imzası ve şemadaki yayıncı (Gizlilik Politikası'ndaki ticari marka). */
+const BLOG_PUBLISHER_NAME = 'Poseidon Tekne Turu'
+
+const UPDATED_LABEL: Record<SiteLocale, string> = {
+  tr: 'Güncellendi',
+  en: 'Updated',
+  de: 'Aktualisiert',
+  ru: 'Обновлено',
 }
 
 function formatDate(dateString: string | undefined, dateLocale: string): string {
@@ -243,17 +254,27 @@ export default async function BlogPostPage({
   // bağlantısı var (referans tasarım). Şema arama sonucundaki kırıntı
   // yolunu beslemeye devam ediyor.
   const breadcrumbSchema = buildBreadcrumbSchema(breadcrumbCrumbs)
+  // Yazar alanı boşsa yazı işletme adına yayımlanmış sayılır (görünen imza da
+  // şema da aynı); yayın tarihi yoksa belgenin oluşturulma tarihi kullanılır.
+  const authorName = merged.author?.trim() || null
+  const bylineName = authorName ?? BLOG_PUBLISHER_NAME
+  const publishedAt = merged.publishDate ?? merged._createdAt ?? null
+  const updatedAt = merged._updatedAt ?? null
+  const showUpdated =
+    Boolean(publishedAt && updatedAt) && new Date(updatedAt!).getTime() - new Date(publishedAt!).getTime() > 24 * 60 * 60 * 1000
   const blogPostingSchema = buildBlogPostingSchema({
     title,
     description: excerpt ?? undefined,
     url: postUrl,
     image: coverUrl ?? undefined,
-    datePublished: merged.publishDate ?? undefined,
-    author: merged.author ?? undefined,
+    datePublished: publishedAt ?? undefined,
+    dateModified: updatedAt ?? undefined,
+    author: authorName ?? undefined,
+    publisherName: BLOG_PUBLISHER_NAME,
   })
 
   return (
-    <main className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen bg-zinc-50">
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={blogPostingSchema} />
       <article className={styles.article}>
@@ -267,29 +288,30 @@ export default async function BlogPostPage({
 
           {excerpt && <p className={styles.lead}>{excerpt}</p>}
 
-          {(merged.author || merged.publishDate || merged._updatedAt) && (
-            <div className={styles.authorRow}>
-              {merged.author && (
-                <>
-                  <span className={styles.avatar} aria-hidden>
-                    {authorInitials(merged.author)}
-                  </span>
-                  <span className={styles.authorName}>{merged.author}</span>
-                </>
-              )}
-              {(merged.publishDate || merged._updatedAt) && (
+          <div className={styles.authorRow}>
+              <span className={styles.avatar} aria-hidden>
+                {authorInitials(bylineName)}
+              </span>
+              <span className={styles.authorName} translate={authorName ? undefined : 'no'}>
+                {bylineName}
+              </span>
+              {(publishedAt || updatedAt) && (
                 <span className={styles.updatedWrap}>
                   <Clock className={styles.updatedIcon} size={15} strokeWidth={2} aria-hidden />
-                  {/* Referans: "24 Eylül 2026 · 4 dk okuma" — kartla aynı tarih
-                      ve biçim (önceden "Son güncelleme: …" yazıyor, karttaki
-                      yayın tarihinden farklı bir tarih gösteriyordu). */}
+                  {/* "24 Eylül 2026 · 4 dk okuma" (kartla aynı yayın tarihi); sonradan
+                      güncellendiyse güncelleme tarihi de yazılır (şemadaki dateModified). */}
                   <span>
-                    {[
-                      formatDate(merged.publishDate ?? merged._updatedAt, dateLocale),
-                      formatBlogReadTime(merged, ui.readTimeSuffix),
-                    ]
+                    {publishedAt && <time dateTime={publishedAt}>{formatDate(publishedAt, dateLocale)}</time>}
+                    {[formatBlogReadTime(merged, ui.readTimeSuffix)]
                       .filter(Boolean)
-                      .join(' · ')}
+                      .map((t) => ` · ${t}`)
+                      .join('')}
+                    {showUpdated && updatedAt && (
+                      <>
+                        {` · ${UPDATED_LABEL[locale]}: `}
+                        <time dateTime={updatedAt}>{formatDate(updatedAt, dateLocale)}</time>
+                      </>
+                    )}
                   </span>
                 </span>
               )}
@@ -301,8 +323,7 @@ export default async function BlogPostPage({
                 locale={locale}
                 className={styles.shareBtn}
               />
-            </div>
-          )}
+          </div>
         </header>
 
         <hr className={styles.headerDivider} />
@@ -369,6 +390,6 @@ export default async function BlogPostPage({
           variant="compact"
         />
       )}
-    </main>
+    </div>
   )
 }

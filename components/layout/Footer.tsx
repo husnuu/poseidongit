@@ -22,6 +22,7 @@ import {
 } from '@/lib/i18n/localizedLabels'
 import { exploreLinksWithHelpCenter } from '@/lib/i18n/headerNavWithHelpCenter'
 import FooterLegal from '@/components/layout/FooterLegal'
+import FooterLanguageLinks from '@/components/layout/FooterLanguageLinks'
 import type { FooterLegalData } from '@/components/layout/FooterLegal'
 import InstagramModern from '@/components/icons/InstagramModern'
 import {
@@ -58,7 +59,10 @@ type SiteFooterLegalRaw = {
   paymentLogos?: Array<{
     asset?: { _ref?: string } | null
     alt?: string | null
+    filename?: string | null
   }> | null
+  etbisUrl?: string | null
+  etbisQr?: { asset?: { _ref?: string } | null } | null
 }
 
 type SiteFooterData = {
@@ -235,6 +239,43 @@ async function getFooterGoogleReviewsUrl(): Promise<string | null> {
   }
 }
 
+type LegalPageLinkRow = {
+  title?: string | null
+  slug?: string | null
+  enTitle?: string | null
+  deTitle?: string | null
+}
+
+/** Sanity'deki tüm yasal sayfalar — footer'daki elle seçilmiş listede olmayanlar
+    (Gizlilik Politikası, Mesafeli Satış Sözleşmesi…) da her sayfadan bağlansın. */
+async function getLegalPageLinks(): Promise<LegalPageLinkRow[]> {
+  try {
+    return await client.fetch<LegalPageLinkRow[]>(
+      `*[_type == "legalPage" && defined(slug.current)] | order(title asc){
+        title, "slug": slug.current,
+        "enTitle": translations.en.title, "deTitle": translations.de.title
+      }`,
+      {},
+      { useCdn: false }
+    )
+  } catch {
+    return []
+  }
+}
+
+/** Gizlilik Politikası sayfası 6698 sayılı KVKK kapsamındaki aydınlatma metnini
+    (veri sorumlusu, işlenen veriler, amaçlar) içeriyor; bağlantı bunu belirtir. */
+const PRIVACY_LINK_LABEL: Partial<Record<SiteLocale, string>> = {
+  tr: 'Gizlilik Politikası ve KVKK Aydınlatma Metni',
+}
+const PRIVACY_SLUG = 'gizlilik-politikasi'
+
+/** Bir yasal bağlantının hangi /yasal/<slug> sayfasına gittiği (tam URL ya da yol). */
+function legalSlugOf(href: string | null | undefined): string | null {
+  const m = /\/yasal\/([^/?#]+)/.exec(href ?? '')
+  return m ? m[1] : null
+}
+
 const POPULAR_TOURS_TITLE: Record<SiteLocale, string> = {
   tr: 'En Popüler Turlarımız',
   en: 'Our Most Popular Tours',
@@ -256,6 +297,13 @@ const PARTNER_LOGIN_LABEL: Record<SiteLocale, string> = {
   en: 'Partner Login',
   de: 'Partner-Login',
   ru: 'Вход для партнёров',
+}
+
+const ETBIS_LABEL: Record<SiteLocale, string> = {
+  tr: "ETBİS'e kayıtlıdır",
+  en: 'Registered with ETBİS',
+  de: 'Bei ETBİS registriert',
+  ru: 'Зарегистрирован в ETBİS',
 }
 
 function locHref(locale: SiteLocale, href: string | null | undefined): string {
@@ -280,15 +328,19 @@ async function mergeFooterLegal(raw: SiteFooterLegalRaw | null | undefined, loca
     companyLine2,
     secure3dLabel,
     paymentLogos: raw.paymentLogos ?? null,
+    etbisUrl: raw.etbisUrl?.trim() || null,
+    etbisQr: raw.etbisQr?.asset ?? null,
+    etbisLabel: ETBIS_LABEL[locale],
   }
 }
 
 export default async function Footer({ locale }: { locale: SiteLocale }) {
-  const [data, settingsForLogo, popularToursRaw, googleReviewsUrl] = await Promise.all([
+  const [data, settingsForLogo, popularToursRaw, googleReviewsUrl, legalPages] = await Promise.all([
     getFooterData(),
     getSiteSettingsLogo(),
     getFooterPopularTours(),
     getFooterGoogleReviewsUrl(),
+    getLegalPageLinks(),
   ])
   const f = footerUi(locale)
   const numLoc = NUMBER_LOCALE[locale]
@@ -421,7 +473,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
 
   const legalFromCms =
     data?.legalLinks?.items?.filter((l) => l?.enabled !== false && l?.label && l?.href) ?? []
-  const legalLinks =
+  const legalLinksBase =
     legalFromCms.length > 0
       ? await Promise.all(
           legalFromCms.map(async (l) => ({
@@ -433,6 +485,23 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
           }))
         )
       : legalLinksFallback(locale)
+  // Elle seçilmiş listede olmayan yasal sayfalar sona eklenir (Gizlilik/KVKK
+  // bağlantısı eskiden hiçbir sayfada yoktu — yasal zorunluluk + güven sinyali).
+  const linkedLegalSlugs = new Set(legalLinksBase.map((l) => legalSlugOf(l.href)).filter(Boolean))
+  const extraLegalLinks = await Promise.all(
+    legalPages
+      .filter((p): p is LegalPageLinkRow & { slug: string; title: string } => Boolean(p.slug && p.title?.trim()))
+      .filter((p) => !linkedLegalSlugs.has(p.slug))
+      .sort((a, b) => (a.slug === PRIVACY_SLUG ? -1 : b.slug === PRIVACY_SLUG ? 1 : 0))
+      .map(async (p) => {
+        const manual = locale === 'en' ? p.enTitle?.trim() : locale === 'de' ? p.deTitle?.trim() : ''
+        const label =
+          (p.slug === PRIVACY_SLUG && PRIVACY_LINK_LABEL[locale]) ||
+          (locale === 'tr' ? p.title : manual || (await translateNavLabelText(p.title, locale)))
+        return { href: `/yasal/${p.slug}`, label }
+      })
+  )
+  const legalLinks = [...legalLinksBase, ...extraLegalLinks]
 
   const footerLegalMerged = await mergeFooterLegal(data?.footerLegal ?? null, locale)
 
@@ -590,9 +659,9 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
 
           {popularTourLinks.length > 0 && (
             <div>
-              <h2 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl lg:whitespace-nowrap">
+              <p className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl lg:whitespace-nowrap">
                 {POPULAR_TOURS_TITLE[locale]}
-              </h2>
+              </p>
               <ul className="space-y-4">
                 {popularTourLinks.map((item) => (
                   <li key={item.href} className="flex items-start gap-2.5">
@@ -610,9 +679,9 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
           )}
 
           <div className="lg:pl-6 xl:pl-10">
-            <h2 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
+            <p className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
               {exploreTitle}
-            </h2>
+            </p>
             <ul className="space-y-4">
               {exploreLinks.map((item, index) => (
                 <li key={index}>
@@ -637,9 +706,9 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
 
           {showBragSection ? (
             <div>
-              <h2 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
+              <p className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
                 {bragTitle}
-              </h2>
+              </p>
               <div className="grid grid-cols-2 gap-5">
                 {awardImages.map((item, index) => {
                   const content = (
@@ -674,9 +743,9 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
             </div>
           ) : null}
           <div>
-            <h2 className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
+            <p className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl">
               {MEMBERSHIPS_TITLE[locale]}
-            </h2>
+            </p>
             <div className="grid grid-cols-2 gap-4">
               <a
                 href="https://www.tursab.org.tr"
@@ -743,10 +812,14 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                   {item.label}
                 </Link>
               ))}
-              <a href="/partner/giris" className={`${headerStyles.footerLink} transition-colors hover:text-white`}>
+              <a href="/partner/giris" rel="nofollow" className={`${headerStyles.footerLink} transition-colors hover:text-white`}>
                 {PARTNER_LOGIN_LABEL[locale]}
               </a>
             </div>
+          </div>
+
+          <div className="mt-6 border-t border-white/15 pt-6">
+            <FooterLanguageLinks locale={locale} />
           </div>
 
           {data?.craftedBy?.name && (

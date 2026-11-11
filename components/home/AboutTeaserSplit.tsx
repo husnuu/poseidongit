@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
-import Image from 'next/image'
+import CoverImage from '@/components/ui/CoverImage'
 import Link from 'next/link'
 import { PortableText } from '@portabletext/react'
 import { ArrowRight } from 'lucide-react'
@@ -216,10 +216,9 @@ export default function AboutTeaserSplit({ data, locale = 'tr' }: AboutTeaserSpl
             <figure className="m-0 rotate-[1.5deg] rounded-md bg-[#fdfcf7] p-3 pb-6 shadow-[0_28px_50px_-24px_rgba(60,50,20,0.55)] transition-transform duration-500 hover:rotate-0 sm:p-4 sm:pb-10">
               <div className="relative w-full overflow-hidden bg-zinc-100" style={{ aspectRatio: naturalRatio ?? 4 / 3 }}>
                 {imageUrl ? (
-                  <Image
+                  <CoverImage
                     src={imageUrl}
                     alt={imageAlt || heading || 'Hakkımızda'}
-                    fill
                     className="object-cover"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                   />

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import Image from 'next/image'
+import CoverImage from '@/components/ui/CoverImage'
 import { Check } from 'lucide-react'
 import { urlFor } from '@/lib/sanity'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -212,10 +212,9 @@ export default function TourClassShowcase({ classes, locale, defaultKey, heading
                       const dedupe = imageDedupeKey(img) ?? String(i)
                       return (
                         <div key={`${activeClass.key}-${dedupe}`} className={styles.slide}>
-                          <Image
+                          <CoverImage
                             src={src}
                             alt={img.alt?.trim() || `${activeClass.label} — ${i + 1}`}
-                            fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 60vw, 720px"
                             placeholder={img.metadata?.lqip ? 'blur' : 'empty'}
                             blurDataURL={img.metadata?.lqip ?? undefined}

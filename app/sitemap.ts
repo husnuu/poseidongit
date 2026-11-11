@@ -195,6 +195,29 @@ async function getLegalEntries(): Promise<{ paths: Partial<Record<SiteLocaleKey,
   }
 }
 
+/** Statik rota → içeriğini oluşturan Sanity belgelerinin en yeni _updatedAt'i.
+ * Liste/landing sayfası, içindeki belgelerden biri değişince değişmiş olur. */
+const STATIC_LASTMOD_QUERY = `{
+  "/": *[_type in ["homePage", "tour", "yachtRental", "blog", "faqPage"] && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]._updatedAt,
+  "/turlar": *[_type in ["toursPage", "tour"] && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]._updatedAt,
+  "/koylar": *[_type in ["covesPage", "cove"] && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]._updatedAt,
+  "/blog": *[_type in ["blogPage", "blog"] && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]._updatedAt,
+  "/hakkimizda": *[_type == "aboutPage" && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]._updatedAt,
+  "/contact": *[_type == "contactPage" && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]._updatedAt,
+  "/menu": *[_type == "menuItem" && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]._updatedAt,
+  "/sik-sorulanlar": *[_type == "faqPage" && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]._updatedAt,
+  "/yat-kiralama": *[_type in ["yachtRentalsPage", "yachtRental", "yachtLocation"] && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]._updatedAt,
+  "/feribot": *[_type == "ferryRoute" && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]._updatedAt
+}`
+
+async function getStaticLastModified(): Promise<Record<string, string | null>> {
+  try {
+    return (await client.fetch<Record<string, string | null>>(STATIC_LASTMOD_QUERY)) ?? {}
+  } catch {
+    return {}
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [
     tourRows,
@@ -204,6 +227,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     yachtDetailRaw,
     ferryRouteEntriesRaw,
     coveRows,
+    staticLastModified,
   ] = await Promise.all([
     getTourSitemapRows(),
     getBlogEntries(),
@@ -212,6 +236,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getYachtDetailEntries(),
     getFerryRouteEntries(),
     getCoveSitemapRows(),
+    getStaticLastModified(),
   ])
 
   const now = new Date()
@@ -243,19 +268,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return 0.6
   }
 
-  // Bu statik rotalar birden fazla Sanity bölümünün toplamı — tek bir
-  // gerçek "son güncelleme" zaman damgası yok. Her build'de "bugün
-  // güncellendi" demek (eskiden: lastModified: now) gerçeği yansıtmıyordu;
-  // bilinmeyen bir tarihi uydurmaktansa alanı boş bırakmak Google için
-  // daha dürüst bir sinyal.
-  const staticPages: MetadataRoute.Sitemap = staticPaths.flatMap((path) =>
-    locales.map((loc) => ({
+  // Statik rotaların tarihi, içeriklerini oluşturan Sanity belgelerinin en
+  // yenisinden gelir (yardım merkezi: koddaki statik verinin tarihi). Her build'de
+  // "bugün güncellendi" demek (eskiden: lastModified: now) gerçeği yansıtmıyordu;
+  // gerçek bir tarih bulunamazsa alan yine boş bırakılır.
+  function staticLastModifiedFor(path: string): Date | undefined {
+    const raw = path === '/yardim-merkezi' ? STATIC_UPDATED_AT : staticLastModified[path]
+    if (!raw) return undefined
+    const d = new Date(raw)
+    return Number.isNaN(d.getTime()) ? undefined : d
+  }
+
+  const staticPages: MetadataRoute.Sitemap = staticPaths.flatMap((path) => {
+    const lastModified = staticLastModifiedFor(path)
+    return locales.map((loc) => ({
       url: publicUrl(loc, path),
+      ...(lastModified ? { lastModified } : {}),
       changeFrequency: 'weekly' as const,
       priority: staticPriority(path),
       alternates: samePathAlternates(path),
     }))
-  )
+  })
 
   // Tur ve koy detayları — çeviri slug'ı yoksa o dilde Türkçe slug kullanılır
   // (sayfalar anlık çeviriyle açılıyor; eskiden DE/RU tur sayfaları hiç listelenmiyordu).

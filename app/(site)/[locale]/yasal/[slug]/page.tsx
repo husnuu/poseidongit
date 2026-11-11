@@ -161,7 +161,7 @@ export default async function YasalSayfaPage({
     Array.isArray(page.content) && page.content.length > 0 ? page.content : null
 
   return (
-    <main className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen bg-zinc-50">
       <StandardPageLd type="WebPage" locale={locale} path={`/yasal/${slug}`} name={page.title} />
       <article className="mx-auto max-w-3xl px-4 py-10 md:py-16">
         <header className="mb-10 text-center">
@@ -191,6 +191,6 @@ export default async function YasalSayfaPage({
           </p>
         )}
       </article>
-    </main>
+    </div>
   )
 }

@@ -616,6 +616,19 @@ export default defineType({
                         },
                     ],
                 }),
+                defineField({
+                    name: 'etbisUrl',
+                    title: 'ETBİS Doğrulama Bağlantısı',
+                    type: 'url',
+                    description:
+                        'ETBİS (Elektronik Ticaret Bilgi Sistemi) kaydından sonra verilen doğrulama adresi — karekodun açtığı sayfa. Doldurulunca footer’da “ETBİS’e kayıtlıdır” rozeti görünür.',
+                }),
+                defineField({
+                    name: 'etbisQr',
+                    title: 'ETBİS Karekodu',
+                    type: 'image',
+                    description: 'ETBİS panelinden indirilen karekod görseli (rozetin yanında gösterilir).',
+                }),
             ],
         }),
 

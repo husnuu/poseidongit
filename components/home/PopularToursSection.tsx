@@ -52,7 +52,6 @@ export default function PopularToursSection({
 }: PopularToursSectionProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const desktopScrollRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
 
@@ -82,7 +81,7 @@ export default function PopularToursSection({
   }
 
   const scrollDesktop = (dir: 1 | -1) => {
-    const el = desktopScrollRef.current
+    const el = scrollRef.current
     if (!el) return
     const card = el.children[0] as HTMLElement | undefined
     // +16: şerit boşluğu (gap-4) — kart genişliğiyle birlikte güncellenmeli.
@@ -123,49 +122,20 @@ export default function PopularToursSection({
           </h2>
         </header>
 
-        {/* MOBİL: yan yana kaydırmalı (swipe) kart şeridi + altta nokta göstergesi
-            (referans siteki gibi) — desktop'ta klasik grid kullanılıyor. */}
-        <div className="md:hidden">
+        {/* Tek kart şeridi (eskiden mobil + masaüstü için iki kez render ediliyordu —
+            DOM iki katına çıkıyor, her tur başlığı sayfada iki kez geçiyordu).
+            Mobil: %86 genişlikte swipe kartlar + nokta göstergesi; masaüstü: 350px
+            kartlar ("Özel Tekne Kiralama" şeridiyle aynı) + oklar. */}
+        <div className="relative">
           <div
             ref={scrollRef}
             onScroll={handleScroll}
-            className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {items.map((tour) => (
-              <div key={tour._id} className="w-[86%] flex-shrink-0 snap-center">
-                <TourCard tour={tour} locale={locale} />
-              </div>
-            ))}
-          </div>
-          {items.length > 1 && (
-            /* Sayfalama noktaları — PopularYachtsSection ile birebir aynı spec:
-               gap 10px (önceden 6, sıkışıktı), 8px nokta, aktif 24px marka
-               mavisi pill (önceden koyu siyah, daha ağır duruyordu). */
-            <div className="mt-5 flex items-center justify-center gap-2.5" aria-hidden>
-              {items.map((_, i) => (
-                <span
-                  key={i}
-                  className={`h-2 rounded-full transition-all duration-300 ease-out ${
-                    i === activeIndex ? 'w-6 bg-[var(--primary,#2168b8)]' : 'w-2 bg-[#d4d4d8]'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* MASAÜSTÜ: tek satır, yana kaydırmalı şerit (referans siteki gibi) — grid yok, taşan kartlar sağa doğru kayar. */}
-        <div className="relative hidden md:block">
-          <div
-            ref={desktopScrollRef}
-            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
           >
             {items.map((tour, index) => (
               <div
                 key={tour._id}
-                /* Masaüstü ölçüleri "Özel Tekne Kiralama" şeridiyle birebir
-                   aynı: 350px kart + 16px boşluk (önceden 380px + 32px idi). */
-                className="w-[320px] flex-shrink-0 snap-start transition-all duration-300 ease-out md:w-[350px]"
+                className="w-[86%] flex-shrink-0 snap-center transition-all duration-300 ease-out md:w-[350px] md:snap-start"
                 style={{
                   opacity: visible ? 1 : 0,
                   transform: visible ? 'translateY(0)' : 'translateY(10px)',
@@ -176,6 +146,21 @@ export default function PopularToursSection({
               </div>
             ))}
           </div>
+
+          {items.length > 1 && (
+            /* Sayfalama noktaları (yalnız mobil) — PopularYachtsSection ile birebir
+               aynı spec: gap 10px, 8px nokta, aktif 24px marka mavisi pill. */
+            <div className="mt-5 flex items-center justify-center gap-2.5 md:hidden" aria-hidden>
+              {items.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-2 rounded-full transition-all duration-300 ease-out ${
+                    i === activeIndex ? 'w-6 bg-[var(--primary,#2168b8)]' : 'w-2 bg-[#d4d4d8]'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
 
           {items.length > 3 && (
             <>

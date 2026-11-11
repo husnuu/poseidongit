@@ -108,3 +108,29 @@ başlıktan EN/DE/RU adres üretip `lib/i18n/generated/localeSlugs.json` dosyas�
 - Search Console → **Sayfa deneyimi / Core Web Vitals** ve **Kapsam** raporları haftalık.
 - Rich Results Test ile tur sayfası (Product + FAQ + Breadcrumb) ve ana sayfa (TravelAgency).
 - Paylaşım önizlemesi: <https://www.opengraph.xyz> veya WhatsApp'ta link gönderip kontrol.
+
+## 8. HTML'in JS'siz okunabilmesi (yapay zekâ tarayıcıları)
+
+GPTBot, ClaudeBot, PerplexityBot ve çoğu SEO denetim aracı JavaScript çalıştırmaz.
+Sayfa içeriğini bir `Suspense` sınırına (kök layout'ta `<Suspense>` ya da bir
+`loading.tsx`) sokmak, statik HTML'de tüm içeriği `<div hidden>` içinde footer'ın
+arkasına taşır — bu tarayıcılar sayfayı boş görür. Bu yüzden:
+
+- `app/layout.tsx` sayfa içeriğini Suspense ile sarmaz; site rotalarında `loading.tsx` yok.
+- `useSearchParams` kullanan sayfa kendi sınırını taşır (örn. `app/login/layout.tsx`).
+- Kontrol: `curl -s https://cesmetekneturu.net/ | grep -o '<h1'` ilk `<footer`'dan önce gelmeli.
+
+## 9. Çerez onayı (Consent Mode v2)
+
+`components/GoogleTagManager.tsx` GTM yüklenmeden önce tüm izinleri "denied" yapar
+(ziyaretçinin kayıtlı tercihi varsa onu kullanır); çerez bandı seçimden sonra
+`consent update` ve `cookie_consent_update` olayını gönderir. GTM'de Google dışı
+etiketler (Meta Pixel vb.) için **Yönetici → Kapsayıcı ayarları → İzin genel bakışı**
+açılmalı ve bu etiketlere "ek izin gerekli: ad_storage" eklenmeli; aksi halde onay
+beklemeden çalışırlar.
+
+## 10. ETBİS
+
+Studio → Site Footer → Legal & Secure 3D Payment → **ETBİS Doğrulama Bağlantısı** ve
+**ETBİS Karekodu** doldurulunca footer'da "ETBİS'e kayıtlıdır" rozeti çıkar
+(şema değişikliği için Studio'nun yeniden deploy edilmesi gerekir).

@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import CoverImage from '@/components/ui/CoverImage'
 import Link from 'next/link'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -51,7 +51,9 @@ export default function HeroBanner({
 
   const desktopImageUrl = hero.heroImageUrl ?? ''
   const mobileImageUrl = hero.heroImageMobileUrl ?? hero.heroImageUrl ?? ''
-  const alt = hero.heroImageAlt ?? 'Hero image'
+  // "Hero image" gibi içeriği anlatmayan alt metinler yerine başlık kullanılır.
+  const altFromCms = hero.heroImageAlt?.trim()
+  const alt = altFromCms && !/^hero( image)?$/i.test(altFromCms) ? altFromCms : hero.heading
   const [line1, line2] = splitHeadingIntoTwoLines(hero.heading)
 
   const primaryHref = hero.primaryCta?.href?.trim()
@@ -68,15 +70,14 @@ export default function HeroBanner({
       className={`relative w-full min-h-[560px] h-[74vh] md:min-h-[520px] md:h-[72vh] overflow-hidden ${!hasImage ? 'bg-[var(--secondary)]' : ''}`}
       aria-label="Hero"
     >
-      {/* Görsel: mobil ve desktop ayrı (responsive), Next/Image fill + priority */}
+      {/* Görsel: mobil ve desktop ayrı (responsive), CoverImage (fill yerleşimi + width/height) + priority */}
       {(desktopImageUrl || mobileImageUrl) && (
         <div className="absolute inset-0">
           {mobileImageUrl && (
             <div className="absolute inset-0 md:hidden">
-              <Image
+              <CoverImage
                 src={mobileImageUrl}
                 alt={alt}
-                fill
                 className="object-cover object-center"
                 priority
                 fetchPriority="high"
@@ -86,10 +87,9 @@ export default function HeroBanner({
           )}
           {desktopImageUrl && (
             <div className={mobileImageUrl ? 'absolute inset-0 hidden md:block' : 'absolute inset-0'}>
-              <Image
+              <CoverImage
                 src={desktopImageUrl}
                 alt={alt}
-                fill
                 className="object-cover object-center"
                 priority
                 fetchPriority="high"

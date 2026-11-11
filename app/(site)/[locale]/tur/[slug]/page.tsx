@@ -359,7 +359,7 @@ export default async function TourPage({
               CSS'inde ayrı bir dış margin tutuyordu (48/72/32/64px…) ve
               üstüne buradaki mb-14/mt-14 yamaları biniyordu — altı ayrı
               sistem. Artık bölümler dış margin taşımıyor, aralık burada. */}
-          <main className="flex-1 min-w-0 space-y-12 sm:space-y-16">
+          <div className="flex-1 min-w-0 space-y-12 sm:space-y-16">
             {/* "#reviews" çapası + başlık TEK çocuk olarak sarılı: aksi hâlde
                 space-y, sıfır yükseklikli çapanın iki yanına da margin basıp
                 başlığın üstünde gereksiz boşluk açıyor. */}
@@ -485,7 +485,7 @@ export default async function TourPage({
           <ReviewsSection reviewsUrl={tour.reviewsUrl} reviewsSection={tour.reviewsSection} tourUi={tourUi} />
         </ScrollReveal>
 
-          </main>
+          </div>
           <TourBookingSidebar
             tour={tour as TourForBooking}
             ticketClasses={tour.ticketClasses}

@@ -1,6 +1,6 @@
 import type { SiteLocale } from './config'
 import { DEFAULT_LOCALE, LOCALE_PATH_PREFIX } from './config'
-import { canonicalRouteToPublicPath } from './routeAliases'
+import { canonicalRouteToPublicPath, incomingPathToCanonicalRoute } from './routeAliases'
 
 /** Eski veya hatalı kanonik path’leri dosya yapısına uyarlar */
 function normalizeLegacyCanonicalStripped(path: string): string {
@@ -67,7 +67,11 @@ export function withLocalePath(locale: SiteLocale, path: string): string {
   }
   const normalized = p.startsWith('/') ? p : `/${p}`
   const { pathname, rest } = splitPathQueryAndHash(normalized)
-  const stripped = normalizeLegacyCanonicalStripped(stripLocalePathPrefix(pathname))
+  // Girdi hangi dilin adresiyle yazılmışsa (Sanity'de /tour/…, /en/tours gibi)
+  // önce kanonik iç rotaya çözülür; eskiden /tour/x gibi bir link TR'de olduğu
+  // gibi kalıyor ve ziyaretçi/Googlebot bir 301 yönlendirmesinden geçiyordu.
+  const { locale: fromLocale, pathWithoutLocale } = parseLocaleFromPathname(pathname)
+  const stripped = normalizeLegacyCanonicalStripped(incomingPathToCanonicalRoute(fromLocale, pathWithoutLocale))
   const publicPath = canonicalRouteToPublicPath(locale, stripped)
   let out: string
   if (locale === DEFAULT_LOCALE) {
@@ -102,4 +106,13 @@ export function parseLocaleFromPathname(pathname: string): {
     return { locale: 'tr', pathWithoutLocale: rest.length ? `/${rest.join('/')}` : '/' }
   }
   return { locale: 'tr', pathWithoutLocale: pathname === '' ? '/' : pathname.startsWith('/') ? pathname : `/${pathname}` }
+}
+
+/**
+ * Dil seçici bağlantıları: bulunulan sayfanın başka dildeki karşılığı.
+ * `/en/tour/sunset-tour` + de → `/de/tour/…` (detay slug'ları localeSlugs.json'dan).
+ */
+export function localeSwitchPath(pathname: string, target: SiteLocale): string {
+  const { locale, pathWithoutLocale } = parseLocaleFromPathname(pathname || '/')
+  return withLocalePath(target, incomingPathToCanonicalRoute(locale, pathWithoutLocale))
 }

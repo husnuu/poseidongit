@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import Image from 'next/image'
+import CoverImage from '@/components/ui/CoverImage'
 import Link from 'next/link'
 import { Clock, MapPin } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -9,6 +9,7 @@ import { withLocalePath } from '@/lib/i18n/paths'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './TourCard.module.css'
 import { SANITY_DISPLAY_IMAGE_PROPS } from '@/lib/sanityImage'
+import { computeDiscountedPrice } from '@/lib/tourCardPrice'
 import { useWishlist } from '@/lib/wishlist/WishlistContext'
 import ShareButton from '@/components/ui/ShareButton'
 import type { TourCategory } from '@/lib/tourCategories'
@@ -85,12 +86,6 @@ export type TourListItem = {
 function formatPriceFrom(price: number | null | undefined, numberLocale: string): string {
   if (price == null) return ''
   return `${price.toLocaleString(numberLocale)} ₺`
-}
-
-/** İndirimli fiyatı en yakın 10'a yuvarlar — Türkiye'deki tur fiyatlandırmasında
-    yaygın olan "yuvarlak sayı" alışkanlığıyla tutarlı (ör. 2.553 yerine 2.550). */
-function computeDiscountedPrice(price: number, percentage: number): number {
-  return Math.round((price * (1 - percentage / 100)) / 10) * 10
 }
 
 const DISCOUNT_BADGE_LABEL: Record<SiteLocale, (percentage: number) => string> = {
@@ -201,10 +196,9 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
   const imageSection = (
     <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-zinc-100">
       {tour.coverImageUrl ? (
-        <Image
+        <CoverImage
           src={tour.coverImageUrl}
           alt={tour.coverImageAlt || tour.title || tourUi.tourCardCoverAltFallback}
-          fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           {...SANITY_DISPLAY_IMAGE_PROPS}

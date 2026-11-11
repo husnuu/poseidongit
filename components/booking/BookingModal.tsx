@@ -154,7 +154,7 @@ export default function BookingModal({ tour, onClose }: BookingModalProps) {
           ))}
         </div>
 
-        <main className={`${styles.content} ${styles.stepContent}`} key={submitted ? 'done' : state.step}>
+        <div className={`${styles.content} ${styles.stepContent}`} key={submitted ? 'done' : state.step}>
           {submitted ? (
             <div className={styles.card} style={{ textAlign: 'center', padding: 32 }}>
               <h2 className={styles.successTitle}>Rezervasyonunuz alındı</h2>
@@ -201,7 +201,7 @@ export default function BookingModal({ tour, onClose }: BookingModalProps) {
               )}
             </>
           )}
-        </main>
+        </div>
 
         {!submitted && (
           <div className={styles.ctaWrap}>

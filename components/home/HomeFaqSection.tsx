@@ -1,6 +1,3 @@
-'use client'
-
-import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, ChevronDown } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -81,9 +78,13 @@ const DEFAULT_FAQ_TR: HomeFaqItem[] = [
   },
 ]
 
+/**
+ * Sunucu bileşeni: tüm cevaplar HTML'de bulunur (eskiden yalnızca açılan
+ * sorunun cevabı render ediliyordu — arama motorları ve yapay zekâ tarayıcıları
+ * cevapları hiç göremiyordu). Yerel <details name> akordeonu JS'siz çalışır ve
+ * aynı anda tek soruyu açık tutar.
+ */
 export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionProps) {
-  const [openIndex, setOpenIndex] = useState<number | null>(null)
-
   const resolvedItems = items && items.length > 0 ? items : locale === 'tr' ? DEFAULT_FAQ_TR : null
   if (!resolvedItems || resolvedItems.length === 0) return null
 
@@ -107,52 +108,37 @@ export default function HomeFaqSection({ items, locale = 'tr' }: HomeFaqSectionP
         </h2>
 
         <div className="flex flex-col gap-3">
-          {resolvedItems.map((item, index) => {
-            const isOpen = openIndex === index
-            return (
-              <div
-                key={index}
-                /* Kart: görünmez #f1f5f9 kenar + shadow-sm zeminle kaynaşıyordu; tur/yat
-                   kartlarıyla aynı reçete — görünür yumuşak kenar + katmanlı gölge. */
-                className={`group overflow-hidden rounded-2xl border bg-white shadow-[0_1px_2px_rgba(19,23,25,0.05),0_4px_14px_-4px_rgba(19,23,25,0.09)] transition-all duration-200 hover:shadow-[0_2px_4px_rgba(19,23,25,0.05),0_10px_24px_-8px_rgba(19,23,25,0.14)] ${
-                  isOpen ? 'border-[var(--primary,#2168b8)]/35' : 'border-[#e5e9ef] hover:border-[var(--primary,#2168b8)]/25'
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => setOpenIndex(isOpen ? null : index)}
-                  aria-expanded={isOpen}
-                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
+          {resolvedItems.map((item, index) => (
+            <details
+              key={index}
+              name="home-faq"
+              /* Kart: görünmez #f1f5f9 kenar + shadow-sm zeminle kaynaşıyordu; tur/yat
+                 kartlarıyla aynı reçete — görünür yumuşak kenar + katmanlı gölge. */
+              className="group overflow-hidden rounded-2xl border border-[#e5e9ef] bg-white shadow-[0_1px_2px_rgba(19,23,25,0.05),0_4px_14px_-4px_rgba(19,23,25,0.09)] transition-all duration-200 hover:border-[var(--primary,#2168b8)]/25 hover:shadow-[0_2px_4px_rgba(19,23,25,0.05),0_10px_24px_-8px_rgba(19,23,25,0.14)] open:border-[var(--primary,#2168b8)]/35"
+            >
+              <summary className="flex w-full cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5 [&::-webkit-details-marker]:hidden">
+                {/* Soru: bold (belirginlik) ama 15/16px — bir üst deneme (16/17 +
+                    güçlü gölge) fazla bulundu, bir tık geri çekildi. */}
+                <h3 className="m-0 text-[15px] font-bold leading-snug text-[var(--secondary,#131719)] transition-colors duration-200 group-hover:text-[var(--primary,#2168b8)] group-open:text-[var(--primary,#2168b8)] sm:text-[16px]">
+                  {item.question}
+                </h3>
+                <ChevronDown
+                  className="h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-open:rotate-180"
+                  style={{ color: 'var(--muted, #81848b)' }}
+                  strokeWidth={2}
+                  aria-hidden
+                />
+              </summary>
+              <div className="px-5 pb-5 sm:px-6">
+                <p
+                  className="text-sm leading-relaxed sm:text-[15px]"
+                  style={{ color: 'var(--text-color, #58595b)' }}
                 >
-                  {/* Soru: bold (belirginlik) ama 15/16px — bir üst deneme (16/17 +
-                      güçlü gölge) fazla bulundu, bir tık geri çekildi. */}
-                  <span
-                    className={`text-[15px] font-bold leading-snug transition-colors duration-200 sm:text-[16px] ${
-                      isOpen ? 'text-[var(--primary,#2168b8)]' : 'text-[var(--secondary,#131719)] group-hover:text-[var(--primary,#2168b8)]'
-                    }`}
-                  >
-                    {item.question}
-                  </span>
-                  <ChevronDown
-                    className={`h-[18px] w-[18px] shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                    style={{ color: 'var(--muted, #81848b)' }}
-                    strokeWidth={2}
-                    aria-hidden
-                  />
-                </button>
-                {isOpen && (
-                  <div className="px-5 pb-5 sm:px-6">
-                    <p
-                      className="text-sm leading-relaxed sm:text-[15px]"
-                      style={{ color: 'var(--text-color, #58595b)' }}
-                    >
-                      {item.answer}
-                    </p>
-                  </div>
-                )}
+                  {item.answer}
+                </p>
               </div>
-            )
-          })}
+            </details>
+          ))}
         </div>
 
         <div className="mt-8 flex justify-center md:mt-10">

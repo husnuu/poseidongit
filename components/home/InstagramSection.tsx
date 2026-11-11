@@ -52,6 +52,24 @@ const WATCH: Record<SiteLocale, { video: string; post: string }> = {
   ru: { video: 'Смотреть в Instagram', post: 'Открыть в Instagram' },
 }
 
+const WATCH_YOUTUBE: Record<SiteLocale, string> = {
+  tr: "YouTube'da izle",
+  en: 'Watch on YouTube',
+  de: 'Auf YouTube ansehen',
+  ru: 'Смотреть на YouTube',
+}
+
+const POST_NUMBER: Record<SiteLocale, (n: number) => string> = {
+  tr: (n) => `gönderi ${n}`,
+  en: (n) => `post ${n}`,
+  de: (n) => `Beitrag ${n}`,
+  ru: (n) => `публикация ${n}`,
+}
+
+function isYouTubeHref(href: string): boolean {
+  return /(^|\.)(youtube\.com|youtu\.be)\//i.test(href.replace(/^https?:\/\//i, ''))
+}
+
 const FOLLOWERS: Record<SiteLocale, string> = { tr: 'takipçi', en: 'followers', de: 'Follower', ru: 'подписчиков' }
 
 const NAV_ARIA: Record<SiteLocale, { prev: string; next: string }> = {
@@ -193,7 +211,7 @@ export default function InstagramSection({ data, feed, fallbackFollowerCount, lo
               onScroll={updateArrows}
               className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:scroll-px-0 md:px-0 [&::-webkit-scrollbar]:hidden"
             >
-              {cards.map((card) => (
+              {cards.map((card, cardIndex) => (
                 <a
                   key={card.key}
                   data-ig-card
@@ -207,6 +225,9 @@ export default function InstagramSection({ data, feed, fallbackFollowerCount, lo
                     src={card.imageUrl}
                     alt={card.alt}
                     loading="lazy"
+                    // Kart 3:4 — boyut öznitelikleri yer tutucu oranı verir (görüntü CSS'le kaplar).
+                    width={900}
+                    height={1200}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                   />
                   {card.isVideo && (
@@ -220,9 +241,11 @@ export default function InstagramSection({ data, feed, fallbackFollowerCount, lo
                   <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                     <span className="inline-flex items-center gap-2 text-[15px] font-extrabold text-white">
                       <ExternalLink className="h-5 w-5" aria-hidden />
-                      {card.isVideo ? WATCH[locale].video : WATCH[locale].post}
+                      {isYouTubeHref(card.href) ? WATCH_YOUTUBE[locale] : card.isVideo ? WATCH[locale].video : WATCH[locale].post}
                     </span>
                   </span>
+                  {/* Açıklamasız kartlarda bağlantı metinleri aynı olmasın. */}
+                  {!card.caption && <span className="sr-only">{POST_NUMBER[locale](cardIndex + 1)}</span>}
                 </a>
               ))}
             </div>

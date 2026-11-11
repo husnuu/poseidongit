@@ -921,6 +921,7 @@ export const blogBySlugQuery = `*[_type == "blog" && (
   tags,
   translations,
   seo{ metaTitle, metaDescription, ogImage },
+  _createdAt,
   _updatedAt
 }`
 
@@ -1486,8 +1487,11 @@ export const siteFooterQuery = `*[_type == "siteFooter"][0] {
     secure3dLabelDe,
     paymentLogos[] {
       asset,
-      alt
-    }
+      alt,
+      "filename": asset->originalFilename
+    },
+    etbisUrl,
+    etbisQr{ asset }
   },
   craftedBy {
     name,

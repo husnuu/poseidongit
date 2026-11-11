@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import CoverImage from '@/components/ui/CoverImage'
 import { ArrowRight, MapPin } from 'lucide-react'
 // Sınıflar (TourClassShowcase) bölümüyle birebir aynı toggle/panel görünümü için
 // aynı CSS modülü reuse ediliyor — iki bileşen de görsel olarak aynı dili konuşsun.
@@ -155,10 +155,9 @@ export default function RouteSection({
                 <div className={showcaseStyles.gallery}>
                   {activeLoc.imageUrl ? (
                     <div className={showcaseStyles.imageWrap}>
-                      <Image
+                      <CoverImage
                         src={activeLoc.imageUrl}
                         alt={activeLoc.alt || activeLoc.name}
-                        fill
                         sizes="(max-width: 900px) 100vw, 55vw"
                         className={showcaseStyles.image}
                         priority={activeIndex === 0}

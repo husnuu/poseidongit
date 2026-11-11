@@ -78,9 +78,18 @@ declare global {
   }
 }
 
-/** GA4 Consent Mode v2 — yalnızca etiket; admin çerezlerine dokunmaz. */
+/** Google Consent Mode v2 (GTM + GA4) — yalnızca etiket; admin çerezlerine dokunmaz.
+ * Varsayılan değerler GoogleTagManager'daki önyükleme betiğinde verilir. */
 export function applyGtagConsent(prefs: CookieConsentPreferences): void {
-  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return
+  if (typeof window === 'undefined') return
+  window.dataLayer = window.dataLayer || []
+  if (typeof window.gtag !== 'function') {
+    window.gtag = function gtag() {
+      // gtag komutları dataLayer'a `arguments` nesnesi olarak itilmeli (dizi değil).
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer!.push(arguments)
+    }
+  }
   const analytics = prefs.analytics ? 'granted' : 'denied'
   const ads = prefs.ads ? 'granted' : 'denied'
   window.gtag('consent', 'update', {
@@ -89,4 +98,7 @@ export function applyGtagConsent(prefs: CookieConsentPreferences): void {
     ad_user_data: ads,
     ad_personalization: ads,
   })
+  window.gtag('set', 'ads_data_redaction', ads === 'denied')
+  // Google dışı etiketler (ör. Meta Pixel) GTM'de bu olayla tetiklenebilir.
+  window.dataLayer.push({ event: 'cookie_consent_update', consent_analytics: analytics, consent_ads: ads })
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import Image from 'next/image'
+import CoverImage from '@/components/ui/CoverImage'
 import Link from 'next/link'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
@@ -190,10 +190,9 @@ export default function HomePopularYachtCard({
   const imageSection = (
     <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-zinc-100">
       {yacht.coverImageUrl ? (
-        <Image
+        <CoverImage
           src={yacht.coverImageUrl}
           alt={yacht.coverImageAlt || yacht.name || 'Yat görseli'}
-          fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
@@ -343,6 +342,8 @@ export default function HomePopularYachtCard({
         >
           {priceBlock}
           {ctaInner}
+          {/* Aynı fiyatlı iki teknenin bağlantı metni aynı olmasın (görünmez, yalnızca metin). */}
+          <span className="sr-only">{titlePlain}</span>
         </Link>
       </div>
     </article>

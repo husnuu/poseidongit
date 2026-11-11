@@ -156,7 +156,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
   )
 
   return (
-    <main className={styles.main}>
+    <div className={styles.main}>
       <StandardPageLd type="CollectionPage" locale={locale} path="/blog" name={heroTitle} description={leadText || undefined} />
       <section className={styles.hero}>
         <div className={styles.heroContainer}>
@@ -185,6 +185,6 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
           )}
         </div>
       </section>
-    </main>
+    </div>
   )
 }

@@ -117,7 +117,7 @@ export default function YachtDetailView({ locale, yacht, path, whatsappUrl }: Ya
       )}
       <div className="container mx-auto px-4 py-16 max-w-[1360px]">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
-          <main className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0">
             <YachtHeader
               name={yacht.name}
               yachtType={yacht.yachtType}
@@ -160,7 +160,7 @@ export default function YachtDetailView({ locale, yacht, path, whatsappUrl }: Ya
             <ScrollReveal>
               <YachtOptionalSections locale={locale} yacht={yacht} />
             </ScrollReveal>
-          </main>
+          </div>
           <YachtInquiryExperience yacht={yacht} locale={locale} />
         </div>
       </div>

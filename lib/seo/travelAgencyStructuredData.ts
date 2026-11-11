@@ -31,7 +31,10 @@ const BUSINESS_ALTERNATE_NAME = 'cesmetekneturu.net'
 const DESCRIPTION =
   "Çeşme'nin en kapsamlı online tekne turu rezervasyonu ve güvenli bilet satış platformu. Poseidon ile Ege koylarını keşfedin."
 
-const TELEPHONE = '+90-532-153-28-14'
+/** Sitede (footer, WhatsApp butonu) ve Gizlilik Politikası'ndaki veri sorumlusu
+ * bilgisinde görünen numara — şema görünen içerikle aynı olmalı (eskiden burada
+ * sitede hiç geçmeyen +90 532 153 28 14 vardı). */
+const TELEPHONE = '+90-533-417-36-56'
 const EMAIL = 'turkeycesme@hotmail.com'
 
 /** * Adres bilgisi HTML footer ile birebir eşitlendi.
@@ -52,7 +55,7 @@ export const FULL_ADDRESS_LINE = `${ADDRESS.streetAddress}, ${ADDRESS.addressLoc
 const GEO = { latitude: 38.3237, longitude: 26.3030 } as const
 
 /** WhatsApp ReserveAction — E.164 ülke kodu ile, + olmadan */
-const WHATSAPP_E164 = '905321532814'
+const WHATSAPP_E164 = '905334173656'
 
 /** Yedek görseller — `public/` klasöründe böyle dosyalar YOK (bkz. SEO
  * denetimi: bu sabitler canlıda kırık `/favicon.png` ve `/og-image.png`
@@ -62,11 +65,40 @@ const WHATSAPP_E164 = '905321532814'
 const FALLBACK_LOGO_PUBLIC_PATH: string | null = null
 const FALLBACK_IMAGE_PUBLIC_PATHS: readonly string[] = []
 
-/** Sosyal medya ve gerçek Google Maps linkin eklendi */
+/** Sabit profiller. Footer'daki sosyal medya hesapları (Sanity → siteFooter.social)
+ * çalışma zamanında eklenir — bkz. lib/seo/businessProfiles.ts. Google Haritalar
+ * kaydı, uzun arama sonucu adresi yerine kalıcı CID adresiyle (aynı işletme:
+ * ftid 0x14bb7b510f49d5f7:0x599400a4bd3f5d0b). */
 const SAME_AS = [
   'https://www.instagram.com/cesmeyacht',
-  'https://www.google.com/maps?vet=10CAAQoqAOahcKEwjgvpavhOmTAxUAAAAAHQAAAAAQDw..i&rlz=1C5MACD_enTR1078TR1079&pvq=Cg0vZy8xMXR0OGdoYmN3IiUKH1lhdCBLaXJhbGFtYSAtIMOHZcWfbWUgWWFjaHRpbmcQAhgD&lqi=CifDh2XFn21lIFlhdCBLaXJhbGFtYSAtIMOHZcWfbWUgWWFjaHRpbmdI-9Keh-W5gIAIWjsQARACEAMQBBgAGAMYBCIlw6dlxZ9tZSB5YXQga2lyYWxhbWEgw6dlxZ9tZSB5YWNodGluZyoECAIQAZIBDWNydWlzZV9hZ2VuY3k&fvr=1&cs=0&um=1&ie=UTF-8&fb=1&gl=tr&sa=X&ftid=0x14bb7b510f49d5f7:0x599400a4bd3f5d0b', // Senin paylaştığın gerçek Google linki
+  'https://www.google.com/maps?cid=6454784873478446347',
 ] as const
+
+/** sameAs için tek biçim: sorgu/izleme parametresi ve sondaki "/" atılır, tekrarlar elenir. */
+export function mergeSameAs(...lists: ReadonlyArray<ReadonlyArray<string | null | undefined>>): string[] {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const list of lists) {
+    for (const raw of list) {
+      const t = raw?.trim()
+      if (!t || !/^https?:\/\//i.test(t)) continue
+      let normalized = t
+      try {
+        const u = new URL(t)
+        // Google Haritalar'da kimlik sorguda (cid) — orada parametre korunur.
+        const keepQuery = u.hostname.includes('google.') && u.searchParams.has('cid')
+        normalized = `${u.protocol}//${u.hostname}${u.pathname.replace(/\/+$/, '')}${keepQuery ? `?cid=${u.searchParams.get('cid')}` : ''}`
+      } catch {
+        continue
+      }
+      const key = normalized.toLowerCase().replace(/^https?:\/\/(www\.)?/, '')
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.push(normalized)
+    }
+  }
+  return out
+}
 
 const PRICE_RANGE = '1500-2500' // Günlük turlardan özel yat kiralamaya kadar olan geniş skala
 const PAYMENT_ACCEPTED = 'Cash, Credit Card, Bank Transfer, Online Payment'
@@ -83,7 +115,7 @@ const AGGREGATE_RATING = {
 /** Hizmet isimleri SEO ve "Online Bilet" odaklı güncellendi */
 const SERVICE_OFFERS: ReadonlyArray<{ name: string; path: string }> = [
   { name: "Çeşme Daily Boat Tour - Online Ticket Booking", path: '/tur/cesme-tekne-turu' },
-  { name: 'Private Yacht Charter Çeşme - Instant Booking', path: '/yat-kiralama/' },
+  { name: 'Private Yacht Charter Çeşme - Instant Booking', path: '/yat-kiralama' },
 ]
 
 const WEEKDAYS = [
@@ -96,9 +128,18 @@ const WEEKDAYS = [
   'https://schema.org/Sunday',
 ] as const
 
+/** Çalışma zamanında Sanity'den gelen ek bilgiler. */
+export type TravelAgencyStructuredDataExtras = {
+  /** Footer'daki sosyal medya profilleri (görünen bağlantılar). */
+  sameAs?: ReadonlyArray<string | null | undefined>
+  /** Gerçek tur/yat fiyatlarından hesaplanan aralık (örn. "1.500–60.000 TRY"). */
+  priceRange?: string | null
+}
+
 export function buildTravelAgencyStructuredData(
   imageOverrides?: TravelAgencyStructuredDataImageOverrides,
-  aggregateRatingOverride?: TravelAgencyAggregateRatingOverride | null
+  aggregateRatingOverride?: TravelAgencyAggregateRatingOverride | null,
+  extras?: TravelAgencyStructuredDataExtras
 ): Record<string, unknown> {
   const base = getBaseUrl()
   const id = `${base}/#business`
@@ -163,7 +204,7 @@ export function buildTravelAgencyStructuredData(
         closes: '23:59',
       },
     ],
-    priceRange: PRICE_RANGE,
+    priceRange: extras?.priceRange?.trim() || PRICE_RANGE,
     currenciesAccepted: 'TRY',
     paymentAccepted: PAYMENT_ACCEPTED,
     aggregateRating:
@@ -180,7 +221,7 @@ export function buildTravelAgencyStructuredData(
             reviewCount: AGGREGATE_RATING.reviewCount,
             bestRating: AGGREGATE_RATING.bestRating,
           },
-    sameAs: [...SAME_AS],
+    sameAs: mergeSameAs(extras?.sameAs ?? [], SAME_AS),
     potentialAction: {
       '@type': 'ReserveAction',
       target: {
@@ -207,7 +248,7 @@ export function buildTravelAgencyStructuredData(
  * İletişim sayfası için işletmenin iletişim kimliği — ana sayfadaki
  * TravelAgency ile aynı @id ve aynı gerçek bilgiler (tek kaynak bu dosya).
  */
-export function buildBusinessContactStructuredData(): Record<string, unknown> {
+export function buildBusinessContactStructuredData(extras?: Pick<TravelAgencyStructuredDataExtras, 'sameAs'>): Record<string, unknown> {
   const base = getBaseUrl()
   return {
     '@context': 'https://schema.org',
@@ -231,7 +272,7 @@ export function buildBusinessContactStructuredData(): Record<string, unknown> {
       { '@type': 'ContactPoint', telephone: TELEPHONE, email: EMAIL, contactType: 'customer service' },
       { '@type': 'ContactPoint', telephone: TELEPHONE, contactType: 'reservations', url: `https://wa.me/${WHATSAPP_E164}` },
     ],
-    sameAs: [...SAME_AS],
+    sameAs: mergeSameAs(extras?.sameAs ?? [], SAME_AS),
   }
 }
 
@@ -242,5 +283,5 @@ export const BUSINESS_FACTS = {
   email: EMAIL,
   whatsappUrl: `https://wa.me/${WHATSAPP_E164}`,
   address: FULL_ADDRESS_LINE,
-  sameAs: [...SAME_AS],
+  sameAs: mergeSameAs(SAME_AS),
 } as const

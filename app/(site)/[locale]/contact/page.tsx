@@ -11,6 +11,7 @@ import type { TourListItem } from '@/components/tours/TourCard'
 import { absoluteUrl, getSiteName } from '@/lib/seo'
 import { buildStandardPageLd } from '@/lib/seo/pageSchemas'
 import { buildBusinessContactStructuredData } from '@/lib/seo/travelAgencyStructuredData'
+import { getFooterSocialProfileUrls } from '@/lib/seo/businessProfiles'
 import JsonLd from '@/components/seo/JsonLd'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
@@ -213,12 +214,14 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
     locationMapLink: data?.locationMapLink ?? null,
   }
 
+  const socialProfiles = await getFooterSocialProfileUrls()
+
   return (
-    <main className="relative min-h-screen overflow-hidden bg-white">
+    <div className="relative min-h-screen overflow-hidden bg-white">
       {pageLd.map((d, i) => (
         <JsonLd key={i} data={d} />
       ))}
-      <JsonLd data={buildBusinessContactStructuredData()} />
+      <JsonLd data={buildBusinessContactStructuredData({ sameAs: socialProfiles })} />
       {/* Koylar sayfasındaki gibi başlığın arkasında çok açık mavi bir ışıltı. */}
       <div
         className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[460px] w-[1000px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-70 blur-3xl"
@@ -269,6 +272,6 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
           hideViewAllButton
         />
       </div>
-    </main>
+    </div>
   )
 }

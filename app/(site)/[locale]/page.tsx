@@ -11,6 +11,7 @@ import {
 } from '@/lib/queries'
 import HomeReviewsSection, { type HomeReviewsSectionData, type HomeReviewItem } from '@/components/home/HomeReviewsSection'
 import HomeFaqSection, { type HomeFaqItem } from '@/components/home/HomeFaqSection'
+import HomeAtAGlance from '@/components/home/HomeAtAGlance'
 import HeroBanner from '@/components/home/HeroBanner'
 import FeatureBar from '@/components/home/FeatureBar'
 import PopularToursSection from '@/components/home/PopularToursSection'
@@ -35,6 +36,7 @@ import type { InstagramSectionData } from '@/components/home/InstagramSection'
 import type { RouteSectionLocation } from '@/components/home/RouteSection'
 import type { TourListItem } from '@/components/tours/TourCard'
 import JsonLd from '@/components/seo/JsonLd'
+import { localizeNavHref } from '@/lib/i18n/localizeNavHref'
 import ScrollReveal from '@/components/ui/ScrollReveal'
 import {
   buildOrganizationSchema,
@@ -45,8 +47,11 @@ import {
 import { alternateLanguageAbsoluteUrls } from '@/lib/seo/alternateLanguages'
 import {
   buildTravelAgencyStructuredData,
+  mergeSameAs,
   type TravelAgencyStructuredDataImageOverrides,
 } from '@/lib/seo/travelAgencyStructuredData'
+import { getFooterSocialProfileUrls } from '@/lib/seo/businessProfiles'
+import { SITE_BRAND } from '@/lib/seo/brand'
 import { travelAgencyImageOverridesFromSanity } from '@/lib/seo/travelAgencySanityImages'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -365,10 +370,11 @@ function localizeCta(
 ): { label?: string | null; href?: string | null } | null | undefined {
   if (!c) return c
   const h = c.href?.trim()
-  if (!h || h.startsWith('http://') || h.startsWith('https://') || h.startsWith('mailto:') || h.startsWith('tel:')) {
-    return c
-  }
-  return { ...c, href: withLocalePath(locale, h) }
+  if (!h) return c
+  // Sanity'deki tam site adresleri de (https://www.cesmetekneturu.net/tour/…)
+  // göreli, kanonik yola çevrilir — eskiden hero'daki "Online bilet al" iki
+  // yönlendirmeden (www → kök, /tour → /tur) geçiyordu.
+  return { ...c, href: localizeNavHref(locale, h) }
 }
 
 async function localizeHero(
@@ -1055,12 +1061,29 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   // `${base}/logo.png`'a düşüyordu (canlıda kırık bir "logo" URL'i üretiyordu
   // — bkz. SEO denetimi). TravelAgency şeması için zaten hesaplanmış gerçek
   // Sanity logosu burada da kullanılıyor.
-  const organizationSchema = buildOrganizationSchema(
-    travelAgencyImageOverrides.logoUrl ? { logo: travelAgencyImageOverrides.logoUrl } : undefined
-  )
+  // sameAs: footer'da görünen sosyal medya hesapları + sabit profiller (Haritalar).
+  const socialProfiles = await getFooterSocialProfileUrls()
+  const siteDisplayName = SITE_BRAND.tr
+  const organizationSchema = buildOrganizationSchema({
+    name: siteDisplayName,
+    ...(travelAgencyImageOverrides.logoUrl ? { logo: travelAgencyImageOverrides.logoUrl } : {}),
+    sameAs: mergeSameAs(socialProfiles),
+  })
   const websiteSchema = buildWebSiteSchema({
+    name: siteDisplayName,
     description: data?.seo?.metaDescription?.trim() || DEFAULT_HOME_DESCRIPTION[locale],
   })
+  // priceRange: sayfadaki gerçek tur ve tekne fiyatlarından (yalnızca TL olanlar).
+  const listedPrices = [
+    ...(popularToursSection?.items ?? []).map((t) => t.priceFrom),
+    ...(popularYachtsSection?.items ?? [])
+      .filter((y) => !y.currency || y.currency === 'TRY')
+      .map((y) => y.priceFrom),
+  ].filter((n): n is number => typeof n === 'number' && n > 0)
+  const priceRange =
+    listedPrices.length > 0
+      ? `${Math.min(...listedPrices).toLocaleString('tr-TR')}–${Math.max(...listedPrices).toLocaleString('tr-TR')} TRY`
+      : null
   let travelAgencySchema: Record<string, unknown>
   try {
     // Google'ın structured-data kuralları: şema, sayfada GERÇEKTEN görünen
@@ -1070,7 +1093,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       homeReviews && homeReviews.totalCount > 0
         ? { ratingValue: homeReviews.avgRating, reviewCount: homeReviews.totalCount }
         : null
-    travelAgencySchema = buildTravelAgencyStructuredData(travelAgencyImageOverrides, liveRating)
+    travelAgencySchema = buildTravelAgencyStructuredData(travelAgencyImageOverrides, liveRating, {
+      sameAs: socialProfiles,
+      priceRange,
+    })
   } catch {
     travelAgencySchema = {
       '@context': 'https://schema.org',
@@ -1078,6 +1104,27 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       name: getSiteName() || (locale === 'en' ? 'Çeşme boat tour' : locale === 'de' ? 'Çeşme Bootstour' : 'Çeşme tekne turu'),
       url: getBaseUrl(),
     }
+  }
+
+  // "Kısaca" tablosundaki turların gerçek son güncellenme zamanı (görünen tarih + WebPage.dateModified).
+  const glanceTourIds = (popularToursSection?.items ?? []).map((t) => t._id).filter(Boolean)
+  const glanceUpdatedAt = glanceTourIds.length
+    ? await client
+        .fetch<string | null>(`*[_type == "tour" && _id in $ids] | order(_updatedAt desc)[0]._updatedAt`, { ids: glanceTourIds })
+        .catch(() => null)
+    : null
+  const homePublicPath = withLocalePath(locale, '/')
+  const homeUrl = `${getBaseUrl()}${homePublicPath === '/' ? '' : homePublicPath}`
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${homeUrl}/#webpage`,
+    url: homeUrl,
+    inLanguage: locale,
+    isPartOf: { '@id': `${getBaseUrl()}/#website` },
+    about: { '@id': `${getBaseUrl()}/#business` },
+    publisher: { '@id': `${getBaseUrl()}/#business` },
+    ...(glanceUpdatedAt ? { dateModified: glanceUpdatedAt } : {}),
   }
 
   const loyaltyProgramLabel = locale === 'en' ? 'Loyalty Program' : locale === 'de' ? 'Treueprogramm' : 'Sadakat Programı'
@@ -1089,6 +1136,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <JsonLd data={organizationSchema} />
       <JsonLd data={websiteSchema} />
       <JsonLd data={travelAgencySchema} />
+      <JsonLd data={webPageSchema} />
       <HeroBanner hero={hero} locale={locale} />
       {featureBar && featureBar.length > 0 && (
         <ScrollReveal>
@@ -1153,6 +1201,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <ScrollReveal>
         <AboutTeaserSplit data={aboutTeaser} locale={locale} />
       </ScrollReveal>
+      <HomeAtAGlance
+        tours={popularToursSection?.enabled ? popularToursSection.items ?? [] : []}
+        hasYachts={Boolean(popularYachtsSection?.enabled && popularYachtsSection.items?.length)}
+        updatedAt={glanceUpdatedAt}
+        locale={locale}
+      />
       <ScrollReveal>
         <HomeFaqSection items={homeFaqItems} locale={locale} />
       </ScrollReveal>

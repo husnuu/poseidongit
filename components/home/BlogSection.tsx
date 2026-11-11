@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
-import Image from 'next/image'
+import CoverImage from '@/components/ui/CoverImage'
 import Link from 'next/link'
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
@@ -74,10 +74,9 @@ function HomeBlogCard({ post, locale, noImageLabel }: { post: BlogPostItem; loca
     >
       <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-zinc-100">
         {post.coverImageUrl ? (
-          <Image
+          <CoverImage
             src={post.coverImageUrl}
             alt={post.coverImageAlt || post.title || 'Blog'}
-            fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 768px) 86vw, 380px"
           />

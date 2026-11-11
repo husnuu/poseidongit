@@ -148,7 +148,7 @@ export default async function RezervasyonPage({
         </Link>
 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 pt-4">
-          <main className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0">
             <span
               className="mb-3 inline-flex items-center rounded-full bg-[#eaf1fb] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[var(--primary,#2168b8)]"
             >
@@ -251,7 +251,7 @@ export default async function RezervasyonPage({
             <div className="mt-14">
               <ReviewsSection reviewsUrl={tour.reviewsUrl} reviewsSection={tour.reviewsSection} tourUi={tourUi} />
             </div>
-          </main>
+          </div>
 
           <TourBookingSidebar
             tour={tour as TourForBooking}
