@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import WhatsAppFloatButtonRoot from '@/components/WhatsAppFloatButtonRoot'
+import ChatWidgetRoot from '@/components/chat/ChatWidgetRoot'
 
 export default function SiteLayout({
   children,
@@ -13,6 +14,9 @@ export default function SiteLayout({
       {children}
       <Suspense fallback={null}>
         <WhatsAppFloatButtonRoot />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ChatWidgetRoot />
       </Suspense>
     </div>
   )

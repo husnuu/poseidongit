@@ -1,8 +1,6 @@
 'use client'
 
-import { useLayoutEffect, useState } from 'react'
-import { MOBILE_BOTTOM_CTA_BAR_ID } from '@/lib/mobileBottomCtaBarId'
-import { COOKIE_CONSENT_BANNER_ID } from '@/lib/cookieBannerId'
+import { useFloatingButtonState } from '@/components/floating/useFloatingButtonState'
 import styles from './WhatsAppFloatButton.module.css'
 
 function WhatsAppGlyph({ className }: { className?: string }) {
@@ -17,65 +15,12 @@ type Props = {
   href: string
 }
 
-function isMobileViewport() {
-  return typeof window !== 'undefined' && window.innerWidth <= 1023
-}
-
-function isElementVisible(id: string): boolean {
-  const el = document.getElementById(id)
-  if (!el) return false
-  const st = window.getComputedStyle(el)
-  // Not: opacity'e bakmıyoruz — çerez bannerı gibi `transition: opacity` ile
-  // açılan öğelerde, tam bu satırın çalıştığı an (mutation gözlemcisi class
-  // değişimini yakaladığı an) opacity animasyonu henüz 0'dan başlamış oluyor;
-  // CSS geçişleri kendileri birer DOM mutasyonu SAYILMADIĞINDAN gözlemci bir
-  // daha tetiklenmiyor ve sonuç kalıcı olarak yanlış kalıyordu. `pointer-events`
-  // aynı class değişiminde ANINDA (geçişsiz) değiştiği için güvenilir sinyal.
-  if (st.display === 'none' || st.visibility === 'hidden' || st.pointerEvents === 'none') {
-    return false
-  }
-  const rect = el.getBoundingClientRect()
-  return rect.height > 0 && rect.width > 0
-}
-
 export default function WhatsAppFloatButton({ href }: Props) {
-  /** Mobilde alt şerit yoksa true — buton ekranın dibine yaklaşır */
-  const [relaxBottom, setRelaxBottom] = useState(false)
-  /** Çerez bannerı açıkken mobilde WhatsApp butonu "Kabul Et" gibi butonların
-   * üzerine binebiliyordu — banner görünürken buton tamamen gizlenir. */
-  const [hideForCookieBanner, setHideForCookieBanner] = useState(false)
-  /** "Rezerve Et", "Bilet Al", "Müsaitlik Sor" gibi butonlarla açılan
-   * rezervasyon/sihirbaz modalları hep aynı şekilde `document.body.style.overflow
-   * = 'hidden'` ayarlıyor — bu ortak sinyali kullanarak, bu modallardan biri
-   * açıkken WhatsApp butonu (masaüstü + mobil) tamamen gizlenir. */
-  const [hideForOpenModal, setHideForOpenModal] = useState(false)
+  // Mobil alt şerit / çerez bannerı / açık rezervasyon modalı kuralları — sohbet
+  // asistanı butonuyla ortak (bkz. useFloatingButtonState).
+  const { relaxBottom, hidden } = useFloatingButtonState()
 
-  useLayoutEffect(() => {
-    const sync = () => {
-      setHideForOpenModal(document.body.style.overflow === 'hidden')
-
-      if (!isMobileViewport()) {
-        setRelaxBottom(false)
-        setHideForCookieBanner(false)
-        return
-      }
-      setRelaxBottom(!isElementVisible(MOBILE_BOTTOM_CTA_BAR_ID))
-      setHideForCookieBanner(isElementVisible(COOKIE_CONSENT_BANNER_ID))
-    }
-
-    sync()
-    window.addEventListener('resize', sync)
-
-    const mo = new MutationObserver(sync)
-    mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] })
-
-    return () => {
-      window.removeEventListener('resize', sync)
-      mo.disconnect()
-    }
-  }, [])
-
-  if (hideForCookieBanner || hideForOpenModal) return null
+  if (hidden) return null
 
   return (
     <a

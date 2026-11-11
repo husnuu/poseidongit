@@ -10,6 +10,7 @@ import contactPage from './contactPage'
 import contactPageLocaleOverlay from './contactPageLocaleOverlay'
 import cove from './cove'
 import coveTranslation from './coveTranslation'
+import chatbotSettings from './chatbotSettings'
 import faqPage from './faqPage'
 import ferryRoute from './ferryRoute'
 import ferryRouteTranslation from './ferryRouteTranslation'
@@ -47,6 +48,7 @@ export const schemaTypes = [
   blogTranslation,
   boat,
   boatTimelineItem,
+  chatbotSettings,
   contactPage,
   contactPageLocaleOverlay,
   cove,

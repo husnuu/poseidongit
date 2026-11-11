@@ -9,6 +9,7 @@ import {
   ClipboardList,
   MessageSquare,
   MessageCircle,
+  Bot,
   Handshake,
   Code2,
   Ticket,
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { href: '/admin/widget', label: 'Web Sitesi Widget', icon: Code2 },
   { href: '/admin/yacht-inquiries', label: 'Motoryat Mesajları', icon: MessageSquare },
   { href: '/admin/whatsapp', label: 'WhatsApp Bildirimleri', icon: MessageCircle },
+  { href: '/admin/chatbot', label: 'Sohbet Asistanı', icon: Bot },
   { href: '/biletci', label: 'Biletçi', icon: Ticket },
 ] as const
 

@@ -133,4 +133,4 @@ beklemeden çalışırlar.
 
 Studio → Site Footer → Legal & Secure 3D Payment → **ETBİS Doğrulama Bağlantısı** ve
 **ETBİS Karekodu** doldurulunca footer'da "ETBİS'e kayıtlıdır" rozeti çıkar
-(şema değişikliği için Studio'nun yeniden deploy edilmesi gerekir).
+(Studio'yu `npm run studio` ile localde açıyorsanız sayfayı yenilemek yeterli; *.sanity.studio adresinde yayınlıyorsanız `npx sanity login` + `npx sanity deploy`).

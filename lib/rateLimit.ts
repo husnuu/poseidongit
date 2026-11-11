@@ -16,6 +16,7 @@ export type RateLimitBucket =
   | 'crewLogin'
   | 'partnerLogin'
   | 'crewAction'
+  | 'chat'
 
 type UpstashWindow = '15 m' | '10 m' | '1 h'
 
@@ -39,6 +40,8 @@ const UPSTASH_WINDOWS: Record<RateLimitBucket, { max: number; window: UpstashWin
   crewLogin: { max: 15, window: '15 m' },
   partnerLogin: { max: 10, window: '15 m' },
   crewAction: { max: 300, window: '10 m' },
+  // Sohbet asistanı: her mesaj ücretli bir model çağrısı — ziyaretçi başına saatte 40 mesaj.
+  chat: { max: 40, window: '1 h' },
 }
 
 /** Bellek yedekleri (Upstash yok veya hata): sabit pencere, ms. */
@@ -56,6 +59,7 @@ const MEMORY_MS: Record<RateLimitBucket, { max: number; windowMs: number }> = {
   crewLogin: { max: 15, windowMs: 15 * 60 * 1000 },
   partnerLogin: { max: 10, windowMs: 15 * 60 * 1000 },
   crewAction: { max: 300, windowMs: 10 * 60 * 1000 },
+  chat: { max: 40, windowMs: 60 * 60 * 1000 },
 }
 
 function createRedis(): Redis | null {
@@ -66,6 +70,11 @@ function createRedis(): Redis | null {
 }
 
 const redisSingleton = createRedis()
+
+/** Upstash tanımlıysa ortak Redis istemcisi (diğer sayaçlar için, ör. sohbet asistanının günlük tavanı). */
+export function getSharedRedis(): Redis | null {
+  return redisSingleton
+}
 
 const upstashLimiters: Partial<Record<RateLimitBucket, Ratelimit>> = {}
 if (redisSingleton) {

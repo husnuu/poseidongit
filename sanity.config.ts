@@ -56,6 +56,10 @@ export default defineConfig({
               .id('menuItem-list')
               .child(S.documentTypeList('menuItem').title('Menü ürünleri')),
             S.listItem()
+              .title('Sohbet Asistanı — bilgi belgeleri')
+              .id('chatbotSettings')
+              .child(S.document().schemaType('chatbotSettings').documentId('chatbotSettings')),
+            S.listItem()
               .title('Feribot Hatları')
               .id('ferryRoute-list')
               .child(S.documentTypeList('ferryRoute').title('Feribot Hatları')),
@@ -73,6 +77,7 @@ export default defineConfig({
                   'helpArticle',
                   'menuItem',
                   'ferryRoute',
+                  'chatbotSettings',
                 ].includes(item.getId() ?? '')
             ),
           ]),
