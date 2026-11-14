@@ -14,6 +14,9 @@ const HELP_CENTER_ITEM: HeaderNavItem = {
   labelDe: 'Hilfezentrum',
 }
 
+/** Footer «Keşfet» listesinde RU karşılığı (üst menü RU'yu localizedLabels üzerinden çözüyor). */
+const HELP_CENTER_LABEL_RU = 'Центр помощи'
+
 /** /en/foo, /de/foo, /tr/foo → /foo */
 function canonicalInternalPath(href: string): string {
   const t = href.trim()
@@ -84,7 +87,9 @@ export function exploreLinksWithHelpCenter(locale: SiteLocale, links: ExploreLin
       ? HELP_CENTER_ITEM.labelEn ?? HELP_CENTER_ITEM.label
       : locale === 'de'
         ? HELP_CENTER_ITEM.labelDe ?? HELP_CENTER_ITEM.label
-        : HELP_CENTER_ITEM.label
+        : locale === 'ru'
+          ? HELP_CENTER_LABEL_RU
+          : HELP_CENTER_ITEM.label
   const row: ExploreLinkItem = { label, href: HELP_CENTER_ITEM.href }
   const contactIdx = items.findIndex((n) => isContactHref(n.href))
   if (contactIdx >= 0) {

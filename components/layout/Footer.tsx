@@ -292,6 +292,14 @@ const MEMBERSHIPS_TITLE: Record<SiteLocale, string> = {
   ru: 'Наши сертификаты',
 }
 
+const MEMBERSHIP_BADGE_LABELS: Record<SiteLocale, { tursab: string; chamber: string }> = {
+  tr: { tursab: 'TÜRSAB Üyesi', chamber: 'Deniz Ticaret Odası Üyesi' },
+  en: { tursab: 'TÜRSAB Member', chamber: 'Chamber of Shipping Member' },
+  // Yumuşak tire (­): uzun bileşik kelime dar rozet kutusundan taşmasın.
+  de: { tursab: 'TÜRSAB-Mitglied', chamber: 'Mitglied der Schiff­fahrts­kammer' },
+  ru: { tursab: 'Член TÜRSAB', chamber: 'Член Палаты судоходства' },
+}
+
 const PARTNER_LOGIN_LABEL: Record<SiteLocale, string> = {
   tr: 'Partner Girişi',
   en: 'Partner Login',
@@ -659,7 +667,11 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
 
           {popularTourLinks.length > 0 && (
             <div>
-              <p className="mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl lg:whitespace-nowrap">
+              {/* Tek satır yalnızca kısa TR/EN başlıkta; RU/DE başlık sütuna sığmayıp
+                  yandaki sütunun başlığının üstüne biniyordu. */}
+              <p
+                className={`mb-6 text-xl font-black uppercase tracking-wide text-white md:text-2xl ${locale === 'tr' || locale === 'en' ? 'lg:whitespace-nowrap' : ''}`}
+              >
                 {POPULAR_TOURS_TITLE[locale]}
               </p>
               <ul className="space-y-4">
@@ -766,7 +778,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                   className="h-10 w-auto object-contain brightness-0 invert opacity-70"
                 />
                 <span className="relative inline-block text-xs font-semibold uppercase leading-snug tracking-wide text-white after:absolute after:-bottom-0.5 after:left-0 after:right-0 after:h-px after:origin-center after:scale-x-0 after:bg-current after:transition-transform after:duration-200 group-hover:after:scale-x-100">
-                  TÜRSAB Üyesi
+                  {MEMBERSHIP_BADGE_LABELS[locale].tursab}
                 </span>
               </a>
               <a
@@ -788,7 +800,7 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
                   className="h-9 w-auto object-contain brightness-0 invert opacity-70"
                 />
                 <span className="relative inline-block text-xs font-semibold uppercase leading-snug tracking-wide text-white after:absolute after:-bottom-0.5 after:left-0 after:right-0 after:h-px after:origin-center after:scale-x-0 after:bg-current after:transition-transform after:duration-200 group-hover:after:scale-x-100">
-                  Deniz Ticaret Odası Üyesi
+                  {MEMBERSHIP_BADGE_LABELS[locale].chamber}
                 </span>
               </a>
             </div>
@@ -797,11 +809,15 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
 
         <div className="mt-14 border-t border-white/15 pt-8">
           <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+            {/* Sabit genişlik: DE/RU'da uzun yasal linkler satırı kaplayıp telif
+                metnini kelime kelime alt alta diziyordu; linkler kendi alanında kayar. */}
             {data?.footerLegal && footerLegalMerged && (
-              <FooterLegal data={footerLegalMerged} inline regionAriaLabel={f.legalRegion} />
+              <div className="md:w-[220px] md:shrink-0">
+                <FooterLegal data={footerLegalMerged} inline regionAriaLabel={f.legalRegion} />
+              </div>
             )}
             <div
-              className={`flex flex-wrap gap-x-12 gap-y-4 text-xs font-semibold text-white ${data?.footerLegal ? 'justify-center md:justify-end' : 'justify-center'}`}
+              className={`flex flex-wrap gap-x-12 gap-y-4 text-xs font-semibold text-white md:min-w-0 md:flex-1 ${data?.footerLegal ? 'justify-center md:justify-end' : 'justify-center'}`}
             >
               {legalLinks.map((item, index) => (
                 <Link

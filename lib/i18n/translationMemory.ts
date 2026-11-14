@@ -1,5 +1,5 @@
 /**
- * Elle yazılmış Türkçe → Almanca / İngilizce çeviri sözlükleri ("translation memory").
+ * Elle yazılmış Türkçe → Almanca / İngilizce / Rusça çeviri sözlükleri ("translation memory").
  *
  * runtimeTranslate.ts içindeki translateText(), dış bir çeviri API'sine
  * (MyMemory/DeepL) gitmeden ÖNCE bu sözlüğü kontrol eder. Kaynak metin
@@ -255,6 +255,28 @@ export const DE_TRANSLATION_MEMORY: Record<string, string> = {
   "İzmir'den çıkıp Çeşme'nin turkuaz koylarında tam gün geçirmek için tek yapmanız gereken belirlenen noktada bizi beklemek. Transfer, tekne, BBQ öğle yemeği ve 4 durak — her şey dahil.": "Von İzmir aus einen ganzen Tag in den türkisfarbenen Buchten von Çeşme verbringen – Sie müssen nur am vereinbarten Treffpunkt auf uns warten. Transfer, Boot, BBQ-Mittagessen und 4 Stopps – alles inklusive.",
   "Günbatımı Turu": "Sonnenuntergangstour",
   "Çeşme’de gün batımını denizin üzerinde karşılayın. 19:00–21:30 saatleri arasında gerçekleşen turda Akvaryum Koyu’nda yüzme molası verilir, hafif müzik eşliğinde keyifli bir atmosfer sunulur ve akşam yemeği dahildir.": "Erleben Sie den Sonnenuntergang über dem Meer in Çeşme. Die Tour findet zwischen 19:00 und 21:30 Uhr statt, mit einer Schwimmpause in der Aquarium-Bucht, einer angenehmen Atmosphäre mit leiser Musik, und einem inkludierten Abendessen.",
+
+  // ---- Koy adları (Sanity'de büyük harfle; makine çevirisi "CORAL ISLAND" gibi İngilizce bırakıyordu) ----
+  'EŞEK ADASI': 'ESELINSEL',
+  'MAVİ KOY (AKVARYUM)': 'BLAUE BUCHT (AQUARIUM)',
+  'MERCAN ADASI': 'KORALLENINSEL',
+  'KIŞ LİMANI': 'WINTERHAFEN',
+  'MAĞARALAR': 'HÖHLEN',
+  'MAKRİ ADASI': 'INSEL MAKRI',
+}
+
+/**
+ * Rusça sözlük — yalnızca makine çevirisinin bozduğu kısa özel adlar
+ * (ör. "KIŞ LİMANI" → "УИНТЕР-ХАРБОР" harf çevirisi).
+ */
+export const RU_TRANSLATION_MEMORY: Record<string, string> = {
+  // ---- Koy adları ----
+  'EŞEK ADASI': 'ОСЛИНЫЙ ОСТРОВ',
+  'MAVİ KOY (AKVARYUM)': 'ГОЛУБАЯ БУХТА (АКВАРИУМ)',
+  'MERCAN ADASI': 'КОРАЛЛОВЫЙ ОСТРОВ',
+  'KIŞ LİMANI': 'ЗИМНЯЯ ГАВАНЬ',
+  'MAĞARALAR': 'ПЕЩЕРЫ',
+  'MAKRİ ADASI': 'ОСТРОВ МАКРИ',
 }
 
 /**

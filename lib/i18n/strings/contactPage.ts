@@ -225,7 +225,7 @@ const RU: ContactPageUiStrings = {
   ariaYoutube: 'Наш канал на YouTube',
   ariaInstagram: 'Подписаться в Instagram',
   mapIframeTitle: 'Карта',
-  defaultPopularToursTitle: 'ИЛИ ВЫБЕРИТЕ ОДИН ИЗ НАШИХ САМЫХ ПОПУЛЯРНЫХ ТУРОВ!',
+  defaultPopularToursTitle: 'ОТКРОЙТЕ НАШИ САМЫЕ ПОПУЛЯРНЫЕ МОРСКИЕ ПРОГУЛКИ',
   instagramFallbackLabel: 'Подписывайтесь на нас в Instagram',
   youtubeFallbackLabel: 'Найдите нас на YouTube',
   formTitle: "Напишите нам",

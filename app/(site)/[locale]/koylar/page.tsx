@@ -12,10 +12,11 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
-import { coveSlugForLocale, mergeCoveForLocale } from '@/lib/i18n/mergeCoveForLocale'
+import { coveFieldHasManualTranslation, coveSlugForLocale, mergeCoveForLocale } from '@/lib/i18n/mergeCoveForLocale'
 import { mergeCovesPageLocale, mergeCovesPageSeoForLocale } from '@/lib/i18n/mergeCovesPageLocale'
 import { getCovesPageUiStrings } from '@/lib/i18n/strings/covesPage'
 import { ensureLocalized } from '@/lib/i18n/ensureLocalized'
+import { translateText } from '@/lib/i18n/runtimeTranslate'
 import { LISTING_HEADINGS } from '@/lib/i18n/strings/listingHeadings'
 import StandardPageLd from '@/components/seo/StandardPageLd'
 
@@ -123,11 +124,29 @@ export default async function KoylarPage({ params }: { params: Promise<{ locale:
   const description = descriptionLocalized || null
   const pageItems = Array.isArray(pageData?.items) ? pageData.items.filter((i): i is CoveItem => i != null) : []
   const source = pageItems.length > 0 ? pageItems : allCoves
-  const items = sortCoves(source).map((c) => {
-    const raw = c as unknown as Record<string, unknown>
-    const merged = mergeCoveForLocale(raw, locale) as unknown as CoveItem
-    return { ...merged, slug: coveSlugForLocale(raw, locale) ?? null }
-  })
+  // Elle çeviri girilmemiş alanlar koy detay sayfasındaki gibi anlık çevrilir
+  // (aynı metin → aynı çeviri önbelleği); yoksa /de ve /ru kartları Türkçe kalıyordu.
+  const items = await Promise.all(
+    sortCoves(source).map(async (c) => {
+      const raw = c as unknown as Record<string, unknown>
+      const merged = mergeCoveForLocale(raw, locale) as unknown as CoveItem
+      const slug = coveSlugForLocale(raw, locale) ?? null
+      if (locale === 'tr') return { ...merged, slug }
+      const manual = (f: string) => coveFieldHasManualTranslation(raw, locale, f)
+      const [title, description, locationTag] = await Promise.all([
+        manual('title') ? merged.title : translateText(merged.title, locale),
+        manual('description') ? merged.description : translateText(merged.description, locale),
+        manual('locationTag') ? merged.locationTag : translateText(merged.locationTag, locale),
+      ])
+      return {
+        ...merged,
+        slug,
+        title: title || merged.title,
+        description: description || merged.description,
+        locationTag: locationTag || merged.locationTag,
+      }
+    }),
+  )
 
   const emptyMsg = pageData?.emptyListMessage?.trim() || ui.emptyList
   const toursHref = withLocalePath(locale, '/turlar')

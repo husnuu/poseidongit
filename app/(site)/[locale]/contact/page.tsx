@@ -19,13 +19,23 @@ import { notFound } from 'next/navigation'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
 import { mergeContactPageLocale, mergeContactPageSeoForLocale } from '@/lib/i18n/mergeContactPageLocale'
-import { mergeTourForLocale } from '@/lib/i18n/mergeTourForLocale'
+import { mergeTourForLocale, tourFieldHasManualTranslation } from '@/lib/i18n/mergeTourForLocale'
+import { translatePortableTextBlocks, translateText } from '@/lib/i18n/runtimeTranslate'
 import { getContactPageUiStrings, mergeContactUiFromSanity } from '@/lib/i18n/strings/contactPage'
 
 // Popüler Turlar bölüm başlığı için
 // daha ölçülü bir boyut — referans sitedeki alt başlık stiline uygun.
 const CONTACT_SUBHEADING_CLASS =
   'text-[20px] font-extrabold uppercase leading-[1.2] mb-6 sm:text-[22px] md:text-[24px]'
+
+/**
+ * Google Haritalar'dan kopyalanan gömme bağlantısı arayüz dilini `pb` içinde
+ * sabitliyor ("!1str" → "Haritalar'da aç"); yabancı dilde sayfanın diline çevrilir.
+ */
+function localizeMapEmbedUrl(url: string | null, locale: SiteLocale): string | null {
+  if (!url || locale === 'tr') return url
+  return url.replace(/(!(?:3m2|5m2)!1s)tr(?=!)/g, `$1${locale}`)
+}
 
 type ContactPageData = {
   title?: string | null
@@ -102,14 +112,17 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
   const locale = loc as SiteLocale
 
   let data: ContactPageData | null = null
-  let trTitle: string | null = null
+  let trData: ContactPageData | null = null
   try {
-    const raw = await client.fetch<ContactPageData | null>(contactPageQuery, {}, { useCdn: false })
-    trTitle = raw?.title?.trim() || null
-    data = mergeContactPageLocale(raw as unknown as Record<string, unknown>, locale) as ContactPageData | null
+    trData = await client.fetch<ContactPageData | null>(contactPageQuery, {}, { useCdn: false })
+    data = mergeContactPageLocale(trData as unknown as Record<string, unknown>, locale) as ContactPageData | null
   } catch {
     data = null
   }
+  const trTitle = trData?.title?.trim() || null
+
+  /** O dilde çeviri girilmemiş: birleştirmeden sonra alan hâlâ Türkçe orijinalin kendisi. */
+  const untranslated = (merged: unknown, tr: unknown) => locale !== 'tr' && merged != null && merged === tr
 
   const ui = mergeContactUiFromSanity(getContactPageUiStrings(locale), data?.ui)
 
@@ -129,27 +142,42 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
     name: title,
     description: ui.defaultMetaDescription,
   })
-  const intro = data?.intro ?? []
+  // Giriş metninin o dilde elle çevirisi yoksa (RU için hiç yok) anlık çevrilir.
+  const intro =
+    (untranslated(data?.intro, trData?.intro)
+      ? await translatePortableTextBlocks(data?.intro, locale)
+      : data?.intro) ?? []
   const form = data?.form ?? {}
   const showPopularTours = data?.showPopularTours ?? false
-  const popularToursTitle = data?.popularToursTitle ?? ui.defaultPopularToursTitle
+  const popularToursTitle =
+    data?.popularToursTitle && !untranslated(data.popularToursTitle, trData?.popularToursTitle)
+      ? data.popularToursTitle
+      : ui.defaultPopularToursTitle
   const popularTours = data?.popularTours ?? []
-  const popularToursSectionData = {
-    enabled: showPopularTours && popularTours.length > 0,
-    title: popularToursTitle,
-    subtitle: undefined as string | null | undefined,
-    items: popularTours.map((tour): TourListItem => {
-      const merged = mergeTourForLocale(tour as unknown as Record<string, unknown>, locale) as unknown as typeof tour
+  // Ana sayfadaki popüler tur kartlarıyla aynı kural: elle çevirisi olmayan
+  // alanlar anlık çevrilir (aynı metin → aynı çeviri önbelleği).
+  const popularTourItems = await Promise.all(
+    popularTours.map(async (tour): Promise<TourListItem> => {
+      const rawTour = tour as unknown as Record<string, unknown>
+      const merged = mergeTourForLocale(rawTour, locale) as unknown as typeof tour
       const qf = merged.quickFacts
-      const durationLabel = qf?.durationText?.trim() || merged.durationLabel
-      const departureLabel = qf?.meetingLocation?.trim() || merged.departureLabel
+      const durationRaw = qf?.durationText?.trim() || merged.durationLabel
+      const departureRaw = qf?.meetingLocation?.trim() || merged.departureLabel
+      const [title, shortDescription, durationLabel, departureLabel] = await Promise.all([
+        tourFieldHasManualTranslation(rawTour, locale, 'title') ? merged.title : translateText(merged.title, locale),
+        tourFieldHasManualTranslation(rawTour, locale, 'shortDescription')
+          ? merged.shortDescription
+          : translateText(merged.shortDescription, locale),
+        untranslated(durationRaw, tour.durationLabel) ? translateText(durationRaw, locale) : durationRaw,
+        untranslated(departureRaw, tour.departureLabel) ? translateText(departureRaw, locale) : departureRaw,
+      ])
       return {
         _id: merged._id,
-        title: merged.title ?? null,
+        title: title || merged.title || null,
         slug: merged.slug ?? null,
-        shortDescription: merged.shortDescription ?? null,
-        durationLabel: durationLabel ?? null,
-        departureLabel: departureLabel ?? null,
+        shortDescription: shortDescription || merged.shortDescription || null,
+        durationLabel: durationLabel || durationRaw || null,
+        departureLabel: departureLabel || departureRaw || null,
         priceFrom: merged.priceFrom ?? null,
         privateTour: Boolean((merged as { privateTour?: boolean | null }).privateTour),
         rating: merged.rating ?? null,
@@ -161,22 +189,44 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         coverImageAlt: merged.mainImage?.alt ?? null,
       }
     }),
+  )
+  const popularToursSectionData = {
+    enabled: showPopularTours && popularTourItems.length > 0,
+    title: popularToursTitle,
+    subtitle: undefined as string | null | undefined,
+    items: popularTourItems,
   }
 
-  // schemaTypes/contactPage.ts'deki submitLabel alanının hiç değiştirilmemiş
-  // İngilizce varsayılanı ("SEND MESSAGE") — Sanity'de bu alan boş değil,
-  // olduğu gibi bu placeholder metni tutuyor, bu yüzden Türkçe sayfada da
-  // İngilizce çıkıyordu. Editör gerçekten özel bir metin girerse ona saygı
-  // gösterilmeye devam eder.
+  // schemaTypes/contactPage.ts'deki submitLabel/successMessage alanlarının hiç
+  // değiştirilmemiş İngilizce varsayılanları ("SEND MESSAGE", "Success!") —
+  // Sanity'de bu alanlar boş değil, olduğu gibi bu placeholder metni tutuyor,
+  // bu yüzden Türkçe sayfada da İngilizce çıkıyordu. Editör gerçekten özel bir
+  // metin girerse ona saygı gösterilir; ama o dilde çevirisi yoksa Türkçe metin
+  // yerine dilin kendi varsayılanı kullanılır.
   const PLACEHOLDER_SUBMIT_LABEL = 'SEND MESSAGE'
+  const PLACEHOLDER_SUCCESS_MESSAGE = 'Success!'
+  const trForm = trData?.form ?? {}
   const formProps = {
     ...ui,
     submitLabel:
-      form.submitLabel && form.submitLabel.trim() !== PLACEHOLDER_SUBMIT_LABEL
+      form.submitLabel &&
+      form.submitLabel.trim() !== PLACEHOLDER_SUBMIT_LABEL &&
+      !untranslated(form.submitLabel, trForm.submitLabel)
         ? form.submitLabel
         : ui.defaultSubmitLabel,
-    successMessage: form.successMessage ?? ui.defaultSuccessMessage,
+    successMessage:
+      form.successMessage &&
+      form.successMessage.trim() !== PLACEHOLDER_SUCCESS_MESSAGE &&
+      !untranslated(form.successMessage, trForm.successMessage)
+        ? form.successMessage
+        : ui.defaultSuccessMessage,
   }
+
+  // "KONUM" gibi Türkçe konum başlığı yabancı dilde çevirisi yoksa gösterilmez.
+  const locationTitle =
+    data?.locationTitle?.trim() && !untranslated(data.locationTitle, trData?.locationTitle)
+      ? data.locationTitle.trim()
+      : null
 
   const sidebarLabels: ContactSidebarLabels = {
     sidebarAria: ui.sidebarAria,
@@ -195,10 +245,10 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
     ariaInstagram: ui.ariaInstagram,
     instagramFallbackLabel: ui.instagramFallbackLabel,
     youtubeFallbackLabel: ui.youtubeFallbackLabel,
-    officeTitle: data?.locationTitle?.trim() || ui.officeTitle,
+    officeTitle: locationTitle || ui.officeTitle,
     directionsCta: ui.directionsCta,
     socialTitle: ui.socialTitle,
-    mapIframeTitle: data?.locationTitle ?? ui.mapIframeTitle,
+    mapIframeTitle: locationTitle || ui.mapIframeTitle,
   }
   const sidebarData: ContactSidebarData = {
     email: data?.email ?? null,
@@ -210,7 +260,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
     youtubeLabel: data?.youtubeLabel ?? null,
     instagramUrl: data?.instagramUrl ?? null,
     instagramLabel: data?.instagramLabel ?? null,
-    mapEmbedUrl: data?.mapEmbedUrl ?? null,
+    mapEmbedUrl: localizeMapEmbedUrl(data?.mapEmbedUrl ?? null, locale),
     locationMapLink: data?.locationMapLink ?? null,
   }
 

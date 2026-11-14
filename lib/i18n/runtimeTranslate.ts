@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache'
 import type { SiteLocale } from './config'
-import { DE_TRANSLATION_MEMORY, EN_TRANSLATION_MEMORY } from './translationMemory'
+import { DE_TRANSLATION_MEMORY, EN_TRANSLATION_MEMORY, RU_TRANSLATION_MEMORY } from './translationMemory'
 
 /**
  * Anlık (runtime) makine çevirisi — Sanity'e hiçbir çeviri yazılmaz.
@@ -316,6 +316,10 @@ export async function translateText(text: string | null | undefined, target: Sit
   }
   if (target === 'en') {
     const memorized = EN_TRANSLATION_MEMORY[trimmed]
+    if (memorized) return memorized
+  }
+  if (target === 'ru') {
+    const memorized = RU_TRANSLATION_MEMORY[trimmed]
     if (memorized) return memorized
   }
   const cacheKey = `${target}\u0000${trimmed}`
