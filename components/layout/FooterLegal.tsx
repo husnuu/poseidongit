@@ -54,72 +54,85 @@ export default function FooterLegal({ data, inline, regionAriaLabel = 'Legal and
 
   if (!hasText && !hasSecureLabel && logos.length === 0 && !etbisUrl) return null
 
+  const textItems = [data.copyrightText, data.companyLine1, data.companyLine2].filter(
+    (t): t is string => Boolean(t?.trim()),
+  )
+
   const content = (
-    <>
+    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
       {hasText && (
-        <div className="max-w-[1000px] space-y-1 text-sm font-medium leading-7 text-white">
-          {data.copyrightText && (
-            <p className="font-semibold text-white">{data.copyrightText}</p>
-          )}
-          {data.companyLine1 && <p>{data.companyLine1}</p>}
-          {data.companyLine2 && <p>{data.companyLine2}</p>}
-        </div>
-      )}
-
-      {hasSecureLabel && (
-        <p
-          className={`inline-flex items-center gap-2 text-xs font-semibold text-white ${hasText ? 'mt-4' : 'mt-0'}`}
-        >
-          <Lock className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
-          {data.secure3dLabel}
-        </p>
-      )}
-
-      {logos.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {logos.map((item, index) => {
-            const asset = item?.asset
-            if (!asset) return null
-            const src = urlFor(asset).width(32).height(22).auto('format').url()
-            const alt = paymentLogoAlt(item?.alt, item?.filename)
-            return (
+        // Satırlar yan yana akar, araya nokta girer. Her satırın başındaki nokta
+        // dış kutunun dışında kalıp kırpılır; alt satıra kayan öğe noktayla başlamaz.
+        <div className="min-w-0 overflow-hidden">
+          <p className="-ml-6 flex flex-wrap gap-y-1 text-sm font-medium leading-6 text-white">
+            {textItems.map((text, index) => (
               <span
                 key={index}
-                className="flex items-center justify-center rounded bg-white px-1.5 py-1 shadow-sm"
+                className={`relative pl-6 before:absolute before:left-2.5 before:top-2.5 before:h-1 before:w-1 before:rounded-full before:bg-white/50 ${index === 0 && data.copyrightText ? 'font-semibold' : ''}`}
               >
-                <Image
-                  src={src}
-                  alt={alt}
-                  width={32}
-                  height={22}
-                  className="h-5 w-auto max-h-5 object-contain"
-                />
+                {text}
               </span>
-            )
-          })}
+            ))}
+          </p>
         </div>
       )}
 
-      {etbisUrl && (
-        <a
-          href={etbisUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-3 rounded-lg bg-white py-1.5 pl-1.5 pr-3 text-[11px] font-bold uppercase leading-tight tracking-wide text-[#131719] shadow-sm transition-opacity hover:opacity-90"
-        >
-          {data.etbisQr?._ref ? (
-            <Image
-              src={urlFor(data.etbisQr).width(112).height(112).url()}
-              alt="ETBİS"
-              width={56}
-              height={56}
-              className="h-14 w-14 object-contain"
-            />
-          ) : null}
-          <span>{data.etbisLabel || "ETBİS'e kayıtlıdır"}</span>
-        </a>
+      {(hasSecureLabel || logos.length > 0 || etbisUrl) && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3 lg:shrink-0 lg:justify-end">
+          {hasSecureLabel && (
+            <p className="inline-flex items-center gap-2 whitespace-nowrap text-xs font-semibold text-white">
+              <Lock className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
+              {data.secure3dLabel}
+            </p>
+          )}
+
+          {logos.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {logos.map((item, index) => {
+                const asset = item?.asset
+                if (!asset) return null
+                const src = urlFor(asset).width(32).height(22).auto('format').url()
+                const alt = paymentLogoAlt(item?.alt, item?.filename)
+                return (
+                  <span
+                    key={index}
+                    className="flex items-center justify-center rounded bg-white px-1.5 py-1 shadow-sm"
+                  >
+                    <Image
+                      src={src}
+                      alt={alt}
+                      width={32}
+                      height={22}
+                      className="h-5 w-auto max-h-5 object-contain"
+                    />
+                  </span>
+                )
+              })}
+            </div>
+          )}
+
+          {etbisUrl && (
+            <a
+              href={etbisUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 rounded-lg bg-white py-1.5 pl-1.5 pr-3 text-[11px] font-bold uppercase leading-tight tracking-wide text-[#131719] shadow-sm transition-opacity hover:opacity-90"
+            >
+              {data.etbisQr?._ref ? (
+                <Image
+                  src={urlFor(data.etbisQr).width(112).height(112).url()}
+                  alt="ETBİS"
+                  width={56}
+                  height={56}
+                  className="h-14 w-14 object-contain"
+                />
+              ) : null}
+              <span>{data.etbisLabel || "ETBİS'e kayıtlıdır"}</span>
+            </a>
+          )}
+        </div>
       )}
-    </>
+    </div>
   )
 
   if (inline) {

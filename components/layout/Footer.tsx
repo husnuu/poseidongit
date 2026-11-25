@@ -808,31 +808,29 @@ export default async function Footer({ locale }: { locale: SiteLocale }) {
         </div>
 
         <div className="mt-14 border-t border-white/15 pt-8">
-          <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-            {/* Sabit genişlik: DE/RU'da uzun yasal linkler satırı kaplayıp telif
-                metnini kelime kelime alt alta diziyordu; linkler kendi alanında kayar. */}
-            {data?.footerLegal && footerLegalMerged && (
-              <div className="md:w-[220px] md:shrink-0">
-                <FooterLegal data={footerLegalMerged} inline regionAriaLabel={f.legalRegion} />
-              </div>
-            )}
-            <div
-              className={`flex flex-wrap gap-x-12 gap-y-4 text-xs font-semibold text-white md:min-w-0 md:flex-1 ${data?.footerLegal ? 'justify-center md:justify-end' : 'justify-center'}`}
-            >
-              {legalLinks.map((item, index) => (
-                <Link
-                  key={index}
-                  href={locHref(locale, item.href || '#')}
-                  className={`${headerStyles.footerLink} transition-colors hover:text-white`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <a href="/partner/giris" rel="nofollow" className={`${headerStyles.footerLink} transition-colors hover:text-white`}>
-                {PARTNER_LOGIN_LABEL[locale]}
-              </a>
-            </div>
+          {/* Yasal linkler kendi satırında; telif ve ödeme bilgisi altta tam
+              genişlikte yatay akar (DE/RU'daki uzun linkler artık telif metnini
+              dar bir sütuna sıkıştırmaz). */}
+          <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 text-xs font-semibold text-white">
+            {legalLinks.map((item, index) => (
+              <Link
+                key={index}
+                href={locHref(locale, item.href || '#')}
+                className={`${headerStyles.footerLink} transition-colors hover:text-white`}
+              >
+                {item.label}
+              </Link>
+            ))}
+            <a href="/partner/giris" rel="nofollow" className={`${headerStyles.footerLink} transition-colors hover:text-white`}>
+              {PARTNER_LOGIN_LABEL[locale]}
+            </a>
           </div>
+
+          {data?.footerLegal && footerLegalMerged && (
+            <div className="mt-6 border-t border-white/15 pt-6">
+              <FooterLegal data={footerLegalMerged} inline regionAriaLabel={f.legalRegion} />
+            </div>
+          )}
 
           <div className="mt-6 border-t border-white/15 pt-6">
             <FooterLanguageLinks locale={locale} />
