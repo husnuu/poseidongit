@@ -239,6 +239,15 @@
   padding-left: 1.5em;
 }
 
+/* Tailwind preflight liste işaretlerini kaldırıyor; yazı içinde madde/numara görünsün. */
+.body ul {
+  list-style: disc;
+}
+
+.body ol {
+  list-style: decimal;
+}
+
 .body li {
   margin-bottom: 0.35em;
 }
