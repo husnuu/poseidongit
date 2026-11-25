@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { resolveTourRatingLabel } from '@/lib/i18n/ratingLabels'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
+import { LUNCH_INCLUDED_LABEL } from '@/lib/i18n/tourLunchIncluded'
 import DemandNotice from '@/components/booking/DemandNotice'
 import styles from './TourHeader.module.css'
 
@@ -31,6 +32,16 @@ function PinIcon() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <circle cx="12" cy="10" r="3"/>
       <path d="M12 2a8 8 0 0 1 8 8c0 5.25-8 13-8 13S4 15.25 4 10a8 8 0 0 1 8-8z"/>
+    </svg>
+  )
+}
+
+function UtensilsIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+      <path d="M7 2v20"/>
+      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
     </svg>
   )
 }
@@ -90,6 +101,8 @@ export interface TourHeaderProps {
   locale: SiteLocale
   /** Yalnızca popüler turda "talepler yoğun" şeridi gösterilir. */
   highDemand?: boolean
+  /** "Öğle yemeği dahil" satırı (bkz. lib/i18n/tourLunchIncluded.ts). */
+  lunchIncluded?: boolean
 }
 
 export function TourHeader({
@@ -103,6 +116,7 @@ export function TourHeader({
   meetingLocationUrl,
   locale,
   highDemand = false,
+  lunchIncluded = false,
 }: TourHeaderProps) {
   const tourUi = useMemo(() => getTourPageUi(locale), [locale])
   const displayRatingLabel = resolveTourRatingLabel(
@@ -169,6 +183,13 @@ export function TourHeader({
                 </a>
               ) : meetingLocation}
             </span>
+          </div>
+        )}
+
+        {lunchIncluded && (
+          <div className={styles.metaItem}>
+            <span className={styles.metaIcon}><UtensilsIcon /></span>
+            <span className={styles.metaText}>{LUNCH_INCLUDED_LABEL[locale]}</span>
           </div>
         )}
 

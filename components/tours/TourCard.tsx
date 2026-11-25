@@ -3,8 +3,9 @@
 import { useMemo } from 'react'
 import CoverImage from '@/components/ui/CoverImage'
 import Link from 'next/link'
-import { Clock, MapPin } from 'lucide-react'
+import { Clock, MapPin, Utensils } from 'lucide-react'
 import type { SiteLocale } from '@/lib/i18n/config'
+import { isLunchIncludedTour, LUNCH_INCLUDED_LABEL } from '@/lib/i18n/tourLunchIncluded'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import styles from './TourCard.module.css'
@@ -251,7 +252,8 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
     </div>
   )
 
-  const metaRows = (tour.departureLabel || tour.durationLabel) && (
+  const lunchIncluded = isLunchIncludedTour(tour._id)
+  const metaRows = (tour.departureLabel || tour.durationLabel || lunchIncluded) && (
     <div className="mt-2.5 space-y-1.5">
       {tour.durationLabel && (
         <div className={`${styles.metaRow} flex items-center gap-2 text-[13px] leading-snug`} style={{ color: ICON_MUTED }}>
@@ -269,6 +271,12 @@ export default function TourCard({ tour, locale = 'tr' }: TourCardProps) {
             {tourUi.tourCardDeparturePrefix}
             {tour.departureLabel}
           </span>
+        </div>
+      )}
+      {lunchIncluded && (
+        <div className={`${styles.metaRow} flex items-center gap-2 text-[13px] leading-snug`} style={{ color: ICON_MUTED }}>
+          <Utensils className="size-4 shrink-0" style={{ color: META_ICON_COLOR }} strokeWidth={2} aria-hidden />
+          <span>{LUNCH_INCLUDED_LABEL[locale]}</span>
         </div>
       )}
     </div>

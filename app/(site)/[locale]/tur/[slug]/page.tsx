@@ -30,6 +30,9 @@ import type { TourForBooking } from '@/lib/sanity/bookingTypes'
 import ReviewsSection from '@/components/ReviewsSection'
 import ReviewExcerptStrip from '@/components/ReviewExcerptStrip'
 import WhereSection from '@/components/tour/WhereSection'
+import TourKnowBefore from '@/components/tour/TourKnowBefore'
+import { getTourKnowBefore, KNOW_BEFORE_HEADING } from '@/lib/i18n/tourKnowBefore'
+import { isLunchIncludedTour } from '@/lib/i18n/tourLunchIncluded'
 import TourReelsRail from '@/components/tour/TourReelsRail'
 import ScrollReveal from '@/components/ui/ScrollReveal'
 import JsonLd from '@/components/seo/JsonLd'
@@ -281,6 +284,13 @@ export default async function TourPage({
   const videoEmbedUrl = tour.tourVideo ? getVideoEmbedUrl(tour.tourVideo) : null
   const galleryHeroImages = buildGalleryHeroImages(tour, tourUi)
   const itineraryTimelineItems = buildItineraryTimelineItems(tour)
+  const knowBeforeItems = getTourKnowBefore(tour._id, locale)
+  // Öğle yemeği başlıktaki bilgi satırında gösterilen turlarda Öne Çıkanlar'daki
+  // yemek maddesi tekrar etmesin.
+  const lunchIncluded = isLunchIncludedTour(tour._id)
+  const highlights = lunchIncluded
+    ? tour.highlights?.filter((h) => h.icon?.trim().toLowerCase() !== 'food')
+    : tour.highlights
 
   const reelsSlides =
     tour.reelsSection?.enabled && Array.isArray(tour.reelsSection.items)
@@ -375,6 +385,7 @@ export default async function TourPage({
                 meetingLocation={tour.quickFacts?.meetingLocation}
                 locale={locale}
                 highDemand={!!tour.isPopular}
+                lunchIncluded={lunchIncluded}
               />
               {/* Mobildeki "yoğun talep" şeridi TourHeader'ın meta satırları
                   içinde (compact varyant) — bkz. TourHeader.tsx. */}
@@ -382,7 +393,7 @@ export default async function TourPage({
 
         <ScrollReveal>
           <HighlightsDetailsRow
-            highlights={tour.highlights}
+            highlights={highlights}
             tourDetails={tour.tourDetails}
             quickFacts={tour.quickFacts}
             tourUi={tourUi}
@@ -464,6 +475,12 @@ export default async function TourPage({
         <ScrollReveal>
           <IncludedNotIncluded included={tour.included} notIncluded={tour.notIncluded} tourUi={tourUi} />
         </ScrollReveal>
+
+        {knowBeforeItems ? (
+          <ScrollReveal>
+            <TourKnowBefore heading={KNOW_BEFORE_HEADING[locale]} items={knowBeforeItems} />
+          </ScrollReveal>
+        ) : null}
 
         <ScrollReveal>
           <HostBlock host={tour.host} whyYouWillLove={tour.whyYouWillLove} tourUi={tourUi} />
