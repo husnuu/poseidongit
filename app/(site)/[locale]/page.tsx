@@ -16,6 +16,8 @@ import HeroBanner from '@/components/home/HeroBanner'
 import FeatureBar from '@/components/home/FeatureBar'
 import PopularToursSection from '@/components/home/PopularToursSection'
 import PopularYachtsSection from '@/components/home/PopularYachtsSection'
+import HomeFerrySection from '@/components/home/HomeFerrySection'
+import { getFerryRouteList } from '@/lib/ferry/listFerryRoutes'
 import HomeClassesSection, { type HomeClassesSectionData } from '@/components/home/HomeClassesSection'
 import type { TourClassItem } from '@/components/tour/TourClassShowcase'
 import type { HomePopularYachtCardData } from '@/components/home/HomePopularYachtCard'
@@ -1130,6 +1132,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const loyaltyProgramLabel = locale === 'en' ? 'Loyalty Program' : locale === 'de' ? 'Treueprogramm' : 'Sadakat Programı'
 
   const instagramFeed = instagramSection?.enabled ? await getInstagramFeed() : null
+  const ferryRoutes = await getFerryRouteList(locale)
 
   return (
     <div className="min-h-screen bg-white">
@@ -1167,6 +1170,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </ScrollReveal>
       <ScrollReveal>
         <PopularYachtsSection data={popularYachtsSection} locale={locale} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <HomeFerrySection routes={ferryRoutes} locale={locale} />
       </ScrollReveal>
 
       {loyaltyBanner && (
