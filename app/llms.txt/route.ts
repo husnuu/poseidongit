@@ -4,6 +4,7 @@ import { getBaseUrl } from '@/lib/seo'
 import { BUSINESS_FACTS } from '@/lib/seo/travelAgencyStructuredData'
 import { SITE_BRAND } from '@/lib/seo/brand'
 import { STATIC_HELP_CATEGORIES } from '@/lib/helpCenter/staticHelpData'
+import { TURYOL_ROUTES } from '@/lib/ferry/turyolRoutes'
 
 export const revalidate = 3600
 
@@ -47,6 +48,17 @@ export async function GET() {
     }`),
   ])
 
+  // Sanity'de belgesi olmayan Turyol feribot hatları (lib/ferry/turyolRoutes.ts).
+  const ferrySlugs = new Set(ferries.map((r) => r.slug))
+  const ferryRows: Row[] = [
+    ...ferries,
+    ...TURYOL_ROUTES.filter((r) => r.page && !ferrySlugs.has(r.slug)).map((r) => ({
+      title: r.page!.texts.tr.title,
+      slug: r.slug,
+      summary: r.page!.texts.tr.cardDescription,
+    })),
+  ]
+
   const list = (rows: Row[], path: (slug: string) => string, withPrice = false) =>
     rows
       .filter((r) => r.slug && r.title)
@@ -61,7 +73,7 @@ export async function GET() {
 
   const body = `# ${SITE_BRAND.tr} — Poseidon
 
-> Çeşme (İzmir) çıkışlı günlük tekne turları, gün batımı turu, tüplü dalış, özel yat kiralama ve Sakız feribot biletleri için online rezervasyon ve bilet satış sitesi. Biletler online alınır; rezervasyon onayı e-posta ile gönderilir.
+> Çeşme (İzmir) çıkışlı günlük tekne turları, gün batımı turu, tüplü dalış, özel yat kiralama ve Sakız, Midilli ve Kos feribot biletleri için online rezervasyon ve bilet satış sitesi. Biletler online alınır; rezervasyon onayı e-posta ile gönderilir.
 
 İşletme: ${BUSINESS_FACTS.name}
 Adres: ${BUSINESS_FACTS.address}
@@ -83,7 +95,7 @@ ${list(yachtLocations, (s) => `/yat-kiralama/${s}`)}
 
 ## Feribot
 
-${list(ferries, (s) => `/feribot/${s}`) || `- [Feribot biletleri](${base}/feribot)`}
+${list(ferryRows, (s) => `/feribot/${s}`) || `- [Feribot biletleri](${base}/feribot)`}
 
 ## Koylar ve adalar rehberi
 

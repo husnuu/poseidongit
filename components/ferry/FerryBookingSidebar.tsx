@@ -4,13 +4,15 @@ import { useState } from 'react'
 import FerryBookingCard, { type FerryExtraFee } from '@/components/FerryBookingCard'
 import FerryBookingWizard from '@/components/ferry/FerryBookingWizard'
 import FerryMobileStickyBar from '@/components/ferry/FerryMobileStickyBar'
-import { adultFromFare, type FerryAgeTier } from '@/components/ferry/ferryTypes'
+import { adultFromFare, type FerryAgeTier, type FerryVessel } from '@/components/ferry/ferryTypes'
 import type { SiteLocale } from '@/lib/i18n/config'
 
 interface FerryBookingSidebarProps {
   title: string
   ferryTitle: string
   ageTiers: FerryAgeTier[]
+  /** Turyol hatlarında tekne seçimi (rezervasyon modalı). */
+  vessels?: FerryVessel[] | null
   currency: string
   numberLocale: string
   departurePort: string
@@ -31,6 +33,7 @@ export default function FerryBookingSidebar({
   title,
   ferryTitle,
   ageTiers,
+  vessels,
   currency,
   numberLocale,
   departurePort,
@@ -82,6 +85,7 @@ export default function FerryBookingSidebar({
         arrivalPort={arrivalPort}
         currency={currency}
         ageTiers={ageTiers}
+        vessels={vessels}
         importantNotes={importantNotes}
         notesTitle={notesTitle}
         cashNote={cashNote}

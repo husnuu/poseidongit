@@ -25,6 +25,16 @@ export type FerryPageUiStrings = {
   viewRouteButton: string
   perPersonLabel: string
   cardNoImage: string
+  faresTitle: string
+  faresOneWay: string
+  faresRoundTrip: string
+  faresSameDay: string
+  faresNote: (from: string, to: string) => string
+  faresVehicleNote: string
+  islandMustSee: string
+  islandBeaches: string
+  islandPractical: string
+  photoCredits: string
 }
 
 const TR: FerryPageUiStrings = {
@@ -49,11 +59,21 @@ const TR: FerryPageUiStrings = {
   listSubtitle: 'Türkiye - Yunanistan arası feribot biletlerinizi kolayca alabilirsiniz.',
   listMetaTitle: 'Feribot Biletleri',
   listMetaDescription:
-    'Çeşme çıkışlı feribot hatlarını, sefer saatlerini ve fiyatları inceleyin; feribot biletinizi online olarak dakikalar içinde güvenle satın alın.',
+    'Çeşme, Ayvalık, Aliağa ve Bodrum’dan Sakız, Midilli ve Kos’a feribot hatlarını ve Euro fiyatlarını inceleyin; feribot biletinizi online olarak dakikalar içinde güvenle satın alın.',
   listEmptyMessage: 'Henüz feribot hattı eklenmemiş.',
   viewRouteButton: 'Seferi Görüntüle',
   perPersonLabel: 'Kişi Başı',
   cardNoImage: 'Görsel yok',
+  faresTitle: 'Tekneler ve Fiyatlar',
+  faresOneWay: 'Tek Yön',
+  faresRoundTrip: 'Gidiş-Dönüş',
+  faresSameDay: 'Aynı Gün Dönüş',
+  faresNote: (from, to) => `Fiyatlar kişi başı ve Euro (€) cinsindendir; ${from} – ${to} seferlerine göredir, sezona göre değişebilir.`,
+  faresVehicleNote: 'Araç fiyatları araç başınadır.',
+  islandMustSee: 'Görmeden Dönmeyin',
+  islandBeaches: 'Plajlar',
+  islandPractical: 'Pratik Bilgiler',
+  photoCredits: 'Fotoğraflar',
 }
 
 const EN: FerryPageUiStrings = {
@@ -78,11 +98,21 @@ const EN: FerryPageUiStrings = {
   listSubtitle: 'Easily get your ferry tickets between Turkey and Greece.',
   listMetaTitle: 'Ferry Tickets',
   listMetaDescription:
-    'Browse ferry routes from Çeşme with schedules and fares, and buy your ferry ticket securely online in just a few minutes.',
+    'Browse ferry routes from Çeşme, Ayvalık, Aliağa and Bodrum to Chios, Lesvos and Kos with fares in euros, and buy your ferry ticket securely online in just a few minutes.',
   listEmptyMessage: 'No ferry routes have been added yet.',
   viewRouteButton: 'View Route',
   perPersonLabel: 'Per Person',
   cardNoImage: 'No image',
+  faresTitle: 'Vessels & Fares',
+  faresOneWay: 'One Way',
+  faresRoundTrip: 'Return',
+  faresSameDay: 'Same-Day Return',
+  faresNote: (from, to) => `Fares are per person in euros (€), based on sailings from ${from} to ${to}, and may change with the season.`,
+  faresVehicleNote: 'Vehicle fares are per vehicle.',
+  islandMustSee: 'Don’t Miss',
+  islandBeaches: 'Beaches',
+  islandPractical: 'Practical Tips',
+  photoCredits: 'Photos',
 }
 
 const DE: FerryPageUiStrings = {
@@ -111,6 +141,16 @@ const DE: FerryPageUiStrings = {
   viewRouteButton: 'Route ansehen',
   perPersonLabel: 'Pro Person',
   cardNoImage: 'Kein Bild',
+  faresTitle: 'Schiffe & Preise',
+  faresOneWay: 'Einfache Fahrt',
+  faresRoundTrip: 'Hin & zurück',
+  faresSameDay: 'Rückfahrt am selben Tag',
+  faresNote: (from, to) => `Preise pro Person in Euro (€), gültig für Abfahrten vom ${from} bis ${to}; saisonale Änderungen möglich.`,
+  faresVehicleNote: 'Fahrzeugpreise gelten pro Fahrzeug.',
+  islandMustSee: 'Nicht verpassen',
+  islandBeaches: 'Strände',
+  islandPractical: 'Praktische Tipps',
+  photoCredits: 'Fotos',
 }
 
 const RU: FerryPageUiStrings = {
@@ -139,6 +179,16 @@ const RU: FerryPageUiStrings = {
   viewRouteButton: 'Посмотреть маршрут',
   perPersonLabel: 'За человека',
   cardNoImage: 'Нет фото',
+  faresTitle: 'Суда и цены',
+  faresOneWay: 'В одну сторону',
+  faresRoundTrip: 'Туда и обратно',
+  faresSameDay: 'Обратно в тот же день',
+  faresNote: (from, to) => `Цены указаны за человека в евро (€) для рейсов с ${from} по ${to} и могут меняться в зависимости от сезона.`,
+  faresVehicleNote: 'Цены для транспорта указаны за одно транспортное средство.',
+  islandMustSee: 'Обязательно посмотрите',
+  islandBeaches: 'Пляжи',
+  islandPractical: 'Полезная информация',
+  photoCredits: 'Фото',
 }
 
 export function getFerryPageUiStrings(locale: SiteLocale): FerryPageUiStrings {

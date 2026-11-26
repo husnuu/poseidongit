@@ -16,6 +16,11 @@ import { isSiteLocale } from '@/lib/i18n/config'
 import { getFerryPageUiStrings } from '@/lib/i18n/strings/ferryPage'
 import { mergeFerryRouteLocale } from '@/lib/i18n/mergeFerryRouteLocale'
 import StandardPageLd from '@/components/seo/StandardPageLd'
+import FerryVesselFares from '@/components/ferry/FerryVesselFares'
+import FerryIslandGuide from '@/components/ferry/FerryIslandGuide'
+import { cheapestVessel, vesselAgeTiers } from '@/components/ferry/ferryTypes'
+import { getTuryolRoute, TURYOL_FARES_PERIOD, TURYOL_ROUTES, type TuryolRoute } from '@/lib/ferry/turyolRoutes'
+import { getIslandGuide, ISLAND_PHOTOS, type IslandPhotoKey } from '@/lib/ferry/islandGuides'
 
 type SanityImageish = {
   asset?: { _ref?: string }
@@ -66,6 +71,8 @@ type FerryRouteData = {
   notIncluded?: string[] | null
   faqs?: Array<{ question: string; answer: string }> | null
   translations?: unknown
+  /** Sanity belgesi olmayan Turyol hatlarında galerideki ada fotoğrafları (kaynak satırı için). */
+  catalogImages?: IslandPhotoKey[] | null
 }
 
 function getVideoEmbedUrl(video: FerryRouteData['video']): string | null {
@@ -85,26 +92,69 @@ function buildGalleryImages(
   data: FerryRouteData,
   ui: ReturnType<typeof getFerryPageUiStrings>,
 ): PhotoGridImage[] {
-  const main = data.mainImage?.asset ? [data.mainImage] : []
+  const main = data.mainImage?.asset || data.mainImage?.url ? [data.mainImage] : []
   const gallery = data.gallery ?? []
-  const all = [...main, ...gallery].filter((img): img is SanityImageish => Boolean(img?.asset))
+  const all = [...main, ...gallery].filter((img): img is SanityImageish => Boolean(img?.asset || img?.url))
   return all
     .map((img, i) => ({
-      src: tourGalleryHeroImageUrl(img.asset) ?? img.url ?? '',
+      src: (img.asset ? tourGalleryHeroImageUrl(img.asset) : null) ?? img.url ?? '',
       blurDataURL: img.metadata?.lqip ?? null,
       alt: img.alt?.trim() || ui.galleryImageAlt(data.title, i),
     }))
     .filter((row) => row.src.length > 0)
 }
 
-async function getFerryRoute(slug: string, locale: SiteLocale): Promise<FerryRouteData | null> {
-  try {
-    const raw = await client.fetch<FerryRouteData | null>(ferryRouteQuery, { slug }, { useCdn: false })
-    if (!raw) return null
-    return mergeFerryRouteLocale(raw as unknown as Record<string, unknown>, locale) as unknown as FerryRouteData
-  } catch {
-    return null
+function textBlock(text: string, i: number): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: `p${i}`,
+    style: 'normal',
+    markDefs: [],
+    children: [{ _type: 'span', _key: `s${i}`, text, marks: [] }],
   }
+}
+
+/** Sanity'de belgesi olmayan Turyol hatları (lib/ferry/turyolRoutes.ts) için sayfa verisi. */
+function ferryRouteFromCatalog(route: TuryolRoute, locale: SiteLocale): FerryRouteData | null {
+  if (!route.page) return null
+  const t = route.page.texts[locale] ?? route.page.texts.tr
+  const [main, ...rest] = route.page.images.map((key) => ({
+    url: ISLAND_PHOTOS[key].src,
+    alt: ISLAND_PHOTOS[key].caption[locale],
+  }))
+  return {
+    _id: `ferry-${route.slug}`,
+    title: t.title,
+    slug: route.slug,
+    isActive: true,
+    seo: { metaDescription: t.metaDescription },
+    mainImage: main ?? null,
+    gallery: rest,
+    durationLabel: t.durationLabel,
+    routeLabel: t.routeLabel,
+    departurePort: t.departurePort,
+    arrivalPort: t.arrivalPort,
+    currency: '€',
+    bookingBullets: t.bookingBullets,
+    aboutBody: t.about.map(textBlock),
+    knowBeforeYouGo: t.knowBefore,
+    included: t.included,
+    notIncluded: t.notIncluded,
+    faqs: t.faqs,
+    catalogImages: route.page.images,
+  }
+}
+
+async function getFerryRoute(slug: string, locale: SiteLocale): Promise<FerryRouteData | null> {
+  let raw: FerryRouteData | null = null
+  try {
+    raw = await client.fetch<FerryRouteData | null>(ferryRouteQuery, { slug }, { useCdn: false })
+  } catch {
+    raw = null
+  }
+  if (raw) return mergeFerryRouteLocale(raw as unknown as Record<string, unknown>, locale) as unknown as FerryRouteData
+  const catalog = getTuryolRoute(slug)
+  return catalog ? ferryRouteFromCatalog(catalog, locale) : null
 }
 
 /** Feribot hattı sayfaları build'de önceden üretilir (iç rota her dilde Türkçe slug). */
@@ -112,7 +162,8 @@ export async function generateStaticParams() {
   const slugs = await client
     .fetch<string[]>(`*[_type == "ferryRoute" && isActive != false && defined(slug.current)].slug.current`)
     .catch(() => [] as string[])
-  return slugs.map((slug) => ({ slug }))
+  const catalogSlugs = TURYOL_ROUTES.filter((r) => r.page).map((r) => r.slug)
+  return Array.from(new Set([...slugs, ...catalogSlugs])).map((slug) => ({ slug }))
 }
 
 export async function generateMetadata({
@@ -130,7 +181,7 @@ export async function generateMetadata({
   const description = seoDescription.length >= 70 ? seoDescription : ui.defaultMetaDescription
   const image = data?.mainImage?.asset
     ? tourGalleryHeroImageUrl(data.mainImage.asset)
-    : undefined
+    : data?.mainImage?.url
   return buildPageMetadata({
     locale,
     path: `/feribot/${slug}`,
@@ -184,8 +235,17 @@ export default async function FerryRoutePage({
   const hasKnowBeforeYouGo = Array.isArray(data.knowBeforeYouGo) && data.knowBeforeYouGo.length > 0
   const hasIncluded = Array.isArray(data.included) && data.included.length > 0
   const hasNotIncluded = Array.isArray(data.notIncluded) && data.notIncluded.length > 0
-  const ageTiers = data.ageTiers ?? []
-  const currency = data.currency?.trim() || '€'
+  // Turyol hatlarında fiyatlar teknelere göre (€) — Sanity'deki yaş grubu fiyatları yerine.
+  const turyol = getTuryolRoute(slug)
+  const vessels = turyol?.vessels ?? []
+  const fromVessel = cheapestVessel(vessels)
+  const ageTiers = fromVessel ? vesselAgeTiers(fromVessel, locale) : data.ageTiers ?? []
+  const currency = fromVessel ? '€' : data.currency?.trim() || '€'
+  const islandGuide = turyol ? getIslandGuide(turyol.island, locale) : null
+  const islandCreditPhotos: IslandPhotoKey[] = [
+    ...(data.catalogImages ?? []),
+    ...(islandGuide?.mustSee.flatMap((item) => (item.photo ? [item.photo] : [])) ?? []),
+  ]
   const departurePort = data.departurePort?.trim() || data.routeLabel?.split('↔')[0]?.trim() || ''
   const arrivalPort = data.arrivalPort?.trim() || data.routeLabel?.split('↔')[1]?.trim() || ''
   const importantNotes = (data.knowBeforeYouGo ?? [])
@@ -237,6 +297,10 @@ export default async function FerryRoutePage({
               </div>
             </header>
 
+            {vessels.length > 0 && (
+              <FerryVesselFares vessels={vessels} period={TURYOL_FARES_PERIOD} locale={locale} />
+            )}
+
             {aboutTitle && (
               <section className="mb-10">
                 <h2
@@ -258,6 +322,10 @@ export default async function FerryRoutePage({
                   </div>
                 )}
               </section>
+            )}
+
+            {islandGuide && (
+              <FerryIslandGuide guide={islandGuide} creditPhotos={islandCreditPhotos} locale={locale} />
             )}
 
             {videoEmbedUrl && (
@@ -354,6 +422,7 @@ export default async function FerryRoutePage({
             title={ui.bookingCardTitle}
             ferryTitle={data.title}
             ageTiers={ageTiers}
+            vessels={vessels}
             currency={currency}
             numberLocale={ui.numberLocale}
             departurePort={departurePort}

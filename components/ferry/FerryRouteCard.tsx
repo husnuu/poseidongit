@@ -5,10 +5,13 @@ import type { SiteLocale } from '@/lib/i18n/config'
 import { withLocalePath } from '@/lib/i18n/paths'
 import { getFerryPageUiStrings } from '@/lib/i18n/strings/ferryPage'
 import { adultFromFare, type FerryAgeTier } from '@/components/ferry/ferryTypes'
-import { SANITY_DISPLAY_IMAGE_PROPS } from '@/lib/sanityImage'
+import { displayImageProps } from '@/lib/sanityImage'
+import type { IslandKey } from '@/lib/ferry/islandGuides'
 import styles from './FerryRouteCard.module.css'
 
 const ICON_MUTED = 'var(--muted, #81848b)'
+/** Tur kartıyla (TourCard) aynı meta ikon rengi. */
+const META_ICON_COLOR = '#8a99ad'
 
 export type FerryRouteListItem = {
   _id: string
@@ -23,6 +26,8 @@ export type FerryRouteListItem = {
   arrivalPort?: string | null
   currency?: string | null
   ageTiers?: FerryAgeTier[] | null
+  /** Varış adası — liste sayfasındaki ada butonları için. */
+  island?: IslandKey | null
 }
 
 function formatPriceFrom(price: number | null | undefined, currency: string, numberLocale: string): string {
@@ -53,7 +58,7 @@ export default function FerryRouteCard({ route, locale = 'tr' }: FerryRouteCardP
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-          {...SANITY_DISPLAY_IMAGE_PROPS}
+          {...displayImageProps(route.coverImageUrl)}
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-sm text-zinc-400">{ui.cardNoImage}</div>
@@ -65,13 +70,13 @@ export default function FerryRouteCard({ route, locale = 'tr' }: FerryRouteCardP
     <div className="mt-2.5 space-y-1.5">
       {route.durationLabel && (
         <div className={`${styles.metaRow} flex items-center gap-2 text-[13px] leading-snug`} style={{ color: ICON_MUTED }}>
-          <Clock className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+          <Clock className="size-4 shrink-0" style={{ color: META_ICON_COLOR }} strokeWidth={2} aria-hidden />
           <span>{route.durationLabel}</span>
         </div>
       )}
       {routeText && (
         <div className={`${styles.metaRow} flex items-center gap-2 text-[13px] leading-snug`} style={{ color: ICON_MUTED }}>
-          <Ship className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+          <Ship className="size-4 shrink-0" style={{ color: META_ICON_COLOR }} strokeWidth={2} aria-hidden />
           <span>{routeText}</span>
         </div>
       )}
@@ -80,7 +85,7 @@ export default function FerryRouteCard({ route, locale = 'tr' }: FerryRouteCardP
 
   const ctaInner = (
     <span
-      className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-5 py-2.5 text-center text-[13px] font-bold uppercase tracking-wide text-white transition duration-200 hover:scale-105 hover:brightness-110 sm:text-[14px]"
+      className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-5 py-2.5 text-center text-[14px] font-extrabold uppercase tracking-wide text-white transition duration-200 hover:scale-105 hover:brightness-110 sm:text-[15px]"
       style={{ background: 'var(--primary, #2168b8)' }}
     >
       {ui.viewRouteButton}
@@ -111,7 +116,7 @@ export default function FerryRouteCard({ route, locale = 'tr' }: FerryRouteCardP
   )
 
   return (
-    <article className="group flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#f1f5f9] bg-white shadow-[0_2px_8px_rgba(19,23,25,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-8px_rgba(19,23,25,0.12)]">
+    <article className="group flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#bfcbd8] bg-white transition-colors duration-300 hover:border-[#8a9db3]">
       {href ? (
         <>
           <Link

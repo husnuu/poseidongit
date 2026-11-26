@@ -34,3 +34,8 @@ export const SANITY_DISPLAY_IMAGE_PROPS = {
   quality: 92,
   unoptimized: true,
 } as const
+
+/** Yerel (/public) görselleri Next optimize eder; Sanity CDN görselleri olduğu gibi kalır. */
+export function displayImageProps(src: string) {
+  return src.startsWith('/') ? ({ quality: 85 } as const) : SANITY_DISPLAY_IMAGE_PROPS
+}

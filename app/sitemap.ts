@@ -6,6 +6,7 @@ import { STATIC_HELP_CATEGORIES } from '@/lib/helpCenter/staticHelpData'
 import { STATIC_UPDATED_AT } from '@/lib/helpCenter/staticHelpResolve'
 import { canonicalRouteToPublicPath } from '@/lib/i18n/routeAliases'
 import type { SiteLocale } from '@/lib/i18n/config'
+import { TURYOL_FARES_PERIOD, TURYOL_ROUTES } from '@/lib/ferry/turyolRoutes'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
@@ -150,15 +151,24 @@ async function getFerryRouteEntries(): Promise<SitemapEntry[]> {
     const list = await client.fetch<{ slug: string | null; _updatedAt: string }[]>(
       `*[_type == "ferryRoute" && isActive != false && defined(slug.current)]{ "slug": slug.current, _updatedAt }`
     )
-    return (list ?? [])
+    const entries = (list ?? [])
       .filter((r): r is { slug: string; _updatedAt: string } => Boolean(r.slug))
       .map((r) => ({
         slug: r.slug,
         lastModified: r._updatedAt ? new Date(r._updatedAt) : new Date(),
       }))
+    return [...entries, ...turyolCatalogEntries(new Set(entries.map((e) => e.slug)))]
   } catch {
-    return []
+    return turyolCatalogEntries(new Set())
   }
+}
+
+/** Sanity'de belgesi olmayan, kodda tanımlı Turyol hatları (lib/ferry/turyolRoutes.ts). */
+function turyolCatalogEntries(existing: Set<string>): SitemapEntry[] {
+  return TURYOL_ROUTES.filter((r) => r.page && !existing.has(r.slug)).map((r) => ({
+    slug: r.slug,
+    lastModified: new Date(`${TURYOL_FARES_PERIOD.from}T00:00:00Z`),
+  }))
 }
 
 type LegalSitemapRow = {

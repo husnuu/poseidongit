@@ -287,6 +287,29 @@
   font-weight: 700;
 }
 
+/* Tekne seçimi (Turyol hatları): ad + tip solda, yetişkin fiyatı sağda. */
+.vesselBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vesselKind {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.vesselPrice {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .calendarSection {
   margin-bottom: 4px;
 }

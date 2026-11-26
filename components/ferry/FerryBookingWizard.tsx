@@ -6,7 +6,19 @@ import PhoneField from '@/components/ui/PhoneField'
 import NationalitySelect from './NationalitySelect'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { getNationalityLabel } from './nationalityOptions'
-import { adultFromFare, fareForTier, type FerryAgeTier, type FerryTripType, type FerryDirection } from './ferryTypes'
+import {
+  adultFromFare,
+  fareForTier,
+  vehicleFare,
+  vesselAgeTiers,
+  FERRY_VEHICLE_LABELS,
+  FERRY_VESSEL_KIND_LABELS,
+  type FerryAgeTier,
+  type FerryTripType,
+  type FerryDirection,
+  type FerryVehicleKey,
+  type FerryVessel,
+} from './ferryTypes'
 import styles from './FerryBookingWizard.module.css'
 
 interface FerryBookingWizardProps {
@@ -17,6 +29,8 @@ interface FerryBookingWizardProps {
   arrivalPort: string
   currency: string
   ageTiers: FerryAgeTier[]
+  /** Hatta birden fazla tekne varsa müşteri seçer; fiyatlar seçilen tekneden gelir. */
+  vessels?: FerryVessel[] | null
   importantNotes: string[]
   /** "Bilmeniz Gerekenler" gibi CMS başlığı — verilmezse yerelleştirilmiş varsayılana düşer. */
   notesTitle?: string
@@ -70,6 +84,27 @@ const SAME_DAY_RETURN_HINT: Record<SiteLocale, string> = {
   en: 'Same day as departure',
   de: 'Am selben Tag wie die Hinfahrt',
   ru: 'В тот же день, что и отправление',
+}
+
+const VESSEL_TITLE: Record<SiteLocale, string> = { tr: 'Tekne', en: 'Vessel', de: 'Schiff', ru: 'Судно' }
+const VEHICLE_TITLE: Record<SiteLocale, string> = {
+  tr: 'Araç (isteğe bağlı)',
+  en: 'Vehicle (optional)',
+  de: 'Fahrzeug (optional)',
+  ru: 'Транспорт (по желанию)',
+}
+const PER_VEHICLE: Record<SiteLocale, string> = { tr: 'araç başı', en: 'per vehicle', de: 'pro Fahrzeug', ru: 'за транспорт' }
+const ADULT_FROM: Record<SiteLocale, string> = { tr: 'Yetişkin', en: 'Adult', de: 'Erwachsener', ru: 'Взрослый' }
+const VEHICLE_KEYS: FerryVehicleKey[] = ['car', 'motorbike']
+
+/** WhatsApp mesajı ekibe gider — her dilde Türkçe. */
+function vesselLabelTr(v: FerryVessel): string {
+  return `${v.name}${v.kind ? ` (${FERRY_VESSEL_KIND_LABELS.tr[v.kind]})` : ''}`
+}
+
+function adultFareFor(v: FerryVessel, tripType: FerryTripType): number {
+  if (tripType === 'oneway') return v.fares.oneWay.adult
+  return tripType === 'sameday' ? v.fares.sameDay.adult : v.fares.roundTrip.adult
 }
 
 const DEPARTURE_LABEL: Record<SiteLocale, string> = { tr: 'Gidiş', en: 'Departure', de: 'Hinfahrt', ru: 'Отправление' }
@@ -323,6 +358,7 @@ export default function FerryBookingWizard({
   arrivalPort,
   currency,
   ageTiers,
+  vessels,
   importantNotes,
   notesTitle,
   cashNote,
@@ -338,6 +374,13 @@ export default function FerryBookingWizard({
   const [departureDate, setDepartureDate] = useState('')
   const [returnDate, setReturnDate] = useState('')
   const [counts, setCounts] = useState<Record<string, number>>({})
+  const [vesselId, setVesselId] = useState<string | null>(vessels?.[0]?.id ?? null)
+  const [vehicleCounts, setVehicleCounts] = useState<Record<FerryVehicleKey, number>>({ car: 0, motorbike: 0 })
+  const selectedVessel = vessels?.find((v) => v.id === vesselId) ?? vessels?.[0] ?? null
+  const activeTiers = useMemo(
+    () => (selectedVessel ? vesselAgeTiers(selectedVessel, locale) : ageTiers),
+    [selectedVessel, locale, ageTiers],
+  )
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -379,25 +422,34 @@ export default function FerryBookingWizard({
     [counts],
   )
 
+  const vehicleTotal = useMemo(() => {
+    if (!selectedVessel?.vehicleFares) return 0
+    return VEHICLE_KEYS.reduce(
+      (sum, key) => sum + (vehicleCounts[key] ?? 0) * (vehicleFare(selectedVessel, tripType, key) ?? 0),
+      0,
+    )
+  }, [selectedVessel, vehicleCounts, tripType])
+
   const totalPrice = useMemo(() => {
-    return ageTiers.reduce((sum, tier) => {
+    const passengersTotal = activeTiers.reduce((sum, tier) => {
       const c = counts[tier.key] ?? 0
       if (c <= 0) return sum
       return sum + c * fareForTier(tier, tripType, direction)
     }, 0)
-  }, [ageTiers, counts, tripType, direction])
+    return passengersTotal + vehicleTotal
+  }, [activeTiers, counts, tripType, direction, vehicleTotal])
 
-  const fromPrice = useMemo(() => adultFromFare(ageTiers), [ageTiers])
+  const fromPrice = useMemo(() => adultFromFare(activeTiers), [activeTiers])
 
   // Her yaş grubundan seçilen adet kadar "yolcu koltuğu" — her biri kendi bilgi kartını alır.
   const passengerSlots = useMemo(() => {
     const slots: { tierLabel: string }[] = []
-    ageTiers.forEach((tier) => {
+    activeTiers.forEach((tier) => {
       const c = counts[tier.key] ?? 0
       for (let i = 0; i < c; i++) slots.push({ tierLabel: tier.label })
     })
     return slots
-  }, [ageTiers, counts])
+  }, [activeTiers, counts])
 
   useEffect(() => {
     setPassengers((prev) => passengerSlots.map((_, i) => prev[i] ?? emptyPassenger()))
@@ -412,6 +464,23 @@ export default function FerryBookingWizard({
       return { ...prev, [key]: next }
     })
   }
+
+  const setVehicleCount = (key: FerryVehicleKey, delta: number) => {
+    setVehicleCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] ?? 0) + delta) }))
+  }
+
+  const selectVessel = (v: FerryVessel) => {
+    setVesselId(v.id)
+    if (!v.vehicleFares) setVehicleCounts({ car: 0, motorbike: 0 })
+  }
+
+  const selectedVehicles = selectedVessel?.vehicleFares
+    ? VEHICLE_KEYS.filter((key) => (vehicleCounts[key] ?? 0) > 0).map((key) => ({
+        key,
+        count: vehicleCounts[key],
+        fare: vehicleFare(selectedVessel, tripType, key) ?? 0,
+      }))
+    : []
 
   const updatePassenger = (index: number, patch: Partial<PassengerInfo>) => {
     setPassengers((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)))
@@ -464,6 +533,7 @@ export default function FerryBookingWizard({
     lines.push('')
     lines.push(`Güzergah: ${routeLine}`)
     lines.push(`Sefer tipi: ${tripTypeLabels[tripType]}`)
+    if (selectedVessel) lines.push(`Tekne: ${vesselLabelTr(selectedVessel)}`)
     if (tripType === 'diffday') {
       lines.push(`Gidiş tarihi: ${formatDateDisplay(departureDate, locale)}`)
       lines.push(`Dönüş tarihi: ${formatDateDisplay(returnDate, locale)}`)
@@ -472,13 +542,20 @@ export default function FerryBookingWizard({
     }
     lines.push('')
     lines.push('Yolcular:')
-    ageTiers.forEach((tier) => {
+    activeTiers.forEach((tier) => {
       const c = counts[tier.key] ?? 0
       if (c > 0) {
         const fare = fareForTier(tier, tripType, direction)
         lines.push(`- ${tier.label} × ${c} (${formatMoney(fare, currency, numberLocale)} / kişi)`)
       }
     })
+    if (selectedVehicles.length > 0) {
+      lines.push('')
+      lines.push('Araçlar:')
+      selectedVehicles.forEach(({ key, count, fare }) => {
+        lines.push(`- ${FERRY_VEHICLE_LABELS.tr[key]} × ${count} (${formatMoney(fare, currency, numberLocale)} / araç)`)
+      })
+    }
     lines.push('')
     lines.push(`Toplam: ${formatMoney(totalPrice, currency, numberLocale)}`)
     lines.push('')
@@ -522,6 +599,11 @@ export default function FerryBookingWizard({
                   <p className={styles.ticketInfoLineBold}>
                     <span className={styles.ticketInfoLabel}>Sefer tipi:</span> {tripTypeLabels[tripType]}
                   </p>
+                  {selectedVessel && (
+                    <p className={styles.ticketInfoLine}>
+                      <span className={styles.ticketInfoLabel}>{VESSEL_TITLE[locale]}:</span> {selectedVessel.name}
+                    </p>
+                  )}
                   {tripType === 'diffday' ? (
                     <>
                       <p className={styles.ticketInfoLine}>
@@ -538,7 +620,7 @@ export default function FerryBookingWizard({
                       <span className={styles.ticketInfoLabel}>Tarih:</span> {formatDateDisplay(departureDate, locale)}
                     </p>
                   )}
-                  {ageTiers
+                  {activeTiers
                     .filter((t) => (counts[t.key] ?? 0) > 0)
                     .map((tier) => {
                       const c = counts[tier.key] ?? 0
@@ -549,6 +631,11 @@ export default function FerryBookingWizard({
                         </p>
                       )
                     })}
+                  {selectedVehicles.map(({ key, count, fare }) => (
+                    <p key={key} className={styles.ticketInfoLine}>
+                      {FERRY_VEHICLE_LABELS[locale][key]} × {count} ({formatMoney(fare, currency, numberLocale)})
+                    </p>
+                  ))}
                 </div>
               </div>
 
@@ -626,6 +713,36 @@ export default function FerryBookingWizard({
         <div className={styles.body}>
           {step === 1 && (
             <>
+              {vessels && vessels.length > 0 && (
+                <>
+                  <div className={styles.sectionHeaderPlain}>
+                    <h3 className={styles.sectionTitlePlain}>{VESSEL_TITLE[locale]}</h3>
+                  </div>
+                  <div className={styles.directionRow}>
+                    {vessels.map((v) => {
+                      const active = selectedVessel?.id === v.id
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          aria-pressed={active}
+                          className={`${styles.directionBtn} ${styles.vesselBtn} ${active ? styles.directionActive : ''}`}
+                          onClick={() => selectVessel(v)}
+                        >
+                          <span>
+                            {v.name}
+                            {v.kind && <span className={styles.vesselKind}>{FERRY_VESSEL_KIND_LABELS[locale][v.kind]}</span>}
+                          </span>
+                          <span className={styles.vesselPrice}>
+                            {ADULT_FROM[locale]} {formatMoney(adultFareFor(v, tripType), currency, numberLocale)}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+
               <div className={styles.sectionHeaderPlain}><h3 className={styles.sectionTitlePlain}>Bilet tipi</h3></div>
               <div className={styles.tabs}>
                 {(['oneway', 'sameday', 'diffday'] as FerryTripType[]).map((t) => (
@@ -701,7 +818,7 @@ export default function FerryBookingWizard({
 
               <div className={styles.sectionHeaderPlain}><h3 className={styles.sectionTitlePlain}>Yolcular</h3></div>
               <div className={styles.passengerList}>
-                {ageTiers.map((tier) => {
+                {activeTiers.map((tier) => {
                   const fare = fareForTier(tier, tripType, direction)
                   const ageText =
                     tier.minAge != null
@@ -742,6 +859,51 @@ export default function FerryBookingWizard({
                   )
                 })}
               </div>
+
+              {selectedVessel?.vehicleFares && (
+                <>
+                  <div className={styles.sectionHeaderPlain}>
+                    <h3 className={styles.sectionTitlePlain}>{VEHICLE_TITLE[locale]}</h3>
+                  </div>
+                  <div className={styles.passengerList}>
+                    {VEHICLE_KEYS.map((key) => {
+                      const label = FERRY_VEHICLE_LABELS[locale][key]
+                      const count = vehicleCounts[key] ?? 0
+                      return (
+                        <div key={key} className={styles.passengerRow}>
+                          <div>
+                            <div className={styles.passengerLabel}>{label}</div>
+                            <div className={styles.passengerSub}>
+                              {formatMoney(vehicleFare(selectedVessel, tripType, key) ?? 0, currency, numberLocale)} ·{' '}
+                              {PER_VEHICLE[locale]}
+                            </div>
+                          </div>
+                          <div className={styles.counter}>
+                            <button
+                              type="button"
+                              onClick={() => setVehicleCount(key, -1)}
+                              className={styles.counterBtn}
+                              aria-label={`${label} azalt`}
+                              disabled={count <= 0}
+                            >
+                              <Minus size={16} strokeWidth={2.5} aria-hidden />
+                            </button>
+                            <span className={styles.counterValue}>{count}</span>
+                            <button
+                              type="button"
+                              onClick={() => setVehicleCount(key, 1)}
+                              className={styles.counterBtn}
+                              aria-label={`${label} artır`}
+                            >
+                              <Plus size={16} strokeWidth={2.5} aria-hidden />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
 
               {importantNotes.length > 0 && (
                 <>

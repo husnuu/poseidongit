@@ -8,7 +8,7 @@ import { withLocalePath } from '@/lib/i18n/paths'
 import { getTourPageUi } from '@/lib/i18n/tourPageUi'
 import { useWishlist } from '@/lib/wishlist/WishlistContext'
 import styles from './PhotoGrid.module.css'
-import { SANITY_DISPLAY_IMAGE_PROPS } from '@/lib/sanityImage'
+import { displayImageProps } from '@/lib/sanityImage'
 import { Image as ImageIcon, Facebook, Heart, Link2, Mail, MessageCircle, Send, Share, Twitter, X as XIcon } from 'lucide-react'
 
 export interface PhotoGridImage {
@@ -246,7 +246,7 @@ export default function PhotoGrid({
               placeholder={mainImage.blurDataURL ? 'blur' : 'empty'}
               blurDataURL={mainImage.blurDataURL ?? undefined}
               sizes="50vw"
-              {...SANITY_DISPLAY_IMAGE_PROPS}
+              {...displayImageProps(mainImage.src)}
             />
             {heroBadges && heroBadges.length > 0 ? (
               <div className={styles.mainBadgeLayer}>
@@ -279,7 +279,7 @@ export default function PhotoGrid({
                   placeholder={image.blurDataURL ? 'blur' : 'empty'}
                   blurDataURL={image.blurDataURL ?? undefined}
                   sizes="25vw"
-                  {...SANITY_DISPLAY_IMAGE_PROPS}
+                  {...displayImageProps(image.src)}
                 />
                 {isBottomRight && (
                   <div className={styles.desktopControls}>
@@ -332,7 +332,7 @@ export default function PhotoGrid({
                   blurDataURL={image.blurDataURL ?? undefined}
                   sizes="100vw"
                   priority={index === 0}
-                  {...SANITY_DISPLAY_IMAGE_PROPS}
+                  {...displayImageProps(image.src)}
                 />
                 {index === 0 && heroBadges && heroBadges.length > 0 ? (
                   <div className={styles.mainBadgeLayer}>
@@ -495,7 +495,7 @@ export default function PhotoGrid({
               className={styles.lightboxImage}
               sizes="(max-width: 768px) 100vw, min(2560px, 96vw)"
               priority
-              {...SANITY_DISPLAY_IMAGE_PROPS}
+              {...displayImageProps(images[lightboxIndex].src)}
             />
           </div>
 

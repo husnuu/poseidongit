@@ -22,6 +22,21 @@
         "de": "cesme-chios-faehrticket",
         "en": "cesme-chios-ferry-ticket",
         "ru": "bilet-na-parom-cesme-khios"
+      },
+      "ayvalik-midilli": {
+        "de": "ayvalik-lesbos-faehrticket",
+        "en": "ayvalik-lesvos-ferry-ticket",
+        "ru": "bilet-na-parom-ayvalyk-lesbos"
+      },
+      "aliaga-midilli": {
+        "de": "aliaga-lesbos-faehrticket",
+        "en": "aliaga-lesvos-ferry-ticket",
+        "ru": "bilet-na-parom-aliaga-lesbos"
+      },
+      "bodrum-kos": {
+        "de": "bodrum-kos-faehrticket",
+        "en": "bodrum-kos-ferry-ticket",
+        "ru": "bilet-na-parom-bodrum-kos"
       }
     },
     "koylar": {

@@ -6,9 +6,11 @@ import { ferryRoutesListQuery } from '@/lib/queries'
 import { mergeFerryRouteLocale, ferryRouteFieldHasManualTranslation } from '@/lib/i18n/mergeFerryRouteLocale'
 import { translateText } from '@/lib/i18n/runtimeTranslate'
 import { getFerryPageUiStrings } from '@/lib/i18n/strings/ferryPage'
-import FerryRouteCard from '@/components/ferry/FerryRouteCard'
+import FerryRouteFilter from '@/components/ferry/FerryRouteFilter'
 import type { FerryRouteListItem } from '@/components/ferry/FerryRouteCard'
-import type { FerryAgeTier } from '@/components/ferry/ferryTypes'
+import { cheapestVessel, vesselAgeTiers, type FerryAgeTier } from '@/components/ferry/ferryTypes'
+import { getTuryolRoute, TURYOL_ROUTES } from '@/lib/ferry/turyolRoutes'
+import { ISLAND_PHOTOS } from '@/lib/ferry/islandGuides'
 import { buildPageMetadata } from '@/lib/seo/buildPageMetadata'
 import type { SiteLocale } from '@/lib/i18n/config'
 import { isSiteLocale } from '@/lib/i18n/config'
@@ -98,6 +100,35 @@ export default async function FeribotListPage({ params }: { params: Promise<{ lo
     routes = []
   }
 
+  // Turyol hatları: fiyat teknelerden (€); Sanity'de belgesi olmayanlar kodtaki metinlerle eklenir.
+  const sanitySlugs = new Set(routes.map((r) => r.slug))
+  routes = routes.map((route) => {
+    const turyol = getTuryolRoute(route.slug)
+    const vessel = cheapestVessel(turyol?.vessels ?? [])
+    return vessel ? { ...route, currency: '€', ageTiers: vesselAgeTiers(vessel, locale), island: turyol!.island } : route
+  })
+  for (const turyol of [...TURYOL_ROUTES].sort((a, b) => a.order - b.order)) {
+    const vessel = cheapestVessel(turyol.vessels)
+    if (!turyol.page || !vessel || sanitySlugs.has(turyol.slug)) continue
+    const t = turyol.page.texts[locale] ?? turyol.page.texts.tr
+    const cover = ISLAND_PHOTOS[turyol.page.images[0]]
+    routes.push({
+      _id: `ferry-${turyol.slug}`,
+      title: t.title,
+      slug: turyol.slug,
+      cardDescription: t.cardDescription,
+      coverImageUrl: cover?.src ?? null,
+      coverImageAlt: cover?.caption[locale] ?? null,
+      durationLabel: t.durationLabel,
+      routeLabel: t.routeLabel,
+      departurePort: t.departurePort,
+      arrivalPort: t.arrivalPort,
+      currency: '€',
+      ageTiers: vesselAgeTiers(vessel, locale),
+      island: turyol.island,
+    })
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <StandardPageLd type="CollectionPage" locale={locale} path="/feribot" name={ui.listMetaTitle} description={ui.listMetaDescription} />
@@ -120,11 +151,7 @@ export default async function FeribotListPage({ params }: { params: Promise<{ lo
           </header>
 
           <h2 className="sr-only">{LISTING_HEADINGS.ferries[locale]}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {routes.map((route) => (
-              <FerryRouteCard key={route._id} route={route} locale={locale} />
-            ))}
-          </div>
+          {routes.length > 0 && <FerryRouteFilter routes={routes} locale={locale} />}
 
           {routes.length === 0 && (
             <p className="text-center text-black/60 py-12">{ui.listEmptyMessage}</p>
